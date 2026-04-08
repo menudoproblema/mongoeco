@@ -646,6 +646,22 @@ async def explain_search_documents(
             "queryPrefilterCandidateCount": query_prefilter_candidate_count,
             "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
             "combinedPrefilterCandidateCount": vector_prefilter_candidate_count,
+            "prefilterRetentionRatio": _safe_ratio(
+                vector_prefilter_candidate_count,
+                (
+                    vector_index.valid_vector_counts.get(query.path, 0)
+                    if vector_index is not None
+                    else None
+                ),
+            ),
+            "evaluationRetentionRatio": _safe_ratio(
+                vector_candidates_evaluated,
+                vector_prefilter_candidate_count,
+            ),
+            "matchedBeforeLimitRatio": _safe_ratio(
+                vector_documents_matched_before_limit,
+                vector_candidates_evaluated,
+            ),
             "prefilterIntersection": _prefilter_intersection_summary(
                 query_filter_applied=query.filter_spec is not None,
                 downstream_filter_applied=downstream_filter_spec is not None,

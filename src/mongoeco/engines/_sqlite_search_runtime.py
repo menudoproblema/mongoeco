@@ -2177,6 +2177,18 @@ def explain_search_documents_sync(
             "queryPrefilterCandidateCount": query_prefilter_candidate_count,
             "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
             "combinedPrefilterCandidateCount": vector_prefilter_candidate_count,
+            "prefilterRetentionRatio": _safe_ratio(
+                vector_prefilter_candidate_count,
+                vector_state.documents_scanned if vector_state is not None else None,
+            ),
+            "evaluationRetentionRatio": _safe_ratio(
+                candidates_evaluated,
+                vector_prefilter_candidate_count,
+            ),
+            "matchedBeforeLimitRatio": _safe_ratio(
+                vector_documents_matched_before_limit,
+                candidates_evaluated,
+            ),
             "prefilterIntersection": _prefilter_intersection_summary(
                 query_filter_applied=query.filter_spec is not None,
                 downstream_filter_applied=downstream_filter_spec is not None,

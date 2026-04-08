@@ -559,6 +559,15 @@ def assert_vector_similarity_explanation(
     if candidates_requested is not None and candidates_evaluated is not None:
         case.assertGreaterEqual(candidates_requested, candidates_evaluated)
     case.assertEqual(details["candidatePlan"]["prefilterIntersection"]["mode"], "none")
+    case.assertIsNotNone(details["candidatePlan"]["prefilterRetentionRatio"])
+    case.assertIsNotNone(details["candidatePlan"]["evaluationRetentionRatio"])
+    case.assertIsNotNone(details["candidatePlan"]["matchedBeforeLimitRatio"])
+    case.assertGreaterEqual(details["candidatePlan"]["prefilterRetentionRatio"], 0.0)
+    case.assertLessEqual(details["candidatePlan"]["prefilterRetentionRatio"], 1.0)
+    case.assertGreaterEqual(details["candidatePlan"]["evaluationRetentionRatio"], 0.0)
+    case.assertLessEqual(details["candidatePlan"]["evaluationRetentionRatio"], 1.0)
+    case.assertGreaterEqual(details["candidatePlan"]["matchedBeforeLimitRatio"], 0.0)
+    case.assertLessEqual(details["candidatePlan"]["matchedBeforeLimitRatio"], 1.0)
 
 
 def assert_vector_min_score_explanation(
