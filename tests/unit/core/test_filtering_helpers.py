@@ -25,7 +25,7 @@ from mongoeco.core.geo import (
     point_matches_geometry,
     _iter_geometry_coordinates,
 )
-from mongoeco.core.query_plan import QueryNode, compile_filter
+from mongoeco.core.query_plan import QueryNode, WhereCondition, compile_filter
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, Timestamp, UNDEFINED, PlanningMode
 
@@ -768,3 +768,34 @@ class FilteringHelperTests(unittest.TestCase):
                 {"mixed": {"$near": {"$geometry": {"type": "Point", "coordinates": [3, 3]}, "$maxDistance": 2}}},
             )
         )
+
+    def test_where_document_view_branches_and_missing_compiled_where_expression(self):
+        dictionary_view = filtering_module._WhereDocumentView({"items": [{"name": "Ada"}], "flag": 0})
+        self.assertEqual(list(dictionary_view), ["items", "flag"])
+        self.assertEqual(len(dictionary_view), 2)
+        self.assertFalse(bool(dictionary_view["flag"]))
+
+        list_view = filtering_module._WhereDocumentView([{"name": "Ada"}, {"name": "Grace"}])
+        self.assertEqual([entry.name for entry in list_view], ["Ada", "Grace"])
+        self.assertEqual(list_view[0].name, "Ada")
+        self.assertEqual(len(list_view), 2)
+        self.assertTrue(bool(list_view))
+        with self.assertRaisesRegex(TypeError, "list/tuple \\$where indexing requires an integer"):
+            _ = list_view["0"]  # type: ignore[index]
+
+        scalar_view = filtering_module._WhereDocumentView(1)
+        with self.assertRaisesRegex(TypeError, "value does not support indexing"):
+            _ = scalar_view[0]
+        with self.assertRaisesRegex(TypeError, "value is not iterable"):
+            list(scalar_view)
+        with self.assertRaisesRegex(TypeError, "value has no length"):
+            len(scalar_view)
+
+        with self.assertRaisesRegex(OperationFailure, "missing compiled expression"):
+            QueryEngine.match_plan(
+                {"a": 1},
+                WhereCondition(
+                    expression="this.a == 1",
+                    compiled_expression=None,
+                ),
+            )

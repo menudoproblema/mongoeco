@@ -4832,6 +4832,102 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(OperationFailure):
             engine._load_indexes("db", "coll")
 
+        cursor.fetchall.return_value = [
+            (
+                "bad_text_weights_json",
+                "idx_bad_text_weights_json",
+                '["title"]',
+                '[["title", "text"]]',
+                0,
+                0,
+                0,
+                None,
+                None,
+                0,
+                "{",
+                None,
+                None,
+                0,
+                None,
+                "scalar_idx",
+            ),
+        ]
+        engine._mark_index_metadata_changed("db", "coll")
+        with self.assertRaises(OperationFailure):
+            engine._load_indexes("db", "coll")
+
+        cursor.fetchall.return_value = [
+            (
+                "bad_text_weights_shape",
+                "idx_bad_text_weights_shape",
+                '["title"]',
+                '[["title", "text"]]',
+                0,
+                0,
+                0,
+                None,
+                None,
+                0,
+                '{"title": 0}',
+                None,
+                None,
+                0,
+                None,
+                "scalar_idx",
+            ),
+        ]
+        engine._mark_index_metadata_changed("db", "coll")
+        with self.assertRaises(OperationFailure):
+            engine._load_indexes("db", "coll")
+
+        cursor.fetchall.return_value = [
+            (
+                "bad_default_language",
+                "idx_bad_default_language",
+                '["title"]',
+                '[["title", "text"]]',
+                0,
+                0,
+                0,
+                None,
+                None,
+                0,
+                '{"title": 1}',
+                "",
+                None,
+                0,
+                None,
+                "scalar_idx",
+            ),
+        ]
+        engine._mark_index_metadata_changed("db", "coll")
+        with self.assertRaises(OperationFailure):
+            engine._load_indexes("db", "coll")
+
+        cursor.fetchall.return_value = [
+            (
+                "bad_language_override",
+                "idx_bad_language_override",
+                '["title"]',
+                '[["title", "text"]]',
+                0,
+                0,
+                0,
+                None,
+                None,
+                0,
+                '{"title": 1}',
+                "english",
+                "",
+                0,
+                None,
+                "scalar_idx",
+            ),
+        ]
+        engine._mark_index_metadata_changed("db", "coll")
+        with self.assertRaises(OperationFailure):
+            engine._load_indexes("db", "coll")
+
     async def test_sqlite_search_sync_and_explain_details_cover_empty_and_fallback_shapes(self):
         engine = SQLiteEngine()
         await engine.connect()

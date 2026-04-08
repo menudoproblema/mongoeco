@@ -14,6 +14,40 @@ from mongoeco.errors import DuplicateKeyError
 
 
 class SQLiteIndexHelperCoverageTests(unittest.TestCase):
+    @staticmethod
+    def _base_create_index_kwargs() -> dict[str, object]:
+        return {
+            "db_name": "db",
+            "coll_name": "coll",
+            "keys": [("kind", 1)],
+            "unique": False,
+            "name": None,
+            "sparse": False,
+            "hidden": False,
+            "collation": None,
+            "partial_filter_expression": None,
+            "expire_after_seconds": None,
+            "deadline": None,
+            "enforce_deadline_fn": lambda _deadline: None,
+            "begin_write": lambda _conn: None,
+            "commit_write": lambda _conn: None,
+            "rollback_write": lambda _conn: None,
+            "purge_expired_documents": lambda *_args: None,
+            "mark_index_metadata_changed": lambda *_args: None,
+            "invalidate_collection_features_cache": lambda *_args: None,
+            "load_indexes": lambda *_args: [],
+            "field_traverses_array_in_collection": lambda *_args: False,
+            "supports_multikey_index": lambda *_args: False,
+            "physical_index_name": lambda *_args: "idx",
+            "physical_multikey_index_name": lambda *_args: "idx_multi",
+            "physical_scalar_index_name": lambda *_args: "idx_scalar",
+            "is_builtin_id_index": lambda _keys: False,
+            "replace_multikey_entries_for_document": lambda *_args: None,
+            "replace_scalar_entries_for_document": lambda *_args: None,
+            "load_documents": lambda *_args: [],
+            "quote_identifier": lambda value: f'"{value}"',
+        }
+
     def test_create_index_rejects_non_boolean_hidden_flag(self):
         with self.assertRaisesRegex(TypeError, "hidden must be a bool"):
             index_admin.create_index(
@@ -48,6 +82,34 @@ class SQLiteIndexHelperCoverageTests(unittest.TestCase):
                 load_documents=lambda *_args: [],
                 quote_identifier=lambda value: f'"{value}"',
             )
+
+    def test_create_index_validates_ttl_hidden_and_collation_after_definition_init(self):
+        kwargs = self._base_create_index_kwargs()
+        kwargs["expire_after_seconds"] = "bad"
+        with patch(
+            "mongoeco.engines._sqlite_index_admin.IndexDefinition",
+            return_value=SimpleNamespace(weights=None, default_language=None, language_override=None),
+        ):
+            with self.assertRaisesRegex(TypeError, "expire_after_seconds must be a non-negative int or None"):
+                index_admin.create_index(Mock(), **kwargs)
+
+        kwargs = self._base_create_index_kwargs()
+        kwargs["hidden"] = "yes"
+        with patch(
+            "mongoeco.engines._sqlite_index_admin.IndexDefinition",
+            return_value=SimpleNamespace(weights=None, default_language=None, language_override=None),
+        ):
+            with self.assertRaisesRegex(TypeError, "hidden must be a bool"):
+                index_admin.create_index(Mock(), **kwargs)
+
+        kwargs = self._base_create_index_kwargs()
+        kwargs["collation"] = "en"
+        with patch(
+            "mongoeco.engines._sqlite_index_admin.IndexDefinition",
+            return_value=SimpleNamespace(weights=None, default_language=None, language_override=None),
+        ):
+            with self.assertRaisesRegex(TypeError, "collation must be a dict or None"):
+                index_admin.create_index(Mock(), **kwargs)
 
     def test_drop_index_rolls_back_when_sql_drop_fails(self):
         conn = Mock()

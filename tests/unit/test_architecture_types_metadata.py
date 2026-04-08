@@ -1084,3 +1084,21 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             WriteConcern(wtimeout=-1)
         with self.assertRaises(TypeError):
             WriteConcern(j="yes")  # type: ignore[arg-type]
+
+    def test_index_text_metadata_validation_rejects_invalid_weights_and_languages(self):
+        with self.assertRaisesRegex(TypeError, "weights must be a dict or None"):
+            IndexDefinition([("title", "text")], name="title_text", weights=1)  # type: ignore[arg-type]
+        with self.assertRaisesRegex(TypeError, "weights field names must be non-empty strings"):
+            IndexDefinition([("title", "text")], name="title_text", weights={"": 1})  # type: ignore[dict-item]
+        with self.assertRaisesRegex(TypeError, "weights values must be positive integers"):
+            IndexDefinition([("title", "text")], name="title_text", weights={"title": 0})
+        with self.assertRaisesRegex(
+            ValueError,
+            "default_language and language_override are only supported for text indexes",
+        ):
+            IndexDefinition([("title", 1)], name="title_1", default_language="english")
+        with self.assertRaisesRegex(
+            ValueError,
+            "default_language and language_override are only supported for text indexes",
+        ):
+            IndexModel([("title", 1)], default_language="english")

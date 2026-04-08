@@ -865,7 +865,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             indexes = await engine.list_indexes("db", "coll")
             info = await engine.index_information("db", "coll")
             semantics = compile_find_semantics(
-                text_query=compile_classic_text_query({"$search": "Ada"})
+                text_query=compile_classic_text_query({"$search": "Ada", "$language": "es"})
             )
             scored_documents = list(
                 engine._iter_documents_for_classic_text_query(
@@ -915,6 +915,44 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation.details["textQuery"]["weights"], {"title": 5, "body": 1})
         self.assertEqual(explanation.details["textQuery"]["defaultLanguage"], "english")
         self.assertEqual(explanation.details["textQuery"]["languageOverride"], "lang")
+        self.assertEqual(explanation.details["textQuery"]["language"], "es")
+
+    async def test_create_index_revalidates_ttl_hidden_and_collation_after_definition_init(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            with patch.object(
+                memory_module,
+                "IndexDefinition",
+                return_value=type(
+                    "_IndexDefinitionStub",
+                    (),
+                    {"weights": None, "default_language": None, "language_override": None},
+                )(),
+            ):
+                with self.assertRaisesRegex(TypeError, "expire_after_seconds must be a non-negative int or None"):
+                    await engine.create_index(
+                        "db",
+                        "users",
+                        ["expires_at"],
+                        expire_after_seconds="bad",  # type: ignore[arg-type]
+                    )
+                with self.assertRaisesRegex(TypeError, "hidden must be a bool"):
+                    await engine.create_index(
+                        "db",
+                        "users",
+                        ["kind"],
+                        hidden="yes",  # type: ignore[arg-type]
+                    )
+                with self.assertRaisesRegex(TypeError, "collation must be a dict or None"):
+                    await engine.create_index(
+                        "db",
+                        "users",
+                        ["kind"],
+                        collation="en",  # type: ignore[arg-type]
+                    )
+        finally:
+            await engine.disconnect()
 
     async def test_ttl_index_metadata_and_opportunistic_expiration_round_trip(self):
         engine = MemoryEngine()

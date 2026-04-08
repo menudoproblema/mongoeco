@@ -107,6 +107,8 @@ class QueryPlanTests(unittest.TestCase):
     def test_compile_filter_rejects_unsafe_where_expressions(self):
         with self.assertRaisesRegex(ValueError, "safe local expression subset"):
             compile_filter({"$where": "len(this.tags) > 0"})
+        with self.assertRaisesRegex(ValueError, "only supports names"):
+            compile_filter({"$where": "other_name"})
         with self.assertRaisesRegex(ValueError, "must be a non-empty string or callable"):
             compile_filter({"$where": ""})
 

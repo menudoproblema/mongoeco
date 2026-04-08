@@ -109,10 +109,16 @@ class SearchCoreTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             compile_classic_text_query({"$search": ""})
         with self.assertRaises(OperationFailure):
+            compile_classic_text_query({"$search": "Ada", "$language": 7})
+        with self.assertRaises(OperationFailure):
             split_classic_text_filter({"$text": None})
         self.assertEqual(tokenize_classic_text(1), ())
         self.assertEqual(search_module.iter_classic_text_values({"tags": [1, "Ada"]}, "tags"), ("Ada",))
         self.assertEqual(search_module.iter_classic_text_values({}, "tags"), ())
+        with self.assertRaisesRegex(OperationFailure, "classic \\$text requires a local text index"):
+            resolve_classic_text_index(
+                [EngineIndexRecord(name="empty", fields=[], key=[], unique=False)]
+            )
 
         indexes = [
             EngineIndexRecord(name="body_text", fields=["body"], key=[("body", "text")], unique=False),

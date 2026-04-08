@@ -97,6 +97,17 @@ class AdminParsingTests(unittest.TestCase):
         self.assertEqual(text_models[0].weights, {"title": 5, "content": 1})
         self.assertEqual(text_models[0].default_language, "english")
         self.assertEqual(text_models[0].language_override, "lang")
+        snake_case_language_models = normalize_index_models_from_command(
+            [
+                {
+                    "key": {"title": "text"},
+                    "default_language": "spanish",
+                    "language_override": "lang",
+                }
+            ]
+        )
+        self.assertEqual(snake_case_language_models[0].default_language, "spanish")
+        self.assertEqual(snake_case_language_models[0].language_override, "lang")
 
         with self.assertRaises(TypeError):
             normalize_index_models_from_command("email_1")
