@@ -72,6 +72,7 @@ SEARCH_HIGHLIGHTS_FIELD = "searchHighlights"
 @dataclass(frozen=True, slots=True)
 class SearchCountSpec:
     mode: str = "total"
+    threshold: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -723,16 +724,28 @@ def _compile_search_count_spec(spec: object) -> SearchCountSpec | None:
         return None
     if not isinstance(spec, dict):
         raise OperationFailure("$search.count requires a document specification")
-    unsupported_options = sorted(set(spec) - {"type"})
+    unsupported_options = sorted(set(spec) - {"type", "threshold"})
     if unsupported_options:
         raise OperationFailure(
-            "$search.count only supports type; unsupported keys: "
+            "$search.count only supports type and threshold; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     mode = spec.get("type", "total")
     if mode not in {"total", "lowerBound"}:
         raise OperationFailure("$search.count.type must be 'total' or 'lowerBound'")
-    return SearchCountSpec(mode=mode)
+    threshold = spec.get("threshold")
+    if threshold is not None:
+        if mode != "lowerBound":
+            raise OperationFailure(
+                "$search.count.threshold is only supported when count.type is 'lowerBound'"
+            )
+        if (
+            not isinstance(threshold, int)
+            or isinstance(threshold, bool)
+            or threshold <= 0
+        ):
+            raise OperationFailure("$search.count.threshold must be a positive integer")
+    return SearchCountSpec(mode=mode, threshold=threshold)
 
 
 def _compile_search_highlight_spec(spec: object) -> SearchHighlightSpec | None:
@@ -1336,7 +1349,10 @@ def _serialized_search_stage_options(query: SearchQuery) -> dict[str, object] | 
     options = _search_stage_options(query)
     serialized: dict[str, object] = {}
     if options.count is not None:
-        serialized["count"] = {"type": options.count.mode}
+        serialized_count: dict[str, object] = {"type": options.count.mode}
+        if options.count.threshold is not None:
+            serialized_count["threshold"] = options.count.threshold
+        serialized["count"] = serialized_count
     if options.highlight is not None:
         serialized["highlight"] = {
             "paths": list(options.highlight.paths) if options.highlight.paths is not None else None,
@@ -2751,11 +2767,14 @@ def build_search_stage_option_previews(
     options = _search_stage_options(query)
     previews: dict[str, object] = {}
     if options.count is not None:
-        previews["countPreview"] = {
+        preview_count: dict[str, object] = {
             "type": options.count.mode,
             "value": len(documents),
             "exact": options.count.mode == "total",
         }
+        if options.count.threshold is not None:
+            preview_count["threshold"] = options.count.threshold
+        previews["countPreview"] = preview_count
     if options.highlight is not None:
         preview_fragments: list[dict[str, object]] = []
         for document in documents:
@@ -2795,7 +2814,15 @@ def build_search_meta_document(
     if options.count is not None:
         count_value = len(documents)
         if options.count.mode == "lowerBound":
-            result["count"] = {"lowerBound": count_value}
+            lower_bound = (
+                min(count_value, options.count.threshold)
+                if options.count.threshold is not None
+                else count_value
+            )
+            count_payload: dict[str, object] = {"lowerBound": lower_bound}
+            if options.count.threshold is not None:
+                count_payload["threshold"] = options.count.threshold
+            result["count"] = count_payload
         else:
             result["count"] = {"total": count_value}
     if options.facet is not None:

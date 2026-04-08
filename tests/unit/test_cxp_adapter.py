@@ -362,6 +362,13 @@ class CxpAlignmentTests(unittest.TestCase):
             },
         )
         self.assertEqual(
+            exported['capabilities']['search']['metadata']['stageOptions']['countOptions'],
+            {
+                'supportsThreshold': True,
+                'thresholdMode': 'lowerBound',
+            },
+        )
+        self.assertEqual(
             exported['capabilities']['search']['metadata']['stageOptions']['facet'],
             {
                 'supportsPath': True,

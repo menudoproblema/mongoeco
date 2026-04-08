@@ -602,6 +602,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             }
                         ],
                     )
+                    search_meta_lower_bound = collection.aggregate(
+                        [
+                            {
+                                "$searchMeta": {
+                                    "index": "by_text",
+                                    "text": {"query": "ada", "path": ["title", "body"]},
+                                    "count": {"type": "lowerBound", "threshold": 1},
+                                }
+                            }
+                        ]
+                    ).to_list()
+                    self.assertEqual(
+                        search_meta_lower_bound,
+                        [{"count": {"lowerBound": 1, "threshold": 1}}],
+                    )
                     search_meta_facets = collection.aggregate(
                         [
                             {

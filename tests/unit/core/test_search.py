@@ -940,6 +940,25 @@ class SearchCoreTests(unittest.TestCase):
             ),
             {"count": {"lowerBound": 2}},
         )
+        lower_bound_threshold_query = compile_search_stage(
+            "$searchMeta",
+            {
+                "index": "by_text",
+                "text": {"query": "ada", "path": "title"},
+                "count": {"type": "lowerBound", "threshold": 1},
+            },
+        )
+        self.assertEqual(
+            search_module.build_search_meta_document(
+                [{"kind": "note"}, {"kind": "reference"}],
+                query=lower_bound_threshold_query,
+            ),
+            {"count": {"lowerBound": 1, "threshold": 1}},
+        )
+        self.assertEqual(
+            search_query_explain_details(lower_bound_threshold_query)["stageOptions"]["count"],  # type: ignore[index]
+            {"type": "lowerBound", "threshold": 1},
+        )
         named_facet_query = compile_search_stage(
             "$searchMeta",
             {
@@ -3967,12 +3986,22 @@ class SearchCoreTests(unittest.TestCase):
             (
                 search_module._compile_search_count_spec,
                 {"type": "total", "extra": True},
-                "count only supports type",
+                "count only supports type and threshold",
             ),
             (
                 search_module._compile_search_count_spec,
                 {"type": "approx"},
                 "count.type must be 'total' or 'lowerBound'",
+            ),
+            (
+                search_module._compile_search_count_spec,
+                {"type": "total", "threshold": 2},
+                "threshold is only supported when count.type is 'lowerBound'",
+            ),
+            (
+                search_module._compile_search_count_spec,
+                {"type": "lowerBound", "threshold": 0},
+                "count.threshold must be a positive integer",
             ),
             (
                 search_module._compile_search_highlight_spec,
@@ -4389,7 +4418,7 @@ class SearchCoreTests(unittest.TestCase):
             terms=("ada",),
             paths=("title",),
             stage_options=search_module.SearchStageOptions(
-                count=search_module.SearchCountSpec(mode="lowerBound"),
+                count=search_module.SearchCountSpec(mode="lowerBound", threshold=2),
                 highlight=search_module.SearchHighlightSpec(paths=("title",), max_chars=10),
                 facet=search_module.SearchFacetSpec(path="kind", num_buckets=2),
             ),
@@ -4407,6 +4436,7 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(previews["countPreview"]["type"], "lowerBound")
         self.assertEqual(previews["countPreview"]["exact"], False)
+        self.assertEqual(previews["countPreview"]["threshold"], 2)
         self.assertEqual(len(previews["highlightPreview"]["sample"]), 3)
         self.assertEqual(previews["facetPreview"]["type"], "string")
         self.assertEqual(previews["facetPreview"]["buckets"], [{"value": "note", "count": 3}])

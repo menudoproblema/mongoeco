@@ -1160,6 +1160,10 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
     'textSearchTier': 'closed-local-tier',
     'stageOptions': {
         'count': ['total', 'lowerBound'],
+        'countOptions': {
+            'supportsThreshold': True,
+            'thresholdMode': 'lowerBound',
+        },
         'highlight': {
             'supportsPath': True,
             'supportsMaxChars': True,
@@ -1235,6 +1239,10 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
                 ],
                 'stageOptions': {
                     'count': ['total', 'lowerBound'],
+                    'countOptions': {
+                        'supportsThreshold': True,
+                        'thresholdMode': 'lowerBound',
+                    },
                     'highlight': {
                         'supportsPath': True,
                         'supportsMaxChars': True,

@@ -241,6 +241,13 @@ class CompatResolutionTests(unittest.TestCase):
             },
         )
         self.assertEqual(
+            catalog["capabilities"]["search"]["metadata"]["stageOptions"]["countOptions"],
+            {
+                "supportsThreshold": True,
+                "thresholdMode": "lowerBound",
+            },
+        )
+        self.assertEqual(
             catalog["capabilities"]["vector_search"]["metadata"]["hybridFilterModes"],
             [
                 "candidate-prefilter",
