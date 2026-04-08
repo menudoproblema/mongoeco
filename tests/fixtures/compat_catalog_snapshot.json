@@ -2,7 +2,7 @@
   "cxp": {
     "capabilities": {
       "aggregation": {
-        "description": "Support for the aggregation framework.",
+        "description": "General-purpose aggregation pipeline support.",
         "metadata": {
           "async": true,
           "embedded": true,
@@ -468,6 +468,107 @@
             "resultType": "cursor"
           }
         ],
+        "telemetry": {
+          "description": null,
+          "events": [
+            {
+              "description": "Aggregation pipeline execution span. completion event.",
+              "eventType": "db.client.aggregate.completed",
+              "requiredPayloadKeys": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.pipeline.stage.count"
+                }
+              ],
+              "severity": null
+            }
+          ],
+          "metrics": [
+            {
+              "description": "Aggregation pipeline execution span. duration metric.",
+              "name": "db.client.aggregate.duration",
+              "requiredLabels": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                }
+              ],
+              "unit": "s"
+            }
+          ],
+          "spans": [
+            {
+              "description": "Aggregation pipeline execution span.",
+              "name": "db.client.aggregate",
+              "requiredAttributes": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.pipeline.stage.count"
+                }
+              ]
+            }
+          ]
+        },
         "tiers": [
           "core",
           "search",
@@ -475,7 +576,7 @@
         ]
       },
       "change_streams": {
-        "description": "Realtime change observability.",
+        "description": "Observe collection or database changes.",
         "metadata": {
           "boundedHistory": true,
           "distributed": false,
@@ -493,12 +594,117 @@
             "resultType": "change_stream"
           }
         ],
+        "telemetry": {
+          "description": null,
+          "events": [
+            {
+              "description": "Change-stream observation span. completion event.",
+              "eventType": "db.client.change_stream.completed",
+              "requiredPayloadKeys": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.change.operation_type"
+                }
+              ],
+              "severity": null
+            }
+          ],
+          "metrics": [
+            {
+              "description": "Change-stream observation span. duration metric.",
+              "name": "db.client.change_stream.duration",
+              "requiredLabels": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.change.operation_type"
+                }
+              ],
+              "unit": "s"
+            }
+          ],
+          "spans": [
+            {
+              "description": "Change-stream observation span.",
+              "name": "db.client.change_stream",
+              "requiredAttributes": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.change.operation_type"
+                }
+              ]
+            }
+          ]
+        },
         "tiers": [
           "platform"
         ]
       },
       "collation": {
-        "description": "Collation-aware sorting and comparison.",
+        "description": "Locale-aware comparison and sorting support.",
         "metadata": {
           "backend": {
             "advancedOptionsAvailable": false,
@@ -583,12 +789,117 @@
           }
         },
         "operations": [],
+        "telemetry": {
+          "description": null,
+          "events": [
+            {
+              "description": "Collation-aware database operation span. completion event.",
+              "eventType": "db.client.collation.completed",
+              "requiredPayloadKeys": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.collation.locale"
+                }
+              ],
+              "severity": null
+            }
+          ],
+          "metrics": [
+            {
+              "description": "Collation-aware database operation span. duration metric.",
+              "name": "db.client.collation.duration",
+              "requiredLabels": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.collation.locale"
+                }
+              ],
+              "unit": "s"
+            }
+          ],
+          "spans": [
+            {
+              "description": "Collation-aware database operation span.",
+              "name": "db.client.collation",
+              "requiredAttributes": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.collation.locale"
+                }
+              ]
+            }
+          ]
+        },
         "tiers": [
           "platform"
         ]
       },
       "persistence": {
-        "description": "Data persistence beyond process lifetime.",
+        "description": "Persistence guarantees and storage-engine metadata.",
         "metadata": {
           "operationMetadata": {
             "listDatabases": {
@@ -609,12 +920,125 @@
           "storageEngine": "runtime-dependent"
         },
         "operations": [],
+        "telemetry": {
+          "description": null,
+          "events": [
+            {
+              "description": "Persistence metadata reporting span. completion event.",
+              "eventType": "db.client.persistence.reported",
+              "requiredPayloadKeys": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.persistence.storage_engine"
+                },
+                {
+                  "description": null,
+                  "name": "db.persistence.persistent"
+                }
+              ],
+              "severity": null
+            }
+          ],
+          "metrics": [
+            {
+              "description": "Persistence metadata reporting span. duration metric.",
+              "name": "db.client.persistence.duration",
+              "requiredLabels": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.persistence.storage_engine"
+                }
+              ],
+              "unit": "s"
+            }
+          ],
+          "spans": [
+            {
+              "description": "Persistence metadata reporting span.",
+              "name": "db.client.persistence",
+              "requiredAttributes": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.persistence.storage_engine"
+                },
+                {
+                  "description": null,
+                  "name": "db.persistence.persistent"
+                }
+              ]
+            }
+          ]
+        },
         "tiers": [
           "platform"
         ]
       },
       "read": {
-        "description": "Basic read queries.",
+        "description": "Read-only collection operations.",
         "metadata": {
           "async": true,
           "embedded": true,
@@ -784,6 +1208,99 @@
             "resultType": "array"
           }
         ],
+        "telemetry": {
+          "description": null,
+          "events": [
+            {
+              "description": "Database client operation span. completion event.",
+              "eventType": "db.client.operation.completed",
+              "requiredPayloadKeys": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                }
+              ],
+              "severity": null
+            }
+          ],
+          "metrics": [
+            {
+              "description": "Database client operation span. duration metric.",
+              "name": "db.client.operation.duration",
+              "requiredLabels": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                }
+              ],
+              "unit": "s"
+            }
+          ],
+          "spans": [
+            {
+              "description": "Database client operation span.",
+              "name": "db.client.operation",
+              "requiredAttributes": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                }
+              ]
+            }
+          ]
+        },
         "tiers": [
           "core",
           "search",
@@ -791,7 +1308,7 @@
         ]
       },
       "search": {
-        "description": "Support for Atlas Search-style textual queries.",
+        "description": "Atlas Search via aggregate pipelines.",
         "metadata": {
           "advancedAtlasLikeGaps": [
             "fullFacetCollectorParity",
@@ -1005,12 +1522,125 @@
             "resultType": "cursor"
           }
         ],
+        "telemetry": {
+          "description": null,
+          "events": [
+            {
+              "description": "Search pipeline execution span. completion event.",
+              "eventType": "db.client.search.completed",
+              "requiredPayloadKeys": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.pipeline.stage.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.search.operator"
+                }
+              ],
+              "severity": null
+            }
+          ],
+          "metrics": [
+            {
+              "description": "Search pipeline execution span. duration metric.",
+              "name": "db.client.search.duration",
+              "requiredLabels": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.pipeline.stage.name"
+                }
+              ],
+              "unit": "s"
+            }
+          ],
+          "spans": [
+            {
+              "description": "Search pipeline execution span.",
+              "name": "db.client.search",
+              "requiredAttributes": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.pipeline.stage.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.search.operator"
+                }
+              ]
+            }
+          ]
+        },
         "tiers": [
           "search"
         ]
       },
       "topology_discovery": {
-        "description": "Topology and node-state discovery.",
+        "description": "Expose topology and SDAM-style discovery data.",
         "metadata": {
           "operationMetadata": {
             "hello": {
@@ -1051,12 +1681,97 @@
           "topologyType": "unknown"
         },
         "operations": [],
+        "telemetry": {
+          "description": null,
+          "events": [
+            {
+              "description": "Topology discovery completion event.",
+              "eventType": "db.client.topology.discovered",
+              "requiredPayloadKeys": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.topology.type"
+                },
+                {
+                  "description": null,
+                  "name": "db.topology.server.count"
+                }
+              ],
+              "severity": null
+            }
+          ],
+          "metrics": [
+            {
+              "description": "Topology reporting span duration metric.",
+              "name": "db.client.topology.duration",
+              "requiredLabels": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.topology.type"
+                }
+              ],
+              "unit": "s"
+            }
+          ],
+          "spans": [
+            {
+              "description": "Topology reporting span.",
+              "name": "db.client.topology",
+              "requiredAttributes": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.topology.type"
+                },
+                {
+                  "description": null,
+                  "name": "db.topology.server.count"
+                }
+              ]
+            }
+          ]
+        },
         "tiers": [
           "platform"
         ]
       },
       "transactions": {
-        "description": "Atomic multi-document operations.",
+        "description": "Client sessions and transaction orchestration.",
         "metadata": {
           "async": true,
           "distributed": false,
@@ -1076,12 +1791,121 @@
             "resultType": "transaction_result"
           }
         ],
+        "telemetry": {
+          "description": null,
+          "events": [
+            {
+              "description": "Transaction orchestration span. completion event.",
+              "eventType": "db.client.transaction.completed",
+              "requiredPayloadKeys": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.transaction.id"
+                },
+                {
+                  "description": null,
+                  "name": "db.transaction.outcome"
+                }
+              ],
+              "severity": null
+            }
+          ],
+          "metrics": [
+            {
+              "description": "Transaction orchestration span. duration metric.",
+              "name": "db.client.transaction.duration",
+              "requiredLabels": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.transaction.outcome"
+                }
+              ],
+              "unit": "s"
+            }
+          ],
+          "spans": [
+            {
+              "description": "Transaction orchestration span.",
+              "name": "db.client.transaction",
+              "requiredAttributes": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.transaction.id"
+                }
+              ]
+            }
+          ]
+        },
         "tiers": [
           "platform"
         ]
       },
       "vector_search": {
-        "description": "Semantic similarity search support.",
+        "description": "Atlas Vector Search via aggregate pipelines.",
         "metadata": {
           "aggregateStage": "$vectorSearch",
           "backend": "usearch",
@@ -1158,12 +1982,125 @@
             "resultType": "cursor"
           }
         ],
+        "telemetry": {
+          "description": null,
+          "events": [
+            {
+              "description": "Vector search pipeline execution span. completion event.",
+              "eventType": "db.client.vector_search.completed",
+              "requiredPayloadKeys": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.pipeline.stage.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.vector_search.similarity"
+                }
+              ],
+              "severity": null
+            }
+          ],
+          "metrics": [
+            {
+              "description": "Vector search pipeline execution span. duration metric.",
+              "name": "db.client.vector_search.duration",
+              "requiredLabels": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                },
+                {
+                  "description": null,
+                  "name": "db.vector_search.similarity"
+                }
+              ],
+              "unit": "s"
+            }
+          ],
+          "spans": [
+            {
+              "description": "Vector search pipeline execution span.",
+              "name": "db.client.vector_search",
+              "requiredAttributes": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.pipeline.stage.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.vector_search.similarity"
+                }
+              ]
+            }
+          ]
+        },
         "tiers": [
           "search"
         ]
       },
       "write": {
-        "description": "Insert, update, and delete document operations.",
+        "description": "Mutation operations over collections.",
         "metadata": {
           "async": true,
           "embedded": true,
@@ -1414,6 +2351,99 @@
             "resultType": "bulk_write_result"
           }
         ],
+        "telemetry": {
+          "description": null,
+          "events": [
+            {
+              "description": "Database client operation span. completion event.",
+              "eventType": "db.client.operation.completed",
+              "requiredPayloadKeys": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                }
+              ],
+              "severity": null
+            }
+          ],
+          "metrics": [
+            {
+              "description": "Database client operation span. duration metric.",
+              "name": "db.client.operation.duration",
+              "requiredLabels": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.outcome"
+                }
+              ],
+              "unit": "s"
+            }
+          ],
+          "spans": [
+            {
+              "description": "Database client operation span.",
+              "name": "db.client.operation",
+              "requiredAttributes": [
+                {
+                  "description": "The canonical name of the resource (engine, database, provider).",
+                  "name": "cxp.resource.name"
+                },
+                {
+                  "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                  "name": "cxp.resource.kind"
+                },
+                {
+                  "description": null,
+                  "name": "db.system.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.operation.name"
+                },
+                {
+                  "description": null,
+                  "name": "db.namespace.name"
+                }
+              ]
+            }
+          ]
+        },
         "tiers": [
           "core",
           "search",
@@ -1494,7 +2524,7 @@
               }
             },
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -1883,6 +2913,107 @@
             "supportsLeadingVectorSearchStage": true,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Aggregation pipeline execution span. completion event.",
+                "eventType": "db.client.aggregate.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.pipeline.stage.count"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Aggregation pipeline execution span. duration metric.",
+                "name": "db.client.aggregate.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Aggregation pipeline execution span.",
+                "name": "db.client.aggregate",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.pipeline.stage.count"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -1964,7 +3095,7 @@
               }
             },
             "mongodb-text-search": {
-              "description": "Reusable profile for tests and resources that need textual $search without requiring vector search.",
+              "description": "Reusable profile for tests and resources that only need text search.",
               "name": "mongodb-text-search",
               "recommendedFor": [
                 "text-search-tests",
@@ -2081,6 +3212,119 @@
             "supportsExplain": true,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Search pipeline execution span. completion event.",
+                "eventType": "db.client.search.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.pipeline.stage.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.search.operator"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Search pipeline execution span. duration metric.",
+                "name": "db.client.search.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.pipeline.stage.name"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Search pipeline execution span.",
+                "name": "db.client.search",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.pipeline.stage.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.search.operator"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -2204,6 +3448,119 @@
             "supportsExplain": true,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Vector search pipeline execution span. completion event.",
+                "eventType": "db.client.vector_search.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.pipeline.stage.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.vector_search.similarity"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Vector search pipeline execution span. duration metric.",
+                "name": "db.client.vector_search.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.vector_search.similarity"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Vector search pipeline execution span.",
+                "name": "db.client.vector_search",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.pipeline.stage.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.vector_search.similarity"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -2212,7 +3569,7 @@
           "capabilityName": "write",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -2382,6 +3739,99 @@
             "supportsOrderedExecution": true,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -2390,7 +3840,7 @@
           "capabilityName": "read",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -2561,6 +4011,99 @@
             "supportsExplain": false,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -2669,6 +4212,111 @@
             "behavior": "filter",
             "scope": "collection-query",
             "supportsCollation": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Collation-aware database operation span. completion event.",
+                "eventType": "db.client.collation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Collation-aware database operation span. duration metric.",
+                "name": "db.client.collation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Collation-aware database operation span.",
+                "name": "db.client.collation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -2677,7 +4325,7 @@
           "capabilityName": "write",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -2848,6 +4496,99 @@
             "supportsExplain": false,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -2956,6 +4697,111 @@
             "behavior": "filter-match",
             "scope": "collection-write",
             "supportsCollation": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Collation-aware database operation span. completion event.",
+                "eventType": "db.client.collation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Collation-aware database operation span. duration metric.",
+                "name": "db.client.collation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Collation-aware database operation span.",
+                "name": "db.client.collation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -2964,7 +4810,7 @@
           "capabilityName": "write",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -3135,6 +4981,99 @@
             "supportsExplain": false,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -3243,6 +5182,111 @@
             "behavior": "filter-match",
             "scope": "collection-write",
             "supportsCollation": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Collation-aware database operation span. completion event.",
+                "eventType": "db.client.collation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Collation-aware database operation span. duration metric.",
+                "name": "db.client.collation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Collation-aware database operation span.",
+                "name": "db.client.collation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -3251,7 +5295,7 @@
           "capabilityName": "read",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -3423,6 +5467,99 @@
             "supportsExplain": false,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -3531,6 +5668,111 @@
             "behavior": "dedup",
             "scope": "collection-query",
             "supportsCollation": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Collation-aware database operation span. completion event.",
+                "eventType": "db.client.collation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Collation-aware database operation span. duration metric.",
+                "name": "db.client.collation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Collation-aware database operation span.",
+                "name": "db.client.collation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -3539,7 +5781,7 @@
           "capabilityName": "read",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -3707,6 +5949,99 @@
             "supportsExplain": false,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -3715,7 +6050,7 @@
           "capabilityName": "read",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -3893,6 +6228,99 @@
             "supportsExplain": true,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -4001,6 +6429,111 @@
             "behavior": "filter-and-sort",
             "scope": "collection-query",
             "supportsCollation": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Collation-aware database operation span. completion event.",
+                "eventType": "db.client.collation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Collation-aware database operation span. duration metric.",
+                "name": "db.client.collation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Collation-aware database operation span.",
+                "name": "db.client.collation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -4009,7 +6542,7 @@
           "capabilityName": "read",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -4182,6 +6715,99 @@
             "supportsExplain": false,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -4290,6 +6916,111 @@
             "behavior": "filter",
             "scope": "collection-query",
             "supportsCollation": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Collation-aware database operation span. completion event.",
+                "eventType": "db.client.collation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Collation-aware database operation span. duration metric.",
+                "name": "db.client.collation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Collation-aware database operation span.",
+                "name": "db.client.collation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -4404,6 +7135,91 @@
               "maxWireVersion"
             ],
             "supportsCapabilityInspection": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Topology discovery completion event.",
+                "eventType": "db.client.topology.discovered",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.server.count"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Topology reporting span duration metric.",
+                "name": "db.client.topology.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Topology reporting span.",
+                "name": "db.client.topology",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.server.count"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -4412,7 +7228,7 @@
           "capabilityName": "write",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -4578,6 +7394,99 @@
             "supportsOrderedExecution": true,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -4586,7 +7495,7 @@
           "capabilityName": "write",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -4750,6 +7659,99 @@
             "supportsExplain": false,
             "supportsSession": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -4860,6 +7862,91 @@
             "inspectionSurface": "database.command",
             "legacyAliasOf": "hello",
             "supportsCapabilityInspection": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Topology discovery completion event.",
+                "eventType": "db.client.topology.discovered",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.server.count"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Topology reporting span duration metric.",
+                "name": "db.client.topology.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Topology reporting span.",
+                "name": "db.client.topology",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.server.count"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -4970,6 +8057,119 @@
             "behavior": "list-visible-databases",
             "inspectionSurface": "database.command",
             "supportsCapabilityInspection": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Persistence metadata reporting span. completion event.",
+                "eventType": "db.client.persistence.reported",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.persistence.storage_engine"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.persistence.persistent"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Persistence metadata reporting span. duration metric.",
+                "name": "db.client.persistence.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.persistence.storage_engine"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Persistence metadata reporting span.",
+                "name": "db.client.persistence",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.persistence.storage_engine"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.persistence.persistent"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -4978,7 +8178,7 @@
           "capabilityName": "write",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -5154,6 +8354,99 @@
             "supportsSession": true,
             "supportsUpsert": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -5262,6 +8555,111 @@
             "behavior": "filter-match",
             "scope": "collection-write",
             "supportsCollation": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Collation-aware database operation span. completion event.",
+                "eventType": "db.client.collation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Collation-aware database operation span. duration metric.",
+                "name": "db.client.collation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Collation-aware database operation span.",
+                "name": "db.client.collation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -5372,6 +8770,91 @@
             "inspectionSurface": "mongoeco.client",
             "metadataPath": "sdam_capabilities()",
             "supportsCapabilityInspection": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Topology discovery completion event.",
+                "eventType": "db.client.topology.discovered",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.server.count"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Topology reporting span duration metric.",
+                "name": "db.client.topology.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Topology reporting span.",
+                "name": "db.client.topology",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.server.count"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -5482,6 +8965,111 @@
             "inspectionSurface": "database.command",
             "metadataPath": "mongoeco.collation",
             "supportsCapabilityInspection": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Collation-aware database operation span. completion event.",
+                "eventType": "db.client.collation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Collation-aware database operation span. duration metric.",
+                "name": "db.client.collation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Collation-aware database operation span.",
+                "name": "db.client.collation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -5593,6 +9181,119 @@
               "mongoeco.engineRuntime"
             ],
             "supportsCapabilityInspection": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Persistence metadata reporting span. completion event.",
+                "eventType": "db.client.persistence.reported",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.persistence.storage_engine"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.persistence.persistent"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Persistence metadata reporting span. duration metric.",
+                "name": "db.client.persistence.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.persistence.storage_engine"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Persistence metadata reporting span.",
+                "name": "db.client.persistence",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.persistence.storage_engine"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.persistence.persistent"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -5701,6 +9402,91 @@
             "inspectionSurface": "database.command",
             "metadataPath": "mongoeco.sdam",
             "supportsCapabilityInspection": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Topology discovery completion event.",
+                "eventType": "db.client.topology.discovered",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.server.count"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Topology reporting span duration metric.",
+                "name": "db.client.topology.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Topology reporting span.",
+                "name": "db.client.topology",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.type"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.topology.server.count"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -5709,7 +9495,7 @@
           "capabilityName": "write",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -5903,6 +9689,99 @@
             "supportsSession": true,
             "supportsUpsert": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -6011,6 +9890,111 @@
             "behavior": "filter-match",
             "scope": "collection-write",
             "supportsCollation": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Collation-aware database operation span. completion event.",
+                "eventType": "db.client.collation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Collation-aware database operation span. duration metric.",
+                "name": "db.client.collation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Collation-aware database operation span.",
+                "name": "db.client.collation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ]
+              }
+            ]
           }
         }
       ],
@@ -6019,7 +10003,7 @@
           "capabilityName": "write",
           "compatibleProfileSupport": {
             "mongodb-core": {
-              "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+              "description": "Reusable profile for providers that expose the MongoDB core set.",
               "name": "mongodb-core",
               "recommendedFor": [
                 "core-tests",
@@ -6214,6 +10198,99 @@
             "supportsSession": true,
             "supportsUpsert": true,
             "unsupportedOptions": []
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Database client operation span. completion event.",
+                "eventType": "db.client.operation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Database client operation span. duration metric.",
+                "name": "db.client.operation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Database client operation span.",
+                "name": "db.client.operation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -6322,6 +10399,111 @@
             "behavior": "filter-match",
             "scope": "collection-write",
             "supportsCollation": true
+          },
+          "telemetry": {
+            "description": null,
+            "events": [
+              {
+                "description": "Collation-aware database operation span. completion event.",
+                "eventType": "db.client.collation.completed",
+                "requiredPayloadKeys": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "severity": null
+              }
+            ],
+            "metrics": [
+              {
+                "description": "Collation-aware database operation span. duration metric.",
+                "name": "db.client.collation.duration",
+                "requiredLabels": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.outcome"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ],
+                "unit": "s"
+              }
+            ],
+            "spans": [
+              {
+                "description": "Collation-aware database operation span.",
+                "name": "db.client.collation",
+                "requiredAttributes": [
+                  {
+                    "description": "The canonical name of the resource (engine, database, provider).",
+                    "name": "cxp.resource.name"
+                  },
+                  {
+                    "description": "The category of the resource (e.g., 'mongodb', 'playwright', 'asgi').",
+                    "name": "cxp.resource.kind"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.system.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.operation.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.namespace.name"
+                  },
+                  {
+                    "description": null,
+                    "name": "db.collation.locale"
+                  }
+                ]
+              }
+            ]
           }
         }
       ]
@@ -6361,7 +10543,7 @@
         }
       },
       "mongodb-core": {
-        "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+        "description": "Reusable profile for providers that expose the MongoDB core set.",
         "name": "mongodb-core",
         "recommendedFor": [
           "core-tests",
@@ -6586,7 +10768,7 @@
         }
       },
       "mongodb-text-search": {
-        "description": "Reusable profile for tests and resources that need textual $search without requiring vector search.",
+        "description": "Reusable profile for tests and resources that only need text search.",
         "name": "mongodb-text-search",
         "recommendedFor": [
           "text-search-tests",
@@ -6675,7 +10857,7 @@
         ]
       },
       "mongodb-core": {
-        "description": "Reusable minimum profile for basic MongoDB tests and resources.",
+        "description": "Reusable profile for providers that expose the MongoDB core set.",
         "name": "mongodb-core",
         "recommendedFor": [
           "core-tests",
@@ -6867,7 +11049,7 @@
         ]
       },
       "mongodb-text-search": {
-        "description": "Reusable profile for tests and resources that need textual $search without requiring vector search.",
+        "description": "Reusable profile for tests and resources that only need text search.",
         "name": "mongodb-text-search",
         "recommendedFor": [
           "text-search-tests",

@@ -577,10 +577,10 @@
 - `interface`: `database/mongodb`
 ### Profiles
 #### `mongodb-core`
-- `description`: `Reusable minimum profile for basic MongoDB tests and resources.`
+- `description`: `Reusable profile for providers that expose the MongoDB core set.`
 - `recommendedFor`: `core-tests`, `general-resources`
 #### `mongodb-text-search`
-- `description`: `Reusable profile for tests and resources that need textual $search without requiring vector search.`
+- `description`: `Reusable profile for tests and resources that only need text search.`
 - `recommendedFor`: `text-search-tests`, `search-without-vector-search`
 #### `mongodb-search`
 - `description`: `Reusable profile for tests and resources with search and vector search.`
@@ -592,7 +592,7 @@
 - `description`: `Reusable profile for tests that need a richer aggregation subset.`
 - `recommendedFor`: `aggregation-rich-tests`, `subset-sensitive-tooling`
 ### `read`
-- `description`: `Basic read queries.`
+- `description`: `Read-only collection operations.`
 - `tiers`: `core`, `search`, `platform`
 - `operations`: `find`, `find_one`, `count_documents`, `estimated_document_count`, `distinct`
 - `embedded`: `True`
@@ -603,7 +603,7 @@
 - `operationMetadata`: `{'find': {'supportedOptions': ['batch_size', 'comment', 'hint', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'resultType': 'cursor', 'collectionScoped': True, 'supportsSession': True, 'acceptsFilter': True, 'acceptsProjection': True, 'acceptsSort': True, 'acceptsSkip': True, 'acceptsLimit': True, 'acceptsBatchSize': True, 'acceptsHint': True, 'acceptsComment': True, 'acceptsMaxTimeMs': True, 'acceptsLet': True, 'acceptsCollation': True}, 'find_one': {'supportedOptions': [], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'document', 'collectionScoped': True, 'supportsSession': True, 'acceptsFilter': True, 'acceptsProjection': True, 'acceptsSort': False, 'acceptsSkip': False, 'acceptsLimit': False, 'acceptsBatchSize': False, 'acceptsHint': False, 'acceptsComment': False, 'acceptsMaxTimeMs': False, 'acceptsLet': False, 'acceptsCollation': True}, 'count_documents': {'supportedOptions': ['comment', 'hint', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'count', 'collectionScoped': True, 'supportsSession': True, 'acceptsFilter': True, 'acceptsHint': True, 'acceptsComment': True, 'acceptsMaxTimeMs': True, 'acceptsCollation': True}, 'estimated_document_count': {'supportedOptions': ['comment', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'count', 'collectionScoped': True, 'supportsSession': True, 'acceptsFilter': False, 'acceptsComment': True, 'acceptsMaxTimeMs': True}, 'distinct': {'supportedOptions': ['comment', 'hint', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'array', 'collectionScoped': True, 'supportsSession': True, 'acceptsFilter': True, 'acceptsFieldPath': True, 'acceptsHint': True, 'acceptsComment': True, 'acceptsMaxTimeMs': True, 'acceptsCollation': True}}`
 
 ### `write`
-- `description`: `Insert, update, and delete document operations.`
+- `description`: `Mutation operations over collections.`
 - `tiers`: `core`, `search`, `platform`
 - `operations`: `insert_one`, `insert_many`, `update_one`, `update_many`, `replace_one`, `delete_one`, `delete_many`, `bulk_write`
 - `embedded`: `True`
@@ -614,7 +614,7 @@
 - `operationMetadata`: `{'insert_one': {'supportedOptions': [], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'insert_result', 'collectionScoped': True, 'supportsSession': True, 'acceptsDocument': True, 'acceptsComment': False}, 'insert_many': {'supportedOptions': [], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'insert_many_result', 'collectionScoped': True, 'supportsSession': True, 'acceptsDocuments': True, 'supportsOrderedExecution': True, 'acceptsComment': False, 'acceptsOrderedExecution': True}, 'update_one': {'supportedOptions': ['array_filters', 'comment', 'hint', 'let', 'sort'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'update_result', 'collectionScoped': True, 'supportsSession': True, 'acceptsFilter': True, 'acceptsUpdateDocument': True, 'supportsUpsert': True, 'acceptsSort': True, 'acceptsHint': True, 'acceptsComment': True, 'acceptsLet': True, 'acceptsCollation': True, 'acceptsArrayFilters': True, 'supportsPipelineUpdate': True, 'supportedUpdateOperators': ['$addToSet', '$bit', '$currentDate', '$inc', '$max', '$min', '$mul', '$pop', '$pull', '$pullAll', '$push', '$rename', '$set', '$setOnInsert', '$unset']}, 'update_many': {'supportedOptions': ['array_filters', 'comment', 'hint', 'let'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'update_result', 'collectionScoped': True, 'supportsSession': True, 'acceptsFilter': True, 'acceptsUpdateDocument': True, 'supportsUpsert': True, 'acceptsSort': False, 'acceptsHint': True, 'acceptsComment': True, 'acceptsLet': True, 'acceptsCollation': True, 'acceptsArrayFilters': True, 'supportsPipelineUpdate': True, 'supportedUpdateOperators': ['$addToSet', '$bit', '$currentDate', '$inc', '$max', '$min', '$mul', '$pop', '$pull', '$pullAll', '$push', '$rename', '$set', '$setOnInsert', '$unset']}, 'replace_one': {'supportedOptions': ['comment', 'hint', 'let', 'sort'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'update_result', 'collectionScoped': True, 'supportsSession': True, 'acceptsFilter': True, 'acceptsReplacementDocument': True, 'supportsUpsert': True, 'acceptsSort': True, 'acceptsHint': True, 'acceptsComment': True, 'acceptsLet': True, 'acceptsCollation': True, 'supportsReplacementDocument': True}, 'delete_one': {'supportedOptions': ['comment', 'hint', 'let'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'delete_result', 'collectionScoped': True, 'supportsSession': True, 'acceptsFilter': True, 'acceptsHint': True, 'acceptsComment': True, 'acceptsLet': True, 'acceptsCollation': True}, 'delete_many': {'supportedOptions': ['comment', 'hint', 'let'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'delete_result', 'collectionScoped': True, 'supportsSession': True, 'acceptsFilter': True, 'acceptsHint': True, 'acceptsComment': True, 'acceptsLet': True, 'acceptsCollation': True}, 'bulk_write': {'supportedOptions': ['comment', 'let'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': False, 'resultType': 'bulk_write_result', 'collectionScoped': True, 'supportsSession': True, 'acceptsWriteModels': True, 'supportsOrderedExecution': True, 'acceptsComment': True, 'acceptsLet': True, 'acceptsOrderedExecution': True}}`
 
 ### `transactions`
-- `description`: `Atomic multi-document operations.`
+- `description`: `Client sessions and transaction orchestration.`
 - `tiers`: `platform`
 - `operations`: `start_session`, `with_transaction`
 - `embedded`: `True`
@@ -623,8 +623,21 @@
 - `distributed`: `False`
 - `mode`: `local`
 
+### `change_streams`
+- `description`: `Observe collection or database changes.`
+- `tiers`: `platform`
+- `operations`: `watch`
+- `implementation`: `local`
+- `distributed`: `False`
+- `persistent`: `False`
+- `resumable`: `True`
+- `resumableAcrossClientRestarts`: `False`
+- `resumableAcrossProcesses`: `False`
+- `resumableAcrossNodes`: `False`
+- `boundedHistory`: `True`
+
 ### `aggregation`
-- `description`: `Support for the aggregation framework.`
+- `description`: `General-purpose aggregation pipeline support.`
 - `tiers`: `core`, `search`, `platform`
 - `operations`: `aggregate`
 - `supportedStages`: `$addFields`, `$bucket`, `$bucketAuto`, `$collStats`, `$count`, `$densify`, `$documents`, `$facet`, `$fill`, `$geoNear`, `$group`, `$limit`, `$lookup`, `$match`, `$merge`, `$project`, `$replaceRoot`, `$replaceWith`, `$sample`, `$set`, `$setWindowFields`, `$skip`, `$sort`, `$sortByCount`, `$unionWith`, `$unset`, `$unwind`
@@ -637,21 +650,8 @@
 - `explainable`: `True`
 - `operationMetadata`: `{'aggregate': {'supportedOptions': ['allow_disk_use', 'batch_size', 'comment', 'hint', 'let', 'max_time_ms'], 'acceptedNoopOptions': [], 'unsupportedOptions': [], 'supportsExplain': True, 'resultType': 'cursor', 'supportsCollectionScope': True, 'supportsDatabaseScope': True, 'supportsSession': True, 'acceptsPipeline': True, 'supportedStages': ['$addFields', '$bucket', '$bucketAuto', '$collStats', '$count', '$densify', '$documents', '$facet', '$fill', '$geoNear', '$group', '$limit', '$lookup', '$match', '$merge', '$project', '$replaceRoot', '$replaceWith', '$sample', '$set', '$setWindowFields', '$skip', '$sort', '$sortByCount', '$unionWith', '$unset', '$unwind'], 'supportedExpressionOperators': ['$abs', '$add', '$all', '$allElementsTrue', '$and', '$anyElementTrue', '$arrayElemAt', '$arrayToObject', '$binarySize', '$bitAnd', '$bitNot', '$bitOr', '$bitXor', '$bsonSize', '$ceil', '$cmp', '$concat', '$concatArrays', '$cond', '$convert', '$dateAdd', '$dateDiff', '$dateFromParts', '$dateFromString', '$dateSubtract', '$dateToParts', '$dateToString', '$dateTrunc', '$dayOfMonth', '$dayOfWeek', '$dayOfYear', '$divide', '$elemMatch', '$eq', '$exists', '$exp', '$filter', '$first', '$firstN', '$floor', '$getField', '$gt', '$gte', '$hour', '$ifNull', '$in', '$indexOfArray', '$indexOfBytes', '$indexOfCP', '$isArray', '$isNumber', '$isoDayOfWeek', '$isoWeek', '$isoWeekYear', '$lastN', '$let', '$literal', '$ln', '$log', '$log10', '$lt', '$lte', '$ltrim', '$map', '$maxN', '$median', '$mergeObjects', '$millisecond', '$minN', '$minute', '$mod', '$month', '$multiply', '$ne', '$nin', '$objectToArray', '$or', '$percentile', '$pow', '$rand', '$range', '$reduce', '$regexFind', '$regexFindAll', '$regexMatch', '$replaceAll', '$replaceOne', '$reverseArray', '$round', '$rtrim', '$second', '$setDifference', '$setEquals', '$setField', '$setIntersection', '$setIsSubset', '$setUnion', '$size', '$slice', '$sortArray', '$split', '$sqrt', '$stdDevPop', '$stdDevSamp', '$strLenBytes', '$strLenCP', '$strcasecmp', '$substr', '$substrBytes', '$substrCP', '$subtract', '$switch', '$toBool', '$toDate', '$toDecimal', '$toDouble', '$toInt', '$toLong', '$toLower', '$toObjectId', '$toString', '$toUUID', '$toUpper', '$trim', '$trunc', '$type', '$unsetField', '$week', '$year', '$zip'], 'supportedGroupAccumulators': ['$addToSet', '$avg', '$bottom', '$bottomN', '$count', '$first', '$firstN', '$last', '$lastN', '$max', '$maxN', '$median', '$mergeObjects', '$min', '$minN', '$percentile', '$push', '$stdDevPop', '$stdDevSamp', '$sum', '$top', '$topN'], 'supportedWindowAccumulators': ['$addToSet', '$avg', '$bottom', '$bottomN', '$count', '$denseRank', '$documentNumber', '$expMovingAvg', '$first', '$firstN', '$last', '$lastN', '$linearFill', '$locf', '$max', '$maxN', '$median', '$min', '$minN', '$percentile', '$push', '$rank', '$shift', '$stdDevPop', '$stdDevSamp', '$sum', '$top', '$topN'], 'supportsLeadingSearchStage': True, 'supportsLeadingVectorSearchStage': True}}`
 
-### `change_streams`
-- `description`: `Realtime change observability.`
-- `tiers`: `platform`
-- `operations`: `watch`
-- `implementation`: `local`
-- `distributed`: `False`
-- `persistent`: `False`
-- `resumable`: `True`
-- `resumableAcrossClientRestarts`: `False`
-- `resumableAcrossProcesses`: `False`
-- `resumableAcrossNodes`: `False`
-- `boundedHistory`: `True`
-
 ### `search`
-- `description`: `Support for Atlas Search-style textual queries.`
+- `description`: `Atlas Search via aggregate pipelines.`
 - `tiers`: `search`
 - `operations`: `aggregate`
 - `operators`: `text`, `phrase`, `autocomplete`, `wildcard`, `exists`, `in`, `equals`, `range`, `near`, `compound`, `regex`
@@ -671,7 +671,7 @@
 - `note`: `The local textual $search tier is closed in its documented subset; remaining gaps are advanced Atlas-like features.`
 
 ### `vector_search`
-- `description`: `Semantic similarity search support.`
+- `description`: `Atlas Vector Search via aggregate pipelines.`
 - `tiers`: `search`
 - `operations`: `aggregate`
 - `similarities`: `cosine`, `dotProduct`, `euclidean`
@@ -686,7 +686,7 @@
 - `note`: `SQLiteEngine uses a local usearch ANN backend when the vector index is materialized; MemoryEngine remains the exact semantic baseline.`
 
 ### `collation`
-- `description`: `Collation-aware sorting and comparison.`
+- `description`: `Locale-aware comparison and sorting support.`
 - `tiers`: `platform`
 - `operations`: _empty_
 - `backend`: `{'selectedBackend': 'pyuca', 'availableBackends': ['pyuca'], 'unicodeAvailable': True, 'advancedOptionsAvailable': False}`
@@ -694,7 +694,7 @@
 - `operationMetadata`: `{'find': {'supportsCollation': True, 'scope': 'collection-query', 'behavior': 'filter-and-sort'}, 'find_one': {'supportsCollation': True, 'scope': 'collection-query', 'behavior': 'filter'}, 'count_documents': {'supportsCollation': True, 'scope': 'collection-query', 'behavior': 'filter'}, 'distinct': {'supportsCollation': True, 'scope': 'collection-query', 'behavior': 'dedup'}, 'update_one': {'supportsCollation': True, 'scope': 'collection-write', 'behavior': 'filter-match'}, 'update_many': {'supportsCollation': True, 'scope': 'collection-write', 'behavior': 'filter-match'}, 'replace_one': {'supportsCollation': True, 'scope': 'collection-write', 'behavior': 'filter-match'}, 'delete_one': {'supportsCollation': True, 'scope': 'collection-write', 'behavior': 'filter-match'}, 'delete_many': {'supportsCollation': True, 'scope': 'collection-write', 'behavior': 'filter-match'}, 'serverStatus': {'supportsCapabilityInspection': True, 'inspectionSurface': 'database.command', 'metadataPath': 'mongoeco.collation'}}`
 
 ### `persistence`
-- `description`: `Data persistence beyond process lifetime.`
+- `description`: `Persistence guarantees and storage-engine metadata.`
 - `tiers`: `platform`
 - `operations`: _empty_
 - `persistent`: `True`
@@ -702,7 +702,7 @@
 - `operationMetadata`: `{'serverStatus': {'supportsCapabilityInspection': True, 'inspectionSurface': 'database.command', 'metadataPaths': ['storageEngine.name', 'mongoeco.engineRuntime']}, 'listDatabases': {'supportsCapabilityInspection': True, 'inspectionSurface': 'database.command', 'behavior': 'list-visible-databases'}}`
 
 ### `topology_discovery`
-- `description`: `Topology and node-state discovery.`
+- `description`: `Expose topology and SDAM-style discovery data.`
 - `tiers`: `platform`
 - `operations`: _empty_
 - `topologyType`: `unknown`

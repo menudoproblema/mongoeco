@@ -69,36 +69,35 @@ class CxpSmokeCoverageTests(unittest.TestCase):
         finally:
             cxp_capabilities.export_cxp_capability_catalog = original_export
 
-    def test_profile_catalog_exports_validate_mapping_shape(self) -> None:
+    def test_compat_cxp_projection_exports_delegate_to_canonical_cxp_helpers(self) -> None:
+        self.assertEqual(
+            compat_catalog_export.export_cxp_profile_catalog(),
+            cxp_capabilities.export_cxp_profile_catalog(),
+        )
+        self.assertEqual(
+            compat_catalog_export.export_cxp_profile_support_catalog(),
+            cxp_capabilities.export_cxp_profile_support_catalog(),
+        )
+        self.assertEqual(
+            compat_catalog_export.export_cxp_operation_catalog(),
+            cxp_capabilities.export_cxp_operation_catalog(),
+        )
+
         original_export = compat_catalog_export.export_cxp_catalog
-
-        def _bad_profiles() -> dict[str, object]:
-            return {'profiles': ['not-a-mapping']}
-
-        def _bad_profile_support() -> dict[str, object]:
-            return {'profileSupport': ['not-a-mapping']}
-
-        def _bad_operations() -> dict[str, object]:
-            return {'operations': ['not-a-mapping']}
-
-        compat_catalog_export.export_cxp_catalog = _bad_profiles
+        compat_catalog_export.export_cxp_catalog = lambda: {'broken': True}
         try:
-            with self.assertRaises(TypeError):
-                compat_catalog_export.export_cxp_profile_catalog()
-        finally:
-            compat_catalog_export.export_cxp_catalog = original_export
-
-        compat_catalog_export.export_cxp_catalog = _bad_profile_support
-        try:
-            with self.assertRaises(TypeError):
-                compat_catalog_export.export_cxp_profile_support_catalog()
-        finally:
-            compat_catalog_export.export_cxp_catalog = original_export
-
-        compat_catalog_export.export_cxp_catalog = _bad_operations
-        try:
-            with self.assertRaises(TypeError):
-                compat_catalog_export.export_cxp_operation_catalog()
+            self.assertEqual(
+                compat_catalog_export.export_cxp_profile_catalog(),
+                cxp_capabilities.export_cxp_profile_catalog(),
+            )
+            self.assertEqual(
+                compat_catalog_export.export_cxp_profile_support_catalog(),
+                cxp_capabilities.export_cxp_profile_support_catalog(),
+            )
+            self.assertEqual(
+                compat_catalog_export.export_cxp_operation_catalog(),
+                cxp_capabilities.export_cxp_operation_catalog(),
+            )
         finally:
             compat_catalog_export.export_cxp_catalog = original_export
 

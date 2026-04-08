@@ -291,6 +291,19 @@ class CompatResolutionTests(unittest.TestCase):
                 "find"
             ]["acceptsCollation"]
         )
+        self.assertEqual(
+            catalog["capabilities"]["read"]["telemetry"]["spans"][0]["name"],
+            "db.client.operation",
+        )
+        self.assertIn(
+            "db.operation.name",
+            [
+                field["name"]
+                for field in catalog["capabilities"]["read"]["telemetry"]["spans"][
+                    0
+                ]["requiredAttributes"]
+            ],
+        )
 
     def test_exported_cxp_profile_catalog_matches_cxp_catalog_profiles(self):
         self.assertEqual(
@@ -332,6 +345,19 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(
             operation_catalog["serverStatus"][0]["compatibleProfiles"],
             ["mongodb-platform"],
+        )
+        self.assertEqual(
+            operation_catalog["find"][0]["telemetry"]["events"][0]["eventType"],
+            "db.client.operation.completed",
+        )
+        self.assertIn(
+            "db.operation.outcome",
+            [
+                field["name"]
+                for field in operation_catalog["find"][0]["telemetry"]["events"][
+                    0
+                ]["requiredPayloadKeys"]
+            ],
         )
         self.assertEqual(
             operation_catalog["sdam_capabilities"][0]["capabilityName"],
@@ -836,3 +862,18 @@ class CompatResolutionTests(unittest.TestCase):
     def test_auto_installed_profile_requires_pymongo(self, _version):
         with self.assertRaises(ValueError):
             detect_installed_pymongo_profile()
+
+    def test_cxp_capability_telemetry_serializer_defaults_to_empty_when_missing(self):
+        from mongoeco.cxp import capabilities as cxp_capabilities
+
+        class _CapabilityWithoutTelemetry:
+            telemetry = None
+
+        self.assertEqual(
+            cxp_capabilities._serialize_capability_telemetry(_CapabilityWithoutTelemetry()),
+            {
+                "spans": [],
+                "metrics": [],
+                "events": [],
+            },
+        )

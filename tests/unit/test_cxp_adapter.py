@@ -74,7 +74,7 @@ class CxpAlignmentTests(unittest.TestCase):
             'MongoVectorSearchMetadata',
         )
 
-    def test_execution_catalog_surface_is_aligned_with_cxp_2(self) -> None:
+    def test_execution_catalog_surface_is_aligned_with_cxp_3(self) -> None:
         self.assertEqual(EXECUTION_ENGINE_FAMILY_INTERFACE, 'execution/engine')
         self.assertEqual(
             EXECUTION_ENGINE_FAMILY_CATALOG.interface,

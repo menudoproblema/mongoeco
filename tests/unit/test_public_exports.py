@@ -121,6 +121,7 @@ class PublicExportsTests(unittest.TestCase):
         self.assertIn("MONGODB_CORE_PROFILE", cxp_module.__all__)
         self.assertIn("MongoSearchMetadata", cxp_module.__all__)
         self.assertIn("export_cxp_capability_catalog", cxp_module.__all__)
+        self.assertIn("export_cxp_profile_catalog", cxp_module.__all__)
         self.assertNotIn("MONGODB_FIND", cxp_module.__all__)
         self.assertNotIn("MONGODB_UPDATE_ONE", cxp_module.__all__)
         self.assertNotIn("MONGODB_SEARCH", cxp_module.__all__)
