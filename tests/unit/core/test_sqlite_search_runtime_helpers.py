@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 from unittest.mock import patch
 
@@ -35,6 +36,133 @@ SQLiteSearchRuntimeHelperTests = _build_case(
 
 
 class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
+    def test_sqlite_vector_helpers_cover_post_candidate_filter_fallback_paths(self) -> None:
+        async def _run() -> None:
+            engine = SQLiteEngine()
+            await engine.connect()
+            try:
+                await engine.put_document(
+                    "db",
+                    "coll",
+                    {
+                        "_id": 1,
+                        "kind": "reference",
+                        "embedding": [1.0, 0.0],
+                    },
+                )
+                await engine.put_document(
+                    "db",
+                    "coll",
+                    {
+                        "_id": 2,
+                        "kind": "reference",
+                        "embedding": [0.0, 1.0],
+                    },
+                )
+                vector_definition = SearchIndexDefinition(
+                    {
+                        "fields": [
+                            {
+                                "type": "vector",
+                                "path": "embedding",
+                                "numDimensions": 2,
+                                "similarity": "cosine",
+                            }
+                        ]
+                    },
+                    name="by_vector",
+                    index_type="vectorSearch",
+                )
+                search_runtime_module.create_search_index_sync(
+                    engine,
+                    "db",
+                    "coll",
+                    vector_definition,
+                    None,
+                    None,
+                )
+                vector_query = compile_search_stage(
+                    "$vectorSearch",
+                    {
+                        "index": "by_vector",
+                        "path": "embedding",
+                        "queryVector": [1.0, 0.0],
+                        "limit": 1,
+                        "numCandidates": 1,
+                    },
+                )
+                self.assertEqual(
+                    search_runtime_module._vector_filter_mode(
+                        {"kind": "note"},
+                        None,
+                    ),
+                    "post-candidate",
+                )
+                self.assertIsNone(
+                    search_runtime_module._vector_pruning_summary(
+                        documents_scanned=None,
+                        prefilter_candidate_count=None,
+                        candidates_evaluated=None,
+                        post_candidate_filtered_count=0,
+                        min_score_filtered_count=0,
+                    )
+                )
+
+                conn = engine._require_connection()
+                with engine._bind_connection(conn):
+                    vector_physical = engine._load_search_index_rows(
+                        "db",
+                        "coll",
+                        name="by_vector",
+                    )[0][1]
+                    vector_backend = search_runtime_module.ensure_vector_search_backend_sync(
+                        engine,
+                        conn,
+                        "db",
+                        "coll",
+                        vector_definition,
+                        vector_physical,
+                        "embedding",
+                    )
+
+                    self.assertEqual(
+                        search_runtime_module.exact_vector_hits_sync(
+                            engine,
+                            "db",
+                            "coll",
+                            vector_definition,
+                            vector_query,
+                            downstream_filter_spec={"kind": "note"},
+                        ),
+                        [],
+                    )
+
+                    (
+                        vector_hits,
+                        _requested,
+                        evaluated_count,
+                        filtered_count,
+                        _min_score_filtered_count,
+                        _fallback_reason,
+                    ) = search_runtime_module._sqlite_vector_candidate_documents(
+                        engine,
+                        "db",
+                        "coll",
+                        vector_definition,
+                        vector_query,
+                        vector_backend,
+                        prefilter_storage_keys=None,
+                        prefilter_exact=False,
+                        downstream_filter_spec={"kind": "note"},
+                    )
+                    self.assertEqual(vector_hits, [])
+                    self.assertGreaterEqual(evaluated_count, 1)
+                    self.assertGreaterEqual(filtered_count, 1)
+            finally:
+                await engine.disconnect()
+
+        asyncio.run(_run())
+
     def test_sqlite_search_runtime_direct_branches(self) -> None:
         async def _run() -> None:
             engine = SQLiteEngine()

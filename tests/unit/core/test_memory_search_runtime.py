@@ -14,6 +14,17 @@ from mongoeco.types import SearchIndexDefinition
 
 
 class MemorySearchRuntimeTests(unittest.TestCase):
+    def test_vector_pruning_summary_returns_none_without_scan_signals(self) -> None:
+        self.assertIsNone(
+            memory_search_runtime_module._vector_pruning_summary(
+                documents_scanned=None,
+                prefilter_candidate_count=None,
+                candidates_evaluated=None,
+                post_candidate_filtered_count=0,
+                min_score_filtered_count=0,
+            )
+        )
+
     def test_vector_filter_residual_description_covers_none_exact_and_non_exact_modes(self) -> None:
         self.assertIsNone(_vector_filter_residual_description(None, None))
         self.assertEqual(
