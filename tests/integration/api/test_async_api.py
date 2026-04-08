@@ -1490,6 +1490,41 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(OperationFailure):
                         await collection.create_search_index({"mappings": {"fields": {"title": {"type": "decimal"}}}})
 
+    async def test_search_exists_uses_stable_id_tie_break_without_explicit_sort(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.docs.get_collection("stable_tie_break")
+                    await collection.insert_many(
+                        [
+                            {"_id": 3, "title": "gamma"},
+                            {"_id": 1, "title": "alpha"},
+                            {"_id": 2, "title": "beta"},
+                        ]
+                    )
+                    await collection.create_search_indexes(
+                        [
+                            SearchIndexModel(
+                                {
+                                    "mappings": {
+                                        "dynamic": False,
+                                        "fields": {
+                                            "title": {"type": "string"},
+                                        },
+                                    }
+                                },
+                                name="by_text",
+                            )
+                        ]
+                    )
+                    hits = await collection.aggregate(
+                        [
+                            {"$search": {"index": "by_text", "exists": {"path": "title"}}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in hits], [1, 2, 3])
+
     async def test_search_phrase_slop_keeps_parity_between_memory_and_sqlite(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

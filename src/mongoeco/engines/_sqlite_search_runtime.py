@@ -1694,13 +1694,18 @@ def execute_sqlite_search_query(
                 coll_name,
                 candidate_storage_keys,
             )
-            documents = [
-                document
+            exact_documents = [
+                (
+                    document,
+                    definition,
+                    materialize_search_document(document, definition),
+                )
                 for _storage_key, document in candidate_documents
                 if downstream_filter_spec is None
                 or QueryEngine.match(document, downstream_filter_spec, dialect=MONGODB_DIALECT_70)
             ]
-            return documents[:result_limit_hint] if result_limit_hint is not None else documents
+            sorted_documents = _sort_search_documents_for_query(exact_documents, query=query)
+            return sorted_documents[:result_limit_hint] if result_limit_hint is not None else sorted_documents
         candidate_documents = _load_candidate_documents(
             engine,
             db_name,

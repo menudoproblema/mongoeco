@@ -21,6 +21,7 @@ from mongoeco.core.search import (
     is_text_search_query,
     matches_search_query,
     search_compound_ranking,
+    search_clause_ranking,
     search_near_distance,
     search_query_explain_details,
     vector_field_paths,
@@ -314,7 +315,7 @@ async def execute_search_documents(
                 attach_search_highlights(document, definition=definition, query=query)
                 for document in results
             ]
-        matches: list[Document] = []
+        ranked_matches: list[tuple[float, str, Document]] = []
         for document, materialized in materialized_documents:
             if downstream_filter_spec is not None:
                 candidateable_match = matches_candidateable_filter(document, downstream_filter_spec)
@@ -322,14 +323,21 @@ async def execute_search_documents(
                     continue
                 if candidateable_match is None and not QueryEngine.match(document, downstream_filter_spec, dialect=MONGODB_DIALECT_70):
                     continue
-            if not matches_search_query(document, definition=definition, query=query, materialized=materialized):
+            matched, clause_score, _near_distance = search_clause_ranking(
+                document,
+                definition=definition,
+                query=query,
+                materialized=materialized,
+            )
+            if not matched:
                 continue
-            matches.append(document)
-            if effective_limit is not None and len(matches) >= effective_limit:
-                break
+            ranked_matches.append((-clause_score, _document_tie_break_key(document), document))
+        ranked_matches.sort(key=lambda item: item[:2])
+        if effective_limit is not None:
+            ranked_matches = ranked_matches[:effective_limit]
         return [
             attach_search_highlights(document, definition=definition, query=query)
-            for document in matches
+            for _score, _tie_break, document in ranked_matches
         ]
 
     effective_vector_limit = min(query.limit, effective_limit) if effective_limit is not None else query.limit

@@ -620,7 +620,19 @@ def sort_search_documents_for_query(
             )
         ranked_compound.sort(key=lambda item: item[:2])
         return [document for _score, _tie_break, document in ranked_compound]
-    return [document for document, _definition, _materialized in documents]
+    ranked_generic: list[tuple[float, str, Document]] = []
+    for document, definition, materialized in documents:
+        matched, score, _near_distance = search_clause_ranking(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+        if not matched:
+            continue
+        ranked_generic.append((-score, _document_tie_break_key(document), document))
+    ranked_generic.sort(key=lambda item: item[:2])
+    return [document for _score, _tie_break, document in ranked_generic]
 
 
 def rank_compound_candidate_storage_keys_from_entries(
