@@ -128,6 +128,7 @@ class SearchAutocompleteQuery:
     token_order: str = "any"
     fuzzy_max_edits: int = 0
     fuzzy_prefix_length: int = 0
+    fuzzy_max_expansions: int = 0
     stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
@@ -929,26 +930,41 @@ def matches_search_autocomplete_query(
 ) -> bool:
     prepared = materialized or materialize_search_document(document, definition)
     query_terms = tuple(term.lower() for term in query.terms)
-    token_sets = _materialized_token_sets(prepared, query.paths)
     token_counters = _materialized_token_counters(prepared, query.paths)
-    if not token_sets:
+    if not token_counters:
         return False
-    for index, token_set in enumerate(token_sets):
+    for token_counter in token_counters:
+        ordered_tokens = tuple(token_counter)
+        if not ordered_tokens:
+            continue
         if query.token_order == "sequential":
-            token_counter = token_counters[index] if index < len(token_counters) else Counter()
+            allowed_tokens_by_term = {
+                term: frozenset(
+                    _autocomplete_matching_tokens(
+                        ordered_tokens,
+                        term,
+                        query=query,
+                    )
+                )
+                for term in query_terms
+            }
+            if any(not matches for matches in allowed_tokens_by_term.values()):
+                continue
             if _token_sequence_matches(
-                tuple(token_counter),
+                ordered_tokens,
                 query_terms,
-                matcher=lambda token, term: _autocomplete_token_matches(
-                    token,
-                    term,
-                    query=query,
-                ),
+                matcher=lambda token, term: token in allowed_tokens_by_term[term],
             ):
                 return True
             continue
         if all(
-            any(_autocomplete_token_matches(token, term, query=query) for token in token_set)
+            bool(
+                _autocomplete_matching_tokens(
+                    ordered_tokens,
+                    term,
+                    query=query,
+                )
+            )
             for term in query_terms
         ):
             return True
@@ -1031,6 +1047,26 @@ def _autocomplete_token_matches(
         _bounded_levenshtein_distance(term, prefix_candidate, max_distance=max_edits),
     )
     return distance <= max_edits
+
+
+def _autocomplete_matching_tokens(
+    tokens: tuple[str, ...],
+    term: str,
+    *,
+    query: SearchAutocompleteQuery,
+) -> tuple[str, ...]:
+    matches = tuple(
+        token
+        for token in tokens
+        if _autocomplete_token_matches(token, term, query=query)
+    )
+    if (
+        query.fuzzy_max_edits > 0
+        and query.fuzzy_max_expansions > 0
+        and len(matches) > query.fuzzy_max_expansions
+    ):
+        return matches[: query.fuzzy_max_expansions]
+    return matches
 
 
 def _bounded_levenshtein_distance(a: str, b: str, *, max_distance: int) -> int:
@@ -1269,26 +1305,36 @@ def search_clause_ranking(
     if isinstance(query, SearchAutocompleteQuery):
         score = 0.0
         for token_counter in _materialized_token_counters(prepared, query.paths):
+            ordered_tokens = tuple(token_counter)
+            if not ordered_tokens:
+                continue
             if query.token_order == "sequential":
-                ordered_tokens = tuple(token_counter)
+                allowed_tokens_by_term = {
+                    term.lower(): frozenset(
+                        _autocomplete_matching_tokens(
+                            ordered_tokens,
+                            term.lower(),
+                            query=query,
+                        )
+                    )
+                    for term in query.terms
+                }
+                if any(not matches for matches in allowed_tokens_by_term.values()):
+                    continue
                 if _token_sequence_matches(
                     ordered_tokens,
                     tuple(term.lower() for term in query.terms),
-                    matcher=lambda token, term: _autocomplete_token_matches(
-                        token,
-                        term,
-                        query=query,
-                    ),
+                    matcher=lambda token, term: token in allowed_tokens_by_term[term],
                 ):
                     score = max(score, float(len(query.terms)))
                 continue
             local = 0.0
             for term in query.terms:
-                matches = [
-                    token
-                    for token in token_counter
-                    if _autocomplete_token_matches(token, term.lower(), query=query)
-                ]
+                matches = _autocomplete_matching_tokens(
+                    ordered_tokens,
+                    term.lower(),
+                    query=query,
+                )
                 if not matches:
                     local = 0.0
                     break
@@ -1703,7 +1749,7 @@ def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) ->
     token_order = clause_spec.get("tokenOrder", "any")
     if token_order not in {"any", "sequential"}:
         raise OperationFailure("$search.autocomplete.tokenOrder must be 'any' or 'sequential'")
-    fuzzy_max_edits, fuzzy_prefix_length = _compile_search_autocomplete_fuzzy_spec(
+    fuzzy_max_edits, fuzzy_prefix_length, fuzzy_max_expansions = _compile_search_autocomplete_fuzzy_spec(
         clause_spec.get("fuzzy")
     )
     return SearchAutocompleteQuery(
@@ -1714,18 +1760,19 @@ def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) ->
         token_order=token_order,
         fuzzy_max_edits=fuzzy_max_edits,
         fuzzy_prefix_length=fuzzy_prefix_length,
+        fuzzy_max_expansions=fuzzy_max_expansions,
     )
 
 
-def _compile_search_autocomplete_fuzzy_spec(spec: object) -> tuple[int, int]:
+def _compile_search_autocomplete_fuzzy_spec(spec: object) -> tuple[int, int, int]:
     if spec is None:
-        return 0, 0
+        return 0, 0, 0
     if not isinstance(spec, dict):
         raise OperationFailure("$search.autocomplete.fuzzy must be a document specification")
-    unsupported_options = sorted(set(spec) - {"maxEdits", "prefixLength"})
+    unsupported_options = sorted(set(spec) - {"maxEdits", "prefixLength", "maxExpansions"})
     if unsupported_options:
         raise OperationFailure(
-            "$search.autocomplete.fuzzy only supports maxEdits and prefixLength; unsupported keys: "
+            "$search.autocomplete.fuzzy only supports maxEdits, prefixLength and maxExpansions; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     max_edits = spec.get("maxEdits", 1)
@@ -1742,7 +1789,16 @@ def _compile_search_autocomplete_fuzzy_spec(spec: object) -> tuple[int, int]:
         or prefix_length < 0
     ):
         raise OperationFailure("$search.autocomplete.fuzzy.prefixLength must be a non-negative integer")
-    return max_edits, prefix_length
+    max_expansions = spec.get("maxExpansions", 50)
+    if (
+        not isinstance(max_expansions, int)
+        or isinstance(max_expansions, bool)
+        or max_expansions <= 0
+    ):
+        raise OperationFailure(
+            "$search.autocomplete.fuzzy.maxExpansions must be a positive integer"
+        )
+    return max_edits, prefix_length, max_expansions
 
 
 def _compile_search_wildcard_clause(index_name: str, clause_spec: object) -> SearchWildcardQuery:
@@ -2129,6 +2185,7 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
             query_semantics["fuzzy"] = {
                 "maxEdits": query.fuzzy_max_edits,
                 "prefixLength": query.fuzzy_prefix_length,
+                "maxExpansions": query.fuzzy_max_expansions,
             }
     elif isinstance(query, SearchWildcardQuery):
         query_semantics = {

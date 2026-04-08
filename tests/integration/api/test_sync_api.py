@@ -320,7 +320,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     ).explain()
                     self.assertEqual(
                         fuzzy_autocomplete_explanation["engine_plan"]["details"]["querySemantics"]["fuzzy"],
-                        {"maxEdits": 2, "prefixLength": 1},
+                        {"maxEdits": 2, "prefixLength": 1, "maxExpansions": 50},
                     )
                     if engine_name == "sqlite":
                         self.assertEqual(

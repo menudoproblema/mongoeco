@@ -586,6 +586,22 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(fuzzy_autocomplete.fuzzy_max_edits, 2)
         self.assertEqual(fuzzy_autocomplete.fuzzy_prefix_length, 1)
+        self.assertEqual(fuzzy_autocomplete.fuzzy_max_expansions, 50)
+        bounded_fuzzy_autocomplete = compile_search_autocomplete_query(
+            {
+                "index": "by_text",
+                "autocomplete": {
+                    "query": "ada",
+                    "path": "title",
+                    "fuzzy": {
+                        "maxEdits": 2,
+                        "prefixLength": 1,
+                        "maxExpansions": 3,
+                    },
+                },
+            }
+        )
+        self.assertEqual(bounded_fuzzy_autocomplete.fuzzy_max_expansions, 3)
         with self.assertRaisesRegex(OperationFailure, "at least one searchable token"):
             compile_search_autocomplete_query(
                 {
@@ -720,6 +736,43 @@ class SearchCoreTests(unittest.TestCase):
                 query=fuzzy_query,
             )
         )
+
+    def test_search_clause_ranking_applies_fuzzy_max_expansions(self) -> None:
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+        document = {"title": "algorithm algorithm algorithn"}
+        unlimited_query = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="algoritm",
+            terms=("algoritm",),
+            paths=("title",),
+            fuzzy_max_edits=2,
+            fuzzy_prefix_length=0,
+            fuzzy_max_expansions=50,
+        )
+        limited_query = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="algoritm",
+            terms=("algoritm",),
+            paths=("title",),
+            fuzzy_max_edits=2,
+            fuzzy_prefix_length=0,
+            fuzzy_max_expansions=1,
+        )
+
+        unlimited_matched, unlimited_score, _ = search_module.search_clause_ranking(
+            document,
+            definition=definition,
+            query=unlimited_query,
+        )
+        limited_matched, limited_score, _ = search_module.search_clause_ranking(
+            document,
+            definition=definition,
+            query=limited_query,
+        )
+
+        self.assertTrue(unlimited_matched)
+        self.assertTrue(limited_matched)
+        self.assertGreater(unlimited_score, limited_score)
 
     def test_iter_searchable_text_entries_respects_mapping(self) -> None:
         definition = SearchIndexDefinition(
@@ -3674,9 +3727,17 @@ class SearchCoreTests(unittest.TestCase):
                 compile_search_autocomplete_query,
                 {
                     "index": "by_text",
+                    "autocomplete": {"query": "Ada", "path": "title", "fuzzy": {"maxExpansions": 0}},
+                },
+                "fuzzy.maxExpansions",
+            ),
+            (
+                compile_search_autocomplete_query,
+                {
+                    "index": "by_text",
                     "autocomplete": {"query": "Ada", "path": "title", "fuzzy": {"extra": 1}},
                 },
-                "only supports maxEdits and prefixLength",
+                "only supports maxEdits, prefixLength and maxExpansions",
             ),
             (
                 compile_search_wildcard_query,
@@ -3779,6 +3840,38 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertTrue(matched)
         self.assertEqual(score, 2.0)
+        empty_tokens_rank = search_module.search_clause_ranking(
+            document,
+            definition=definition,
+            query=sequential,
+            materialized=search_module.MaterializedSearchDocument(
+                entries=(("body", "ada"),),
+                searchable_paths=frozenset({"body"}),
+                lowered_values=("ada",),
+                lowered_values_by_path={"body": ("ada",)},
+                token_counter_by_path={"body": search_module.Counter()},
+                token_counter=search_module.Counter(),
+                token_sets_by_path={"body": frozenset()},
+                token_set=frozenset(),
+            ),
+        )
+        self.assertEqual(empty_tokens_rank, (False, 0.0, None))
+        missing_term_rank = search_module.search_clause_ranking(
+            document,
+            definition=definition,
+            query=sequential,
+            materialized=search_module.MaterializedSearchDocument(
+                entries=(("body", "ada"),),
+                searchable_paths=frozenset({"body"}),
+                lowered_values=("ada",),
+                lowered_values_by_path={"body": ("ada",)},
+                token_counter_by_path={"body": search_module.Counter({"ada": 1})},
+                token_counter=search_module.Counter({"ada": 1}),
+                token_sets_by_path={"body": frozenset({"ada"})},
+                token_set=frozenset({"ada"}),
+            ),
+        )
+        self.assertEqual(missing_term_rank, (False, 0.0, None))
 
         non_compound = search_module._highlightable_textual_clauses(
             SearchNearQuery(index_name="by_text", path="count", origin=2, pivot=1.0, origin_kind="number")
