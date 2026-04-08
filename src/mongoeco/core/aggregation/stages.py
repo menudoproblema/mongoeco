@@ -567,6 +567,23 @@ def _stage_current_op(
     ]
 
 
+def _stage_plan_cache_stats(
+    _documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    if context.stage_index != 0:
+        raise OperationFailure("$planCacheStats is only valid as the first pipeline stage")
+    if context.plan_cache_stats_resolver is None:
+        raise OperationFailure("$planCacheStats requires a plan cache stats resolver in the local runtime")
+    if not isinstance(spec, dict):
+        raise OperationFailure("$planCacheStats requires a document specification")
+    if spec:
+        raise OperationFailure("$planCacheStats local runtime supports only an empty document")
+
+    return [deepcopy(document) for document in context.plan_cache_stats_resolver()]
+
+
 def _evaluate_redact_action(
     document: Document,
     spec: object,
@@ -776,6 +793,7 @@ AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {
     "$collStats": AggregationStageSpec(_stage_coll_stats, "materializing"),
     "$indexStats": AggregationStageSpec(_stage_index_stats, "materializing"),
     "$currentOp": AggregationStageSpec(_stage_current_op, "materializing"),
+    "$planCacheStats": AggregationStageSpec(_stage_plan_cache_stats, "materializing"),
 }
 
 AGGREGATION_STAGE_HANDLERS: dict[str, AggregationStageHandler] = {
@@ -829,6 +847,7 @@ def apply_pipeline(
     collection_stats_resolver=None,
     index_stats_resolver=None,
     current_op_resolver=None,
+    plan_cache_stats_resolver=None,
     variables: dict[str, Any] | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
@@ -874,6 +893,7 @@ def apply_pipeline(
                 collection_stats_resolver=collection_stats_resolver,
                 index_stats_resolver=index_stats_resolver,
                 current_op_resolver=current_op_resolver,
+                plan_cache_stats_resolver=plan_cache_stats_resolver,
                 variables=variables,
                 dialect=dialect,
                 collation=collation,

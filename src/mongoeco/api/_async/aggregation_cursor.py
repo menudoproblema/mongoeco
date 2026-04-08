@@ -504,6 +504,12 @@ class AsyncAggregationCursor:
             for stage in pipeline
         )
 
+    def _collect_plan_cache_stats_requested(self, pipeline: Pipeline) -> bool:
+        return any(
+            isinstance(stage, dict) and len(stage) == 1 and "$planCacheStats" in stage
+            for stage in pipeline
+        )
+
     async def _load_collstats_snapshots(self, pipeline: Pipeline) -> dict[int, Document]:
         snapshots: dict[int, Document] = {}
         scales = self._collect_collstats_scales(pipeline)
@@ -544,6 +550,29 @@ class AsyncAggregationCursor:
                 }
             )
         return snapshot
+
+    def _load_plan_cache_stats_snapshot(self, pipeline: Pipeline) -> list[Document]:
+        if not self._collect_plan_cache_stats_requested(pipeline):
+            return []
+        runtime_diagnostics = getattr(self._collection._engine, "_runtime_diagnostics_info", None)
+        diagnostics = runtime_diagnostics() if callable(runtime_diagnostics) else {}
+        if not isinstance(diagnostics, dict):
+            diagnostics = {}
+        captured_at = datetime.datetime.now(datetime.UTC)
+        return [
+            {
+                "ns": f"{self._collection._db_name}.{self._collection._collection_name}",
+                "isActive": True,
+                "isPinned": False,
+                "works": 0,
+                "timeOfCreation": captured_at,
+                "createdFromQuery": {
+                    "stage": "$planCacheStats",
+                    "runtime": "mongoeco-local",
+                },
+                "cachedPlan": deepcopy(diagnostics),
+            }
+        ]
 
     def _scan_collection_with_operation(
         self,
@@ -632,6 +661,7 @@ class AsyncAggregationCursor:
                         "$collStats" in remaining_pipeline[0]
                         or "$indexStats" in remaining_pipeline[0]
                         or "$currentOp" in remaining_pipeline[0]
+                        or "$planCacheStats" in remaining_pipeline[0]
                     )
                 ):
                     documents = []
@@ -643,6 +673,7 @@ class AsyncAggregationCursor:
             collstats_snapshots = await self._load_collstats_snapshots(remaining_pipeline)
             index_stats_snapshot = await self._load_index_stats_snapshot(remaining_pipeline)
             current_op_requested = self._collect_current_op_requested(remaining_pipeline)
+            plan_cache_stats_snapshot = self._load_plan_cache_stats_snapshot(remaining_pipeline)
             snapshot_active_operations = getattr(self._collection._engine, "_snapshot_active_operations", None)
             current_op_snapshot = (
                 snapshot_active_operations()
@@ -668,6 +699,9 @@ class AsyncAggregationCursor:
             current_op_resolver = None
             if current_op_requested:
                 current_op_resolver = lambda: deepcopy(current_op_snapshot)
+            plan_cache_stats_resolver = None
+            if plan_cache_stats_snapshot:
+                plan_cache_stats_resolver = lambda: deepcopy(plan_cache_stats_snapshot)
             result = apply_pipeline(
                 documents,
                 remaining_pipeline,
@@ -675,6 +709,7 @@ class AsyncAggregationCursor:
                 collection_stats_resolver=collection_stats_resolver,
                 index_stats_resolver=index_stats_resolver,
                 current_op_resolver=current_op_resolver,
+                plan_cache_stats_resolver=plan_cache_stats_resolver,
                 variables=self._let,
                 dialect=dialect,
                 collation=self._collation,

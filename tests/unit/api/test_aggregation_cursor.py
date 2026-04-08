@@ -1008,6 +1008,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(cursor._collect_index_stats_requested([{"$project": {"_id": 1}}]))
         self.assertTrue(cursor._collect_current_op_requested([{"$currentOp": {}}]))
         self.assertFalse(cursor._collect_current_op_requested([{"$project": {"_id": 1}}]))
+        self.assertTrue(cursor._collect_plan_cache_stats_requested([{"$planCacheStats": {}}]))
+        self.assertFalse(cursor._collect_plan_cache_stats_requested([{"$project": {"_id": 1}}]))
 
         search_cursor = AsyncAggregationCursor(collection, [{"$search": {"text": {"query": "Ada", "path": "name"}}}], batch_size=2)
         with patch.object(search_cursor, "_materialize", return_value=[{"_id": "a"}]) as materialize:
@@ -1090,6 +1092,31 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         result = await cursor.to_list()
 
         self.assertEqual(result, [{"opid": "op-1", "command": "find", "ns": "db.coll"}])
+
+    async def test_aggregation_cursor_supports_plan_cache_stats_stage_with_runtime_diagnostics(self):
+        collection = _FakeCollection([])
+        collection._engine._runtime_diagnostics_info = lambda: {  # type: ignore[attr-defined]
+            "planner": {"engine": "python"},
+            "caches": {"trackedCollections": 1},
+        }
+
+        cursor = AsyncAggregationCursor(collection, [{"$planCacheStats": {}}], batch_size=2)
+        result = await cursor.to_list()
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["ns"], "db.coll")
+        self.assertEqual(result[0]["createdFromQuery"]["stage"], "$planCacheStats")
+        self.assertEqual(result[0]["cachedPlan"]["planner"]["engine"], "python")
+
+    async def test_aggregation_cursor_plan_cache_stats_ignores_non_dict_runtime_diagnostics(self):
+        collection = _FakeCollection([])
+        collection._engine._runtime_diagnostics_info = lambda: ["unexpected"]  # type: ignore[attr-defined]
+
+        cursor = AsyncAggregationCursor(collection, [{"$planCacheStats": {}}], batch_size=2)
+        result = await cursor.to_list()
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["cachedPlan"], {})
 
     async def test_aggregation_cursor_additional_stream_and_merge_branches(self):
         database = AsyncDatabase(MemoryEngine(), "db")
