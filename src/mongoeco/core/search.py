@@ -34,9 +34,11 @@ VECTOR_SEARCH_SCORE_FIELD = "__mongoeco_vectorSearchScore__"
 SEARCH_RESULT_METADATA_FIELDS = frozenset({TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD})
 _TEXT_TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 _SUPPORTED_REGEX_FLAGS = {
+    "a": re.ASCII,
     "i": re.IGNORECASE,
     "m": re.MULTILINE,
     "s": re.DOTALL,
+    "u": re.UNICODE,
     "x": re.VERBOSE,
 }
 _SUPPORTED_REGEX_FLAGS_LABEL = ", ".join(sorted(_SUPPORTED_REGEX_FLAGS))
@@ -1541,7 +1543,7 @@ def _compile_search_regex_clause(index_name: str, clause_spec: object) -> Search
         )
     try:
         re.compile(raw_query, _regex_compile_flags(flags))
-    except re.error as exc:
+    except (re.error, ValueError) as exc:
         raise OperationFailure(f"$search.regex.query must be a valid regular expression: {exc}") from exc
     return SearchRegexQuery(
         index_name=index_name,

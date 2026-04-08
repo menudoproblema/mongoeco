@@ -366,7 +366,8 @@ class VirtualIndexTests(unittest.TestCase):
         self.assertFalse(_same_field_regex_implies(InCondition("name", (1,)), regex))
         self.assertFalse(_same_field_regex_implies(InCondition("name", ()), regex))
         self.assertFalse(_same_field_regex_implies(MatchAll(), regex))
-        self.assertIsNotNone(_compile_regex_condition(RegexCondition("body", "^ada$", "imsx")).search("Ada\n"))
+        self.assertIsNotNone(_compile_regex_condition(RegexCondition("body", "^ada$", "aimsx")).search("Ada\n"))
+        self.assertIsNotNone(_compile_regex_condition(RegexCondition("body", "^ada$", "iumsx")).search("Ada\n"))
 
     def test_ordering_and_bound_helpers_cover_edge_comparisons(self):
         self.assertTrue(

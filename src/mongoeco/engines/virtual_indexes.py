@@ -338,6 +338,10 @@ def _compile_regex_condition(condition: RegexCondition) -> re.Pattern[str]:
             flags |= re.MULTILINE
         elif option == "s":
             flags |= re.DOTALL
+        elif option == "a":
+            flags |= re.ASCII
+        elif option == "u":
+            flags |= re.UNICODE
         elif option == "x":
             flags |= re.VERBOSE
     return re.compile(condition.pattern, flags)

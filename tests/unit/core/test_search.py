@@ -823,12 +823,23 @@ class SearchCoreTests(unittest.TestCase):
                 "regex": {
                     "query": "Ada.*",
                     "path": "title",
-                    "flags": "imsx",
+                    "flags": "aimsx",
                 },
             }
         )
 
-        self.assertEqual(query.flags, "imsx")
+        self.assertEqual(query.flags, "aimsx")
+        query = compile_search_regex_query(
+            {
+                "index": "by_text",
+                "regex": {
+                    "query": "Ada.*",
+                    "path": "title",
+                    "flags": "iumsx",
+                },
+            }
+        )
+        self.assertEqual(query.flags, "iumsx")
 
     def test_compile_vector_search_query_and_search_stage_error_paths(self) -> None:
         with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
@@ -3442,6 +3453,14 @@ class SearchCoreTests(unittest.TestCase):
                 compile_search_regex_query,
                 {
                     "index": "by_text",
+                    "regex": {"query": "Ada.*", "path": "title", "flags": "au"},
+                },
+                "valid regular expression",
+            ),
+            (
+                compile_search_regex_query,
+                {
+                    "index": "by_text",
                     "regex": {"query": "Ada.*", "path": "title", "boost": 2},
                 },
                 "only supports query, path and flags",
@@ -3459,6 +3478,10 @@ class SearchCoreTests(unittest.TestCase):
             | search_module.re.MULTILINE
             | search_module.re.DOTALL
             | search_module.re.VERBOSE,
+        )
+        self.assertEqual(
+            search_module._regex_compile_flags("au"),
+            search_module.re.ASCII | search_module.re.UNICODE,
         )
 
         definition = SearchIndexDefinition(
