@@ -379,6 +379,64 @@ class ClientSessionTests(unittest.TestCase):
         self.assertFalse(session.in_transaction)
         self.assertEqual(session.transaction_number, 1)
 
+    def test_session_with_transaction_retries_transient_callback_errors(self):
+        session = ClientSession()
+        calls = {"count": 0}
+
+        def _run(active: ClientSession):
+            del active
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise OperationFailure(
+                    "transient callback failure",
+                    error_labels=("TransientTransactionError",),
+                )
+            return "ok"
+
+        self.assertEqual(session.with_transaction(_run), "ok")
+        self.assertEqual(calls["count"], 2)
+        self.assertFalse(session.in_transaction)
+        self.assertEqual(session.transaction_number, 2)
+
+    def test_session_with_transaction_retries_transient_commit_errors(self):
+        session = ClientSession()
+        callback_calls = {"count": 0}
+        commit_calls = {"count": 0}
+
+        def _on_commit(active: ClientSession) -> None:
+            del active
+            commit_calls["count"] += 1
+            if commit_calls["count"] <= 3:
+                raise OperationFailure(
+                    "transient commit failure",
+                    error_labels=("TransientTransactionError",),
+                )
+
+        def _run(active: ClientSession) -> str:
+            del active
+            callback_calls["count"] += 1
+            return "ok"
+
+        session.register_transaction_hooks("memory", commit=_on_commit)
+        self.assertEqual(session.with_transaction(_run), "ok")
+        self.assertEqual(callback_calls["count"], 2)
+        self.assertEqual(commit_calls["count"], 4)
+        self.assertFalse(session.in_transaction)
+        self.assertEqual(session.transaction_number, 2)
+
+    def test_session_with_transaction_raises_non_transient_commit_errors(self):
+        session = ClientSession()
+
+        def _on_commit(active: ClientSession) -> None:
+            del active
+            raise RuntimeError("commit failed")
+
+        session.register_transaction_hooks("memory", commit=_on_commit)
+        with self.assertRaisesRegex(RuntimeError, "commit failed"):
+            session.with_transaction(lambda active: "ok")
+
+        self.assertFalse(session.in_transaction)
+
     def test_async_session_with_transaction_respects_callback_ending_transaction(self):
         session = ClientSession()
 
@@ -400,6 +458,94 @@ class ClientSessionTests(unittest.TestCase):
 
         self.assertFalse(session.in_transaction)
         self.assertEqual(session.transaction_number, 1)
+
+    def test_async_session_with_transaction_retries_transient_callback_errors(self):
+        session = ClientSession()
+        calls = {"count": 0}
+
+        async def _run(active: ClientSession):
+            del active
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise ConnectionFailure(
+                    "transient async callback failure",
+                    error_labels=("TransientTransactionError",),
+                )
+            return "ok"
+
+        self.assertEqual(asyncio.run(session.with_transaction(_run)), "ok")
+        self.assertEqual(calls["count"], 2)
+        self.assertFalse(session.in_transaction)
+        self.assertEqual(session.transaction_number, 2)
+
+    def test_async_session_with_transaction_retries_transient_errors_then_accepts_sync_callback_result(self):
+        session = ClientSession()
+        callback_calls = {"count": 0}
+
+        async def _first_attempt() -> str:
+            raise ConnectionFailure(
+                "transient async callback failure",
+                error_labels=("TransientTransactionError",),
+            )
+
+        def _run(active: ClientSession):
+            del active
+            callback_calls["count"] += 1
+            if callback_calls["count"] == 1:
+                return _first_attempt()
+            return "ok-sync"
+
+        self.assertEqual(asyncio.run(session.with_transaction(_run)), "ok-sync")
+        self.assertEqual(callback_calls["count"], 2)
+        self.assertFalse(session.in_transaction)
+
+    def test_async_session_with_transaction_retries_transient_commit_errors(self):
+        session = ClientSession()
+        callback_calls = {"count": 0}
+        commit_calls = {"count": 0}
+
+        def _on_commit(active: ClientSession) -> None:
+            del active
+            commit_calls["count"] += 1
+            if commit_calls["count"] <= 3:
+                raise OperationFailure(
+                    "transient async commit failure",
+                    error_labels=("TransientTransactionError",),
+                )
+
+        async def _run(active: ClientSession) -> str:
+            del active
+            callback_calls["count"] += 1
+            return "ok"
+
+        session.register_transaction_hooks("memory", commit=_on_commit)
+        self.assertEqual(asyncio.run(session.with_transaction(_run)), "ok")
+        self.assertEqual(callback_calls["count"], 2)
+        self.assertEqual(commit_calls["count"], 4)
+        self.assertFalse(session.in_transaction)
+        self.assertEqual(session.transaction_number, 2)
+
+    def test_async_session_with_transaction_raises_non_transient_commit_errors(self):
+        session = ClientSession()
+
+        def _on_commit(active: ClientSession) -> None:
+            del active
+            raise RuntimeError("async commit failed")
+
+        async def _run(active: ClientSession) -> str:
+            del active
+            return "ok"
+
+        session.register_transaction_hooks("memory", commit=_on_commit)
+        with self.assertRaisesRegex(RuntimeError, "async commit failed"):
+            asyncio.run(session.with_transaction(_run))
+
+        self.assertFalse(session.in_transaction)
+
+    def test_abort_after_transaction_error_returns_when_transaction_is_not_active(self):
+        session = ClientSession()
+        session._abort_after_transaction_error()
+        self.assertFalse(session.in_transaction)
 
     def test_session_close_aborts_active_transaction(self):
         session = ClientSession()

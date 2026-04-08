@@ -267,6 +267,30 @@ class ClientSession:
                 if attempts >= _TRANSACTION_RETRY_ATTEMPTS or not self._should_retry_transaction_phase(phase, exc):
                     raise
 
+    @classmethod
+    def _should_retry_with_transaction(cls, exc: Exception) -> bool:
+        return _TRANSIENT_TRANSACTION_ERROR in cls._error_labels(exc)
+
+    def _start_transaction_for_with_transaction(
+        self,
+        *,
+        read_concern: ReadConcern | None,
+        write_concern: WriteConcern | None,
+        read_preference: ReadPreference | None,
+        max_commit_time_ms: int | None,
+    ) -> None:
+        self.start_transaction(
+            read_concern=read_concern,
+            write_concern=write_concern,
+            read_preference=read_preference,
+            max_commit_time_ms=max_commit_time_ms,
+        )
+
+    def _abort_after_transaction_error(self) -> None:
+        if not self.in_transaction:
+            return
+        self.abort_transaction()
+
     def start_transaction(
         self,
         *,
@@ -353,34 +377,113 @@ class ClientSession:
         **kwargs,
     ) -> object:
         self.ensure_active()
-        self.start_transaction(
-            read_concern=read_concern,
-            write_concern=write_concern,
-            read_preference=read_preference,
-            max_commit_time_ms=max_commit_time_ms,
-        )
-        try:
-            result = callback(self, *args, **kwargs)
-        except Exception:
-            self.abort_transaction()
-            raise
-        if inspect.isawaitable(result):
-            return self._wrap_async_transaction(result)
-        if not self.in_transaction:
-            return result
-        self.commit_transaction()
-        return result
+        attempts = 0
+        while True:
+            attempts += 1
+            self._start_transaction_for_with_transaction(
+                read_concern=read_concern,
+                write_concern=write_concern,
+                read_preference=read_preference,
+                max_commit_time_ms=max_commit_time_ms,
+            )
+            try:
+                result = callback(self, *args, **kwargs)
+            except Exception as exc:
+                self._abort_after_transaction_error()
+                if (
+                    attempts < _TRANSACTION_RETRY_ATTEMPTS
+                    and self._should_retry_with_transaction(exc)
+                ):
+                    continue
+                raise
+            if inspect.isawaitable(result):
+                return self._with_transaction_async(
+                    callback,
+                    args=args,
+                    kwargs=kwargs,
+                    first_result=result,
+                    attempts=attempts,
+                    read_concern=read_concern,
+                    write_concern=write_concern,
+                    read_preference=read_preference,
+                    max_commit_time_ms=max_commit_time_ms,
+                )
+            try:
+                if self.in_transaction:
+                    self.commit_transaction()
+                return result
+            except Exception as exc:
+                self._abort_after_transaction_error()
+                if (
+                    attempts < _TRANSACTION_RETRY_ATTEMPTS
+                    and self._should_retry_with_transaction(exc)
+                ):
+                    continue
+                raise
 
-    async def _wrap_async_transaction(self, awaitable: Awaitable[object]) -> object:
-        try:
-            result = await awaitable
-        except Exception:
-            self.abort_transaction()
-            raise
-        if not self.in_transaction:
-            return result
-        self.commit_transaction()
-        return result
+    async def _with_transaction_async(
+        self,
+        callback: Callable[["ClientSession"], object],
+        *,
+        args: tuple[object, ...],
+        kwargs: dict[str, object],
+        first_result: Awaitable[object],
+        attempts: int,
+        read_concern: ReadConcern | None,
+        write_concern: WriteConcern | None,
+        read_preference: ReadPreference | None,
+        max_commit_time_ms: int | None,
+    ) -> object:
+        pending_result: Awaitable[object] | None = first_result
+        while True:
+            try:
+                if pending_result is None:
+                    callback_result = callback(self, *args, **kwargs)
+                    if inspect.isawaitable(callback_result):
+                        pending_result = callback_result
+                    else:
+                        result = callback_result
+                        if self.in_transaction:
+                            self.commit_transaction()
+                        return result
+                result = await pending_result
+                pending_result = None
+            except Exception as exc:
+                self._abort_after_transaction_error()
+                if (
+                    attempts < _TRANSACTION_RETRY_ATTEMPTS
+                    and self._should_retry_with_transaction(exc)
+                ):
+                    attempts += 1
+                    self._start_transaction_for_with_transaction(
+                        read_concern=read_concern,
+                        write_concern=write_concern,
+                        read_preference=read_preference,
+                        max_commit_time_ms=max_commit_time_ms,
+                    )
+                    pending_result = None
+                    continue
+                raise
+            try:
+                if self.in_transaction:
+                    self.commit_transaction()
+                return result
+            except Exception as exc:
+                self._abort_after_transaction_error()
+                if (
+                    attempts < _TRANSACTION_RETRY_ATTEMPTS
+                    and self._should_retry_with_transaction(exc)
+                ):
+                    attempts += 1
+                    self._start_transaction_for_with_transaction(
+                        read_concern=read_concern,
+                        write_concern=write_concern,
+                        read_preference=read_preference,
+                        max_commit_time_ms=max_commit_time_ms,
+                    )
+                    pending_result = None
+                    continue
+                raise
 
     def close(self) -> None:
         if not self.active:
