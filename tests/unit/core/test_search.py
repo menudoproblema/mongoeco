@@ -770,6 +770,61 @@ class SearchCoreTests(unittest.TestCase):
             ),
             {"count": {"lowerBound": 2}},
         )
+        named_facet_query = compile_search_stage(
+            "$searchMeta",
+            {
+                "index": "by_text",
+                "text": {"query": "ada", "path": "title"},
+                "facet": {
+                    "facets": {
+                        "kindFacet": {"path": "kind", "numBuckets": 3},
+                        "titleFacet": {"path": "title", "numBuckets": 2},
+                    }
+                },
+            },
+        )
+        self.assertEqual(
+            search_module.build_search_meta_document(
+                [
+                    {"kind": "note", "title": "Ada"},
+                    {"kind": "note", "title": "Notes"},
+                    {"kind": "reference", "title": "Ada"},
+                ],
+                query=named_facet_query,
+            ),
+            {
+                "facet": {
+                    "facets": {
+                        "kindFacet": {
+                            "path": "kind",
+                            "numBuckets": 3,
+                            "buckets": [
+                                {"value": "note", "count": 2},
+                                {"value": "reference", "count": 1},
+                            ],
+                        },
+                        "titleFacet": {
+                            "path": "title",
+                            "numBuckets": 2,
+                            "buckets": [
+                                {"value": "Ada", "count": 2},
+                                {"value": "Notes", "count": 1},
+                            ],
+                        },
+                    }
+                }
+            },
+        )
+        self.assertEqual(
+            search_query_explain_details(named_facet_query)["stageOptions"]["facet"],  # type: ignore[index]
+            {
+                "facets": {
+                    "kindFacet": {"type": "string", "path": "kind", "numBuckets": 3},
+                    "titleFacet": {"type": "string", "path": "title", "numBuckets": 2},
+                },
+                "previewOnly": True,
+            },
+        )
         with self.assertRaisesRegex(OperationFailure, "\\$searchMeta does not support highlight"):
             search_module.build_search_meta_document(
                 [],
@@ -1803,6 +1858,25 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(query.stage_options.highlight.max_chars, 32)
         self.assertEqual(query.stage_options.facet.path, "kind")
         self.assertEqual(query.stage_options.facet.num_buckets, 4)
+        self.assertEqual(query.stage_options.facet.facets, ())
+
+    def test_compile_search_text_like_query_supports_named_facet_collector(self) -> None:
+        query = compile_search_text_like_query(
+            {
+                "index": "by_text",
+                "text": {"query": "Ada", "path": "body"},
+                "facet": {
+                    "facets": {
+                        "kindFacet": {"type": "string", "path": "kind", "numBuckets": 4},
+                        "titleFacet": {"path": "title"},
+                    }
+                },
+            }
+        )
+        self.assertEqual(
+            query.stage_options.facet.facets,
+            (("kindFacet", "kind", 4), ("titleFacet", "title", 10)),
+        )
 
     def test_compile_search_text_query_supports_wildcard_path(self) -> None:
         query = compile_search_text_query(
@@ -3384,6 +3458,46 @@ class SearchCoreTests(unittest.TestCase):
                 search_module._compile_search_facet_spec,
                 {"path": "kind", "extra": True},
                 "facet only supports path and numBuckets",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"facets": {}, "path": "kind"},
+                "collector mode",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"facets": []},
+                "facets must be a non-empty document",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"facets": {"": {"path": "kind"}}},
+                "facet names must be non-empty strings",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"facets": {"kind": []}},
+                "facet 'kind' must be a document specification",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"facets": {"kind": {"path": "kind", "extra": True}}},
+                "facets only support type, path and numBuckets",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"facets": {"kind": {"type": "number", "path": "kind"}}},
+                "only type='string'",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"facets": {"kind": {"path": ""}}},
+                "facet path must be a non-empty string",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"facets": {"kind": {"path": "kind", "numBuckets": 0}}},
+                "facet numBuckets must be a positive integer",
             ),
             (
                 search_module._compile_search_facet_spec,

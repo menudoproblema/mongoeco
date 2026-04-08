@@ -78,6 +78,7 @@ class SearchHighlightSpec:
 class SearchFacetSpec:
     path: str = ""
     num_buckets: int = 10
+    facets: tuple[tuple[str, str, int], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -622,6 +623,47 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
         return None
     if not isinstance(spec, dict):
         raise OperationFailure("$search.facet requires a document specification")
+    if "facets" in spec:
+        unsupported_options = sorted(set(spec) - {"facets"})
+        if unsupported_options:
+            raise OperationFailure(
+                "$search.facet only supports facets in collector mode; unsupported keys: "
+                + ", ".join(unsupported_options)
+            )
+        raw_facets = spec.get("facets")
+        if not isinstance(raw_facets, dict) or not raw_facets:
+            raise OperationFailure("$search.facet.facets must be a non-empty document")
+        resolved_facets: list[tuple[str, str, int]] = []
+        for facet_name, facet_spec in raw_facets.items():
+            if not isinstance(facet_name, str) or not facet_name:
+                raise OperationFailure("$search.facet facet names must be non-empty strings")
+            if not isinstance(facet_spec, dict):
+                raise OperationFailure(
+                    f"$search.facet facet '{facet_name}' must be a document specification"
+                )
+            facet_unsupported_options = sorted(
+                set(facet_spec) - {"type", "path", "numBuckets"}
+            )
+            if facet_unsupported_options:
+                raise OperationFailure(
+                    "$search.facet facets only support type, path and numBuckets; unsupported keys: "
+                    + ", ".join(facet_unsupported_options)
+                )
+            facet_type = facet_spec.get("type", "string")
+            if facet_type != "string":
+                raise OperationFailure("$search.facet facets currently support only type='string'")
+            facet_path = facet_spec.get("path")
+            if not isinstance(facet_path, str) or not facet_path:
+                raise OperationFailure("$search.facet facet path must be a non-empty string")
+            facet_num_buckets = facet_spec.get("numBuckets", 10)
+            if (
+                not isinstance(facet_num_buckets, int)
+                or isinstance(facet_num_buckets, bool)
+                or facet_num_buckets <= 0
+            ):
+                raise OperationFailure("$search.facet facet numBuckets must be a positive integer")
+            resolved_facets.append((facet_name, facet_path, facet_num_buckets))
+        return SearchFacetSpec(facets=tuple(resolved_facets))
     unsupported_options = sorted(set(spec) - {"path", "numBuckets"})
     if unsupported_options:
         raise OperationFailure(
@@ -1030,11 +1072,20 @@ def _serialized_search_stage_options(query: SearchQuery) -> dict[str, object] | 
             "resultField": SEARCH_HIGHLIGHTS_FIELD,
         }
     if options.facet is not None:
-        serialized["facet"] = {
-            "path": options.facet.path,
-            "numBuckets": options.facet.num_buckets,
-            "previewOnly": True,
-        }
+        if options.facet.facets:
+            serialized["facet"] = {
+                "facets": {
+                    name: {"type": "string", "path": path, "numBuckets": num_buckets}
+                    for name, path, num_buckets in options.facet.facets
+                },
+                "previewOnly": True,
+            }
+        else:
+            serialized["facet"] = {
+                "path": options.facet.path,
+                "numBuckets": options.facet.num_buckets,
+                "previewOnly": True,
+            }
     return serialized or None
 
 
@@ -2360,7 +2411,7 @@ def build_search_stage_option_previews(
             "sample": preview_fragments[:3],
         }
     if options.facet is not None:
-        previews["facetPreview"] = _facet_preview(documents, options.facet)
+        previews["facetPreview"] = _facet_preview_payload(documents, options.facet)
     return previews
 
 
@@ -2382,8 +2433,25 @@ def build_search_meta_document(
         else:
             result["count"] = {"total": count_value}
     if options.facet is not None:
-        result["facet"] = _facet_preview(documents, options.facet)
+        result["facet"] = _facet_preview_payload(documents, options.facet)
     return result
+
+
+def _facet_preview_payload(
+    documents: list[Document],
+    spec: SearchFacetSpec,
+) -> dict[str, object]:
+    if spec.facets:
+        return {
+            "facets": {
+                name: _facet_preview(
+                    documents,
+                    SearchFacetSpec(path=path, num_buckets=num_buckets),
+                )
+                for name, path, num_buckets in spec.facets
+            }
+        }
+    return _facet_preview(documents, spec)
 
 
 def build_search_highlights(

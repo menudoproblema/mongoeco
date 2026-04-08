@@ -462,6 +462,46 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             }
                         ],
                     )
+                    search_meta_facets = collection.aggregate(
+                        [
+                            {
+                                "$searchMeta": {
+                                    "index": "by_text",
+                                    "text": {"query": "ada", "path": ["title", "body"]},
+                                    "facet": {
+                                        "facets": {
+                                            "kindFacet": {"type": "string", "path": "kind", "numBuckets": 5},
+                                            "titleFacet": {"path": "title", "numBuckets": 3},
+                                        }
+                                    },
+                                }
+                            }
+                        ]
+                    ).to_list()
+                    self.assertEqual(
+                        search_meta_facets,
+                        [
+                            {
+                                "facet": {
+                                    "facets": {
+                                        "kindFacet": {
+                                            "path": "kind",
+                                            "numBuckets": 5,
+                                            "buckets": [{"value": "note", "count": 2}],
+                                        },
+                                        "titleFacet": {
+                                            "path": "title",
+                                            "numBuckets": 3,
+                                            "buckets": [
+                                                {"value": "Grace", "count": 1},
+                                                {"value": "Notes", "count": 1},
+                                            ],
+                                        },
+                                    }
+                                }
+                            }
+                        ],
+                    )
                     with self.assertRaisesRegex(OperationFailure, "\\$searchMeta does not support highlight"):
                         collection.aggregate(
                             [
