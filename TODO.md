@@ -78,12 +78,12 @@ Pendientes:
 * revisar packaging y metadatos de distribución;
 * seguir endureciendo documentación pública de uso, alcance y posicionamiento;
 * decidir política de compatibilidad y de versiones;
-* decidir si compensa publicar un adaptador CXP live opcional sobre `mongoeco`
+* decidir si compensa publicar un adaptador CXP live opcional para `mongoeco`
   ahora que:
   * capabilities, operations y profiles ya salen del catálogo canónico
   * existe proyección de telemetría del driver al vocabulario `db.client.*`
-  * y la responsabilidad de negotiation / lifecycle no tiene por qué vivir en
-    el runtime base;
+  * y la responsabilidad de negotiation / lifecycle queda fuera del runtime
+    base y pertenece al runner/orquestador;
 * decidir qué hacer con:
   * `benchmarks/`
   * `mongoeco-rs/`
@@ -116,6 +116,11 @@ Ya no forman parte del backlog pendiente básico:
   * metadata pública por operación en CXP/compat cerrada como contrato
     tooling-grade para `profiles`, `operations` y `telemetry` (sin heurísticas
     implícitas en tooling).
+* frontera CXP establecida de forma explícita:
+  * `mongoeco` no negocia capabilities/profiles ni gestiona lifecycle de
+    provider;
+  * esas responsabilidades pertenecen a runner/orquestador;
+  * cualquier provider CXP live, si existe, vive como adaptador externo.
 
 ## 5. Backends y extensibilidad
 
@@ -127,8 +132,7 @@ Pendientes:
 * estudiar si un backend SQL adicional (`DuckDB`, `PostgreSQL`) compensa ahora que el contrato interno está más limpio;
 * evaluar si el runtime de driver debe seguir creciendo como producto propio o quedarse como soporte local suficiente.
 * valorar si el provider CXP live debe vivir:
-  * dentro de `mongoeco` como capa opcional muy separada
-  * en un paquete/adaptador externo
+  * en un paquete/adaptador externo (runner/orquestador)
   * o no existir mientras baste con catálogo, profiles y telemetría proyectada
 
 ## 6. Referencia futura: Rust
@@ -167,6 +171,6 @@ Líneas a vigilar:
 * evaluar si `$search` y `vectorSearch` pasan de subset útil a superficie de
   producto claramente diferenciada;
 * decidir si un provider CXP live opcional merece vivir como adaptador externo
-  o como capa separada dentro del proyecto;
+  del runner/orquestador o no existir;
 * reservar una `4.0.0` solo para un cambio real de centro de gravedad, no para
   seguir ampliando subset local dentro de `3.x`.

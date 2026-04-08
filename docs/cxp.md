@@ -15,6 +15,14 @@ It does **not** mean that `mongoeco` ships a built-in provider implementation
 for negotiation or instance resolution. Those concerns belong to the system
 that wants to use `mongoeco` as a resource or provider.
 
+In practice, this boundary is deliberate and stable:
+
+* capability/profile negotiation is owned by the runner or orchestrator layer;
+* provider/session lifecycle is owned by the runner or orchestrator layer;
+* `mongoeco` stays as runtime + canonical contract + telemetry projection;
+* if a live provider wrapper exists, it must be a separate adapter layer, not
+  core `mongoeco`.
+
 ## What `mongoeco` publishes
 
 The package publishes the canonical `database/mongodb` catalog, the aligned
@@ -338,6 +346,8 @@ Current limits of the `mongoeco` side of the integration:
 * `mongoeco` does not ship a live CXP provider wrapper for its clients;
 * it does not negotiate profiles, telemetry streams or capabilities on behalf of external
   frameworks;
+* it does not own orchestration concerns such as provider lifecycle or resource
+  negotiation; those belong to the runner/platform that consumes `mongoeco`;
 * the built-in telemetry projection is limited to canonical command telemetry
   for `read`, `write`, `aggregation`, `search` and `vector_search`;
 * it exposes canonical capabilities, canonical first-level operations,
