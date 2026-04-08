@@ -34,8 +34,8 @@ Use them when you want to answer one of these questions quickly:
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
   Public-facing local hybrid retrieval diagnostics: compare `MemoryEngine`
   versus `SQLiteEngine`, read `scoreBreakdown`, `candidatePlan`,
-  `hybridRetrieval`, projected `vectorSearchScore`, residual filters and exact
-  fallback.
+  `hybridRetrieval`, `pruningSummary`, `prefilterSources`, projected
+  `vectorSearchScore`, residual filters and exact fallback.
 * [cxp_adapter.py](/Users/uve/Proyectos/mongoeco2/examples/cxp_adapter.py)
   Inspect the canonical `database/mongodb` catalog, the reusable CXP profile
   export, the evaluated profile support view, an operation-centric catalog, a

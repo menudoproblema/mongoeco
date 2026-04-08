@@ -125,9 +125,43 @@ These examples show:
   textual/scalar path grouping and embedded-path sections;
 * `compound` with `phrase`, `equals`, `in`, `range`, `near`, `exists` and `regex`;
 * local hybrid retrieval diagnostics such as `scoreBreakdown`,
-  `candidatePlan`, `hybridRetrieval`, `vectorSearchScore`, residual filters
-  and fallback reasons, with clearer parity between `MemoryEngine` and
-  `SQLiteEngine`.
+  `candidatePlan`, `hybridRetrieval`, `pruningSummary`,
+  `prefilterSources`, `vectorSearchScore`, residual filters and fallback
+  reasons, with clearer parity between `MemoryEngine` and `SQLiteEngine`.
+
+## Reading Hybrid Explain Output
+
+When a local `$vectorSearch` is combined with structured filters
+(`filter` inside `$vectorSearch` and/or downstream `$match`), read
+`explain()["engine_plan"]["details"]` in this order:
+
+* `candidatePlan.prefilterSources` tells you where candidate pruning came
+  from:
+  * `queryFilter` means prefilter came from `$vectorSearch.filter`;
+  * `downstreamFilter` means prefilter came from pipeline filter after
+    `$vectorSearch`.
+* Each prefilter source exposes:
+  * `candidateable`: whether local prefiltering was possible;
+  * `exact`: whether prefilter is complete or still needs residual filtering;
+  * `supportedPaths` and `supportedOperators`: which structured subset was
+    pushed down.
+* `pruningSummary` tells you if prefiltering is materially useful:
+  * `prefilterPrunedRatio`: how much corpus was removed before scoring;
+  * `candidateEvaluationRatio`: how many prefiltered candidates were actually
+    evaluated by vector scoring;
+  * `postCandidateFilteredRatio`: how much work still got rejected after
+    candidate prefilter;
+  * `minScoreFilteredRatio`: score-threshold impact (`minScore`) on evaluated
+    candidates.
+
+Practical interpretation:
+
+* good hybrid pushdown usually means high `prefilterPrunedRatio` and low
+  `postCandidateFilteredRatio`;
+* if `postCandidateFilteredRatio` is high, your structured filter is only
+  partially pushable and residual filtering is still expensive;
+* if `prefilterSources` contains only one source, the other filter path is not
+  participating in candidate pruning for that query shape.
 
 ## Limits To Keep In Mind
 

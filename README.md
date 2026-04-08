@@ -358,8 +358,8 @@ Examples worth showing first:
 * [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
   compares `MemoryEngine` and `SQLiteEngine` for local hybrid retrieval,
   including `scoreBreakdown`, `candidatePlan`, `hybridRetrieval`,
-  projected `vectorSearchScore`, residual filtering and exact fallback in
-  local `$vectorSearch`.
+  `pruningSummary`, `prefilterSources`, projected `vectorSearchScore`,
+  residual filtering and exact fallback in local `$vectorSearch`.
 * [cxp_adapter.py](/Users/uve/Proyectos/mongoeco2/examples/cxp_adapter.py)
   demonstrates the canonical CXP `database/mongodb` catalog and the `cxp`
   projection exposed by `aggregate(...).explain()`.
