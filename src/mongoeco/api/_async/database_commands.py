@@ -325,6 +325,7 @@ class _FailCommandInjection:
     error_code: int
     error_message: str
     error_labels: tuple[str, ...]
+    namespace: str | None = None
     close_connection: bool = False
     block_time_ms: int = 0
     remaining_times: int | None = None
@@ -344,6 +345,7 @@ class _CommandFailPointState:
         error_code: int,
         error_message: str,
         error_labels: tuple[str, ...],
+        namespace: str | None = None,
         close_connection: bool = False,
         block_time_ms: int = 0,
     ) -> dict[str, object]:
@@ -361,39 +363,48 @@ class _CommandFailPointState:
                 error_code=error_code,
                 error_message=error_message,
                 error_labels=error_labels,
+                namespace=namespace,
                 close_connection=close_connection,
                 block_time_ms=block_time_ms,
                 remaining_times=times if mode == "times" else None,
             )
+            data: dict[str, object] = {
+                "failCommands": list(fail_commands),
+                "errorCode": error_code,
+                "errorMessage": error_message,
+                "errorLabels": list(error_labels),
+                "closeConnection": close_connection,
+                "blockConnection": block_time_ms > 0,
+                "blockTimeMS": block_time_ms,
+            }
+            if namespace is not None:
+                data["namespace"] = namespace
             return {
                 "ok": 1.0,
                 "failPoint": "failCommand",
                 "mode": {"times": times} if mode == "times" else "alwaysOn",
                 "enabled": True,
-                "data": {
-                    "failCommands": list(fail_commands),
-                    "errorCode": error_code,
-                    "errorMessage": error_message,
-                    "errorLabels": list(error_labels),
-                    "closeConnection": close_connection,
-                    "blockConnection": block_time_ms > 0,
-                    "blockTimeMS": block_time_ms,
-                },
+                "data": data,
             }
 
     def consume_fail_command(
         self,
         command_name: str,
+        *,
+        namespace: str | None = None,
     ) -> _FailCommandInjection | None:
         with self._lock:
             fail_command = self._fail_command
             if fail_command is None or command_name not in fail_command.command_names:
+                return None
+            if fail_command.namespace is not None and namespace != fail_command.namespace:
                 return None
             consumed = _FailCommandInjection(
                 command_names=fail_command.command_names,
                 error_code=fail_command.error_code,
                 error_message=fail_command.error_message,
                 error_labels=fail_command.error_labels,
+                namespace=fail_command.namespace,
                 close_connection=fail_command.close_connection,
                 block_time_ms=fail_command.block_time_ms,
                 remaining_times=fail_command.remaining_times,
@@ -719,6 +730,7 @@ class AsyncDatabaseCommandService:
         error_code: int = _FAIL_COMMAND_DEFAULT_CODE
         error_message: str = _FAIL_COMMAND_DEFAULT_MESSAGE
         error_labels: tuple[str, ...] = ()
+        namespace: str | None = None
         close_connection: bool = False
         block_time_ms: int = 0
 
@@ -795,7 +807,8 @@ class AsyncDatabaseCommandService:
         data_spec: object | None,
         *,
         required: bool,
-    ) -> tuple[tuple[str, ...], int, str, tuple[str, ...], bool, int]:
+        db_name: str,
+    ) -> tuple[tuple[str, ...], int, str, tuple[str, ...], str | None, bool, int]:
         if data_spec is None:
             if required:
                 raise TypeError(
@@ -806,6 +819,7 @@ class AsyncDatabaseCommandService:
                 _FAIL_COMMAND_DEFAULT_CODE,
                 _FAIL_COMMAND_DEFAULT_MESSAGE,
                 (),
+                None,
                 False,
                 0,
             )
@@ -844,6 +858,12 @@ class AsyncDatabaseCommandService:
         ):
             raise TypeError("configureFailPoint data.errorLabels must be a list of strings")
         error_labels = tuple(labels_spec)
+        namespace = data_spec.get("namespace")
+        if namespace is not None:
+            if not isinstance(namespace, str) or not namespace:
+                raise TypeError("configureFailPoint data.namespace must be a non-empty string")
+            if "." not in namespace:
+                namespace = f"{db_name}.{namespace}"
         close_connection = data_spec.get("closeConnection", False)
         if not isinstance(close_connection, bool):
             raise TypeError("configureFailPoint data.closeConnection must be a bool")
@@ -871,6 +891,7 @@ class AsyncDatabaseCommandService:
             error_code,
             error_message,
             error_labels,
+            namespace,
             close_connection,
             block_time_ms,
         )
@@ -984,12 +1005,14 @@ class AsyncDatabaseCommandService:
                 error_code,
                 error_message,
                 error_labels,
+                namespace,
                 close_connection,
                 block_time_ms,
             ) = (
                 self._normalize_fail_command_data(
                     spec.get("data"),
                     required=mode != "off",
+                    db_name=self._admin._db_name,
                 )
             )
             return self.ConfigureFailPointCommand(
@@ -1002,6 +1025,7 @@ class AsyncDatabaseCommandService:
                 error_code=error_code,
                 error_message=error_message,
                 error_labels=error_labels,
+                namespace=namespace,
                 close_connection=close_connection,
                 block_time_ms=block_time_ms,
             )
@@ -1169,6 +1193,7 @@ class AsyncDatabaseCommandService:
                 error_code=command.error_code,
                 error_message=command.error_message,
                 error_labels=command.error_labels,
+                namespace=command.namespace,
                 close_connection=command.close_connection,
                 block_time_ms=command.block_time_ms,
             )  # type: ignore[return-value]
@@ -1315,9 +1340,13 @@ class AsyncDatabaseCommandService:
         )
         started_at = time.perf_counter_ns()
         should_track = parsed.command_name not in {"currentOp", "killOp"}
+        command_namespace = self._command_namespace(parsed)
         try:
             if parsed.command_name != "configureFailPoint":
-                fail_command = self._failpoints.consume_fail_command(parsed.command_name)
+                fail_command = self._failpoints.consume_fail_command(
+                    parsed.command_name,
+                    namespace=command_namespace,
+                )
                 if fail_command is not None:
                     if fail_command.block_time_ms > 0:
                         await asyncio.sleep(float(fail_command.block_time_ms) / 1000.0)
@@ -1381,3 +1410,14 @@ class AsyncDatabaseCommandService:
             session=session,
             **kwargs,
         )
+
+    @staticmethod
+    def _command_namespace(
+        command: AdminCommand[object],
+    ) -> str | None:
+        target = command.spec.get(command.command_name)
+        if not isinstance(target, str) or not target:
+            return None
+        if "." in target:
+            return target
+        return f"{command.db_name}.{target}"

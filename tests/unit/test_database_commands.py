@@ -423,6 +423,29 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
         )
         self.assertIsInstance(parsed_with_null_labels, service.ConfigureFailPointCommand)
         self.assertEqual(parsed_with_null_labels.error_labels, ())
+        parsed_with_namespace = service.parse_raw_command(
+            {
+                "configureFailPoint": "failCommand",
+                "mode": "alwaysOn",
+                "data": {
+                    "failCommands": ["count"],
+                    "namespace": "users",
+                },
+            }
+        )
+        self.assertIsInstance(parsed_with_namespace, service.ConfigureFailPointCommand)
+        self.assertEqual(parsed_with_namespace.namespace, "db.users")
+        with self.assertRaisesRegex(TypeError, "namespace must be a non-empty string"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "namespace": 1,
+                    },
+                }
+            )
         with self.assertRaisesRegex(TypeError, "closeConnection must be a bool"):
             service.parse_raw_command(
                 {
@@ -535,6 +558,21 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
                 await service.execute_document({"count": "users"})
             successful = await service.execute_document({"count": "users"})
             self.assertEqual(successful["n"], 1)
+
+            namespaced = await service.execute_document(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "namespace": "users",
+                    },
+                }
+            )
+            self.assertEqual(namespaced["data"]["namespace"], "db.users")
+            self.assertEqual((await service.execute_document({"count": "other"}))["n"], 1)
+            with self.assertRaisesRegex(OperationFailure, "failpoint"):
+                await service.execute_document({"count": "users"})
 
             await service.execute_document(
                 {
