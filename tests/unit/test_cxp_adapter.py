@@ -345,6 +345,30 @@ class CxpAlignmentTests(unittest.TestCase):
             },
         )
         self.assertEqual(
+            exported['capabilities']['search']['metadata']['stageOptions']['facet'],
+            {
+                'supportsPath': True,
+                'supportsNumBuckets': True,
+                'supportsType': True,
+                'supportedTypes': ['string', 'number', 'date'],
+                'supportsCollectorOperator': True,
+                'collectorOperatorSupports': [
+                    'text',
+                    'phrase',
+                    'autocomplete',
+                    'wildcard',
+                    'regex',
+                    'exists',
+                    'in',
+                    'equals',
+                    'range',
+                    'near',
+                    'compound',
+                ],
+                'previewOnly': True,
+            },
+        )
+        self.assertEqual(
             exported['capabilities']['collation']['metadata'],
             {
                 'backend': {

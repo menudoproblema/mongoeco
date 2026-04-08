@@ -1504,12 +1504,26 @@
               "lowerBound"
             ],
             "facet": {
+              "collectorOperatorSupports": [
+                "text",
+                "phrase",
+                "autocomplete",
+                "wildcard",
+                "regex",
+                "exists",
+                "in",
+                "equals",
+                "range",
+                "near",
+                "compound"
+              ],
               "previewOnly": true,
               "supportedTypes": [
                 "string",
                 "number",
                 "date"
               ],
+              "supportsCollectorOperator": true,
               "supportsNumBuckets": true,
               "supportsPath": true,
               "supportsType": true
@@ -12075,12 +12089,26 @@
           "lowerBound"
         ],
         "facet": {
+          "collectorOperatorSupports": [
+            "text",
+            "phrase",
+            "autocomplete",
+            "wildcard",
+            "regex",
+            "exists",
+            "in",
+            "equals",
+            "range",
+            "near",
+            "compound"
+          ],
           "previewOnly": true,
           "supportedTypes": [
             "string",
             "number",
             "date"
           ],
+          "supportsCollectorOperator": true,
           "supportsNumBuckets": true,
           "supportsPath": true,
           "supportsType": true
