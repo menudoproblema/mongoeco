@@ -6419,6 +6419,40 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(explain["details"]["textQuery"]["defaultLanguage"], "english")
                     self.assertEqual(explain["details"]["textQuery"]["languageOverride"], "lang")
 
+    async def test_collection_text_query_supports_phrase_and_exclusion_semantics(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.analytics.text_semantics
+                    await collection.insert_many(
+                        [
+                            {"_id": "1", "content": "Ada Lovelace algorithm notes"},
+                            {"_id": "2", "content": "Ada Lovelace compiler notes"},
+                            {"_id": "3", "content": "Ada debug note"},
+                        ]
+                    )
+                    await collection.create_index({"content": "text"})
+
+                    phrase_results = await collection.find(
+                        {"$text": {"$search": '"Ada Lovelace" -compiler'}},
+                        {"_id": 1, "score": {"$meta": "textScore"}},
+                        sort={"score": {"$meta": "textScore"}},
+                    ).to_list()
+                    exclusion_results = await collection.find(
+                        {"$text": {"$search": 'ada -"debug note"'}},
+                        {"_id": 1},
+                        sort={"_id": 1},
+                    ).to_list()
+                    explain = await collection.find(
+                        {"$text": {"$search": '"Ada Lovelace" -compiler -"debug note"'}},
+                    ).explain()
+
+                    self.assertEqual(phrase_results, [{"_id": "1", "score": 2.0}])
+                    self.assertEqual(exclusion_results, [{"_id": "1"}, {"_id": "2"}])
+                    self.assertEqual(explain["details"]["textQuery"]["requiredPhrases"], ["ada lovelace"])
+                    self.assertEqual(explain["details"]["textQuery"]["excludedTerms"], ["compiler"])
+                    self.assertEqual(explain["details"]["textQuery"]["excludedPhrases"], ["debug note"])
+
     async def test_collection_text_query_hint_selects_text_index_and_rejects_non_text_hint(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

@@ -4816,6 +4816,20 @@ class SQLiteEngine(AsyncStorageEngine):
                     "diacriticSensitive": semantics.text_query.diacritic_sensitive,
                 }
             }
+            if semantics.text_query.required_phrases:
+                text_details["textQuery"]["requiredPhrases"] = [
+                    " ".join(phrase)
+                    for phrase in semantics.text_query.required_phrases
+                ]
+            if semantics.text_query.excluded_terms:
+                text_details["textQuery"]["excludedTerms"] = list(
+                    semantics.text_query.excluded_terms
+                )
+            if semantics.text_query.excluded_phrases:
+                text_details["textQuery"]["excludedPhrases"] = [
+                    " ".join(phrase)
+                    for phrase in semantics.text_query.excluded_phrases
+                ]
             if semantics.text_query.language is not None:
                 text_details["textQuery"]["language"] = semantics.text_query.language
             if text_index_metadata is not None:

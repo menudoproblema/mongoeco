@@ -33,6 +33,7 @@ TEXT_SCORE_FIELD = "__mongoeco_textScore__"
 VECTOR_SEARCH_SCORE_FIELD = "__mongoeco_vectorSearchScore__"
 SEARCH_RESULT_METADATA_FIELDS = frozenset({TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD})
 _TEXT_TOKEN_RE = re.compile(r"\w+", re.UNICODE)
+_TEXT_QUERY_CHUNK_RE = re.compile(r'-?"[^"]+"|-?\S+')
 _SUPPORTED_REGEX_FLAGS = {
     "a": re.ASCII,
     "i": re.IGNORECASE,
@@ -92,6 +93,9 @@ class SearchStageOptions:
 class ClassicTextQuery:
     raw_query: str
     terms: tuple[str, ...]
+    excluded_terms: tuple[str, ...] = ()
+    required_phrases: tuple[tuple[str, ...], ...] = ()
+    excluded_phrases: tuple[tuple[str, ...], ...] = ()
     case_sensitive: bool = False
     diacritic_sensitive: bool = False
     language: str | None = None
@@ -271,18 +275,19 @@ def compile_classic_text_query(spec: object) -> ClassicTextQuery:
     language = spec.get("$language")
     if language is not None and not isinstance(language, str):
         raise OperationFailure("$text.$language must be a string")
-    terms = tuple(
-        tokenize_classic_text(
-            raw_query,
-            case_sensitive=case_sensitive,
-            diacritic_sensitive=diacritic_sensitive,
-        )
+    terms, excluded_terms, required_phrases, excluded_phrases = _parse_classic_text_terms(
+        raw_query,
+        case_sensitive=case_sensitive,
+        diacritic_sensitive=diacritic_sensitive,
     )
-    if not terms:
+    if not terms and not required_phrases:
         raise OperationFailure("$text.$search must contain at least one searchable token")
     return ClassicTextQuery(
         raw_query=raw_query,
         terms=terms,
+        excluded_terms=excluded_terms,
+        required_phrases=required_phrases,
+        excluded_phrases=excluded_phrases,
         case_sensitive=case_sensitive,
         diacritic_sensitive=diacritic_sensitive,
         language=language,
@@ -317,6 +322,55 @@ def tokenize_classic_text(
     if not case_sensitive:
         normalized = normalized.lower()
     return tuple(match.group(0) for match in _TEXT_TOKEN_RE.finditer(normalized))
+
+
+def _parse_classic_text_terms(
+    value: str,
+    *,
+    case_sensitive: bool,
+    diacritic_sensitive: bool,
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[tuple[str, ...], ...], tuple[tuple[str, ...], ...]]:
+    include_terms: list[str] = []
+    exclude_terms: list[str] = []
+    include_phrases: list[tuple[str, ...]] = []
+    exclude_phrases: list[tuple[str, ...]] = []
+    for raw_chunk in _TEXT_QUERY_CHUNK_RE.findall(value):
+        chunk = raw_chunk.strip()
+        is_exclusion = chunk.startswith("-")
+        payload = chunk[1:] if is_exclusion else chunk
+        if not payload:
+            continue
+        if payload.startswith('"') and payload.endswith('"') and len(payload) >= 2:
+            phrase_tokens = tokenize_classic_text(
+                payload[1:-1],
+                case_sensitive=case_sensitive,
+                diacritic_sensitive=diacritic_sensitive,
+            )
+            if not phrase_tokens:
+                continue
+            if is_exclusion:
+                exclude_phrases.append(phrase_tokens)
+            else:
+                include_phrases.append(phrase_tokens)
+                include_terms.extend(phrase_tokens)
+            continue
+        chunk_terms = tokenize_classic_text(
+            payload,
+            case_sensitive=case_sensitive,
+            diacritic_sensitive=diacritic_sensitive,
+        )
+        if not chunk_terms:
+            continue
+        if is_exclusion:
+            exclude_terms.extend(chunk_terms)
+        else:
+            include_terms.extend(chunk_terms)
+    return (
+        tuple(include_terms),
+        tuple(exclude_terms),
+        tuple(include_phrases),
+        tuple(exclude_phrases),
+    )
 
 
 def resolve_classic_text_index(
@@ -397,17 +451,44 @@ def classic_text_score(
     fields = (field,) if isinstance(field, str) else tuple(field)
     if not fields:
         return None
+    field_tokens: dict[str, tuple[tuple[str, ...], ...]] = {}
+    field_counters: dict[str, Counter[str]] = {}
+    all_tokens: list[str] = []
     score = 0.0
     for current_field in fields:
-        token_counter = Counter()
+        values_tokens: list[tuple[str, ...]] = []
         for value in iter_classic_text_values(document, current_field):
-            token_counter.update(
-                tokenize_classic_text(
-                    value,
-                    case_sensitive=query.case_sensitive,
-                    diacritic_sensitive=query.diacritic_sensitive,
-                )
+            value_tokens = tokenize_classic_text(
+                value,
+                case_sensitive=query.case_sensitive,
+                diacritic_sensitive=query.diacritic_sensitive,
             )
+            if value_tokens:
+                values_tokens.append(value_tokens)
+                all_tokens.extend(value_tokens)
+        token_counter = Counter(token for tokens in values_tokens for token in tokens)
+        if not token_counter:
+            continue
+        field_tokens[current_field] = tuple(values_tokens)
+        field_counters[current_field] = token_counter
+    if not field_counters:
+        return None
+    if query.excluded_terms:
+        present_tokens = frozenset(all_tokens)
+        if any(term in present_tokens for term in query.excluded_terms):
+            return None
+    if query.required_phrases:
+        all_sequences = tuple(tokens for sequences in field_tokens.values() for tokens in sequences)
+        for phrase in query.required_phrases:
+            if not any(_token_sequence_contains(sequence, phrase) for sequence in all_sequences):
+                return None
+    if query.excluded_phrases:
+        all_sequences = tuple(tokens for sequences in field_tokens.values() for tokens in sequences)
+        for phrase in query.excluded_phrases:
+            if any(_token_sequence_contains(sequence, phrase) for sequence in all_sequences):
+                return None
+    for current_field in fields:
+        token_counter = field_counters.get(current_field)
         if not token_counter:
             continue
         field_score = sum(token_counter.get(term, 0) for term in query.terms)
@@ -426,6 +507,16 @@ def classic_text_score(
     if score <= 0:
         return None
     return float(score)
+
+
+def _token_sequence_contains(tokens: tuple[str, ...], phrase: tuple[str, ...]) -> bool:
+    phrase_length = len(phrase)
+    if phrase_length <= 0 or len(tokens) < phrase_length:
+        return False
+    for start in range(0, len(tokens) - phrase_length + 1):
+        if tokens[start : start + phrase_length] == phrase:
+            return True
+    return False
 
 
 def attach_text_score(document: Document, score: float) -> Document:

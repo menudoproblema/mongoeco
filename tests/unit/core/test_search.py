@@ -104,6 +104,17 @@ class SearchCoreTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             compile_classic_text_query({"$search": "Ada", "$diacriticSensitive": "yes"})
 
+    def test_compile_classic_text_query_supports_phrases_and_exclusions(self) -> None:
+        query = compile_classic_text_query({"$search": '"Ada Lovelace" -compiler -"debug note"'})
+        self.assertEqual(query.terms, ("ada", "lovelace"))
+        self.assertEqual(query.required_phrases, (("ada", "lovelace"),))
+        self.assertEqual(query.excluded_terms, ("compiler",))
+        self.assertEqual(query.excluded_phrases, (("debug", "note"),))
+        empty_phrase = compile_classic_text_query({"$search": '"" Ada -'})
+        self.assertEqual(empty_phrase.terms, ("ada",))
+        self.assertEqual(empty_phrase.required_phrases, ())
+        self.assertEqual(empty_phrase.excluded_terms, ())
+
     def test_classic_text_helpers_cover_invalid_shapes_and_ambiguous_hints(self) -> None:
         with self.assertRaises(OperationFailure):
             compile_classic_text_query([])
@@ -227,6 +238,56 @@ class SearchCoreTests(unittest.TestCase):
             classic_text_score({"body": "Áda"}, field="body", query=normalized_query),
             1.0,
         )
+        phrase_query = compile_classic_text_query({"$search": '"ada algorithm"'})
+        self.assertEqual(
+            classic_text_score(
+                {"body": "Ada algorithm notes"},
+                field="body",
+                query=phrase_query,
+            ),
+            2.0,
+        )
+        self.assertIsNone(
+            classic_text_score(
+                {"body": "Ada wrote an algorithm"},
+                field="body",
+                query=phrase_query,
+            )
+        )
+        exclusion_query = compile_classic_text_query({"$search": "ada -grace"})
+        self.assertEqual(
+            classic_text_score(
+                {"body": "Ada wrote an algorithm"},
+                field="body",
+                query=exclusion_query,
+            ),
+            1.0,
+        )
+        self.assertIsNone(
+            classic_text_score(
+                {"body": "Ada and Grace wrote compilers"},
+                field="body",
+                query=exclusion_query,
+            )
+        )
+        excluded_phrase_query = compile_classic_text_query({"$search": 'ada -"debug note"'})
+        self.assertIsNone(
+            classic_text_score(
+                {"body": "Ada debug note"},
+                field="body",
+                query=excluded_phrase_query,
+            )
+        )
+        self.assertEqual(
+            classic_text_score(
+                {"body": "Ada"},
+                field=("title", "body"),
+                query=compile_classic_text_query({"$search": "Ada"}),
+            ),
+            1.0,
+        )
+        self.assertFalse(search_module._token_sequence_contains(("ada",), ()))
+        self.assertFalse(search_module._token_sequence_contains(("ada",), ("ada", "lovelace")))
 
     def test_resolve_classic_text_index_requires_single_unambiguous_text_index(self) -> None:
         indexes = [
