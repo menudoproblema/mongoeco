@@ -449,6 +449,38 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         expected_flags="i",
                         expected_allow_analyzed_field=True,
                     )
+                    wildcard_token_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "wildcard": {
+                                        "query": "alg*",
+                                        "path": "body",
+                                        "allowAnalyzedField": True,
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in wildcard_token_hits], [3])
+                    wildcard_strict_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "wildcard": {
+                                        "query": "alg*",
+                                        "path": "body",
+                                        "allowAnalyzedField": False,
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual(wildcard_strict_hits, [])
                     sequential_autocomplete_hits = collection.aggregate(
                         [
                             {

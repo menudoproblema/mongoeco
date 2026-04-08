@@ -1417,8 +1417,17 @@
           "operatorSemantics": {
             "autocomplete": {
               "atlasParity": "subset",
+              "fuzzy": {
+                "maxEdits": [
+                  1,
+                  2
+                ],
+                "supportsMaxExpansions": true,
+                "supportsPrefixLength": true
+              },
               "matchingMode": "token-prefix",
               "scope": "local-text-tier",
+              "supportsFuzzy": true,
               "tokenOrder": [
                 "any",
                 "sequential"
@@ -1475,7 +1484,8 @@
               "atlasParity": "subset",
               "matchingMode": "glob-local",
               "patternSyntax": "fnmatch-like",
-              "scope": "local-text-tier"
+              "scope": "local-text-tier",
+              "tokenFallbackOnAnalyzedField": true
             }
           },
           "operators": [
@@ -12002,8 +12012,17 @@
       "operatorSemantics": {
         "autocomplete": {
           "atlasParity": "subset",
+          "fuzzy": {
+            "maxEdits": [
+              1,
+              2
+            ],
+            "supportsMaxExpansions": true,
+            "supportsPrefixLength": true
+          },
           "matchingMode": "token-prefix",
           "scope": "local-text-tier",
+          "supportsFuzzy": true,
           "tokenOrder": [
             "any",
             "sequential"
@@ -12060,7 +12079,8 @@
           "atlasParity": "subset",
           "matchingMode": "glob-local",
           "patternSyntax": "fnmatch-like",
-          "scope": "local-text-tier"
+          "scope": "local-text-tier",
+          "tokenFallbackOnAnalyzedField": true
         }
       },
       "operators": [

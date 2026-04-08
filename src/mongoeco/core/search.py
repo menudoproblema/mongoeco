@@ -1032,7 +1032,14 @@ def matches_search_wildcard_query(
 ) -> bool:
     pattern = query.normalized_pattern
     prepared = materialized or materialize_search_document(document, definition)
-    return any(fnmatch.fnmatchcase(value, pattern) for value in _materialized_lowered_values(prepared, query.paths))
+    return any(
+        _wildcard_matches_value(
+            value,
+            pattern=pattern,
+            allow_analyzed_field=query.allow_analyzed_field,
+        )
+        for value in _materialized_lowered_values(prepared, query.paths)
+    )
 
 
 def matches_search_regex_query(
@@ -1074,6 +1081,22 @@ def _token_sequence_matches(
             return False
         position += 1
     return True
+
+
+def _wildcard_matches_value(
+    lowered_value: str,
+    *,
+    pattern: str,
+    allow_analyzed_field: bool,
+) -> bool:
+    if fnmatch.fnmatchcase(lowered_value, pattern):
+        return True
+    if not allow_analyzed_field:
+        return False
+    return any(
+        fnmatch.fnmatchcase(token, pattern)
+        for token in tokenize_classic_text(lowered_value)
+    )
 
 
 def _autocomplete_token_matches(
@@ -1399,7 +1422,11 @@ def search_clause_ranking(
             sum(
                 1
                 for value in _materialized_lowered_values(prepared, query.paths)
-                if fnmatch.fnmatchcase(value, query.normalized_pattern)
+                if _wildcard_matches_value(
+                    value,
+                    pattern=query.normalized_pattern,
+                    allow_analyzed_field=query.allow_analyzed_field,
+                )
             )
         )
         return score > 0.0, score, None
@@ -2246,6 +2273,8 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
             "tokenization": "classic-text-local",
             "atlasParity": "subset",
             "tokenOrder": query.token_order,
+            "supportsFuzzy": True,
+            "fuzzyEnabled": query.fuzzy_max_edits > 0,
             "scope": "local-text-tier",
         }
         if query.fuzzy_max_edits > 0:
@@ -2259,6 +2288,7 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
             "matchingMode": "glob-local",
             "patternSyntax": "fnmatch-like",
             "allowAnalyzedField": query.allow_analyzed_field,
+            "tokenFallbackEnabled": query.allow_analyzed_field,
             "atlasParity": "subset",
             "scope": "local-text-tier",
         }
@@ -2912,7 +2942,11 @@ def _text_value_matches_clause(
             for term in clause.terms
         )
     if isinstance(clause, SearchWildcardQuery):
-        return fnmatch.fnmatchcase(lowered, clause.normalized_pattern)
+        return _wildcard_matches_value(
+            lowered,
+            pattern=clause.normalized_pattern,
+            allow_analyzed_field=clause.allow_analyzed_field,
+        )
     compiled = re.compile(clause.raw_query, _regex_compile_flags(clause.flags))
     return compiled.search(value) is not None
 

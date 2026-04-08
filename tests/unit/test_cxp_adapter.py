@@ -320,6 +320,23 @@ class CxpAlignmentTests(unittest.TestCase):
                 'matchingMode': 'token-prefix',
                 'tokenization': 'classic-text-local',
                 'tokenOrder': ['any', 'sequential'],
+                'supportsFuzzy': True,
+                'fuzzy': {
+                    'maxEdits': [1, 2],
+                    'supportsPrefixLength': True,
+                    'supportsMaxExpansions': True,
+                },
+                'atlasParity': 'subset',
+                'scope': 'local-text-tier',
+            },
+        )
+        self.assertEqual(
+            exported['capabilities']['search']['metadata']['operatorSemantics']['wildcard'],
+            {
+                'matchingMode': 'glob-local',
+                'patternSyntax': 'fnmatch-like',
+                'allowAnalyzedField': True,
+                'tokenFallbackOnAnalyzedField': True,
                 'atlasParity': 'subset',
                 'scope': 'local-text-tier',
             },

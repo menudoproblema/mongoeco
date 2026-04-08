@@ -1271,6 +1271,20 @@ class SearchCoreTests(unittest.TestCase):
         phrase_query = SearchPhraseQuery(index_name="by_text", raw_query="Ada algorithms", paths=("title",))
         autocomplete_query = SearchAutocompleteQuery(index_name="by_text", raw_query="alg", terms=("alg",), paths=("title", "body"))
         wildcard_query = SearchWildcardQuery(index_name="by_text", raw_query="*algorithm*", normalized_pattern="*algorithm*", paths=("body",))
+        analyzed_wildcard_query = SearchWildcardQuery(
+            index_name="by_text",
+            raw_query="algo*",
+            normalized_pattern="algo*",
+            paths=("body",),
+            allow_analyzed_field=True,
+        )
+        strict_wildcard_query = SearchWildcardQuery(
+            index_name="by_text",
+            raw_query="algo*",
+            normalized_pattern="algo*",
+            paths=("body",),
+            allow_analyzed_field=False,
+        )
         near_query = SearchNearQuery(index_name="by_text", path="count", origin=10, pivot=4.0, origin_kind="number")
         in_query = SearchInQuery(index_name="by_text", path="count", values=(7.0, 9.0), normalized_values=frozenset({("number", 7.0), ("number", 9.0)}))
         equals_query = SearchEqualsQuery(index_name="by_text", path="count", value=7.0, value_kind="number")
@@ -1288,6 +1302,22 @@ class SearchCoreTests(unittest.TestCase):
         self.assertTrue(matches_search_phrase_query(document, definition=definition, query=phrase_query, materialized=prepared))
         self.assertTrue(matches_search_autocomplete_query(document, definition=definition, query=autocomplete_query, materialized=prepared))
         self.assertTrue(matches_search_wildcard_query(document, definition=definition, query=wildcard_query, materialized=prepared))
+        self.assertTrue(
+            matches_search_wildcard_query(
+                document,
+                definition=definition,
+                query=analyzed_wildcard_query,
+                materialized=prepared,
+            )
+        )
+        self.assertFalse(
+            matches_search_wildcard_query(
+                document,
+                definition=definition,
+                query=strict_wildcard_query,
+                materialized=prepared,
+            )
+        )
         self.assertTrue(matches_search_near_query(document, definition=definition, query=near_query, materialized=prepared))
         self.assertTrue(matches_search_in_query(document, definition=definition, query=in_query, materialized=prepared))
         self.assertTrue(matches_search_equals_query(document, definition=definition, query=equals_query, materialized=prepared))
@@ -1296,6 +1326,24 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(search_module.search_clause_ranking(document, definition=definition, query=text_query, materialized=prepared), (True, 2.0, None))
         self.assertEqual(search_module.search_clause_ranking(document, definition=definition, query=phrase_query, materialized=prepared), (True, 1.0, None))
         self.assertEqual(search_module.search_clause_ranking(document, definition=definition, query=wildcard_query, materialized=prepared), (True, 1.0, None))
+        self.assertEqual(
+            search_module.search_clause_ranking(
+                document,
+                definition=definition,
+                query=analyzed_wildcard_query,
+                materialized=prepared,
+            ),
+            (True, 1.0, None),
+        )
+        self.assertEqual(
+            search_module.search_clause_ranking(
+                document,
+                definition=definition,
+                query=strict_wildcard_query,
+                materialized=prepared,
+            ),
+            (False, 0.0, None),
+        )
         self.assertEqual(
             search_module.search_clause_ranking(
                 document,
@@ -2515,6 +2563,45 @@ class SearchCoreTests(unittest.TestCase):
             },
             name="by_text",
         )
+        document = {"title": "Ada Lovelace", "body": "Analytical engine pioneer"}
+        self.assertTrue(
+            matches_search_autocomplete_query(
+                document,
+                definition=definition,
+                query=SearchAutocompleteQuery(
+                    index_name="by_text",
+                    raw_query="ada",
+                    terms=("ada",),
+                    paths=("title",),
+                ),
+            )
+        )
+        self.assertTrue(
+            matches_search_wildcard_query(
+                document,
+                definition=definition,
+                query=SearchWildcardQuery(
+                    index_name="by_text",
+                    raw_query="eng*",
+                    normalized_pattern="eng*",
+                    paths=("body",),
+                    allow_analyzed_field=True,
+                ),
+            )
+        )
+        self.assertFalse(
+            matches_search_wildcard_query(
+                document,
+                definition=definition,
+                query=SearchWildcardQuery(
+                    index_name="by_text",
+                    raw_query="eng*",
+                    normalized_pattern="eng*",
+                    paths=("body",),
+                    allow_analyzed_field=False,
+                ),
+            )
+        )
 
     def test_matches_search_regex_query_rejects_invalid_patterns(self) -> None:
         definition = SearchIndexDefinition(
@@ -3354,6 +3441,55 @@ class SearchCoreTests(unittest.TestCase):
                 "flags": "i",
                 "supportsFlags": True,
                 "allowAnalyzedField": False,
+                "atlasParity": "subset",
+                "scope": "local-text-tier",
+            },
+        )
+        autocomplete_details = search_query_explain_details(
+            SearchAutocompleteQuery(
+                index_name="by_text",
+                raw_query="ada alg",
+                terms=("ada", "alg"),
+                paths=("body",),
+                token_order="sequential",
+                fuzzy_max_edits=2,
+                fuzzy_prefix_length=1,
+                fuzzy_max_expansions=20,
+            )
+        )
+        self.assertEqual(
+            autocomplete_details["querySemantics"],
+            {
+                "matchingMode": "token-prefix",
+                "tokenization": "classic-text-local",
+                "atlasParity": "subset",
+                "tokenOrder": "sequential",
+                "supportsFuzzy": True,
+                "fuzzyEnabled": True,
+                "fuzzy": {
+                    "maxEdits": 2,
+                    "prefixLength": 1,
+                    "maxExpansions": 20,
+                },
+                "scope": "local-text-tier",
+            },
+        )
+        wildcard_details = search_query_explain_details(
+            SearchWildcardQuery(
+                index_name="by_text",
+                raw_query="alg*",
+                normalized_pattern="alg*",
+                paths=("body",),
+                allow_analyzed_field=True,
+            )
+        )
+        self.assertEqual(
+            wildcard_details["querySemantics"],
+            {
+                "matchingMode": "glob-local",
+                "patternSyntax": "fnmatch-like",
+                "allowAnalyzedField": True,
+                "tokenFallbackEnabled": True,
                 "atlasParity": "subset",
                 "scope": "local-text-tier",
             },
@@ -4236,6 +4372,30 @@ class SearchCoreTests(unittest.TestCase):
             )
         )
         self.assertTrue(search_module._text_value_matches_clause("Ada title", wildcard))
+        self.assertTrue(
+            search_module._text_value_matches_clause(
+                "Ada title",
+                SearchWildcardQuery(
+                    index_name="by_text",
+                    raw_query="tit*",
+                    normalized_pattern="tit*",
+                    paths=("title",),
+                    allow_analyzed_field=True,
+                ),
+            )
+        )
+        self.assertFalse(
+            search_module._text_value_matches_clause(
+                "Ada title",
+                SearchWildcardQuery(
+                    index_name="by_text",
+                    raw_query="tit*",
+                    normalized_pattern="tit*",
+                    paths=("title",),
+                    allow_analyzed_field=False,
+                ),
+            )
+        )
         self.assertTrue(search_module._text_value_matches_clause("Ada title", regex))
         self.assertEqual(
             search_module._highlight_payload_for_clause("title", "Ada title", clause=phrase, max_chars=50),
