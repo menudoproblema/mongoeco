@@ -6290,7 +6290,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     created = client.test.command(
                         {
                             "createIndexes": "events",
-                            "indexes": [{"key": {"kind": 1}, "name": "kind_hidden", "hidden": True}],
+                            "indexes": [{"key": {"kind": 1}, "name": "kind_hidden", "hidden": True, "background": True}],
                         }
                     )
                     indexes = collection.list_indexes().to_list()

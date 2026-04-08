@@ -466,6 +466,21 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
 
         self.assertTrue(engine.kwargs["hidden"])
 
+    def test_create_index_accepts_background_as_compatibility_noop(self):
+        class EngineStub:
+            async def create_index(self, *args, **kwargs):
+                self.kwargs = kwargs
+                return "email_1"
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        asyncio.run(collection.create_index([("email", 1)], background=True))
+        self.assertNotIn("background", engine.kwargs)
+
+        with self.assertRaises(TypeError):
+            asyncio.run(collection.create_index([("email", 1)], background=1))  # type: ignore[arg-type]
+
     def test_create_index_forwards_collation(self):
         class EngineStub:
             def __init__(self):

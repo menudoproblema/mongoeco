@@ -323,7 +323,7 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     hidden_result = client.alpha.command(
                         {
                             "createIndexes": "schools",
-                            "indexes": [{"key": {"tags": 1}, "name": "tags_hidden", "hidden": True}],
+                            "indexes": [{"key": {"tags": 1}, "name": "tags_hidden", "hidden": True, "background": True}],
                         }
                     )
                     try:

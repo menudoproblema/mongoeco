@@ -327,6 +327,7 @@ class IndexModel:
     name: str | None = None
     unique: bool = False
     sparse: bool = False
+    background: bool = False
     hidden: bool = False
     collation: Document | None = None
     partial_filter_expression: Filter | None = None
@@ -340,6 +341,7 @@ class IndexModel:
         name = kwargs.pop("name", None)
         unique = kwargs.pop("unique", False)
         sparse = kwargs.pop("sparse", False)
+        background = kwargs.pop("background", False)
         hidden = kwargs.pop("hidden", False)
         collation = kwargs.pop("collation", None)
         partial_filter_expression = kwargs.pop("partialFilterExpression", None)
@@ -361,6 +363,8 @@ class IndexModel:
             raise TypeError("unique must be a bool")
         if not isinstance(sparse, bool):
             raise TypeError("sparse must be a bool")
+        if not isinstance(background, bool):
+            raise TypeError("background must be a bool")
         if not isinstance(hidden, bool):
             raise TypeError("hidden must be a bool")
         if collation is not None and not isinstance(collation, dict):
@@ -404,6 +408,7 @@ class IndexModel:
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "unique", unique)
         object.__setattr__(self, "sparse", sparse)
+        object.__setattr__(self, "background", background)
         object.__setattr__(self, "hidden", hidden)
         object.__setattr__(self, "collation", deepcopy(collation))
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
@@ -434,7 +439,10 @@ class IndexModel:
 
     @property
     def document(self) -> IndexDocument:
-        return self.definition.to_model_document()
+        document = self.definition.to_model_document()
+        if self.background:
+            document["background"] = True
+        return document
 
 
 @dataclass(frozen=True, slots=True)

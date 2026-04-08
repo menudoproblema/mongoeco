@@ -25,6 +25,7 @@ async def create_index(
     unique: bool = False,
     name: str | None = None,
     sparse: bool = False,
+    background: bool = False,
     hidden: bool = False,
     collation: dict[str, object] | None = None,
     partial_filter_expression: dict[str, object] | None = None,
@@ -37,6 +38,8 @@ async def create_index(
     session: ClientSession | None = None,
 ) -> str:
     normalized_keys = collection._normalize_index_keys(keys)
+    if not isinstance(background, bool):
+        raise TypeError("background must be a bool")
     expire_after_seconds = collection._normalize_expire_after_seconds(expire_after_seconds)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
     created_name = await collection._engine.create_index(

@@ -97,6 +97,7 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             "name",
             "unique",
             "sparse",
+            "background",
             "hidden",
             "collation",
             "partialFilterExpression",
@@ -120,6 +121,8 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             kwargs["unique"] = raw_index["unique"]
         if "sparse" in raw_index:
             kwargs["sparse"] = raw_index["sparse"]
+        if "background" in raw_index:
+            kwargs["background"] = raw_index["background"]
         if "hidden" in raw_index:
             kwargs["hidden"] = raw_index["hidden"]
         if "collation" in raw_index:

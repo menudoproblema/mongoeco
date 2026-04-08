@@ -989,10 +989,13 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
 
         sparse_model = IndexModel(
             [("tenant", 1)],
+            background=True,
             sparse=True,
             partialFilterExpression={"tenant": {"$exists": True}},
         )
         self.assertEqual(sparse_model.resolved_name, "tenant_1")
+        self.assertTrue(sparse_model.background)
+        self.assertTrue(sparse_model.document["background"])
         self.assertTrue(sparse_model.document["sparse"])
         self.assertEqual(
             sparse_model.definition.partial_filter_expression,
@@ -1011,6 +1014,8 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             IndexModel([("tenant", 1)], unique=1)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             IndexModel([("tenant", 1)], sparse=1)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("tenant", 1)], background=1)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             IndexModel([("tenant", 1)], hidden=1)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):

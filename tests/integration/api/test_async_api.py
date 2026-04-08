@@ -6723,7 +6723,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     created = await client.analytics.command(
                         {
                             "createIndexes": "events",
-                            "indexes": [{"key": {"kind": 1}, "name": "kind_hidden", "hidden": True}],
+                            "indexes": [{"key": {"kind": 1}, "name": "kind_hidden", "hidden": True, "background": True}],
                         }
                     )
                     indexes = await collection.list_indexes().to_list()

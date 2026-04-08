@@ -67,6 +67,7 @@ class AdminParsingTests(unittest.TestCase):
                     "name": "email_1",
                     "unique": True,
                     "sparse": True,
+                    "background": True,
                     "collation": {"locale": "en", "strength": 2},
                     "partialFilterExpression": {"active": True},
                 }
@@ -78,6 +79,7 @@ class AdminParsingTests(unittest.TestCase):
         self.assertEqual(model.name, "email_1")
         self.assertTrue(model.unique)
         self.assertTrue(model.sparse)
+        self.assertTrue(model.background)
         self.assertEqual(model.collation, {"locale": "en", "strength": 2})
         self.assertEqual(model.partial_filter_expression, {"active": True})
         ttl_models = normalize_index_models_from_command(
