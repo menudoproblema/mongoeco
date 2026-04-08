@@ -1057,6 +1057,38 @@ async def assert_database_command_supports_configure_fail_point(case, engine_nam
                 case.assertEqual(write_concern_error.get("code"), 64)
                 case.assertEqual(write_concern_error.get("errInfo"), {"wtimeout": True})
 
+                await _maybe_await(
+                    client.alpha.command(
+                        {
+                            "configureFailPoint": "failCommand",
+                            "mode": {"times": 1},
+                            "data": {
+                                "failCommands": ["insert"],
+                                "writeConcernError": {
+                                    "code": 64,
+                                    "errmsg": "simulated write concern timeout on insert",
+                                    "errInfo": {"wtimeout": True},
+                                },
+                            },
+                        }
+                    )
+                )
+                with case.assertRaisesRegex(
+                    OperationFailure,
+                    "simulated write concern timeout on insert",
+                ) as write_wtimeout_ctx:
+                    await _maybe_await(
+                        client.alpha.command(
+                            {
+                                "insert": "events",
+                                "documents": [{"_id": "write-timeout", "kind": "view"}],
+                            }
+                        )
+                    )
+                write_command_error = write_wtimeout_ctx.exception.details.get("writeConcernError", {})
+                case.assertEqual(write_command_error.get("code"), 64)
+                case.assertEqual(write_command_error.get("errInfo"), {"wtimeout": True})
+
                 disabled = await _maybe_await(
                     client.alpha.command(
                         {"configureFailPoint": "failCommand", "mode": "off"}
