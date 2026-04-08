@@ -422,6 +422,103 @@ class AggregationPipelineCoreTests(unittest.TestCase):
         self.assertAlmostEqual(result[0]["dist"], 1.0)
         self.assertGreater(result[1]["dist"], result[0]["dist"])
 
+    def test_pipeline_supports_redact_with_descend_prune_and_nested_arrays(self):
+        documents = [
+            {
+                "_id": "1",
+                "level": 1,
+                "public": "ok",
+                "nested": {
+                    "level": 2,
+                    "visible": True,
+                    "secret": {"level": 10, "token": "x"},
+                },
+                "items": [
+                    {"level": 2, "label": "keep"},
+                    {"level": 8, "label": "drop"},
+                    "raw",
+                    {"level": 3, "extra": {"level": 99, "x": 1}},
+                ],
+                "matrix": [
+                    [
+                        {"level": 9, "x": 1},
+                        {"level": 1, "x": 2},
+                    ],
+                    "plain",
+                ],
+            },
+            {"_id": "2", "level": 9, "public": "gone"},
+        ]
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$redact": {
+                        "$cond": [
+                            {"$lte": ["$level", 5]},
+                            "$$DESCEND",
+                            "$$PRUNE",
+                        ]
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {
+                    "_id": "1",
+                    "level": 1,
+                    "public": "ok",
+                    "nested": {"level": 2, "visible": True},
+                    "items": [
+                        {"level": 2, "label": "keep"},
+                        "raw",
+                        {"level": 3},
+                    ],
+                    "matrix": [
+                        [{"level": 1, "x": 2}],
+                        "plain",
+                    ],
+                }
+            ],
+        )
+
+    def test_pipeline_supports_redact_keep_action_without_descending_children(self):
+        documents = [
+            {"_id": "1", "kind": "audit", "nested": {"level": 99, "secret": "x"}},
+            {"_id": "2", "kind": "event", "nested": {"level": 1, "secret": "y"}},
+        ]
+
+        result = apply_pipeline(
+            documents,
+            [
+                {
+                    "$redact": {
+                        "$cond": [
+                            {"$eq": ["$kind", "audit"]},
+                            "$$KEEP",
+                            "$$PRUNE",
+                        ]
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            result,
+            [{"_id": "1", "kind": "audit", "nested": {"level": 99, "secret": "x"}}],
+        )
+
+    def test_pipeline_redact_rejects_non_system_actions(self):
+        with self.assertRaisesRegex(OperationFailure, "must evaluate to \\$\\$KEEP, \\$\\$PRUNE or \\$\\$DESCEND"):
+            apply_pipeline(
+                [{"_id": "1", "level": 1}],
+                [{"$redact": "$level"}],
+            )
+
     def test_pipeline_supports_unwind_string_path(self):
         documents = [
             {"_id": "1", "tags": ["python", "mongodb"]},

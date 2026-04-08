@@ -744,7 +744,6 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
 
         unsupported_window_operators = [
             "$covariancePop", "$covarianceSamp",
-            "$derivative", "$integral",
         ]
         for operator in unsupported_window_operators:
             with self.subTest(window_operator=operator):
@@ -1005,6 +1004,168 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
             apply_pipeline(
                 [{"_id": "1", "value": "bad"}],
                 [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$expMovingAvg": {"input": "$value", "N": 3}}}}}],
+            )
+
+    def test_set_window_fields_supports_derivative_and_integral(self):
+        result = apply_pipeline(
+            [
+                {"_id": "1", "group": "a", "position": 1, "value": 10},
+                {"_id": "2", "group": "a", "position": 2, "value": 20},
+                {"_id": "3", "group": "a", "position": 4, "value": 40},
+                {"_id": "4", "group": "a", "position": 6, "value": None},
+            ],
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"position": 1},
+                        "output": {
+                            "velocity": {
+                                "$derivative": {"input": "$value"},
+                                "window": {"documents": [-1, 0]},
+                            },
+                            "area": {
+                                "$integral": {"input": "$value"},
+                                "window": {"documents": [-1, 0]},
+                            },
+                        },
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {"_id": "1", "group": "a", "position": 1, "value": 10, "velocity": None, "area": None},
+                {"_id": "2", "group": "a", "position": 2, "value": 20, "velocity": 10.0, "area": 15.0},
+                {"_id": "3", "group": "a", "position": 4, "value": 40, "velocity": 10.0, "area": 60.0},
+                {"_id": "4", "group": "a", "position": 6, "value": None, "velocity": None, "area": None},
+            ],
+        )
+
+    def test_set_window_fields_supports_derivative_and_integral_with_datetime_unit(self):
+        base = datetime.datetime(2026, 4, 8, 10, 0, tzinfo=datetime.UTC)
+        result = apply_pipeline(
+            [
+                {"_id": "1", "group": "a", "ts": base, "value": 0},
+                {"_id": "2", "group": "a", "ts": base + datetime.timedelta(seconds=10), "value": 20},
+                {"_id": "3", "group": "a", "ts": base + datetime.timedelta(seconds=20), "value": 60},
+            ],
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"ts": 1},
+                        "output": {
+                            "velocity": {
+                                "$derivative": {"input": "$value", "unit": "second"},
+                                "window": {"documents": [-1, 0]},
+                            },
+                            "area": {
+                                "$integral": {"input": "$value", "unit": "second"},
+                                "window": {"documents": [-1, 0]},
+                            },
+                        },
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {"_id": "1", "group": "a", "ts": base, "value": 0, "velocity": None, "area": None},
+                {"_id": "2", "group": "a", "ts": base + datetime.timedelta(seconds=10), "value": 20, "velocity": 2.0, "area": 100.0},
+                {"_id": "3", "group": "a", "ts": base + datetime.timedelta(seconds=20), "value": 60, "velocity": 4.0, "area": 400.0},
+            ],
+        )
+
+    def test_set_window_fields_derivative_returns_none_when_axis_delta_is_zero(self):
+        result = apply_pipeline(
+            [
+                {"_id": "1", "group": "a", "position": 1, "value": 10},
+                {"_id": "2", "group": "a", "position": 1, "value": 20},
+            ],
+            [
+                {
+                    "$setWindowFields": {
+                        "partitionBy": "$group",
+                        "sortBy": {"position": 1},
+                        "output": {
+                            "velocity": {
+                                "$derivative": {"input": "$value"},
+                                "window": {"documents": [-1, 0]},
+                            },
+                        },
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {"_id": "1", "group": "a", "position": 1, "value": 10, "velocity": None},
+                {"_id": "2", "group": "a", "position": 1, "value": 20, "velocity": None},
+            ],
+        )
+
+    def test_set_window_fields_derivative_and_integral_reject_invalid_payloads(self):
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"output": {"result": {"$derivative": {"input": "$value"}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1, "value": 1}, "output": {"result": {"$integral": {"input": "$value"}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$derivative": "$value"}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$derivative": {"input": "$value", "extra": 1}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"_id": 1}, "output": {"result": {"$integral": {"input": "$value", "unit": 1}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "ts": datetime.datetime(2026, 4, 8, 10, 0), "value": 10}, {"_id": "2", "ts": datetime.datetime(2026, 4, 8, 10, 1), "value": 20}],
+                [{"$setWindowFields": {"sortBy": {"ts": 1}, "output": {"result": {"$integral": {"input": "$value", "unit": "month"}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "score": 1, "value": 10}, {"_id": "2", "score": 2, "value": 20}],
+                [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"result": {"$integral": {"input": "$value", "unit": "second"}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "score": 1, "value": True}],
+                [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"result": {"$derivative": {"input": "$value"}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "score": "bad", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"result": {"$derivative": {"input": "$value"}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "value": 10}],
+                [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"result": {"$derivative": {"input": "$value"}}}}}],
+            )
+        with self.assertRaises(OperationFailure):
+            apply_pipeline(
+                [{"_id": "1", "score": 1, "value": 10}, {"_id": "2", "score": datetime.datetime(2026, 4, 8, 10, 0), "value": 20}],
+                [{"$setWindowFields": {"sortBy": {"score": 1}, "output": {"result": {"$derivative": {"input": "$value"}}}}}],
             )
 
     def test_exp_moving_avg_helpers_cover_alpha_variants(self):

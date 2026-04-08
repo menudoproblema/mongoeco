@@ -42,7 +42,7 @@ SUPPORTED_AGGREGATION_STAGES = frozenset(
     {
         "$match", "$project", "$unset", "$sample", "$sort", "$skip", "$limit", "$addFields", "$set",
         "$unwind", "$group", "$bucket", "$bucketAuto", "$lookup", "$unionWith", "$replaceRoot",
-        "$replaceWith", "$facet", "$count", "$sortByCount", "$setWindowFields", "$documents",
+        "$replaceWith", "$redact", "$facet", "$count", "$sortByCount", "$setWindowFields", "$documents",
         "$densify", "$fill", "$merge", "$geoNear", "$collStats",
     }
 )
@@ -57,5 +57,5 @@ SUPPORTED_WINDOW_ACCUMULATORS = frozenset(
     {"$sum", "$count", "$min", "$max", "$avg", "$stdDevPop", "$stdDevSamp", "$push", "$addToSet",
      "$first", "$last", "$firstN", "$lastN", "$maxN", "$minN", "$top", "$bottom", "$topN",
      "$bottomN", "$median", "$percentile", "$documentNumber", "$rank", "$denseRank", "$shift",
-     "$locf", "$linearFill", "$expMovingAvg"}
+     "$locf", "$linearFill", "$expMovingAvg", "$derivative", "$integral"}
 )

@@ -43,6 +43,7 @@ from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.aggregation.runtime import (
     AggregationStageContext,
     _apply_unwind,
+    evaluate_expression,
 )
 from mongoeco.core.paths import get_document_value, set_document_value
 from mongoeco.core.aggregation.transform_stages import (
@@ -56,6 +57,16 @@ from mongoeco.core.aggregation.transform_stages import (
 
 
 type AggregationStageHandler = Callable[[list[Document], object, AggregationStageContext], list[Document]]
+
+_REDACT_KEEP = "$$KEEP"
+_REDACT_PRUNE = "$$PRUNE"
+_REDACT_DESCEND = "$$DESCEND"
+_REDACT_SYSTEM_VARIABLES = {
+    "KEEP": _REDACT_KEEP,
+    "PRUNE": _REDACT_PRUNE,
+    "DESCEND": _REDACT_DESCEND,
+}
+_REDACT_PRUNED = object()
 
 
 @dataclass(frozen=True, slots=True)
@@ -239,6 +250,25 @@ def _stage_replace_with(
         context.variables,
         dialect=context.dialect,
     )
+
+
+def _stage_redact(
+    documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    result: list[Document] = []
+    for document in documents:
+        redacted = _redact_document(
+            document,
+            spec,
+            context.variables,
+            dialect=context.dialect,
+        )
+        if redacted is _REDACT_PRUNED:
+            continue
+        result.append(redacted)
+    return result
 
 
 def _stage_facet(
@@ -499,6 +529,82 @@ def _stage_coll_stats(
     return [result]
 
 
+def _evaluate_redact_action(
+    document: Document,
+    spec: object,
+    variables: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> str:
+    redact_variables = dict(variables or {})
+    redact_variables.update(_REDACT_SYSTEM_VARIABLES)
+    action = evaluate_expression(document, spec, redact_variables, dialect=dialect)
+    if action in {_REDACT_KEEP, _REDACT_PRUNE, _REDACT_DESCEND}:
+        return action
+    raise OperationFailure("$redact expression must evaluate to $$KEEP, $$PRUNE or $$DESCEND")
+
+
+def _redact_document(
+    document: Document,
+    spec: object,
+    variables: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> Document | object:
+    action = _evaluate_redact_action(
+        document,
+        spec,
+        variables,
+        dialect=dialect,
+    )
+    if action == _REDACT_KEEP:
+        return deepcopy(document)
+    if action == _REDACT_PRUNE:
+        return _REDACT_PRUNED
+    redacted: Document = {}
+    for key, value in document.items():
+        redacted_value = _redact_descended_value(
+            value,
+            spec,
+            variables,
+            dialect=dialect,
+        )
+        if redacted_value is _REDACT_PRUNED:
+            continue
+        redacted[key] = redacted_value
+    return redacted
+
+
+def _redact_descended_value(
+    value: object,
+    spec: object,
+    variables: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> object:
+    if isinstance(value, dict):
+        return _redact_document(
+            value,
+            spec,
+            variables,
+            dialect=dialect,
+        )
+    if isinstance(value, list):
+        redacted_items: list[object] = []
+        for item in value:
+            redacted_item = _redact_descended_value(
+                item,
+                spec,
+                variables,
+                dialect=dialect,
+            )
+            if redacted_item is _REDACT_PRUNED:
+                continue
+            redacted_items.append(redacted_item)
+        return redacted_items
+    return deepcopy(value)
+
+
 def _partition_value(document: Document, path: str) -> object | None:
     found, value = get_document_value(document, path)
     return value if found else None
@@ -621,6 +727,7 @@ AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {
     "$unionWith": AggregationStageSpec(_stage_union_with, "materializing"),
     "$replaceRoot": AggregationStageSpec(_stage_replace_root, "streamable"),
     "$replaceWith": AggregationStageSpec(_stage_replace_with, "streamable"),
+    "$redact": AggregationStageSpec(_stage_redact, "streamable"),
     "$facet": AggregationStageSpec(_stage_facet, "materializing"),
     "$count": AggregationStageSpec(_stage_count, "materializing"),
     "$sortByCount": AggregationStageSpec(_stage_sort_by_count, "materializing"),

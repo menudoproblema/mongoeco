@@ -140,6 +140,87 @@ def _apply_exp_moving_avg(
     return results
 
 
+_WINDOW_RATE_UNIT_MILLISECONDS: dict[str, float] = {
+    "millisecond": 1.0,
+    "second": 1_000.0,
+    "minute": 60_000.0,
+    "hour": 3_600_000.0,
+    "day": 86_400_000.0,
+    "week": 604_800_000.0,
+}
+
+
+def _parse_window_rate_expression(operator: str, expression: object) -> tuple[object, str | None]:
+    if not isinstance(expression, dict) or "input" not in expression:
+        raise OperationFailure(f"{operator} requires input")
+    unsupported_keys = set(expression) - {"input", "unit"}
+    if unsupported_keys:
+        raise OperationFailure(f"{operator} supports only input and unit")
+    unit = expression.get("unit")
+    if unit is not None and not isinstance(unit, str):
+        raise OperationFailure(f"{operator} unit must be a string")
+    return expression["input"], unit
+
+
+def _datetime_to_epoch_milliseconds(value: datetime.datetime) -> float:
+    if value.tzinfo is None:
+        epoch = datetime.datetime(1970, 1, 1)
+        return (value - epoch).total_seconds() * 1000.0
+    epoch_utc = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+    return (value.astimezone(datetime.UTC) - epoch_utc).total_seconds() * 1000.0
+
+
+def _extract_window_rate_points(
+    window_documents: list[Document],
+    sort_field: str,
+    input_expression: object,
+    variables: dict[str, Any] | None,
+    *,
+    operator: str,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
+) -> tuple[list[tuple[float, float]], str | None]:
+    points: list[tuple[float, float]] = []
+    axis_kind: str | None = None
+    for candidate_document in window_documents:
+        found_sort, sort_value = get_document_value(candidate_document, sort_field)
+        if not found_sort:
+            raise OperationFailure(f"{operator} requires sortBy values for all window documents")
+        if isinstance(sort_value, datetime.datetime):
+            next_axis_kind = "datetime"
+            axis_value = _datetime_to_epoch_milliseconds(sort_value)
+        elif isinstance(sort_value, (int, float)) and not isinstance(sort_value, bool) and math.isfinite(float(sort_value)):
+            next_axis_kind = "numeric"
+            axis_value = float(sort_value)
+        else:
+            raise OperationFailure(f"{operator} sortBy values must be numeric or datetime")
+        if axis_kind is None:
+            axis_kind = next_axis_kind
+        elif axis_kind != next_axis_kind:
+            raise OperationFailure(f"{operator} sortBy values must use a consistent type")
+        input_value = evaluate_expression(candidate_document, input_expression, variables, dialect=dialect)
+        if input_value is None:
+            continue
+        if (
+            not isinstance(input_value, (int, float))
+            or isinstance(input_value, bool)
+            or not math.isfinite(float(input_value))
+        ):
+            raise OperationFailure(f"{operator} input must evaluate to finite numeric values")
+        points.append((axis_value, float(input_value)))
+    return points, axis_kind
+
+
+def _window_rate_axis_scale(operator: str, axis_kind: str | None, unit: str | None) -> float:
+    if unit is None:
+        return 1.0
+    if axis_kind != "datetime":
+        raise OperationFailure(f"{operator} unit is supported only when sortBy values are datetimes")
+    scale = _WINDOW_RATE_UNIT_MILLISECONDS.get(unit)
+    if scale is None:
+        raise OperationFailure(f"{operator} unit is invalid")
+    return scale
+
+
 def _build_accumulator_runtime(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
@@ -180,6 +261,62 @@ def _build_accumulator_runtime(
         "resolve_aggregation_field_path": _resolve_aggregation_field_path,
         "missing_sentinel": _MISSING,
     }
+
+
+def _resolve_set_window_documents(
+    ordered: list[Document],
+    document: Document,
+    current_index: int,
+    last_index: int,
+    window: dict[str, object] | None,
+    sort_spec: list[tuple[str, int]] | None,
+) -> list[Document]:
+    if window is None:
+        return ordered
+    has_documents = "documents" in window
+    has_range = "range" in window
+    if has_documents == has_range:
+        raise OperationFailure("$setWindowFields window must contain exactly one of documents or range")
+    if has_documents:
+        documents_window = window.get("documents")
+        if not isinstance(documents_window, list) or len(documents_window) != 2:
+            raise OperationFailure("$setWindowFields requires a two-item documents window")
+        start = max(0, _resolve_window_index(documents_window[0], current_index, last_index, lower=True))
+        end = min(last_index, _resolve_window_index(documents_window[1], current_index, last_index, lower=False))
+        return ordered[start:end + 1] if start <= end else []
+
+    if sort_spec is None or len(sort_spec) != 1:
+        raise OperationFailure("$setWindowFields range windows require exactly one sort field")
+    range_window = window.get("range")
+    if not isinstance(range_window, list) or len(range_window) != 2:
+        raise OperationFailure("$setWindowFields requires a two-item range window")
+    lower_bound = _require_range_bound(range_window[0])
+    upper_bound = _require_range_bound(range_window[1])
+    sort_field = sort_spec[0][0]
+    found_current, current_value = get_document_value(document, sort_field)
+    if (
+        not found_current
+        or not isinstance(current_value, (int, float))
+        or isinstance(current_value, bool)
+        or not math.isfinite(float(current_value))
+    ):
+        raise OperationFailure("$setWindowFields numeric range windows require numeric sort values")
+    lower_value = _resolve_range_value(current_value, lower_bound, lower=True)
+    upper_value = _resolve_range_value(current_value, upper_bound, lower=False)
+    window_documents: list[Document] = []
+    for candidate in ordered:
+        found_candidate, candidate_value = get_document_value(candidate, sort_field)
+        if (
+            not found_candidate
+            or not isinstance(candidate_value, (int, float))
+            or isinstance(candidate_value, bool)
+            or not math.isfinite(float(candidate_value))
+        ):
+            raise OperationFailure("$setWindowFields numeric range windows require numeric sort values")
+        numeric_candidate = float(candidate_value)
+        if lower_value <= numeric_candidate <= upper_value:
+            window_documents.append(candidate)
+    return window_documents
 
 
 def _find_bucket_index(
@@ -464,7 +601,7 @@ def _apply_set_window_fields(
         operator, expression, window = _require_window_output_spec(field_spec)
         if not dialect.supports_window_accumulator(operator):
             raise OperationFailure(f"Unsupported $setWindowFields accumulator: {operator}")
-        if operator in {"$rank", "$denseRank", "$documentNumber", "$shift", "$locf", "$linearFill", "$expMovingAvg"}:
+        if operator in {"$rank", "$denseRank", "$documentNumber", "$shift", "$locf", "$linearFill", "$expMovingAvg", "$derivative", "$integral"}:
             prepared_window_outputs[field] = (operator, expression, window, ())
             continue
         prepared_specs = _prepare_accumulator_specs(
@@ -571,52 +708,50 @@ def _apply_set_window_fields(
                     )
                     set_document_value(enriched, field, values[current_index])
                     continue
-                if window is None:
-                    window_documents = ordered
-                else:
-                    has_documents = "documents" in window
-                    has_range = "range" in window
-                    if has_documents == has_range:
-                        raise OperationFailure("$setWindowFields window must contain exactly one of documents or range")
-                    if has_documents:
-                        documents_window = window.get("documents")
-                        if not isinstance(documents_window, list) or len(documents_window) != 2:
-                            raise OperationFailure("$setWindowFields requires a two-item documents window")
-                        start = max(0, _resolve_window_index(documents_window[0], current_index, last_index, lower=True))
-                        end = min(last_index, _resolve_window_index(documents_window[1], current_index, last_index, lower=False))
-                        window_documents = ordered[start:end + 1] if start <= end else []
-                    else:
-                        if sort_spec is None or len(sort_spec) != 1:
-                            raise OperationFailure("$setWindowFields range windows require exactly one sort field")
-                        range_window = window.get("range")
-                        if not isinstance(range_window, list) or len(range_window) != 2:
-                            raise OperationFailure("$setWindowFields requires a two-item range window")
-                        lower_bound = _require_range_bound(range_window[0])
-                        upper_bound = _require_range_bound(range_window[1])
-                        sort_field = sort_spec[0][0]
-                        found_current, current_value = get_document_value(document, sort_field)
-                        if (
-                            not found_current
-                            or not isinstance(current_value, (int, float))
-                            or isinstance(current_value, bool)
-                            or not math.isfinite(float(current_value))
-                        ):
-                            raise OperationFailure("$setWindowFields numeric range windows require numeric sort values")
-                        lower_value = _resolve_range_value(current_value, lower_bound, lower=True)
-                        upper_value = _resolve_range_value(current_value, upper_bound, lower=False)
-                        window_documents = []
-                        for candidate in ordered:
-                            found_candidate, candidate_value = get_document_value(candidate, sort_field)
-                            if (
-                                not found_candidate
-                                or not isinstance(candidate_value, (int, float))
-                                or isinstance(candidate_value, bool)
-                                or not math.isfinite(float(candidate_value))
-                            ):
-                                raise OperationFailure("$setWindowFields numeric range windows require numeric sort values")
-                            numeric_candidate = float(candidate_value)
-                            if lower_value <= numeric_candidate <= upper_value:
-                                window_documents.append(candidate)
+                window_documents = _resolve_set_window_documents(
+                    ordered,
+                    document,
+                    current_index,
+                    last_index,
+                    window,
+                    sort_spec,
+                )
+                if operator in {"$derivative", "$integral"}:
+                    if sort_spec is None:
+                        raise OperationFailure(f"{operator} requires sortBy")
+                    if len(sort_spec) != 1:
+                        raise OperationFailure(f"{operator} requires exactly one sortBy field")
+                    input_expression, unit = _parse_window_rate_expression(operator, expression)
+                    sort_field = sort_spec[0][0]
+                    points, axis_kind = _extract_window_rate_points(
+                        window_documents,
+                        sort_field,
+                        input_expression,
+                        variables,
+                        operator=operator,
+                        dialect=dialect,
+                    )
+                    if len(points) < 2:
+                        set_document_value(enriched, field, None)
+                        continue
+                    axis_scale = _window_rate_axis_scale(operator, axis_kind, unit)
+                    if operator == "$derivative":
+                        first_axis, first_value = points[0]
+                        last_axis, last_value = points[-1]
+                        delta_axis = (last_axis - first_axis) / axis_scale
+                        if delta_axis == 0:
+                            set_document_value(enriched, field, None)
+                        else:
+                            set_document_value(enriched, field, (last_value - first_value) / delta_axis)
+                        continue
+                    integral_total = 0.0
+                    for point_index in range(1, len(points)):
+                        left_axis, left_value = points[point_index - 1]
+                        right_axis, right_value = points[point_index]
+                        delta_axis = (right_axis - left_axis) / axis_scale
+                        integral_total += ((left_value + right_value) / 2.0) * delta_axis
+                    set_document_value(enriched, field, integral_total)
+                    continue
                 state = reusable_window_states[field]
                 _reset_accumulator_bucket(
                     state,
