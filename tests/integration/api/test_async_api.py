@@ -546,6 +546,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                     "highlight": {
                                         "path": ["title", "body"],
                                         "maxChars": 40,
+                                        "maxNumPassages": 1,
                                     },
                                     "facet": {"path": "kind", "numBuckets": 5},
                                 }
@@ -566,6 +567,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                     "highlight": {
                                         "path": ["title", "body"],
                                         "maxChars": 40,
+                                        "maxNumPassages": 1,
                                     },
                                     "facet": {"path": "kind", "numBuckets": 5},
                                 }

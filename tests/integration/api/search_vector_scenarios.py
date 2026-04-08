@@ -440,6 +440,7 @@ def assert_search_advanced_option_explanation(
             "highlight": {
                 "paths": ["title", "body"],
                 "maxChars": 40,
+                "maxNumPassages": 1,
                 "resultField": "searchHighlights",
             },
             "facet": {
@@ -469,6 +470,7 @@ def assert_search_advanced_option_explanation(
     )
     case.assertEqual(details["highlightPreview"]["resultField"], "searchHighlights")
     case.assertEqual(details["highlightPreview"]["requestedPaths"], ["title", "body"])
+    case.assertEqual(details["highlightPreview"]["maxNumPassages"], 1)
     case.assertGreaterEqual(details["highlightPreview"]["fragmentCount"], 1)
     case.assertTrue(details["highlightPreview"]["sample"])
 

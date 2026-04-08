@@ -237,6 +237,7 @@ class CompatResolutionTests(unittest.TestCase):
             {
                 "supportsPath": True,
                 "supportsMaxChars": True,
+                "supportsMaxNumPassages": True,
                 "resultField": "searchHighlights",
             },
         )

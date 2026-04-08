@@ -79,6 +79,7 @@ class SearchCountSpec:
 class SearchHighlightSpec:
     paths: tuple[str, ...] | None = None
     max_chars: int = 120
+    max_num_passages: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -753,10 +754,10 @@ def _compile_search_highlight_spec(spec: object) -> SearchHighlightSpec | None:
         return None
     if not isinstance(spec, dict):
         raise OperationFailure("$search.highlight requires a document specification")
-    unsupported_options = sorted(set(spec) - {"path", "maxChars"})
+    unsupported_options = sorted(set(spec) - {"path", "maxChars", "maxNumPassages"})
     if unsupported_options:
         raise OperationFailure(
-            "$search.highlight only supports path and maxChars; unsupported keys: "
+            "$search.highlight only supports path, maxChars and maxNumPassages; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     paths = _normalize_search_paths(spec.get("path"))
@@ -769,7 +770,18 @@ def _compile_search_highlight_spec(spec: object) -> SearchHighlightSpec | None:
         or max_chars <= 0
     ):
         raise OperationFailure("$search.highlight.maxChars must be a positive integer")
-    return SearchHighlightSpec(paths=paths, max_chars=max_chars)
+    max_num_passages = spec.get("maxNumPassages")
+    if max_num_passages is not None and (
+        not isinstance(max_num_passages, int)
+        or isinstance(max_num_passages, bool)
+        or max_num_passages <= 0
+    ):
+        raise OperationFailure("$search.highlight.maxNumPassages must be a positive integer")
+    return SearchHighlightSpec(
+        paths=paths,
+        max_chars=max_chars,
+        max_num_passages=max_num_passages,
+    )
 
 
 def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
@@ -1354,11 +1366,14 @@ def _serialized_search_stage_options(query: SearchQuery) -> dict[str, object] | 
             serialized_count["threshold"] = options.count.threshold
         serialized["count"] = serialized_count
     if options.highlight is not None:
-        serialized["highlight"] = {
+        serialized_highlight: dict[str, object] = {
             "paths": list(options.highlight.paths) if options.highlight.paths is not None else None,
             "maxChars": options.highlight.max_chars,
             "resultField": SEARCH_HIGHLIGHTS_FIELD,
         }
+        if options.highlight.max_num_passages is not None:
+            serialized_highlight["maxNumPassages"] = options.highlight.max_num_passages
+        serialized["highlight"] = serialized_highlight
     if options.facet is not None:
         if options.facet.facets:
             serialized["facet"] = {
@@ -2785,7 +2800,7 @@ def build_search_stage_option_previews(
                         preview_fragments.append(deepcopy(item))
             if len(preview_fragments) >= 3:
                 break
-        previews["highlightPreview"] = {
+        highlight_preview: dict[str, object] = {
             "resultField": SEARCH_HIGHLIGHTS_FIELD,
             "requestedPaths": list(options.highlight.paths or ()),
             "fragmentCount": sum(
@@ -2795,6 +2810,9 @@ def build_search_stage_option_previews(
             ),
             "sample": preview_fragments[:3],
         }
+        if options.highlight.max_num_passages is not None:
+            highlight_preview["maxNumPassages"] = options.highlight.max_num_passages
+        previews["highlightPreview"] = highlight_preview
     if options.facet is not None:
         previews["facetPreview"] = _facet_preview_payload(documents, options.facet)
     return previews
@@ -2896,6 +2914,11 @@ def build_search_highlights(
                     continue
                 seen.add(marker)
                 highlights.append(payload)
+                if (
+                    spec.max_num_passages is not None
+                    and len(highlights) >= spec.max_num_passages
+                ):
+                    return highlights
     return highlights
 
 

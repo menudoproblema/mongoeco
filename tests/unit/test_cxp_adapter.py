@@ -358,6 +358,7 @@ class CxpAlignmentTests(unittest.TestCase):
             {
                 'supportsPath': True,
                 'supportsMaxChars': True,
+                'supportsMaxNumPassages': True,
                 'resultField': 'searchHighlights',
             },
         )

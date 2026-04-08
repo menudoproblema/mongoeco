@@ -1409,6 +1409,7 @@
                 "highlight": {
                   "resultField": "searchHighlights",
                   "supportsMaxChars": true,
+                  "supportsMaxNumPassages": true,
                   "supportsPath": true
                 }
               },
@@ -1561,6 +1562,7 @@
             "highlight": {
               "resultField": "searchHighlights",
               "supportsMaxChars": true,
+              "supportsMaxNumPassages": true,
               "supportsPath": true
             }
           },
@@ -3284,6 +3286,7 @@
               "highlight": {
                 "resultField": "searchHighlights",
                 "supportsMaxChars": true,
+                "supportsMaxNumPassages": true,
                 "supportsPath": true
               }
             },
@@ -12037,6 +12040,7 @@
             "highlight": {
               "resultField": "searchHighlights",
               "supportsMaxChars": true,
+              "supportsMaxNumPassages": true,
               "supportsPath": true
             }
           },
@@ -12189,6 +12193,7 @@
         "highlight": {
           "resultField": "searchHighlights",
           "supportsMaxChars": true,
+          "supportsMaxNumPassages": true,
           "supportsPath": true
         }
       },

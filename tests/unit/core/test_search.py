@@ -2314,13 +2314,14 @@ class SearchCoreTests(unittest.TestCase):
                 "index": "by_text",
                 "text": {"query": "Ada", "path": "body"},
                 "count": {"type": "total"},
-                "highlight": {"path": ["body"], "maxChars": 32},
+                "highlight": {"path": ["body"], "maxChars": 32, "maxNumPassages": 2},
                 "facet": {"path": "kind", "numBuckets": 4},
             }
         )
         self.assertEqual(query.stage_options.count.mode, "total")
         self.assertEqual(query.stage_options.highlight.paths, ("body",))
         self.assertEqual(query.stage_options.highlight.max_chars, 32)
+        self.assertEqual(query.stage_options.highlight.max_num_passages, 2)
         self.assertEqual(query.stage_options.facet.path, "kind")
         self.assertEqual(query.stage_options.facet.num_buckets, 4)
         self.assertEqual(query.stage_options.facet.facet_type, "string")
@@ -4011,7 +4012,7 @@ class SearchCoreTests(unittest.TestCase):
             (
                 search_module._compile_search_highlight_spec,
                 {"path": "title", "extra": True},
-                "highlight only supports path and maxChars",
+                "highlight only supports path, maxChars and maxNumPassages",
             ),
             (
                 search_module._compile_search_highlight_spec,
@@ -4022,6 +4023,11 @@ class SearchCoreTests(unittest.TestCase):
                 search_module._compile_search_highlight_spec,
                 {"path": "title", "maxChars": 0},
                 "highlight.maxChars must be a positive integer",
+            ),
+            (
+                search_module._compile_search_highlight_spec,
+                {"path": "title", "maxNumPassages": 0},
+                "highlight.maxNumPassages must be a positive integer",
             ),
             (
                 search_module._compile_search_facet_spec,
@@ -4411,6 +4417,34 @@ class SearchCoreTests(unittest.TestCase):
             highlights,
             [{"path": "title", "operator": "text", "text": "Ada title", "matchedTerms": ["ada"]}],
         )
+        unbounded_highlights = search_module.build_search_highlights(
+            {"title": "Ada title", "body": "Ada body"},
+            definition=definition,
+            query=SearchTextQuery(
+                index_name="by_text",
+                raw_query="Ada",
+                terms=("ada",),
+                paths=("title", "body"),
+            ),
+            spec=search_module.SearchHighlightSpec(paths=("title", "body"), max_chars=20),
+        )
+        self.assertEqual(len(unbounded_highlights), 2)
+        limited_highlights = search_module.build_search_highlights(
+            {"title": "Ada title", "body": "Ada body"},
+            definition=definition,
+            query=SearchTextQuery(
+                index_name="by_text",
+                raw_query="Ada",
+                terms=("ada",),
+                paths=("title", "body"),
+            ),
+            spec=search_module.SearchHighlightSpec(
+                paths=("title", "body"),
+                max_chars=20,
+                max_num_passages=1,
+            ),
+        )
+        self.assertEqual(len(limited_highlights), 1)
 
         preview_query = SearchTextQuery(
             index_name="by_text",
@@ -4419,7 +4453,11 @@ class SearchCoreTests(unittest.TestCase):
             paths=("title",),
             stage_options=search_module.SearchStageOptions(
                 count=search_module.SearchCountSpec(mode="lowerBound", threshold=2),
-                highlight=search_module.SearchHighlightSpec(paths=("title",), max_chars=10),
+                highlight=search_module.SearchHighlightSpec(
+                    paths=("title",),
+                    max_chars=10,
+                    max_num_passages=2,
+                ),
                 facet=search_module.SearchFacetSpec(path="kind", num_buckets=2),
             ),
         )
@@ -4438,6 +4476,7 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(previews["countPreview"]["exact"], False)
         self.assertEqual(previews["countPreview"]["threshold"], 2)
         self.assertEqual(len(previews["highlightPreview"]["sample"]), 3)
+        self.assertEqual(previews["highlightPreview"]["maxNumPassages"], 2)
         self.assertEqual(previews["facetPreview"]["type"], "string")
         self.assertEqual(previews["facetPreview"]["buckets"], [{"value": "note", "count": 3}])
 

@@ -1167,6 +1167,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
         'highlight': {
             'supportsPath': True,
             'supportsMaxChars': True,
+            'supportsMaxNumPassages': True,
             'resultField': 'searchHighlights',
         },
         'facet': {
@@ -1246,6 +1247,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
                     'highlight': {
                         'supportsPath': True,
                         'supportsMaxChars': True,
+                        'supportsMaxNumPassages': True,
                         'resultField': 'searchHighlights',
                     },
                     'facet': {
