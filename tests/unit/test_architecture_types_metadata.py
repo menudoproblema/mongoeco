@@ -1001,6 +1001,39 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             sparse_model.definition.partial_filter_expression,
             {"tenant": {"$exists": True}},
         )
+        wildcard_definition = IndexDefinition(
+            [("$**", 1)],
+            name="wildcard_idx",
+            wildcard_projection={"private": 0},
+        )
+        wildcard_model = IndexModel(
+            [("$**", 1)],
+            wildcardProjection={"private": 0},
+        )
+        self.assertEqual(
+            wildcard_definition.to_model_document()["wildcardProjection"],
+            {"private": 0},
+        )
+        self.assertEqual(
+            wildcard_definition.to_list_document()["wildcardProjection"],
+            {"private": 0},
+        )
+        self.assertEqual(
+            wildcard_definition.to_information_entry()["wildcardProjection"],
+            {"private": 0},
+        )
+        self.assertEqual(
+            wildcard_model.document["wildcardProjection"],
+            {"private": 0},
+        )
+        bool_wildcard_model = IndexModel(
+            [("$**", 1)],
+            wildcardProjection={"private": False},
+        )
+        self.assertEqual(
+            bool_wildcard_model.document["wildcardProjection"],
+            {"private": 0},
+        )
 
         with self.assertRaises(TypeError):
             IndexDefinition([("tenant", 1)], name="bad", unique=1)  # type: ignore[arg-type]
@@ -1020,6 +1053,20 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             IndexModel([("tenant", 1)], hidden=1)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             IndexModel([("tenant", 1)], partialFilterExpression="x")  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("$**", 1)], wildcardProjection=2)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            IndexModel([("$**", 1)], wildcardProjection={"": 0})
+        with self.assertRaises(TypeError):
+            IndexModel([("$**", 1)], wildcardProjection={"tenant": 2})
+        with self.assertRaises(ValueError):
+            IndexDefinition(
+                [("tenant", 1)],
+                name="tenant_idx",
+                wildcard_projection={"tenant": 0},
+            )
+        with self.assertRaises(ValueError):
+            IndexModel([("tenant", 1)], wildcardProjection={"tenant": 0})
         with self.assertRaises(TypeError):
             IndexModel([("tenant", 1)], unexpected=True)  # type: ignore[arg-type]
 

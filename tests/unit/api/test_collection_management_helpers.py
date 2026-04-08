@@ -481,6 +481,31 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         with self.assertRaises(TypeError):
             asyncio.run(collection.create_index([("email", 1)], background=1))  # type: ignore[arg-type]
 
+    def test_create_index_accepts_wildcard_projection_as_compatibility_noop(self):
+        class EngineStub:
+            async def create_index(self, *args, **kwargs):
+                self.kwargs = kwargs
+                return "email_1"
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        asyncio.run(
+            collection.create_index(
+                [("$**", 1)],
+                wildcard_projection={"private": 0},
+            )
+        )
+        self.assertNotIn("wildcard_projection", engine.kwargs)
+
+        with self.assertRaises(TypeError):
+            asyncio.run(
+                collection.create_index(
+                    [("$**", 1)],
+                    wildcard_projection=1,  # type: ignore[arg-type]
+                )
+            )
+
     def test_create_index_forwards_collation(self):
         class EngineStub:
             def __init__(self):

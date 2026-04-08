@@ -103,8 +103,10 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             "partialFilterExpression",
             "expireAfterSeconds",
             "weights",
+            "wildcardProjection",
             "defaultLanguage",
             "languageOverride",
+            "wildcard_projection",
             "default_language",
             "language_override",
         }
@@ -133,10 +135,14 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
             kwargs["expireAfterSeconds"] = raw_index["expireAfterSeconds"]
         if "weights" in raw_index:
             kwargs["weights"] = raw_index["weights"]
+        if "wildcardProjection" in raw_index:
+            kwargs["wildcardProjection"] = raw_index["wildcardProjection"]
         if "defaultLanguage" in raw_index:
             kwargs["defaultLanguage"] = raw_index["defaultLanguage"]
         if "languageOverride" in raw_index:
             kwargs["languageOverride"] = raw_index["languageOverride"]
+        if "wildcard_projection" in raw_index:
+            kwargs["wildcard_projection"] = raw_index["wildcard_projection"]
         if "default_language" in raw_index:
             kwargs["default_language"] = raw_index["default_language"]
         if "language_override" in raw_index:

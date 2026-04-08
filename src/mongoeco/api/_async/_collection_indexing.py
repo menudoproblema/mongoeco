@@ -31,6 +31,7 @@ async def create_index(
     partial_filter_expression: dict[str, object] | None = None,
     expire_after_seconds: int | None = None,
     weights: dict[str, int] | None = None,
+    wildcard_projection: dict[str, object] | None = None,
     default_language: str | None = None,
     language_override: str | None = None,
     comment: object | None = None,
@@ -40,6 +41,8 @@ async def create_index(
     normalized_keys = collection._normalize_index_keys(keys)
     if not isinstance(background, bool):
         raise TypeError("background must be a bool")
+    if wildcard_projection is not None and not isinstance(wildcard_projection, dict):
+        raise TypeError("wildcard_projection must be a dict or None")
     expire_after_seconds = collection._normalize_expire_after_seconds(expire_after_seconds)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
     created_name = await collection._engine.create_index(

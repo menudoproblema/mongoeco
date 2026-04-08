@@ -111,6 +111,14 @@ def _text_index_fields(keys: IndexKeySpec) -> tuple[str, ...]:
     return tuple(field for field, direction in keys if direction == "text")
 
 
+def _is_wildcard_index_field(field: str) -> bool:
+    return field == "$**" or field.endswith(".$**")
+
+
+def _has_wildcard_index_path(keys: IndexKeySpec) -> bool:
+    return any(_is_wildcard_index_field(field) for field, _direction in keys)
+
+
 def _validate_text_index_weights(
     weights: object,
     *,
@@ -146,6 +154,31 @@ def _normalize_text_index_language(value: object, *, field_name: str) -> str | N
     return value
 
 
+def _validate_wildcard_projection(value: object) -> Document:
+    if not isinstance(value, dict):
+        raise TypeError("wildcard_projection must be a dict or None")
+    normalized: Document = {}
+    for field, projection in value.items():
+        if not isinstance(field, str) or not field:
+            raise TypeError(
+                "wildcard_projection field names must be non-empty strings"
+            )
+        if isinstance(projection, bool):
+            normalized[field] = int(projection)
+            continue
+        if (
+            isinstance(projection, int)
+            and not isinstance(projection, bool)
+            and projection in (0, 1)
+        ):
+            normalized[field] = projection
+            continue
+        raise TypeError(
+            "wildcard_projection values must be booleans or 0/1 integers"
+        )
+    return normalized
+
+
 @dataclass(frozen=True, slots=True)
 class IndexDefinition:
     keys: IndexKeySpec
@@ -157,6 +190,7 @@ class IndexDefinition:
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
     weights: TextIndexWeights | None = None
+    wildcard_projection: Document | None = None
     default_language: str | None = None
     language_override: str | None = None
 
@@ -172,6 +206,7 @@ class IndexDefinition:
         partial_filter_expression: Filter | None = None,
         expire_after_seconds: int | None = None,
         weights: TextIndexWeights | None = None,
+        wildcard_projection: Document | None = None,
         default_language: str | None = None,
         language_override: str | None = None,
     ):
@@ -203,6 +238,15 @@ class IndexDefinition:
                 weights,
                 text_fields=text_fields,
             )
+        normalized_wildcard_projection: Document | None = None
+        if wildcard_projection is not None:
+            if not _has_wildcard_index_path(normalized):
+                raise ValueError(
+                    "wildcard_projection is only supported for wildcard indexes"
+                )
+            normalized_wildcard_projection = _validate_wildcard_projection(
+                wildcard_projection
+            )
         normalized_default_language = _normalize_text_index_language(
             default_language,
             field_name="default_language",
@@ -227,6 +271,11 @@ class IndexDefinition:
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
         object.__setattr__(self, "expire_after_seconds", expire_after_seconds)
         object.__setattr__(self, "weights", deepcopy(normalized_weights))
+        object.__setattr__(
+            self,
+            "wildcard_projection",
+            deepcopy(normalized_wildcard_projection),
+        )
         object.__setattr__(self, "default_language", normalized_default_language)
         object.__setattr__(self, "language_override", normalized_language_override)
 
@@ -252,6 +301,8 @@ class IndexDefinition:
             document["expireAfterSeconds"] = self.expire_after_seconds
         if self.weights is not None:
             document["weights"] = deepcopy(self.weights)
+        if self.wildcard_projection is not None:
+            document["wildcardProjection"] = deepcopy(self.wildcard_projection)
         if self.default_language is not None:
             document["default_language"] = self.default_language
         if self.language_override is not None:
@@ -277,6 +328,8 @@ class IndexDefinition:
             document["expireAfterSeconds"] = self.expire_after_seconds
         if self.weights is not None:
             document["weights"] = deepcopy(self.weights)
+        if self.wildcard_projection is not None:
+            document["wildcardProjection"] = deepcopy(self.wildcard_projection)
         if self.default_language is not None:
             document["default_language"] = self.default_language
         if self.language_override is not None:
@@ -299,6 +352,8 @@ class IndexDefinition:
             entry["expireAfterSeconds"] = self.expire_after_seconds
         if self.weights is not None:
             entry["weights"] = deepcopy(self.weights)
+        if self.wildcard_projection is not None:
+            entry["wildcardProjection"] = deepcopy(self.wildcard_projection)
         if self.default_language is not None:
             entry["default_language"] = self.default_language
         if self.language_override is not None:
@@ -333,6 +388,7 @@ class IndexModel:
     partial_filter_expression: Filter | None = None
     expire_after_seconds: int | None = None
     weights: TextIndexWeights | None = None
+    wildcard_projection: Document | None = None
     default_language: str | None = None
     language_override: str | None = None
 
@@ -351,6 +407,9 @@ class IndexModel:
         if expire_after_seconds is None:
             expire_after_seconds = kwargs.pop("expire_after_seconds", None)
         weights = kwargs.pop("weights", None)
+        wildcard_projection = kwargs.pop("wildcardProjection", None)
+        if wildcard_projection is None:
+            wildcard_projection = kwargs.pop("wildcard_projection", None)
         default_language = kwargs.pop("defaultLanguage", None)
         if default_language is None:
             default_language = kwargs.pop("default_language", None)
@@ -386,6 +445,15 @@ class IndexModel:
                 weights,
                 text_fields=text_fields,
             )
+        normalized_wildcard_projection: Document | None = None
+        if wildcard_projection is not None:
+            if not _has_wildcard_index_path(normalized):
+                raise ValueError(
+                    "wildcard_projection is only supported for wildcard indexes"
+                )
+            normalized_wildcard_projection = _validate_wildcard_projection(
+                wildcard_projection
+            )
         normalized_default_language = _normalize_text_index_language(
             default_language,
             field_name="default_language",
@@ -414,6 +482,11 @@ class IndexModel:
         object.__setattr__(self, "partial_filter_expression", deepcopy(partial_filter_expression))
         object.__setattr__(self, "expire_after_seconds", expire_after_seconds)
         object.__setattr__(self, "weights", deepcopy(normalized_weights))
+        object.__setattr__(
+            self,
+            "wildcard_projection",
+            deepcopy(normalized_wildcard_projection),
+        )
         object.__setattr__(self, "default_language", normalized_default_language)
         object.__setattr__(self, "language_override", normalized_language_override)
 
@@ -433,6 +506,7 @@ class IndexModel:
             partial_filter_expression=self.partial_filter_expression,
             expire_after_seconds=self.expire_after_seconds,
             weights=self.weights,
+            wildcard_projection=self.wildcard_projection,
             default_language=self.default_language,
             language_override=self.language_override,
         )

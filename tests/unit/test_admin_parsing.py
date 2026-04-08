@@ -110,6 +110,27 @@ class AdminParsingTests(unittest.TestCase):
         )
         self.assertEqual(snake_case_language_models[0].default_language, "spanish")
         self.assertEqual(snake_case_language_models[0].language_override, "lang")
+        wildcard_models = normalize_index_models_from_command(
+            [
+                {
+                    "key": {"$**": 1},
+                    "wildcardProjection": {"private": 0},
+                }
+            ]
+        )
+        self.assertEqual(wildcard_models[0].wildcard_projection, {"private": 0})
+        snake_case_wildcard_models = normalize_index_models_from_command(
+            [
+                {
+                    "key": {"$**": 1},
+                    "wildcard_projection": {"private": 1},
+                }
+            ]
+        )
+        self.assertEqual(
+            snake_case_wildcard_models[0].wildcard_projection,
+            {"private": 1},
+        )
 
         with self.assertRaises(TypeError):
             normalize_index_models_from_command("email_1")

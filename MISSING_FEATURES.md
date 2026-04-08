@@ -6,7 +6,7 @@ arquitectonica y las decisiones de endurecimiento del diseno viven ya en
 
 | Prioridad | Nombre                                                            | Impacto     | Esfuerzo    | Refs                                                              |
 | --------- | ----------------------------------------------------------------- | ----------- | ----------- | ----------------------------------------------------------------- |
-| 10        | Opciones avanzadas de indice mas alla del subset local actual (`hidden`/`partialFilterExpression`/TTL/`background`) | Medio-Alto  | Medio       | `_types/indexes.py:109`<br>`admin_parsing.py:84`                 |
+| 10        | Cerrar paridad de opciones avanzadas de indice mas alla del subset local actual (`hidden`/`partialFilterExpression`/TTL/`background`/`wildcardProjection`) con cola pendiente (`min`/`max`/`bucketSize`) | Medio-Alto  | Medio       | `_types/indexes.py:109`<br>`admin_parsing.py:84`                 |
 | 11        | Ir mas alla del subset avanzado local de `$search` hacia paridad Atlas-like real (`searchMeta`, collector `facet`, highlighting mas rico, count meta, semantica mas rica de `autocomplete`/`wildcard`/`regex`) | Medio-Alto  | Medio-Alto  | `search.py:126`<br>`TODO.md:10`                                   |
 | 11.5      | Ampliar mappings locales de `$search` mas alla de `string`/`token`/`autocomplete`/`number`/`date`/`boolean`/`objectId`/`uuid`/`document`/`embeddedDocuments` | Medio-Alto  | Medio       | `search.py:29`<br>`TODO.md:29`                                    |
 | 14        | Llevar `vectorSearch` mas alla del retrieval hibrido local actual | Medio-Alto  | Alto        | `README.md:20`<br>`search.py:187`<br>`TODO.md:25`                 |
