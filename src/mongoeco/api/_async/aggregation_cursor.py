@@ -31,7 +31,11 @@ from mongoeco.core.aggregation import (
 )
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
-from mongoeco.core.search import strip_search_result_metadata
+from mongoeco.core.search import (
+    build_search_meta_document,
+    compile_search_stage,
+    strip_search_result_metadata,
+)
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import AggregateExplanation, Document, QueryPlanExplanation
@@ -105,7 +109,7 @@ class AsyncAggregationCursor:
         if not isinstance(stage, dict) or len(stage) != 1:
             return None
         operator, spec = next(iter(stage.items()))
-        if operator not in {"$search", "$vectorSearch"}:
+        if operator not in {"$search", "$searchMeta", "$vectorSearch"}:
             return None
         return operator, spec
 
@@ -306,16 +310,22 @@ class AsyncAggregationCursor:
         search_documents = getattr(self._collection._engine, "search_documents", None)
         if not callable(search_documents):
             raise OperationFailure(f"{operator} is not supported by this engine")
-        return await search_documents(
+        resolved_operator = "$search" if operator == "$searchMeta" else operator
+        query = compile_search_stage(operator, spec) if operator == "$searchMeta" else None
+        documents = await search_documents(
             self._collection._db_name,
             self._collection._collection_name,
-            operator,
+            resolved_operator,
             spec,
             max_time_ms=self._max_time_ms,
             context=self._session,
             result_limit_hint=result_limit_hint,
             downstream_filter_spec=downstream_filter_spec,
         )
+        if operator != "$searchMeta":
+            return documents
+        assert query is not None
+        return [build_search_meta_document(documents, query=query)]
 
     async def _materialize_leading_search_pipeline(
         self,

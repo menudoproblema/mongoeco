@@ -663,6 +663,13 @@ class SearchCoreTests(unittest.TestCase):
                     {"$search": {"text": {"query": "ada"}}},
                 ]
             )
+        with self.assertRaises(OperationFailure):
+            validate_search_stage_pipeline(
+                [
+                    {"$match": {"x": 1}},
+                    {"$searchMeta": {"text": {"query": "ada"}}},
+                ]
+            )
 
     def test_validate_search_stage_pipeline_rejects_multiple_search_operators(self) -> None:
         with self.assertRaises(OperationFailure):
@@ -715,6 +722,77 @@ class SearchCoreTests(unittest.TestCase):
                 paths=("title",),
             ),
         )
+
+    def test_compile_search_meta_stage_and_build_meta_document(self) -> None:
+        query = compile_search_stage(
+            "$searchMeta",
+            {
+                "index": "by_text",
+                "text": {"query": "ada", "path": "title"},
+                "count": {"type": "total"},
+                "facet": {"path": "kind", "numBuckets": 2},
+            },
+        )
+        self.assertIsInstance(query, SearchTextQuery)
+        self.assertEqual(
+            search_module.build_search_meta_document(
+                [
+                    {"kind": "note"},
+                    {"kind": "note"},
+                    {"kind": "reference"},
+                ],
+                query=query,
+            ),
+            {
+                "count": {"total": 3},
+                "facet": {
+                    "path": "kind",
+                    "numBuckets": 2,
+                    "buckets": [
+                        {"value": "note", "count": 2},
+                        {"value": "reference", "count": 1},
+                    ],
+                },
+            },
+        )
+        lower_bound_query = compile_search_stage(
+            "$searchMeta",
+            {
+                "index": "by_text",
+                "text": {"query": "ada", "path": "title"},
+                "count": {"type": "lowerBound"},
+            },
+        )
+        self.assertEqual(
+            search_module.build_search_meta_document(
+                [{"kind": "note"}, {"kind": "reference"}],
+                query=lower_bound_query,
+            ),
+            {"count": {"lowerBound": 2}},
+        )
+        with self.assertRaisesRegex(OperationFailure, "\\$searchMeta does not support highlight"):
+            search_module.build_search_meta_document(
+                [],
+                query=SearchTextQuery(
+                    index_name="by_text",
+                    raw_query="ada",
+                    terms=("ada",),
+                    paths=("title",),
+                    stage_options=search_module.SearchStageOptions(
+                        highlight=search_module.SearchHighlightSpec(paths=("title",)),
+                    ),
+                ),
+            )
+        with self.assertRaisesRegex(OperationFailure, "\\$searchMeta requires at least one of count or facet"):
+            search_module.build_search_meta_document(
+                [],
+                query=SearchTextQuery(
+                    index_name="by_text",
+                    raw_query="ada",
+                    terms=("ada",),
+                    paths=("title",),
+                ),
+            )
 
     def test_wrapper_compilers_reject_wrong_operator_shapes(self) -> None:
         with self.assertRaisesRegex(OperationFailure, "exists specification is required"):

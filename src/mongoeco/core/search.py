@@ -2362,6 +2362,28 @@ def build_search_stage_option_previews(
     return previews
 
 
+def build_search_meta_document(
+    documents: list[Document],
+    *,
+    query: SearchTextLikeQuery,
+) -> Document:
+    options = _search_stage_options(query)
+    if options.highlight is not None:
+        raise OperationFailure("$searchMeta does not support highlight")
+    if options.count is None and options.facet is None:
+        raise OperationFailure("$searchMeta requires at least one of count or facet")
+    result: Document = {}
+    if options.count is not None:
+        count_value = len(documents)
+        if options.count.mode == "lowerBound":
+            result["count"] = {"lowerBound": count_value}
+        else:
+            result["count"] = {"total": count_value}
+    if options.facet is not None:
+        result["facet"] = _facet_preview(documents, options.facet)
+    return result
+
+
 def build_search_highlights(
     document: Document,
     *,
@@ -2724,6 +2746,7 @@ def _explain_vector_query(query: SearchVectorQuery) -> dict[str, object | None]:
 
 _SEARCH_STAGE_COMPILERS: dict[str, Callable[[object], SearchQuery]] = {
     "$search": compile_search_text_like_query,
+    "$searchMeta": compile_search_text_like_query,
     "$vectorSearch": compile_vector_search_query,
 }
 

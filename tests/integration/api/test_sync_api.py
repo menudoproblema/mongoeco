@@ -437,6 +437,44 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         self,
                         advanced_explanation,
                     )
+                    search_meta = collection.aggregate(
+                        [
+                            {
+                                "$searchMeta": {
+                                    "index": "by_text",
+                                    "text": {"query": "ada", "path": ["title", "body"]},
+                                    "count": {"type": "total"},
+                                    "facet": {"path": "kind", "numBuckets": 5},
+                                }
+                            }
+                        ]
+                    ).to_list()
+                    self.assertEqual(
+                        search_meta,
+                        [
+                            {
+                                "count": {"total": 2},
+                                "facet": {
+                                    "path": "kind",
+                                    "numBuckets": 5,
+                                    "buckets": [{"value": "note", "count": 2}],
+                                },
+                            }
+                        ],
+                    )
+                    with self.assertRaisesRegex(OperationFailure, "\\$searchMeta does not support highlight"):
+                        collection.aggregate(
+                            [
+                                {
+                                    "$searchMeta": {
+                                        "index": "by_text",
+                                        "text": {"query": "ada", "path": ["title", "body"]},
+                                        "count": {"type": "total"},
+                                        "highlight": {"path": "title"},
+                                    }
+                                }
+                            ]
+                        ).to_list()
 
                     compound_hits = collection.aggregate(
                         [

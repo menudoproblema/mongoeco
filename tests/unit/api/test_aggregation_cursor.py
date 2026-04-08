@@ -330,6 +330,71 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(OperationFailure, "search stage was not present"):
             await AsyncAggregationCursor(collection, [])._search_documents()
 
+    async def test_search_meta_helper_maps_to_search_and_returns_metadata(self):
+        collection = _FakeCollection([])
+        calls: list[str] = []
+
+        async def _search_documents(*args, **kwargs):
+            del kwargs
+            calls.append(str(args[2]))
+            return [
+                {"_id": "1", "kind": "note"},
+                {"_id": "2", "kind": "reference"},
+            ]
+
+        collection._engine.search_documents = _search_documents
+        cursor = AsyncAggregationCursor(
+            collection,
+            [
+                {
+                    "$searchMeta": {
+                        "index": "by_text",
+                        "text": {"query": "ada", "path": "name"},
+                        "count": {"type": "total"},
+                        "facet": {"path": "kind", "numBuckets": 2},
+                    }
+                }
+            ],
+        )
+
+        self.assertEqual(
+            await cursor._search_documents(),
+            [
+                {
+                    "count": {"total": 2},
+                    "facet": {
+                        "path": "kind",
+                        "numBuckets": 2,
+                        "buckets": [
+                            {"value": "note", "count": 1},
+                            {"value": "reference", "count": 1},
+                        ],
+                    },
+                }
+            ],
+        )
+        self.assertEqual(calls, ["$search"])
+
+        with self.assertRaisesRegex(OperationFailure, "\\$searchMeta requires at least one of count or facet"):
+            await AsyncAggregationCursor(
+                collection,
+                [{"$searchMeta": {"index": "by_text", "text": {"query": "ada", "path": "name"}}}],
+            )._search_documents()
+        with self.assertRaisesRegex(OperationFailure, "\\$searchMeta does not support highlight"):
+            await AsyncAggregationCursor(
+                collection,
+                [
+                    {
+                        "$searchMeta": {
+                            "index": "by_text",
+                            "text": {"query": "ada", "path": "name"},
+                            "count": {"type": "total"},
+                            "highlight": {"path": "name"},
+                        }
+                    }
+                ],
+            )._search_documents()
+
     async def test_search_materialization_expands_prefix_for_match_then_limit(self):
         collection = _FakeCollection([])
         calls: list[int | None] = []
