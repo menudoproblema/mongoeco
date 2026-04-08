@@ -21,7 +21,8 @@ Objetivo: ampliar búsqueda local solo donde el siguiente salto aporte valor rea
 Pendientes:
 
 * decidir si merece la pena ir más allá del tier textual local ya cerrado hacia features Atlas-like avanzadas, sobre todo:
-  * collector `facet` completo / `searchMeta`
+  * collector `facet` y `searchMeta` más allá del preview local actual
+    (ya con `facet` tipado `string`/`number`/`date` en runtime local)
   * `highlight` con semántica más rica que snippets locales
   * `count` como meta/collector más allá del preview local
   * semántica todavía más rica de `autocomplete`

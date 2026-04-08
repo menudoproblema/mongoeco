@@ -365,6 +365,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 {
                     "count": {"total": 2},
                     "facet": {
+                        "type": "string",
                         "path": "kind",
                         "numBuckets": 2,
                         "buckets": [

@@ -43,6 +43,7 @@ _SUPPORTED_REGEX_FLAGS = {
     "x": re.VERBOSE,
 }
 _SUPPORTED_REGEX_FLAGS_LABEL = ", ".join(sorted(_SUPPORTED_REGEX_FLAGS))
+_SUPPORTED_SEARCH_FACET_TYPES = frozenset({"string", "number", "date"})
 TEXTUAL_SEARCH_FIELD_MAPPING_TYPES = frozenset({"string", "autocomplete", "token"})
 EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES = frozenset(
     {
@@ -79,7 +80,8 @@ class SearchHighlightSpec:
 class SearchFacetSpec:
     path: str = ""
     num_buckets: int = 10
-    facets: tuple[tuple[str, str, int], ...] = ()
+    facet_type: str = "string"
+    facets: tuple[tuple[str, str, str, int], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -727,7 +729,7 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
         raw_facets = spec.get("facets")
         if not isinstance(raw_facets, dict) or not raw_facets:
             raise OperationFailure("$search.facet.facets must be a non-empty document")
-        resolved_facets: list[tuple[str, str, int]] = []
+        resolved_facets: list[tuple[str, str, str, int]] = []
         for facet_name, facet_spec in raw_facets.items():
             if not isinstance(facet_name, str) or not facet_name:
                 raise OperationFailure("$search.facet facet names must be non-empty strings")
@@ -744,8 +746,11 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
                     + ", ".join(facet_unsupported_options)
                 )
             facet_type = facet_spec.get("type", "string")
-            if facet_type != "string":
-                raise OperationFailure("$search.facet facets currently support only type='string'")
+            if facet_type not in _SUPPORTED_SEARCH_FACET_TYPES:
+                raise OperationFailure(
+                    "$search.facet facet type must be one of: "
+                    + ", ".join(sorted(_SUPPORTED_SEARCH_FACET_TYPES))
+                )
             facet_path = facet_spec.get("path")
             if not isinstance(facet_path, str) or not facet_path:
                 raise OperationFailure("$search.facet facet path must be a non-empty string")
@@ -756,17 +761,23 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
                 or facet_num_buckets <= 0
             ):
                 raise OperationFailure("$search.facet facet numBuckets must be a positive integer")
-            resolved_facets.append((facet_name, facet_path, facet_num_buckets))
+            resolved_facets.append((facet_name, facet_path, facet_type, facet_num_buckets))
         return SearchFacetSpec(facets=tuple(resolved_facets))
-    unsupported_options = sorted(set(spec) - {"path", "numBuckets"})
+    unsupported_options = sorted(set(spec) - {"type", "path", "numBuckets"})
     if unsupported_options:
         raise OperationFailure(
-            "$search.facet only supports path and numBuckets; unsupported keys: "
+            "$search.facet only supports type, path and numBuckets; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     path = spec.get("path")
     if not isinstance(path, str) or not path:
         raise OperationFailure("$search.facet.path must be a non-empty string")
+    facet_type = spec.get("type", "string")
+    if facet_type not in _SUPPORTED_SEARCH_FACET_TYPES:
+        raise OperationFailure(
+            "$search.facet.type must be one of: "
+            + ", ".join(sorted(_SUPPORTED_SEARCH_FACET_TYPES))
+        )
     num_buckets = spec.get("numBuckets", 10)
     if (
         not isinstance(num_buckets, int)
@@ -774,7 +785,7 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
         or num_buckets <= 0
     ):
         raise OperationFailure("$search.facet.numBuckets must be a positive integer")
-    return SearchFacetSpec(path=path, num_buckets=num_buckets)
+    return SearchFacetSpec(path=path, num_buckets=num_buckets, facet_type=facet_type)
 
 
 def compile_search_text_query(spec: object) -> SearchTextQuery:
@@ -1268,13 +1279,14 @@ def _serialized_search_stage_options(query: SearchQuery) -> dict[str, object] | 
         if options.facet.facets:
             serialized["facet"] = {
                 "facets": {
-                    name: {"type": "string", "path": path, "numBuckets": num_buckets}
-                    for name, path, num_buckets in options.facet.facets
+                    name: {"type": facet_type, "path": path, "numBuckets": num_buckets}
+                    for name, path, facet_type, num_buckets in options.facet.facets
                 },
                 "previewOnly": True,
             }
         else:
             serialized["facet"] = {
+                "type": options.facet.facet_type,
                 "path": options.facet.path,
                 "numBuckets": options.facet.num_buckets,
                 "previewOnly": True,
@@ -1807,7 +1819,7 @@ def _compile_search_wildcard_clause(index_name: str, clause_spec: object) -> Sea
     unsupported_options = sorted(set(clause_spec) - {"query", "path", "allowAnalyzedField"})
     if unsupported_options:
         raise OperationFailure(
-            "$search.wildcard only supports query and path; unsupported keys: "
+            "$search.wildcard only supports query, path and allowAnalyzedField; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     raw_query = clause_spec.get("query")
@@ -2710,9 +2722,9 @@ def _facet_preview_payload(
             "facets": {
                 name: _facet_preview(
                     documents,
-                    SearchFacetSpec(path=path, num_buckets=num_buckets),
+                    SearchFacetSpec(path=path, num_buckets=num_buckets, facet_type=facet_type),
                 )
-                for name, path, num_buckets in spec.facets
+                for name, path, facet_type, num_buckets in spec.facets
             }
         }
     return _facet_preview(documents, spec)
@@ -2892,6 +2904,12 @@ def _facet_preview(
             normalized = _normalize_search_scalar_value(value)
             if normalized is None:
                 continue
+            normalized_kind = normalized[0]
+            if spec.facet_type == "date":
+                if normalized_kind not in {"date", "datetime"}:
+                    continue
+            elif normalized_kind != spec.facet_type:
+                continue
             if normalized in seen_in_document:
                 continue
             seen_in_document.add(normalized)
@@ -2905,6 +2923,7 @@ def _facet_preview(
         )[: spec.num_buckets]
     ]
     return {
+        "type": spec.facet_type,
         "path": spec.path,
         "numBuckets": spec.num_buckets,
         "buckets": buckets,

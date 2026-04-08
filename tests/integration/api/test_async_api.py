@@ -500,6 +500,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             {
                                 "count": {"total": 2},
                                 "facet": {
+                                    "type": "string",
                                     "path": "kind",
                                     "numBuckets": 5,
                                     "buckets": [{"value": "note", "count": 2}],
@@ -530,11 +531,13 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                 "facet": {
                                     "facets": {
                                         "kindFacet": {
+                                            "type": "string",
                                             "path": "kind",
                                             "numBuckets": 5,
                                             "buckets": [{"value": "note", "count": 2}],
                                         },
                                         "titleFacet": {
+                                            "type": "string",
                                             "path": "title",
                                             "numBuckets": 3,
                                             "buckets": [

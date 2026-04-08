@@ -436,6 +436,7 @@ def assert_search_advanced_option_explanation(
                 "resultField": "searchHighlights",
             },
             "facet": {
+                "type": "string",
                 "path": "kind",
                 "numBuckets": 5,
                 "previewOnly": True,
@@ -453,6 +454,7 @@ def assert_search_advanced_option_explanation(
     case.assertEqual(
         details["facetPreview"],
         {
+            "type": "string",
             "path": "kind",
             "numBuckets": 5,
             "buckets": [{"value": "note", "count": 2}],

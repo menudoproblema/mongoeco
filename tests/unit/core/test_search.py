@@ -914,6 +914,7 @@ class SearchCoreTests(unittest.TestCase):
             {
                 "count": {"total": 3},
                 "facet": {
+                    "type": "string",
                     "path": "kind",
                     "numBuckets": 2,
                     "buckets": [
@@ -964,6 +965,7 @@ class SearchCoreTests(unittest.TestCase):
                 "facet": {
                     "facets": {
                         "kindFacet": {
+                            "type": "string",
                             "path": "kind",
                             "numBuckets": 3,
                             "buckets": [
@@ -972,6 +974,7 @@ class SearchCoreTests(unittest.TestCase):
                             ],
                         },
                         "titleFacet": {
+                            "type": "string",
                             "path": "title",
                             "numBuckets": 2,
                             "buckets": [
@@ -1016,6 +1019,66 @@ class SearchCoreTests(unittest.TestCase):
                     paths=("title",),
                 ),
             )
+
+    def test_compile_search_meta_stage_supports_number_and_date_facets(self) -> None:
+        query = compile_search_stage(
+            "$searchMeta",
+            {
+                "index": "by_text",
+                "text": {"query": "ada", "path": "title"},
+                "facet": {
+                    "facets": {
+                        "priceFacet": {"type": "number", "path": "price", "numBuckets": 2},
+                        "publishedFacet": {"type": "date", "path": "published", "numBuckets": 2},
+                    }
+                },
+            },
+        )
+        self.assertEqual(
+            search_module.build_search_meta_document(
+                [
+                    {"title": "Ada", "price": 10, "published": datetime.date(2020, 1, 1)},
+                    {"title": "Ada", "price": 10.0, "published": datetime.date(2020, 1, 1)},
+                    {"title": "Ada", "price": 20, "published": datetime.date(2021, 1, 1)},
+                    {"title": "Ada", "price": "20", "published": "2021-01-01"},
+                ],
+                query=query,
+            ),
+            {
+                "facet": {
+                    "facets": {
+                        "priceFacet": {
+                            "type": "number",
+                            "path": "price",
+                            "numBuckets": 2,
+                            "buckets": [
+                                {"value": 10.0, "count": 2},
+                                {"value": 20.0, "count": 1},
+                            ],
+                        },
+                        "publishedFacet": {
+                            "type": "date",
+                            "path": "published",
+                            "numBuckets": 2,
+                            "buckets": [
+                                {"value": datetime.date(2020, 1, 1), "count": 2},
+                                {"value": datetime.date(2021, 1, 1), "count": 1},
+                            ],
+                        },
+                    }
+                }
+            },
+        )
+        self.assertEqual(
+            search_query_explain_details(query)["stageOptions"]["facet"],  # type: ignore[index]
+            {
+                "facets": {
+                    "priceFacet": {"type": "number", "path": "price", "numBuckets": 2},
+                    "publishedFacet": {"type": "date", "path": "published", "numBuckets": 2},
+                },
+                "previewOnly": True,
+            },
+        )
 
     def test_wrapper_compilers_reject_wrong_operator_shapes(self) -> None:
         with self.assertRaisesRegex(OperationFailure, "exists specification is required"):
@@ -2026,6 +2089,7 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(query.stage_options.highlight.max_chars, 32)
         self.assertEqual(query.stage_options.facet.path, "kind")
         self.assertEqual(query.stage_options.facet.num_buckets, 4)
+        self.assertEqual(query.stage_options.facet.facet_type, "string")
         self.assertEqual(query.stage_options.facet.facets, ())
 
     def test_compile_search_text_like_query_supports_named_facet_collector(self) -> None:
@@ -2043,7 +2107,10 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(
             query.stage_options.facet.facets,
-            (("kindFacet", "kind", 4), ("titleFacet", "title", 10)),
+            (
+                ("kindFacet", "kind", "string", 4),
+                ("titleFacet", "title", "string", 10),
+            ),
         )
 
     def test_compile_search_text_query_supports_wildcard_path(self) -> None:
@@ -3219,6 +3286,7 @@ class SearchCoreTests(unittest.TestCase):
                     "resultField": "searchHighlights",
                 },
                 "facet": {
+                    "type": "string",
                     "path": "kind",
                     "numBuckets": 3,
                     "previewOnly": True,
@@ -3575,7 +3643,12 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(
             previews["facetPreview"],
-            {"path": "kind", "numBuckets": 3, "buckets": [{"value": "note", "count": 1}]},
+            {
+                "type": "string",
+                "path": "kind",
+                "numBuckets": 3,
+                "buckets": [{"value": "note", "count": 1}],
+            },
         )
         self.assertEqual(previews["highlightPreview"]["resultField"], "searchHighlights")
         self.assertTrue(previews["highlightPreview"]["sample"])
@@ -3625,7 +3698,7 @@ class SearchCoreTests(unittest.TestCase):
             (
                 search_module._compile_search_facet_spec,
                 {"path": "kind", "extra": True},
-                "facet only supports path and numBuckets",
+                "facet only supports type, path and numBuckets",
             ),
             (
                 search_module._compile_search_facet_spec,
@@ -3654,8 +3727,8 @@ class SearchCoreTests(unittest.TestCase):
             ),
             (
                 search_module._compile_search_facet_spec,
-                {"facets": {"kind": {"type": "number", "path": "kind"}}},
-                "only type='string'",
+                {"facets": {"kind": {"type": "object", "path": "kind"}}},
+                "facet type must be one of",
             ),
             (
                 search_module._compile_search_facet_spec,
@@ -3676,6 +3749,11 @@ class SearchCoreTests(unittest.TestCase):
                 search_module._compile_search_facet_spec,
                 {"path": "kind", "numBuckets": 0},
                 "facet.numBuckets must be a positive integer",
+            ),
+            (
+                search_module._compile_search_facet_spec,
+                {"path": "kind", "type": "object"},
+                "facet.type must be one of",
             ),
         )
         for compiler, spec, pattern in invalid_specs:
@@ -3753,7 +3831,7 @@ class SearchCoreTests(unittest.TestCase):
                     "index": "by_text",
                     "wildcard": {"query": "*ada*", "path": "title", "boost": 2},
                 },
-                "only supports query and path",
+                "only supports query, path and allowAnalyzedField",
             ),
             (
                 compile_search_regex_query,
@@ -3983,6 +4061,7 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(previews["countPreview"]["type"], "lowerBound")
         self.assertEqual(previews["countPreview"]["exact"], False)
         self.assertEqual(len(previews["highlightPreview"]["sample"]), 3)
+        self.assertEqual(previews["facetPreview"]["type"], "string")
         self.assertEqual(previews["facetPreview"]["buckets"], [{"value": "note", "count": 3}])
 
         phrase = SearchPhraseQuery(index_name="by_text", raw_query="Ada title", paths=("title",), slop=1)
