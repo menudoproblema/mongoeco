@@ -962,6 +962,32 @@ async def assert_database_command_supports_configure_fail_point(case, engine_nam
                 with case.assertRaisesRegex(OperationFailure, "failpoint"):
                     await _maybe_await(client.alpha.command({"count": "events"}))
 
+                multi_ns = await _maybe_await(
+                    client.alpha.command(
+                        {
+                            "configureFailPoint": "failCommand",
+                            "mode": {"times": 2},
+                            "data": {
+                                "failCommands": ["count"],
+                                "namespaces": ["events", "orders"],
+                            },
+                        }
+                    )
+                )
+                case.assertEqual(multi_ns["data"]["namespaces"], ["alpha.events", "alpha.orders"])
+                with case.assertRaisesRegex(OperationFailure, "failpoint"):
+                    await _maybe_await(client.alpha.command({"count": "events"}))
+                with case.assertRaisesRegex(OperationFailure, "failpoint"):
+                    await _maybe_await(client.alpha.command({"count": "orders"}))
+                case.assertEqual(
+                    (
+                        await _maybe_await(
+                            client.alpha.command({"count": "other_events"})
+                        )
+                    )["n"],
+                    0,
+                )
+
                 await _maybe_await(
                     client.alpha.command(
                         {

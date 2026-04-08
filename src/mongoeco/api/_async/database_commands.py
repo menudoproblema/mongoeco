@@ -325,7 +325,7 @@ class _FailCommandInjection:
     error_code: int
     error_message: str
     error_labels: tuple[str, ...]
-    namespace: str | None = None
+    namespaces: frozenset[str] | None = None
     close_connection: bool = False
     block_time_ms: int = 0
     remaining_times: int | None = None
@@ -345,7 +345,7 @@ class _CommandFailPointState:
         error_code: int,
         error_message: str,
         error_labels: tuple[str, ...],
-        namespace: str | None = None,
+        namespaces: tuple[str, ...] | None = None,
         close_connection: bool = False,
         block_time_ms: int = 0,
     ) -> dict[str, object]:
@@ -358,12 +358,15 @@ class _CommandFailPointState:
                     "mode": "off",
                     "enabled": False,
                 }
+            normalized_namespaces = (
+                frozenset(namespaces) if namespaces is not None else None
+            )
             self._fail_command = _FailCommandInjection(
                 command_names=frozenset(fail_commands),
                 error_code=error_code,
                 error_message=error_message,
                 error_labels=error_labels,
-                namespace=namespace,
+                namespaces=normalized_namespaces,
                 close_connection=close_connection,
                 block_time_ms=block_time_ms,
                 remaining_times=times if mode == "times" else None,
@@ -377,8 +380,12 @@ class _CommandFailPointState:
                 "blockConnection": block_time_ms > 0,
                 "blockTimeMS": block_time_ms,
             }
-            if namespace is not None:
-                data["namespace"] = namespace
+            if normalized_namespaces:
+                sorted_namespaces = sorted(normalized_namespaces)
+                if len(sorted_namespaces) == 1:
+                    data["namespace"] = sorted_namespaces[0]
+                else:
+                    data["namespaces"] = sorted_namespaces
             return {
                 "ok": 1.0,
                 "failPoint": "failCommand",
@@ -397,14 +404,17 @@ class _CommandFailPointState:
             fail_command = self._fail_command
             if fail_command is None or command_name not in fail_command.command_names:
                 return None
-            if fail_command.namespace is not None and namespace != fail_command.namespace:
+            if (
+                fail_command.namespaces is not None
+                and namespace not in fail_command.namespaces
+            ):
                 return None
             consumed = _FailCommandInjection(
                 command_names=fail_command.command_names,
                 error_code=fail_command.error_code,
                 error_message=fail_command.error_message,
                 error_labels=fail_command.error_labels,
-                namespace=fail_command.namespace,
+                namespaces=fail_command.namespaces,
                 close_connection=fail_command.close_connection,
                 block_time_ms=fail_command.block_time_ms,
                 remaining_times=fail_command.remaining_times,
@@ -730,7 +740,7 @@ class AsyncDatabaseCommandService:
         error_code: int = _FAIL_COMMAND_DEFAULT_CODE
         error_message: str = _FAIL_COMMAND_DEFAULT_MESSAGE
         error_labels: tuple[str, ...] = ()
-        namespace: str | None = None
+        namespaces: tuple[str, ...] | None = None
         close_connection: bool = False
         block_time_ms: int = 0
 
@@ -808,7 +818,15 @@ class AsyncDatabaseCommandService:
         *,
         required: bool,
         db_name: str,
-    ) -> tuple[tuple[str, ...], int, str, tuple[str, ...], str | None, bool, int]:
+    ) -> tuple[
+        tuple[str, ...],
+        int,
+        str,
+        tuple[str, ...],
+        tuple[str, ...] | None,
+        bool,
+        int,
+    ]:
         if data_spec is None:
             if required:
                 raise TypeError(
@@ -859,11 +877,39 @@ class AsyncDatabaseCommandService:
             raise TypeError("configureFailPoint data.errorLabels must be a list of strings")
         error_labels = tuple(labels_spec)
         namespace = data_spec.get("namespace")
+        namespaces_spec = data_spec.get("namespaces")
+        if namespace is not None and namespaces_spec is not None:
+            raise TypeError(
+                "configureFailPoint data.namespace and data.namespaces are mutually exclusive"
+            )
+
+        namespaces: tuple[str, ...] | None = None
         if namespace is not None:
             if not isinstance(namespace, str) or not namespace:
-                raise TypeError("configureFailPoint data.namespace must be a non-empty string")
+                raise TypeError(
+                    "configureFailPoint data.namespace must be a non-empty string"
+                )
             if "." not in namespace:
                 namespace = f"{db_name}.{namespace}"
+            namespaces = (namespace,)
+        elif namespaces_spec is not None:
+            if (
+                not isinstance(namespaces_spec, list | tuple)
+                or not namespaces_spec
+                or any(
+                    not isinstance(namespace_name, str) or not namespace_name
+                    for namespace_name in namespaces_spec
+                )
+            ):
+                raise TypeError(
+                    "configureFailPoint data.namespaces must be a non-empty list of strings"
+                )
+            normalized_namespaces: list[str] = []
+            for namespace_name in namespaces_spec:
+                if "." not in namespace_name:
+                    namespace_name = f"{db_name}.{namespace_name}"
+                normalized_namespaces.append(namespace_name)
+            namespaces = tuple(dict.fromkeys(normalized_namespaces))
         close_connection = data_spec.get("closeConnection", False)
         if not isinstance(close_connection, bool):
             raise TypeError("configureFailPoint data.closeConnection must be a bool")
@@ -891,7 +937,7 @@ class AsyncDatabaseCommandService:
             error_code,
             error_message,
             error_labels,
-            namespace,
+            namespaces,
             close_connection,
             block_time_ms,
         )
@@ -1005,7 +1051,7 @@ class AsyncDatabaseCommandService:
                 error_code,
                 error_message,
                 error_labels,
-                namespace,
+                namespaces,
                 close_connection,
                 block_time_ms,
             ) = (
@@ -1025,7 +1071,7 @@ class AsyncDatabaseCommandService:
                 error_code=error_code,
                 error_message=error_message,
                 error_labels=error_labels,
-                namespace=namespace,
+                namespaces=namespaces,
                 close_connection=close_connection,
                 block_time_ms=block_time_ms,
             )
@@ -1193,7 +1239,7 @@ class AsyncDatabaseCommandService:
                 error_code=command.error_code,
                 error_message=command.error_message,
                 error_labels=command.error_labels,
-                namespace=command.namespace,
+                namespaces=command.namespaces,
                 close_connection=command.close_connection,
                 block_time_ms=command.block_time_ms,
             )  # type: ignore[return-value]

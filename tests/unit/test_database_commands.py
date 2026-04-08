@@ -434,7 +434,19 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
             }
         )
         self.assertIsInstance(parsed_with_namespace, service.ConfigureFailPointCommand)
-        self.assertEqual(parsed_with_namespace.namespace, "db.users")
+        self.assertEqual(parsed_with_namespace.namespaces, ("db.users",))
+        parsed_with_namespaces = service.parse_raw_command(
+            {
+                "configureFailPoint": "failCommand",
+                "mode": "alwaysOn",
+                "data": {
+                    "failCommands": ["count"],
+                    "namespaces": ["users", "db.orders", "users"],
+                },
+            }
+        )
+        self.assertIsInstance(parsed_with_namespaces, service.ConfigureFailPointCommand)
+        self.assertEqual(parsed_with_namespaces.namespaces, ("db.users", "db.orders"))
         with self.assertRaisesRegex(TypeError, "namespace must be a non-empty string"):
             service.parse_raw_command(
                 {
@@ -443,6 +455,31 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
                     "data": {
                         "failCommands": ["count"],
                         "namespace": 1,
+                    },
+                }
+            )
+        with self.assertRaisesRegex(TypeError, "mutually exclusive"):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "namespace": "users",
+                        "namespaces": ["orders"],
+                    },
+                }
+            )
+        with self.assertRaisesRegex(
+            TypeError, "namespaces must be a non-empty list of strings"
+        ):
+            service.parse_raw_command(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": "alwaysOn",
+                    "data": {
+                        "failCommands": ["count"],
+                        "namespaces": [],
                     },
                 }
             )
@@ -573,6 +610,23 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
             self.assertEqual((await service.execute_document({"count": "other"}))["n"], 1)
             with self.assertRaisesRegex(OperationFailure, "failpoint"):
                 await service.execute_document({"count": "users"})
+
+            multi_namespaced = await service.execute_document(
+                {
+                    "configureFailPoint": "failCommand",
+                    "mode": {"times": 2},
+                    "data": {
+                        "failCommands": ["count"],
+                        "namespaces": ["users", "orders"],
+                    },
+                }
+            )
+            self.assertEqual(multi_namespaced["data"]["namespaces"], ["db.orders", "db.users"])
+            with self.assertRaisesRegex(OperationFailure, "failpoint"):
+                await service.execute_document({"count": "users"})
+            with self.assertRaisesRegex(OperationFailure, "failpoint"):
+                await service.execute_document({"count": "orders"})
+            self.assertEqual((await service.execute_document({"count": "other"}))["n"], 1)
 
             await service.execute_document(
                 {
