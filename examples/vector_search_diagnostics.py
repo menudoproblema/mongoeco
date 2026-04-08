@@ -126,6 +126,19 @@ def _run_engine(engine_label: str, engine) -> None:
         )
         _print_vector_case(
             collection,
+            "cosine / query filter + downstream structured filter",
+            {
+                "index": "embedding_cosine",
+                "path": "embedding",
+                "queryVector": [1.0, 0.0, 0.0],
+                "numCandidates": 12,
+                "limit": 2,
+                "filter": {"kind": "note"},
+            },
+            post_match={"score": {"$gte": 15}},
+        )
+        _print_vector_case(
+            collection,
             "dotProduct / same query",
             {
                 "index": "embedding_dot",
