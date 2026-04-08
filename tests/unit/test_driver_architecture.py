@@ -32,6 +32,7 @@ from mongoeco.driver import (
     RequestExecutionTrace,
     ServerSelectedEvent,
     ServerSelectionFailedEvent,
+    TopologyRefreshedEvent,
     ServerDescription,
     ServerState,
     ServerType,
@@ -908,6 +909,29 @@ class ClientDriverArchitectureTests(unittest.TestCase):
         self.assertEqual(len(topology.servers), 1)
         self.assertEqual(topology.servers[0].server_type, ServerType.STANDALONE)
         self.assertIsNone(topology.servers[0].error)
+
+    def test_refresh_topology_emits_topology_refreshed_monitor_event(self):
+        async def _run() -> tuple[TopologyDescription, tuple, str]:
+            async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+                client = AsyncMongoClient(uri=proxy.address.uri)
+                await client._engine.connect()
+                try:
+                    previous_topology_type = client.topology_description.topology_type.value
+                    topology = await client.refresh_topology()
+                    return topology, client.driver_monitor.history, previous_topology_type
+                finally:
+                    await client.close()
+
+        topology, history, previous_topology_type = asyncio.run(_run())
+        refreshed_event = history[-1]
+        self.assertIsInstance(refreshed_event, TopologyRefreshedEvent)
+        self.assertEqual(refreshed_event.previous_topology_type, previous_topology_type)
+        self.assertEqual(refreshed_event.topology_type, "single")
+        self.assertEqual(refreshed_event.previous_server_count, 1)
+        self.assertEqual(refreshed_event.server_count, 1)
+        self.assertEqual(refreshed_event.set_name, None)
+        self.assertTrue(refreshed_event.changed)
+        self.assertEqual(topology.topology_type, TopologyType.SINGLE)
 
     def test_refresh_topology_marks_hidden_and_arbiter_members_non_readable(self):
         runtime = DriverRuntime(

@@ -29,6 +29,17 @@ class ServerSelectionFailedEvent:
 
 
 @dataclass(frozen=True, slots=True)
+class TopologyRefreshedEvent:
+    previous_topology_type: str
+    topology_type: str
+    previous_server_count: int
+    server_count: int
+    compatible: bool
+    set_name: str | None = None
+    changed: bool = False
+
+
+@dataclass(frozen=True, slots=True)
 class ConnectionCheckedOutEvent:
     database: str
     command_name: str
@@ -93,6 +104,7 @@ class CommandFailedEvent:
 DriverEvent = (
     ServerSelectedEvent
     | ServerSelectionFailedEvent
+    | TopologyRefreshedEvent
     | ConnectionCheckedOutEvent
     | ConnectionCheckedInEvent
     | CommandStartedEvent

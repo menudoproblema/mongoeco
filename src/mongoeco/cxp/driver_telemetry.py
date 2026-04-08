@@ -21,6 +21,7 @@ from mongoeco.driver.monitoring import (
     DriverMonitor,
     ServerSelectedEvent,
     ServerSelectionFailedEvent,
+    TopologyRefreshedEvent,
 )
 
 _READ_COMMANDS = {
@@ -123,6 +124,7 @@ class DriverTelemetryProjector:
             (
                 ServerSelectedEvent,
                 ServerSelectionFailedEvent,
+                TopologyRefreshedEvent,
                 ConnectionCheckedOutEvent,
                 ConnectionCheckedInEvent,
             ),

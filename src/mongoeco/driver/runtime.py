@@ -10,6 +10,7 @@ from mongoeco.driver.execution import (
 )
 from mongoeco.driver.monitoring import (
     DriverMonitor,
+    TopologyRefreshedEvent,
 )
 from mongoeco.driver.policies import (
     ConcernPolicy,
@@ -153,11 +154,24 @@ class DriverRuntime:
         )
 
     async def refresh_topology(self, transport: WireProtocolCommandTransport | None = None) -> TopologyDescription:
-        self._topology = await refresh_topology(
+        previous = self._topology
+        refreshed = await refresh_topology(
             current_topology=self._topology,
             prepare_execution=self.prepare_request_execution_attempt,
             complete_execution=self.complete_request_execution,
             transport=self.create_network_transport() if transport is None else transport,
+        )
+        self._topology = refreshed
+        self._monitor.emit(
+            TopologyRefreshedEvent(
+                previous_topology_type=previous.topology_type.value,
+                topology_type=refreshed.topology_type.value,
+                previous_server_count=len(previous.servers),
+                server_count=len(refreshed.servers),
+                compatible=refreshed.compatible,
+                set_name=refreshed.set_name,
+                changed=refreshed != previous,
+            )
         )
         return self._topology
 
