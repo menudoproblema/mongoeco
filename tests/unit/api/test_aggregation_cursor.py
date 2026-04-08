@@ -1,3 +1,4 @@
+import datetime
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -1003,6 +1004,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(cursor._collect_collstats_scales([{"$collStats": {"storageStats": {"scale": 4}}}]), {4})
         self.assertEqual(cursor._collect_collstats_scales([{"$collStats": {"count": {}}}, {"$collStats": []}]), {1})
+        self.assertTrue(cursor._collect_index_stats_requested([{"$indexStats": {}}]))
+        self.assertFalse(cursor._collect_index_stats_requested([{"$project": {"_id": 1}}]))
 
         search_cursor = AsyncAggregationCursor(collection, [{"$search": {"text": {"query": "Ada", "path": "name"}}}], batch_size=2)
         with patch.object(search_cursor, "_materialize", return_value=[{"_id": "a"}]) as materialize:
@@ -1055,6 +1058,24 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
             stream_cursor._build_pushdown_cursor = lambda _operation: _BatchCursor(batches.pop(0))  # type: ignore[method-assign]
             self.assertEqual([document async for document in stream_cursor._stream_batches()], [{"_id": "2"}])
+
+    async def test_aggregation_cursor_supports_index_stats_stage_with_local_snapshot_projection(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        collection = database.get_collection("events")
+        await collection.insert_one({"_id": "1", "name": "Ada"})
+        await collection.create_index([("name", 1)])
+
+        cursor = AsyncAggregationCursor(collection, [{"$indexStats": {}}])
+        result = await cursor.to_list()
+
+        self.assertGreaterEqual(len(result), 1)
+        for entry in result:
+            self.assertIn("name", entry)
+            self.assertIn("key", entry)
+            self.assertIn("spec", entry)
+            self.assertIn("accesses", entry)
+            self.assertEqual(entry["accesses"]["ops"], 0)
+            self.assertIsInstance(entry["accesses"]["since"], datetime.datetime)
 
     async def test_aggregation_cursor_additional_stream_and_merge_branches(self):
         database = AsyncDatabase(MemoryEngine(), "db")

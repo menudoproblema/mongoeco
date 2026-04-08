@@ -99,6 +99,7 @@ class AggregationStageContext:
     stage_index: int
     collection_resolver: Callable[[str], list[Document]] | None = None
     collection_stats_resolver: Callable[[int], Document] | None = None
+    index_stats_resolver: Callable[[], list[Document]] | None = None
     variables: dict[str, Any] | None = None
     dialect: MongoDialect = MONGODB_DIALECT_70
     collation: CollationSpec | None = None

@@ -529,6 +529,23 @@ def _stage_coll_stats(
     return [result]
 
 
+def _stage_index_stats(
+    _documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    if context.stage_index != 0:
+        raise OperationFailure("$indexStats is only valid as the first pipeline stage")
+    if context.index_stats_resolver is None:
+        raise OperationFailure("$indexStats requires an index stats resolver in the local runtime")
+    if not isinstance(spec, dict):
+        raise OperationFailure("$indexStats requires a document specification")
+    if spec:
+        raise OperationFailure("$indexStats local runtime supports only an empty document")
+
+    return [deepcopy(document) for document in context.index_stats_resolver()]
+
+
 def _evaluate_redact_action(
     document: Document,
     spec: object,
@@ -736,6 +753,7 @@ AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {
     "$fill": AggregationStageSpec(_stage_fill, "materializing"),
     "$geoNear": AggregationStageSpec(_stage_geo_near, "materializing"),
     "$collStats": AggregationStageSpec(_stage_coll_stats, "materializing"),
+    "$indexStats": AggregationStageSpec(_stage_index_stats, "materializing"),
 }
 
 AGGREGATION_STAGE_HANDLERS: dict[str, AggregationStageHandler] = {
@@ -787,6 +805,7 @@ def apply_pipeline(
     *,
     collection_resolver=None,
     collection_stats_resolver=None,
+    index_stats_resolver=None,
     variables: dict[str, Any] | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
@@ -830,6 +849,7 @@ def apply_pipeline(
                 stage_index=index,
                 collection_resolver=collection_resolver,
                 collection_stats_resolver=collection_stats_resolver,
+                index_stats_resolver=index_stats_resolver,
                 variables=variables,
                 dialect=dialect,
                 collation=collation,

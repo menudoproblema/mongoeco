@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from copy import deepcopy
+import datetime
 import math
 import time
 
@@ -512,6 +513,32 @@ class AsyncAggregationCursor:
             snapshots[scale] = snapshot.to_document()
         return snapshots
 
+    def _collect_index_stats_requested(self, pipeline: Pipeline) -> bool:
+        return any(
+            isinstance(stage, dict) and len(stage) == 1 and "$indexStats" in stage
+            for stage in pipeline
+        )
+
+    async def _load_index_stats_snapshot(self, pipeline: Pipeline) -> list[Document]:
+        if not self._collect_index_stats_requested(pipeline):
+            return []
+        index_documents = await self._collection.list_indexes(session=self._session).to_list()
+        captured_at = datetime.datetime.now(datetime.UTC)
+        snapshot: list[Document] = []
+        for index_document in index_documents:
+            snapshot.append(
+                {
+                    "name": index_document.get("name"),
+                    "key": deepcopy(index_document.get("key")),
+                    "spec": deepcopy(index_document),
+                    "accesses": {
+                        "ops": 0,
+                        "since": captured_at,
+                    },
+                }
+            )
+        return snapshot
+
     def _scan_collection_with_operation(
         self,
         collection_name: str,
@@ -592,7 +619,11 @@ class AsyncAggregationCursor:
                     dialect=dialect,
                 )
                 remaining_pipeline = pushdown.remaining_pipeline
-                if remaining_pipeline and isinstance(remaining_pipeline[0], dict) and "$collStats" in remaining_pipeline[0]:
+                if (
+                    remaining_pipeline
+                    and isinstance(remaining_pipeline[0], dict)
+                    and ("$collStats" in remaining_pipeline[0] or "$indexStats" in remaining_pipeline[0])
+                ):
                     documents = []
                 else:
                     documents = await self._build_pushdown_cursor(
@@ -600,6 +631,7 @@ class AsyncAggregationCursor:
                     ).to_list()
             referenced_collections = await self._load_referenced_collections()
             collstats_snapshots = await self._load_collstats_snapshots(remaining_pipeline)
+            index_stats_snapshot = await self._load_index_stats_snapshot(remaining_pipeline)
             enforce_deadline(deadline)
             enforce_deadline(deadline)
             self._enforce_materialization_budget(
@@ -613,11 +645,15 @@ class AsyncAggregationCursor:
                 collection_stats_resolver = lambda scale: deepcopy(
                     collstats_snapshots.get(scale, default_collstats_snapshot)
                 )
+            index_stats_resolver = None
+            if index_stats_snapshot:
+                index_stats_resolver = lambda: deepcopy(index_stats_snapshot)
             result = apply_pipeline(
                 documents,
                 remaining_pipeline,
                 collection_resolver=referenced_collections.get,
                 collection_stats_resolver=collection_stats_resolver,
+                index_stats_resolver=index_stats_resolver,
                 variables=self._let,
                 dialect=dialect,
                 collation=self._collation,

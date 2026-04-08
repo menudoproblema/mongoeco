@@ -298,6 +298,42 @@ class AggregationPipelineCoreTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationFailure, "supports only scale"):
             apply_pipeline([], [{"$collStats": {"storageStats": {"future": True}}}], collection_stats_resolver=resolver)
 
+    def test_pipeline_supports_index_stats_stage_with_resolver_snapshot(self):
+        snapshot = [
+            {
+                "name": "_id_",
+                "key": {"_id": 1},
+                "spec": {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                "accesses": {"ops": 0, "since": datetime.datetime(2026, 4, 8, tzinfo=datetime.UTC)},
+            }
+        ]
+
+        result = apply_pipeline(
+            [{"_id": "ignored"}],
+            [{"$indexStats": {}}],
+            index_stats_resolver=lambda: snapshot,
+        )
+
+        self.assertEqual(result, snapshot)
+        result[0]["spec"]["unique"] = False
+        self.assertTrue(snapshot[0]["spec"]["unique"])
+
+    def test_index_stats_stage_requires_first_position_and_supported_options(self):
+        resolver = lambda: [{"name": "_id_", "key": {"_id": 1}, "spec": {"name": "_id_", "key": {"_id": 1}}, "accesses": {"ops": 0, "since": datetime.datetime(2026, 4, 8, tzinfo=datetime.UTC)}}]
+
+        with self.assertRaisesRegex(OperationFailure, "\\$indexStats is only valid as the first pipeline stage"):
+            apply_pipeline(
+                [{"_id": 1}],
+                [{"$match": {"_id": 1}}, {"$indexStats": {}}],
+                index_stats_resolver=resolver,
+            )
+        with self.assertRaisesRegex(OperationFailure, "requires an index stats resolver"):
+            apply_pipeline([], [{"$indexStats": {}}])
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            apply_pipeline([], [{"$indexStats": []}], index_stats_resolver=resolver)
+        with self.assertRaisesRegex(OperationFailure, "supports only an empty document"):
+            apply_pipeline([], [{"$indexStats": {"future": True}}], index_stats_resolver=resolver)
+
     def test_pipeline_supports_geo_near_for_local_points(self):
         documents = [
             {"_id": "a", "name": "Ada", "location": {"type": "Point", "coordinates": [0, 0]}, "active": True},
