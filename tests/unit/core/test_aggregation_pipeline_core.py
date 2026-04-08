@@ -334,6 +334,38 @@ class AggregationPipelineCoreTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationFailure, "supports only an empty document"):
             apply_pipeline([], [{"$indexStats": {"future": True}}], index_stats_resolver=resolver)
 
+    def test_pipeline_supports_current_op_stage_with_resolver_snapshot(self):
+        snapshot = [
+            {"opid": "1", "command": "find", "ns": "db.events"},
+            {"opid": "2", "command": "currentOp", "ns": "admin.$cmd"},
+        ]
+
+        result = apply_pipeline(
+            [{"_id": "ignored"}],
+            [{"$currentOp": {}}],
+            current_op_resolver=lambda: snapshot,
+        )
+
+        self.assertEqual(result, [{"opid": "1", "command": "find", "ns": "db.events"}])
+        result[0]["ns"] = "mutated"
+        self.assertEqual(snapshot[0]["ns"], "db.events")
+
+    def test_current_op_stage_requires_first_position_and_supported_options(self):
+        resolver = lambda: [{"opid": "1", "command": "find"}]
+
+        with self.assertRaisesRegex(OperationFailure, "\\$currentOp is only valid as the first pipeline stage"):
+            apply_pipeline(
+                [{"_id": 1}],
+                [{"$match": {"_id": 1}}, {"$currentOp": {}}],
+                current_op_resolver=resolver,
+            )
+        with self.assertRaisesRegex(OperationFailure, "requires a current operation resolver"):
+            apply_pipeline([], [{"$currentOp": {}}])
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
+            apply_pipeline([], [{"$currentOp": []}], current_op_resolver=resolver)
+        with self.assertRaisesRegex(OperationFailure, "supports only an empty document"):
+            apply_pipeline([], [{"$currentOp": {"allUsers": True}}], current_op_resolver=resolver)
+
     def test_pipeline_supports_geo_near_for_local_points(self):
         documents = [
             {"_id": "a", "name": "Ada", "location": {"type": "Point", "coordinates": [0, 0]}, "active": True},

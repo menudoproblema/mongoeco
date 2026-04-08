@@ -546,6 +546,27 @@ def _stage_index_stats(
     return [deepcopy(document) for document in context.index_stats_resolver()]
 
 
+def _stage_current_op(
+    _documents: list[Document],
+    spec: object,
+    context: AggregationStageContext,
+) -> list[Document]:
+    if context.stage_index != 0:
+        raise OperationFailure("$currentOp is only valid as the first pipeline stage")
+    if context.current_op_resolver is None:
+        raise OperationFailure("$currentOp requires a current operation resolver in the local runtime")
+    if not isinstance(spec, dict):
+        raise OperationFailure("$currentOp requires a document specification")
+    if spec:
+        raise OperationFailure("$currentOp local runtime supports only an empty document")
+
+    return [
+        deepcopy(document)
+        for document in context.current_op_resolver()
+        if document.get("command") != "currentOp"
+    ]
+
+
 def _evaluate_redact_action(
     document: Document,
     spec: object,
@@ -754,6 +775,7 @@ AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {
     "$geoNear": AggregationStageSpec(_stage_geo_near, "materializing"),
     "$collStats": AggregationStageSpec(_stage_coll_stats, "materializing"),
     "$indexStats": AggregationStageSpec(_stage_index_stats, "materializing"),
+    "$currentOp": AggregationStageSpec(_stage_current_op, "materializing"),
 }
 
 AGGREGATION_STAGE_HANDLERS: dict[str, AggregationStageHandler] = {
@@ -806,6 +828,7 @@ def apply_pipeline(
     collection_resolver=None,
     collection_stats_resolver=None,
     index_stats_resolver=None,
+    current_op_resolver=None,
     variables: dict[str, Any] | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
@@ -850,6 +873,7 @@ def apply_pipeline(
                 collection_resolver=collection_resolver,
                 collection_stats_resolver=collection_stats_resolver,
                 index_stats_resolver=index_stats_resolver,
+                current_op_resolver=current_op_resolver,
                 variables=variables,
                 dialect=dialect,
                 collation=collation,

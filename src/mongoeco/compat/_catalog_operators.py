@@ -43,7 +43,7 @@ SUPPORTED_AGGREGATION_STAGES = frozenset(
         "$match", "$project", "$unset", "$sample", "$sort", "$skip", "$limit", "$addFields", "$set",
         "$unwind", "$group", "$bucket", "$bucketAuto", "$lookup", "$unionWith", "$replaceRoot",
         "$replaceWith", "$redact", "$facet", "$count", "$sortByCount", "$setWindowFields", "$documents",
-        "$densify", "$fill", "$merge", "$geoNear", "$collStats", "$indexStats",
+        "$densify", "$fill", "$merge", "$geoNear", "$collStats", "$indexStats", "$currentOp",
     }
 )
 

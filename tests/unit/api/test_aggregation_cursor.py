@@ -1006,6 +1006,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cursor._collect_collstats_scales([{"$collStats": {"count": {}}}, {"$collStats": []}]), {1})
         self.assertTrue(cursor._collect_index_stats_requested([{"$indexStats": {}}]))
         self.assertFalse(cursor._collect_index_stats_requested([{"$project": {"_id": 1}}]))
+        self.assertTrue(cursor._collect_current_op_requested([{"$currentOp": {}}]))
+        self.assertFalse(cursor._collect_current_op_requested([{"$project": {"_id": 1}}]))
 
         search_cursor = AsyncAggregationCursor(collection, [{"$search": {"text": {"query": "Ada", "path": "name"}}}], batch_size=2)
         with patch.object(search_cursor, "_materialize", return_value=[{"_id": "a"}]) as materialize:
@@ -1076,6 +1078,18 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("accesses", entry)
             self.assertEqual(entry["accesses"]["ops"], 0)
             self.assertIsInstance(entry["accesses"]["since"], datetime.datetime)
+
+    async def test_aggregation_cursor_supports_current_op_stage_with_engine_snapshot(self):
+        collection = _FakeCollection([])
+        collection._engine._snapshot_active_operations = lambda: [  # type: ignore[attr-defined]
+            {"opid": "op-1", "command": "find", "ns": "db.coll"},
+            {"opid": "op-2", "command": "currentOp", "ns": "admin.$cmd"},
+        ]
+
+        cursor = AsyncAggregationCursor(collection, [{"$currentOp": {}}], batch_size=2)
+        result = await cursor.to_list()
+
+        self.assertEqual(result, [{"opid": "op-1", "command": "find", "ns": "db.coll"}])
 
     async def test_aggregation_cursor_additional_stream_and_merge_branches(self):
         database = AsyncDatabase(MemoryEngine(), "db")

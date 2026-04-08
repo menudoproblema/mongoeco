@@ -498,6 +498,12 @@ class AsyncAggregationCursor:
                 scales.add(1)
         return scales
 
+    def _collect_current_op_requested(self, pipeline: Pipeline) -> bool:
+        return any(
+            isinstance(stage, dict) and len(stage) == 1 and "$currentOp" in stage
+            for stage in pipeline
+        )
+
     async def _load_collstats_snapshots(self, pipeline: Pipeline) -> dict[int, Document]:
         snapshots: dict[int, Document] = {}
         scales = self._collect_collstats_scales(pipeline)
@@ -622,7 +628,11 @@ class AsyncAggregationCursor:
                 if (
                     remaining_pipeline
                     and isinstance(remaining_pipeline[0], dict)
-                    and ("$collStats" in remaining_pipeline[0] or "$indexStats" in remaining_pipeline[0])
+                    and (
+                        "$collStats" in remaining_pipeline[0]
+                        or "$indexStats" in remaining_pipeline[0]
+                        or "$currentOp" in remaining_pipeline[0]
+                    )
                 ):
                     documents = []
                 else:
@@ -632,6 +642,13 @@ class AsyncAggregationCursor:
             referenced_collections = await self._load_referenced_collections()
             collstats_snapshots = await self._load_collstats_snapshots(remaining_pipeline)
             index_stats_snapshot = await self._load_index_stats_snapshot(remaining_pipeline)
+            current_op_requested = self._collect_current_op_requested(remaining_pipeline)
+            snapshot_active_operations = getattr(self._collection._engine, "_snapshot_active_operations", None)
+            current_op_snapshot = (
+                snapshot_active_operations()
+                if current_op_requested and callable(snapshot_active_operations)
+                else []
+            )
             enforce_deadline(deadline)
             enforce_deadline(deadline)
             self._enforce_materialization_budget(
@@ -648,12 +665,16 @@ class AsyncAggregationCursor:
             index_stats_resolver = None
             if index_stats_snapshot:
                 index_stats_resolver = lambda: deepcopy(index_stats_snapshot)
+            current_op_resolver = None
+            if current_op_requested:
+                current_op_resolver = lambda: deepcopy(current_op_snapshot)
             result = apply_pipeline(
                 documents,
                 remaining_pipeline,
                 collection_resolver=referenced_collections.get,
                 collection_stats_resolver=collection_stats_resolver,
                 index_stats_resolver=index_stats_resolver,
+                current_op_resolver=current_op_resolver,
                 variables=self._let,
                 dialect=dialect,
                 collation=self._collation,
