@@ -140,6 +140,18 @@ def assert_filtered_vector_explanation(
         details["candidatePlan"]["prefilterCandidateCount"],
     )
     case.assertIsNone(details["hybridRetrieval"]["downstreamFilterPrefilter"])
+    case.assertEqual(
+        details["candidatePlan"]["prefilterSources"],
+        [
+            {
+                "source": "queryFilter",
+                "candidateable": True,
+                "exact": True,
+                "supportedPaths": ["kind"],
+                "supportedOperators": ["eq"],
+            }
+        ],
+    )
     case.assertLessEqual(
         details["candidatePlan"]["prefilterCandidateCount"],
         details["documentsScanned"],
@@ -201,6 +213,18 @@ def assert_vector_downstream_filter_explanation(
     case.assertEqual(
         details["pruningSummary"]["postCandidateFilteredCount"],
         0,
+    )
+    case.assertEqual(
+        details["candidatePlan"]["prefilterSources"],
+        [
+            {
+                "source": "downstreamFilter",
+                "candidateable": True,
+                "exact": True,
+                "supportedPaths": ["score"],
+                "supportedOperators": ["range"],
+            }
+        ],
     )
     case.assertEqual(
         details["candidatePlan"]["combinedPrefilterCandidateCount"],

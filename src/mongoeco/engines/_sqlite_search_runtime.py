@@ -211,6 +211,31 @@ def _vector_pruning_summary(
     }
 
 
+def _prefilter_source(
+    *,
+    source: str,
+    filter_spec: dict[str, object] | None,
+    filter_description: dict[str, object] | None,
+) -> dict[str, object] | None:
+    if filter_spec is None:
+        return None
+    return {
+        "source": source,
+        "candidateable": bool(filter_description and filter_description.get("candidateable")),
+        "exact": bool(filter_description and filter_description.get("exact")),
+        "supportedPaths": (
+            list(filter_description.get("supportedPaths", []))
+            if filter_description is not None
+            else []
+        ),
+        "supportedOperators": (
+            list(filter_description.get("supportedOperators", []))
+            if filter_description is not None
+            else []
+        ),
+    }
+
+
 def load_search_index_rows(
     engine: _SQLiteSearchRuntimeEngine,
     db_name: str,
@@ -2042,6 +2067,22 @@ def explain_search_documents_sync(
             "queryPrefilterCandidateCount": query_prefilter_candidate_count,
             "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
             "combinedPrefilterCandidateCount": vector_prefilter_candidate_count,
+            "prefilterSources": [
+                source
+                for source in (
+                    _prefilter_source(
+                        source="queryFilter",
+                        filter_spec=query.filter_spec,
+                        filter_description=vector_filter_description,
+                    ),
+                    _prefilter_source(
+                        source="downstreamFilter",
+                        filter_spec=downstream_filter_spec,
+                        filter_description=downstream_filter_description,
+                    ),
+                )
+                if source is not None
+            ],
         }
         if isinstance(query, SearchVectorQuery)
         else None
