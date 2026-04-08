@@ -163,6 +163,10 @@ When a local `$vectorSearch` is combined with structured filters
     candidate prefilter;
   * `minScoreFilteredRatio`: score-threshold impact (`minScore`) on evaluated
     candidates.
+* In `$searchMeta` count payloads, read `exact` first:
+  * `count.total` always reports exact local cardinality with `exact=true`;
+  * in `lowerBound`, `cappedByThreshold=true` means result is intentionally
+    truncated by threshold (still useful for bounded tooling assertions).
 
 Practical interpretation:
 
