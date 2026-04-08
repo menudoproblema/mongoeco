@@ -25,6 +25,16 @@ class WatchHelperTests(unittest.TestCase):
 
 
 class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
+    async def test_async_client_with_transaction_accepts_sync_callback(self):
+        async with AsyncMongoClient(MemoryEngine()) as client:
+            def _run(active):
+                del active
+                return "ok"
+
+            result = await client.with_transaction(_run)
+
+        self.assertEqual(result, "ok")
+
     async def test_direct_collection_watch_shares_hub_with_local_writes(self):
         engine = MemoryEngine()
         await engine.connect()

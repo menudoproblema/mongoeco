@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async.collection import AsyncCollection
@@ -517,6 +518,38 @@ class AsyncMongoClient:
         )
         self._engine.create_session_state(session)
         return session
+
+    async def with_transaction(
+        self,
+        callback,
+        *args,
+        read_concern: ReadConcern | None = None,
+        write_concern: WriteConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        max_commit_time_ms: int | None = None,
+        default_transaction_options: TransactionOptions | None = None,
+        causal_consistency: bool = True,
+        **kwargs: object,
+    ) -> object:
+        session = self.start_session(
+            default_transaction_options=default_transaction_options,
+            causal_consistency=causal_consistency,
+        )
+        try:
+            result = session.with_transaction(
+                callback,
+                *args,
+                read_concern=read_concern,
+                write_concern=write_concern,
+                read_preference=read_preference,
+                max_commit_time_ms=max_commit_time_ms,
+                **kwargs,
+            )
+            if inspect.isawaitable(result):
+                return await result
+            return result
+        finally:
+            session.close()
 
     async def list_database_names(
         self,

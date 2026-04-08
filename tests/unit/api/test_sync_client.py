@@ -15,6 +15,17 @@ async def _noop() -> None:
 
 
 class SyncClientUnitTests(unittest.TestCase):
+    def test_sync_client_with_transaction_accepts_async_callback(self):
+        client = MongoClient(MemoryEngine())
+        try:
+            async def _run(active):
+                del active
+                return "ok"
+
+            self.assertEqual(client.with_transaction(_run), "ok")
+        finally:
+            client.close()
+
     def test_sync_runner_helper_rethrows_helper_errors(self):
         with self.assertRaisesRegex(RuntimeError, "boom"):
             _SyncRunner._rethrow_helper_error({"error": RuntimeError("boom")})

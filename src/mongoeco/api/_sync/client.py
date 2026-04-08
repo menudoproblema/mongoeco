@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import threading
 from typing import TYPE_CHECKING
 
@@ -606,6 +607,39 @@ class MongoClient:
             default_transaction_options=default_transaction_options,
             causal_consistency=causal_consistency,
         )
+
+    def with_transaction(
+        self,
+        callback,
+        *args,
+        read_concern: ReadConcern | None = None,
+        write_concern: WriteConcern | None = None,
+        read_preference: ReadPreference | None = None,
+        max_commit_time_ms: int | None = None,
+        default_transaction_options: TransactionOptions | None = None,
+        causal_consistency: bool = True,
+        **kwargs: object,
+    ) -> object:
+        self._ensure_connected()
+        session = self.start_session(
+            default_transaction_options=default_transaction_options,
+            causal_consistency=causal_consistency,
+        )
+        try:
+            result = session.with_transaction(
+                callback,
+                *args,
+                read_concern=read_concern,
+                write_concern=write_concern,
+                read_preference=read_preference,
+                max_commit_time_ms=max_commit_time_ms,
+                **kwargs,
+            )
+            if inspect.isawaitable(result):
+                return self._runner.run(result)
+            return result
+        finally:
+            session.close()
 
     def list_database_names(self, *, session: ClientSession | None = None) -> list[str]:
         self._ensure_connected()

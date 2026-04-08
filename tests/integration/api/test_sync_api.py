@@ -6494,6 +6494,31 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertFalse(session.in_transaction)
                     self.assertEqual(client.test.users.count_documents({}), 1)
 
+    def test_sync_client_with_transaction_retries_transient_callback_errors(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    attempts = {"count": 0}
+
+                    def _run(active: ClientSession) -> str:
+                        attempts["count"] += 1
+                        if attempts["count"] == 1:
+                            raise OperationFailure(
+                                "transient callback failure",
+                                error_labels=("TransientTransactionError",),
+                            )
+                        client.test.users.insert_one(
+                            {"_id": "tx-callback", "name": "Ada"},
+                            session=active,
+                        )
+                        return "ok"
+
+                    result = client.with_transaction(_run)
+
+                    self.assertEqual(result, "ok")
+                    self.assertEqual(attempts["count"], 2)
+                    self.assertEqual(client.test.users.count_documents({}), 1)
+
     def test_sync_sqlite_session_transaction_is_isolated_and_abortable(self):
         with MongoClient(SQLiteEngine()) as client:
             session = client.start_session()

@@ -6002,6 +6002,31 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertFalse(session.in_transaction)
                     self.assertEqual(await client.test.users.count_documents({}), 1)
 
+    async def test_async_client_with_transaction_retries_transient_callback_errors(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    attempts = {"count": 0}
+
+                    async def _run(active: ClientSession) -> str:
+                        attempts["count"] += 1
+                        if attempts["count"] == 1:
+                            raise OperationFailure(
+                                "transient callback failure",
+                                error_labels=("TransientTransactionError",),
+                            )
+                        await client.test.users.insert_one(
+                            {"_id": "tx-callback", "name": "Ada"},
+                            session=active,
+                        )
+                        return "ok"
+
+                    result = await client.with_transaction(_run)
+
+                    self.assertEqual(result, "ok")
+                    self.assertEqual(attempts["count"], 2)
+                    self.assertEqual(await client.test.users.count_documents({}), 1)
+
     async def test_async_sqlite_session_transaction_is_isolated_and_abortable(self):
         async with AsyncMongoClient(SQLiteEngine()) as client:
             session = client.start_session()
