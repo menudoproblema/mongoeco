@@ -330,7 +330,7 @@ class CxpAlignmentTests(unittest.TestCase):
                 'matchingMode': 'python-regex-local',
                 'supportsFlags': True,
                 'supportsOptionsAlias': True,
-                'supportedFlags': ['i', 'm', 's', 'x'],
+                'supportedFlags': ['a', 'i', 'm', 's', 'u', 'x'],
                 'allowAnalyzedField': True,
                 'atlasParity': 'subset',
                 'scope': 'local-text-tier',

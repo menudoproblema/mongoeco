@@ -425,6 +425,29 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             ]
                         ).explain(),
                         engine_name=engine_name,
+                        expected_flags="i",
+                        expected_allow_analyzed_field=False,
+                    )
+                    assert_regex_explanation(
+                        self,
+                        await collection.aggregate(
+                            [
+                                {
+                                    "$search": {
+                                        "index": "by_text",
+                                        "regex": {
+                                            "query": "Ada.*algorithm",
+                                            "path": "body",
+                                            "options": "i",
+                                            "allowAnalyzedField": True,
+                                        },
+                                    }
+                                }
+                            ]
+                        ).explain(),
+                        engine_name=engine_name,
+                        expected_flags="i",
+                        expected_allow_analyzed_field=True,
                     )
                     sequential_autocomplete_hits = await collection.aggregate(
                         [

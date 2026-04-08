@@ -1456,9 +1456,11 @@
               "matchingMode": "python-regex-local",
               "scope": "local-text-tier",
               "supportedFlags": [
+                "a",
                 "i",
                 "m",
                 "s",
+                "u",
                 "x"
               ],
               "supportsFlags": true,
@@ -12025,9 +12027,11 @@
           "matchingMode": "python-regex-local",
           "scope": "local-text-tier",
           "supportedFlags": [
+            "a",
             "i",
             "m",
             "s",
+            "u",
             "x"
           ],
           "supportsFlags": true,

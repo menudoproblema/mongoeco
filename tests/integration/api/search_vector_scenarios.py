@@ -411,11 +411,18 @@ def assert_regex_explanation(
     explanation: dict[str, object],
     *,
     engine_name: str,
+    expected_flags: str = "",
+    expected_allow_analyzed_field: bool = False,
 ) -> None:
     details = explanation["engine_plan"]["details"]
     case.assertEqual(details["queryOperator"], "regex")
     case.assertEqual(details["query"], "Ada.*algorithm")
     case.assertEqual(details["paths"], ["body"])
+    case.assertEqual(details["querySemantics"]["flags"], expected_flags)
+    case.assertEqual(
+        details["querySemantics"]["allowAnalyzedField"],
+        expected_allow_analyzed_field,
+    )
     case.assertEqual(details["backend"], "python")
     if engine_name == "sqlite":
         case.assertFalse(bool(details.get("fts5_match")))
