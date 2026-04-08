@@ -18,6 +18,7 @@ from mongoeco._types.concerns import (
     ReadPreference,
     ReadPreferenceMode,
     TransactionOptions,
+    UuidRepresentation,
     WriteConcern,
     normalize_codec_options,
     normalize_read_concern,

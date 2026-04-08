@@ -117,7 +117,7 @@ async def find_one(
         duration_ns=time.perf_counter_ns() - started_at,
         operation=operation,
     )
-    return document
+    return collection._apply_codec_options_to_optional_document(document)
 
 
 async def count_documents(

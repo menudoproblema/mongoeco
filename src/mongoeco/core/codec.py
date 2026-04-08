@@ -4,6 +4,7 @@ import decimal
 import uuid
 from typing import Any
 
+from mongoeco._types.concerns import CodecOptions, UuidRepresentation
 try:
     from bson.code import Code as BsonCode
     from bson.max_key import MaxKey as BsonMaxKey
@@ -297,6 +298,95 @@ class DocumentCodec:
             )
 
         return data
+
+    @staticmethod
+    def apply_codec_options(
+        data: Any,
+        *,
+        codec_options: CodecOptions | None,
+    ) -> Any:
+        if codec_options is None:
+            return data
+        return DocumentCodec._apply_codec_options_recursive(data, codec_options=codec_options)
+
+    @staticmethod
+    def _apply_codec_options_recursive(
+        data: Any,
+        *,
+        codec_options: CodecOptions,
+    ) -> Any:
+        if isinstance(data, dict):
+            converted = {
+                key: DocumentCodec._apply_codec_options_recursive(value, codec_options=codec_options)
+                for key, value in data.items()
+            }
+            if codec_options.document_class is dict:
+                return converted
+            return codec_options.document_class(converted)
+        if isinstance(data, list):
+            return [
+                DocumentCodec._apply_codec_options_recursive(value, codec_options=codec_options)
+                for value in data
+            ]
+        if isinstance(data, tuple):
+            return tuple(
+                DocumentCodec._apply_codec_options_recursive(value, codec_options=codec_options)
+                for value in data
+            )
+        return DocumentCodec._apply_codec_scalar_options(data, codec_options=codec_options)
+
+    @staticmethod
+    def _apply_codec_scalar_options(
+        value: Any,
+        *,
+        codec_options: CodecOptions,
+    ) -> Any:
+        transformed = value
+        if isinstance(transformed, datetime.datetime):
+            transformed = DocumentCodec._apply_datetime_codec_options(
+                transformed,
+                codec_options=codec_options,
+            )
+        elif isinstance(transformed, uuid.UUID):
+            transformed = DocumentCodec._apply_uuid_codec_options(
+                transformed,
+                codec_options=codec_options,
+            )
+
+        for value_type, decoder in codec_options.type_registry:
+            if isinstance(transformed, value_type):
+                transformed = decoder(transformed)
+        return transformed
+
+    @staticmethod
+    def _apply_datetime_codec_options(
+        value: datetime.datetime,
+        *,
+        codec_options: CodecOptions,
+    ) -> datetime.datetime:
+        if value.tzinfo is None:
+            if not codec_options.tz_aware:
+                return value
+            aware_utc = value.replace(tzinfo=datetime.timezone.utc)
+        else:
+            aware_utc = value.astimezone(datetime.timezone.utc)
+            if not codec_options.tz_aware:
+                return aware_utc.replace(tzinfo=None)
+        target_tz = codec_options.tzinfo or datetime.timezone.utc
+        return aware_utc.astimezone(target_tz)
+
+    @staticmethod
+    def _apply_uuid_codec_options(
+        value: uuid.UUID,
+        *,
+        codec_options: CodecOptions,
+    ) -> uuid.UUID | Binary:
+        uuid_representation = codec_options.uuid_representation
+        if uuid_representation is UuidRepresentation.STANDARD:
+            return value
+        if uuid_representation is UuidRepresentation.UNSPECIFIED:
+            return Binary(value.bytes, subtype=4)
+        return Binary(value.bytes, subtype=3)
 
     @staticmethod
     def _decode_list_fast(data: list[Any], *, preserve_bson_wrappers: bool) -> list[Any]:

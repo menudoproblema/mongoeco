@@ -287,6 +287,7 @@ class CollectionRuntimeCoordinator:
         operation: FindOperation,
         *,
         session: ClientSession | None = None,
+        apply_codec_options: bool = True,
     ) -> AsyncCursor:
         return AsyncCursor(
             self._collection,
@@ -302,6 +303,7 @@ class CollectionRuntimeCoordinator:
             max_time_ms=operation.max_time_ms,
             batch_size=operation.batch_size,
             session=session,
+            apply_codec_options=apply_codec_options,
         )
 
     async def put_replacement_document(

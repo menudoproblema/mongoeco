@@ -17,7 +17,18 @@ except Exception:  # pragma: no cover - optional dependency
 
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.types import Binary, DBRef, Decimal128, ObjectId, Regex, SON, Timestamp, UNDEFINED
+from mongoeco.types import (
+    Binary,
+    CodecOptions,
+    DBRef,
+    Decimal128,
+    ObjectId,
+    Regex,
+    SON,
+    Timestamp,
+    UNDEFINED,
+    UuidRepresentation,
+)
 
 
 class DocumentCodecTests(unittest.TestCase):
@@ -289,3 +300,85 @@ class DocumentCodecTests(unittest.TestCase):
         public = DocumentCodec.to_public(payload)
         self.assertEqual(public, {"items": [1, 2], "meta": "x"})
         self.assertIsNot(public, payload)
+
+    def test_apply_codec_options_supports_tz_aware_document_class_and_type_registry(self):
+        class AuditDocument(dict):
+            pass
+
+        aware_datetime = datetime.datetime(
+            2026,
+            4,
+            8,
+            10,
+            30,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=2)),
+        )
+        options = CodecOptions(
+            document_class=AuditDocument,
+            tz_aware=True,
+            tzinfo=datetime.timezone.utc,
+            type_registry={str: lambda value: value.upper()},
+        )
+
+        materialized = DocumentCodec.apply_codec_options(
+            {
+                "_id": "a1",
+                "created_at": aware_datetime,
+                "nested": {"owner": "ada"},
+            },
+            codec_options=options,
+        )
+
+        self.assertIsInstance(materialized, AuditDocument)
+        self.assertIsInstance(materialized["nested"], AuditDocument)
+        self.assertEqual(materialized["_id"], "A1")
+        self.assertEqual(materialized["nested"]["owner"], "ADA")
+        self.assertEqual(
+            materialized["created_at"],
+            datetime.datetime(2026, 4, 8, 8, 30, tzinfo=datetime.timezone.utc),
+        )
+
+    def test_apply_codec_options_supports_uuid_representation_variants(self):
+        value = uuid.UUID("12345678-1234-5678-1234-567812345678")
+
+        legacy = DocumentCodec.apply_codec_options(
+            {"session": value},
+            codec_options=CodecOptions(uuid_representation=UuidRepresentation.PYTHON_LEGACY),
+        )
+        unspecified = DocumentCodec.apply_codec_options(
+            {"session": value},
+            codec_options=CodecOptions(uuid_representation=UuidRepresentation.UNSPECIFIED),
+        )
+        standard = DocumentCodec.apply_codec_options(
+            {"session": value},
+            codec_options=CodecOptions(uuid_representation=UuidRepresentation.STANDARD),
+        )
+
+        self.assertEqual(legacy["session"], Binary(value.bytes, subtype=3))
+        self.assertEqual(unspecified["session"], Binary(value.bytes, subtype=4))
+        self.assertEqual(standard["session"], value)
+
+    def test_apply_codec_options_returns_input_when_options_are_none(self):
+        payload = {"_id": "a1", "nested": {"value": 1}}
+
+        self.assertIs(DocumentCodec.apply_codec_options(payload, codec_options=None), payload)
+
+    def test_apply_codec_options_supports_tuple_values_and_naive_datetime_tz_projection(self):
+        options = CodecOptions(
+            tz_aware=True,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=1)),
+        )
+        payload = {
+            "items": (
+                datetime.datetime(2026, 4, 8, 8, 0, 0),
+                "x",
+            )
+        }
+
+        materialized = DocumentCodec.apply_codec_options(payload, codec_options=options)
+
+        self.assertIsInstance(materialized["items"], tuple)
+        self.assertEqual(
+            materialized["items"][0],
+            datetime.datetime(2026, 4, 8, 9, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=1))),
+        )

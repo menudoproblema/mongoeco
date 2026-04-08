@@ -95,7 +95,10 @@ class _AsyncCursorIterator:
             raise StopAsyncIteration
         if self._source is not None:
             try:
-                return await self._source.__anext__()
+                document = await self._source.__anext__()
+                if self._cursor._apply_codec_options:
+                    return self._cursor._materialize_document(document)
+                return document
             except StopAsyncIteration:
                 self._cursor._exhausted = True
                 await self.close()
@@ -121,11 +124,16 @@ class _AsyncCursorIterator:
         while len(items) < max_items:
             if self._source is not None:
                 try:
-                    items.append(await self._source.__anext__())
+                    document = await self._source.__anext__()
+                    if self._cursor._apply_codec_options:
+                        document = self._cursor._materialize_document(document)
+                    items.append(document)
                     continue
                 except StopAsyncIteration:
                     self._cursor._exhausted = True
-                    await self.close()
+                    self._source = None
+                    if not items:
+                        await self.close()
                     break
             if not self._buffer:
                 if self._cursor._exhausted:
@@ -191,6 +199,7 @@ class AsyncCursor:
         max_time_ms: int | None = None,
         batch_size: int | None = None,
         session: ClientSession | None = None,
+        apply_codec_options: bool = True,
     ):
         self._collection = collection
         self._filter_spec = filter_spec
@@ -205,6 +214,7 @@ class AsyncCursor:
         self._max_time_ms = max_time_ms
         self._batch_size = batch_size
         self._session = session
+        self._apply_codec_options = apply_codec_options
         self._started = False
         self._exhausted = False
         self._active_async_iterable: _AsyncCursorIterator | None = None
@@ -243,6 +253,12 @@ class AsyncCursor:
     def _semantics_with_overrides(self, **changes: object):
         return replace(self._base_semantics(), **changes)
 
+    def _materialize_document(self, document: Document) -> Document:
+        applier = getattr(self._collection, "_apply_codec_options_to_document", None)
+        if callable(applier):
+            return applier(document)
+        return document
+
     def _scan(self, *, limit: int | None = None):
         self._started = True
         engine = self._collection._engine
@@ -252,12 +268,13 @@ class AsyncCursor:
         operation = self._operation_with_overrides(limit=self._limit if limit is None else limit)
         _ensure_operation_executable(self._collection, operation)
         semantics = self._semantics_with_overrides(limit=operation.limit)
-        return engine.scan_find_semantics(
+        stream = engine.scan_find_semantics(
             self._collection._db_name,
             self._collection._collection_name,
             semantics,
             context=self._session,
         )
+        return stream
 
     async def _fetch_batch(self, offset: int, batch_size: int) -> list[Document]:
         effective_skip = self._skip + offset
@@ -280,6 +297,8 @@ class AsyncCursor:
             semantics,
             context=self._session,
         )
+        if self._apply_codec_options:
+            return [self._materialize_document(document) async for document in iterable]
         return [document async for document in iterable]
 
     def _iter(self, *, limit: int | None = None, enforce_ownership: bool = True) -> _AsyncCursorIterator:

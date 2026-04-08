@@ -671,10 +671,19 @@ class AsyncAggregationCursor:
     def _build_pushdown_cursor(self, operation: FindOperation):
         build_cursor = getattr(self._collection, "_build_cursor", None)
         if callable(build_cursor):
-            return build_cursor(
-                operation,
-                session=self._session,
-            )
+            try:
+                return build_cursor(
+                    operation,
+                    session=self._session,
+                    apply_codec_options=False,
+                )
+            except TypeError as exc:
+                if "apply_codec_options" not in str(exc):
+                    raise
+                return build_cursor(
+                    operation,
+                    session=self._session,
+                )
         return self._collection.find(
             operation.filter_spec,
             operation.projection,
@@ -836,20 +845,26 @@ class AsyncAggregationCursor:
             dialect=dialect,
         )
 
+    def _materialize_document(self, document: Document) -> Document:
+        applier = getattr(self._collection, "_apply_codec_options_to_document", None)
+        if callable(applier):
+            return applier(document)
+        return document
+
     async def _stream_batches(self) -> AsyncIterator[Document]:
         _ensure_operation_executable(self._collection, self._operation)
         if self._leading_search_stage() is not None:
             for document in await self._materialize():
-                yield document
+                yield self._materialize_document(document)
             return
         effective_pipeline, writeback_stage = self._split_terminal_writeback_stage(self._effective_pipeline())
         if writeback_stage is not None:
             for document in await self._materialize():
-                yield document
+                yield self._materialize_document(document)
             return
         if self._batch_size in (None, 0):
             for document in await self._materialize():
-                yield document
+                yield self._materialize_document(document)
             return
 
         deadline = operation_deadline(self._max_time_ms)
@@ -864,7 +879,7 @@ class AsyncAggregationCursor:
         )
         if stream_plan is None:
             for document in await self._materialize():
-                yield document
+                yield self._materialize_document(document)
             return
 
         streamable_pipeline, trailing_skip, trailing_limit = stream_plan
@@ -918,7 +933,9 @@ class AsyncAggregationCursor:
                 remaining_limit -= len(transformed)
 
             for document in transformed:
-                yield DocumentCodec.to_public(strip_search_result_metadata(document))
+                yield self._materialize_document(
+                    DocumentCodec.to_public(strip_search_result_metadata(document))
+                )
 
     async def to_list(self) -> list[Document]:
         started_at = time.perf_counter_ns()

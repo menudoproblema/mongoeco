@@ -106,6 +106,7 @@ from mongoeco._types import (
     TransactionOptions,
     UndefinedType,
     UNDEFINED,
+    UuidRepresentation,
     UpdateMany,
     UpdateOne,
     UpdateResult,

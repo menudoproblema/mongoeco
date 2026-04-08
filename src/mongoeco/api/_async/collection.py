@@ -54,6 +54,7 @@ from mongoeco.compat import (
     resolve_pymongo_profile_resolution,
 )
 from mongoeco.core.aggregation import Pipeline
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
@@ -313,6 +314,23 @@ class AsyncCollection:
         if not all(is_filter(item) for item in array_filters):
             raise TypeError("array_filters must be a list of dicts")
         return array_filters
+
+    def _apply_codec_options_to_document(self, document: Document) -> Document:
+        materialized = DocumentCodec.apply_codec_options(
+            document,
+            codec_options=self._codec_options,
+        )
+        if not isinstance(materialized, dict):
+            raise TypeError("codec_options.document_class must produce dict-compatible documents")
+        return materialized
+
+    def _apply_codec_options_to_optional_document(
+        self,
+        document: Document | None,
+    ) -> Document | None:
+        if document is None:
+            return None
+        return self._apply_codec_options_to_document(document)
 
     @staticmethod
     def _normalize_index_keys(keys: object) -> IndexKeySpec:
@@ -585,10 +603,12 @@ class AsyncCollection:
         operation: FindOperation,
         *,
         session: ClientSession | None = None,
+        apply_codec_options: bool = True,
     ) -> AsyncCursor:
         return self._runtime.build_cursor(
             operation,
             session=session,
+            apply_codec_options=apply_codec_options,
         )
 
     async def _put_replacement_document(

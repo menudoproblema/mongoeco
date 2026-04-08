@@ -46,7 +46,7 @@ _SUPPORTED_REGEX_FLAGS = {
 }
 _SUPPORTED_REGEX_FLAGS_LABEL = ", ".join(sorted(_SUPPORTED_REGEX_FLAGS))
 _SUPPORTED_SEARCH_FACET_TYPES = frozenset(
-    {"string", "number", "date", "boolean", "objectId", "uuid"}
+    {"string", "token", "number", "date", "boolean", "objectId", "uuid"}
 )
 TEXTUAL_SEARCH_FIELD_MAPPING_TYPES = frozenset({"string", "autocomplete", "token"})
 EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES = frozenset(
@@ -61,6 +61,10 @@ EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES = frozenset(
 STRUCTURED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
     {"document", "embeddedDocuments"}
 )
+STRUCTURED_SEARCH_FIELD_MAPPING_TYPE_ALIASES: dict[str, str] = {
+    "object": "document",
+    "embeddedDocument": "embeddedDocuments",
+}
 SUPPORTED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
     TEXTUAL_SEARCH_FIELD_MAPPING_TYPES
     | EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES
@@ -763,9 +767,13 @@ def _compile_search_highlight_spec(spec: object) -> SearchHighlightSpec | None:
             "$search.highlight only supports path, maxChars and maxNumPassages; unsupported keys: "
             + ", ".join(unsupported_options)
         )
-    paths = _normalize_search_paths(spec.get("path"))
-    if paths is None:
-        raise OperationFailure("$search.highlight.path must be a string or list of strings")
+    raw_path = spec.get("path")
+    if isinstance(raw_path, dict) and raw_path == {"wildcard": "*"}:
+        paths = None
+    else:
+        paths = _normalize_search_paths(raw_path)
+        if paths is None:
+            raise OperationFailure("$search.highlight.path must be a string or list of strings")
     max_chars = spec.get("maxChars", 120)
     if (
         not isinstance(max_chars, int)
@@ -2375,7 +2383,7 @@ def _validate_mappings_document(mappings: Document) -> None:
 
 
 def _validate_field_mapping(field_spec: Document) -> None:
-    mapping_type = field_spec.get("type", "document")
+    mapping_type = _normalize_search_field_mapping_type(field_spec.get("type", "document"))
     if mapping_type in STRUCTURED_SEARCH_FIELD_MAPPING_TYPES:
         nested_mapping = {
             key: value for key, value in field_spec.items() if key != "type"
@@ -2909,7 +2917,7 @@ def build_search_stage_option_previews(
                 break
         highlight_preview: dict[str, object] = {
             "resultField": SEARCH_HIGHLIGHTS_FIELD,
-            "requestedPaths": list(options.highlight.paths or ()),
+            "requestedPaths": ["*"] if options.highlight.paths is None else list(options.highlight.paths),
             "fragmentCount": sum(
                 len(document.get(SEARCH_HIGHLIGHTS_FIELD, ()))
                 for document in documents
@@ -2994,11 +3002,14 @@ def build_search_highlights(
     spec: SearchHighlightSpec,
 ) -> list[dict[str, object]]:
     available_leaf_paths = _mapped_textual_search_paths(definition)
-    requested_paths = list(spec.paths or ())
-    resolved_paths = _resolve_requested_leaf_paths(
-        requested_paths,
-        available_leaf_paths=available_leaf_paths,
-    )
+    if spec.paths is None:
+        resolved_paths = list(available_leaf_paths)
+    else:
+        requested_paths = list(spec.paths)
+        resolved_paths = _resolve_requested_leaf_paths(
+            requested_paths,
+            available_leaf_paths=available_leaf_paths,
+        )
     clauses = _highlightable_textual_clauses(query)
     highlights: list[dict[str, object]] = []
     seen: set[tuple[str, str, str]] = set()
@@ -3176,6 +3187,9 @@ def _facet_preview(
             normalized_kind = normalized[0]
             if spec.facet_type == "date":
                 if normalized_kind not in {"date", "datetime"}:
+                    continue
+            elif spec.facet_type in {"string", "token"}:
+                if normalized_kind != "string":
                     continue
             elif spec.facet_type == "boolean":
                 if normalized_kind != "bool":
@@ -3471,6 +3485,12 @@ _SEARCH_QUERY_EXPLAINERS: dict[type[Any], _SearchExplainBuilder] = {
 }
 
 
+def _normalize_search_field_mapping_type(value: object) -> str:
+    if not isinstance(value, str):
+        return "document"
+    return STRUCTURED_SEARCH_FIELD_MAPPING_TYPE_ALIASES.get(value, value)
+
+
 def _collect_entries_from_mapping(document: object, mappings: Document, prefix: str = "") -> list[tuple[str, str]]:
     entries: list[tuple[str, str]] = []
     if mappings.get("dynamic", False):
@@ -3483,7 +3503,7 @@ def _collect_entries_from_mapping(document: object, mappings: Document, prefix: 
             continue
         path = f"{prefix}.{field_name}" if prefix else field_name
         value = document[field_name]
-        mapping_type = field_spec.get("type", "document")
+        mapping_type = _normalize_search_field_mapping_type(field_spec.get("type", "document"))
         if mapping_type == "document":
             entries.extend(_collect_entries_from_mapping(value, field_spec, prefix=path))
             continue
@@ -3591,7 +3611,7 @@ def _iter_mapped_search_paths(mappings: Document, prefix: str = "") -> tuple[str
         if not isinstance(field_name, str) or not field_name or not isinstance(field_spec, dict):
             continue
         path = f"{prefix}.{field_name}" if prefix else field_name
-        mapping_type = field_spec.get("type", "document")
+        mapping_type = _normalize_search_field_mapping_type(field_spec.get("type", "document"))
         collected.append(path)
         if mapping_type in STRUCTURED_SEARCH_FIELD_MAPPING_TYPES:
             nested_mapping = {key: value for key, value in field_spec.items() if key != "type"}
@@ -3613,7 +3633,7 @@ def _iter_mapped_leaf_search_paths(
         if not isinstance(field_name, str) or not field_name or not isinstance(field_spec, dict):
             continue
         path = f"{prefix}.{field_name}" if prefix else field_name
-        mapping_type = field_spec.get("type", "document")
+        mapping_type = _normalize_search_field_mapping_type(field_spec.get("type", "document"))
         if mapping_type in STRUCTURED_SEARCH_FIELD_MAPPING_TYPES:
             nested_mapping = {key: value for key, value in field_spec.items() if key != "type"}
             collected.extend(

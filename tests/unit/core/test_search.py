@@ -4186,6 +4186,113 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(previews["highlightPreview"]["resultField"], "searchHighlights")
         self.assertTrue(previews["highlightPreview"]["sample"])
 
+    def test_search_highlight_wildcard_path_targets_all_mapped_textual_fields(self) -> None:
+        definition = SearchIndexDefinition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "string"},
+                        "body": {"type": "string"},
+                    },
+                }
+            },
+            name="by_text",
+        )
+        query = SearchTextQuery(
+            index_name="by_text",
+            raw_query="Ada",
+            terms=("ada",),
+            paths=None,
+            stage_options=search_module.SearchStageOptions(
+                highlight=search_module.SearchHighlightSpec(paths=None, max_chars=40),
+            ),
+        )
+        highlighted = search_module.attach_search_highlights(
+            {
+                "_id": 1,
+                "title": "Ada in title",
+                "body": "Ada in body",
+            },
+            definition=definition,
+            query=query,
+        )
+        highlights = highlighted.get("searchHighlights")
+        assert isinstance(highlights, list)
+        self.assertEqual(
+            sorted(fragment["path"] for fragment in highlights),
+            ["body", "title"],
+        )
+        previews = search_module.build_search_stage_option_previews(
+            [highlighted],
+            definition=definition,
+            query=query,
+        )
+        self.assertEqual(previews["highlightPreview"]["requestedPaths"], ["*"])
+
+    def test_search_index_mapping_aliases_and_token_facet_subset_are_supported(self) -> None:
+        normalized = validate_search_index_definition(
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "profile": {
+                            "type": "object",
+                            "fields": {
+                                "bio": {"type": "string"},
+                            },
+                        },
+                        "contributors": {
+                            "type": "embeddedDocument",
+                            "fields": {
+                                "name": {"type": "string"},
+                            },
+                        },
+                        "kind": {"type": "token"},
+                    },
+                }
+            },
+            index_type="search",
+        )
+        definition = SearchIndexDefinition(normalized, name="by_text")
+        entries = iter_searchable_text_entries(
+            {
+                "profile": {"bio": "Ada"},
+                "contributors": [{"name": "Grace"}],
+            },
+            definition,
+        )
+        self.assertIn(("profile.bio", "Ada"), entries)
+        self.assertIn(("contributors.name", "Grace"), entries)
+
+        query = SearchTextQuery(
+            index_name="by_text",
+            raw_query="Ada",
+            terms=("ada",),
+            paths=("profile.bio",),
+            stage_options=search_module.SearchStageOptions(
+                facet=search_module.SearchFacetSpec(path="kind", facet_type="token", num_buckets=2),
+            ),
+        )
+        previews = search_module.build_search_stage_option_previews(
+            [
+                {"kind": "note"},
+                {"kind": "note"},
+                {"kind": "reference"},
+            ],
+            definition=definition,
+            query=query,
+        )
+        self.assertEqual(
+            previews["facetPreview"],
+            {
+                "type": "token",
+                "path": "kind",
+                "numBuckets": 2,
+                "buckets": [{"value": "note", "count": 2}, {"value": "reference", "count": 1}],
+            },
+        )
+
     def test_search_advanced_option_validators_cover_invalid_shapes(self) -> None:
         invalid_specs = (
             (
@@ -4222,11 +4329,6 @@ class SearchCoreTests(unittest.TestCase):
                 search_module._compile_search_highlight_spec,
                 {"path": "title", "extra": True},
                 "highlight only supports path, maxChars and maxNumPassages",
-            ),
-            (
-                search_module._compile_search_highlight_spec,
-                {"path": {"wildcard": "*"}},
-                "highlight.path must be a string",
             ),
             (
                 search_module._compile_search_highlight_spec,
@@ -4317,6 +4419,9 @@ class SearchCoreTests(unittest.TestCase):
         for compiler, spec, pattern in invalid_specs:
             with self.subTest(spec=spec), self.assertRaisesRegex(OperationFailure, pattern):
                 compiler(spec)
+        wildcard_highlight = search_module._compile_search_highlight_spec({"path": {"wildcard": "*"}})
+        assert wildcard_highlight is not None
+        self.assertIsNone(wildcard_highlight.paths)
 
         invalid_queries = (
             (
@@ -5458,6 +5563,71 @@ class SearchCoreTests(unittest.TestCase):
         self.assertFalse(search_module._search_path_exists(5, "history"))
         self.assertFalse(search_module._search_path_exists({"history": [1]}, "scores.0"))
         self.assertTrue(search_module._search_path_exists({"value": None}, ""))
+
+    def test_search_meta_and_highlight_compilers_reject_invalid_operator_shapes(self) -> None:
+        with self.assertRaisesRegex(OperationFailure, "\\$searchMeta requires a document specification"):
+            search_module.compile_search_meta_text_like_query([])
+        with self.assertRaisesRegex(
+            OperationFailure,
+            "\\$searchMeta.facet.operator must be a document specification",
+        ):
+            search_module.compile_search_meta_text_like_query(
+                {"facet": {"operator": "text"}, "facets": {"kindFacet": {"path": "kind"}}}
+            )
+        with self.assertRaisesRegex(OperationFailure, "supports only search operators"):
+            search_module.compile_search_meta_text_like_query(
+                {
+                    "facet": {
+                        "operator": {
+                            "text": {"query": "ada", "path": "name"},
+                            "extra": {"query": "ada"},
+                        },
+                        "facets": {"kindFacet": {"path": "kind"}},
+                    }
+                }
+            )
+        with self.assertRaisesRegex(
+            OperationFailure,
+            "\\$search.highlight.path must be a string or list of strings",
+        ):
+            search_module._compile_search_highlight_spec({})
+
+    def test_autocomplete_sequential_mode_rejects_documents_when_a_term_has_no_matches(self) -> None:
+        definition = SearchIndexDefinition(
+            {"mappings": {"dynamic": False, "fields": {"title": {"type": "autocomplete"}}}},
+            name="by_text",
+        )
+        query = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="ada missing",
+            terms=("ada", "missing"),
+            paths=("title",),
+            token_order="sequential",
+        )
+        document = {"title": "Ada Lovelace"}
+        prepared = materialize_search_document(document, definition)
+
+        self.assertFalse(
+            matches_search_autocomplete_query(
+                document,
+                definition=definition,
+                query=query,
+                materialized=prepared,
+            )
+        )
+
+    def test_token_facet_preview_skips_non_string_values_and_mapping_type_defaults_to_document(self) -> None:
+        preview = search_module._facet_preview(
+            [
+                {"kind": 1},
+                {"kind": True},
+                {"kind": "note"},
+            ],
+            spec=search_module.SearchFacetSpec(path="kind", facet_type="token", num_buckets=2),
+        )
+
+        self.assertEqual(preview["buckets"], [{"value": "note", "count": 1}])
+        self.assertEqual(search_module._normalize_search_field_mapping_type(1), "document")
 
     def test_search_compound_ranking_prefers_more_should_hits_and_near_closeness(self) -> None:
         definition = SearchIndexDefinition(

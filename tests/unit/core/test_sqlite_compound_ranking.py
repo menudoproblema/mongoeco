@@ -510,3 +510,21 @@ class SQLiteCompoundRankingTests(unittest.TestCase):
                 ),
                 ["a"],
             )
+
+    def test_sort_search_documents_for_query_filters_unmatched_generic_documents(self) -> None:
+        query = compile_search_stage(
+            "$search",
+            {"index": "by_text", "text": {"query": "ada", "path": "title"}},
+        )
+        matching = {"_id": "a", "title": "Ada algorithms"}
+        non_matching = {"_id": "b", "title": "Grace notes"}
+
+        ranked = sort_search_documents_for_query(
+            [
+                (matching, self.definition, materialize_search_document(matching, self.definition)),
+                (non_matching, self.definition, materialize_search_document(non_matching, self.definition)),
+            ],
+            query=query,
+        )
+
+        self.assertEqual([document["_id"] for document in ranked], ["a"])

@@ -363,7 +363,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             await cursor._search_documents(),
             [
                 {
-                    "count": {"total": 2},
+                    "count": {"total": 2, "exact": True},
                     "facet": {
                         "type": "string",
                         "path": "kind",
@@ -450,6 +450,35 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 }
             ],
         )
+
+    def test_search_runtime_spec_projection_keeps_ambiguous_facet_operator_unchanged(self):
+        original_spec = {
+            "index": "by_text",
+            "facet": {
+                "operator": {
+                    "text": {"query": "ada", "path": "name"},
+                    "phrase": {"query": "ada", "path": "name"},
+                },
+                "facets": {"kindFacet": {"path": "kind", "numBuckets": 2}},
+            },
+        }
+
+        projected_spec = AsyncAggregationCursor._search_runtime_spec_for_stage("$searchMeta", original_spec)
+
+        self.assertIs(projected_spec, original_spec)
+
+    def test_build_pushdown_cursor_reraises_unrelated_type_errors_from_builder(self):
+        class BrokenBuilderCollection(_FakeCollection):
+            def _build_cursor(self, operation, *, session=None, **kwargs):  # type: ignore[override]
+                del operation, session, kwargs
+                raise TypeError("boom")
+
+        collection = BrokenBuilderCollection([])
+        cursor = AsyncAggregationCursor(collection, [{"$project": {"_id": 1}}], batch_size=2)
+        operation = cursor._pushdown_find_operation(batch_size=2)
+
+        with self.assertRaisesRegex(TypeError, "boom"):
+            cursor._build_pushdown_cursor(operation)
 
     async def test_search_materialization_expands_prefix_for_match_then_limit(self):
         collection = _FakeCollection([])

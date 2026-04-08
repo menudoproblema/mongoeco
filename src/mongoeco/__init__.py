@@ -13,6 +13,7 @@ from mongoeco.types import (
     Binary, BulkWriteResult, CodecOptions, DBRef, Decimal128, DeleteMany, DeleteOne, IndexDefinition,
     IndexModel, InsertOne, ObjectId, ReadConcern, ReadPreference, ReadPreferenceMode, Regex, ReplaceOne,
     ReturnDocument, SearchIndexDefinition, SearchIndexModel, SON, Timestamp, TransactionOptions, UNDEFINED,
+    UuidRepresentation,
     UndefinedType, UpdateMany, UpdateOne, WriteConcern,
 )
 
@@ -46,6 +47,7 @@ _TYPE_EXPORTS = (
     "ReadPreference",
     "ReadPreferenceMode",
     "CodecOptions",
+    "UuidRepresentation",
     "TransactionOptions",
     "Binary",
     "Regex",

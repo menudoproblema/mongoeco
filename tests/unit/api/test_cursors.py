@@ -571,6 +571,14 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(await iterator.pull_chunk(1), [])
 
+    async def test_async_cursor_source_iterator_pull_chunk_closes_on_empty_source(self):
+        cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None)
+        iterator = cursor.__aiter__()
+
+        self.assertEqual(await iterator.pull_chunk(3), [])
+        self.assertTrue(iterator._closed)
+        self.assertIsNone(cursor._active_async_iterable)
+
     async def test_async_cursor_uses_local_prefetch_when_batch_size_is_none(self):
         documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
         collection = _BatchTrackingCollectionStub(documents)

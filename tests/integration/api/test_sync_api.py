@@ -9,6 +9,7 @@ import uuid
 from bson import decode_all
 
 from mongoeco import (
+    Binary,
     CodecOptions,
     ClientSession,
     DeleteMany,
@@ -26,6 +27,7 @@ from mongoeco import (
     TransactionOptions,
     UpdateMany,
     UpdateOne,
+    UuidRepresentation,
     WriteConcern,
 )
 from mongoeco.types import PlanningMode
@@ -2998,6 +3000,47 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertIs(collection.read_concern, read_concern)
             self.assertIs(collection.read_preference, read_preference)
             self.assertIs(collection.codec_options, codec_options)
+
+    def test_codec_options_materialize_find_results_with_timezone_uuid_and_document_class(self):
+        class AuditDocument(dict):
+            pass
+
+        aware_datetime = datetime.datetime(
+            2026,
+            4,
+            8,
+            10,
+            30,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=2)),
+        )
+        trace_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
+        codec_options = CodecOptions(
+            AuditDocument,
+            tz_aware=True,
+            tzinfo=datetime.timezone.utc,
+            uuid_representation=UuidRepresentation.UNSPECIFIED,
+        )
+
+        with MongoClient(MemoryEngine(), codec_options=codec_options) as client:
+            collection = client.alpha.get_collection("events")
+            collection.insert_one(
+                {
+                    "_id": "evt-1",
+                    "created_at": aware_datetime,
+                    "trace": trace_id,
+                    "nested": {"owner": "ada"},
+                }
+            )
+            found = collection.find_one({"_id": "evt-1"})
+
+        assert found is not None
+        self.assertIsInstance(found, AuditDocument)
+        self.assertIsInstance(found["nested"], AuditDocument)
+        self.assertEqual(
+            found["created_at"],
+            datetime.datetime(2026, 4, 8, 8, 30, tzinfo=datetime.timezone.utc),
+        )
+        self.assertEqual(found["trace"], Binary(trace_id.bytes, subtype=4))
 
     def test_with_options_clones_database_and_collection_without_mutating_parent(self):
         with MongoClient(MemoryEngine()) as client:

@@ -920,6 +920,13 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertIsNotNone(self.collection.codec_options)
         self.assertEqual(collection.full_name, "db.coll")
 
+    def test_apply_codec_options_to_document_rejects_non_dict_mapping_outputs(self):
+        collection = AsyncCollection(MemoryEngine(), "db", "coll")
+
+        with patch.object(async_collection_module.DocumentCodec, "apply_codec_options", return_value=[]):
+            with self.assertRaisesRegex(TypeError, "dict-compatible"):
+                collection._apply_codec_options_to_document({"_id": "1"})
+
     def test_rename_preserves_collection_configuration(self):
         class EngineStub(MemoryEngine):
             async def rename_collection(self, *args, **kwargs):

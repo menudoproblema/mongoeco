@@ -108,6 +108,7 @@ from mongoeco.types import (
     ReadPreferenceMode,
     TransactionOptions,
     Timestamp,
+    UuidRepresentation,
     WriteConcern,
     BuildInfoDocument,
     CollectionStatsSnapshot,
@@ -280,6 +281,18 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             CodecOptions(document_class=list)  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             CodecOptions(tz_aware=1)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            CodecOptions(tzinfo="UTC")  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            CodecOptions(tz_aware=False, tzinfo=datetime.timezone.utc)
+        with self.assertRaises(ValueError):
+            CodecOptions(uuid_representation="legacy")
+        with self.assertRaises(TypeError):
+            CodecOptions(type_registry=[(datetime.datetime, lambda value: value)])  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            CodecOptions(type_registry={"x": lambda value: value})  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            CodecOptions(type_registry={datetime.datetime: "decoder"})  # type: ignore[arg-type]
 
         with self.assertRaises(TypeError):
             TransactionOptions(read_concern="bad")  # type: ignore[arg-type]
@@ -643,7 +656,13 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             tag_sets=[{"region": "eu-west"}],
             max_staleness_seconds=120,
         )
-        codec_options = CodecOptions(dict, tz_aware=True)
+        codec_options = CodecOptions(
+            dict,
+            tz_aware=True,
+            tzinfo=datetime.timezone.utc,
+            uuid_representation=UuidRepresentation.STANDARD,
+            type_registry={datetime.datetime: lambda value: value},
+        )
         transaction_options = TransactionOptions(
             read_concern=read_concern,
             write_concern=write_concern,
@@ -655,6 +674,9 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(read_concern.document, {"level": "majority"})
         self.assertEqual(read_preference.name, "secondaryPreferred")
         self.assertEqual(codec_options.document_class, dict)
+        self.assertEqual(codec_options.tzinfo, datetime.timezone.utc)
+        self.assertEqual(codec_options.uuid_representation, UuidRepresentation.STANDARD)
+        self.assertEqual(len(codec_options.type_registry), 1)
         self.assertEqual(transaction_options.max_commit_time_ms, 500)
 
     def test_pymongo_configuration_types_reject_invalid_values(self):
@@ -666,6 +688,8 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             ReadPreference("invalid")  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
             CodecOptions(list)  # type: ignore[arg-type]
+        with self.assertRaises(TypeError):
+            CodecOptions(uuid_representation=1)  # type: ignore[arg-type]
         with self.assertRaises(ValueError):
             TransactionOptions(max_commit_time_ms=0)
 
@@ -706,6 +730,10 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
         self.assertEqual(normalize_read_concern(None).document, {})
         self.assertEqual(normalize_read_preference(None).document, {"mode": "primary"})
         self.assertEqual(normalize_codec_options(None).document_class, dict)
+        self.assertEqual(
+            normalize_codec_options(None).uuid_representation,
+            UuidRepresentation.STANDARD,
+        )
         self.assertIsNone(normalize_transaction_options(None).max_commit_time_ms)
 
         with self.assertRaises(TypeError):

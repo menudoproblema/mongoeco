@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+import datetime
 from enum import Enum
-from typing import Sequence
+from typing import Callable, Sequence
 
 
 def _require_non_bool_int(value: object, field_name: str) -> int:
@@ -81,6 +83,14 @@ class ReadPreferenceMode(Enum):
     NEAREST = "nearest"
 
 
+class UuidRepresentation(Enum):
+    STANDARD = "standard"
+    PYTHON_LEGACY = "pythonLegacy"
+    JAVA_LEGACY = "javaLegacy"
+    CSHARP_LEGACY = "csharpLegacy"
+    UNSPECIFIED = "unspecified"
+
+
 @dataclass(frozen=True, slots=True)
 class ReadPreference:
     mode: ReadPreferenceMode = ReadPreferenceMode.PRIMARY
@@ -150,12 +160,18 @@ class ReadPreference:
 class CodecOptions:
     document_class: type[dict] = dict
     tz_aware: bool = False
+    tzinfo: datetime.tzinfo | None = None
+    uuid_representation: UuidRepresentation = UuidRepresentation.STANDARD
+    type_registry: tuple[tuple[type[object], Callable[[object], object]], ...] = ()
 
     def __init__(
         self,
         document_class: type[dict] = dict,
         *,
         tz_aware: bool = False,
+        tzinfo: datetime.tzinfo | None = None,
+        uuid_representation: UuidRepresentation | str = UuidRepresentation.STANDARD,
+        type_registry: Mapping[type[object], Callable[[object], object]] | None = None,
     ):
         if not isinstance(document_class, type):
             raise TypeError("document_class must be a type")
@@ -163,8 +179,36 @@ class CodecOptions:
             raise TypeError("document_class must be a dict subclass")
         if not isinstance(tz_aware, bool):
             raise TypeError("tz_aware must be a bool")
+        if tzinfo is not None and not isinstance(tzinfo, datetime.tzinfo):
+            raise TypeError("tzinfo must be a tzinfo or None")
+        if tzinfo is not None and not tz_aware:
+            raise ValueError("tzinfo requires tz_aware=True")
+        if isinstance(uuid_representation, str):
+            try:
+                uuid_representation = UuidRepresentation(uuid_representation)
+            except ValueError as exc:
+                supported = ", ".join(member.value for member in UuidRepresentation)
+                raise ValueError(
+                    "uuid_representation must be one of: "
+                    + supported
+                ) from exc
+        elif not isinstance(uuid_representation, UuidRepresentation):
+            raise TypeError("uuid_representation must be a UuidRepresentation or string")
+        normalized_type_registry: list[tuple[type[object], Callable[[object], object]]] = []
+        if type_registry is not None:
+            if not isinstance(type_registry, Mapping):
+                raise TypeError("type_registry must be a mapping of type -> decoder callable")
+            for value_type, decoder in type_registry.items():
+                if not isinstance(value_type, type):
+                    raise TypeError("type_registry keys must be types")
+                if not callable(decoder):
+                    raise TypeError("type_registry values must be callables")
+                normalized_type_registry.append((value_type, decoder))
         object.__setattr__(self, "document_class", document_class)
         object.__setattr__(self, "tz_aware", tz_aware)
+        object.__setattr__(self, "tzinfo", tzinfo)
+        object.__setattr__(self, "uuid_representation", uuid_representation)
+        object.__setattr__(self, "type_registry", tuple(normalized_type_registry))
 
 
 @dataclass(frozen=True, slots=True)
