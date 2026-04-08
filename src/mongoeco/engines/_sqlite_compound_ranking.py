@@ -7,6 +7,7 @@ import sqlite3
 from dataclasses import dataclass
 from typing import Protocol
 
+from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.search import (
     MaterializedSearchDocument,
     SearchCompoundQuery,
@@ -585,20 +586,24 @@ def materialized_search_document_from_entries(
     )
 
 
+def _document_tie_break_key(document: Document) -> str:
+    return repr(bson_engine_key(document.get("_id")))
+
+
 def sort_search_documents_for_query(
     documents: list[tuple[Document, SearchIndexDefinition, object | None]],
     *,
     query: SearchQuery,
 ) -> list[Document]:
     if isinstance(query, SearchNearQuery):
-        ranked: list[tuple[float, Document]] = []
+        ranked: list[tuple[float, str, Document]] = []
         for document, _definition, _materialized in documents:
             distance = search_near_distance(document, query=query)
-            ranked.append((distance if distance is not None else float("inf"), document))
-        ranked.sort(key=lambda item: item[0])
-        return [document for _distance, document in ranked]
+            ranked.append((distance if distance is not None else float("inf"), _document_tie_break_key(document), document))
+        ranked.sort(key=lambda item: item[:2])
+        return [document for _distance, _tie_break, document in ranked]
     if isinstance(query, SearchCompoundQuery) and query.should:
-        ranked_compound: list[tuple[tuple[float, float, float], Document]] = []
+        ranked_compound: list[tuple[tuple[float, float, float], str, Document]] = []
         for document, definition, materialized in documents:
             matched_should, should_score, best_near_distance = search_compound_ranking(
                 document,
@@ -606,9 +611,15 @@ def sort_search_documents_for_query(
                 query=query,
                 materialized=materialized,
             )
-            ranked_compound.append(((-float(matched_should), -should_score, best_near_distance), document))
-        ranked_compound.sort(key=lambda item: item[0])
-        return [document for _score, document in ranked_compound]
+            ranked_compound.append(
+                (
+                    (-float(matched_should), -should_score, best_near_distance),
+                    _document_tie_break_key(document),
+                    document,
+                )
+            )
+        ranked_compound.sort(key=lambda item: item[:2])
+        return [document for _score, _tie_break, document in ranked_compound]
     return [document for document, _definition, _materialized in documents]
 
 

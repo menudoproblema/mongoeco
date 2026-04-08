@@ -1917,6 +1917,95 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
             ["a", "b"],
         )
 
+    async def test_tie_order_is_deterministic_for_near_compound_and_vector_in_memory_and_sqlite(self):
+        results: dict[str, dict[str, list[str]]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.search_runtime.get_collection("docs")
+                await collection.insert_many(
+                    [
+                        {"_id": "b", "title": "ada", "score": 10, "embedding": [1.0, 0.0, 0.0]},
+                        {"_id": "a", "title": "ada", "score": 10, "embedding": [1.0, 0.0, 0.0]},
+                        {"_id": "c", "title": "ada", "score": 8, "embedding": [0.0, 1.0, 0.0]},
+                    ]
+                )
+                await collection.create_search_indexes(
+                    [
+                        SearchIndexModel({"mappings": {"dynamic": True}}, name="by_text"),
+                        SearchIndexModel(
+                            {
+                                "fields": [
+                                    {
+                                        "type": "vector",
+                                        "path": "embedding",
+                                        "numDimensions": 3,
+                                        "similarity": "cosine",
+                                    }
+                                ]
+                            },
+                            name="by_vector",
+                            type="vectorSearch",
+                        ),
+                    ]
+                )
+
+                near_hits = await collection.aggregate(
+                    [
+                        {
+                            "$search": {
+                                "index": "by_text",
+                                "near": {"path": "score", "origin": 9, "pivot": 2},
+                            }
+                        },
+                        {"$project": {"_id": 1}},
+                        {"$limit": 2},
+                    ]
+                ).to_list()
+
+                compound_hits = await collection.aggregate(
+                    [
+                        {
+                            "$search": {
+                                "index": "by_text",
+                                "compound": {
+                                    "must": [{"text": {"query": "ada", "path": "title"}}],
+                                    "filter": [{"range": {"path": "score", "gte": 10, "lte": 10}}],
+                                    "should": [{"exists": {"path": "title"}}],
+                                    "minimumShouldMatch": 1,
+                                },
+                            }
+                        },
+                        {"$project": {"_id": 1}},
+                        {"$limit": 2},
+                    ]
+                ).to_list()
+
+                vector_hits = await collection.aggregate(
+                    [
+                        {
+                            "$vectorSearch": {
+                                "index": "by_vector",
+                                "path": "embedding",
+                                "queryVector": [1.0, 0.0, 0.0],
+                                "limit": 2,
+                                "numCandidates": 3,
+                            }
+                        },
+                        {"$project": {"_id": 1}},
+                    ]
+                ).to_list()
+
+                results[engine_name] = {
+                    "near": [document["_id"] for document in near_hits],
+                    "compound": [document["_id"] for document in compound_hits],
+                    "vector": [document["_id"] for document in vector_hits],
+                }
+
+        self.assertEqual(results["memory"], results["sqlite"])
+        self.assertEqual(results["memory"]["near"], ["a", "b"])
+        self.assertEqual(results["memory"]["compound"], ["a", "b"])
+        self.assertEqual(results["memory"]["vector"], ["a", "b"])
+
     async def test_watch_event_shape_matches_in_memory_and_sqlite(self):
         results: dict[str, list[dict[str, object]]] = {}
         for engine_name in ("memory", "sqlite"):

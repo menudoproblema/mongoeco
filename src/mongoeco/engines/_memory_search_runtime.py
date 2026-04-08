@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import replace
-import heapq
 import math
 from typing import Protocol
 
 from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.search import (
+    VECTOR_SEARCH_SCORE_FIELD,
     SearchCompoundQuery,
     SearchNearQuery,
     SearchVectorQuery,
@@ -58,6 +59,19 @@ class _MemorySearchRuntimeEngine(Protocol):
         context: ClientSession | None,
     ): ...
     _search_index_ready_at: dict[tuple[str, str, str], float]
+
+
+def _document_tie_break_key(document: Document) -> str:
+    return repr(bson_engine_key(document.get("_id")))
+
+
+def _sort_vector_scored_documents(documents: list[Document]) -> None:
+    documents.sort(
+        key=lambda document: (
+            -float(document.get(VECTOR_SEARCH_SCORE_FIELD, float("-inf"))),
+            _document_tie_break_key(document),
+        )
+    )
 
 
 def _vector_filter_residual_description(
@@ -244,7 +258,7 @@ async def execute_search_documents(
 
     if is_text_search_query(query):
         if isinstance(query, SearchNearQuery):
-            distance_hits: list[tuple[float, Document]] = []
+            distance_hits: list[tuple[float, str, Document]] = []
             for document, materialized in materialized_documents:
                 if downstream_filter_spec is not None and not QueryEngine.match(document, downstream_filter_spec, dialect=MONGODB_DIALECT_70):
                     continue
@@ -253,19 +267,18 @@ async def execute_search_documents(
                 distance = search_near_distance(document, query=query)
                 if distance is None:
                     continue
-                distance_hits.append((distance, document))
+                distance_hits.append((distance, _document_tie_break_key(document), document))
+            distance_hits.sort(key=lambda item: item[:2])
             if effective_limit is not None:
-                distance_hits = heapq.nsmallest(effective_limit, distance_hits, key=lambda item: item[0])
-            else:
-                distance_hits.sort(key=lambda item: item[0])
-            results = [document for _distance, document in distance_hits]
+                distance_hits = distance_hits[:effective_limit]
+            results = [document for _distance, _tie_break, document in distance_hits]
             return [
                 attach_search_highlights(document, definition=definition, query=query)
                 for document in results
             ]
         if isinstance(query, SearchCompoundQuery) and query.should:
-            ranked_documents: list[tuple[tuple[int, float, float], int, Document]] = []
-            for order, (document, materialized) in enumerate(materialized_documents):
+            ranked_documents: list[tuple[tuple[int, float, float], str, Document]] = []
+            for document, materialized in materialized_documents:
                 if downstream_filter_spec is not None:
                     candidateable_match = matches_candidateable_filter(document, downstream_filter_spec)
                     if candidateable_match is False:
@@ -285,15 +298,18 @@ async def execute_search_documents(
                     should_score,
                     -best_near_distance if math.isfinite(best_near_distance) else float("-inf"),
                 )
-                if effective_limit is not None:
-                    if len(ranked_documents) < effective_limit:
-                        heapq.heappush(ranked_documents, (rank, -order, document))
-                    elif (rank, -order) > ranked_documents[0][:2]:
-                        heapq.heapreplace(ranked_documents, (rank, -order, document))
-                else:
-                    ranked_documents.append((rank, -order, document))
-            ranked_documents.sort(key=lambda item: item[:2], reverse=True)
-            results = [document for _score, _order, document in ranked_documents]
+                ranked_documents.append((rank, _document_tie_break_key(document), document))
+            ranked_documents.sort(
+                key=lambda item: (
+                    -item[0][0],
+                    -item[0][1],
+                    -item[0][2],
+                    item[1],
+                )
+            )
+            if effective_limit is not None:
+                ranked_documents = ranked_documents[:effective_limit]
+            results = [document for _score, _tie_break, document in ranked_documents]
             return [
                 attach_search_highlights(document, definition=definition, query=query)
                 for document in results
@@ -340,20 +356,22 @@ async def execute_search_documents(
         vector_index,
         query=query,
         candidate_rows=candidate_rows,
-        limit=effective_vector_limit,
+        limit=None,
     )
     query_requires_postfilter = query.filter_spec is not None and query_filter_rows is None
     downstream_requires_postfilter = downstream_filter_spec is not None and downstream_filter_rows is None
     if not query_requires_postfilter and not downstream_requires_postfilter:
-        return [
+        vector_documents = [
             attach_vector_search_score(
                 vector_index.documents[path_positions[row_index]].document,
                 vector_score,
             )
-            for vector_score, row_index in scored_rows[:effective_vector_limit]
+            for vector_score, row_index in scored_rows
         ]
-    vector_hits: list[tuple[float, int, Document]] = []
-    for order, (score, row_index) in enumerate(scored_rows):
+        _sort_vector_scored_documents(vector_documents)
+        return vector_documents[:effective_vector_limit]
+    vector_hits: list[Document] = []
+    for score, row_index in scored_rows:
         prepared = vector_index.documents[path_positions[row_index]]
         if downstream_requires_postfilter:
             candidateable_match = matches_candidateable_filter(prepared.document, downstream_filter_spec)
@@ -367,9 +385,9 @@ async def execute_search_documents(
                 continue
             if candidateable_match is None and not QueryEngine.match(prepared.document, query.filter_spec, dialect=MONGODB_DIALECT_70):
                 continue
-        vector_hits.append((score, -order, attach_vector_search_score(prepared.document, score)))
-    vector_hits.sort(key=lambda item: item[:2], reverse=True)
-    return [document for _score, _order, document in vector_hits[:effective_vector_limit]]
+        vector_hits.append(attach_vector_search_score(prepared.document, score))
+    _sort_vector_scored_documents(vector_hits)
+    return vector_hits[:effective_vector_limit]
 
 
 async def explain_search_documents(
