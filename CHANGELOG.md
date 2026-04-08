@@ -12,6 +12,36 @@ usa Semantic Versioning.
 
 - Nothing yet.
 
+## [3.3.0] - 2026-04-08
+### Added
+
+- Integracion con `cxp>=3.0.0` como base canonica de contrato para
+  `database/mongodb`, manteniendo `mongoeco.cxp` como fachada controlada y
+  `mongoeco.compat` como proyeccion.
+- Exportes publicos de CXP por operacion y capability con metadata de
+  telemetria canonica (`spans`, `metrics`, `events`) consumible por tooling
+  sin heuristicas de nombres.
+- Proyeccion de telemetria del driver con atributos canonicos de recurso
+  (`cxp.resource.name`, `cxp.resource.kind`) para snapshots comparables entre
+  providers.
+- Cierre de metadata publica `mongodb-platform` para
+  `collation`/`persistence`/`topology_discovery` en capas de
+  capabilities/operations/profiles con cobertura de tests.
+
+### Changed
+
+- `mongoeco.compat` delega la exportacion de `profiles`,
+  `profileSupport` y `operations` a los exports canonicos de `mongoeco.cxp`,
+  evitando drift entre superficies.
+- Se limpia la surface publica 3.x retirando aliases legacy de root y
+  reforzando una forma CXP-first mas explicita.
+- Se amplia el subset local de busqueda textual (`$text`) y las validaciones
+  de metadata de indices en `memory` y `sqlite`, con explicaciones mas ricas.
+
+### Quality
+
+- Suite de tests y coverage cerradas a `100%` en `src/mongoeco`.
+
 ## [3.2.0] - 2026-04-06
 ### Added
 

@@ -6,8 +6,7 @@ Esta lista prepara una release sin obligar a publicar nada.
 
 - revisar [README.md](../README.md) para que el
   alcance embebido/local y sus limites sean explicitos;
-- revisar [roadmap-3.2.md](/Users/uve/Proyectos/mongoeco2/docs/roadmap-3.2.md)
-  y [release-3.2.0-draft.md](/Users/uve/Proyectos/mongoeco2/docs/release-3.2.0-draft.md)
+- revisar [release-3.3.0-draft.md](/Users/uve/Proyectos/mongoeco2/docs/release-3.3.0-draft.md)
   para confirmar que la narrativa de release sigue el capability model CXP
   canónico;
 - revisar [COMPATIBILITY.md](../COMPATIBILITY.md)
