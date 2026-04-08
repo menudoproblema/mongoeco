@@ -32,7 +32,9 @@ class SQLiteSearchBackendDecision:
 
 
 def supports_sqlite_fts5_search_query(query: SearchQuery) -> bool:
-    return isinstance(query, (SearchTextQuery, SearchPhraseQuery, SearchAutocompleteQuery))
+    if isinstance(query, SearchAutocompleteQuery):
+        return query.fuzzy_max_edits <= 0
+    return isinstance(query, (SearchTextQuery, SearchPhraseQuery))
 
 
 def decide_sqlite_search_backend(

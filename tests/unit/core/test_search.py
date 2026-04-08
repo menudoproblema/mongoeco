@@ -574,6 +574,18 @@ class SearchCoreTests(unittest.TestCase):
             }
         )
         self.assertEqual(autocomplete.token_order, "sequential")
+        fuzzy_autocomplete = compile_search_autocomplete_query(
+            {
+                "index": "by_text",
+                "autocomplete": {
+                    "query": "ada",
+                    "path": "title",
+                    "fuzzy": {"maxEdits": 2, "prefixLength": 1},
+                },
+            }
+        )
+        self.assertEqual(fuzzy_autocomplete.fuzzy_max_edits, 2)
+        self.assertEqual(fuzzy_autocomplete.fuzzy_prefix_length, 1)
         with self.assertRaisesRegex(OperationFailure, "at least one searchable token"):
             compile_search_autocomplete_query(
                 {
@@ -664,6 +676,48 @@ class SearchCoreTests(unittest.TestCase):
                 {"title": "Algorithm notes by Ada"},
                 definition=definition,
                 query=query,
+            )
+        )
+
+    def test_matches_search_autocomplete_query_supports_fuzzy_matching(self) -> None:
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+        fuzzy_query = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="algoritm",
+            terms=("algoritm",),
+            paths=("title",),
+            fuzzy_max_edits=2,
+            fuzzy_prefix_length=1,
+        )
+        self.assertTrue(
+            matches_search_autocomplete_query(
+                {"title": "Algorithm handbook"},
+                definition=definition,
+                query=fuzzy_query,
+            )
+        )
+        strict_prefix_query = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="alg",
+            terms=("alg",),
+            paths=("title",),
+            fuzzy_max_edits=2,
+            fuzzy_prefix_length=5,
+        )
+        self.assertFalse(
+            matches_search_autocomplete_query(
+                {"title": "ag"},
+                definition=definition,
+                query=strict_prefix_query,
+            )
+        )
+        self.assertEqual(search_module._bounded_levenshtein_distance("abc", "zzz", max_distance=1), 2)
+        self.assertEqual(search_module._bounded_levenshtein_distance("ab", "ba", max_distance=1), 2)
+        self.assertFalse(
+            matches_search_autocomplete_query(
+                {"title": "Compiler notes"},
+                definition=definition,
+                query=fuzzy_query,
             )
         )
 
@@ -3590,7 +3644,39 @@ class SearchCoreTests(unittest.TestCase):
                     "index": "by_text",
                     "autocomplete": {"query": "Ada", "path": "title", "boost": 2},
                 },
-                "only supports query and path",
+                "only supports query, path, tokenOrder and fuzzy",
+            ),
+            (
+                compile_search_autocomplete_query,
+                {
+                    "index": "by_text",
+                    "autocomplete": {"query": "Ada", "path": "title", "fuzzy": "yes"},
+                },
+                "fuzzy must be a document",
+            ),
+            (
+                compile_search_autocomplete_query,
+                {
+                    "index": "by_text",
+                    "autocomplete": {"query": "Ada", "path": "title", "fuzzy": {"maxEdits": 3}},
+                },
+                "fuzzy.maxEdits",
+            ),
+            (
+                compile_search_autocomplete_query,
+                {
+                    "index": "by_text",
+                    "autocomplete": {"query": "Ada", "path": "title", "fuzzy": {"prefixLength": -1}},
+                },
+                "fuzzy.prefixLength",
+            ),
+            (
+                compile_search_autocomplete_query,
+                {
+                    "index": "by_text",
+                    "autocomplete": {"query": "Ada", "path": "title", "fuzzy": {"extra": 1}},
+                },
+                "only supports maxEdits and prefixLength",
             ),
             (
                 compile_search_wildcard_query,
@@ -3836,6 +3922,19 @@ class SearchCoreTests(unittest.TestCase):
                     raw_query="Ada ti",
                     terms=("ada", "ti"),
                     paths=("title",),
+                ),
+            )
+        )
+        self.assertTrue(
+            search_module._text_value_matches_clause(
+                "Algorithm title",
+                SearchAutocompleteQuery(
+                    index_name="by_text",
+                    raw_query="algoritm",
+                    terms=("algoritm",),
+                    paths=("title",),
+                    fuzzy_max_edits=2,
+                    fuzzy_prefix_length=1,
                 ),
             )
         )

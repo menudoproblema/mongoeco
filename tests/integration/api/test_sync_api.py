@@ -288,6 +288,51 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     else:
                         self.assertEqual(autocomplete_explanation["engine_plan"]["details"]["backend"], "python")
 
+                    fuzzy_autocomplete_hits = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "autocomplete": {
+                                        "query": "algoritm",
+                                        "path": "body",
+                                        "fuzzy": {"maxEdits": 2, "prefixLength": 1},
+                                    },
+                                }
+                            },
+                            {"$sort": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in fuzzy_autocomplete_hits], [3])
+                    fuzzy_autocomplete_explanation = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "autocomplete": {
+                                        "query": "algoritm",
+                                        "path": "body",
+                                        "fuzzy": {"maxEdits": 2, "prefixLength": 1},
+                                    },
+                                }
+                            }
+                        ]
+                    ).explain()
+                    self.assertEqual(
+                        fuzzy_autocomplete_explanation["engine_plan"]["details"]["querySemantics"]["fuzzy"],
+                        {"maxEdits": 2, "prefixLength": 1},
+                    )
+                    if engine_name == "sqlite":
+                        self.assertEqual(
+                            fuzzy_autocomplete_explanation["engine_plan"]["details"]["backend"],
+                            "fts5-path",
+                        )
+                    else:
+                        self.assertEqual(
+                            fuzzy_autocomplete_explanation["engine_plan"]["details"]["backend"],
+                            "python",
+                        )
+
                     wildcard_hits = collection.aggregate(
                         [{"$search": {"index": "by_text", "wildcard": {"query": "*algorithm*", "path": "body"}}}]
                     ).to_list()

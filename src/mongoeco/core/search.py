@@ -126,6 +126,8 @@ class SearchAutocompleteQuery:
     terms: tuple[str, ...]
     paths: tuple[str, ...] | None = None
     token_order: str = "any"
+    fuzzy_max_edits: int = 0
+    fuzzy_prefix_length: int = 0
     stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
 
 
@@ -934,10 +936,21 @@ def matches_search_autocomplete_query(
     for index, token_set in enumerate(token_sets):
         if query.token_order == "sequential":
             token_counter = token_counters[index] if index < len(token_counters) else Counter()
-            if _token_sequence_matches(tuple(token_counter), query_terms):
+            if _token_sequence_matches(
+                tuple(token_counter),
+                query_terms,
+                matcher=lambda token, term: _autocomplete_token_matches(
+                    token,
+                    term,
+                    query=query,
+                ),
+            ):
                 return True
             continue
-        if all(any(token.startswith(term) for token in token_set) for term in query_terms):
+        if all(
+            any(_autocomplete_token_matches(token, term, query=query) for token in token_set)
+            for term in query_terms
+        ):
             return True
     return False
 
@@ -979,17 +992,70 @@ def matches_search_regex_query(
 def _token_sequence_matches(
     tokens: tuple[str, ...],
     query_terms: tuple[str, ...],
+    *,
+    matcher: Callable[[str, str], bool] | None = None,
 ) -> bool:
     if not query_terms:
         return False
+    term_matcher = matcher or (lambda token, term: token.startswith(term))
     position = 0
     for term in query_terms:
-        while position < len(tokens) and not tokens[position].startswith(term):
+        while position < len(tokens) and not term_matcher(tokens[position], term):
             position += 1
         if position >= len(tokens):
             return False
         position += 1
     return True
+
+
+def _autocomplete_token_matches(
+    token: str,
+    term: str,
+    *,
+    query: SearchAutocompleteQuery,
+) -> bool:
+    if token.startswith(term):
+        return True
+    if query.fuzzy_max_edits <= 0:
+        return False
+    prefix_length = query.fuzzy_prefix_length
+    if prefix_length > 0:
+        if len(token) < prefix_length or len(term) < prefix_length:
+            return False
+        if token[:prefix_length] != term[:prefix_length]:
+            return False
+    max_edits = query.fuzzy_max_edits
+    prefix_candidate = token[: max(len(term), prefix_length)]
+    distance = min(
+        _bounded_levenshtein_distance(term, token, max_distance=max_edits),
+        _bounded_levenshtein_distance(term, prefix_candidate, max_distance=max_edits),
+    )
+    return distance <= max_edits
+
+
+def _bounded_levenshtein_distance(a: str, b: str, *, max_distance: int) -> int:
+    if abs(len(a) - len(b)) > max_distance:
+        return max_distance + 1
+    previous = list(range(len(b) + 1))
+    for index_a, char_a in enumerate(a, start=1):
+        current = [index_a]
+        row_min = current[0]
+        for index_b, char_b in enumerate(b, start=1):
+            cost = 0 if char_a == char_b else 1
+            value = min(
+                previous[index_b] + 1,
+                current[index_b - 1] + 1,
+                previous[index_b - 1] + cost,
+            )
+            current.append(value)
+            row_min = min(row_min, value)
+        if row_min > max_distance:
+            return max_distance + 1
+        previous = current
+    distance = previous[-1]
+    if distance > max_distance:
+        return max_distance + 1
+    return distance
 
 
 def _regex_compile_flags(flags: str) -> int:
@@ -1205,12 +1271,24 @@ def search_clause_ranking(
         for token_counter in _materialized_token_counters(prepared, query.paths):
             if query.token_order == "sequential":
                 ordered_tokens = tuple(token_counter)
-                if _token_sequence_matches(ordered_tokens, tuple(term.lower() for term in query.terms)):
+                if _token_sequence_matches(
+                    ordered_tokens,
+                    tuple(term.lower() for term in query.terms),
+                    matcher=lambda token, term: _autocomplete_token_matches(
+                        token,
+                        term,
+                        query=query,
+                    ),
+                ):
                     score = max(score, float(len(query.terms)))
                 continue
             local = 0.0
             for term in query.terms:
-                matches = [token for token in token_counter if token.startswith(term.lower())]
+                matches = [
+                    token
+                    for token in token_counter
+                    if _autocomplete_token_matches(token, term.lower(), query=query)
+                ]
                 if not matches:
                     local = 0.0
                     break
@@ -1610,10 +1688,10 @@ def _compile_search_phrase_clause(index_name: str, clause_spec: object) -> Searc
 def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) -> SearchAutocompleteQuery:
     if not isinstance(clause_spec, dict):
         raise OperationFailure("$search.autocomplete requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"query", "path", "tokenOrder"})
+    unsupported_options = sorted(set(clause_spec) - {"query", "path", "tokenOrder", "fuzzy"})
     if unsupported_options:
         raise OperationFailure(
-            "$search.autocomplete only supports query and path; unsupported keys: "
+            "$search.autocomplete only supports query, path, tokenOrder and fuzzy; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     raw_query = clause_spec.get("query")
@@ -1625,13 +1703,46 @@ def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) ->
     token_order = clause_spec.get("tokenOrder", "any")
     if token_order not in {"any", "sequential"}:
         raise OperationFailure("$search.autocomplete.tokenOrder must be 'any' or 'sequential'")
+    fuzzy_max_edits, fuzzy_prefix_length = _compile_search_autocomplete_fuzzy_spec(
+        clause_spec.get("fuzzy")
+    )
     return SearchAutocompleteQuery(
         index_name=index_name,
         raw_query=raw_query,
         terms=terms,
         paths=_normalize_search_paths(clause_spec.get("path")),
         token_order=token_order,
+        fuzzy_max_edits=fuzzy_max_edits,
+        fuzzy_prefix_length=fuzzy_prefix_length,
     )
+
+
+def _compile_search_autocomplete_fuzzy_spec(spec: object) -> tuple[int, int]:
+    if spec is None:
+        return 0, 0
+    if not isinstance(spec, dict):
+        raise OperationFailure("$search.autocomplete.fuzzy must be a document specification")
+    unsupported_options = sorted(set(spec) - {"maxEdits", "prefixLength"})
+    if unsupported_options:
+        raise OperationFailure(
+            "$search.autocomplete.fuzzy only supports maxEdits and prefixLength; unsupported keys: "
+            + ", ".join(unsupported_options)
+        )
+    max_edits = spec.get("maxEdits", 1)
+    if (
+        not isinstance(max_edits, int)
+        or isinstance(max_edits, bool)
+        or max_edits not in (1, 2)
+    ):
+        raise OperationFailure("$search.autocomplete.fuzzy.maxEdits must be 1 or 2")
+    prefix_length = spec.get("prefixLength", 0)
+    if (
+        not isinstance(prefix_length, int)
+        or isinstance(prefix_length, bool)
+        or prefix_length < 0
+    ):
+        raise OperationFailure("$search.autocomplete.fuzzy.prefixLength must be a non-negative integer")
+    return max_edits, prefix_length
 
 
 def _compile_search_wildcard_clause(index_name: str, clause_spec: object) -> SearchWildcardQuery:
@@ -2014,6 +2125,11 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
             "tokenOrder": query.token_order,
             "scope": "local-text-tier",
         }
+        if query.fuzzy_max_edits > 0:
+            query_semantics["fuzzy"] = {
+                "maxEdits": query.fuzzy_max_edits,
+                "prefixLength": query.fuzzy_prefix_length,
+            }
     elif isinstance(query, SearchWildcardQuery):
         query_semantics = {
             "matchingMode": "glob-local",
@@ -2657,8 +2773,19 @@ def _text_value_matches_clause(
     if isinstance(clause, SearchAutocompleteQuery):
         tokens = tokenize_classic_text(value)
         if clause.token_order == "sequential":
-            return _token_sequence_matches(tokens, tuple(term.lower() for term in clause.terms))
-        return all(any(token.startswith(term.lower()) for token in tokens) for term in clause.terms)
+            return _token_sequence_matches(
+                tokens,
+                tuple(term.lower() for term in clause.terms),
+                matcher=lambda token, term: _autocomplete_token_matches(
+                    token,
+                    term,
+                    query=clause,
+                ),
+            )
+        return all(
+            any(_autocomplete_token_matches(token, term.lower(), query=clause) for token in tokens)
+            for term in clause.terms
+        )
     if isinstance(clause, SearchWildcardQuery):
         return fnmatch.fnmatchcase(lowered, clause.normalized_pattern)
     compiled = re.compile(clause.raw_query, _regex_compile_flags(clause.flags))

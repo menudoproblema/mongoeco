@@ -411,7 +411,12 @@ def _sqlite_leaf_candidate_storage_keys(
 ) -> tuple[list[str], str, bool]:
     sql: str
     params: list[object]
-    if isinstance(query, (SearchTextQuery, SearchPhraseQuery, SearchAutocompleteQuery)):
+    if isinstance(query, SearchAutocompleteQuery) and query.fuzzy_max_edits > 0:
+        sql = f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)}"
+        params = []
+        backend = "fts5-path"
+        exact = False
+    elif isinstance(query, (SearchTextQuery, SearchPhraseQuery, SearchAutocompleteQuery)):
         sql = (
             f"SELECT DISTINCT storage_key FROM {engine._quote_identifier(physical_name)} "
             "WHERE content MATCH ?"
