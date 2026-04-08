@@ -225,7 +225,8 @@ class SortingHelpersTests(unittest.TestCase):
 
     def test_compare_native_sort_scalars_handles_none_bytes_and_unsupported_types(self):
         self.assertEqual(_compare_native_sort_scalars(b"a", b"b"), -1)
-        self.assertEqual(_compare_native_sort_scalars(bytes([97]), b"a"), 0)
+        # Avoid CPython single-byte bytes caching so we exercise the equality branch.
+        self.assertEqual(_compare_native_sort_scalars(bytes(bytearray(b"a")), b"a"), 0)
         self.assertEqual(_compare_native_sort_scalars(2.0, 2.0), 0)
         self.assertEqual(_compare_native_sort_scalars(1.0, 2.0), -1)
         self.assertEqual(_compare_native_sort_scalars(float("2.0"), float("2.0")), 0)
