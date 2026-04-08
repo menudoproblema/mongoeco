@@ -163,11 +163,47 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     collection = client.search_runtime.get_collection("docs")
+                    shared_owner = ObjectId("64f0c0d2e1382374dbf95e01")
+                    shared_trace = uuid.UUID("12345678-1234-5678-1234-567812345678")
                     await collection.insert_many(
                         [
-                            {"_id": 1, "title": "Ada", "body": "Analytical engine notes", "kind": "reference", "score": 9, "publishedAt": datetime.datetime(2024, 1, 1, 12, 0, 0), "embedding": [1.0, 0.0, 0.0]},
-                            {"_id": 2, "title": "Grace", "body": "Compiler pioneer", "kind": "note", "score": 15, "publishedAt": datetime.datetime(2024, 1, 1, 12, 5, 0), "embedding": [0.1, 0.9, 0.0]},
-                            {"_id": 3, "title": "Notes", "body": "Ada wrote the first algorithm", "kind": "note", "score": 11, "publishedAt": datetime.datetime(2024, 1, 1, 12, 1, 0), "embedding": [0.9, 0.1, 0.0], "summary": "Algorithm summary"},
+                            {
+                                "_id": 1,
+                                "title": "Ada",
+                                "body": "Analytical engine notes",
+                                "kind": "reference",
+                                "score": 9,
+                                "publishedAt": datetime.datetime(2024, 1, 1, 12, 0, 0),
+                                "active": False,
+                                "owner": ObjectId("64f0c0d2e1382374dbf95e00"),
+                                "traceId": uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                                "embedding": [1.0, 0.0, 0.0],
+                            },
+                            {
+                                "_id": 2,
+                                "title": "Grace",
+                                "body": "Compiler pioneer",
+                                "kind": "note",
+                                "score": 15,
+                                "publishedAt": datetime.datetime(2024, 1, 1, 12, 5, 0),
+                                "active": True,
+                                "owner": shared_owner,
+                                "traceId": shared_trace,
+                                "embedding": [0.1, 0.9, 0.0],
+                            },
+                            {
+                                "_id": 3,
+                                "title": "Notes",
+                                "body": "Ada wrote the first algorithm",
+                                "kind": "note",
+                                "score": 11,
+                                "publishedAt": datetime.datetime(2024, 1, 1, 12, 1, 0),
+                                "active": True,
+                                "owner": shared_owner,
+                                "traceId": shared_trace,
+                                "embedding": [0.9, 0.1, 0.0],
+                                "summary": "Algorithm summary",
+                            },
                         ]
                     )
                     await collection.create_search_indexes(
@@ -182,6 +218,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                             "summary": {"type": "string"},
                                             "score": {"type": "number"},
                                             "publishedAt": {"type": "date"},
+                                            "active": {"type": "boolean"},
+                                            "owner": {"type": "objectId"},
+                                            "traceId": {"type": "uuid"},
                                         },
                                     }
                                 },
@@ -573,6 +612,9 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                         "facets": {
                                             "kindFacet": {"type": "string", "path": "kind", "numBuckets": 5},
                                             "titleFacet": {"path": "title", "numBuckets": 3},
+                                            "activeFacet": {"type": "boolean", "path": "active", "numBuckets": 2},
+                                            "ownerFacet": {"type": "objectId", "path": "owner", "numBuckets": 2},
+                                            "traceFacet": {"type": "uuid", "path": "traceId", "numBuckets": 2},
                                         }
                                     },
                                 }
@@ -599,6 +641,24 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                                 {"value": "Grace", "count": 1},
                                                 {"value": "Notes", "count": 1},
                                             ],
+                                        },
+                                        "activeFacet": {
+                                            "type": "boolean",
+                                            "path": "active",
+                                            "numBuckets": 2,
+                                            "buckets": [{"value": True, "count": 2}],
+                                        },
+                                        "ownerFacet": {
+                                            "type": "objectId",
+                                            "path": "owner",
+                                            "numBuckets": 2,
+                                            "buckets": [{"value": shared_owner, "count": 2}],
+                                        },
+                                        "traceFacet": {
+                                            "type": "uuid",
+                                            "path": "traceId",
+                                            "numBuckets": 2,
+                                            "buckets": [{"value": shared_trace, "count": 2}],
                                         },
                                     }
                                 }

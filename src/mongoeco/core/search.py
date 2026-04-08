@@ -9,6 +9,7 @@ import math
 import re
 from typing import Any, Callable
 import unicodedata
+import uuid
 
 from mongoeco.core._search_contract import (
     SEARCH_STAGE_OPERATORS,
@@ -21,6 +22,7 @@ from mongoeco.types import (
     Document,
     EngineIndexRecord,
     IndexKeySpec,
+    ObjectId,
     SearchIndexDefinition,
     SearchIndexDocument,
     normalize_index_keys,
@@ -43,7 +45,9 @@ _SUPPORTED_REGEX_FLAGS = {
     "x": re.VERBOSE,
 }
 _SUPPORTED_REGEX_FLAGS_LABEL = ", ".join(sorted(_SUPPORTED_REGEX_FLAGS))
-_SUPPORTED_SEARCH_FACET_TYPES = frozenset({"string", "number", "date"})
+_SUPPORTED_SEARCH_FACET_TYPES = frozenset(
+    {"string", "number", "date", "boolean", "objectId", "uuid"}
+)
 TEXTUAL_SEARCH_FIELD_MAPPING_TYPES = frozenset({"string", "autocomplete", "token"})
 EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES = frozenset(
     {
@@ -1993,7 +1997,7 @@ def _compile_search_in_clause(index_name: str, clause_spec: object) -> SearchInQ
         normalized_value = _normalize_search_scalar_value(item)
         if normalized_value is None:
             raise OperationFailure(
-                "$search.in.value entries must be null, bool, finite number, string, date or datetime"
+                "$search.in.value entries must be null, bool, finite number, string, date, datetime, objectId or uuid"
             )
         if normalized_value in seen:
             continue
@@ -2023,7 +2027,7 @@ def _compile_search_equals_clause(index_name: str, clause_spec: object) -> Searc
     normalized_value = _normalize_search_scalar_value(clause_spec.get("value"))
     if normalized_value is None:
         raise OperationFailure(
-            "$search.equals.value must be null, bool, finite number, string, date or datetime"
+            "$search.equals.value must be null, bool, finite number, string, date, datetime, objectId or uuid"
         )
     value_kind, value = normalized_value
     return SearchEqualsQuery(
@@ -2998,6 +3002,9 @@ def _facet_preview(
             if spec.facet_type == "date":
                 if normalized_kind not in {"date", "datetime"}:
                     continue
+            elif spec.facet_type == "boolean":
+                if normalized_kind != "bool":
+                    continue
             elif normalized_kind != spec.facet_type:
                 continue
             if normalized in seen_in_document:
@@ -3532,6 +3539,10 @@ def _normalize_search_scalar_value(value: object) -> tuple[str, object] | None:
         return "null", None
     if isinstance(value, bool):
         return "bool", value
+    if isinstance(value, ObjectId):
+        return "objectId", value
+    if isinstance(value, uuid.UUID):
+        return "uuid", value
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         numeric = float(value)
         if not math.isfinite(numeric):

@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 import datetime
 from dataclasses import dataclass
+import uuid
 
 import mongoeco.core.search as search_module
 from mongoeco.core._search_contract import TEXT_SEARCH_INDEX_CAPABILITIES, TEXT_SEARCH_OPERATOR_NAMES
@@ -69,7 +70,7 @@ from mongoeco.core.search import (
     vector_field_paths,
 )
 from mongoeco.errors import OperationFailure
-from mongoeco.types import EngineIndexRecord, SearchIndexDefinition
+from mongoeco.types import EngineIndexRecord, ObjectId, SearchIndexDefinition
 
 
 class SearchCoreTests(unittest.TestCase):
@@ -1080,6 +1081,81 @@ class SearchCoreTests(unittest.TestCase):
             },
         )
 
+    def test_compile_search_meta_stage_supports_boolean_objectid_and_uuid_facets(self) -> None:
+        first_owner = ObjectId("64f0c0d2e1382374dbf95d21")
+        second_owner = ObjectId("64f0c0d2e1382374dbf95d22")
+        first_trace = uuid.UUID("12345678-1234-5678-1234-567812345678")
+        second_trace = uuid.UUID("87654321-4321-8765-4321-876543218765")
+        query = compile_search_stage(
+            "$searchMeta",
+            {
+                "index": "by_text",
+                "text": {"query": "ada", "path": "title"},
+                "facet": {
+                    "facets": {
+                        "activeFacet": {"type": "boolean", "path": "active", "numBuckets": 2},
+                        "ownerFacet": {"type": "objectId", "path": "owner", "numBuckets": 3},
+                        "traceFacet": {"type": "uuid", "path": "traceId", "numBuckets": 2},
+                    }
+                },
+            },
+        )
+        self.assertEqual(
+            search_module.build_search_meta_document(
+                [
+                    {"title": "Ada", "active": True, "owner": first_owner, "traceId": first_trace},
+                    {"title": "Ada", "active": True, "owner": first_owner, "traceId": second_trace},
+                    {"title": "Ada", "active": False, "owner": second_owner, "traceId": first_trace},
+                    {"title": "Ada", "active": "true", "owner": str(second_owner), "traceId": str(first_trace)},
+                ],
+                query=query,
+            ),
+            {
+                "facet": {
+                    "facets": {
+                        "activeFacet": {
+                            "type": "boolean",
+                            "path": "active",
+                            "numBuckets": 2,
+                            "buckets": [
+                                {"value": True, "count": 2},
+                                {"value": False, "count": 1},
+                            ],
+                        },
+                        "ownerFacet": {
+                            "type": "objectId",
+                            "path": "owner",
+                            "numBuckets": 3,
+                            "buckets": [
+                                {"value": first_owner, "count": 2},
+                                {"value": second_owner, "count": 1},
+                            ],
+                        },
+                        "traceFacet": {
+                            "type": "uuid",
+                            "path": "traceId",
+                            "numBuckets": 2,
+                            "buckets": [
+                                {"value": first_trace, "count": 2},
+                                {"value": second_trace, "count": 1},
+                            ],
+                        },
+                    }
+                }
+            },
+        )
+        self.assertEqual(
+            search_query_explain_details(query)["stageOptions"]["facet"],  # type: ignore[index]
+            {
+                "facets": {
+                    "activeFacet": {"type": "boolean", "path": "active", "numBuckets": 2},
+                    "ownerFacet": {"type": "objectId", "path": "owner", "numBuckets": 3},
+                    "traceFacet": {"type": "uuid", "path": "traceId", "numBuckets": 2},
+                },
+                "previewOnly": True,
+            },
+        )
+
     def test_compile_search_meta_stage_supports_collector_operator_form(self) -> None:
         query = compile_search_stage(
             "$searchMeta",
@@ -1429,6 +1505,10 @@ class SearchCoreTests(unittest.TestCase):
         self.assertEqual(search_module._search_near_origin_kind(datetime.date(2024, 1, 1)), "date")
         self.assertEqual(search_module._normalize_search_scalar_value(7), ("number", 7.0))
         self.assertEqual(search_module._normalize_search_scalar_value(None), ("null", None))
+        object_id = ObjectId("64f0c0d2e1382374dbf95d11")
+        uuid_value = uuid.UUID("12345678-1234-5678-1234-567812345678")
+        self.assertEqual(search_module._normalize_search_scalar_value(object_id), ("objectId", object_id))
+        self.assertEqual(search_module._normalize_search_scalar_value(uuid_value), ("uuid", uuid_value))
         self.assertIsNone(search_module._normalize_search_scalar_value(object()))
         self.assertEqual(
             search_module._search_path_scalar_values({"count": [7, "x", True]}, "count"),
@@ -1533,13 +1613,19 @@ class SearchCoreTests(unittest.TestCase):
             search_module._compile_search_in_clause("by_text", {"path": "", "value": ["x"]})
         with self.assertRaisesRegex(OperationFailure, "must be a non-empty array"):
             search_module._compile_search_in_clause("by_text", {"path": "kind", "value": []})
-        with self.assertRaisesRegex(OperationFailure, "must be null, bool, finite number, string, date or datetime"):
+        with self.assertRaisesRegex(
+            OperationFailure,
+            "must be null, bool, finite number, string, date, datetime, objectId or uuid",
+        ):
             search_module._compile_search_in_clause("by_text", {"path": "kind", "value": [float("inf")]})
         with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
             search_module._compile_search_equals_clause("by_text", [])
         with self.assertRaisesRegex(OperationFailure, "path must be a non-empty string"):
             search_module._compile_search_equals_clause("by_text", {"path": "", "value": "x"})
-        with self.assertRaisesRegex(OperationFailure, "must be null, bool, finite number, string, date or datetime"):
+        with self.assertRaisesRegex(
+            OperationFailure,
+            "must be null, bool, finite number, string, date, datetime, objectId or uuid",
+        ):
             search_module._compile_search_equals_clause("by_text", {"path": "kind", "value": float("inf")})
         with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
             search_module._compile_search_range_clause("by_text", [])

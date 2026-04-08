@@ -1390,8 +1390,17 @@
                 ],
                 "facet": {
                   "previewOnly": true,
+                  "supportedTypes": [
+                    "string",
+                    "number",
+                    "date",
+                    "boolean",
+                    "objectId",
+                    "uuid"
+                  ],
                   "supportsNumBuckets": true,
-                  "supportsPath": true
+                  "supportsPath": true,
+                  "supportsType": true
                 },
                 "highlight": {
                   "resultField": "searchHighlights",
@@ -1531,7 +1540,10 @@
               "supportedTypes": [
                 "string",
                 "number",
-                "date"
+                "date",
+                "boolean",
+                "objectId",
+                "uuid"
               ],
               "supportsCollectorOperator": true,
               "supportsNumBuckets": true,
@@ -3245,8 +3257,17 @@
               ],
               "facet": {
                 "previewOnly": true,
+                "supportedTypes": [
+                  "string",
+                  "number",
+                  "date",
+                  "boolean",
+                  "objectId",
+                  "uuid"
+                ],
                 "supportsNumBuckets": true,
-                "supportsPath": true
+                "supportsPath": true,
+                "supportsType": true
               },
               "highlight": {
                 "resultField": "searchHighlights",
@@ -11985,8 +12006,17 @@
             ],
             "facet": {
               "previewOnly": true,
+              "supportedTypes": [
+                "string",
+                "number",
+                "date",
+                "boolean",
+                "objectId",
+                "uuid"
+              ],
               "supportsNumBuckets": true,
-              "supportsPath": true
+              "supportsPath": true,
+              "supportsType": true
             },
             "highlight": {
               "resultField": "searchHighlights",
@@ -12126,7 +12156,10 @@
           "supportedTypes": [
             "string",
             "number",
-            "date"
+            "date",
+            "boolean",
+            "objectId",
+            "uuid"
           ],
           "supportsCollectorOperator": true,
           "supportsNumBuckets": true,

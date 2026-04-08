@@ -1169,7 +1169,14 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
             'supportsPath': True,
             'supportsNumBuckets': True,
             'supportsType': True,
-            'supportedTypes': ['string', 'number', 'date'],
+            'supportedTypes': [
+                'string',
+                'number',
+                'date',
+                'boolean',
+                'objectId',
+                'uuid',
+            ],
             'supportsCollectorOperator': True,
             'collectorOperatorSupports': [
                 'text',
@@ -1236,6 +1243,15 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
                     'facet': {
                         'supportsPath': True,
                         'supportsNumBuckets': True,
+                        'supportsType': True,
+                        'supportedTypes': [
+                            'string',
+                            'number',
+                            'date',
+                            'boolean',
+                            'objectId',
+                            'uuid',
+                        ],
                         'previewOnly': True,
                     },
                 },

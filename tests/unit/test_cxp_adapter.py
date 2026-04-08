@@ -367,7 +367,14 @@ class CxpAlignmentTests(unittest.TestCase):
                 'supportsPath': True,
                 'supportsNumBuckets': True,
                 'supportsType': True,
-                'supportedTypes': ['string', 'number', 'date'],
+                'supportedTypes': [
+                    'string',
+                    'number',
+                    'date',
+                    'boolean',
+                    'objectId',
+                    'uuid',
+                ],
                 'supportsCollectorOperator': True,
                 'collectorOperatorSupports': [
                     'text',
