@@ -2944,12 +2944,20 @@ def build_search_meta_document(
                 if options.count.threshold is not None
                 else count_value
             )
-            count_payload: dict[str, object] = {"lowerBound": lower_bound}
+            count_payload: dict[str, object] = {
+                "lowerBound": lower_bound,
+                "exact": (
+                    True
+                    if options.count.threshold is None
+                    else count_value <= options.count.threshold
+                ),
+            }
             if options.count.threshold is not None:
                 count_payload["threshold"] = options.count.threshold
+                count_payload["cappedByThreshold"] = count_value > options.count.threshold
             result["count"] = count_payload
         else:
-            result["count"] = {"total": count_value}
+            result["count"] = {"total": count_value, "exact": True}
     if options.facet is not None:
         result["facet"] = _facet_preview_payload(documents, options.facet)
     return result

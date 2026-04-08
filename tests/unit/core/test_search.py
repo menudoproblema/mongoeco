@@ -963,7 +963,7 @@ class SearchCoreTests(unittest.TestCase):
                 query=query,
             ),
             {
-                "count": {"total": 3},
+                "count": {"total": 3, "exact": True},
                 "facet": {
                     "type": "string",
                     "path": "kind",
@@ -988,7 +988,7 @@ class SearchCoreTests(unittest.TestCase):
                 [{"kind": "note"}, {"kind": "reference"}],
                 query=lower_bound_query,
             ),
-            {"count": {"lowerBound": 2}},
+            {"count": {"lowerBound": 2, "exact": True}},
         )
         lower_bound_threshold_query = compile_search_stage(
             "$searchMeta",
@@ -1003,7 +1003,7 @@ class SearchCoreTests(unittest.TestCase):
                 [{"kind": "note"}, {"kind": "reference"}],
                 query=lower_bound_threshold_query,
             ),
-            {"count": {"lowerBound": 1, "threshold": 1}},
+            {"count": {"lowerBound": 1, "exact": False, "threshold": 1, "cappedByThreshold": True}},
         )
         self.assertEqual(
             search_query_explain_details(lower_bound_threshold_query)["stageOptions"]["count"],  # type: ignore[index]
@@ -1387,7 +1387,7 @@ class SearchCoreTests(unittest.TestCase):
                 query=query,
             ),
             {
-                "count": {"total": 2},
+                "count": {"total": 2, "exact": True},
                 "facet": {
                     "facets": {
                         "kindFacet": {

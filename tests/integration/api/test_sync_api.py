@@ -626,7 +626,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         search_meta,
                         [
                             {
-                                "count": {"total": 2},
+                                "count": {"total": 2, "exact": True},
                                 "facet": {
                                     "type": "string",
                                     "path": "kind",
@@ -649,7 +649,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     ).to_list()
                     self.assertEqual(
                         search_meta_lower_bound,
-                        [{"count": {"lowerBound": 1, "threshold": 1}}],
+                        [{"count": {"lowerBound": 1, "exact": False, "threshold": 1, "cappedByThreshold": True}}],
                     )
                     search_meta_facets = collection.aggregate(
                         [
