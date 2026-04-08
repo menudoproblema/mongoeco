@@ -423,6 +423,10 @@ def assert_regex_explanation(
         details["querySemantics"]["allowAnalyzedField"],
         expected_allow_analyzed_field,
     )
+    case.assertEqual(
+        details["querySemantics"]["tokenFallbackEnabled"],
+        expected_allow_analyzed_field,
+    )
     case.assertEqual(details["backend"], "python")
     if engine_name == "sqlite":
         case.assertFalse(bool(details.get("fts5_match")))

@@ -320,6 +320,7 @@ class CxpAlignmentTests(unittest.TestCase):
                 'matchingMode': 'token-prefix',
                 'tokenization': 'classic-text-local',
                 'tokenOrder': ['any', 'sequential'],
+                'scoreModes': ['frequency', 'binary'],
                 'supportsFuzzy': True,
                 'fuzzy': {
                     'maxEdits': [1, 2],
@@ -349,6 +350,7 @@ class CxpAlignmentTests(unittest.TestCase):
                 'supportsOptionsAlias': True,
                 'supportedFlags': ['a', 'i', 'm', 's', 'u', 'x'],
                 'allowAnalyzedField': True,
+                'tokenFallbackOnAnalyzedField': True,
                 'atlasParity': 'subset',
                 'scope': 'local-text-tier',
             },

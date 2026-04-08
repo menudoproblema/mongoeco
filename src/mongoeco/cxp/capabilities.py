@@ -1110,6 +1110,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
             'matchingMode': 'token-prefix',
             'tokenization': 'classic-text-local',
             'tokenOrder': ['any', 'sequential'],
+            'scoreModes': ['frequency', 'binary'],
             'supportsFuzzy': True,
             'fuzzy': {
                 'maxEdits': [1, 2],
@@ -1133,6 +1134,7 @@ _MONGOECO_PUBLIC_CXP_CAPABILITY_METADATA[MONGODB_SEARCH] = {
             'supportsOptionsAlias': True,
             'supportedFlags': ['a', 'i', 'm', 's', 'u', 'x'],
             'allowAnalyzedField': True,
+            'tokenFallbackOnAnalyzedField': True,
             'atlasParity': 'subset',
             'scope': 'local-text-tier',
         },

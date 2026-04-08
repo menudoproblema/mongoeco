@@ -775,6 +775,56 @@ class SearchCoreTests(unittest.TestCase):
         self.assertTrue(limited_matched)
         self.assertGreater(unlimited_score, limited_score)
 
+    def test_search_clause_ranking_supports_autocomplete_score_mode(self) -> None:
+        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+        document = {"title": "ada ada algorithm"}
+        frequency_query = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="ada alg",
+            terms=("ada", "alg"),
+            paths=("title",),
+            token_order="any",
+            score_mode="frequency",
+        )
+        binary_query = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="ada alg",
+            terms=("ada", "alg"),
+            paths=("title",),
+            token_order="any",
+            score_mode="binary",
+        )
+        sequential_binary_query = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="ada alg",
+            terms=("ada", "alg"),
+            paths=("title",),
+            token_order="sequential",
+            score_mode="binary",
+        )
+
+        frequency_matched, frequency_score, _ = search_module.search_clause_ranking(
+            document,
+            definition=definition,
+            query=frequency_query,
+        )
+        binary_matched, binary_score, _ = search_module.search_clause_ranking(
+            document,
+            definition=definition,
+            query=binary_query,
+        )
+        sequential_binary_matched, sequential_binary_score, _ = search_module.search_clause_ranking(
+            document,
+            definition=definition,
+            query=sequential_binary_query,
+        )
+
+        self.assertTrue(frequency_matched)
+        self.assertTrue(binary_matched)
+        self.assertTrue(sequential_binary_matched)
+        self.assertGreater(frequency_score, binary_score)
+        self.assertEqual(sequential_binary_score, 1.0)
+
     def test_iter_searchable_text_entries_respects_mapping(self) -> None:
         definition = SearchIndexDefinition(
             {
@@ -2402,6 +2452,16 @@ class SearchCoreTests(unittest.TestCase):
                 "wildcard": {"query": "*algorithm*", "path": ["title", "body"]},
             }
         )
+        scored = compile_search_autocomplete_query(
+            {
+                "index": "by_text",
+                "autocomplete": {
+                    "query": "Ada Lov",
+                    "path": ["title", "body"],
+                    "scoreMode": "binary",
+                },
+            }
+        )
         self.assertEqual(
             autocomplete,
             SearchAutocompleteQuery(
@@ -2412,6 +2472,7 @@ class SearchCoreTests(unittest.TestCase):
             ),
         )
         self.assertEqual(sqlite_fts5_query(autocomplete), '"ada"* AND "lov"*')
+        self.assertEqual(scored.score_mode, "binary")
         self.assertEqual(
             wildcard,
             SearchWildcardQuery(
@@ -2887,6 +2948,29 @@ class SearchCoreTests(unittest.TestCase):
                     raw_query="a # comment\nb",
                     paths=("body",),
                     flags="x",
+                ),
+            )
+        )
+        self.assertFalse(
+            matches_search_regex_query(
+                {"body": "Ada wrote the first algorithm"},
+                definition=definition,
+                query=SearchRegexQuery(
+                    index_name="by_text",
+                    raw_query="^algorithm$",
+                    paths=("body",),
+                ),
+            )
+        )
+        self.assertTrue(
+            matches_search_regex_query(
+                {"body": "Ada wrote the first algorithm"},
+                definition=definition,
+                query=SearchRegexQuery(
+                    index_name="by_text",
+                    raw_query="^algorithm$",
+                    paths=("body",),
+                    allow_analyzed_field=True,
                 ),
             )
         )
@@ -3661,6 +3745,7 @@ class SearchCoreTests(unittest.TestCase):
                 "flags": "i",
                 "supportsFlags": True,
                 "allowAnalyzedField": False,
+                "tokenFallbackEnabled": False,
                 "atlasParity": "subset",
                 "scope": "local-text-tier",
             },
@@ -3684,6 +3769,8 @@ class SearchCoreTests(unittest.TestCase):
                 "tokenization": "classic-text-local",
                 "atlasParity": "subset",
                 "tokenOrder": "sequential",
+                "scoreMode": "frequency",
+                "scoringMode": "matched-term-count",
                 "supportsFuzzy": True,
                 "fuzzyEnabled": True,
                 "fuzzy": {
@@ -4238,7 +4325,15 @@ class SearchCoreTests(unittest.TestCase):
                     "index": "by_text",
                     "autocomplete": {"query": "Ada", "path": "title", "boost": 2},
                 },
-                "only supports query, path, tokenOrder and fuzzy",
+                "only supports query, path, tokenOrder, scoreMode and fuzzy",
+            ),
+            (
+                compile_search_autocomplete_query,
+                {
+                    "index": "by_text",
+                    "autocomplete": {"query": "Ada", "path": "title", "scoreMode": "weird"},
+                },
+                "scoreMode",
             ),
             (
                 compile_search_autocomplete_query,

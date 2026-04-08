@@ -1442,6 +1442,10 @@
               },
               "matchingMode": "token-prefix",
               "scope": "local-text-tier",
+              "scoreModes": [
+                "frequency",
+                "binary"
+              ],
               "supportsFuzzy": true,
               "tokenOrder": [
                 "any",
@@ -1488,7 +1492,8 @@
                 "x"
               ],
               "supportsFlags": true,
-              "supportsOptionsAlias": true
+              "supportsOptionsAlias": true,
+              "tokenFallbackOnAnalyzedField": true
             },
             "text": {
               "matchingMode": "tokenized-any-term",
@@ -12076,6 +12081,10 @@
           },
           "matchingMode": "token-prefix",
           "scope": "local-text-tier",
+          "scoreModes": [
+            "frequency",
+            "binary"
+          ],
           "supportsFuzzy": true,
           "tokenOrder": [
             "any",
@@ -12122,7 +12131,8 @@
             "x"
           ],
           "supportsFlags": true,
-          "supportsOptionsAlias": true
+          "supportsOptionsAlias": true,
+          "tokenFallbackOnAnalyzedField": true
         },
         "text": {
           "matchingMode": "tokenized-any-term",

@@ -136,6 +136,7 @@ class SearchAutocompleteQuery:
     terms: tuple[str, ...]
     paths: tuple[str, ...] | None = None
     token_order: str = "any"
+    score_mode: str = "frequency"
     fuzzy_max_edits: int = 0
     fuzzy_prefix_length: int = 0
     fuzzy_max_expansions: int = 0
@@ -1108,7 +1109,11 @@ def matches_search_regex_query(
         _resolved_materialized_paths(prepared, query.paths)
     )
     return any(
-        compiled.search(value) is not None
+        _regex_matches_value(
+            value,
+            compiled=compiled,
+            allow_analyzed_field=query.allow_analyzed_field,
+        )
         for field_path, value in prepared.entries
         if allowed_paths is None or field_path in allowed_paths
     )
@@ -1147,6 +1152,26 @@ def _wildcard_matches_value(
         fnmatch.fnmatchcase(token, pattern)
         for token in tokenize_classic_text(lowered_value)
     )
+
+
+def _regex_matches_value(
+    value: str,
+    *,
+    compiled: re.Pattern[str],
+    allow_analyzed_field: bool,
+) -> bool:
+    if compiled.search(value) is not None:
+        return True
+    if not allow_analyzed_field:
+        return False
+    return any(
+        compiled.search(token) is not None
+        for token in _regex_token_values(value)
+    )
+
+
+def _regex_token_values(value: str) -> tuple[str, ...]:
+    return tuple(match.group(0) for match in _TEXT_TOKEN_RE.finditer(value))
 
 
 def _autocomplete_token_matches(
@@ -1469,7 +1494,12 @@ def search_clause_ranking(
                     tuple(term.lower() for term in query.terms),
                     matcher=lambda token, term: token in allowed_tokens_by_term[term],
                 ):
-                    score = max(score, float(len(query.terms)))
+                    local_score = (
+                        float(len(query.terms))
+                        if query.score_mode == "frequency"
+                        else 1.0
+                    )
+                    score = max(score, local_score)
                 continue
             local = 0.0
             for term in query.terms:
@@ -1481,7 +1511,10 @@ def search_clause_ranking(
                 if not matches:
                     local = 0.0
                     break
-                local += float(sum(token_counter[token] for token in matches))
+                if query.score_mode == "frequency":
+                    local += float(sum(token_counter[token] for token in matches))
+                else:
+                    local += 1.0
             score = max(score, local)
         return score > 0.0, score, None
     if isinstance(query, SearchWildcardQuery):
@@ -1507,7 +1540,11 @@ def search_clause_ranking(
                 1
                 for field_path, value in prepared.entries
                 if (allowed_paths is None or field_path in allowed_paths)
-                and compiled.search(value) is not None
+                and _regex_matches_value(
+                    value,
+                    compiled=compiled,
+                    allow_analyzed_field=query.allow_analyzed_field,
+                )
             )
         )
         return score > 0.0, score, None
@@ -1881,10 +1918,10 @@ def _compile_search_phrase_clause(index_name: str, clause_spec: object) -> Searc
 def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) -> SearchAutocompleteQuery:
     if not isinstance(clause_spec, dict):
         raise OperationFailure("$search.autocomplete requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"query", "path", "tokenOrder", "fuzzy"})
+    unsupported_options = sorted(set(clause_spec) - {"query", "path", "tokenOrder", "scoreMode", "fuzzy"})
     if unsupported_options:
         raise OperationFailure(
-            "$search.autocomplete only supports query, path, tokenOrder and fuzzy; unsupported keys: "
+            "$search.autocomplete only supports query, path, tokenOrder, scoreMode and fuzzy; unsupported keys: "
             + ", ".join(unsupported_options)
         )
     raw_query = clause_spec.get("query")
@@ -1896,6 +1933,9 @@ def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) ->
     token_order = clause_spec.get("tokenOrder", "any")
     if token_order not in {"any", "sequential"}:
         raise OperationFailure("$search.autocomplete.tokenOrder must be 'any' or 'sequential'")
+    score_mode = clause_spec.get("scoreMode", "frequency")
+    if score_mode not in {"frequency", "binary"}:
+        raise OperationFailure("$search.autocomplete.scoreMode must be 'frequency' or 'binary'")
     fuzzy_max_edits, fuzzy_prefix_length, fuzzy_max_expansions = _compile_search_autocomplete_fuzzy_spec(
         clause_spec.get("fuzzy")
     )
@@ -1905,6 +1945,7 @@ def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) ->
         terms=terms,
         paths=_normalize_search_paths(clause_spec.get("path")),
         token_order=token_order,
+        score_mode=score_mode,
         fuzzy_max_edits=fuzzy_max_edits,
         fuzzy_prefix_length=fuzzy_prefix_length,
         fuzzy_max_expansions=fuzzy_max_expansions,
@@ -2340,6 +2381,14 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
             "tokenization": "classic-text-local",
             "atlasParity": "subset",
             "tokenOrder": query.token_order,
+            "scoreMode": query.score_mode,
+            "scoringMode": (
+                "matched-token-frequency"
+                if query.score_mode == "frequency" and query.token_order == "any"
+                else "matched-term-count"
+                if query.score_mode == "frequency"
+                else "binary-term-coverage"
+            ),
             "supportsFuzzy": True,
             "fuzzyEnabled": query.fuzzy_max_edits > 0,
             "scope": "local-text-tier",
@@ -2365,6 +2414,7 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
             "flags": query.flags,
             "supportsFlags": True,
             "allowAnalyzedField": query.allow_analyzed_field,
+            "tokenFallbackEnabled": query.allow_analyzed_field,
             "atlasParity": "subset",
             "scope": "local-text-tier",
         }
@@ -3040,7 +3090,11 @@ def _text_value_matches_clause(
             allow_analyzed_field=clause.allow_analyzed_field,
         )
     compiled = re.compile(clause.raw_query, _regex_compile_flags(clause.flags))
-    return compiled.search(value) is not None
+    return _regex_matches_value(
+        value,
+        compiled=compiled,
+        allow_analyzed_field=clause.allow_analyzed_field,
+    )
 
 
 def _highlight_payload_for_clause(
