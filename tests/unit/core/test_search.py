@@ -1465,7 +1465,7 @@ class SearchCoreTests(unittest.TestCase):
                 },
             }
         )
-        self.assertEqual(query.flags, "iumsx")
+        self.assertEqual(query.flags, "imsux")
 
     def test_compile_vector_search_query_and_search_stage_error_paths(self) -> None:
         with self.assertRaisesRegex(OperationFailure, "requires a document specification"):
@@ -4442,7 +4442,7 @@ class SearchCoreTests(unittest.TestCase):
                         "options": "m",
                     },
                 },
-                "flags and .*options must match",
+                "must represent the same flag set",
             ),
             (
                 compile_search_regex_query,
@@ -4470,6 +4470,19 @@ class SearchCoreTests(unittest.TestCase):
         )
         self.assertEqual(query.flags, "im")
         self.assertTrue(query.allow_analyzed_field)
+
+        canonicalized_query = compile_search_regex_query(
+            {
+                "index": "by_text",
+                "regex": {
+                    "query": "Ada.*",
+                    "path": "title",
+                    "flags": "MIIM",
+                    "options": "im",
+                },
+            }
+        )
+        self.assertEqual(canonicalized_query.flags, "im")
 
     def test_search_advanced_text_helpers_cover_private_branches(self) -> None:
         self.assertFalse(search_module._token_sequence_matches(("ada",), ()))

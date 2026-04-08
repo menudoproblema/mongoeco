@@ -1251,6 +1251,21 @@ def _regex_compile_flags(flags: str) -> int:
     return compiled_flags
 
 
+def _normalize_regex_flags(raw_flags: str, *, field_name: str) -> str:
+    normalized_flags = raw_flags.lower()
+    unsupported_flags = sorted(
+        {flag for flag in normalized_flags if flag not in _SUPPORTED_REGEX_FLAGS}
+    )
+    if unsupported_flags:
+        raise OperationFailure(
+            f"$search.regex.{field_name} only supports "
+            + _SUPPORTED_REGEX_FLAGS_LABEL
+            + "; unsupported: "
+            + ", ".join(unsupported_flags)
+        )
+    return "".join(sorted(set(normalized_flags)))
+
+
 def matches_search_exists_query(
     document: Document,
     *,
@@ -2033,24 +2048,34 @@ def _compile_search_regex_clause(index_name: str, clause_spec: object) -> Search
         raise OperationFailure("$search.regex.flags must be a string")
     if raw_options is not None and not isinstance(raw_options, str):
         raise OperationFailure("$search.regex.options must be a string")
-    flags = raw_flags if raw_flags is not None else raw_options
-    if flags is None:
-        flags = ""
-    if raw_flags is not None and raw_options is not None and raw_flags != raw_options:
-        raise OperationFailure("$search.regex.flags and $search.regex.options must match when both are provided")
+    normalized_flags = (
+        _normalize_regex_flags(raw_flags, field_name="flags")
+        if raw_flags is not None
+        else None
+    )
+    normalized_options = (
+        _normalize_regex_flags(raw_options, field_name="options")
+        if raw_options is not None
+        else None
+    )
+    flags = (
+        normalized_flags
+        if normalized_flags is not None
+        else normalized_options
+        if normalized_options is not None
+        else ""
+    )
+    if (
+        normalized_flags is not None
+        and normalized_options is not None
+        and normalized_flags != normalized_options
+    ):
+        raise OperationFailure(
+            "$search.regex.flags and $search.regex.options must represent the same flag set when both are provided"
+        )
     allow_analyzed_field = clause_spec.get("allowAnalyzedField", False)
     if not isinstance(allow_analyzed_field, bool):
         raise OperationFailure("$search.regex.allowAnalyzedField must be a boolean")
-    unsupported_flags = sorted(
-        {flag for flag in flags if flag not in _SUPPORTED_REGEX_FLAGS}
-    )
-    if unsupported_flags:
-        raise OperationFailure(
-            "$search.regex.flags only supports "
-            + _SUPPORTED_REGEX_FLAGS_LABEL
-            + "; unsupported: "
-            + ", ".join(unsupported_flags)
-        )
     try:
         re.compile(raw_query, _regex_compile_flags(flags))
     except (re.error, ValueError) as exc:
