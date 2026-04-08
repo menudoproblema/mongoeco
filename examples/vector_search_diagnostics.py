@@ -12,10 +12,20 @@ from _demo_support import (
 )
 
 
-def _print_vector_case(collection, label: str, stage: dict[str, object]) -> None:
-    results = collection.aggregate(
+def _print_vector_case(
+    collection,
+    label: str,
+    stage: dict[str, object],
+    *,
+    post_match: dict[str, object] | None = None,
+) -> None:
+    pipeline: list[dict[str, object]] = [{"$vectorSearch": stage}]
+    explain_pipeline: list[dict[str, object]] = [{"$vectorSearch": stage}]
+    if post_match is not None:
+        pipeline.append({"$match": post_match})
+        explain_pipeline.append({"$match": post_match})
+    pipeline.extend(
         [
-            {"$vectorSearch": stage},
             {
                 "$project": {
                     "_id": 1,
@@ -27,8 +37,9 @@ def _print_vector_case(collection, label: str, stage: dict[str, object]) -> None
             },
             {"$sort": {"vectorScore": -1, "_id": 1}},
         ]
-    ).to_list()
-    explain = collection.aggregate([{"$vectorSearch": stage}]).explain()
+    )
+    results = collection.aggregate(pipeline).to_list()
+    explain = collection.aggregate(explain_pipeline).explain()
     details = explain["engine_plan"]["details"]
 
     print(f"\n[{label}]")
@@ -38,6 +49,9 @@ def _print_vector_case(collection, label: str, stage: dict[str, object]) -> None
     print("score breakdown:", details["scoreBreakdown"])
     print("candidate plan:", details["candidatePlan"])
     print("hybrid retrieval:", details["hybridRetrieval"])
+    print("query filter prefilter:", details["vectorFilterPrefilter"])
+    print("downstream filter prefilter:", details["downstreamFilterCandidatePrefilter"])
+    print("query/downstream filter mode:", details["filterMode"], details["downstreamFilterMode"])
     print("vector backend:", details["vectorBackend"])
 
 
@@ -96,6 +110,18 @@ def _run_engine(engine_label: str, engine) -> None:
                     ]
                 },
             },
+        )
+        _print_vector_case(
+            collection,
+            "cosine / downstream structured filter ($match)",
+            {
+                "index": "embedding_cosine",
+                "path": "embedding",
+                "queryVector": [1.0, 0.0, 0.0],
+                "numCandidates": 12,
+                "limit": 2,
+            },
+            post_match={"score": {"$gte": 15}},
         )
         _print_vector_case(
             collection,

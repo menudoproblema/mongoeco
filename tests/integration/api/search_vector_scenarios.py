@@ -116,6 +116,17 @@ def assert_filtered_vector_explanation(
 ) -> None:
     details = explanation["engine_plan"]["details"]
     case.assertEqual(details["hybridRetrieval"]["filterMode"], "candidate-prefilter")
+    case.assertEqual(details["hybridRetrieval"]["queryFilterMode"], "candidate-prefilter")
+    case.assertIsNone(details["hybridRetrieval"]["downstreamFilterMode"])
+    case.assertEqual(
+        details["candidatePlan"]["combinedPrefilterCandidateCount"],
+        details["candidatePlan"]["prefilterCandidateCount"],
+    )
+    case.assertEqual(
+        details["hybridRetrieval"]["combinedPrefilterCandidateCount"],
+        details["candidatePlan"]["prefilterCandidateCount"],
+    )
+    case.assertIsNone(details["hybridRetrieval"]["downstreamFilterPrefilter"])
     case.assertLessEqual(
         details["candidatePlan"]["prefilterCandidateCount"],
         details["documentsScanned"],
@@ -134,6 +145,66 @@ def assert_filtered_vector_explanation(
     case.assertEqual(details["filterMode"], "candidate-prefilter")
     case.assertEqual(details["vectorFilterPrefilter"]["backend"], "memory-vector-filter-index")
     case.assertLess(details["documentsScannedAfterPrefilter"], details["documentsScanned"])
+
+
+def assert_vector_downstream_filter_explanation(
+    case: unittest.TestCase,
+    explanation: dict[str, object],
+    *,
+    engine_name: str,
+) -> None:
+    details = explanation["engine_plan"]["details"]
+    case.assertIsNone(details["filterMode"])
+    case.assertEqual(details["downstreamFilterMode"], "candidate-prefilter")
+    case.assertEqual(
+        details["hybridRetrieval"]["queryFilter"],
+        None,
+    )
+    case.assertEqual(
+        details["hybridRetrieval"]["downstreamFilter"],
+        {"score": {"$gte": 15}},
+    )
+    case.assertEqual(
+        details["hybridRetrieval"]["queryFilterMode"],
+        None,
+    )
+    case.assertEqual(
+        details["hybridRetrieval"]["downstreamFilterMode"],
+        "candidate-prefilter",
+    )
+    case.assertEqual(
+        details["candidatePlan"]["queryPrefilterCandidateCount"],
+        details["documentsScanned"],
+    )
+    case.assertEqual(
+        details["candidatePlan"]["combinedPrefilterCandidateCount"],
+        details["candidatePlan"]["prefilterCandidateCount"],
+    )
+    case.assertEqual(
+        details["candidatePlan"]["combinedPrefilterCandidateCount"],
+        details["candidatePlan"]["downstreamPrefilterCandidateCount"],
+    )
+    case.assertEqual(details["documentsFiltered"], 0)
+    case.assertEqual(details["hybridRetrieval"]["documentsFilteredPostCandidate"], 0)
+    case.assertTrue(details["downstreamFilterCandidatePrefilter"]["exact"])
+    case.assertEqual(
+        details["downstreamFilterCandidatePrefilter"]["supportedPaths"],
+        ["score"],
+    )
+    case.assertEqual(
+        details["downstreamFilterCandidatePrefilter"]["supportedOperators"],
+        ["range"],
+    )
+    if engine_name == "sqlite":
+        case.assertEqual(
+            details["downstreamFilterCandidatePrefilter"]["backend"],
+            "vector-filter-index",
+        )
+        return
+    case.assertEqual(
+        details["downstreamFilterCandidatePrefilter"]["backend"],
+        "memory-vector-filter-index",
+    )
 
 
 def assert_in_equals_and_range_explanations(

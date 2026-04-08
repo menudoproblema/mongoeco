@@ -92,6 +92,19 @@ def _vector_filter_residual_description(
     }
 
 
+def _vector_filter_mode(
+    filter_spec: dict[str, object] | None,
+    vector_filter_description: dict[str, object] | None,
+) -> str | None:
+    if filter_spec is None:
+        return None
+    if vector_filter_description is None:
+        return "post-candidate"
+    if bool(vector_filter_description.get("exact")):
+        return "candidate-prefilter"
+    return "candidate-prefilter+post-candidate"
+
+
 def _memory_vector_backend_document(
     *,
     query: SearchVectorQuery,
@@ -344,18 +357,32 @@ async def explain_search_documents(
     vector_documents_filtered_by_min_score: int | None = None
     vector_mode: str | None = None
     vector_filter_mode: str | None = None
+    downstream_vector_filter_mode: str | None = None
+    query_prefilter_candidate_count: int | None = None
+    downstream_prefilter_candidate_count: int | None = None
+    downstream_filter_description: dict[str, object] | None = None
     if isinstance(query, SearchVectorQuery) and vector_index is not None:
         vector_mode = "exact"
         path_positions = vector_index.vector_row_positions.get(query.path, ())
-        query_filter_rows, _query_filter_description = candidate_rows_for_vector_filter(
+        query_filter_rows, vector_filter_description = candidate_rows_for_vector_filter(
             vector_index,
             query_path=query.path,
             filter_spec=query.filter_spec,
         )
-        downstream_filter_rows, _downstream_filter_description = candidate_rows_for_vector_filter(
+        downstream_filter_rows, downstream_filter_description = candidate_rows_for_vector_filter(
             vector_index,
             query_path=query.path,
             filter_spec=downstream_filter_spec,
+        )
+        query_prefilter_candidate_count = (
+            len(query_filter_rows)
+            if query_filter_rows is not None
+            else len(path_positions)
+        )
+        downstream_prefilter_candidate_count = (
+            len(downstream_filter_rows)
+            if downstream_filter_rows is not None
+            else len(path_positions)
         )
         candidate_rows = list(
             query_filter_rows if query_filter_rows is not None else range(len(path_positions))
@@ -389,15 +416,13 @@ async def explain_search_documents(
         downstream_requires_postfilter = (
             downstream_filter_spec is not None and downstream_filter_rows is None
         )
-        vector_filter_mode = (
-            "candidate-prefilter"
-            if query.filter_spec is not None
-            and bool(vector_filter_description and vector_filter_description.get("exact"))
-            else "candidate-prefilter+post-candidate"
-            if query.filter_spec is not None and vector_filter_description is not None
-            else "post-candidate"
-            if query.filter_spec is not None
-            else None
+        vector_filter_mode = _vector_filter_mode(
+            query.filter_spec,
+            vector_filter_description,
+        )
+        downstream_vector_filter_mode = _vector_filter_mode(
+            downstream_filter_spec,
+            downstream_filter_description,
         )
         passing_hits = 0
         rejected_hits = 0
@@ -452,6 +477,9 @@ async def explain_search_documents(
             "documentsScannedAfterPrefilter": vector_prefilter_candidate_count,
             "topKLimitHint": result_limit_hint,
             "candidateExpansionStrategy": "exact-baseline",
+            "queryPrefilterCandidateCount": query_prefilter_candidate_count,
+            "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
+            "combinedPrefilterCandidateCount": vector_prefilter_candidate_count,
         }
         if isinstance(query, SearchVectorQuery)
         else None
@@ -459,6 +487,8 @@ async def explain_search_documents(
     vector_hybrid_retrieval = (
         {
             "filterMode": vector_filter_mode,
+            "queryFilterMode": vector_filter_mode,
+            "downstreamFilterMode": downstream_vector_filter_mode,
             "queryFilter": deepcopy(query.filter_spec) if query.filter_spec is not None else None,
             "downstreamFilter": (
                 deepcopy(downstream_filter_spec)
@@ -470,6 +500,19 @@ async def explain_search_documents(
                 query.filter_spec,
                 vector_filter_description,
             ),
+            "queryFilterPrefilter": deepcopy(vector_filter_description),
+            "queryFilterResidual": _vector_filter_residual_description(
+                query.filter_spec,
+                vector_filter_description,
+            ),
+            "downstreamFilterPrefilter": deepcopy(downstream_filter_description),
+            "downstreamFilterResidual": _vector_filter_residual_description(
+                downstream_filter_spec,
+                downstream_filter_description,
+            ),
+            "queryPrefilterCandidateCount": query_prefilter_candidate_count,
+            "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
+            "combinedPrefilterCandidateCount": vector_prefilter_candidate_count,
             "documentsFilteredPostCandidate": vector_documents_filtered,
         }
         if isinstance(query, SearchVectorQuery)
@@ -506,15 +549,28 @@ async def explain_search_documents(
             "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
             "mode": vector_mode,
             "filterMode": vector_filter_mode,
+            "downstreamFilterMode": downstream_vector_filter_mode,
             "vectorFilterPrefilter": vector_filter_description if isinstance(query, SearchVectorQuery) else None,
             "vectorFilterResidual": (
                 _vector_filter_residual_description(query.filter_spec, vector_filter_description)
                 if isinstance(query, SearchVectorQuery)
                 else None
             ),
+            "downstreamFilterCandidatePrefilter": (
+                deepcopy(downstream_filter_description)
+                if isinstance(query, SearchVectorQuery)
+                else None
+            ),
+            "downstreamFilterResidual": (
+                _vector_filter_residual_description(downstream_filter_spec, downstream_filter_description)
+                if isinstance(query, SearchVectorQuery)
+                else None
+            ),
             "candidatesRequested": vector_candidates_requested,
             "candidatesEvaluated": vector_candidates_evaluated,
             "prefilterCandidateCount": vector_prefilter_candidate_count,
+            "queryPrefilterCandidateCount": query_prefilter_candidate_count,
+            "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
             "documentsMatchedBeforeLimit": vector_documents_matched_before_limit,
             "documentsFiltered": vector_documents_filtered,
             "documentsFilteredByMinScore": vector_documents_filtered_by_min_score,

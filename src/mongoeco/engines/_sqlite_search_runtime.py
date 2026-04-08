@@ -153,6 +153,19 @@ def _vector_filter_residual_description(
     }
 
 
+def _vector_filter_mode(
+    filter_spec: dict[str, object] | None,
+    vector_filter_description: dict[str, object] | None,
+) -> str | None:
+    if filter_spec is None:
+        return None
+    if vector_filter_description is None:
+        return "post-candidate"
+    if bool(vector_filter_description.get("exact")):
+        return "candidate-prefilter"
+    return "candidate-prefilter+post-candidate"
+
+
 def load_search_index_rows(
     engine: _SQLiteSearchRuntimeEngine,
     db_name: str,
@@ -1096,7 +1109,9 @@ def exact_vector_hits_sync(
     query: SearchVectorQuery,
     *,
     candidate_storage_keys: list[str] | None = None,
-    skip_filter_match: bool = False,
+    downstream_filter_spec: dict[str, object] | None = None,
+    skip_query_filter_match: bool = False,
+    skip_downstream_filter_match: bool = False,
 ) -> list[tuple[float, Document]]:
     vector_hits: list[tuple[float, Document]] = []
     if candidate_storage_keys is not None:
@@ -1111,10 +1126,24 @@ def exact_vector_hits_sync(
     else:
         documents = engine._load_documents(db_name, coll_name)
     for _, document in documents:
-        if not skip_filter_match and query.filter_spec is not None and not QueryEngine.match(
-            document,
-            query.filter_spec,
-            dialect=MONGODB_DIALECT_70,
+        if (
+            not skip_query_filter_match
+            and query.filter_spec is not None
+            and not QueryEngine.match(
+                document,
+                query.filter_spec,
+                dialect=MONGODB_DIALECT_70,
+            )
+        ):
+            continue
+        if (
+            not skip_downstream_filter_match
+            and downstream_filter_spec is not None
+            and not QueryEngine.match(
+                document,
+                downstream_filter_spec,
+                dialect=MONGODB_DIALECT_70,
+            )
         ):
             continue
         score = score_vector_document(
@@ -1139,8 +1168,22 @@ def _sqlite_vector_candidate_documents(
     query: SearchVectorQuery,
     backend_state: SQLiteVectorBackendState,
     prefilter_storage_keys: list[str] | None,
-    prefilter_exact: bool,
+    prefilter_exact: bool = False,
+    *,
+    query_filter_spec: dict[str, object] | None = None,
+    query_prefilter_exact: bool | None = None,
+    downstream_filter_spec: dict[str, object] | None = None,
+    downstream_prefilter_exact: bool | None = None,
 ) -> tuple[list[Document], int, int, int, int, str | None]:
+    if query_filter_spec is None:
+        query_filter_spec = query.filter_spec
+    if query_prefilter_exact is None:
+        query_prefilter_exact = prefilter_exact
+    if downstream_prefilter_exact is None:
+        downstream_prefilter_exact = (
+            True if downstream_filter_spec is None else prefilter_exact
+        )
+    prefilter_exact = query_prefilter_exact and downstream_prefilter_exact
     if prefilter_storage_keys is not None and prefilter_exact and not prefilter_storage_keys:
         return [], 0, 0, 0, 0, None
     requested = max(query.limit, query.num_candidates)
@@ -1179,10 +1222,25 @@ def _sqlite_vector_candidate_documents(
             new_storage_keys,
         ):
             candidates_evaluated += 1
-            if query.filter_spec is not None and not prefilter_exact and not QueryEngine.match(
-                document,
-                query.filter_spec,
-                dialect=MONGODB_DIALECT_70,
+            if (
+                query_filter_spec is not None
+                and not query_prefilter_exact
+                and not QueryEngine.match(
+                    document,
+                    query_filter_spec,
+                    dialect=MONGODB_DIALECT_70,
+                )
+            ):
+                documents_filtered += 1
+                continue
+            if (
+                downstream_filter_spec is not None
+                and not downstream_prefilter_exact
+                and not QueryEngine.match(
+                    document,
+                    downstream_filter_spec,
+                    dialect=MONGODB_DIALECT_70,
+                )
             ):
                 documents_filtered += 1
                 continue
@@ -1206,7 +1264,10 @@ def _sqlite_vector_candidate_documents(
                     documents_filtered_by_min_score,
                     None,
                 )
-        if query.filter_spec is None or current_request >= max_requested:
+        if (
+            query_filter_spec is None
+            and downstream_filter_spec is None
+        ) or current_request >= max_requested:
             break
         current_request = _next_vector_candidate_request(
             current_request,
@@ -1215,7 +1276,7 @@ def _sqlite_vector_candidate_documents(
             max_requested=max_requested,
         )
 
-    if query.filter_spec is not None and len(matched_documents) < query.limit:
+    if (query_filter_spec is not None or downstream_filter_spec is not None) and len(matched_documents) < query.limit:
         exact_fallback_reason = "candidate-prefilter-underflow" if prefilter_exact else "post-filter-underflow"
     return (
         matched_documents[: query.limit],
@@ -1248,6 +1309,11 @@ def execute_sqlite_search_query(
         physical_name,
     )
     if isinstance(query, SearchVectorQuery):
+        vector_filter_storage_keys: list[str] | None = None
+        vector_filter_description: dict[str, object] | None = None
+        downstream_filter_storage_keys: list[str] | None = None
+        downstream_filter_description: dict[str, object] | None = None
+        combined_prefilter_storage_keys: list[str] | None = None
         decision = decide_sqlite_search_backend(
             query,
             physical_name=resolved_physical_name,
@@ -1269,6 +1335,32 @@ def execute_sqlite_search_query(
                 backend_state,
                 filter_spec=query.filter_spec,
             )
+            downstream_filter_storage_keys, downstream_filter_description = vector_filter_candidate_storage_keys(
+                backend_state,
+                filter_spec=downstream_filter_spec,
+            )
+            if vector_filter_storage_keys is not None and downstream_filter_storage_keys is not None:
+                downstream_key_set = set(downstream_filter_storage_keys)
+                combined_prefilter_storage_keys = [
+                    storage_key
+                    for storage_key in vector_filter_storage_keys
+                    if storage_key in downstream_key_set
+                ]
+            elif vector_filter_storage_keys is not None:
+                combined_prefilter_storage_keys = vector_filter_storage_keys
+            elif downstream_filter_storage_keys is not None:
+                combined_prefilter_storage_keys = downstream_filter_storage_keys
+            query_prefilter_exact = (
+                query.filter_spec is None
+                or bool(vector_filter_description and vector_filter_description.get("exact"))
+            )
+            downstream_prefilter_exact = (
+                downstream_filter_spec is None
+                or bool(
+                    downstream_filter_description
+                    and downstream_filter_description.get("exact")
+                )
+            )
             (
                 filtered_documents,
                 _requested_candidates,
@@ -1283,8 +1375,12 @@ def execute_sqlite_search_query(
                 definition,
                 query,
                 backend_state,
-                prefilter_storage_keys=vector_filter_storage_keys,
-                prefilter_exact=bool(vector_filter_description and vector_filter_description.get("exact")),
+                prefilter_storage_keys=combined_prefilter_storage_keys,
+                prefilter_exact=query_prefilter_exact and downstream_prefilter_exact,
+                query_filter_spec=query.filter_spec,
+                query_prefilter_exact=query_prefilter_exact,
+                downstream_filter_spec=downstream_filter_spec,
+                downstream_prefilter_exact=downstream_prefilter_exact,
             )
             if exact_fallback_reason is None:
                 enforce_deadline(deadline)
@@ -1292,10 +1388,36 @@ def execute_sqlite_search_query(
                     filtered_documents = [
                         document
                         for document in filtered_documents
-                        if QueryEngine.match(document, downstream_filter_spec, dialect=MONGODB_DIALECT_70)
+                        if QueryEngine.match(
+                            document,
+                            downstream_filter_spec,
+                            dialect=MONGODB_DIALECT_70,
+                        )
                     ]
                 effective_limit = min(query.limit, result_limit_hint) if result_limit_hint is not None else query.limit
                 return filtered_documents[:effective_limit]
+        query_prefilter_exact = (
+            query.filter_spec is None
+            or bool(vector_filter_description and vector_filter_description.get("exact"))
+        )
+        downstream_prefilter_exact = bool(
+            downstream_filter_spec is None
+            or (
+                downstream_filter_description
+                and downstream_filter_description.get("exact")
+            )
+        )
+        if vector_filter_storage_keys is not None and downstream_filter_storage_keys is not None:
+            downstream_key_set = set(downstream_filter_storage_keys)
+            combined_prefilter_storage_keys = [
+                storage_key
+                for storage_key in vector_filter_storage_keys
+                if storage_key in downstream_key_set
+            ]
+        elif vector_filter_storage_keys is not None:
+            combined_prefilter_storage_keys = vector_filter_storage_keys
+        elif downstream_filter_storage_keys is not None:
+            combined_prefilter_storage_keys = downstream_filter_storage_keys
         exact_hits = exact_vector_hits_sync(
             engine,
             db_name,
@@ -1303,16 +1425,32 @@ def execute_sqlite_search_query(
             definition,
             query,
             candidate_storage_keys=(
-                vector_filter_storage_keys
-                if vector_filter_storage_keys is not None
-                and vector_filter_description is not None
-                and bool(vector_filter_description.get("exact"))
+                combined_prefilter_storage_keys
+                if combined_prefilter_storage_keys is not None
+                and (
+                    query.filter_spec is None
+                    or query_prefilter_exact
+                )
+                and (
+                    downstream_filter_spec is None
+                    or downstream_prefilter_exact
+                )
                 else None
             ),
-            skip_filter_match=bool(
-                vector_filter_storage_keys is not None
-                and vector_filter_description is not None
-                and bool(vector_filter_description.get("exact"))
+            downstream_filter_spec=downstream_filter_spec,
+            skip_query_filter_match=bool(
+                query.filter_spec is None
+                or (
+                    vector_filter_storage_keys is not None
+                    and query_prefilter_exact
+                )
+            ),
+            skip_downstream_filter_match=bool(
+                downstream_filter_spec is None
+                or (
+                    downstream_filter_storage_keys is not None
+                    and downstream_prefilter_exact
+                )
             ),
         )
         enforce_deadline(deadline)
@@ -1568,6 +1706,9 @@ def explain_search_documents_sync(
     vector_state: SQLiteVectorBackendState | None = None
     vector_filter_storage_keys: list[str] | None = None
     vector_filter_description: dict[str, object] | None = None
+    downstream_filter_storage_keys: list[str] | None = None
+    downstream_filter_description: dict[str, object] | None = None
+    combined_prefilter_storage_keys: list[str] | None = None
     exact_fallback_reason: str | None = None
     matched_vector_documents: list[Document] | None = None
     documents_filtered = 0
@@ -1716,6 +1857,21 @@ def explain_search_documents_sync(
                     vector_state,
                     filter_spec=query.filter_spec,
                 )
+                downstream_filter_storage_keys, downstream_filter_description = vector_filter_candidate_storage_keys(
+                    vector_state,
+                    filter_spec=downstream_filter_spec,
+                )
+                if vector_filter_storage_keys is not None and downstream_filter_storage_keys is not None:
+                    downstream_key_set = set(downstream_filter_storage_keys)
+                    combined_prefilter_storage_keys = [
+                        storage_key
+                        for storage_key in vector_filter_storage_keys
+                        if storage_key in downstream_key_set
+                    ]
+                elif vector_filter_storage_keys is not None:
+                    combined_prefilter_storage_keys = vector_filter_storage_keys
+                elif downstream_filter_storage_keys is not None:
+                    combined_prefilter_storage_keys = downstream_filter_storage_keys
             decision = decide_sqlite_search_backend(
                 query,
                 physical_name=resolved_physical_name,
@@ -1738,26 +1894,62 @@ def explain_search_documents_sync(
                 definition,
                 query,
                 vector_state,
-                prefilter_storage_keys=vector_filter_storage_keys if vector_state is not None else None,
-                prefilter_exact=bool(vector_filter_description and vector_filter_description.get("exact")),
+                prefilter_storage_keys=combined_prefilter_storage_keys if vector_state is not None else None,
+                prefilter_exact=(
+                    (
+                        query.filter_spec is None
+                        or bool(vector_filter_description and vector_filter_description.get("exact"))
+                    )
+                    and (
+                        downstream_filter_spec is None
+                        or bool(
+                            downstream_filter_description
+                            and downstream_filter_description.get("exact")
+                        )
+                    )
+                ),
+                query_filter_spec=query.filter_spec,
+                query_prefilter_exact=(
+                    query.filter_spec is None
+                    or bool(vector_filter_description and vector_filter_description.get("exact"))
+                ),
+                downstream_filter_spec=downstream_filter_spec,
+                downstream_prefilter_exact=(
+                    downstream_filter_spec is None
+                    or bool(
+                        downstream_filter_description
+                        and downstream_filter_description.get("exact")
+                    )
+                ),
             )
             candidates_evaluated = evaluated_count
     vector_filter_mode = (
-        "candidate-prefilter"
+        _vector_filter_mode(query.filter_spec, vector_filter_description)
         if isinstance(query, SearchVectorQuery)
-        and query.filter_spec is not None
-        and bool(vector_filter_description and vector_filter_description.get("exact"))
-        else "candidate-prefilter+post-candidate"
+        else None
+    )
+    downstream_vector_filter_mode = (
+        _vector_filter_mode(downstream_filter_spec, downstream_filter_description)
         if isinstance(query, SearchVectorQuery)
-        and query.filter_spec is not None
-        and vector_filter_description is not None
-        else "post-candidate"
-        if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
+        else None
+    )
+    query_prefilter_candidate_count = (
+        len(vector_filter_storage_keys)
+        if isinstance(query, SearchVectorQuery) and vector_filter_storage_keys is not None
+        else vector_state.valid_vectors
+        if isinstance(query, SearchVectorQuery) and vector_state is not None
+        else None
+    )
+    downstream_prefilter_candidate_count = (
+        len(downstream_filter_storage_keys)
+        if isinstance(query, SearchVectorQuery) and downstream_filter_storage_keys is not None
+        else vector_state.valid_vectors
+        if isinstance(query, SearchVectorQuery) and vector_state is not None
         else None
     )
     vector_prefilter_candidate_count = (
-        len(vector_filter_storage_keys)
-        if isinstance(query, SearchVectorQuery) and vector_filter_storage_keys is not None
+        len(combined_prefilter_storage_keys)
+        if isinstance(query, SearchVectorQuery) and combined_prefilter_storage_keys is not None
         else vector_state.valid_vectors
         if isinstance(query, SearchVectorQuery) and vector_state is not None
         else None
@@ -1796,10 +1988,15 @@ def explain_search_documents_sync(
             "documentsMatchedBeforeLimit": vector_documents_matched_before_limit,
             "documentsScanned": vector_state.documents_scanned if vector_state is not None else None,
             "candidateExpansionStrategy": (
-                "adaptive-retention" if query.filter_spec is not None else None
+                "adaptive-retention"
+                if query.filter_spec is not None or downstream_filter_spec is not None
+                else None
             ),
             "exactFallbackReason": exact_fallback_reason,
             "topKLimitHint": result_limit_hint,
+            "queryPrefilterCandidateCount": query_prefilter_candidate_count,
+            "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
+            "combinedPrefilterCandidateCount": vector_prefilter_candidate_count,
         }
         if isinstance(query, SearchVectorQuery)
         else None
@@ -1807,6 +2004,8 @@ def explain_search_documents_sync(
     vector_hybrid_retrieval = (
         {
             "filterMode": vector_filter_mode,
+            "queryFilterMode": vector_filter_mode,
+            "downstreamFilterMode": downstream_vector_filter_mode,
             "queryFilter": deepcopy(query.filter_spec) if query.filter_spec is not None else None,
             "downstreamFilter": deepcopy(downstream_filter_spec) if downstream_filter_spec is not None else None,
             "prefilter": deepcopy(vector_filter_description),
@@ -1814,6 +2013,19 @@ def explain_search_documents_sync(
                 query.filter_spec,
                 vector_filter_description,
             ),
+            "queryFilterPrefilter": deepcopy(vector_filter_description),
+            "queryFilterResidual": _vector_filter_residual_description(
+                query.filter_spec,
+                vector_filter_description,
+            ),
+            "downstreamFilterPrefilter": deepcopy(downstream_filter_description),
+            "downstreamFilterResidual": _vector_filter_residual_description(
+                downstream_filter_spec,
+                downstream_filter_description,
+            ),
+            "queryPrefilterCandidateCount": query_prefilter_candidate_count,
+            "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
+            "combinedPrefilterCandidateCount": vector_prefilter_candidate_count,
             "documentsFilteredPostCandidate": documents_filtered,
         }
         if isinstance(query, SearchVectorQuery)
@@ -1901,9 +2113,11 @@ def explain_search_documents_sync(
                 else None
             ),
             "filterMode": vector_filter_mode,
+            "downstreamFilterMode": downstream_vector_filter_mode,
             "candidateExpansionStrategy": (
                 "adaptive-retention"
-                if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
+                if isinstance(query, SearchVectorQuery)
+                and (query.filter_spec is not None or downstream_filter_spec is not None)
                 else None
             ),
             "vectorFilterPrefilter": (
@@ -1916,7 +2130,19 @@ def explain_search_documents_sync(
                 if isinstance(query, SearchVectorQuery)
                 else None
             ),
+            "downstreamFilterCandidatePrefilter": (
+                deepcopy(downstream_filter_description)
+                if isinstance(query, SearchVectorQuery)
+                else None
+            ),
+            "downstreamFilterResidual": (
+                _vector_filter_residual_description(downstream_filter_spec, downstream_filter_description)
+                if isinstance(query, SearchVectorQuery)
+                else None
+            ),
             "prefilterCandidateCount": vector_prefilter_candidate_count,
+            "queryPrefilterCandidateCount": query_prefilter_candidate_count,
+            "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
             "candidateCount": len(candidate_storage_keys) if candidate_storage_keys is not None else None,
             "candidateCountBeforeTopK": candidate_count_before_topk,
             "candidatePrefilterExact": candidate_exact,
@@ -1944,7 +2170,8 @@ def explain_search_documents_sync(
             ),
             "documentsFiltered": (
                 documents_filtered
-                if isinstance(query, SearchVectorQuery) and query.filter_spec is not None
+                if isinstance(query, SearchVectorQuery)
+                and (query.filter_spec is not None or downstream_filter_spec is not None)
                 else None
             ),
             "documentsMatchedBeforeLimit": vector_documents_matched_before_limit,

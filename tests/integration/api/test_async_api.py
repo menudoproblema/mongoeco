@@ -56,6 +56,7 @@ from tests.integration.api.search_vector_scenarios import (
     assert_regex_explanation,
     assert_ranged_vector_explanation,
     assert_vector_min_score_explanation,
+    assert_vector_downstream_filter_explanation,
     assert_vector_score_projection_results,
     assert_vector_similarity_explanation,
 )
@@ -951,6 +952,41 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     assert_filtered_vector_explanation(
                         self,
                         filtered_vector_explanation,
+                        engine_name=engine_name,
+                    )
+                    downstream_filtered_vector_hits = await collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 3,
+                                }
+                            },
+                            {"$match": {"score": {"$gte": 15}}},
+                            {"$project": {"_id": 1}},
+                        ]
+                    ).to_list()
+                    self.assertEqual([document["_id"] for document in downstream_filtered_vector_hits], [2])
+                    downstream_filtered_vector_explanation = await collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 3,
+                                }
+                            },
+                            {"$match": {"score": {"$gte": 15}}},
+                        ]
+                    ).explain()
+                    assert_vector_downstream_filter_explanation(
+                        self,
+                        downstream_filtered_vector_explanation,
                         engine_name=engine_name,
                     )
 
