@@ -125,6 +125,14 @@ Ya no forman parte del backlog pendiente básico:
     provider;
   * esas responsabilidades pertenecen a runner/orquestador;
   * cualquier provider CXP live, si existe, vive como adaptador externo.
+* cierre operativo de la tanda de robustez para testing/runtime:
+  * failpoints de driver de alto nivel simulables en runtime
+    (`retryable`, `transient transaction`, `write concern timeout`,
+    `server selection timeout`);
+  * perfil compat estricto `mongoeco-mock-safe` para gating de tooling/tests;
+  * replay diferencial local sobre baseline golden de Mongo real;
+  * tests de determinismo para resultados/explain equivalentes en
+    `MemoryEngine` y `SQLiteEngine`.
 
 ## 5. Backends y extensibilidad
 

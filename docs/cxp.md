@@ -174,6 +174,15 @@ for:
 * `profileSupport`
 * `operations`
 
+`compat` also exposes an additional strict profile projection focused on local
+mock/runtime usage:
+
+* `mongoeco.compat.export_mock_safe_profile_catalog()`
+
+This `mongoeco-mock-safe` profile is intentionally provider-specific and does
+not replace the canonical reusable CXP profiles. It is a stricter local gate
+for test/tooling contracts over the same canonical capability metadata.
+
 The top-level `mongoeco.cxp` package is intentionally narrower than the full
 `cxp` toolkit. It is a curated facade for:
 

@@ -2006,6 +2006,113 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(results["memory"]["compound"], ["a", "b"])
         self.assertEqual(results["memory"]["vector"], ["a", "b"])
 
+    async def test_vector_search_results_and_explain_are_repeatable_and_engine_equivalent(self):
+        per_engine: dict[str, dict[str, object]] = {}
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.search_runtime.get_collection("docs")
+                await collection.insert_many(
+                    [
+                        {
+                            "_id": "a",
+                            "embedding": [1.0, 0.0, 0.0],
+                        },
+                        {
+                            "_id": "b",
+                            "embedding": [1.0, 0.0, 0.0],
+                        },
+                        {
+                            "_id": "c",
+                            "embedding": [0.0, 1.0, 0.0],
+                        },
+                    ]
+                )
+                await collection.create_search_index(
+                    SearchIndexModel(
+                        {
+                            "fields": [
+                                {
+                                    "type": "vector",
+                                    "path": "embedding",
+                                    "numDimensions": 3,
+                                    "similarity": "cosine",
+                                },
+                            ]
+                        },
+                        name="by_vector",
+                        type="vectorSearch",
+                    )
+                )
+
+                async def _run_once() -> dict[str, object]:
+                    hits = await collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 3,
+                                }
+                            },
+                            {"$project": {"_id": 1, "score": {"$meta": "vectorSearchScore"}}},
+                        ]
+                    ).to_list()
+                    explain = await collection.aggregate(
+                        [
+                            {
+                                "$vectorSearch": {
+                                    "index": "by_vector",
+                                    "path": "embedding",
+                                    "queryVector": [1.0, 0.0, 0.0],
+                                    "limit": 2,
+                                    "numCandidates": 3,
+                                }
+                            },
+                        ]
+                    ).explain()
+                    details = explain["engine_plan"]["details"]
+                    candidate_plan = details.get("candidatePlan", {})
+                    pruning_summary = details.get("pruningSummary", {})
+                    return {
+                        "ids": [document["_id"] for document in hits],
+                        "scores": [round(float(document["score"]), 6) for document in hits],
+                        "queryOperator": details.get("queryOperator"),
+                        "pathSummary": details.get("pathSummary"),
+                        "hybridFilterMode": details.get("hybridRetrieval", {}).get("filterMode"),
+                        "prefilterSources": candidate_plan.get("prefilterSources"),
+                        "prefilterCandidateCount": pruning_summary.get("prefilterCandidateCount"),
+                        "candidatesEvaluated": pruning_summary.get("candidatesEvaluated"),
+                        "postCandidateFilteredCount": pruning_summary.get(
+                            "postCandidateFilteredCount"
+                        ),
+                    }
+
+                first = await _run_once()
+                second = await _run_once()
+                self.assertEqual(first, second)
+                per_engine[engine_name] = first
+
+        self.assertEqual(per_engine["memory"]["ids"], per_engine["sqlite"]["ids"])
+        self.assertEqual(per_engine["memory"]["scores"], per_engine["sqlite"]["scores"])
+        self.assertEqual(
+            per_engine["memory"]["queryOperator"],
+            per_engine["sqlite"]["queryOperator"],
+        )
+        self.assertEqual(
+            per_engine["memory"]["pathSummary"],
+            per_engine["sqlite"]["pathSummary"],
+        )
+        self.assertEqual(
+            per_engine["memory"]["hybridFilterMode"],
+            per_engine["sqlite"]["hybridFilterMode"],
+        )
+        self.assertEqual(
+            per_engine["memory"]["prefilterSources"],
+            per_engine["sqlite"]["prefilterSources"],
+        )
+
     async def test_watch_event_shape_matches_in_memory_and_sqlite(self):
         results: dict[str, list[dict[str, object]]] = {}
         for engine_name in ("memory", "sqlite"):

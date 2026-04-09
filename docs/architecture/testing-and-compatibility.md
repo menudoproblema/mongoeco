@@ -32,6 +32,7 @@ La suite se apoya en varias capas:
 - integration tests para la superficie publica;
 - contract tests para comportamientos compartidos entre engines;
 - parity tests para superficies async/sync;
+- replay tests diferenciales contra baseline congelado de Mongo real;
 - smoke de distribuciones y extras opcionales.
 
 ## Politica de parity tests
@@ -208,5 +209,11 @@ En la fase actual, eso incluye ya explicitamente:
 - regresiones sobre `vectorSearch` local con similitudes adicionales, `filter`,
   backend ANN `usearch`, ampliacion adaptativa de candidatos y `explain()`
   con degradacion observable;
+- escenarios de fallo de driver de alto nivel simulables desde runtime
+  (`retryable`, `transient transaction`, `write concern timeout`,
+  `server selection timeout`) con trazabilidad en `driver_monitor`;
+- tests de determinismo para `vectorSearch` que fijan repetibilidad de
+  resultados/explain dentro de cada engine y equivalencia semantica entre
+  `MemoryEngine` y `SQLiteEngine`;
 - snapshots de compatibilidad regenerados automaticamente cuando cambia el
   catalogo declarado.
