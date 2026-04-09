@@ -12301,6 +12301,114 @@
       ]
     }
   },
+  "mock_safe_profile": {
+    "description": "Strict profile for mock/test runtime usage with deterministic local contract expectations for read/write/search/platform tooling.",
+    "name": "mongoeco-mock-safe",
+    "recommendedFor": [
+      "mock-runtime-tests",
+      "contract-gated-tooling"
+    ],
+    "requirements": [
+      {
+        "capabilityName": "read",
+        "requiredMetadataKeys": [
+          "operationMetadata",
+          "queryFieldOperators"
+        ],
+        "requiredOperations": [
+          "find",
+          "find_one",
+          "count_documents",
+          "distinct"
+        ]
+      },
+      {
+        "capabilityName": "write",
+        "requiredMetadataKeys": [
+          "operationMetadata",
+          "supportsPipelineUpdate"
+        ],
+        "requiredOperations": [
+          "insert_one",
+          "update_one",
+          "delete_one",
+          "bulk_write"
+        ]
+      },
+      {
+        "capabilityName": "aggregation",
+        "requiredMetadataKeys": [
+          "supportedStages",
+          "operationMetadata"
+        ],
+        "requiredOperations": [
+          "aggregate"
+        ]
+      },
+      {
+        "capabilityName": "search",
+        "requiredMetadataKeys": [
+          "operators",
+          "fieldMappings",
+          "stageOptions",
+          "operationMetadata"
+        ],
+        "requiredOperations": [
+          "aggregate"
+        ]
+      },
+      {
+        "capabilityName": "vector_search",
+        "requiredMetadataKeys": [
+          "similarities",
+          "operationMetadata",
+          "explainFeatures"
+        ],
+        "requiredOperations": [
+          "aggregate"
+        ]
+      },
+      {
+        "capabilityName": "collation",
+        "requiredMetadataKeys": [
+          "backend",
+          "capabilities",
+          "operationMetadata"
+        ],
+        "requiredOperations": []
+      },
+      {
+        "capabilityName": "persistence",
+        "requiredMetadataKeys": [
+          "persistent",
+          "storageEngine",
+          "operationMetadata"
+        ],
+        "requiredOperations": []
+      },
+      {
+        "capabilityName": "topology_discovery",
+        "requiredMetadataKeys": [
+          "topologyType",
+          "serverCount",
+          "sdam",
+          "operationMetadata"
+        ],
+        "requiredOperations": []
+      }
+    ],
+    "supported": true,
+    "validation": {
+      "expectedInterface": "database/mongodb",
+      "interfaceMismatch": null,
+      "invalidMetadata": [],
+      "messages": [],
+      "missingCapabilities": [],
+      "missingMetadataKeys": [],
+      "missingOperations": [],
+      "unknownProfileCapabilities": []
+    }
+  },
   "mongodb_dialects": {
     "7.0": {
       "aggregation_expression_operators": [

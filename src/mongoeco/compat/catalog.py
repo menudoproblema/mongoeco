@@ -38,6 +38,7 @@ from mongoeco.compat._catalog_export import (
     export_full_compat_catalog,
     export_full_compat_catalog_markdown,
     export_local_runtime_subset_catalog,
+    export_mock_safe_profile_catalog,
     export_mongodb_dialect_catalog,
     export_operation_option_catalog,
     export_pymongo_profile_catalog,

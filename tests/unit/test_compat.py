@@ -52,6 +52,7 @@ from mongoeco.compat import (
     export_cxp_operation_catalog,
     export_cxp_profile_catalog,
     export_cxp_profile_support_catalog,
+    export_mock_safe_profile_catalog,
     export_mongodb_dialect_catalog,
     export_operation_option_catalog,
     export_pymongo_profile_catalog,
@@ -371,6 +372,141 @@ class CompatResolutionTests(unittest.TestCase):
             operation_catalog["sdam_capabilities"][0]["capabilityName"],
             "topology_discovery",
         )
+
+    def test_export_mock_safe_profile_catalog_is_supported_and_strict(self):
+        profile = export_mock_safe_profile_catalog()
+
+        self.assertEqual(profile["name"], "mongoeco-mock-safe")
+        self.assertTrue(profile["supported"])
+        self.assertEqual(
+            profile["validation"]["messages"],
+            [],
+        )
+        self.assertEqual(
+            profile["requirements"][0]["capabilityName"],
+            "read",
+        )
+        self.assertIn(
+            "operationMetadata",
+            profile["requirements"][0]["requiredMetadataKeys"],
+        )
+        self.assertIn(
+            "vector_search",
+            [entry["capabilityName"] for entry in profile["requirements"]],
+        )
+
+    def test_full_catalog_includes_mock_safe_profile_projection(self):
+        full_catalog = export_full_compat_catalog()
+
+        self.assertIn("mock_safe_profile", full_catalog)
+        self.assertEqual(
+            full_catalog["mock_safe_profile"],
+            export_mock_safe_profile_catalog(),
+        )
+
+    def test_mock_safe_profile_validation_handles_interface_and_catalog_mismatch_paths(self):
+        fake_catalog = {
+            "interface": "other/interface",
+            "capabilities": "not-a-mapping",
+        }
+        fake_requirements = (
+            {
+                "capabilityName": "missing_capability",
+                "requiredOperations": ["x"],
+                "requiredMetadataKeys": ["k"],
+            },
+            {
+                "capabilityName": 123,
+                "requiredOperations": ["ignored"],
+                "requiredMetadataKeys": ["ignored"],
+            },
+        )
+
+        with patch.object(
+            catalog_export,
+            "export_cxp_capability_catalog",
+            return_value=fake_catalog,
+        ), patch.object(
+            catalog_export,
+            "_MOCK_SAFE_PROFILE_REQUIREMENTS",
+            fake_requirements,
+        ):
+            profile = catalog_export.export_mock_safe_profile_catalog()
+
+        self.assertFalse(profile["supported"])
+        self.assertIsNotNone(profile["validation"]["interfaceMismatch"])
+        self.assertEqual(
+            profile["validation"]["missingCapabilities"],
+            ["missing_capability"],
+        )
+        self.assertEqual(
+            profile["validation"]["missingOperations"],
+            [],
+        )
+        self.assertEqual(
+            profile["validation"]["missingMetadataKeys"],
+            [],
+        )
+
+    def test_mock_safe_profile_validation_handles_missing_operation_and_metadata_paths(self):
+        fake_catalog = {
+            "interface": "database/mongodb",
+            "capabilities": {
+                "read": {
+                    "operations": [{"name": "find"}],
+                    "metadata": "not-a-mapping",
+                }
+            },
+        }
+        fake_requirements = (
+            {
+                "capabilityName": "read",
+                "requiredOperations": ["find", "find_one"],
+                "requiredMetadataKeys": ["operationMetadata"],
+            },
+        )
+
+        with patch.object(
+            catalog_export,
+            "export_cxp_capability_catalog",
+            return_value=fake_catalog,
+        ), patch.object(
+            catalog_export,
+            "_MOCK_SAFE_PROFILE_REQUIREMENTS",
+            fake_requirements,
+        ):
+            profile = catalog_export.export_mock_safe_profile_catalog()
+
+        self.assertFalse(profile["supported"])
+        self.assertEqual(
+            profile["validation"]["missingOperations"],
+            [{"capabilityName": "read", "operationNames": ["find_one"]}],
+        )
+        self.assertEqual(
+            profile["validation"]["missingMetadataKeys"],
+            [{"capabilityName": "read", "metadataKeys": ["operationMetadata"]}],
+        )
+
+    def test_markdown_render_handles_non_mapping_mock_safe_requirement_items(self):
+        catalog = export_full_compat_catalog()
+        catalog["mock_safe_profile"]["requirements"] = [
+            "broken-requirement",
+            {
+                "capabilityName": "read",
+                "requiredOperations": [],
+                "requiredMetadataKeys": [],
+            },
+        ]
+
+        with patch.object(
+            catalog_export,
+            "export_full_compat_catalog",
+            return_value=catalog,
+        ):
+            markdown = catalog_export.export_full_compat_catalog_markdown()
+
+        self.assertIn("## Mock Safe Profile", markdown)
+        self.assertIn("`read`", markdown)
 
     def test_catalog_is_exposed_as_immutable_global_data(self):
         self.assertIsInstance(MONGODB_DIALECTS, MappingProxyType)

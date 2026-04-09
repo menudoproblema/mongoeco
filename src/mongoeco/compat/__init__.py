@@ -34,6 +34,7 @@ from mongoeco.compat.catalog import (
     export_full_compat_catalog_markdown,
     export_database_command_catalog,
     export_database_command_option_catalog,
+    export_mock_safe_profile_catalog,
     export_mongodb_dialect_catalog,
     MongoBehaviorPolicySpec,
     export_operation_option_catalog,
@@ -125,6 +126,7 @@ _CATALOG_EXPORTS = (
     'export_cxp_operation_catalog',
     'export_cxp_profile_catalog',
     'export_cxp_profile_support_catalog',
+    'export_mock_safe_profile_catalog',
     'export_full_compat_catalog',
     'export_full_compat_catalog_markdown',
 )

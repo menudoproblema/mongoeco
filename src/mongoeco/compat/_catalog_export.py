@@ -34,6 +34,54 @@ from mongoeco.cxp import (
 )
 from mongoeco.cxp.capabilities import export_legacy_runtime_subset_catalog
 
+_MOCK_SAFE_PROFILE_NAME = "mongoeco-mock-safe"
+_MOCK_SAFE_PROFILE_DESCRIPTION = (
+    "Strict profile for mock/test runtime usage with deterministic local "
+    "contract expectations for read/write/search/platform tooling."
+)
+_MOCK_SAFE_PROFILE_REQUIREMENTS: tuple[dict[str, object], ...] = (
+    {
+        "capabilityName": "read",
+        "requiredOperations": ["find", "find_one", "count_documents", "distinct"],
+        "requiredMetadataKeys": ["operationMetadata", "queryFieldOperators"],
+    },
+    {
+        "capabilityName": "write",
+        "requiredOperations": ["insert_one", "update_one", "delete_one", "bulk_write"],
+        "requiredMetadataKeys": ["operationMetadata", "supportsPipelineUpdate"],
+    },
+    {
+        "capabilityName": "aggregation",
+        "requiredOperations": ["aggregate"],
+        "requiredMetadataKeys": ["supportedStages", "operationMetadata"],
+    },
+    {
+        "capabilityName": "search",
+        "requiredOperations": ["aggregate"],
+        "requiredMetadataKeys": ["operators", "fieldMappings", "stageOptions", "operationMetadata"],
+    },
+    {
+        "capabilityName": "vector_search",
+        "requiredOperations": ["aggregate"],
+        "requiredMetadataKeys": ["similarities", "operationMetadata", "explainFeatures"],
+    },
+    {
+        "capabilityName": "collation",
+        "requiredOperations": [],
+        "requiredMetadataKeys": ["backend", "capabilities", "operationMetadata"],
+    },
+    {
+        "capabilityName": "persistence",
+        "requiredOperations": [],
+        "requiredMetadataKeys": ["persistent", "storageEngine", "operationMetadata"],
+    },
+    {
+        "capabilityName": "topology_discovery",
+        "requiredOperations": [],
+        "requiredMetadataKeys": ["topologyType", "serverCount", "sdam", "operationMetadata"],
+    },
+)
+
 
 def export_mongodb_dialect_catalog() -> dict[str, dict[str, object]]:
     return {
@@ -140,6 +188,103 @@ def export_cxp_operation_catalog() -> dict[str, list[dict[str, object]]]:
     return _export_cxp_operation_catalog_from_cxp()
 
 
+def export_mock_safe_profile_catalog() -> dict[str, object]:
+    catalog = export_cxp_capability_catalog()
+    interface = catalog.get("interface")
+    capabilities = catalog.get("capabilities", {})
+    expected_interface = "database/mongodb"
+    messages: list[str] = []
+    missing_capabilities: list[str] = []
+    missing_operations: list[dict[str, object]] = []
+    missing_metadata_keys: list[dict[str, object]] = []
+    interface_mismatch = None
+    if interface != expected_interface:
+        interface_mismatch = f"{interface!r} != {expected_interface!r}"
+        messages.append(
+            f"interface mismatch: expected {expected_interface!r}, got {interface!r}"
+        )
+    if not isinstance(capabilities, dict):
+        capabilities = {}
+    for requirement in _MOCK_SAFE_PROFILE_REQUIREMENTS:
+        capability_name = requirement["capabilityName"]
+        if not isinstance(capability_name, str):
+            continue
+        capability_entry = capabilities.get(capability_name)
+        if not isinstance(capability_entry, dict):
+            missing_capabilities.append(capability_name)
+            messages.append(
+                f"missing capability {capability_name!r} for {_MOCK_SAFE_PROFILE_NAME}"
+            )
+            continue
+        operations = capability_entry.get("operations", ())
+        capability_operation_names = {
+            operation["name"]
+            for operation in operations
+            if isinstance(operation, dict) and isinstance(operation.get("name"), str)
+        }
+        required_operations = requirement["requiredOperations"]
+        if isinstance(required_operations, list):
+            missing_required_operations = [
+                operation_name
+                for operation_name in required_operations
+                if isinstance(operation_name, str)
+                and operation_name not in capability_operation_names
+            ]
+            if missing_required_operations:
+                missing_operations.append(
+                    {
+                        "capabilityName": capability_name,
+                        "operationNames": missing_required_operations,
+                    }
+                )
+                messages.append(
+                    f"missing operations for {capability_name!r}: {missing_required_operations}"
+                )
+        metadata = capability_entry.get("metadata", {})
+        if not isinstance(metadata, dict):
+            metadata = {}
+        required_metadata_keys = requirement["requiredMetadataKeys"]
+        if isinstance(required_metadata_keys, list):
+            missing_required_metadata = [
+                metadata_key
+                for metadata_key in required_metadata_keys
+                if isinstance(metadata_key, str) and metadata_key not in metadata
+            ]
+            if missing_required_metadata:
+                missing_metadata_keys.append(
+                    {
+                        "capabilityName": capability_name,
+                        "metadataKeys": missing_required_metadata,
+                    }
+                )
+                messages.append(
+                    f"missing metadata for {capability_name!r}: {missing_required_metadata}"
+                )
+    supported = (
+        interface_mismatch is None
+        and not missing_capabilities
+        and not missing_operations
+        and not missing_metadata_keys
+    )
+    return {
+        "name": _MOCK_SAFE_PROFILE_NAME,
+        "description": _MOCK_SAFE_PROFILE_DESCRIPTION,
+        "recommendedFor": ["mock-runtime-tests", "contract-gated-tooling"],
+        "requirements": [dict(requirement) for requirement in _MOCK_SAFE_PROFILE_REQUIREMENTS],
+        "supported": supported,
+        "validation": {
+            "messages": messages,
+            "unknownProfileCapabilities": [],
+            "missingCapabilities": missing_capabilities,
+            "missingOperations": missing_operations,
+            "missingMetadataKeys": missing_metadata_keys,
+            "invalidMetadata": [],
+            "interfaceMismatch": interface_mismatch,
+            "expectedInterface": expected_interface,
+        },
+    }
+
+
 def export_full_compat_catalog() -> dict[str, object]:
     return {
         "defaults": {
@@ -162,6 +307,7 @@ def export_full_compat_catalog() -> dict[str, object]:
         "operation_options": export_operation_option_catalog(),
         "database_command_options": export_database_command_option_catalog(),
         "cxp": export_cxp_catalog(),
+        "mock_safe_profile": export_mock_safe_profile_catalog(),
         "local_runtime_subsets": export_local_runtime_subset_catalog(),
     }
 
@@ -310,6 +456,40 @@ def export_full_compat_catalog_markdown() -> str:
                 rendered = f"`{field_value}`"
             lines.append(f"- `{field_name}`: {rendered}")
         lines.append("")
+
+    mock_safe_profile = catalog["mock_safe_profile"]
+    assert isinstance(mock_safe_profile, dict)
+    lines.append("## Mock Safe Profile")
+    lines.append(f"- `name`: `{mock_safe_profile.get('name')}`")
+    lines.append(f"- `description`: `{mock_safe_profile.get('description')}`")
+    lines.append(f"- `supported`: `{mock_safe_profile.get('supported')}`")
+    recommended_for = mock_safe_profile.get("recommendedFor", ())
+    if isinstance(recommended_for, list):
+        rendered_recommended_for = ", ".join(
+            f"`{value}`" for value in recommended_for
+        ) or "_empty_"
+        lines.append(f"- `recommendedFor`: {rendered_recommended_for}")
+    requirements = mock_safe_profile.get("requirements", ())
+    if isinstance(requirements, list):
+        lines.append("### Requirements")
+        for requirement in requirements:
+            if not isinstance(requirement, dict):
+                continue
+            lines.append(
+                f"- `{requirement.get('capabilityName')}`: "
+                f"ops={requirement.get('requiredOperations')} "
+                f"metadata={requirement.get('requiredMetadataKeys')}"
+            )
+    validation = mock_safe_profile.get("validation", {})
+    if isinstance(validation, dict):
+        lines.append("### Validation")
+        for field_name, field_value in validation.items():
+            if isinstance(field_value, list):
+                rendered = ", ".join(f"`{item}`" for item in field_value) or "_empty_"
+            else:
+                rendered = f"`{field_value}`"
+            lines.append(f"- `{field_name}`: {rendered}")
+    lines.append("")
 
     runtime_subsets = catalog["local_runtime_subsets"]
     assert isinstance(runtime_subsets, dict)

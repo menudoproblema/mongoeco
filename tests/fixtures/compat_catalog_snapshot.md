@@ -726,6 +726,30 @@
 - `projectsFromCapability`: `read`
 - `note`: `The embedded runtime uses planar local geometry operations. $nearSphere and 2dsphere remain Mongo-like names over local planar distance.`
 
+## Mock Safe Profile
+- `name`: `mongoeco-mock-safe`
+- `description`: `Strict profile for mock/test runtime usage with deterministic local contract expectations for read/write/search/platform tooling.`
+- `supported`: `True`
+- `recommendedFor`: `mock-runtime-tests`, `contract-gated-tooling`
+### Requirements
+- `read`: ops=['find', 'find_one', 'count_documents', 'distinct'] metadata=['operationMetadata', 'queryFieldOperators']
+- `write`: ops=['insert_one', 'update_one', 'delete_one', 'bulk_write'] metadata=['operationMetadata', 'supportsPipelineUpdate']
+- `aggregation`: ops=['aggregate'] metadata=['supportedStages', 'operationMetadata']
+- `search`: ops=['aggregate'] metadata=['operators', 'fieldMappings', 'stageOptions', 'operationMetadata']
+- `vector_search`: ops=['aggregate'] metadata=['similarities', 'operationMetadata', 'explainFeatures']
+- `collation`: ops=[] metadata=['backend', 'capabilities', 'operationMetadata']
+- `persistence`: ops=[] metadata=['persistent', 'storageEngine', 'operationMetadata']
+- `topology_discovery`: ops=[] metadata=['topologyType', 'serverCount', 'sdam', 'operationMetadata']
+### Validation
+- `messages`: _empty_
+- `unknownProfileCapabilities`: _empty_
+- `missingCapabilities`: _empty_
+- `missingOperations`: _empty_
+- `missingMetadataKeys`: _empty_
+- `invalidMetadata`: _empty_
+- `interfaceMismatch`: `None`
+- `expectedInterface`: `database/mongodb`
+
 ## Local Runtime Subsets
 ### `vectorSearch`
 - `similarities`: `cosine`, `dotProduct`, `euclidean`
