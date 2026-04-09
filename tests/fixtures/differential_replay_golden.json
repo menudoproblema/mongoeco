@@ -1,0 +1,64 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "8.0",
+  "cases": {
+    "aggregate_get_field_literal_name": [
+      {
+        "dotted": 1,
+        "dollar": 2,
+        "double_dot": 3
+      }
+    ],
+    "aggregate_project_array_traversal": [
+      {
+        "_id": "1",
+        "kinds": [
+          "a",
+          "b"
+        ]
+      },
+      {
+        "_id": "2",
+        "kinds": [
+          "c"
+        ]
+      }
+    ],
+    "find_all_with_multiple_elem_match": [
+      "1"
+    ],
+    "find_expr_compare_fields": [
+      "1"
+    ],
+    "find_expr_truthiness_array": [
+      "array",
+      "string"
+    ],
+    "find_implicit_regex_literal": [
+      "1"
+    ],
+    "find_in_with_regex_literals": [
+      "1"
+    ],
+    "find_subdocument_order_sensitive_equality": [
+      "ordered"
+    ],
+    "update_add_to_set_document_order_sensitive": [
+      1,
+      1,
+      {
+        "_id": "1",
+        "items": [
+          {
+            "kind": "a",
+            "qty": 1
+          },
+          {
+            "qty": 1,
+            "kind": "a"
+          }
+        ]
+      }
+    ]
+  }
+}
