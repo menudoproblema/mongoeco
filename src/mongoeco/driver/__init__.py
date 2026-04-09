@@ -7,6 +7,7 @@ from mongoeco.driver.execution import (
     classify_request_exception,
     execute_request_pipeline,
 )
+from mongoeco.driver.failpoints import DriverFailpointController
 from mongoeco.driver.monitoring import (
     CommandFailedEvent,
     CommandStartedEvent,
@@ -95,6 +96,7 @@ __all__ = [
     "RequestExecutionResult",
     "classify_request_exception",
     "execute_request_pipeline",
+    "DriverFailpointController",
     "DriverEvent",
     "DriverMonitor",
     "ServerSelectedEvent",

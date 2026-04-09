@@ -8,6 +8,7 @@ from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolv
 from mongoeco.driver.execution import (
     RequestExecutionResult,
 )
+from mongoeco.driver.failpoints import DriverFailpointController
 from mongoeco.driver.monitoring import (
     DriverMonitor,
     TopologyRefreshedEvent,
@@ -84,10 +85,12 @@ class DriverRuntime:
         )
         self._connections = ConnectionRegistry(self._effective_uri)
         self._monitor = DriverMonitor()
+        self._failpoints = DriverFailpointController()
         self._attempts = RuntimeAttemptLifecycle(
             connections=self._connections,
             monitor=self._monitor,
             resolve_plan=self._resolve_execution_plan,
+            failpoints=self._failpoints,
         )
         self._topology_monitor_task: asyncio.Task[None] | None = None
 
@@ -256,3 +259,7 @@ class DriverRuntime:
     @property
     def monitor(self) -> DriverMonitor:
         return self._monitor
+
+    @property
+    def failpoints(self) -> DriverFailpointController:
+        return self._failpoints

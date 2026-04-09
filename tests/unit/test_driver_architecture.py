@@ -1049,6 +1049,177 @@ class ClientDriverArchitectureTests(unittest.TestCase):
 
 
 class RequestExecutionPipelineTests(unittest.TestCase):
+    def test_execute_request_can_inject_retryable_failpoint_and_retry(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017,db2:27018/?replicaSet=rs0&retryReads=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+        )
+        runtime.failpoints.inject_retryable_command_failure(
+            command_names=("find",),
+            times=1,
+            message="retryable failpoint",
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+        seen: list[str] = []
+
+        class EchoTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                seen.append(execution.selected_server.address)
+                return {"ok": 1.0, "cursor": {"id": 0}}
+
+        result = asyncio.run(runtime.execute_request(plan, EchoTransport()))
+
+        self.assertTrue(result.outcome.ok)
+        self.assertEqual(seen, ["db2:27018"])
+        self.assertEqual(len(result.trace.attempts), 2)
+        self.assertIsInstance(runtime.monitor.history[3], CommandFailedEvent)
+        self.assertTrue(runtime.monitor.history[3].retryable)
+
+    def test_execute_request_can_inject_transient_transaction_failpoint(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?retryWrites=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        runtime.failpoints.inject_transient_transaction_failure(
+            command_names=("commitTransaction",),
+            message="transient tx failpoint",
+            include_unknown_commit_result=True,
+        )
+        plan = runtime.plan_command_request(
+            "admin",
+            "commitTransaction",
+            {"commitTransaction": 1},
+            read_only=False,
+        )
+
+        class NoopTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                del execution
+                return {"ok": 1.0}
+
+        result = asyncio.run(runtime.execute_request(plan, NoopTransport()))
+
+        self.assertFalse(result.outcome.ok)
+        self.assertIn("transient tx failpoint", result.outcome.error or "")
+        failed = runtime.monitor.history[3]
+        self.assertIsInstance(failed, CommandFailedEvent)
+        self.assertFalse(failed.retryable)
+
+    def test_execute_request_can_inject_write_concern_timeout_failpoint(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?retryWrites=false",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        runtime.failpoints.inject_write_concern_timeout(
+            command_names=("insert",),
+            message="wtimeout failpoint",
+        )
+        plan = runtime.plan_command_request(
+            "observe",
+            "insert",
+            {"insert": "events", "documents": [{"_id": "1"}]},
+            read_only=False,
+        )
+
+        class NoopTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                del execution
+                return {"ok": 1.0}
+
+        result = asyncio.run(runtime.execute_request(plan, NoopTransport()))
+
+        self.assertFalse(result.outcome.ok)
+        self.assertIn("wtimeout failpoint", result.outcome.error or "")
+        self.assertEqual(len(result.trace.attempts), 1)
+        failed = runtime.monitor.history[3]
+        self.assertIsInstance(failed, CommandFailedEvent)
+        self.assertFalse(failed.retryable)
+
+    def test_execute_request_can_inject_server_selection_timeout_failpoint(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?directConnection=true",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        runtime.failpoints.inject_server_selection_timeout(
+            command_names=("find",),
+            reason="forced selection timeout",
+        )
+        plan = runtime.plan_command_request("admin", "find", {"find": "events"}, read_only=True)
+
+        class NoopTransport:
+            async def send(self, execution: PreparedRequestExecution) -> dict[str, object]:
+                del execution
+                return {"ok": 1.0}
+
+        result = asyncio.run(runtime.execute_request(plan, NoopTransport()))
+
+        self.assertFalse(result.outcome.ok)
+        self.assertIn("forced selection timeout", result.outcome.error or "")
+        self.assertEqual(result.trace.attempts, ())
+        self.assertEqual(len(runtime.monitor.history), 1)
+        event = runtime.monitor.history[0]
+        self.assertIsInstance(event, ServerSelectionFailedEvent)
+        self.assertEqual(event.reason, "forced selection timeout")
+
+    def test_driver_failpoint_controller_handles_empty_filters_zero_times_and_clear(self):
+        runtime = DriverRuntime(
+            uri="mongodb://db1:27017/?retryReads=false",
+            write_concern=MongoClient().write_concern,
+            read_concern=MongoClient().read_concern,
+            read_preference=ReadPreference(ReadPreferenceMode.PRIMARY),
+        )
+        plan = runtime.plan_command_request("observe", "find", {"find": "events"}, read_only=True)
+        execution = asyncio.run(runtime.prepare_request_execution(plan))
+        try:
+            runtime.failpoints.inject_server_selection_timeout(
+                command_names=(" ",),
+                reason="match-any",
+            )
+            self.assertEqual(
+                runtime.failpoints.consume_server_selection_timeout(plan),
+                "match-any",
+            )
+
+            runtime.failpoints.inject_server_selection_timeout(
+                command_names=("insert",),
+                reason="unmatched",
+            )
+            self.assertIsNone(runtime.failpoints.consume_server_selection_timeout(plan))
+
+            runtime.failpoints.inject_server_selection_timeout(times=0, reason="disabled")
+            self.assertIsNone(runtime.failpoints.consume_server_selection_timeout(plan))
+
+            runtime.failpoints.inject_retryable_command_failure(
+                command_names=(" ",),
+                message="match-any-command",
+            )
+            self.assertIsNotNone(runtime.failpoints.consume_command_failure(execution))
+
+            runtime.failpoints.inject_retryable_command_failure(
+                command_names=("insert",),
+                message="unmatched-command",
+            )
+            self.assertIsNone(runtime.failpoints.consume_command_failure(execution))
+
+            runtime.failpoints.inject_retryable_command_failure(
+                command_names=("find",),
+                times=0,
+                message="disabled-command",
+            )
+            self.assertIsNone(runtime.failpoints.consume_command_failure(execution))
+        finally:
+            asyncio.run(runtime.complete_request_execution(execution))
+
+        runtime.failpoints.clear()
+
     def test_request_execution_trace_and_exception_classification_cover_generic_paths(self):
         self.assertIsNone(RequestExecutionTrace().final_outcome)
 

@@ -74,6 +74,7 @@ async def execute_request_pipeline(
     discard_execution=None,
     transport: AsyncCommandTransport,
     monitor: DriverMonitor | None = None,
+    inject_failure=None,
 ) -> RequestExecutionResult:
     attempts: list[RequestAttempt] = []
     max_attempts = len(plan.candidate_servers) or 1
@@ -98,6 +99,10 @@ async def execute_request_pipeline(
                 )
             )
         try:
+            if inject_failure is not None:
+                injected_error = inject_failure(execution)
+                if injected_error is not None:
+                    raise injected_error
             response = await _send_with_timeout(transport, execution, plan=plan)
             outcome = RequestOutcome(
                 server_address=execution.selected_server.address,

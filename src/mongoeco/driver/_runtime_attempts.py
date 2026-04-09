@@ -18,6 +18,7 @@ from mongoeco.errors import ServerSelectionTimeoutError
 
 if TYPE_CHECKING:
     from mongoeco.driver.connections import ConnectionRegistry
+    from mongoeco.driver.failpoints import DriverFailpointController
     from mongoeco.driver.monitoring import DriverMonitor
     from mongoeco.driver.requests import PreparedRequestExecution, RequestExecutionPlan
     from mongoeco.driver.transports import WireProtocolCommandTransport
@@ -31,10 +32,12 @@ class RuntimeAttemptLifecycle:
         connections: "ConnectionRegistry",
         monitor: "DriverMonitor",
         resolve_plan,
+        failpoints: "DriverFailpointController" | None = None,
     ):
         self._connections = connections
         self._monitor = monitor
         self._resolve_plan = resolve_plan
+        self._failpoints = failpoints
 
     async def prepare(self, plan: "RequestExecutionPlan", *, attempt_number: int) -> "PreparedRequestExecution":
         from mongoeco.driver.requests import PreparedRequestExecution
@@ -93,6 +96,30 @@ class RuntimeAttemptLifecycle:
 
     async def execute(self, plan: "RequestExecutionPlan", *, transport) -> RequestExecutionResult:
         resolved_plan = self._resolve_plan(plan)
+        forced_reason = None
+        if self._failpoints is not None:
+            forced_reason = self._failpoints.consume_server_selection_timeout(
+                resolved_plan
+            )
+        if forced_reason is not None:
+            self._monitor.emit(
+                ServerSelectionFailedEvent(
+                    database=resolved_plan.request.database,
+                    command_name=resolved_plan.request.command_name,
+                    reason=forced_reason,
+                    topology_type=resolved_plan.topology.topology_type.value,
+                    known_server_count=len(resolved_plan.topology.servers),
+                    timeout_ms=resolved_plan.timeout_policy.server_selection_timeout_ms,
+                    read_only=resolved_plan.request.read_only,
+                    session_id=resolved_plan.request.session_id,
+                    request_id=None,
+                )
+            )
+            error = ServerSelectionTimeoutError(forced_reason)
+            return RequestExecutionResult(
+                outcome=classify_request_exception(error, plan=resolved_plan),
+                trace=RequestExecutionTrace(),
+            )
         if not resolved_plan.candidate_servers:
             reason = (
                 f"no eligible servers found within "
@@ -123,4 +150,9 @@ class RuntimeAttemptLifecycle:
             discard_execution=self.discard,
             transport=transport,
             monitor=self._monitor,
+            inject_failure=(
+                None
+                if self._failpoints is None
+                else self._failpoints.consume_command_failure
+            ),
         )
