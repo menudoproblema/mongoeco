@@ -460,7 +460,7 @@ best treated as pre-release.
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
-* [docs/release-3.3.0-draft.md](/Users/uve/Proyectos/mongoeco2/docs/release-3.3.0-draft.md)
+* [docs/release-3.4.0-draft.md](/Users/uve/Proyectos/mongoeco2/docs/release-3.4.0-draft.md)
 * [TODO.md](/Users/uve/Proyectos/mongoeco2/TODO.md)
 * [MISSING_FEATURES.md](/Users/uve/Proyectos/mongoeco2/MISSING_FEATURES.md)
 
