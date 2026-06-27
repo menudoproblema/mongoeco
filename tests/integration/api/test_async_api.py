@@ -32,7 +32,7 @@ from mongoeco import (
 )
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._async.cursor import AsyncCursor
-from mongoeco.compat import MongoDialect80, PyMongoProfile413
+from mongoeco.compat import MongoDialect80, PyMongoProfile417
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import (
@@ -2947,22 +2947,22 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
         async with AsyncMongoClient(
             engine,
             mongodb_dialect='8.0',
-            pymongo_profile='4.13',
+            pymongo_profile='4.17',
         ) as client:
             database = client.get_database('alpha')
             collection = database.get_collection('users')
 
             self.assertEqual(client.mongodb_dialect, MongoDialect80())
             self.assertEqual(client.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
-            self.assertEqual(client.pymongo_profile, PyMongoProfile413())
+            self.assertEqual(client.pymongo_profile, PyMongoProfile417())
             self.assertEqual(client.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
             self.assertEqual(database.mongodb_dialect, MongoDialect80())
             self.assertEqual(database.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
-            self.assertEqual(database.pymongo_profile, PyMongoProfile413())
+            self.assertEqual(database.pymongo_profile, PyMongoProfile417())
             self.assertEqual(database.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
             self.assertEqual(collection.mongodb_dialect, MongoDialect80())
             self.assertEqual(collection.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
-            self.assertEqual(collection.pymongo_profile, PyMongoProfile413())
+            self.assertEqual(collection.pymongo_profile, PyMongoProfile417())
             self.assertEqual(collection.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
 
     async def test_client_supports_attribute_and_item_access(self):

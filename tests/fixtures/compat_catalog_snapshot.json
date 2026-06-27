@@ -13322,6 +13322,19 @@
       "driver_series": "4.x",
       "label": "PyMongo 4.13"
     },
+    "4.17": {
+      "aliases": [
+        "4.17"
+      ],
+      "behavior_flags": {
+        "supports_update_one_sort": true
+      },
+      "capabilities": [
+        "update_one.sort"
+      ],
+      "driver_series": "4.x",
+      "label": "PyMongo 4.17"
+    },
     "4.9": {
       "aliases": [
         "4",

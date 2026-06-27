@@ -10,7 +10,72 @@ import textwrap
 from pathlib import Path
 
 
-DEFAULT_VERSIONS = ("4.9.2", "4.11.3", "4.13.2")
+DEFAULT_VERSIONS = ("4.9.2", "4.11.3", "4.13.2", "4.17.0")
+WRITE_METHODS = (
+    "update_one",
+    "update_many",
+    "replace_one",
+    "delete_one",
+    "delete_many",
+    "find_one_and_update",
+    "find_one_and_replace",
+    "find_one_and_delete",
+    "bulk_write",
+)
+AGGREGATE_OPTIONS = ("hint", "comment", "maxTimeMS", "batchSize", "let")
+CHECK_ORDER = (
+    "update_one.sort",
+    "update_one.hint",
+    "update_one.comment",
+    "update_one.max_time_ms",
+    "update_one.let",
+    "update_many.hint",
+    "update_many.comment",
+    "update_many.max_time_ms",
+    "update_many.let",
+    "replace_one.sort",
+    "replace_one.hint",
+    "replace_one.comment",
+    "replace_one.max_time_ms",
+    "replace_one.let",
+    "delete_one.hint",
+    "delete_one.comment",
+    "delete_one.max_time_ms",
+    "delete_one.let",
+    "delete_many.hint",
+    "delete_many.comment",
+    "delete_many.max_time_ms",
+    "delete_many.let",
+    "find_one_and_update.hint",
+    "find_one_and_update.comment",
+    "find_one_and_update.max_time_ms",
+    "find_one_and_update.let",
+    "find_one_and_replace.hint",
+    "find_one_and_replace.comment",
+    "find_one_and_replace.max_time_ms",
+    "find_one_and_replace.let",
+    "find_one_and_delete.hint",
+    "find_one_and_delete.comment",
+    "find_one_and_delete.max_time_ms",
+    "find_one_and_delete.let",
+    "aggregate.hint",
+    "aggregate.comment",
+    "aggregate.max_time_ms",
+    "aggregate.batch_size",
+    "aggregate.let",
+    "bulk_write.comment",
+    "bulk_write.let",
+    "bulk_write.hint",
+    "bulk_write.sort",
+    "bulk_write.delete_hint",
+    "bulk_write.replace_sort",
+)
+CHECK_LABELS = {
+    "bulk_write.hint": ("bulk_write", "UpdateOne.hint"),
+    "bulk_write.sort": ("bulk_write", "UpdateOne.sort"),
+    "bulk_write.delete_hint": ("bulk_write", "DeleteOne.hint"),
+    "bulk_write.replace_sort": ("bulk_write", "ReplaceOne.sort"),
+}
 
 PROBE_SCRIPT = textwrap.dedent(
     """
@@ -127,6 +192,118 @@ def probe_version(version: str, root: Path, python: str) -> dict[str, object]:
     return json.loads(result.stdout)
 
 
+def _version_sort_key(version: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in version.split(".") if part.isdigit())
+
+
+def _minor_key(version: str) -> str:
+    major, minor, *_rest = version.split(".")
+    return f"{major}_{minor}"
+
+
+def _minor_label(version: str) -> str:
+    major, minor, *_rest = version.split(".")
+    return f"{major}.{minor}"
+
+
+def _check_sort_key(check: str) -> tuple[int, str]:
+    try:
+        return (CHECK_ORDER.index(check), check)
+    except ValueError:
+        return (len(CHECK_ORDER), check)
+
+
+def _check_label(check: str) -> tuple[str, str]:
+    mapped = CHECK_LABELS.get(check)
+    if mapped is not None:
+        return mapped
+    group, _, option = check.partition(".")
+    return group, option
+
+
+def _accepted(results: dict[str, dict[str, object]], version: str, check: str) -> bool:
+    result = results[version][check]
+    if not isinstance(result, dict):
+        raise TypeError(f"Unexpected probe result for {version} {check}: {result!r}")
+    return bool(result["accepted"])
+
+
+def _all_checks(results: dict[str, dict[str, object]]) -> list[str]:
+    checks = {check for version_results in results.values() for check in version_results}
+    return sorted(checks, key=_check_sort_key)
+
+
+def _group_checks(checks: list[str]) -> dict[str, list[str]]:
+    grouped = {method: [] for method in (*WRITE_METHODS, "aggregate")}
+    extras: dict[str, list[str]] = {}
+    for check in checks:
+        group, label = _check_label(check)
+        target = grouped.get(group)
+        if target is None:
+            target = extras.setdefault(group, [])
+        target.append(label)
+    return {
+        group: labels
+        for group, labels in {**grouped, **extras}.items()
+        if labels
+    }
+
+
+def _delta_label(check: str) -> str:
+    group, label = _check_label(check)
+    return f"{group}.{label}"
+
+
+def summarize_results(results: dict[str, dict[str, object]]) -> dict[str, object]:
+    versions = sorted(results, key=_version_sort_key)
+    checks = _all_checks(results)
+    accepted_by_version = {
+        version: {
+            check
+            for check in checks
+            if _accepted(results, version, check)
+        }
+        for version in versions
+    }
+    all_versions = [accepted_by_version[version] for version in versions]
+    baseline = [
+        check
+        for check in checks
+        if all(check in accepted for accepted in all_versions)
+    ]
+    unsupported = [
+        check
+        for check in checks
+        if all(check not in accepted for accepted in all_versions)
+    ]
+    deltas: dict[str, list[str]] = {}
+    for index, version in enumerate(versions[1:], start=1):
+        delta_checks = [
+            check
+            for check in checks
+            if check not in baseline
+            and check not in unsupported
+            and all(check not in accepted_by_version[previous] for previous in versions[:index])
+            and all(check in accepted_by_version[current] for current in versions[index:])
+        ]
+        if delta_checks:
+            deltas[f"{_minor_label(version)}_plus"] = [
+                _delta_label(check)
+                for check in delta_checks
+            ]
+
+    return {
+        "generated_from": [f"PyMongo {version}" for version in versions],
+        "scope": {
+            "write_methods": list(WRITE_METHODS),
+            "aggregate": list(AGGREGATE_OPTIONS),
+        },
+        f"confirmed_baseline_{_minor_key(versions[0])}_plus": _group_checks(baseline),
+        "confirmed_profile_deltas": deltas,
+        f"confirmed_unsupported_in_{_minor_key(versions[0])}_to_{_minor_key(versions[-1])}": _group_checks(unsupported),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Contrasta la superficie PyMongo real contra las opciones modeladas por mongoeco.",
@@ -157,6 +334,11 @@ def main() -> int:
         default=None,
         help="Fichero opcional donde guardar el JSON de resultados.",
     )
+    parser.add_argument(
+        "--summary-output",
+        default=None,
+        help="Fichero opcional donde guardar el resumen estable usado como fixture.",
+    )
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
@@ -170,6 +352,9 @@ def main() -> int:
     payload = json.dumps(results, indent=2, sort_keys=True)
     if args.output:
         Path(args.output).write_text(payload + "\n", encoding="utf-8")
+    if args.summary_output:
+        summary = json.dumps(summarize_results(results), indent=2, sort_keys=False)
+        Path(args.summary_output).write_text(summary + "\n", encoding="utf-8")
     print(payload)
 
     if not args.keep:

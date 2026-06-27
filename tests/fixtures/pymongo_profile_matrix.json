@@ -2,7 +2,8 @@
   "generated_from": [
     "PyMongo 4.9.2",
     "PyMongo 4.11.3",
-    "PyMongo 4.13.2"
+    "PyMongo 4.13.2",
+    "PyMongo 4.17.0"
   ],
   "scope": {
     "write_methods": [
@@ -90,7 +91,7 @@
       "bulk_write.ReplaceOne.sort"
     ]
   },
-  "confirmed_unsupported_in_4_9_to_4_13": {
+  "confirmed_unsupported_in_4_9_to_4_17": {
     "update_one": [
       "max_time_ms"
     ],

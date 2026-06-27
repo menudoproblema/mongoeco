@@ -67,6 +67,13 @@
 - `behavior_flags`: `{'supports_update_one_sort': True}`
 - `capabilities`: `update_one.sort`
 
+### `4.17`
+- `driver_series`: `4.x`
+- `label`: `PyMongo 4.17`
+- `aliases`: `4.17`
+- `behavior_flags`: `{'supports_update_one_sort': True}`
+- `capabilities`: `update_one.sort`
+
 ## Database Commands
 ### `aggregate`
 - `family`: `admin_read`

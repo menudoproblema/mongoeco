@@ -39,5 +39,6 @@ class PackageInitTests(unittest.TestCase):
         self.assertNotIn("export_cxp_profile_support_catalog", module.__all__)
         self.assertNotIn("MongoDialect80", module.__all__)
         self.assertNotIn("PyMongoProfile413", module.__all__)
+        self.assertNotIn("PyMongoProfile417", module.__all__)
         self.assertIn("WriteConcern", module.__all__)
         self.assertIn("__version__", module.__all__)

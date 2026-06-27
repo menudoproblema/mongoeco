@@ -4,7 +4,7 @@ import threading
 import time
 from unittest.mock import patch
 
-from mongoeco.compat import MongoDialect80, PyMongoProfile413
+from mongoeco.compat import MongoDialect80, PyMongoProfile417
 from mongoeco.api._sync.client import MongoClient, _SyncRunner
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import ExecutionTimeout, InvalidOperation, ServerSelectionTimeoutError
@@ -464,19 +464,19 @@ class SyncClientUnitTests(unittest.TestCase):
         client = MongoClient(
             MemoryEngine(),
             mongodb_dialect='8.0',
-            pymongo_profile='4.13',
+            pymongo_profile='4.17',
         )
 
         self.assertEqual(client.mongodb_dialect, MongoDialect80())
         self.assertEqual(client.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
-        self.assertEqual(client.pymongo_profile, PyMongoProfile413())
+        self.assertEqual(client.pymongo_profile, PyMongoProfile417())
         self.assertEqual(client.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
         self.assertEqual(client.get_database('alpha').mongodb_dialect, MongoDialect80())
         self.assertEqual(
             client.get_database('alpha').mongodb_dialect_resolution.resolution_mode,
             'explicit-alias',
         )
-        self.assertEqual(client.get_database('alpha').pymongo_profile, PyMongoProfile413())
+        self.assertEqual(client.get_database('alpha').pymongo_profile, PyMongoProfile417())
         self.assertEqual(
             client.get_database('alpha').pymongo_profile_resolution.resolution_mode,
             'explicit-alias',
@@ -491,7 +491,7 @@ class SyncClientUnitTests(unittest.TestCase):
         )
         self.assertEqual(
             client.get_database('alpha').get_collection('users').pymongo_profile,
-            PyMongoProfile413(),
+            PyMongoProfile417(),
         )
         self.assertEqual(
             client.get_database('alpha').get_collection('users').pymongo_profile_resolution.resolution_mode,
@@ -504,7 +504,7 @@ class SyncClientUnitTests(unittest.TestCase):
         client = MongoClient(
             MemoryEngine(),
             mongodb_dialect='8.0',
-            pymongo_profile='4.13',
+            pymongo_profile='4.17',
         )
         collection = client.get_database('alpha').get_collection('users')
 

@@ -30,6 +30,14 @@ PYMONGO_PROFILE_CATALOG = MappingProxyType(
             behavior_flags=MappingProxyType({"supports_update_one_sort": True}),
             capabilities=frozenset({PYMONGO_CAP_UPDATE_ONE_SORT}),
         ),
+        "4.17": PyMongoProfileCatalogEntry(
+            key="4.17",
+            driver_series="4.x",
+            label="PyMongo 4.17",
+            aliases=("4.17",),
+            behavior_flags=MappingProxyType({"supports_update_one_sort": True}),
+            capabilities=frozenset({PYMONGO_CAP_UPDATE_ONE_SORT}),
+        ),
     }
 )
 

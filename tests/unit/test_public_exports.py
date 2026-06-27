@@ -107,6 +107,7 @@ class PublicExportsTests(unittest.TestCase):
         self.assertFalse(hasattr(mongoeco, "export_cxp_catalog"))
         self.assertFalse(hasattr(mongoeco, "MongoDialect80"))
         self.assertFalse(hasattr(mongoeco, "PyMongoProfile413"))
+        self.assertFalse(hasattr(mongoeco, "PyMongoProfile417"))
 
     def test_root_transport_aliases_are_not_exposed_anymore(self):
         import mongoeco
