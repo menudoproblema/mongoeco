@@ -38,6 +38,7 @@ async def create_index(
     max_time_ms: int | None = None,
     session: ClientSession | None = None,
 ) -> str:
+    collection._ensure_session_active(session)
     normalized_keys = collection._normalize_index_keys(keys)
     if not isinstance(background, bool):
         raise TypeError("background must be a bool")
@@ -79,6 +80,7 @@ async def create_indexes(
     max_time_ms: int | None = None,
     session: ClientSession | None = None,
 ) -> list[str]:
+    collection._ensure_session_active(session)
     models = collection._normalize_index_models(indexes)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
     deadline = operation_deadline(max_time_ms)
@@ -145,6 +147,7 @@ def list_indexes(
     comment: object | None = None,
     session: ClientSession | None = None,
 ) -> AsyncIndexCursor:
+    collection._ensure_session_active(session)
     collection._record_operation_metadata(
         operation="list_indexes",
         comment=comment,
@@ -165,6 +168,7 @@ async def index_information(
     comment: object | None = None,
     session: ClientSession | None = None,
 ) -> IndexInformation:
+    collection._ensure_session_active(session)
     collection._record_operation_metadata(
         operation="index_information",
         comment=comment,
@@ -184,6 +188,7 @@ async def drop_index(
     comment: object | None = None,
     session: ClientSession | None = None,
 ) -> None:
+    collection._ensure_session_active(session)
     target: str | IndexKeySpec
     if isinstance(index_or_name, str):
         target = index_or_name
@@ -208,6 +213,7 @@ async def drop_indexes(
     comment: object | None = None,
     session: ClientSession | None = None,
 ) -> None:
+    collection._ensure_session_active(session)
     await collection._engine.drop_indexes(
         collection._db_name,
         collection._collection_name,
@@ -228,6 +234,7 @@ async def create_search_index(
     max_time_ms: int | None = None,
     session: ClientSession | None = None,
 ) -> str:
+    collection._ensure_session_active(session)
     normalized_model = collection._normalize_search_index_model(model)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
     created_name = await collection._engine.create_search_index(
@@ -254,21 +261,47 @@ async def create_search_indexes(
     max_time_ms: int | None = None,
     session: ClientSession | None = None,
 ) -> list[str]:
+    collection._ensure_session_active(session)
     models = collection._normalize_search_index_models(indexes)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
     deadline = operation_deadline(max_time_ms)
-    names: list[str] = []
-    for model in models:
-        enforce_deadline(deadline)
-        remaining = None if deadline is None else max(1, int((deadline - time.monotonic()) * 1000))
-        name = await collection._engine.create_search_index(
+    existing = {
+        document["name"]
+        for document in await collection._engine.list_search_indexes(
             collection._db_name,
             collection._collection_name,
-            model.definition_snapshot,
-            max_time_ms=remaining,
             context=session,
         )
+        if isinstance(document.get("name"), str)
+    }
+    names: list[str] = []
+    created_names: list[str] = []
+    for model in models:
+        try:
+            enforce_deadline(deadline)
+            remaining = None if deadline is None else max(1, int((deadline - time.monotonic()) * 1000))
+            name = await collection._engine.create_search_index(
+                collection._db_name,
+                collection._collection_name,
+                model.definition_snapshot,
+                max_time_ms=remaining,
+                context=session,
+            )
+        except Exception:
+            for created_name in reversed(created_names):
+                try:
+                    await collection._engine.drop_search_index(
+                        collection._db_name,
+                        collection._collection_name,
+                        created_name,
+                        context=session,
+                    )
+                except Exception:
+                    pass
+            raise
         names.append(name)
+        if name not in existing and name not in created_names:
+            created_names.append(name)
     collection._record_operation_metadata(
         operation="create_search_indexes",
         comment=comment,
@@ -285,6 +318,7 @@ def list_search_indexes(
     comment: object | None = None,
     session: ClientSession | None = None,
 ) -> AsyncSearchIndexCursor:
+    collection._ensure_session_active(session)
     if name is not None:
         name = collection._normalize_search_index_name(name)
     collection._record_operation_metadata(
@@ -311,6 +345,7 @@ async def update_search_index(
     max_time_ms: int | None = None,
     session: ClientSession | None = None,
 ) -> None:
+    collection._ensure_session_active(session)
     name = collection._normalize_search_index_name(name)
     definition = collection._require_document(definition)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
@@ -338,6 +373,7 @@ async def drop_search_index(
     max_time_ms: int | None = None,
     session: ClientSession | None = None,
 ) -> None:
+    collection._ensure_session_active(session)
     name = collection._normalize_search_index_name(name)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
     await collection._engine.drop_search_index(

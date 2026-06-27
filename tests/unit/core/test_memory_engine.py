@@ -17,7 +17,14 @@ from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.engines import memory as memory_module
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.memory import MemoryEngine
-from mongoeco.errors import CollectionInvalid, DuplicateKeyError, ExecutionTimeout, OperationFailure
+from mongoeco.errors import (
+    CollectionInvalid,
+    DocumentValidationFailure,
+    DuplicateKeyError,
+    ExecutionTimeout,
+    InvalidOperation,
+    OperationFailure,
+)
 from mongoeco.session import ClientSession
 from mongoeco.types import EngineIndexRecord, SearchIndexDefinition, UNDEFINED
 
@@ -27,6 +34,11 @@ class _UnhashableValue:
 
     def __repr__(self) -> str:
         return "unhashable-value"
+
+
+class _ExplodingDeepcopy:
+    def __deepcopy__(self, memo):
+        raise RuntimeError("copy boom")
 
 
 class _CodecWithoutSignature:
@@ -420,6 +432,281 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_put_documents_bulk_validates_root_array_ids_before_writing(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            with self.assertRaises(OperationFailure):
+                await engine.put_documents_bulk(
+                    "db",
+                    "coll",
+                    [{"_id": "valid-before-error"}, {"_id": [1]}],
+                    overwrite=False,
+                )
+
+            self.assertIsNone(await engine.get_document("db", "coll", "valid-before-error"))
+        finally:
+            await engine.disconnect()
+
+    async def test_put_documents_bulk_defaults_to_insert_semantics(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "dup", "value": "original"})
+
+            results = await engine.put_documents_bulk(
+                "db",
+                "coll",
+                [
+                    {"_id": "ok"},
+                    {"_id": "dup", "value": "replacement"},
+                    {"_id": "after"},
+                ],
+            )
+
+            self.assertEqual(results, [True, False])
+            self.assertEqual(
+                await engine.get_document("db", "coll", "dup"),
+                {"_id": "dup", "value": "original"},
+            )
+            self.assertEqual(await engine.get_document("db", "coll", "ok"), {"_id": "ok"})
+            self.assertIsNone(await engine.get_document("db", "coll", "after"))
+        finally:
+            await engine.disconnect()
+
+    async def test_put_documents_bulk_stops_on_secondary_unique_duplicate(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], unique=True)
+
+            results = await engine.put_documents_bulk(
+                "db",
+                "coll",
+                [
+                    {"_id": "ok", "email": "same@example.com"},
+                    {"_id": "dup", "email": "same@example.com"},
+                    {"_id": "after", "email": "after@example.com"},
+                ],
+            )
+
+            self.assertEqual(results, [True, False])
+            self.assertEqual(
+                await engine.get_document("db", "coll", "ok"),
+                {"_id": "ok", "email": "same@example.com"},
+            )
+            self.assertIsNone(await engine.get_document("db", "coll", "dup"))
+            self.assertIsNone(await engine.get_document("db", "coll", "after"))
+        finally:
+            await engine.disconnect()
+
+    async def test_put_documents_bulk_prevalidates_insert_batch(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_collection(
+                "db",
+                "coll",
+                options={"validator": {"$jsonSchema": {"required": ["name"]}}},
+            )
+
+            with self.assertRaises(DocumentValidationFailure):
+                await engine.put_documents_bulk(
+                    "db",
+                    "coll",
+                    [
+                        {"_id": "valid-before-error", "name": "Ada"},
+                        {"_id": "invalid"},
+                    ],
+                )
+
+            self.assertIsNone(await engine.get_document("db", "coll", "valid-before-error"))
+            self.assertIsNone(await engine.get_document("db", "coll", "invalid"))
+        finally:
+            await engine.disconnect()
+
+    async def test_write_paths_fail_before_memory_state_changes_on_cache_invalidation_failure(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            with patch.object(
+                engine,
+                "_invalidate_search_runtime_cache",
+                side_effect=RuntimeError("cache boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "cache boom"):
+                    await engine.put_documents_bulk("db", "coll", [{"_id": "inserted"}])
+            self.assertIsNone(await engine.get_document("db", "coll", "inserted"))
+
+            await engine.put_document("db", "coll", {"_id": "update-target", "name": "Ada"})
+            with patch.object(
+                engine,
+                "_invalidate_search_runtime_cache",
+                side_effect=RuntimeError("cache boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "cache boom"):
+                    await self._update(
+                        engine,
+                        "db",
+                        "coll",
+                        {"_id": "update-target"},
+                        {"$set": {"name": "Grace"}},
+                    )
+            self.assertEqual(
+                await engine.get_document("db", "coll", "update-target"),
+                {"_id": "update-target", "name": "Ada"},
+            )
+
+            with patch.object(
+                engine,
+                "_invalidate_search_runtime_cache",
+                side_effect=RuntimeError("cache boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "cache boom"):
+                    await self._update(
+                        engine,
+                        "db",
+                        "coll",
+                        {"_id": "upserted"},
+                        {"$set": {"name": "New"}},
+                        upsert=True,
+                        upsert_seed={"_id": "upserted"},
+                    )
+            self.assertIsNone(await engine.get_document("db", "coll", "upserted"))
+
+            with patch.object(
+                engine,
+                "_invalidate_search_runtime_cache",
+                side_effect=RuntimeError("cache boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "cache boom"):
+                    await engine.delete_document("db", "coll", "update-target")
+            self.assertEqual(
+                await engine.get_document("db", "coll", "update-target"),
+                {"_id": "update-target", "name": "Ada"},
+            )
+
+            with patch.object(
+                engine,
+                "_invalidate_search_runtime_cache",
+                side_effect=RuntimeError("cache boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "cache boom"):
+                    await engine.delete_with_operation(
+                        "db",
+                        "coll",
+                        compile_update_operation({"_id": "update-target"}),
+                    )
+            self.assertEqual(
+                await engine.get_document("db", "coll", "update-target"),
+                {"_id": "update-target", "name": "Ada"},
+            )
+        finally:
+            await engine.disconnect()
+
+    async def test_write_paths_roll_back_memory_state_on_index_update_failure(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["name"])
+            original_update_indexes = engine._update_indexes_locked
+
+            def _fail_insert_index(*args, **kwargs):
+                if kwargs.get("action", "insert") == "insert":
+                    raise RuntimeError("index boom")
+                return original_update_indexes(*args, **kwargs)
+
+            with patch.object(engine, "_update_indexes_locked", side_effect=_fail_insert_index):
+                with self.assertRaisesRegex(RuntimeError, "index boom"):
+                    await engine.put_documents_bulk("db", "coll", [{"_id": "inserted", "name": "Ada"}])
+            self.assertIsNone(await engine.get_document("db", "coll", "inserted"))
+            self.assertEqual(engine._index_data.get("db", {}).get("coll", {}).get("name_1"), {})
+
+            await engine.put_document("db", "coll", {"_id": "update-target", "name": "Ada"})
+            with patch.object(engine, "_update_indexes_locked", side_effect=_fail_insert_index):
+                with self.assertRaisesRegex(RuntimeError, "index boom"):
+                    await self._update(
+                        engine,
+                        "db",
+                        "coll",
+                        {"_id": "update-target"},
+                        {"$set": {"name": "Grace"}},
+                    )
+            self.assertEqual(
+                await engine.get_document("db", "coll", "update-target"),
+                {"_id": "update-target", "name": "Ada"},
+            )
+            self.assertIn(
+                engine._storage_key("update-target"),
+                engine._index_data["db"]["coll"]["name_1"][(("str", "Ada"),)],
+            )
+
+            with patch.object(engine, "_update_indexes_locked", side_effect=_fail_insert_index):
+                with self.assertRaisesRegex(RuntimeError, "index boom"):
+                    await self._update(
+                        engine,
+                        "db",
+                        "coll",
+                        {"_id": "upserted"},
+                        {"$set": {"name": "New"}},
+                        upsert=True,
+                        upsert_seed={"_id": "upserted"},
+                    )
+            self.assertIsNone(await engine.get_document("db", "coll", "upserted"))
+
+            def _fail_delete_index(*args, **kwargs):
+                if kwargs.get("action", "insert") == "delete":
+                    raise RuntimeError("delete index boom")
+                return original_update_indexes(*args, **kwargs)
+
+            with patch.object(engine, "_update_indexes_locked", side_effect=_fail_delete_index):
+                with self.assertRaisesRegex(RuntimeError, "delete index boom"):
+                    await engine.delete_document("db", "coll", "update-target")
+            self.assertEqual(
+                await engine.get_document("db", "coll", "update-target"),
+                {"_id": "update-target", "name": "Ada"},
+            )
+
+            with patch.object(engine, "_update_indexes_locked", side_effect=_fail_delete_index):
+                with self.assertRaisesRegex(RuntimeError, "delete index boom"):
+                    await engine.delete_with_operation(
+                        "db",
+                        "coll",
+                        compile_update_operation({"_id": "update-target"}),
+                    )
+            self.assertEqual(
+                await engine.get_document("db", "coll", "update-target"),
+                {"_id": "update-target", "name": "Ada"},
+            )
+        finally:
+            await engine.disconnect()
+
+    async def test_ttl_purge_rolls_back_memory_state_on_index_failure(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "ttl", ["expires_at"], expire_after_seconds=0)
+            await engine.put_document(
+                "db",
+                "ttl",
+                {
+                    "_id": "expired",
+                    "expires_at": datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc),
+                },
+            )
+
+            with patch.object(
+                engine,
+                "_update_indexes_locked",
+                side_effect=RuntimeError("ttl index boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "ttl index boom"):
+                    await engine.get_document("db", "ttl", "expired")
+
+            self.assertIn(engine._storage_key("expired"), engine._storage["db"]["ttl"])
+        finally:
+            await engine.disconnect()
+
     async def test_update_matching_document_upsert_raises_duplicate_on_secondary_unique_index_collision(self):
         engine = MemoryEngine()
         await engine.connect()
@@ -452,17 +739,18 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(found, {"_id": doc_id, "kind": "event"})
 
-    async def test_engine_supports_list_ids_via_storage_key_normalization(self):
+    async def test_engine_rejects_list_ids_before_storage_key_normalization(self):
         engine = MemoryEngine()
         doc_id = ["tenant", 1]
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": doc_id, "kind": "event"})
+            with self.assertRaises(OperationFailure):
+                await engine.put_document("db", "coll", {"_id": doc_id, "kind": "event"})
             found = await engine.get_document("db", "coll", doc_id)
         finally:
             await engine.disconnect()
 
-        self.assertEqual(found, {"_id": doc_id, "kind": "event"})
+        self.assertIsNone(found)
 
     async def test_engine_distinguishes_bool_and_int_ids(self):
         engine = MemoryEngine()
@@ -814,6 +1102,38 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 await engine.create_index("db", "coll", [("geo", "2dsphere"), ("kind", 1)])
             with self.assertRaisesRegex(OperationFailure, "only supported for text indexes"):
                 await engine.create_index("db", "coll", [("title", 1)], weights={"title": 2})
+        finally:
+            await engine.disconnect()
+
+    async def test_create_index_rolls_back_memory_state_on_later_failure(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            with patch.object(
+                engine,
+                "_purge_expired_documents_locked",
+                side_effect=RuntimeError("purge boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "purge boom"):
+                    await engine.create_index("db", "new_coll", ["created_at"])
+
+            self.assertEqual(await engine.list_indexes("db", "new_coll"), [{"name": "_id_", "key": {"_id": 1}, "unique": True}])
+            self.assertEqual(await engine.list_collections("db"), [])
+            self.assertNotIn("db", engine._index_data)
+
+            await engine.put_document("db", "existing", {"_id": "1", "created_at": 1})
+            with patch.object(
+                engine,
+                "_purge_expired_documents_locked",
+                side_effect=RuntimeError("purge boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "purge boom"):
+                    await engine.create_index("db", "existing", ["created_at"])
+
+            self.assertEqual(await engine.list_collections("db"), ["existing"])
+            self.assertEqual(await engine.list_indexes("db", "existing"), [{"name": "_id_", "key": {"_id": 1}, "unique": True}])
+            self.assertEqual(await engine.get_document("db", "existing", "1"), {"_id": "1", "created_at": 1})
+            self.assertNotIn("existing", engine._index_data.get("db", {}))
         finally:
             await engine.disconnect()
 
@@ -1509,6 +1829,22 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_create_collection_does_not_register_namespace_when_options_copy_fails(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            with self.assertRaisesRegex(RuntimeError, "copy boom"):
+                await engine.create_collection(
+                    "db",
+                    "broken",
+                    options={"validator": _ExplodingDeepcopy()},
+                )
+
+            self.assertEqual(await engine.list_databases(), [])
+            self.assertEqual(await engine.list_collections("db"), [])
+        finally:
+            await engine.disconnect()
+
     async def test_profile_settings_make_system_profile_namespace_visible(self):
         engine = MemoryEngine()
         await engine.connect()
@@ -1520,6 +1856,37 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(await engine.collection_options("db", "system.profile"), {})
         finally:
             await engine.disconnect()
+
+    async def test_profile_namespace_direct_paths_reject_foreign_session(self):
+        owner = MemoryEngine()
+        engine = MemoryEngine()
+        await owner.connect()
+        await engine.connect()
+        try:
+            session = ClientSession()
+            owner.create_session_state(session)
+            engine._profiler.set_level("db", 2)
+            engine._profiler.record(
+                "db",
+                op="query",
+                namespace="db.system.profile",
+                command={"find": "users"},
+                duration_micros=1000,
+            )
+            profile_entries = engine._profiler.list_entries("db")
+            profile_id = profile_entries[0]["_id"]
+
+            with self.assertRaises(InvalidOperation):
+                await engine.get_document("db", "system.profile", profile_id, context=session)
+            with self.assertRaises(InvalidOperation):
+                await engine.delete_document("db", "system.profile", profile_id, context=session)
+            with self.assertRaises(InvalidOperation):
+                await engine.drop_collection("db", "system.profile", context=session)
+
+            self.assertEqual(engine._profiler.list_entries("db"), profile_entries)
+        finally:
+            await engine.disconnect()
+            await owner.disconnect()
 
     async def test_delete_last_document_does_not_remove_collection_metadata(self):
         engine = MemoryEngine()
@@ -1556,6 +1923,54 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(await engine.get_document("db", "archived", "1"), {"_id": "1"})
             self.assertIn("kind_idx", await engine.index_information("db", "archived"))
             self.assertEqual(await engine.collection_options("db", "archived"), {"capped": True})
+        finally:
+            await engine.disconnect()
+
+    async def test_rename_collection_rolls_back_memory_state_on_later_failure(self):
+        engine = MemoryEngine(simulate_search_index_latency=60.0)
+        await engine.connect()
+        try:
+            await engine.create_collection("db", "events", options={"capped": True})
+            await engine.put_document("db", "events", {"_id": "1", "kind": "view"})
+            await engine.create_index("db", "events", ["kind"], name="kind_idx")
+            search_definition = SearchIndexDefinition(
+                {"mappings": {"dynamic": False, "fields": {"title": {"type": "string"}}}},
+                name="by_text",
+            )
+            await engine.create_search_index("db", "events", search_definition)
+            engine._search_document_cache[("db", "events", "by_text")] = (search_definition, [])
+            engine._vector_document_cache[("db", "events", "by_text")] = (search_definition, object())
+
+            original_register_collection = engine._register_collection_locked
+
+            def _fail_target_registration(*args, **kwargs):
+                if len(args) >= 2 and args[1] == "archived":
+                    raise RuntimeError("rename boom")
+                return original_register_collection(*args, **kwargs)
+
+            with patch.object(engine, "_register_collection_locked", side_effect=_fail_target_registration):
+                with self.assertRaisesRegex(RuntimeError, "rename boom"):
+                    await engine.rename_collection("db", "events", "archived")
+
+            self.assertEqual(await engine.list_collections("db"), ["events"])
+            self.assertEqual(
+                await engine.get_document("db", "events", "1"),
+                {"_id": "1", "kind": "view"},
+            )
+            self.assertIsNone(await engine.get_document("db", "archived", "1"))
+            self.assertIn("kind_idx", await engine.index_information("db", "events"))
+            self.assertNotIn("archived", engine._indexes.get("db", {}))
+            self.assertIn("events", engine._index_data.get("db", {}))
+            self.assertNotIn("archived", engine._index_data.get("db", {}))
+            self.assertIn("events", engine._search_indexes.get("db", {}))
+            self.assertNotIn("archived", engine._search_indexes.get("db", {}))
+            self.assertIn(("db", "events", "by_text"), engine._search_index_ready_at)
+            self.assertNotIn(("db", "archived", "by_text"), engine._search_index_ready_at)
+            self.assertIn(("db", "events", "by_text"), engine._search_document_cache)
+            self.assertNotIn(("db", "archived", "by_text"), engine._search_document_cache)
+            self.assertIn(("db", "events", "by_text"), engine._vector_document_cache)
+            self.assertNotIn(("db", "archived", "by_text"), engine._vector_document_cache)
+            self.assertEqual(await engine.collection_options("db", "events"), {"capped": True})
         finally:
             await engine.disconnect()
 
@@ -1633,6 +2048,77 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
             await engine.drop_search_index("db", "coll", "by_text")
             self.assertNotIn("db", engine._search_indexes)
+        finally:
+            await engine.disconnect()
+
+    async def test_search_index_mutations_fail_before_memory_state_changes(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text")
+            with patch.object(
+                engine,
+                "_invalidate_search_runtime_cache",
+                side_effect=RuntimeError("cache boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "cache boom"):
+                    await engine.create_search_index("db", "coll", definition)
+
+            self.assertEqual(await engine.list_search_indexes("db", "coll"), [])
+            self.assertEqual(await engine.list_collections("db"), [])
+
+            with patch.object(
+                engine,
+                "_mark_search_index_pending",
+                side_effect=RuntimeError("pending boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "pending boom"):
+                    await engine.create_search_index("db", "coll", definition)
+
+            self.assertEqual(await engine.list_search_indexes("db", "coll"), [])
+            self.assertEqual(await engine.list_collections("db"), [])
+
+            await engine.create_search_index("db", "coll", definition)
+            engine._search_document_cache[("db", "coll", "by_text")] = (definition, [])
+            with patch.object(
+                engine,
+                "_invalidate_search_runtime_cache",
+                side_effect=RuntimeError("cache boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "cache boom"):
+                    await engine.update_search_index(
+                        "db",
+                        "coll",
+                        "by_text",
+                        {"mappings": {"dynamic": False}},
+                    )
+                with self.assertRaisesRegex(RuntimeError, "cache boom"):
+                    await engine.drop_search_index("db", "coll", "by_text")
+
+            indexes = await engine.list_search_indexes("db", "coll")
+            self.assertEqual(len(indexes), 1)
+            self.assertEqual(indexes[0]["name"], "by_text")
+            self.assertEqual(indexes[0]["definition"], {"mappings": {"dynamic": True}})
+            self.assertIn(("db", "coll", "by_text"), engine._search_document_cache)
+
+            with patch.object(
+                engine,
+                "_mark_search_index_pending",
+                side_effect=RuntimeError("pending boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "pending boom"):
+                    await engine.update_search_index(
+                        "db",
+                        "coll",
+                        "by_text",
+                        {"mappings": {"dynamic": False}},
+                    )
+
+            indexes = await engine.list_search_indexes("db", "coll")
+            self.assertEqual(len(indexes), 1)
+            self.assertEqual(indexes[0]["name"], "by_text")
+            self.assertEqual(indexes[0]["definition"], {"mappings": {"dynamic": True}})
+            self.assertIn(("db", "coll", "by_text"), engine._search_document_cache)
         finally:
             await engine.disconnect()
 
@@ -1740,6 +2226,31 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("db", engine._search_indexes)
         self.assertNotIn(("db", "coll", "by_text"), engine._search_index_ready_at)
 
+    async def test_drop_collection_fails_before_memory_state_changes(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "name": "Ada"})
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text"),
+            )
+
+            with patch.object(
+                engine,
+                "_invalidate_search_runtime_cache",
+                side_effect=RuntimeError("cache boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "cache boom"):
+                    await engine.drop_collection("db", "coll")
+
+            self.assertEqual(await engine.list_collections("db"), ["coll"])
+            self.assertEqual(await engine.get_document("db", "coll", "1"), {"_id": "1", "name": "Ada"})
+            self.assertEqual(len(await engine.list_search_indexes("db", "coll")), 1)
+        finally:
+            await engine.disconnect()
+
     def test_memory_session_mvcc_helpers_cover_commit_abort_and_views(self):
         engine = MemoryEngine()
         session = ClientSession()
@@ -1751,18 +2262,20 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(state)
 
         session.start_transaction()
-        engine._start_session_transaction(session)
         self.assertIsNotNone(engine._active_mvcc_state(session))
+        with self.assertRaisesRegex(InvalidOperation, "not created by this MemoryEngine"):
+            engine._active_mvcc_state(other)
+        engine.create_session_state(other)
         self.assertIsNone(engine._active_mvcc_state(other))
 
         snapshot = engine._mvcc_states[session.session_id]
         snapshot.storage.setdefault("db", {}).setdefault("coll", {})["1"] = {"_id": "1"}
-        engine._commit_session_transaction(session)
+        session.commit_transaction()
         self.assertEqual(engine._storage["db"]["coll"]["1"], {"_id": "1"})
         self.assertIsNone(engine._active_mvcc_state(session))
 
-        engine._start_session_transaction(session)
-        engine._abort_session_transaction(session)
+        session.start_transaction()
+        session.abort_transaction()
         self.assertIsNone(engine._active_mvcc_state(session))
 
     def test_memory_index_helpers_cover_default_views_and_delete_cleanup(self):
@@ -2528,6 +3041,22 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             )
 
             session = ClientSession()
+            with self.assertRaisesRegex(InvalidOperation, "not created by this MemoryEngine"):
+                engine._materialized_search_documents(
+                    "db",
+                    "coll",
+                    SearchIndexDefinition(
+                        {
+                            "mappings": {
+                                "dynamic": False,
+                                "fields": {"title": {"type": "string"}},
+                            }
+                        },
+                        name="by_text",
+                    ),
+                    context=session,
+                )
+            engine.create_session_state(session)
             materialized_with_context = engine._materialized_search_documents(
                 "db",
                 "coll",

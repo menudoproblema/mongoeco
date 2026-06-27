@@ -488,20 +488,13 @@ class ClientSession:
     def close(self) -> None:
         if not self.active:
             return
-        abort_error: Exception | None = None
         if self.transaction_active:
-            try:
-                self._run_transaction_hooks("abort")
-            except Exception as exc:
-                abort_error = exc
-            finally:
-                self._state.transaction.active = False
-                self._state.transaction.options = None
+            self._run_transaction_hooks("abort")
+            self._state.transaction.active = False
+            self._state.transaction.options = None
         self._transaction_hooks.clear()
         self._state.engine_contexts.clear()
         self._state.active = False
-        if abort_error is not None:
-            raise abort_error
 
     def __enter__(self) -> "ClientSession":
         return self

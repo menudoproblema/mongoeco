@@ -152,26 +152,7 @@ def plan_find_semantics_sync(
             and (semantics.limit is None or semantics.limit >= 1)
         ):
             field = query_plan.field
-            if field == "_id":
-                storage_key = storage_key_for_id(query_plan.value)
-                sql = (
-                    "SELECT document FROM documents "
-                    "WHERE db_name = ? AND coll_name = ? AND storage_key = ?"
-                )
-                if semantics.limit is not None:
-                    sql += f" LIMIT {int(semantics.limit)}"
-                params = (db_name, coll_name, storage_key)
-                return SQLiteReadExecutionPlan(
-                    semantics=semantics,
-                    strategy="sql",
-                    execution_lineage=(),
-                    physical_plan=(),
-                    use_sql=True,
-                    sql=sql,
-                    params=params,
-                )
-
-            index = find_scalar_fast_path_index(db_name, coll_name, field)
+            index = None if field == "_id" else find_scalar_fast_path_index(db_name, coll_name, field)
             if index is not None and not field_is_top_level_array_in_collection(db_name, coll_name, field):
                 indexed_sql = build_equals_sql(
                     db_name,

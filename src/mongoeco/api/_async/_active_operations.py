@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Iterator
 
+from mongoeco.session_guards import ensure_session_can_use_engine
 from mongoeco.session import ClientSession
 
 
@@ -21,6 +22,7 @@ def track_active_operation(
     killable: bool = True,
     metadata: dict[str, object] | None = None,
 ) -> Iterator[str | None]:
+    ensure_session_can_use_engine(engine, session)
     begin = getattr(engine, "_begin_active_operation", None)
     if not callable(begin):
         yield None
@@ -43,4 +45,3 @@ def track_active_operation(
         complete = getattr(engine, "_complete_active_operation", None)
         if callable(complete):
             complete(record.opid)
-

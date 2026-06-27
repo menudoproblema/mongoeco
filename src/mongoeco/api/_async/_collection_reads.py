@@ -95,7 +95,7 @@ async def find_one(
                     dialect=collection._mongodb_dialect,
                     context=options.get("session"),
                 )
-            else:
+            if document is None:
                 async for candidate in collection._engine_scan_with_operation(
                     operation,
                     session=options.get("session"),

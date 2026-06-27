@@ -5,6 +5,11 @@ from copy import deepcopy
 import sqlite3
 
 from mongoeco.compat import MongoDialect
+from mongoeco.core.identity import (
+    assert_document_kept_storage_key,
+    assert_document_matches_storage_key,
+    assert_valid_root_document_id,
+)
 from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.types import DeleteResult, Document, DocumentId, Filter, UpdateResult
 
@@ -22,6 +27,7 @@ def delete_matching_document(
     require_connection: Callable[[], sqlite3.Connection],
     purge_expired_documents: Callable[[sqlite3.Connection, str, str], None],
     select_first_document_for_plan: Callable[[str, str, object], tuple[str, Document] | None],
+    storage_key_for_id: Callable[[DocumentId], str],
     begin_write: Callable[[sqlite3.Connection], None],
     commit_write: Callable[[sqlite3.Connection], None],
     rollback_write: Callable[[sqlite3.Connection], None],
@@ -48,7 +54,12 @@ def delete_matching_document(
         selected = select_first_document_for_plan(db_name, coll_name, semantics.query_plan)
         if selected is None:
             return DeleteResult(deleted_count=0)
-        storage_key, _document = selected
+        storage_key, document = selected
+        assert_document_matches_storage_key(
+            document,
+            storage_key,
+            storage_key_for_id=storage_key_for_id,
+        )
         begin_write(conn)
         conn.execute(
             """
@@ -60,11 +71,14 @@ def delete_matching_document(
         delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
         delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
         delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        commit_write(conn)
         invalidate_collection_features_cache(db_name, coll_name)
+        commit_write(conn)
         return DeleteResult(deleted_count=1)
     except (NotImplementedError, TypeError):
         rollback_write(conn)
+    except Exception:
+        rollback_write(conn)
+        raise
 
     for storage_key, document in load_documents(db_name, coll_name):
         if not match_plan(
@@ -74,20 +88,29 @@ def delete_matching_document(
             semantics.collation,
         ):
             continue
-        begin_write(conn)
-        conn.execute(
-            """
-            DELETE FROM documents
-            WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-            """,
-            (db_name, coll_name, storage_key),
+        assert_document_matches_storage_key(
+            document,
+            storage_key,
+            storage_key_for_id=storage_key_for_id,
         )
-        delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        commit_write(conn)
-        invalidate_collection_features_cache(db_name, coll_name)
-        return DeleteResult(deleted_count=1)
+        try:
+            begin_write(conn)
+            conn.execute(
+                """
+                DELETE FROM documents
+                WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                """,
+                (db_name, coll_name, storage_key),
+            )
+            delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+            delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+            delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+            invalidate_collection_features_cache(db_name, coll_name)
+            commit_write(conn)
+            return DeleteResult(deleted_count=1)
+        except Exception:
+            rollback_write(conn)
+            raise
     return DeleteResult(deleted_count=0)
 
 
@@ -160,10 +183,20 @@ def update_with_operation(
 
     if selected is not None:
         storage_key, original_document = selected
+        assert_document_matches_storage_key(
+            original_document,
+            storage_key,
+            storage_key_for_id=storage_key_for_id,
+        )
         document = deepcopy(original_document)
         modified = semantics.compiled_update_plan.apply(document)
         if not modified:
             return UpdateResult(matched_count=1, modified_count=0)
+        assert_document_kept_storage_key(
+            document,
+            storage_key,
+            storage_key_for_id=storage_key_for_id,
+        )
         if not bypass_document_validation:
             enforce_collection_document_validation(
                 document,
@@ -224,14 +257,17 @@ def update_with_operation(
                 document,
                 search_indexes,
             )
-            commit_write(conn)
             invalidate_collection_features_cache(db_name, coll_name)
+            commit_write(conn)
             return UpdateResult(matched_count=1, modified_count=1)
         except (NotImplementedError, TypeError):
             rollback_write(conn)
         except sqlite3.IntegrityError as exc:
             rollback_write(conn)
             raise DuplicateKeyError(str(exc)) from exc
+        except Exception:
+            rollback_write(conn)
+            raise
 
         try:
             begin_write(conn)
@@ -267,12 +303,15 @@ def update_with_operation(
                 document,
                 search_indexes,
             )
-            commit_write(conn)
             invalidate_collection_features_cache(db_name, coll_name)
+            commit_write(conn)
             return UpdateResult(matched_count=1, modified_count=1)
         except sqlite3.IntegrityError as exc:
             rollback_write(conn)
             raise DuplicateKeyError(str(exc)) from exc
+        except Exception:
+            rollback_write(conn)
+            raise
 
     if not upsert:
         return UpdateResult(matched_count=0, modified_count=0)
@@ -281,6 +320,7 @@ def update_with_operation(
     semantics.compiled_upsert_plan.apply(new_doc)
     if "_id" not in new_doc:
         new_doc["_id"] = new_object_id()
+    assert_valid_root_document_id(new_doc["_id"])
     if not bypass_document_validation:
         enforce_collection_document_validation(
             new_doc,
@@ -327,11 +367,14 @@ def update_with_operation(
             new_doc,
             search_indexes,
         )
-        commit_write(conn)
         invalidate_collection_features_cache(db_name, coll_name)
+        commit_write(conn)
     except sqlite3.IntegrityError as exc:
         rollback_write(conn)
         raise DuplicateKeyError(str(exc)) from exc
+    except Exception:
+        rollback_write(conn)
+        raise
 
     return UpdateResult(
         matched_count=0,

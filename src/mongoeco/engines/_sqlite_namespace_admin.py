@@ -118,13 +118,13 @@ def rename_collection(
                 """,
                 (new_name, db_name, coll_name),
             )
-        commit_write(conn)
         mark_index_metadata_changed(db_name, coll_name)
         mark_index_metadata_changed(db_name, new_name)
         invalidate_collection_id_cache(db_name, coll_name)
         invalidate_collection_id_cache(db_name, new_name)
         invalidate_collection_features_cache(db_name, coll_name)
         invalidate_collection_features_cache(db_name, new_name)
+        commit_write(conn)
     except Exception:
         rollback_write(conn)
         raise
@@ -207,10 +207,10 @@ def drop_collection(
             """,
             (db_name, coll_name),
         )
-        commit_write(conn)
         mark_index_metadata_changed(db_name, coll_name)
         invalidate_collection_id_cache(db_name, coll_name)
         invalidate_collection_features_cache(db_name, coll_name)
+        commit_write(conn)
     except Exception:
         rollback_write(conn)
         raise
@@ -310,12 +310,15 @@ def drop_database(
             """,
             (db_name,),
         )
+        clear_index_metadata_versions(db_name)
+        invalidate_index_cache()
+        invalidate_collection_id_cache()
+        invalidate_collection_features_cache()
         commit_write(conn)
     except Exception:
         rollback_write(conn)
         raise
-    clear_index_metadata_versions(db_name)
-    invalidate_index_cache()
-    invalidate_collection_id_cache()
-    invalidate_collection_features_cache()
-    clear_profiler(db_name)
+    try:
+        clear_profiler(db_name)
+    except Exception:
+        pass

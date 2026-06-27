@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from mongoeco.errors import BulkWriteError, OperationFailure
+from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     BulkWriteErrorDetails,
@@ -78,11 +78,15 @@ class DatabaseAdminWriteCommandService:
         if not isinstance(drop_target, bool):
             raise TypeError("dropTarget must be a bool")
         if drop_target:
-            target_names = await self._admin._engine.list_collections(
+            collection_names = set(await self._admin._engine.list_collections(
                 self._admin._db_name,
                 context=session,
-            )
-            if target_name in target_names:
+            ))
+            if source_name == target_name:
+                raise CollectionInvalid("collection names must differ")
+            if source_name not in collection_names:
+                raise CollectionInvalid(f"collection '{source_name}' does not exist")
+            if target_name in collection_names:
                 await self._admin.drop_collection(target_name, session=session)
         await self._admin._database.get_collection(source_name).rename(target_name, session=session)
         return OkResult()
@@ -114,6 +118,7 @@ class DatabaseAdminWriteCommandService:
                 write_errors.append(
                     WriteErrorEntry(
                         index=index,
+                        code=getattr(exc, "code", None),
                         errmsg=str(exc),
                     )
                 )
@@ -220,6 +225,7 @@ class DatabaseAdminWriteCommandService:
                 write_errors.append(
                     WriteErrorEntry(
                         index=index,
+                        code=getattr(exc, "code", None),
                         errmsg=str(exc),
                     )
                 )
@@ -286,6 +292,7 @@ class DatabaseAdminWriteCommandService:
                 write_errors.append(
                     WriteErrorEntry(
                         index=index,
+                        code=getattr(exc, "code", None),
                         errmsg=str(exc),
                     )
                 )

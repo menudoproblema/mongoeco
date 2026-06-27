@@ -75,6 +75,7 @@ def create_index(
     replace_scalar_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, EngineIndexRecord], None],
     load_documents: Callable[[str, str], Iterable[tuple[str, Document]]],
     quote_identifier: Callable[[str], str],
+    validate_ttl_index_candidates: Callable[[list[EngineIndexRecord]], None] | None = None,
     weights: dict[str, int] | None = None,
     default_language: str | None = None,
     language_override: str | None = None,
@@ -220,8 +221,38 @@ def create_index(
                     for expression in index_expressions_sql(field)
                 ],
             ]
-        )
+    )
     unique_sql = "UNIQUE " if unique and not (sparse or partial_filter_expression is not None) else ""
+    index_metadata = EngineIndexRecord(
+        name=index_name,
+        physical_name=physical_name,
+        fields=fields,
+        key=normalized_keys,
+        unique=unique,
+        sparse=sparse,
+        hidden=hidden,
+        collation=deepcopy(collation),
+        partial_filter_expression=deepcopy(partial_filter_expression),
+        expire_after_seconds=expire_after_seconds,
+        weights=deepcopy(definition.weights),
+        default_language=definition.default_language,
+        language_override=definition.language_override,
+        min_value=definition.min_value,
+        max_value=definition.max_value,
+        bucket_size=definition.bucket_size,
+        multikey=multikey,
+        multikey_physical_name=multikey_physical_name,
+        scalar_physical_name=scalar_physical_name,
+    )
+    if validate_ttl_index_candidates is not None:
+        ttl_indexes = [
+            index
+            for index in indexes
+            if index.expire_after_seconds is not None
+        ]
+        if index_metadata.expire_after_seconds is not None:
+            ttl_indexes.append(index_metadata)
+        validate_ttl_index_candidates(ttl_indexes)
 
     try:
         begin_write(conn)
@@ -340,15 +371,23 @@ def create_index(
                     index_metadata,
                 )
         enforce_deadline_fn(deadline)
-        commit_write(conn)
-        purge_expired_documents(conn, db_name, coll_name)
         mark_index_metadata_changed(db_name, coll_name)
         invalidate_collection_features_cache(db_name, coll_name)
-        return index_name
+        commit_write(conn)
     except sqlite3.IntegrityError as exc:
         rollback_write(conn)
         mark_index_metadata_changed(db_name, coll_name)
         raise DuplicateKeyError(str(exc)) from exc
+    except Exception:
+        rollback_write(conn)
+        mark_index_metadata_changed(db_name, coll_name)
+        raise
+    # TTL cleanup is opportunistic; index creation has already succeeded.
+    try:
+        purge_expired_documents(conn, db_name, coll_name)
+    except Exception:
+        pass
+    return index_name
 
 
 def drop_index(
@@ -433,9 +472,9 @@ def drop_index(
             """,
             (db_name, coll_name, target["name"]),
         )
-        commit_write(conn)
         mark_index_metadata_changed(db_name, coll_name)
         invalidate_collection_features_cache(db_name, coll_name)
+        commit_write(conn)
     except Exception:
         rollback_write(conn)
         raise
@@ -492,9 +531,9 @@ def drop_all_indexes(
             """,
             (db_name, coll_name),
         )
-        commit_write(conn)
         mark_index_metadata_changed(db_name, coll_name)
         invalidate_collection_features_cache(db_name, coll_name)
+        commit_write(conn)
     except Exception:
         rollback_write(conn)
         raise

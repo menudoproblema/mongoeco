@@ -393,6 +393,34 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(store.end_sessions([lsid]), {"ok": 1.0})
         self.assertFalse(session.active)
 
+    def test_session_store_keeps_session_when_end_sessions_close_fails(self):
+        proxy = AsyncMongoEcoProxyServer()
+        store = WireSessionStore()
+        capability = resolve_wire_command_capability("find")
+        lsid = {"id": "session-close-fails"}
+        session = store.resolve_for_command(
+            proxy._client,
+            {"lsid": lsid, "find": "events"},
+            capability=capability,
+        )
+        assert session is not None
+        original_close = session.close
+
+        def _close_boom():
+            raise RuntimeError("close boom")
+
+        session.close = _close_boom  # type: ignore[method-assign]
+        with self.assertRaisesRegex(RuntimeError, "close boom"):
+            store.end_sessions([lsid])
+
+        self.assertTrue(session.active)
+        self.assertEqual(len(store._sessions), 1)
+
+        session.close = original_close  # type: ignore[method-assign]
+        self.assertEqual(store.end_sessions([lsid]), {"ok": 1.0})
+        self.assertFalse(session.active)
+        self.assertEqual(store._sessions, {})
+
     def test_session_store_clear_closes_sessions_and_aborts_active_transactions(self):
         proxy = AsyncMongoEcoProxyServer()
         store = WireSessionStore()

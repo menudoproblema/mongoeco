@@ -18,6 +18,22 @@ class RealParityCase:
         return target_version >= self.min_version
 
 
+def _write_error_code(action: Callable[[], Any]) -> tuple[str, int | None]:
+    try:
+        action()
+    except Exception as exc:
+        return ("error", getattr(exc, "code", None))
+    return ("ok", None)
+
+
+def _write_error_flag(action: Callable[[], Any]) -> str:
+    try:
+        action()
+    except Exception:
+        return "error"
+    return "ok"
+
+
 REAL_PARITY_CASES: tuple[RealParityCase, ...] = (
     RealParityCase(
         name="find_expr_compare_fields",
@@ -109,6 +125,55 @@ REAL_PARITY_CASES: tuple[RealParityCase, ...] = (
                 {"$addToSet": {"items": {"qty": 1, "kind": "a"}}},
             )
         ),
+    ),
+    RealParityCase(
+        name="update_set_on_insert_id_matches_filter",
+        seed_documents=[],
+        action=lambda collection: (
+            lambda result: (
+                result.matched_count,
+                result.modified_count,
+                result.upserted_id,
+                collection.find_one({"_id": "seed"}),
+            )
+        )(
+            collection.update_one(
+                {"_id": "seed"},
+                {"$setOnInsert": {"_id": "seed", "state": "new"}},
+                upsert=True,
+            )
+        ),
+    ),
+    RealParityCase(
+        name="update_pipeline_project_preserves_id",
+        seed_documents=[{"_id": "1", "name": "Ada", "legacy": True}],
+        action=lambda collection: (
+            lambda result: (
+                result.matched_count,
+                result.modified_count,
+                collection.find_one({"_id": "1"}),
+            )
+        )(
+            collection.update_one(
+                {"_id": "1"},
+                [{"$project": {"_id": 0, "name": 1}}],
+            )
+        ),
+    ),
+    RealParityCase(
+        name="update_pipeline_rejects_id_change",
+        seed_documents=[{"_id": "1", "name": "Ada"}],
+        action=lambda collection: _write_error_code(
+            lambda: collection.update_one(
+                {"_id": "1"},
+                [{"$set": {"_id": "2"}}],
+            )
+        ),
+    ),
+    RealParityCase(
+        name="insert_rejects_root_array_id",
+        seed_documents=[],
+        action=lambda collection: _write_error_flag(lambda: collection.insert_one({"_id": [1]})),
     ),
     RealParityCase(
         name="find_expr_truthiness_array",

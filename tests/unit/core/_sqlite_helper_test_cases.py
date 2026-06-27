@@ -1547,11 +1547,29 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         engine._vector_search_backends[("phys", "embedding")] = backend
         engine._search_backend_versions[("db", "coll")] = 3
         engine._materialized_search_entry_cache[("db", "coll", "phys", 3)] = {"k1": ((), search_runtime_module._materialized_search_document_from_entries(()))}
+        engine._compound_should_score_cache = {
+            ("db", "coll", "phys", 3, "query"): {"k1": {"matchedShould": 1.0}},
+            ("db", "other", "phys", 2, "query"): {"k2": {"matchedShould": 1.0}},
+        }
+        engine._compound_rank_cache = {
+            ("db", "coll", "phys", 3, "query"): {(("k1",), None): ("k1",)},
+            ("db", "other", "phys", 2, "query"): {(("k2",), None): ("k2",)},
+        }
+        engine._compound_topk_prefilter_cache = {
+            ("db", "coll", "phys", 3, "query"): {(("k1",), 1, None): (("k1",), {})},
+            ("db", "other", "phys", 2, "query"): {(("k2",), 1, None): (("k2",), {})},
+        }
 
         engine._mark_search_backend_changed("db", "coll")
         self.assertEqual(engine._search_backend_versions[("db", "coll")], 4)
         self.assertNotIn(("phys", "embedding"), engine._vector_search_backends)
         self.assertEqual(engine._materialized_search_entry_cache, {})
+        self.assertNotIn(("db", "coll", "phys", 3, "query"), engine._compound_should_score_cache)
+        self.assertNotIn(("db", "coll", "phys", 3, "query"), engine._compound_rank_cache)
+        self.assertNotIn(("db", "coll", "phys", 3, "query"), engine._compound_topk_prefilter_cache)
+        self.assertIn(("db", "other", "phys", 2, "query"), engine._compound_should_score_cache)
+        self.assertIn(("db", "other", "phys", 2, "query"), engine._compound_rank_cache)
+        self.assertIn(("db", "other", "phys", 2, "query"), engine._compound_topk_prefilter_cache)
 
         engine._vector_search_backends[("phys", "embedding")] = backend
         engine._search_backend_versions[("db", "other")] = 2
@@ -1561,6 +1579,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertNotIn(("db", "other"), engine._search_backend_versions)
         self.assertEqual(engine._vector_search_backends, {})
         self.assertEqual(engine._materialized_search_entry_cache, {})
+        self.assertEqual(engine._compound_should_score_cache, {})
+        self.assertEqual(engine._compound_rank_cache, {})
+        self.assertEqual(engine._compound_topk_prefilter_cache, {})
 
         with patch.object(engine._admin_runtime, "clear_index_metadata_versions_for_database") as clear_mock:
             engine._clear_index_metadata_versions_for_database("db")
@@ -2051,7 +2072,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     purge_expired_documents=lambda *_args: None,
                     collection_options_or_empty=lambda *_args: {},
                     dialect_requires_python_fallback=lambda _dialect: False,
-                    select_first_document_for_plan=lambda *_args: ("k1", {"_id": "1"}),
+                    select_first_document_for_plan=lambda *_args: ("1", {"_id": "1"}),
                     load_documents=lambda *_args: [],
                     match_plan=lambda *_args: False,
                     enforce_collection_document_validation=lambda *_args, **_kwargs: None,
@@ -2135,10 +2156,11 @@ class SQLiteInternalHelperTests(unittest.TestCase):
 
     def test_sqlite_physical_index_helpers_commit_only_when_needed(self):
         class _FakeConnection:
-            def __init__(self):
+            def __init__(self, *, fail_commit: bool = False):
                 self.in_transaction = False
                 self.executed: list[str] = []
                 self.commits = 0
+                self.fail_commit = fail_commit
 
             def execute(self, sql: str):
                 self.executed.append(sql)
@@ -2147,6 +2169,8 @@ class SQLiteInternalHelperTests(unittest.TestCase):
 
             def commit(self):
                 self.commits += 1
+                if self.fail_commit:
+                    raise RuntimeError("commit boom")
                 self.in_transaction = False
 
         engine = SQLiteEngine()
@@ -2200,6 +2224,57 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             )
         self.assertEqual(scalar_conn.commits, 0)
         self.assertEqual(scalar_conn.executed, [])
+
+        engine._ensured_multikey_physical_indexes.clear()
+        failing_multikey_conn = _FakeConnection(fail_commit=True)
+        with self.assertRaisesRegex(RuntimeError, "commit boom"):
+            engine._ensure_multikey_physical_indexes_sync(failing_multikey_conn, [multikey_index])
+        self.assertNotIn("mk_physical", engine._ensured_multikey_physical_indexes)
+
+    def test_sqlite_search_backend_cache_is_not_marked_when_internal_commit_fails(self):
+        class _FakeConnection:
+            def __init__(self):
+                self.in_transaction = False
+                self.executed: list[str] = []
+
+            def execute(self, sql: str):
+                self.executed.append(sql)
+                self.in_transaction = True
+                return None
+
+            def executemany(self, sql: str, rows):
+                del rows
+                self.executed.append(sql)
+                self.in_transaction = True
+                return None
+
+            def commit(self):
+                raise RuntimeError("commit boom")
+
+        engine = SQLiteEngine()
+        definition = SearchIndexDefinition(
+            {"mappings": {"dynamic": True}},
+            name="by_text",
+            index_type="search",
+        )
+        conn = _FakeConnection()
+
+        with patch.object(engine, "_supports_fts5", return_value=True), patch.object(
+            engine,
+            "_load_documents",
+            return_value=[],
+        ):
+            with self.assertRaisesRegex(RuntimeError, "commit boom"):
+                search_runtime_module.ensure_search_backend_sync(
+                    engine,
+                    conn,
+                    "db",
+                    "coll",
+                    definition,
+                    "fts_by_text",
+                )
+
+        self.assertNotIn("fts_by_text", engine._ensured_search_backends)
 
     def test_sqlite_scalar_sort_helpers_cover_cache_lookup_and_sql_construction(self):
         engine = SQLiteEngine()

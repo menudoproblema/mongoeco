@@ -412,9 +412,9 @@ def ensure_search_backend_sync(
             """,
             rows,
         )
-    engine._ensured_search_backends.add(resolved_physical_name)
     if not had_transaction and conn.in_transaction:
         conn.commit()
+    engine._ensured_search_backends.add(resolved_physical_name)
     return resolved_physical_name
 
 

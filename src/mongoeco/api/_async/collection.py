@@ -57,6 +57,7 @@ from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import QueryNode
@@ -466,6 +467,10 @@ class AsyncCollection:
             session=session,
         )
 
+    @staticmethod
+    def _ensure_session_active(session: object | None) -> None:
+        CollectionRuntimeCoordinator.ensure_session_active(session)
+
     async def _profile_operation(
         self,
         *,
@@ -501,12 +506,14 @@ class AsyncCollection:
         document_key: Document,
         full_document: Document | None = None,
         update_description: dict[str, object] | None = None,
+        session: ClientSession | None = None,
     ) -> None:
         self._runtime.publish_change_event(
             operation_type=operation_type,
             document_key=document_key,
             full_document=full_document,
             update_description=update_description,
+            session=session,
         )
 
     async def _engine_update_with_operation(
@@ -661,9 +668,11 @@ class AsyncCollection:
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> InsertOneResult[DocumentId]:
+        self._ensure_session_active(session)
         original = self._require_document(document)
         if "_id" not in original:
             original["_id"] = ObjectId()
+        assert_valid_root_document_id(original["_id"])
         doc = deepcopy(original)
 
         started_at = time.perf_counter_ns()
@@ -714,6 +723,7 @@ class AsyncCollection:
             operation_type="insert",
             document_key={"_id": deepcopy(doc["_id"])},
             full_document=deepcopy(doc),
+            session=session,
         )
         return InsertOneResult(inserted_id=doc["_id"])
 
@@ -724,6 +734,7 @@ class AsyncCollection:
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
     ) -> InsertManyResult[DocumentId]:
+        self._ensure_session_active(session)
         inserted_ids: list[DocumentId] = []
         command_documents: list[Document] = []
         started_at = time.perf_counter_ns()
@@ -731,6 +742,7 @@ class AsyncCollection:
         for original in self._require_documents(documents):
             if "_id" not in original:
                 original["_id"] = ObjectId()
+            assert_valid_root_document_id(original["_id"])
             doc = deepcopy(original)
             normalized_documents.append(doc)
             command_documents.append(deepcopy(doc))
@@ -766,13 +778,36 @@ class AsyncCollection:
                     errmsg=str(exc),
                 )
                 raise
-            if len(results) != len(normalized_documents):
+            if len(results) > len(normalized_documents) or (
+                len(results) != len(normalized_documents)
+                and (not results or results[-1])
+            ):
                 raise RuntimeError(
                     "bulk insert engine returned a result count different from the number of documents"
                 )
-            for doc, success in zip(normalized_documents, results, strict=True):
+            for doc, success in zip(normalized_documents, results, strict=False):
                 if not success:
-                    raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
+                    message = f"Duplicate key: _id={doc['_id']}"
+                    await self._profile_operation(
+                        op="insert",
+                        command={
+                            "insert": self._collection_name,
+                            "documents": command_documents,
+                            "bypassDocumentValidation": bypass_document_validation,
+                        },
+                        duration_ns=time.perf_counter_ns() - started_at,
+                        errmsg=message,
+                    )
+                    if inserted_ids and session is not None:
+                        session.observe_operation()
+                    for inserted in command_documents[: len(inserted_ids)]:
+                        self._publish_change_event(
+                            operation_type="insert",
+                            document_key={"_id": deepcopy(inserted["_id"])},
+                            full_document=deepcopy(inserted),
+                            session=session,
+                        )
+                    raise DuplicateKeyError(message)
                 inserted_ids.append(doc["_id"])
             await self._profile_operation(
                 op="insert",
@@ -790,6 +825,7 @@ class AsyncCollection:
                     operation_type="insert",
                     document_key={"_id": deepcopy(inserted["_id"])},
                     full_document=deepcopy(inserted),
+                    session=session,
                 )
             return InsertManyResult(inserted_ids=inserted_ids)
 
@@ -825,7 +861,27 @@ class AsyncCollection:
                 )
                 raise
             if not success:
-                raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
+                message = f"Duplicate key: _id={doc['_id']}"
+                await self._profile_operation(
+                    op="insert",
+                    command={
+                        "insert": self._collection_name,
+                        "documents": command_documents,
+                        "bypassDocumentValidation": bypass_document_validation,
+                    },
+                    duration_ns=time.perf_counter_ns() - started_at,
+                    errmsg=message,
+                )
+                if inserted_ids and session is not None:
+                    session.observe_operation()
+                for inserted in command_documents[: len(inserted_ids)]:
+                    self._publish_change_event(
+                        operation_type="insert",
+                        document_key={"_id": deepcopy(inserted["_id"])},
+                        full_document=deepcopy(inserted),
+                        session=session,
+                    )
+                raise DuplicateKeyError(message)
             inserted_ids.append(doc["_id"])
 
         await self._profile_operation(
@@ -844,6 +900,7 @@ class AsyncCollection:
                 operation_type="insert",
                 document_key={"_id": deepcopy(inserted["_id"])},
                 full_document=deepcopy(inserted),
+                session=session,
             )
         return InsertManyResult(inserted_ids=inserted_ids)
 
@@ -857,6 +914,7 @@ class AsyncCollection:
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ) -> BulkWriteResult[DocumentId]:
+        self._ensure_session_active(session)
         requests = self._require_write_requests(requests)
         if not isinstance(ordered, bool):
             raise TypeError("ordered must be a bool")
@@ -1624,6 +1682,7 @@ class AsyncCollection:
         )
 
     async def drop(self, *, session: ClientSession | None = None) -> None:
+        self._ensure_session_active(session)
         await self._engine.drop_collection(
             self._db_name,
             self._collection_name,
@@ -1632,6 +1691,7 @@ class AsyncCollection:
         self._publish_change_event(
             operation_type="invalidate",
             document_key={"_id": self.full_name},
+            session=session,
         )
 
     async def rename(
@@ -1640,6 +1700,7 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> "AsyncCollection":
+        self._ensure_session_active(session)
         if not isinstance(new_name, str) or not new_name:
             raise TypeError("new_name must be a non-empty string")
         await self._engine.rename_collection(
@@ -1669,6 +1730,7 @@ class AsyncCollection:
         )
 
     async def options(self, *, session: ClientSession | None = None) -> dict[str, object]:
+        self._ensure_session_active(session)
         return await self._engine.collection_options(
             self._db_name,
             self._collection_name,

@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.identity import document_matches_root_id_lookup
 from mongoeco.core.query_plan import (
     EqualsCondition,
     GreaterThanCondition,
@@ -318,7 +320,14 @@ def select_first_document_for_plan(
             if row is None:
                 return None
             row_storage_key, document = row
-            return row_storage_key, deserialize_document(document)
+            document = deserialize_document(document)
+            if not document_matches_root_id_lookup(
+                document,
+                plan.value,
+                dialect=MONGODB_DIALECT_70,
+            ):
+                return None
+            return row_storage_key, document
         selected = select_first_document_for_scalar_index_fn(
             db_name,
             coll_name,

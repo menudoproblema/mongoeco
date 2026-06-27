@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, AsyncIterable
 
 from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
 from mongoeco.api.operations import AggregateOperation, FindOperation, UpdateOperation, compile_find_operation
-from mongoeco.errors import DuplicateKeyError, OperationFailure
-from mongoeco.session import ClientSession
+from mongoeco.errors import DuplicateKeyError, OperationFailure, WriteError
+from mongoeco.session import ClientSession, EngineTransactionContext
 from mongoeco.types import CollationDocument, Document, DocumentId, Filter, HintSpec, ObjectId, SortSpec
 
 if TYPE_CHECKING:
@@ -15,9 +15,20 @@ if TYPE_CHECKING:
     from mongoeco.core.query_plan import QueryNode
 
 
+_CHANGE_STREAM_TRANSACTION_PREFIX = "change_stream_hub:"
+_PENDING_CHANGE_EVENTS_KEY = "pending_change_events"
+
+
 class CollectionRuntimeCoordinator:
     def __init__(self, collection: "AsyncCollection"):
         self._collection = collection
+
+    @staticmethod
+    def ensure_session_active(session: object | None) -> None:
+        if session is not None:
+            ensure_active = getattr(session, "ensure_active", None)
+            if callable(ensure_active):
+                ensure_active()
 
     def record_operation_metadata(
         self,
@@ -30,15 +41,19 @@ class CollectionRuntimeCoordinator:
     ) -> None:
         if session is None:
             return
+        self.ensure_session_active(session)
         recorder = getattr(self._collection._engine, "_record_operation_metadata", None)
         if callable(recorder):
-            recorder(
-                session,
-                operation=operation,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                hint=hint,
-            )
+            try:
+                recorder(
+                    session,
+                    operation=operation,
+                    comment=comment,
+                    max_time_ms=max_time_ms,
+                    hint=hint,
+                )
+            except Exception:
+                pass
         observe_operation = getattr(session, "observe_operation", None)
         if callable(observe_operation):
             observe_operation()
@@ -75,16 +90,19 @@ class CollectionRuntimeCoordinator:
                 except Exception:
                     execution_lineage = ()
                     fallback_reason = None
-        recorder(
-            self._collection._db_name,
-            op=op,
-            command=command,
-            duration_micros=max(1, duration_ns // 1000),
-            execution_lineage=tuple(execution_lineage),
-            fallback_reason=fallback_reason,
-            ok=0.0 if errmsg is not None else 1.0,
-            errmsg=errmsg,
-        )
+        try:
+            recorder(
+                self._collection._db_name,
+                op=op,
+                command=command,
+                duration_micros=max(1, duration_ns // 1000),
+                execution_lineage=tuple(execution_lineage),
+                fallback_reason=fallback_reason,
+                ok=0.0 if errmsg is not None else 1.0,
+                errmsg=errmsg,
+            )
+        except Exception:
+            pass
 
     async def document_by_id(
         self,
@@ -107,17 +125,88 @@ class CollectionRuntimeCoordinator:
         document_key: Document,
         full_document: Document | None = None,
         update_description: dict[str, object] | None = None,
+        session: ClientSession | None = None,
     ) -> None:
-        if self._collection._change_hub is None:
+        change_hub = self._collection._change_hub
+        if change_hub is None:
             return
-        self._collection._change_hub.publish(
-            operation_type=operation_type,
-            db_name=self._collection._db_name,
-            coll_name=self._collection._collection_name,
-            document_key=document_key,
-            full_document=full_document,
-            update_description=update_description,
+        payload = {
+            "operation_type": operation_type,
+            "db_name": self._collection._db_name,
+            "coll_name": self._collection._collection_name,
+            "document_key": deepcopy(document_key),
+            "full_document": deepcopy(full_document) if full_document is not None else None,
+            "update_description": deepcopy(update_description) if update_description is not None else None,
+        }
+        if session is not None and bool(getattr(session, "in_transaction", False)):
+            pending_events = self._pending_transaction_change_events(session)
+            pending_events.append(payload)
+            return
+        self._publish_change_payload(payload)
+
+    def _pending_transaction_change_events(self, session: ClientSession) -> list[dict[str, object]]:
+        change_hub = self._collection._change_hub
+        if change_hub is None:
+            return []
+        engine_key = f"{_CHANGE_STREAM_TRANSACTION_PREFIX}{id(change_hub)}"
+        context = session.get_engine_context(engine_key)
+        if context is None:
+            context = EngineTransactionContext(
+                engine_key=engine_key,
+                connected=True,
+                supports_transactions=True,
+                transaction_active=session.in_transaction,
+                metadata={_PENDING_CHANGE_EVENTS_KEY: []},
+            )
+            session.bind_engine_context(context)
+        pending_events = context.metadata.get(_PENDING_CHANGE_EVENTS_KEY)
+        if not isinstance(pending_events, list):
+            pending_events = []
+            context.metadata[_PENDING_CHANGE_EVENTS_KEY] = pending_events
+
+        def _start(active_session: ClientSession) -> None:
+            active_context = active_session.get_engine_context(engine_key)
+            if active_context is None:
+                return
+            active_context.transaction_active = True
+            active_context.metadata[_PENDING_CHANGE_EVENTS_KEY] = []
+
+        def _commit(active_session: ClientSession) -> None:
+            active_context = active_session.get_engine_context(engine_key)
+            if active_context is None:
+                return
+            queued = active_context.metadata.get(_PENDING_CHANGE_EVENTS_KEY)
+            active_context.metadata[_PENDING_CHANGE_EVENTS_KEY] = []
+            active_context.transaction_active = False
+            if not isinstance(queued, list):
+                return
+            for event in queued:
+                if isinstance(event, dict):
+                    self._publish_change_payload(event)
+
+        def _abort(active_session: ClientSession) -> None:
+            active_context = active_session.get_engine_context(engine_key)
+            if active_context is None:
+                return
+            active_context.metadata[_PENDING_CHANGE_EVENTS_KEY] = []
+            active_context.transaction_active = False
+
+        session.register_transaction_hooks(
+            engine_key,
+            start=_start,
+            commit=_commit,
+            abort=_abort,
         )
+        return pending_events
+
+    def _publish_change_payload(self, payload: dict[str, object]) -> None:
+        change_hub = self._collection._change_hub
+        if change_hub is None:
+            return
+        try:
+            change_hub.publish(**payload)
+        except Exception:
+            return
 
     def ensure_operation_executable(self, operation: FindOperation | UpdateOperation | AggregateOperation) -> None:
         if operation.planning_issues:
@@ -336,7 +425,7 @@ class CollectionRuntimeCoordinator:
         seed_upsert_document(seeded, filter_spec)
         if "_id" in seeded and "_id" in replacement:
             if not self._collection._mongodb_dialect.values_equal(seeded["_id"], replacement["_id"]):
-                raise OperationFailure("The _id field cannot conflict with the replacement filter during upsert")
+                raise WriteError("The _id field cannot conflict with the replacement filter during upsert", code=66)
         document = deepcopy(seeded)
         document.update(deepcopy(replacement))
         if "_id" not in document:
@@ -347,11 +436,13 @@ class CollectionRuntimeCoordinator:
     def materialize_replacement_document(selected: Document, replacement: Document) -> Document:
         if "_id" in replacement:
             return deepcopy(replacement)
+        if "_id" not in selected:
+            return deepcopy(replacement)
 
         replacement_items = [(key, deepcopy(value)) for key, value in replacement.items()]
         replacement_document: Document = {}
         inserted_id = False
-        id_position = list(selected).index("_id") if "_id" in selected else 0
+        id_position = list(selected).index("_id")
 
         for index in range(len(replacement_items) + 1):
             if index == id_position and not inserted_id:

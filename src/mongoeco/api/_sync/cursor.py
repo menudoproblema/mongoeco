@@ -58,6 +58,12 @@ class _CursorIterator:
             self._cursor._exhausted = True
             self.close()
             raise StopIteration
+        except Exception:
+            try:
+                self.close()
+            except Exception:
+                pass
+            raise
 
     def close(self) -> None:
         if self._closed:
@@ -266,6 +272,12 @@ class Cursor:
                 self._exhausted = True
                 self._close_active_iterator(active)
                 return None
+            except Exception:
+                try:
+                    self._close_active_iterator(active)
+                except Exception:
+                    pass
+                raise
         self._started = True
         return self._client._run(
             self._async_collection.find(

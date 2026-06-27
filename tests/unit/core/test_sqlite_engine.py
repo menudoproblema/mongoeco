@@ -299,7 +299,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         fake_connection = Mock()
         fake_connection.execute.return_value.rowcount = 1
         engine._require_connection = Mock(return_value=fake_connection)
-        engine._load_documents = Mock(return_value=[("1", {"kind": "match"})])
+        engine._load_documents = Mock(return_value=[(engine._storage_key("1"), {"_id": "1", "kind": "match"})])
 
         result = engine._delete_matching_document_sync(
             "db",
@@ -616,7 +616,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
     def test_delete_document_sync_rolls_back_on_failure(self):
         engine = SQLiteEngine()
         fake_connection = Mock()
-        fake_connection.execute.side_effect = [None, sqlite3.OperationalError("boom")]
+        selected = Mock()
+        selected.fetchone.return_value = (engine._serialize_document({"_id": "1"}),)
+        fake_connection.execute.side_effect = [selected, None, sqlite3.OperationalError("boom")]
         engine._require_connection = Mock(return_value=fake_connection)
 
         with self.assertRaises(sqlite3.OperationalError):
@@ -2638,8 +2640,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         past = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=120)
         await engine.connect()
         try:
-            await engine.put_document("db", "ttl", {"_id": "expired", "expires_at": past})
             await engine.create_index("db", "ttl", ["expires_at"], expire_after_seconds=0)
+            await engine.put_document("db", "ttl", {"_id": "expired", "expires_at": past})
             conn = engine._require_connection()
             with patch.object(engine, "_delete_search_entries_for_storage_key", side_effect=RuntimeError("boom")), patch.object(
                 engine, "_rollback_write", wraps=engine._rollback_write
@@ -2755,6 +2757,78 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_profile_namespace_direct_paths_reject_foreign_session(self):
+        owner = SQLiteEngine()
+        engine = SQLiteEngine()
+        await owner.connect()
+        await engine.connect()
+        try:
+            session = ClientSession()
+            owner.create_session_state(session)
+            engine._profiler.set_level("db", 2)
+            engine._profiler.record(
+                "db",
+                op="query",
+                namespace="db.system.profile",
+                command={"find": "users"},
+                duration_micros=1000,
+            )
+            profile_entries = engine._profiler.list_entries("db")
+            profile_id = profile_entries[0]["_id"]
+
+            with self.assertRaises(InvalidOperation):
+                await engine.get_document("db", "system.profile", profile_id, context=session)
+            with self.assertRaises(InvalidOperation):
+                await engine.delete_document("db", "system.profile", profile_id, context=session)
+            with self.assertRaises(InvalidOperation):
+                await engine.drop_collection("db", "system.profile", context=session)
+            with self.assertRaises(InvalidOperation):
+                list(engine._iter_scan_documents_sync("db", "system.profile", {}, context=session))
+
+            self.assertEqual(engine._profiler.list_entries("db"), profile_entries)
+        finally:
+            await engine.disconnect()
+            await owner.disconnect()
+
+    async def test_fallback_read_helpers_reject_foreign_session(self):
+        owner = SQLiteEngine()
+        engine = SQLiteEngine()
+        await owner.connect()
+        await engine.connect()
+        try:
+            session = ClientSession()
+            owner.create_session_state(session)
+            await engine.put_document(
+                "db",
+                "users",
+                {"_id": "1", "marker": "count", "items": [{"value": 1}], "name": "Ada"},
+            )
+            expr_semantics = compile_find_semantics({"$expr": {"$eq": ["$marker", "count"]}})
+            elem_match_semantics = compile_find_semantics({"items": {"$elemMatch": {"value": 1}}})
+            text_semantics = compile_find_semantics(
+                {},
+                text_query=compile_classic_text_query({"$search": "Ada"}),
+            )
+            conn = engine._require_connection()
+
+            with self.assertRaises(InvalidOperation):
+                engine._count_matching_documents_sync("db", "users", expr_semantics, None, session)
+            with self.assertRaises(InvalidOperation):
+                engine._count_matching_documents_sync("db", "users", elem_match_semantics, None, session)
+            with self.assertRaises(InvalidOperation):
+                engine._iter_documents_for_classic_text_query_sync(
+                    "db",
+                    "users",
+                    [{"_id": "1", "name": "Ada"}],
+                    semantics=text_semantics,
+                    context=session,
+                )
+            with self.assertRaises(InvalidOperation):
+                engine._purge_expired_documents_sync(conn, "db", "users", context=session)
+        finally:
+            await engine.disconnect()
+            await owner.disconnect()
+
     async def test_delete_last_document_does_not_remove_collection_metadata(self):
         engine = SQLiteEngine()
         await engine.connect()
@@ -2856,8 +2930,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine._select_first_document_for_plan = Mock(side_effect=NotImplementedError("fallback"))
         engine._load_documents = Mock(
             return_value=[
-                ("1", {"kind": "skip"}),
-                ("2", {"kind": "match"}),
+                (engine._storage_key("1"), {"_id": "1", "kind": "skip"}),
+                (engine._storage_key("2"), {"_id": "2", "kind": "match"}),
             ]
         )
 
@@ -2885,7 +2959,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine._plan_has_array_traversing_paths = Mock(return_value=False)
         engine._plan_requires_python_for_array_comparisons = Mock(return_value=False)
         engine._plan_requires_python_for_bytes = Mock(return_value=True)
-        engine._load_documents = Mock(return_value=[("1", {"v": b"\x00"})])
+        engine._load_documents = Mock(return_value=[(engine._storage_key("1"), {"_id": "1", "v": b"\x00"})])
 
         result = engine._delete_matching_document_sync(
             "db",
@@ -5511,6 +5585,24 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 ).fetchone()[0],
                 0,
             )
+        finally:
+            await engine.disconnect()
+
+    async def test_sqlite_drop_database_rolls_back_when_cache_invalidation_fails(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("alpha", "users", {"_id": "1", "email": "a@example.com"})
+
+            with patch.object(engine, "_invalidate_index_cache", side_effect=RuntimeError("cache boom")):
+                with self.assertRaisesRegex(RuntimeError, "cache boom"):
+                    await engine.drop_database("alpha")
+
+            self.assertEqual(
+                await engine.get_document("alpha", "users", "1"),
+                {"_id": "1", "email": "a@example.com"},
+            )
+            self.assertIn("alpha", await engine.list_databases())
         finally:
             await engine.disconnect()
 

@@ -69,6 +69,12 @@ from mongoeco.engines.virtual_indexes import (
     query_can_use_index,
 )
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.identity import (
+    assert_document_kept_storage_key,
+    assert_document_matches_storage_key,
+    assert_valid_root_document_id,
+    document_matches_root_id_lookup,
+)
 from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.projections import apply_projection
@@ -104,7 +110,7 @@ from mongoeco.core.search_filter_prefilter import (
     value_key_matches_range as _shared_value_key_matches_range,
 )
 from mongoeco.core.aggregation import AggregationSpillPolicy
-from mongoeco.errors import CollectionInvalid, DuplicateKeyError, OperationFailure
+from mongoeco.errors import CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure, WriteError
 from mongoeco.session import ClientSession
 from mongoeco.session import EngineTransactionContext
 from mongoeco.types import (
@@ -140,6 +146,26 @@ class _StoredDocument:
         self.payload = payload
         self.decoded_wrapped: Document | None = None
         self.decoded_public: Document | None = None
+
+
+_MISSING = object()
+
+
+@dataclass(slots=True)
+class _MemoryCollectionSnapshot:
+    storage: object
+    indexes: object
+    index_data: object
+    search_indexes: object
+    collection_registered: bool
+    options: object
+
+
+@dataclass(slots=True)
+class _MemorySearchRuntimeSnapshot:
+    ready_at: dict[tuple[str, str, str], object]
+    search_cache: dict[tuple[str, str, str], object]
+    vector_cache: dict[tuple[str, str, str], object]
 
 
 type _FilterValueKey = tuple[str, object]
@@ -472,20 +498,83 @@ class MemoryEngine(AsyncStorageEngine):
                 self._document_expired_by_ttl(document, index, now=now)
                 for index in ttl_indexes
             ):
+                assert_document_matches_storage_key(
+                    document,
+                    storage_key,
+                    storage_key_for_id=self._storage_key,
+                )
                 expired_storage_keys.append(storage_key)
-        for storage_key in expired_storage_keys:
-            document = self._borrow_storage_document(coll[storage_key])
-            self._update_indexes_locked(
+        if not expired_storage_keys:
+            return 0
+        snapshot = self._snapshot_collection_state_locked(
+            db_name,
+            coll_name,
+            storage=storage_source,
+            indexes=indexes_source,
+            index_data=index_data_source,
+            search_indexes=self._search_indexes_view(context),
+            collections=self._collections_view(context),
+            options=self._collection_options_view(context),
+        )
+        try:
+            for storage_key in expired_storage_keys:
+                document = self._borrow_storage_document(coll[storage_key])
+                self._update_indexes_locked(
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    action="delete",
+                    index_data_view=index_data_source,
+                    indexes_view=indexes_source,
+                )
+                del coll[storage_key]
+        except Exception:
+            self._restore_collection_state_locked(
                 db_name,
                 coll_name,
-                storage_key,
-                document,
-                action="delete",
-                index_data_view=index_data_source,
-                indexes_view=indexes_source,
+                snapshot,
+                storage=storage_source,
+                indexes=indexes_source,
+                index_data=index_data_source,
+                search_indexes=self._search_indexes_view(context),
+                collections=self._collections_view(context),
+                options=self._collection_options_view(context),
             )
-            del coll[storage_key]
+            raise
         return len(expired_storage_keys)
+
+    def _assert_expired_documents_have_stable_identity_locked(
+        self,
+        db_name: str,
+        coll_name: str,
+        ttl_indexes: list[EngineIndexRecord],
+        *,
+        context: ClientSession | None = None,
+        storage_view: dict[str, dict[str, dict[Any, Any]]] | None = None,
+    ) -> None:
+        effective_ttl_indexes = [
+            index for index in ttl_indexes if index.expire_after_seconds is not None
+        ]
+        if not effective_ttl_indexes:
+            return
+        storage_source = storage_view if storage_view is not None else self._storage_view(context)
+        coll = storage_source.get(db_name, {}).get(coll_name, {})
+        if not coll:
+            return
+        now = datetime.datetime.now(datetime.timezone.utc)
+        for storage_key, data in coll.items():
+            document = self._borrow_storage_document(data)
+            if not any(
+                self._document_expired_by_ttl(document, index, now=now)
+                for index in effective_ttl_indexes
+            ):
+                continue
+            assert_document_matches_storage_key(
+                document,
+                storage_key,
+                storage_key_for_id=self._storage_key,
+            )
 
     def _decode_storage_document(
         self,
@@ -611,10 +700,11 @@ class MemoryEngine(AsyncStorageEngine):
 
     def _commit_session_transaction(self, session: ClientSession) -> None:
         with self._meta_lock:
-            snapshot = self._mvcc_states.pop(session.session_id, None)
+            snapshot = self._mvcc_states.get(session.session_id)
             if snapshot is not None:
                 if snapshot.snapshot_version != self._mvcc_version:
                     raise OperationFailure("Write conflict during transaction commit")
+                self._mvcc_states.pop(session.session_id, None)
                 self._storage = snapshot.storage
                 self._indexes = snapshot.indexes
                 self._index_data = snapshot.index_data
@@ -638,10 +728,20 @@ class MemoryEngine(AsyncStorageEngine):
             snapshot_version=self._mvcc_version,
         )
 
+    def _ensure_session_can_use_engine(self, context: ClientSession | None) -> None:
+        if context is None:
+            return
+        if context.get_engine_context(self._engine_key()) is None:
+            raise InvalidOperation("This session was not created by this MemoryEngine")
+
     def _active_mvcc_state(self, context: ClientSession | None) -> MemoryMvccState | None:
+        self._ensure_session_can_use_engine(context)
         if context is None or not context.in_transaction:
             return None
-        return self._mvcc_states.get(context.session_id)
+        state = self._mvcc_states.get(context.session_id)
+        if state is None:
+            raise InvalidOperation("This session does not own an active MemoryEngine transaction")
+        return state
 
     def _storage_view(self, context: ClientSession | None) -> dict[str, dict[str, dict[Any, Any]]]:
         state = self._active_mvcc_state(context)
@@ -731,6 +831,7 @@ class MemoryEngine(AsyncStorageEngine):
     ) -> None:
         if context is None:
             return
+        self._ensure_session_can_use_engine(context)
         context.update_engine_state(
             f"memory:{id(self)}",
             last_operation={
@@ -883,9 +984,10 @@ class MemoryEngine(AsyncStorageEngine):
     ) -> None:
         target_collections = self._collections if collections is None else collections
         target_options = self._collection_options if collection_options is None else collection_options
+        copied_options = deepcopy(options or {})
         target_collections.setdefault(db_name, set()).add(coll_name)
         db_options = target_options.setdefault(db_name, {})
-        db_options.setdefault(coll_name, deepcopy(options or {}))
+        db_options.setdefault(coll_name, copied_options)
 
     def _prune_collection_registry_locked(
         self,
@@ -932,6 +1034,113 @@ class MemoryEngine(AsyncStorageEngine):
                 db_index_data.pop(coll_name, None)
         if not db_index_data:
             target_index_data.pop(db_name, None)
+
+    def _snapshot_collection_state_locked(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        storage: dict[str, dict[str, dict[Any, Any]]],
+        indexes: dict[str, dict[str, list[EngineIndexRecord]]],
+        index_data: dict[str, dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]]],
+        search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]],
+        collections: dict[str, set[str]],
+        options: dict[str, dict[str, Document]],
+    ) -> _MemoryCollectionSnapshot:
+        def _copy_entry(mapping: dict[str, dict[str, Any]]) -> object:
+            value = mapping.get(db_name, {}).get(coll_name, _MISSING)
+            return _MISSING if value is _MISSING else deepcopy(value)
+
+        return _MemoryCollectionSnapshot(
+            storage=_copy_entry(storage),
+            indexes=_copy_entry(indexes),
+            index_data=_copy_entry(index_data),
+            search_indexes=_copy_entry(search_indexes),
+            collection_registered=coll_name in collections.get(db_name, set()),
+            options=_copy_entry(options),
+        )
+
+    @staticmethod
+    def _restore_nested_mapping_entry(
+        mapping: dict[str, dict[str, Any]],
+        db_name: str,
+        coll_name: str,
+        value: object,
+    ) -> None:
+        if value is _MISSING:
+            db_mapping = mapping.get(db_name)
+            if db_mapping is None:
+                return
+            db_mapping.pop(coll_name, None)
+            if not db_mapping:
+                mapping.pop(db_name, None)
+            return
+        mapping.setdefault(db_name, {})[coll_name] = deepcopy(value)
+
+    def _restore_collection_state_locked(
+        self,
+        db_name: str,
+        coll_name: str,
+        snapshot: _MemoryCollectionSnapshot,
+        *,
+        storage: dict[str, dict[str, dict[Any, Any]]],
+        indexes: dict[str, dict[str, list[EngineIndexRecord]]],
+        index_data: dict[str, dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]]],
+        search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]],
+        collections: dict[str, set[str]],
+        options: dict[str, dict[str, Document]],
+    ) -> None:
+        self._restore_nested_mapping_entry(storage, db_name, coll_name, snapshot.storage)
+        self._restore_nested_mapping_entry(indexes, db_name, coll_name, snapshot.indexes)
+        self._restore_nested_mapping_entry(index_data, db_name, coll_name, snapshot.index_data)
+        self._restore_nested_mapping_entry(search_indexes, db_name, coll_name, snapshot.search_indexes)
+        if snapshot.collection_registered:
+            collections.setdefault(db_name, set()).add(coll_name)
+        else:
+            db_collections = collections.get(db_name)
+            if db_collections is not None:
+                db_collections.discard(coll_name)
+                if not db_collections:
+                    collections.pop(db_name, None)
+        self._restore_nested_mapping_entry(options, db_name, coll_name, snapshot.options)
+
+    def _snapshot_search_runtime_state_locked(
+        self,
+        db_name: str,
+        coll_names: set[str],
+    ) -> _MemorySearchRuntimeSnapshot:
+        return _MemorySearchRuntimeSnapshot(
+            ready_at={
+                key: value
+                for key, value in self._search_index_ready_at.items()
+                if key[0] == db_name and key[1] in coll_names
+            },
+            search_cache={
+                key: value
+                for key, value in self._search_document_cache.items()
+                if key[0] == db_name and key[1] in coll_names
+            },
+            vector_cache={
+                key: value
+                for key, value in self._vector_document_cache.items()
+                if key[0] == db_name and key[1] in coll_names
+            },
+        )
+
+    def _restore_search_runtime_state_locked(
+        self,
+        db_name: str,
+        coll_names: set[str],
+        snapshot: _MemorySearchRuntimeSnapshot,
+    ) -> None:
+        for mapping, entries in (
+            (self._search_index_ready_at, snapshot.ready_at),
+            (self._search_document_cache, snapshot.search_cache),
+            (self._vector_document_cache, snapshot.vector_cache),
+        ):
+            for key in [key for key in mapping if key[0] == db_name and key[1] in coll_names]:
+                del mapping[key]
+            mapping.update(entries)
 
     def _namespace_exists_locked(self, db_name: str, coll_name: str) -> bool:
         return (
@@ -984,6 +1193,16 @@ class MemoryEngine(AsyncStorageEngine):
         normalized_exclude = exclude_storage_key
         if exclude_storage_key is not None and exclude_storage_key not in coll:
             normalized_exclude = self._storage_key(exclude_storage_key)
+        if "_id" in candidate:
+            candidate_id_storage_key = self._storage_key(candidate["_id"])
+            for storage_key, data in coll.items():
+                if normalized_exclude is not None and storage_key == normalized_exclude:
+                    continue
+                if storage_key == candidate_id_storage_key:
+                    continue
+                existing = self._borrow_storage_document(data)
+                if "_id" in existing and self._storage_key(existing["_id"]) == candidate_id_storage_key:
+                    raise DuplicateKeyError(f"Duplicate key: _id={candidate['_id']}")
 
         for index in indexes:
             if not index.get("unique"):
@@ -1051,7 +1270,7 @@ class MemoryEngine(AsyncStorageEngine):
         slow_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> ProfilingCommandResult:
-        del context
+        self._ensure_session_can_use_engine(context)
         return self._profiler.set_level(db_name, level, slow_ms=slow_ms)
 
     @override
@@ -1080,7 +1299,7 @@ class MemoryEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         documents: list[Document],
-        overwrite: bool = True,
+        overwrite: bool = False,
         *,
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
@@ -1091,6 +1310,7 @@ class MemoryEngine(AsyncStorageEngine):
             option_store = self._collection_options_view(context)
             indexes_view = self._indexes_view(context)
             index_data_view = self._index_data_view(context)
+            search_indexes_view = self._search_indexes_view(context)
             self._purge_expired_documents_locked(
                 db_name,
                 coll_name,
@@ -1099,81 +1319,123 @@ class MemoryEngine(AsyncStorageEngine):
                 index_data_view=index_data_view,
                 storage_view=storage,
             )
-
-            with self._meta_lock:
-                db = storage.setdefault(db_name, {})
-                coll = db.setdefault(coll_name, {})
-                self._register_collection_locked(
-                    db_name,
-                    coll_name,
-                    collections=collections,
-                    collection_options=option_store,
-                )
-                collection_options = self._collection_options_snapshot_locked(
-                    db_name,
-                    coll_name,
-                    collection_options=option_store,
-                )
-
-            results: list[bool] = []
-            modified_any = False
-            for document in documents:
-                doc_id = document.get("_id")
-                storage_key = self._storage_key(doc_id)
-                original_document = None
-                if overwrite and storage_key in coll:
-                    original_document = self._borrow_storage_document(coll[storage_key])
-                if not overwrite and storage_key in coll:
-                    results.append(False)
-                    continue
-
-                if not bypass_document_validation:
-                    enforce_collection_document_validation(
-                        document,
-                        options=collection_options,
-                        original_document=original_document,
-                        dialect=MONGODB_DIALECT_70,
+            snapshot = self._snapshot_collection_state_locked(
+                db_name,
+                coll_name,
+                storage=storage,
+                indexes=indexes_view,
+                index_data=index_data_view,
+                search_indexes=search_indexes_view,
+                collections=collections,
+                options=option_store,
+            )
+            try:
+                with self._meta_lock:
+                    db = storage.setdefault(db_name, {})
+                    coll = db.setdefault(coll_name, {})
+                    self._register_collection_locked(
+                        db_name,
+                        coll_name,
+                        collections=collections,
+                        collection_options=option_store,
+                    )
+                    collection_options = self._collection_options_snapshot_locked(
+                        db_name,
+                        coll_name,
+                        collection_options=option_store,
                     )
 
-                self._ensure_unique_indexes(
-                    db_name,
-                    coll_name,
-                    document,
-                    exclude_storage_key=storage_key if overwrite else None,
-                    indexes_view=indexes_view,
-                    storage_view=storage,
-                    index_data_view=index_data_view,
-                )
+                results: list[bool] = []
+                modified_any = False
+                for document in documents:
+                    if "_id" in document:
+                        assert_valid_root_document_id(document["_id"])
+                bulk_insert_prevalidated = not bypass_document_validation and not overwrite
+                if bulk_insert_prevalidated:
+                    for document in documents:
+                        enforce_collection_document_validation(
+                            document,
+                            options=collection_options,
+                            original_document=None,
+                            dialect=MONGODB_DIALECT_70,
+                        )
+                for document in documents:
+                    doc_id = document.get("_id")
+                    storage_key = self._storage_key(doc_id)
+                    original_document = None
+                    if overwrite and storage_key in coll:
+                        original_document = self._borrow_storage_document(coll[storage_key])
+                    if not overwrite and storage_key in coll:
+                        results.append(False)
+                        break
 
-                if original_document is not None:
+                    if not bypass_document_validation and not bulk_insert_prevalidated:
+                        enforce_collection_document_validation(
+                            document,
+                            options=collection_options,
+                            original_document=original_document,
+                            dialect=MONGODB_DIALECT_70,
+                        )
+
+                    try:
+                        self._ensure_unique_indexes(
+                            db_name,
+                            coll_name,
+                            document,
+                            exclude_storage_key=storage_key if overwrite else None,
+                            indexes_view=indexes_view,
+                            storage_view=storage,
+                            index_data_view=index_data_view,
+                        )
+                    except DuplicateKeyError:
+                        if overwrite or len(documents) == 1:
+                            raise
+                        results.append(False)
+                        break
+
+                    if not modified_any:
+                        self._invalidate_search_runtime_cache(db_name, coll_name)
+                    if original_document is not None:
+                        self._update_indexes_locked(
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            original_document,
+                            action="delete",
+                            index_data_view=index_data_view,
+                            indexes_view=indexes_view,
+                        )
+
+                    coll[storage_key] = self._encode_storage_document(document)
                     self._update_indexes_locked(
                         db_name,
                         coll_name,
                         storage_key,
-                        original_document,
-                        action="delete",
+                        document,
+                        action="insert",
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
-
-                coll[storage_key] = self._encode_storage_document(document)
-                self._update_indexes_locked(
+                    results.append(True)
+                    modified_any = True
+                return results
+            except Exception:
+                self._restore_collection_state_locked(
                     db_name,
                     coll_name,
-                    storage_key,
-                    document,
-                    action="insert",
-                    index_data_view=index_data_view,
-                    indexes_view=indexes_view,
+                    snapshot,
+                    storage=storage,
+                    indexes=indexes_view,
+                    index_data=index_data_view,
+                    search_indexes=search_indexes_view,
+                    collections=collections,
+                    options=option_store,
                 )
-                results.append(True)
-                modified_any = True
-            if modified_any:
-                self._invalidate_search_runtime_cache(db_name, coll_name)
-            return results
+                raise
 
     @override
     async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
+        self._ensure_session_can_use_engine(context)
         effective_dialect = dialect or MONGODB_DIALECT_70
         if self._is_profile_namespace(coll_name):
             document = self._profiler.get_entry(db_name, doc_id)
@@ -1186,42 +1448,79 @@ class MemoryEngine(AsyncStorageEngine):
             data = self._storage_view(context).get(db_name, {}).get(coll_name, {}).get(storage_key)
         if data is None:
             return None
+        document = self._copy_document_containers(self._borrow_public_storage_document(data))
+        if not document_matches_root_id_lookup(document, doc_id, dialect=effective_dialect):
+            return None
         return apply_projection(
-            self._copy_document_containers(self._borrow_public_storage_document(data)),
+            document,
             projection,
             dialect=effective_dialect,
         )
 
     @override
     async def delete_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, context: ClientSession | None = None) -> bool:
+        self._ensure_session_can_use_engine(context)
         if self._is_profile_namespace(coll_name):
             return False
         async with self._get_lock(db_name, coll_name):
-            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
+            storage_view = self._storage_view(context)
+            coll = storage_view.get(db_name, {}).get(coll_name, {})
             indexes_view = self._indexes_view(context)
             index_data_view = self._index_data_view(context)
+            search_indexes_view = self._search_indexes_view(context)
+            collections_view = self._collections_view(context)
+            option_store = self._collection_options_view(context)
             self._purge_expired_documents_locked(
                 db_name,
                 coll_name,
                 context=context,
                 indexes_view=indexes_view,
                 index_data_view=index_data_view,
-                storage_view=self._storage_view(context),
+                storage_view=storage_view,
             )
             storage_key = self._storage_key(doc_id)
             if storage_key in coll:
                 document = self._borrow_storage_document(coll[storage_key])
-                self._update_indexes_locked(
+                public_document = DocumentCodec.to_public(document)
+                if "_id" in public_document:
+                    assert_valid_root_document_id(public_document["_id"])
+                if not document_matches_root_id_lookup(public_document, doc_id, dialect=MONGODB_DIALECT_70):
+                    return False
+                snapshot = self._snapshot_collection_state_locked(
                     db_name,
                     coll_name,
-                    storage_key,
-                    document,
-                    action="delete",
-                    index_data_view=index_data_view,
-                    indexes_view=indexes_view,
+                    storage=storage_view,
+                    indexes=indexes_view,
+                    index_data=index_data_view,
+                    search_indexes=search_indexes_view,
+                    collections=collections_view,
+                    options=option_store,
                 )
-                del coll[storage_key]
-                self._invalidate_search_runtime_cache(db_name, coll_name)
+                try:
+                    self._invalidate_search_runtime_cache(db_name, coll_name)
+                    self._update_indexes_locked(
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        document,
+                        action="delete",
+                        index_data_view=index_data_view,
+                        indexes_view=indexes_view,
+                    )
+                    del coll[storage_key]
+                except Exception:
+                    self._restore_collection_state_locked(
+                        db_name,
+                        coll_name,
+                        snapshot,
+                        storage=storage_view,
+                        indexes=indexes_view,
+                        index_data=index_data_view,
+                        search_indexes=search_indexes_view,
+                        collections=collections_view,
+                        options=option_store,
+                    )
+                    raise
                 return True
             return False
 
@@ -1296,7 +1595,24 @@ class MemoryEngine(AsyncStorageEngine):
                 if id_lookup is not None:
                     storage_key = self._storage_key(id_lookup)
                     data = coll.get(storage_key)
-                    document_source = [self._borrow_storage_document(data)] if data is not None else []
+                    if data is not None:
+                        document = self._borrow_storage_document(data)
+                        if document_matches_root_id_lookup(
+                            DocumentCodec.to_public(document),
+                            id_lookup,
+                            dialect=semantics.dialect,
+                        ):
+                            document_source = [document]
+                        else:
+                            document_source = (
+                                self._borrow_storage_document(data)
+                                for data in coll.values()
+                            )
+                    else:
+                        document_source = (
+                            self._borrow_storage_document(data)
+                            for data in coll.values()
+                        )
                 else:
                     # Intento de optimización: Otros índices (igualdad simple)
                     target_index_match = None
@@ -1396,10 +1712,13 @@ class MemoryEngine(AsyncStorageEngine):
                 indexes_view = self._indexes_view(context)
                 index_data_view = self._index_data_view(context)
                 storage_view = self._storage_view(context)
+                search_indexes_view = self._search_indexes_view(context)
+                collections_view = self._collections_view(context)
+                option_store = self._collection_options_view(context)
                 collection_options = self._collection_options_snapshot_locked(
                     db_name,
                     coll_name,
-                    collection_options=self._collection_options_view(context),
+                    collection_options=option_store,
                 )
             self._purge_expired_documents_locked(
                 db_name,
@@ -1424,7 +1743,18 @@ class MemoryEngine(AsyncStorageEngine):
 
                 document = deepcopy(borrowed_document)
                 original_document = deepcopy(borrowed_document)
+                assert_document_matches_storage_key(
+                    original_document,
+                    storage_key,
+                    storage_key_for_id=self._storage_key,
+                )
                 modified = semantics.compiled_update_plan.apply(document)
+                if modified:
+                    assert_document_kept_storage_key(
+                        document,
+                        storage_key,
+                        storage_key_for_id=self._storage_key,
+                    )
                 if not bypass_document_validation:
                     enforce_collection_document_validation(
                         document,
@@ -1441,26 +1771,50 @@ class MemoryEngine(AsyncStorageEngine):
                     storage_view=storage_view,
                     index_data_view=index_data_view,
                 )
-                self._update_indexes_locked(
+                snapshot = self._snapshot_collection_state_locked(
                     db_name,
                     coll_name,
-                    storage_key,
-                    original_document,
-                    action="delete",
-                    index_data_view=index_data_view,
-                    indexes_view=indexes_view,
+                    storage=storage_view,
+                    indexes=indexes_view,
+                    index_data=index_data_view,
+                    search_indexes=search_indexes_view,
+                    collections=collections_view,
+                    options=option_store,
                 )
-                coll[storage_key] = self._encode_storage_document(document)
-                self._update_indexes_locked(
-                    db_name,
-                    coll_name,
-                    storage_key,
-                    document,
-                    action="insert",
-                    index_data_view=index_data_view,
-                    indexes_view=indexes_view,
-                )
-                self._invalidate_search_runtime_cache(db_name, coll_name)
+                try:
+                    self._invalidate_search_runtime_cache(db_name, coll_name)
+                    self._update_indexes_locked(
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        original_document,
+                        action="delete",
+                        index_data_view=index_data_view,
+                        indexes_view=indexes_view,
+                    )
+                    coll[storage_key] = self._encode_storage_document(document)
+                    self._update_indexes_locked(
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        document,
+                        action="insert",
+                        index_data_view=index_data_view,
+                        indexes_view=indexes_view,
+                    )
+                except Exception:
+                    self._restore_collection_state_locked(
+                        db_name,
+                        coll_name,
+                        snapshot,
+                        storage=storage_view,
+                        indexes=indexes_view,
+                        index_data=index_data_view,
+                        search_indexes=search_indexes_view,
+                        collections=collections_view,
+                        options=option_store,
+                    )
+                    raise
                 return UpdateResult(
                     matched_count=1,
                     modified_count=1 if modified else 0,
@@ -1473,6 +1827,7 @@ class MemoryEngine(AsyncStorageEngine):
             semantics.compiled_upsert_plan.apply(new_doc)
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
+            assert_valid_root_document_id(new_doc["_id"])
             if not bypass_document_validation:
                 enforce_collection_document_validation(
                     new_doc,
@@ -1482,14 +1837,24 @@ class MemoryEngine(AsyncStorageEngine):
                     dialect=semantics.dialect,
                 )
 
+            snapshot = self._snapshot_collection_state_locked(
+                db_name,
+                coll_name,
+                storage=storage_view,
+                indexes=indexes_view,
+                index_data=index_data_view,
+                search_indexes=search_indexes_view,
+                collections=collections_view,
+                options=option_store,
+            )
             with self._meta_lock:
-                db = self._storage_view(context).setdefault(db_name, {})
+                db = storage_view.setdefault(db_name, {})
                 coll = db.setdefault(coll_name, {})
                 self._register_collection_locked(
                     db_name,
                     coll_name,
-                    collections=self._collections_view(context),
-                    collection_options=self._collection_options_view(context),
+                    collections=collections_view,
+                    collection_options=option_store,
                 )
 
             storage_key = self._storage_key(new_doc["_id"])
@@ -1504,17 +1869,31 @@ class MemoryEngine(AsyncStorageEngine):
                 storage_view=storage_view,
                 index_data_view=index_data_view,
             )
-            coll[storage_key] = self._encode_storage_document(new_doc)
-            self._update_indexes_locked(
-                db_name,
-                coll_name,
-                storage_key,
-                new_doc,
-                action="insert",
-                index_data_view=index_data_view,
-                indexes_view=indexes_view,
-            )
-            self._invalidate_search_runtime_cache(db_name, coll_name)
+            try:
+                self._invalidate_search_runtime_cache(db_name, coll_name)
+                coll[storage_key] = self._encode_storage_document(new_doc)
+                self._update_indexes_locked(
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    new_doc,
+                    action="insert",
+                    index_data_view=index_data_view,
+                    indexes_view=indexes_view,
+                )
+            except Exception:
+                self._restore_collection_state_locked(
+                    db_name,
+                    coll_name,
+                    snapshot,
+                    storage=storage_view,
+                    indexes=indexes_view,
+                    index_data=index_data_view,
+                    search_indexes=search_indexes_view,
+                    collections=collections_view,
+                    options=option_store,
+                )
+                raise
             return UpdateResult(
                 matched_count=0,
                 modified_count=0,
@@ -1535,16 +1914,20 @@ class MemoryEngine(AsyncStorageEngine):
         query_plan = ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect)
         effective_collation = normalize_collation(operation.collation)
         async with self._get_lock(db_name, coll_name):
-            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
+            storage_view = self._storage_view(context)
+            coll = storage_view.get(db_name, {}).get(coll_name, {})
             indexes_view = self._indexes_view(context)
             index_data_view = self._index_data_view(context)
+            search_indexes_view = self._search_indexes_view(context)
+            collections_view = self._collections_view(context)
+            option_store = self._collection_options_view(context)
             self._purge_expired_documents_locked(
                 db_name,
                 coll_name,
                 context=context,
                 indexes_view=indexes_view,
                 index_data_view=index_data_view,
-                storage_view=self._storage_view(context),
+                storage_view=storage_view,
             )
             for storage_key, data in list(coll.items()):
                 document = self._borrow_storage_document(data)
@@ -1555,17 +1938,46 @@ class MemoryEngine(AsyncStorageEngine):
                     collation=effective_collation,
                 ):
                     continue
-                self._update_indexes_locked(
+                assert_document_matches_storage_key(
+                    document,
+                    storage_key,
+                    storage_key_for_id=self._storage_key,
+                )
+                snapshot = self._snapshot_collection_state_locked(
                     db_name,
                     coll_name,
-                    storage_key,
-                    document,
-                    action="delete",
-                    index_data_view=index_data_view,
-                    indexes_view=indexes_view,
+                    storage=storage_view,
+                    indexes=indexes_view,
+                    index_data=index_data_view,
+                    search_indexes=search_indexes_view,
+                    collections=collections_view,
+                    options=option_store,
                 )
-                del coll[storage_key]
-                self._invalidate_search_runtime_cache(db_name, coll_name)
+                try:
+                    self._invalidate_search_runtime_cache(db_name, coll_name)
+                    self._update_indexes_locked(
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        document,
+                        action="delete",
+                        index_data_view=index_data_view,
+                        indexes_view=indexes_view,
+                    )
+                    del coll[storage_key]
+                except Exception:
+                    self._restore_collection_state_locked(
+                        db_name,
+                        coll_name,
+                        snapshot,
+                        storage=storage_view,
+                        indexes=indexes_view,
+                        index_data=index_data_view,
+                        search_indexes=search_indexes_view,
+                        collections=collections_view,
+                        options=option_store,
+                    )
+                    raise
                 return DeleteResult(deleted_count=1)
             return DeleteResult(deleted_count=0)
 
@@ -1683,7 +2095,18 @@ class MemoryEngine(AsyncStorageEngine):
             storage_view = self._storage_view(context)
             collections = self._collections_view(context)
             option_store = self._collection_options_view(context)
+            search_indexes = self._search_indexes_view(context)
             enforce_deadline(deadline)
+            mutation_snapshot = self._snapshot_collection_state_locked(
+                db_name,
+                coll_name,
+                storage=storage_view,
+                indexes=indexes_view,
+                index_data=index_data_view,
+                search_indexes=search_indexes,
+                collections=collections,
+                options=option_store,
+            )
             with self._meta_lock:
                 db_indexes = indexes_view.setdefault(db_name, {})
                 coll_indexes = db_indexes.setdefault(coll_name, [])
@@ -1769,24 +2192,53 @@ class MemoryEngine(AsyncStorageEngine):
                         )
                     seen.add(key)
 
+            ttl_indexes = [
+                index
+                for index in coll_indexes
+                if index.expire_after_seconds is not None
+            ]
+            if new_index.expire_after_seconds is not None:
+                ttl_indexes.append(new_index)
+            self._assert_expired_documents_have_stable_identity_locked(
+                db_name,
+                coll_name,
+                ttl_indexes,
+                context=context,
+                storage_view=storage_view,
+            )
+
             enforce_deadline(deadline)
             coll_indexes.append(new_index)
-            if is_ordered_index_spec(normalized_keys):
-                self._rebuild_index_data_locked(
+            try:
+                if is_ordered_index_spec(normalized_keys):
+                    self._rebuild_index_data_locked(
+                        db_name,
+                        coll_name,
+                        new_index,
+                        index_data_view=index_data_view,
+                        storage_view=storage_view,
+                    )
+                self._purge_expired_documents_locked(
                     db_name,
                     coll_name,
-                    new_index,
+                    context=context,
+                    indexes_view=indexes_view,
                     index_data_view=index_data_view,
                     storage_view=storage_view,
                 )
-            self._purge_expired_documents_locked(
-                db_name,
-                coll_name,
-                context=context,
-                indexes_view=indexes_view,
-                index_data_view=index_data_view,
-                storage_view=storage_view,
-            )
+            except Exception:
+                self._restore_collection_state_locked(
+                    db_name,
+                    coll_name,
+                    mutation_snapshot,
+                    storage=storage_view,
+                    indexes=indexes_view,
+                    index_data=index_data_view,
+                    search_indexes=search_indexes,
+                    collections=collections,
+                    options=option_store,
+                )
+                raise
         return index_name
 
     @override
@@ -1916,7 +2368,10 @@ class MemoryEngine(AsyncStorageEngine):
                 ]
                 for key in stale_vector_cache_keys:
                     del self._vector_document_cache[key]
-        self._profiler.clear(db_name)
+        try:
+            self._profiler.clear(db_name)
+        except Exception:
+            pass
 
     @override
     async def drop_indexes(
@@ -1956,30 +2411,65 @@ class MemoryEngine(AsyncStorageEngine):
             collections = self._collections_view(context)
             option_store = self._collection_options_view(context)
             enforce_deadline(deadline)
-            with self._meta_lock:
-                self._register_collection_locked(
-                    db_name,
-                    coll_name,
-                    collections=collections,
-                    collection_options=option_store,
-                )
-                db_search_indexes = search_indexes.setdefault(db_name, {})
-                coll_search_indexes = db_search_indexes.setdefault(coll_name, [])
-                for existing in coll_search_indexes:
-                    if existing.name == normalized_definition.name:
-                        if existing != normalized_definition:
-                            raise OperationFailure(
-                                f"Conflicting search index definition for '{normalized_definition.name}'"
-                            )
-                        return normalized_definition.name
-                coll_search_indexes.append(normalized_definition)
-                self._mark_search_index_pending(db_name, coll_name, normalized_definition.name)
+            coll_search_indexes = search_indexes.get(db_name, {}).get(coll_name, [])
+            for existing in coll_search_indexes:
+                if existing.name == normalized_definition.name:
+                    if existing != normalized_definition:
+                        raise OperationFailure(
+                            f"Conflicting search index definition for '{normalized_definition.name}'"
+                        )
+                    return normalized_definition.name
+            mutation_snapshot = self._snapshot_collection_state_locked(
+                db_name,
+                coll_name,
+                storage=self._storage_view(context),
+                indexes=self._indexes_view(context),
+                index_data=self._index_data_view(context),
+                search_indexes=search_indexes,
+                collections=collections,
+                options=option_store,
+            )
+            runtime_snapshot = self._snapshot_search_runtime_state_locked(
+                db_name,
+                {coll_name},
+            )
+            try:
                 self._invalidate_search_runtime_cache(
                     db_name,
                     coll_name,
                     index_name=normalized_definition.name,
                 )
-                return normalized_definition.name
+                with self._meta_lock:
+                    self._register_collection_locked(
+                        db_name,
+                        coll_name,
+                        collections=collections,
+                        collection_options=option_store,
+                    )
+                    db_search_indexes = search_indexes.setdefault(db_name, {})
+                    coll_search_indexes = db_search_indexes.setdefault(coll_name, [])
+                    coll_search_indexes.append(normalized_definition)
+                    self._mark_search_index_pending(db_name, coll_name, normalized_definition.name)
+                    return normalized_definition.name
+            except Exception:
+                with self._meta_lock:
+                    self._restore_collection_state_locked(
+                        db_name,
+                        coll_name,
+                        mutation_snapshot,
+                        storage=self._storage_view(context),
+                        indexes=self._indexes_view(context),
+                        index_data=self._index_data_view(context),
+                        search_indexes=search_indexes,
+                        collections=collections,
+                        options=option_store,
+                    )
+                    self._restore_search_runtime_state_locked(
+                        db_name,
+                        {coll_name},
+                        runtime_snapshot,
+                    )
+                raise
 
     @override
     async def list_search_indexes(
@@ -2025,18 +2515,53 @@ class MemoryEngine(AsyncStorageEngine):
                         definition,
                         index_type=existing.index_type,
                     )
-                    coll_search_indexes[idx] = SearchIndexDefinition(
-                        normalized_definition,
-                        name=name,
-                        index_type=existing.index_type,
-                    )
-                    self._mark_search_index_pending(db_name, coll_name, name)
-                    self._invalidate_search_runtime_cache(
+                    collections = self._collections_view(context)
+                    option_store = self._collection_options_view(context)
+                    mutation_snapshot = self._snapshot_collection_state_locked(
                         db_name,
                         coll_name,
-                        index_name=name,
+                        storage=self._storage_view(context),
+                        indexes=self._indexes_view(context),
+                        index_data=self._index_data_view(context),
+                        search_indexes=search_indexes,
+                        collections=collections,
+                        options=option_store,
                     )
-                    return
+                    runtime_snapshot = self._snapshot_search_runtime_state_locked(
+                        db_name,
+                        {coll_name},
+                    )
+                    try:
+                        self._invalidate_search_runtime_cache(
+                            db_name,
+                            coll_name,
+                            index_name=name,
+                        )
+                        coll_search_indexes[idx] = SearchIndexDefinition(
+                            normalized_definition,
+                            name=name,
+                            index_type=existing.index_type,
+                        )
+                        self._mark_search_index_pending(db_name, coll_name, name)
+                        return
+                    except Exception:
+                        self._restore_collection_state_locked(
+                            db_name,
+                            coll_name,
+                            mutation_snapshot,
+                            storage=self._storage_view(context),
+                            indexes=self._indexes_view(context),
+                            index_data=self._index_data_view(context),
+                            search_indexes=search_indexes,
+                            collections=collections,
+                            options=option_store,
+                        )
+                        self._restore_search_runtime_state_locked(
+                            db_name,
+                            {coll_name},
+                            runtime_snapshot,
+                        )
+                        raise
         raise OperationFailure(f"search index not found with name [{name}]")
 
     @override
@@ -2056,13 +2581,13 @@ class MemoryEngine(AsyncStorageEngine):
             enforce_deadline(deadline)
             for idx, existing in enumerate(coll_search_indexes):
                 if existing.name == name:
-                    del coll_search_indexes[idx]
-                    self._search_index_ready_at.pop((db_name, coll_name, name), None)
                     self._invalidate_search_runtime_cache(
                         db_name,
                         coll_name,
                         index_name=name,
                     )
+                    del coll_search_indexes[idx]
+                    self._search_index_ready_at.pop((db_name, coll_name, name), None)
                     if not coll_search_indexes:
                         del search_indexes[db_name][coll_name]
                     if not search_indexes[db_name]:
@@ -2286,7 +2811,8 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> EngineReadExecutionPlan:
-        del db_name, coll_name, context
+        del db_name, coll_name
+        self._ensure_session_can_use_engine(context)
         lineage = [
             ExecutionLineageStep(runtime="python", phase="scan", detail="engine scan"),
         ]
@@ -2461,58 +2987,118 @@ class MemoryEngine(AsyncStorageEngine):
                 ):
                     raise CollectionInvalid(f"collection '{new_name}' already exists")
 
-                db_storage = storage.get(db_name)
-                if db_storage is not None and coll_name in db_storage:
-                    db_storage[new_name] = db_storage.pop(coll_name)
-
-                db_indexes = indexes.get(db_name)
-                if db_indexes is not None and coll_name in db_indexes:
-                    db_indexes[new_name] = db_indexes.pop(coll_name)
-
-                db_index_data = index_data.get(db_name)
-                if db_index_data is not None and coll_name in db_index_data:
-                    db_index_data[new_name] = db_index_data.pop(coll_name)
-
-                db_search_indexes = search_indexes.get(db_name)
-                if db_search_indexes is not None and coll_name in db_search_indexes:
-                    db_search_indexes[new_name] = db_search_indexes.pop(coll_name)
-                ready_at = self._search_index_ready_at
-                for key in [key for key in ready_at if key[0] == db_name and key[1] == coll_name]:
-                    ready_at[(db_name, new_name, key[2])] = ready_at.pop(key)
-                stale_cache_keys = [
-                    key
-                    for key in self._search_document_cache
-                    if key[0] == db_name and key[1] == coll_name
-                ]
-                for key in stale_cache_keys:
-                    self._search_document_cache[(db_name, new_name, key[2])] = self._search_document_cache.pop(key)
-                stale_vector_cache_keys = [
-                    key
-                    for key in self._vector_document_cache
-                    if key[0] == db_name and key[1] == coll_name
-                ]
-                for key in stale_vector_cache_keys:
-                    self._vector_document_cache[(db_name, new_name, key[2])] = self._vector_document_cache.pop(key)
-
-                db_options = option_store.get(db_name)
-                if db_options is not None and coll_name in db_options:
-                    db_options[new_name] = db_options.pop(coll_name)
-
-                self._prune_collection_registry_locked(
+                source_snapshot = self._snapshot_collection_state_locked(
                     db_name,
                     coll_name,
+                    storage=storage,
+                    indexes=indexes,
+                    index_data=index_data,
+                    search_indexes=search_indexes,
                     collections=collections,
-                    collection_options=option_store,
+                    options=option_store,
                 )
-                self._register_collection_locked(
+                target_snapshot = self._snapshot_collection_state_locked(
                     db_name,
                     new_name,
-                    options=deepcopy(
-                        option_store.get(db_name, {}).get(new_name, {})
-                    ),
+                    storage=storage,
+                    indexes=indexes,
+                    index_data=index_data,
+                    search_indexes=search_indexes,
                     collections=collections,
-                    collection_options=option_store,
+                    options=option_store,
                 )
+                affected_names = {coll_name, new_name}
+                runtime_snapshot = self._snapshot_search_runtime_state_locked(
+                    db_name,
+                    affected_names,
+                )
+
+                try:
+                    db_storage = storage.get(db_name)
+                    if db_storage is not None and coll_name in db_storage:
+                        db_storage[new_name] = db_storage.pop(coll_name)
+
+                    db_indexes = indexes.get(db_name)
+                    if db_indexes is not None and coll_name in db_indexes:
+                        db_indexes[new_name] = db_indexes.pop(coll_name)
+
+                    db_index_data = index_data.get(db_name)
+                    if db_index_data is not None and coll_name in db_index_data:
+                        db_index_data[new_name] = db_index_data.pop(coll_name)
+
+                    db_search_indexes = search_indexes.get(db_name)
+                    if db_search_indexes is not None and coll_name in db_search_indexes:
+                        db_search_indexes[new_name] = db_search_indexes.pop(coll_name)
+                    ready_at = self._search_index_ready_at
+                    for key in [key for key in ready_at if key[0] == db_name and key[1] == coll_name]:
+                        ready_at[(db_name, new_name, key[2])] = ready_at.pop(key)
+                    stale_cache_keys = [
+                        key
+                        for key in self._search_document_cache
+                        if key[0] == db_name and key[1] == coll_name
+                    ]
+                    for key in stale_cache_keys:
+                        self._search_document_cache[(db_name, new_name, key[2])] = (
+                            self._search_document_cache.pop(key)
+                        )
+                    stale_vector_cache_keys = [
+                        key
+                        for key in self._vector_document_cache
+                        if key[0] == db_name and key[1] == coll_name
+                    ]
+                    for key in stale_vector_cache_keys:
+                        self._vector_document_cache[(db_name, new_name, key[2])] = (
+                            self._vector_document_cache.pop(key)
+                        )
+
+                    db_options = option_store.get(db_name)
+                    if db_options is not None and coll_name in db_options:
+                        db_options[new_name] = db_options.pop(coll_name)
+
+                    self._prune_collection_registry_locked(
+                        db_name,
+                        coll_name,
+                        collections=collections,
+                        collection_options=option_store,
+                    )
+                    self._register_collection_locked(
+                        db_name,
+                        new_name,
+                        options=deepcopy(
+                            option_store.get(db_name, {}).get(new_name, {})
+                        ),
+                        collections=collections,
+                        collection_options=option_store,
+                    )
+                except Exception:
+                    self._restore_collection_state_locked(
+                        db_name,
+                        coll_name,
+                        source_snapshot,
+                        storage=storage,
+                        indexes=indexes,
+                        index_data=index_data,
+                        search_indexes=search_indexes,
+                        collections=collections,
+                        options=option_store,
+                    )
+                    self._restore_collection_state_locked(
+                        db_name,
+                        new_name,
+                        target_snapshot,
+                        storage=storage,
+                        indexes=indexes,
+                        index_data=index_data,
+                        search_indexes=search_indexes,
+                        collections=collections,
+                        options=option_store,
+                    )
+                    self._restore_search_runtime_state_locked(
+                        db_name,
+                        affected_names,
+                        runtime_snapshot,
+                    )
+                    raise
 
     @override
     async def drop_collection(
@@ -2522,6 +3108,7 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
+        self._ensure_session_can_use_engine(context)
         if self._is_profile_namespace(coll_name):
             self._profiler.clear(db_name)
             return
@@ -2533,6 +3120,7 @@ class MemoryEngine(AsyncStorageEngine):
             collections = self._collections_view(context)
             option_store = self._collection_options_view(context)
             with self._meta_lock:
+                self._invalidate_search_runtime_cache(db_name, coll_name)
                 self._prune_collection_registry_locked(
                     db_name,
                     coll_name,
@@ -2559,4 +3147,3 @@ class MemoryEngine(AsyncStorageEngine):
                 ready_at = self._search_index_ready_at
                 for key in [key for key in ready_at if key[0] == db_name and key[1] == coll_name]:
                     del ready_at[key]
-                self._invalidate_search_runtime_cache(db_name, coll_name)

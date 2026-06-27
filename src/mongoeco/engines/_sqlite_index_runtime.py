@@ -33,21 +33,21 @@ def ensure_multikey_physical_indexes_sync(
     indexes: list[EngineIndexRecord],
 ) -> None:
     had_transaction = conn.in_transaction
-    created_any = False
+    ensured_names: set[str] = set()
     for index in indexes:
         if not index.get("multikey"):
             continue
         physical_name = str(index["multikey_physical_name"])
-        if physical_name in engine._ensured_multikey_physical_indexes:
+        if physical_name in engine._ensured_multikey_physical_indexes or physical_name in ensured_names:
             continue
         conn.execute(
             f"CREATE INDEX IF NOT EXISTS {engine._quote_identifier(physical_name)} "
             "ON multikey_entries (collection_id, index_name, type_score, element_key, storage_key)"
         )
-        engine._ensured_multikey_physical_indexes.add(physical_name)
-        created_any = True
-    if created_any and not had_transaction and conn.in_transaction:
+        ensured_names.add(physical_name)
+    if ensured_names and not had_transaction and conn.in_transaction:
         conn.commit()
+    engine._ensured_multikey_physical_indexes.update(ensured_names)
 
 
 def ensure_scalar_physical_indexes_sync(

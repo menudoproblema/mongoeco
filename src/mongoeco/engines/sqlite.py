@@ -25,7 +25,11 @@ from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS, bson_engine_
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.identity import canonical_document_id
+from mongoeco.core.identity import (
+    assert_document_matches_storage_key,
+    assert_valid_root_document_id,
+    canonical_document_id,
+)
 from mongoeco.core.json_compat import json_dumps_compact, json_loads
 from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
@@ -213,7 +217,7 @@ from mongoeco.engines.sqlite_query import (
     translate_compiled_update_plan,
     SQLiteQueryTranslator,
 )
-from mongoeco.errors import CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure
+from mongoeco.errors import CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure, WriteError
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters,
@@ -411,6 +415,30 @@ class SQLiteEngine(AsyncStorageEngine):
     ]:
         return self._cache_state.materialized_search_entry_cache
 
+    def _clear_compound_search_caches(
+        self,
+        db_name: str | None = None,
+        coll_name: str | None = None,
+    ) -> None:
+        for attr_name in (
+            "_compound_should_score_cache",
+            "_compound_rank_cache",
+            "_compound_topk_prefilter_cache",
+        ):
+            cache = getattr(self, attr_name, None)
+            if cache is None:
+                continue
+            if db_name is None:
+                cache.clear()
+                continue
+            stale_keys = [
+                key
+                for key in cache
+                if key[0] == db_name and (coll_name is None or key[1] == coll_name)
+            ]
+            for key in stale_keys:
+                cache.pop(key, None)
+
     def _runtime_diagnostics_info(self) -> dict[str, object]:
         declared_search_index_count = 0
         pending_search_index_count = 0
@@ -606,6 +634,7 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> None:
         if context is None:
             return
+        self._session_runtime.ensure_session_can_use_engine(context)
         context.update_engine_state(
             self._engine_key(),
             last_operation={
@@ -718,6 +747,9 @@ class SQLiteEngine(AsyncStorageEngine):
     def _session_owns_transaction(self, context: ClientSession | None) -> bool:
         return self._session_runtime.session_owns_transaction(context)
 
+    def _ensure_session_can_use_engine(self, context: ClientSession | None) -> None:
+        self._session_runtime.ensure_session_can_use_engine(context)
+
     def _require_connection(self, context: ClientSession | None = None) -> sqlite3.Connection:
         return self._session_runtime.require_connection(context)
 
@@ -759,6 +791,7 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None,
     ) -> int:
+        self._ensure_session_can_use_engine(context)
         try:
             ttl_indexes = [
                 index
@@ -776,6 +809,11 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._document_expired_by_ttl(document, index, now=now)
                 for index in ttl_indexes
             ):
+                assert_document_matches_storage_key(
+                    document,
+                    storage_key,
+                    storage_key_for_id=self._storage_key,
+                )
                 expired.append((storage_key, document))
         if not expired:
             return 0
@@ -798,6 +836,30 @@ class SQLiteEngine(AsyncStorageEngine):
             raise
         self._invalidate_collection_features_cache(db_name, coll_name)
         return len(expired)
+
+    def _assert_expired_documents_have_stable_identity_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        ttl_indexes: list[EngineIndexRecord],
+    ) -> None:
+        effective_ttl_indexes = [
+            index for index in ttl_indexes if index.expire_after_seconds is not None
+        ]
+        if not effective_ttl_indexes:
+            return
+        now = datetime.datetime.now(datetime.timezone.utc)
+        for storage_key, document in self._load_documents(db_name, coll_name):
+            if not any(
+                self._document_expired_by_ttl(document, index, now=now)
+                for index in effective_ttl_indexes
+            ):
+                continue
+            assert_document_matches_storage_key(
+                document,
+                storage_key,
+                storage_key_for_id=self._storage_key,
+            )
 
     def _storage_key(self, value: Any) -> str:
         return repr(canonical_document_id(value))
@@ -825,6 +887,7 @@ class SQLiteEngine(AsyncStorageEngine):
     def _mark_search_backend_changed(self, db_name: str, coll_name: str) -> None:
         cache_key = (db_name, coll_name)
         self._search_backend_versions[cache_key] = self._search_backend_versions.get(cache_key, 0) + 1
+        self._clear_compound_search_caches(db_name, coll_name)
         stale_keys = [
             key
             for key, state in self._vector_search_backends.items()
@@ -844,6 +907,7 @@ class SQLiteEngine(AsyncStorageEngine):
         return self._search_backend_versions.get((db_name, coll_name), 0)
 
     def _clear_search_backend_state_for_database(self, db_name: str) -> None:
+        self._clear_compound_search_caches(db_name)
         stale_version_keys = [key for key in self._search_backend_versions if key[0] == db_name]
         for key in stale_version_keys:
             self._search_backend_versions.pop(key, None)
@@ -2011,6 +2075,24 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> None:
         conn = self._require_connection()
         collection_id = self._lookup_collection_id(conn, db_name, coll_name)
+        if "_id" in document:
+            document_id_storage_key = self._storage_key(document["_id"])
+            rows = conn.execute(
+                """
+                SELECT storage_key, document
+                FROM documents
+                WHERE db_name = ? AND coll_name = ?
+                """,
+                (db_name, coll_name),
+            ).fetchall()
+            for storage_key, payload in rows:
+                if exclude_storage_key is not None and storage_key == exclude_storage_key:
+                    continue
+                if storage_key == document_id_storage_key:
+                    continue
+                existing_document = self._deserialize_document(payload)
+                if "_id" in existing_document and self._storage_key(existing_document["_id"]) == document_id_storage_key:
+                    raise DuplicateKeyError(f"Duplicate key: _id={document['_id']}")
         for index in self._load_indexes(db_name, coll_name):
             if not index["unique"]:
                 continue
@@ -2085,14 +2167,24 @@ class SQLiteEngine(AsyncStorageEngine):
             return self._typed_engine_key(None)
         return self._typed_engine_key(values[0])
 
-    def _select_first_document_for_plan(self, db_name: str, coll_name: str, plan: QueryNode, *, hint: str | IndexKeySpec | None = None) -> tuple[str, Document] | None:
-        return _sqlite_runtime_select_first_document_for_plan(
-            self,
-            db_name,
-            coll_name,
-            plan,
-            hint=hint,
-        )
+    def _select_first_document_for_plan(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: QueryNode,
+        *,
+        hint: str | IndexKeySpec | None = None,
+        context: ClientSession | None = None,
+    ) -> tuple[str, Document] | None:
+        conn = self._require_connection(context)
+        with self._bind_connection(conn):
+            return _sqlite_runtime_select_first_document_for_plan(
+                self,
+                db_name,
+                coll_name,
+                plan,
+                hint=hint,
+            )
 
     def _select_first_document_for_scalar_index(
         self,
@@ -2210,7 +2302,7 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> EngineReadExecutionPlan:
-        del context
+        self._ensure_session_can_use_engine(context)
         return await self._run_blocking(
             self._plan_find_semantics_sync,
             db_name,
@@ -3161,6 +3253,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._vector_search_backends.clear()
                 self._search_backend_versions.clear()
                 self._materialized_search_entry_cache.clear()
+                self._clear_compound_search_caches()
                 self._fts5_available = None
                 self._invalidate_index_cache()
                 self._invalidate_collection_id_cache()
@@ -3175,6 +3268,7 @@ class SQLiteEngine(AsyncStorageEngine):
         return connection
 
     def _can_use_dedicated_reader(self, context: ClientSession | None) -> bool:
+        self._ensure_session_can_use_engine(context)
         return self._path != ":memory:" and not self._session_owns_transaction(context)
 
     def _ensure_collection_row(
@@ -3254,6 +3348,7 @@ class SQLiteEngine(AsyncStorageEngine):
             self._vector_search_backends.clear()
             self._search_backend_versions.clear()
             self._materialized_search_entry_cache.clear()
+            self._clear_compound_search_caches()
             self._fts5_available = None
         if connection is not None:
             connection.close()
@@ -3274,6 +3369,8 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         bypass_document_validation: bool = False,
     ) -> bool:
+        if "_id" in document:
+            assert_valid_root_document_id(document["_id"])
         storage_key = self._storage_key(document.get("_id"))
         serialized_document = self._serialize_document(document)
 
@@ -3407,6 +3504,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
 
     def _prepare_bulk_document_sync(self, document: Document) -> tuple[str, str]:
+        if "_id" in document:
+            assert_valid_root_document_id(document["_id"])
         return self._storage_key(document.get("_id")), self._serialize_document(document)
 
     def _snapshot_bulk_insert_preparation_sync(
@@ -3436,6 +3535,7 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     def _get_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, projection: Projection | None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
+        self._ensure_session_can_use_engine(context)
         effective_dialect = dialect or MONGODB_DIALECT_70
         if self._is_profile_namespace(coll_name):
             profile_document = getattr(self._admin_runtime, "profile_namespace_document", None)
@@ -3466,11 +3566,26 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
 
     def _delete_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, context: ClientSession | None) -> bool:
+        self._ensure_session_can_use_engine(context)
         if self._is_profile_namespace(coll_name):
             return False
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
+                document = _sqlite_get_document(
+                    conn,
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    doc_id=doc_id,
+                    projection=None,
+                    dialect=MONGODB_DIALECT_70,
+                    storage_key=self._storage_key(doc_id),
+                    deserialize_document=lambda payload: DocumentCodec.to_public(self._deserialize_document(payload)),
+                )
+                if document is None:
+                    return False
+                if "_id" in document:
+                    assert_valid_root_document_id(document["_id"])
                 return _sqlite_delete_document(
                     conn,
                     db_name=db_name,
@@ -3494,6 +3609,7 @@ class SQLiteEngine(AsyncStorageEngine):
         semantics: EngineFindSemantics,
         context: ClientSession | None = None,
     ):
+        self._ensure_session_can_use_engine(context)
         text_query = semantics.text_query
         if text_query is None:
             return documents
@@ -3533,6 +3649,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         dialect: MongoDialect | None = None,
     ):
+        self._ensure_session_can_use_engine(context)
         semantics = (
             semantics_or_filter_spec
             if isinstance(semantics_or_filter_spec, EngineFindSemantics)
@@ -3611,6 +3728,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     coll_name,
                     semantics.query_plan,
                     hint=hint,
+                    context=context,
                 )
             except NotImplementedError:
                 selected = None
@@ -3794,6 +3912,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         context=context,
                     ),
                     select_first_document_for_plan=self._select_first_document_for_plan,
+                    storage_key_for_id=self._storage_key,
                     begin_write=lambda current: self._begin_write(current, context),
                     commit_write=lambda current: self._commit_write(current, context),
                     rollback_write=lambda current: self._rollback_write(current, context),
@@ -3819,6 +3938,7 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
         dialect: MongoDialect | None = None,
     ) -> int:
+        self._ensure_session_can_use_engine(context)
         semantics = (
             semantics_or_filter_spec
             if isinstance(semantics_or_filter_spec, EngineFindSemantics)
@@ -3925,6 +4045,11 @@ class SQLiteEngine(AsyncStorageEngine):
                     physical_multikey_index_name=self._physical_multikey_index_name,
                     physical_scalar_index_name=self._physical_scalar_index_name,
                     is_builtin_id_index=self._is_builtin_id_index,
+                    validate_ttl_index_candidates=lambda ttl_indexes: self._assert_expired_documents_have_stable_identity_sync(
+                        db_name,
+                        coll_name,
+                        ttl_indexes,
+                    ),
                     replace_multikey_entries_for_document=self._replace_multikey_entries_for_index_for_document,
                     replace_scalar_entries_for_document=self._replace_scalar_entries_for_index_for_document,
                     load_documents=self._load_documents,
@@ -4237,6 +4362,7 @@ class SQLiteEngine(AsyncStorageEngine):
             )
 
     def _drop_collection_sync(self, db_name: str, coll_name: str, context: ClientSession | None = None) -> None:
+        self._ensure_session_can_use_engine(context)
         if self._is_profile_namespace(coll_name):
             self._admin_runtime.clear_profile_namespace(db_name)
             return
@@ -4279,7 +4405,7 @@ class SQLiteEngine(AsyncStorageEngine):
         slow_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> ProfilingCommandResult:
-        del context
+        self._ensure_session_can_use_engine(context)
         return self._admin_runtime.set_profiling_level(
             db_name,
             level,

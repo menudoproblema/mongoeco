@@ -67,6 +67,13 @@ def _validate_watch_session(session: ClientSession | None) -> None:
         raise InvalidOperation("watch does not support explicit sessions")
 
 
+def _ensure_session_active(session: object | None) -> None:
+    if session is not None:
+        ensure_active = getattr(session, "ensure_active", None)
+        if callable(ensure_active):
+            ensure_active()
+
+
 class AsyncDatabase:
     """Representa una base de datos de MongoDB."""
 
@@ -556,6 +563,7 @@ class AsyncMongoClient:
         *,
         session: ClientSession | None = None,
     ) -> list[str]:
+        _ensure_session_active(session)
         return await self._engine.list_databases(context=session)
 
     async def drop_database(
@@ -564,6 +572,7 @@ class AsyncMongoClient:
         *,
         session: ClientSession | None = None,
     ) -> None:
+        _ensure_session_active(session)
         fast_drop = getattr(self._engine, "drop_database", None)
         if callable(fast_drop):
             await fast_drop(name, context=session)

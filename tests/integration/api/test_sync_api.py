@@ -160,6 +160,32 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     remaining = collection.list_search_indexes().to_list()
                     self.assertEqual([document["name"] for document in remaining], ["by_text", "default"])
 
+    def test_create_search_indexes_rolls_back_created_indexes_on_later_failure(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.search.get_collection("docs")
+                    collection.create_search_index(
+                        SearchIndexModel({"mappings": {"dynamic": True}}, name="conflict")
+                    )
+
+                    with self.assertRaises(OperationFailure):
+                        collection.create_search_indexes(
+                            [
+                                SearchIndexModel(
+                                    {"mappings": {"dynamic": False}},
+                                    name="created-before-fail",
+                                ),
+                                SearchIndexModel(
+                                    {"mappings": {"dynamic": False}},
+                                    name="conflict",
+                                ),
+                            ]
+                        )
+
+                    listed = collection.list_search_indexes().to_list()
+                    self.assertEqual([document["name"] for document in listed], ["conflict"])
+
     def test_aggregate_search_executes_text_search_and_rejects_invalid_runtime(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -2200,6 +2226,192 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(invalidate_event["operationType"], "invalidate")
                     self.assertFalse(invalidate_stream.alive)
 
+    def test_watch_defers_transaction_events_until_commit_and_discards_abort(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.observe.get_collection("items")
+                    collection.insert_many(
+                        [
+                            {"_id": "update-target", "name": "Ada"},
+                            {"_id": "delete-target", "name": "Grace"},
+                        ]
+                    )
+                    stream = collection.watch(max_await_time_ms=25)
+
+                    session = client.start_session()
+                    session.start_transaction()
+                    collection.insert_one({"_id": "ghost"}, session=session)
+                    collection.update_one(
+                        {"_id": "update-target"},
+                        {"$set": {"name": "Ada Lovelace"}},
+                        session=session,
+                    )
+                    collection.delete_one({"_id": "delete-target"}, session=session)
+
+                    self.assertIsNone(stream.try_next())
+                    session.abort_transaction()
+                    self.assertIsNone(stream.try_next())
+                    self.assertIsNone(collection.find_one({"_id": "ghost"}))
+                    self.assertEqual(
+                        collection.find_one({"_id": "update-target"}),
+                        {"_id": "update-target", "name": "Ada"},
+                    )
+                    self.assertEqual(
+                        collection.find_one({"_id": "delete-target"}),
+                        {"_id": "delete-target", "name": "Grace"},
+                    )
+
+                    session = client.start_session()
+                    session.start_transaction()
+                    collection.insert_one({"_id": "committed"}, session=session)
+                    self.assertIsNone(stream.try_next())
+                    session.commit_transaction()
+
+                    event = stream.try_next()
+                    self.assertIsNotNone(event)
+                    self.assertEqual(event["operationType"], "insert")
+                    self.assertEqual(event["documentKey"], {"_id": "committed"})
+                    self.assertEqual(
+                        collection.find_one({"_id": "committed"}),
+                        {"_id": "committed"},
+                    )
+
+    def test_change_stream_publish_failure_does_not_fail_completed_writes(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.observe.get_collection("items")
+
+                    def _boom(**_payload):
+                        raise RuntimeError("publish boom")
+
+                    client._async_client._change_hub.publish = _boom  # type: ignore[method-assign]
+
+                    direct_result = collection.insert_one({"_id": "direct"})
+                    self.assertEqual(direct_result.inserted_id, "direct")
+                    self.assertEqual(collection.find_one({"_id": "direct"}), {"_id": "direct"})
+
+                    session = client.start_session()
+                    session.start_transaction()
+                    collection.insert_one({"_id": "committed"}, session=session)
+                    session.commit_transaction()
+
+                    self.assertFalse(session.in_transaction)
+                    self.assertEqual(
+                        collection.find_one({"_id": "committed"}),
+                        {"_id": "committed"},
+                    )
+
+    def test_profile_recording_failure_does_not_fail_completed_operations(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.observe.get_collection("items")
+
+                    def _profile_boom(*_args, **_kwargs):
+                        raise RuntimeError("profile boom")
+
+                    client._async_client._engine._record_profile_event = _profile_boom  # type: ignore[method-assign]
+
+                    insert_result = collection.insert_one({"_id": "profiled"})
+                    self.assertEqual(insert_result.inserted_id, "profiled")
+                    self.assertEqual(collection.find_one({"_id": "profiled"}), {"_id": "profiled"})
+                    self.assertEqual(client.admin.command("ping")["ok"], 1.0)
+
+                    async def _write_boom(*_args, **_kwargs):
+                        raise RuntimeError("write boom")
+
+                    client._async_client._engine.put_document = _write_boom  # type: ignore[method-assign]
+                    with self.assertRaisesRegex(RuntimeError, "write boom"):
+                        collection.insert_one({"_id": "failed"})
+
+    def test_operation_metadata_failure_does_not_fail_completed_bulk_write(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.observe.get_collection("items")
+                    session = client.start_session()
+
+                    with session:
+                        def _metadata_boom(*_args, **_kwargs):
+                            raise RuntimeError("metadata boom")
+
+                        client._async_client._engine._record_operation_metadata = _metadata_boom  # type: ignore[method-assign]
+
+                        result = collection.bulk_write(
+                            [InsertOne({"_id": "metadata"})],
+                            session=session,
+                        )
+
+                        self.assertEqual(result.inserted_count, 1)
+                        self.assertIsNotNone(session.operation_time)
+                        self.assertEqual(collection.find_one({"_id": "metadata"}), {"_id": "metadata"})
+
+    def test_drop_database_profiler_cleanup_failure_does_not_fail_completed_drop(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    client.profiled.items.insert_one({"_id": "drop-me"})
+                    engine = client._async_client._engine
+                    original_clear = engine._profiler.clear
+
+                    def _clear_boom(*_args, **_kwargs):
+                        raise RuntimeError("profiler clear boom")
+
+                    engine._profiler.clear = _clear_boom  # type: ignore[method-assign]
+                    try:
+                        client.drop_database("profiled")
+                    finally:
+                        engine._profiler.clear = original_clear  # type: ignore[method-assign]
+
+                    self.assertIsNone(client.profiled.items.find_one({"_id": "drop-me"}))
+                    self.assertNotIn("profiled", client.list_database_names())
+
+    def test_closed_sessions_fail_before_collection_side_effects(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.observe.get_collection("items")
+                    session = client.start_session()
+                    session.close()
+
+                    with self.assertRaises(InvalidOperation):
+                        collection.insert_one({"_id": "closed"}, session=session)
+                    self.assertIsNone(collection.find_one({"_id": "closed"}))
+
+                    with self.assertRaises(InvalidOperation):
+                        collection.bulk_write(
+                            [InsertOne({"_id": "closed-bulk"})],
+                            session=session,
+                        )
+                    self.assertIsNone(collection.find_one({"_id": "closed-bulk"}))
+
+                    with self.assertRaises(InvalidOperation):
+                        client.observe.command(
+                            {"insert": "items", "documents": [{"_id": "closed-command"}]},
+                            session=session,
+                        )
+                    self.assertIsNone(collection.find_one({"_id": "closed-command"}))
+
+                    with self.assertRaises(InvalidOperation):
+                        collection.create_index("tenant", session=session)
+                    self.assertNotIn("tenant_1", collection.index_information())
+
+                    database = client.get_database("closed_admin")
+                    database.create_collection("existing")
+
+                    with self.assertRaises(InvalidOperation):
+                        database.create_collection("new_collection", session=session)
+                    self.assertNotIn("new_collection", database.list_collection_names())
+
+                    with self.assertRaises(InvalidOperation):
+                        client.list_database_names(session=session)
+
+                    with self.assertRaises(InvalidOperation):
+                        client.drop_database("closed_admin", session=session)
+                    self.assertEqual(database.list_collection_names(), ["existing"])
+
     def test_collection_json_schema_validator_rejects_invalid_inserts_and_updates(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -2635,7 +2847,77 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.assertRaisesRegex(OperationFailure, "Write conflict"):
                 second.commit_transaction()
 
+            self.assertTrue(second.in_transaction)
+            self.assertEqual(
+                client.alpha.users.find_one({"_id": "1"}, session=second),
+                {"_id": "1", "name": "Grace"},
+            )
+            client.alpha.users.insert_one({"_id": "after-conflict"}, session=second)
+            self.assertIsNone(client.alpha.users.find_one({"_id": "after-conflict"}))
+            second.abort_transaction()
+
             self.assertEqual(client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
+            self.assertIsNone(client.alpha.users.find_one({"_id": "after-conflict"}))
+
+    def test_transaction_session_cannot_write_through_foreign_engine(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as owner_client, MongoClient(factory()) as foreign_client:
+                    session = owner_client.start_session()
+
+                    with self.assertRaises(InvalidOperation):
+                        foreign_client.alpha.users.insert_one({"_id": "foreign-non-tx"}, session=session)
+                    with self.assertRaises(InvalidOperation):
+                        foreign_client.list_database_names(session=session)
+                    with self.assertRaises(InvalidOperation):
+                        foreign_client.alpha.command({"profile": -1}, session=session)
+                    with self.assertRaises(InvalidOperation):
+                        foreign_client.alpha.command({"ping": 1}, session=session)
+                    with self.assertRaises(InvalidOperation):
+                        foreign_client.alpha.command({"hello": 1}, session=session)
+                    with self.assertRaises(InvalidOperation):
+                        foreign_client.alpha.users.aggregate(
+                            [{"$currentOp": {}}],
+                            session=session,
+                        ).to_list()
+                    self.assertIsNone(foreign_client.alpha.users.find_one({"_id": "foreign-non-tx"}))
+
+                    foreign_client.alpha.users.insert_one(
+                        {"_id": "count-seed", "marker": "count", "items": [{"value": 1}]}
+                    )
+                    with self.assertRaises(InvalidOperation):
+                        foreign_client.alpha.users.count_documents(
+                            {"$expr": {"$eq": ["$marker", "count"]}},
+                            session=session,
+                        )
+                    with self.assertRaises(InvalidOperation):
+                        foreign_client.alpha.users.count_documents(
+                            {"items": {"$elemMatch": {"value": 1}}},
+                            session=session,
+                        )
+                    self.assertEqual(foreign_client.alpha.users.count_documents({}), 1)
+
+                    foreign_client.alpha.command({"profile": 2})
+                    foreign_client.alpha.users.insert_one({"_id": "profile-seed"})
+                    profile_collection = foreign_client.alpha.get_collection("system.profile")
+                    profile_entries = profile_collection.find({}).to_list()
+                    self.assertGreaterEqual(len(profile_entries), 1)
+                    profile_id = profile_entries[0]["_id"]
+                    with self.assertRaises(InvalidOperation):
+                        profile_collection.find_one({"_id": profile_id}, session=session)
+                    with self.assertRaises(InvalidOperation):
+                        profile_collection.delete_one({"_id": profile_id}, session=session)
+                    with self.assertRaises(InvalidOperation):
+                        profile_collection.drop(session=session)
+                    self.assertEqual(profile_collection.find({}).to_list(), profile_entries)
+
+                    session.start_transaction()
+
+                    with self.assertRaises(InvalidOperation):
+                        foreign_client.alpha.users.insert_one({"_id": "foreign"}, session=session)
+
+                    session.abort_transaction()
+                    self.assertIsNone(foreign_client.alpha.users.find_one({"_id": "foreign"}))
 
     def test_session_observes_operation_times_after_successful_collection_ops(self):
         with MongoClient(MemoryEngine()) as client:
@@ -3204,6 +3486,83 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(updated.modified_count, 2)
                     self.assertEqual(deleted.deleted_count, 2)
                     self.assertEqual(remaining, [{"_id": "3", "kind": "click", "done": False}])
+
+    def test_insert_many_duplicate_preserves_existing_and_publishes_prior_successes(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.observe.get_collection("items")
+                    collection.insert_one({"_id": "dup", "value": "original"})
+                    stream = collection.watch(max_await_time_ms=25)
+
+                    with self.assertRaises(DuplicateKeyError):
+                        collection.insert_many(
+                            [
+                                {"_id": "ok"},
+                                {"_id": "dup", "value": "replacement"},
+                                {"_id": "after"},
+                            ]
+                        )
+
+                    self.assertEqual(
+                        collection.find_one({"_id": "dup"}),
+                        {"_id": "dup", "value": "original"},
+                    )
+                    self.assertEqual(collection.find_one({"_id": "ok"}), {"_id": "ok"})
+                    self.assertIsNone(collection.find_one({"_id": "after"}))
+                    event = stream.try_next()
+                    self.assertIsNotNone(event)
+                    self.assertEqual(event["operationType"], "insert")
+                    self.assertEqual(event["documentKey"], {"_id": "ok"})
+                    self.assertIsNone(stream.try_next())
+
+    def test_insert_many_unique_duplicate_publishes_prior_successes(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.observe.get_collection("items")
+                    collection.create_index(["email"], unique=True)
+                    stream = collection.watch(max_await_time_ms=25)
+
+                    with self.assertRaises(DuplicateKeyError):
+                        collection.insert_many(
+                            [
+                                {"_id": "ok", "email": "same@example.com"},
+                                {"_id": "dup", "email": "same@example.com"},
+                                {"_id": "after", "email": "after@example.com"},
+                            ]
+                        )
+
+                    self.assertEqual(
+                        collection.find({}, sort=[("_id", 1)]).to_list(),
+                        [{"_id": "ok", "email": "same@example.com"}],
+                    )
+                    event = stream.try_next()
+                    self.assertIsNotNone(event)
+                    self.assertEqual(event["operationType"], "insert")
+                    self.assertEqual(event["documentKey"], {"_id": "ok"})
+                    self.assertIsNone(stream.try_next())
+
+    def test_insert_many_validation_failure_writes_no_partial_batch(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.observe.create_collection(
+                        "validated_items",
+                        validator={"$jsonSchema": {"required": ["name"]}},
+                    )
+                    stream = collection.watch(max_await_time_ms=25)
+
+                    with self.assertRaises(DocumentValidationFailure):
+                        collection.insert_many(
+                            [
+                                {"_id": "valid-before-error", "name": "Ada"},
+                                {"_id": "invalid"},
+                            ]
+                        )
+
+                    self.assertEqual(collection.find({}).to_list(), [])
+                    self.assertIsNone(stream.try_next())
 
     def test_delete_last_document_keeps_collection_visible_until_drop(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -7294,6 +7653,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             },
                         ],
                     )
+
+    def test_pipeline_updates_preserve_id_and_reject_id_changes(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.users
+                    collection.insert_one({"_id": "1", "name": "Ada", "legacy": True})
+
+                    result = collection.update_one(
+                        {"_id": "1"},
+                        [{"$project": {"_id": 0, "name": 1}}],
+                    )
+
+                    self.assertEqual(result.modified_count, 1)
+                    self.assertEqual(collection.find_one({"_id": "1"}), {"name": "Ada", "_id": "1"})
+
+                    with self.assertRaises(OperationFailure):
+                        collection.update_one({"_id": "1"}, [{"$set": {"_id": "2"}}])
+
+                    self.assertEqual(collection.find_one({"_id": "1"}), {"name": "Ada", "_id": "1"})
+                    self.assertIsNone(collection.find_one({"_id": "2"}))
 
     def test_operations_after_close_raise_invalid_operation(self):
         client = MongoClient()

@@ -118,6 +118,13 @@ class AsyncDatabaseAdminService:
         return self._database._mongodb_dialect
 
     @staticmethod
+    def _ensure_session_active(session: object | None) -> None:
+        if session is not None:
+            ensure_active = getattr(session, "ensure_active", None)
+            if callable(ensure_active):
+                ensure_active()
+
+    @staticmethod
     def _normalize_filter(filter_spec: object | None) -> Filter:
         return normalize_filter_document(filter_spec)
 
@@ -167,6 +174,7 @@ class AsyncDatabaseAdminService:
             explicit={"filter_spec": filter_spec, "session": session},
             extra_kwargs={"filter": filter, **kwargs},
         )
+        self._ensure_session_active(options.get("session"))
         normalized_filter = (
             None
             if options.get("filter_spec") is None
@@ -188,6 +196,7 @@ class AsyncDatabaseAdminService:
         *,
         session: ClientSession | None = None,
     ) -> list[CollectionListingSnapshot]:
+        self._ensure_session_active(session)
         names = await self._engine.list_collections(self._db_name, context=session)
         snapshots: list[CollectionListingSnapshot] = []
         for name in names:
@@ -216,6 +225,7 @@ class AsyncDatabaseAdminService:
             explicit={"filter_spec": filter_spec, "session": session},
             extra_kwargs={"filter": filter, **kwargs},
         )
+        self._ensure_session_active(options.get("session"))
         normalized_filter = self._normalize_filter(options.get("filter_spec"))
 
         async def _load() -> list[CollectionListingDocument]:
@@ -244,6 +254,7 @@ class AsyncDatabaseAdminService:
         session: ClientSession | None = None,
         **options: object,
     ):
+        self._ensure_session_active(session)
         normalized_options = dict(options)
         self._validate_create_collection_options(normalized_options)
         compile_collection_validation_semantics(

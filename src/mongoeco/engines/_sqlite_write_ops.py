@@ -4,6 +4,7 @@ from collections.abc import Callable, Iterable
 import sqlite3
 
 from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.errors import DuplicateKeyError
 from mongoeco.engines.semantic_core import enforce_collection_document_validation
 from mongoeco.types import Document, EngineIndexRecord
@@ -35,6 +36,8 @@ def put_document(
     replace_search_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, list[tuple[object, str | None, float | None]]], None],
     invalidate_collection_features_cache: Callable[[str, str], None],
 ) -> bool:
+    if "_id" in document:
+        assert_valid_root_document_id(document["_id"])
     purge_expired_documents(conn, db_name, coll_name)
     begin_write(conn)
     try:
@@ -102,8 +105,8 @@ def put_document(
                 search_indexes,
             )
 
-        commit_write(conn)
         invalidate_collection_features_cache(db_name, coll_name)
+        commit_write(conn)
         return True
     except Exception:
         rollback_write(conn)
@@ -166,6 +169,8 @@ def put_documents_bulk(
             strict=False,
         ):
             try:
+                if "_id" in document:
+                    assert_valid_root_document_id(document["_id"])
                 validate_document_against_unique_indexes(
                     db_name,
                     coll_name,
@@ -241,8 +246,8 @@ def put_documents_bulk(
             except (DuplicateKeyError, sqlite3.IntegrityError):
                 results.append(False)
                 break
-        commit_write(conn)
         invalidate_collection_features_cache(db_name, coll_name)
+        commit_write(conn)
         return results
     except Exception:
         rollback_write(conn)
@@ -275,8 +280,8 @@ def delete_document(
         delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
         delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
         delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        commit_write(conn)
         invalidate_collection_features_cache(db_name, coll_name)
+        commit_write(conn)
         return cursor.rowcount > 0
     except Exception:
         rollback_write(conn)

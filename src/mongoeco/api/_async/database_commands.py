@@ -33,6 +33,7 @@ from mongoeco.driver.topology import sdam_capabilities_info
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.session import ClientSession
+from mongoeco.session_guards import ensure_session_can_use_engine
 from mongoeco.types import (
     BuildInfoDocument,
     CollectionStatsSnapshot,
@@ -68,6 +69,33 @@ _FAIL_COMMAND_DEFAULT_MESSAGE = "failCommand failpoint triggered"
 @contextmanager
 def _null_operation_tracker():
     yield None
+
+
+def _record_command_profile_event(
+    engine: object,
+    db_name: str,
+    *,
+    op: str,
+    command: dict[str, object],
+    duration_micros: int,
+    ok: float = 1.0,
+    errmsg: str | None = None,
+) -> None:
+    recorder = getattr(engine, "_record_profile_event", None)
+    if not callable(recorder):
+        return
+    try:
+        recorder(
+            db_name,
+            op=op,
+            command=command,
+            duration_micros=duration_micros,
+            ok=ok,
+            errmsg=errmsg,
+        )
+    except Exception:
+        pass
+
 
 SUPPORTED_DATABASE_COMMANDS: tuple[str, ...] = (
     "aggregate",
@@ -1274,6 +1302,7 @@ class AsyncDatabaseCommandService:
         *,
         session: ClientSession | None = None,
     ) -> CommandResultT:
+        self._ensure_session_can_use_engine(session)
         if isinstance(command, self.StaticAdminCommand):
             return self._execute_static(command)  # type: ignore[return-value]
         if isinstance(command, self.ConnectionStatusCommand):
@@ -1447,6 +1476,9 @@ class AsyncDatabaseCommandService:
             return routing
         return _LegacyAdminRoutingAdapter(self._admin)
 
+    def _ensure_session_can_use_engine(self, session: ClientSession | None) -> None:
+        ensure_session_can_use_engine(self._engine, session)
+
     @staticmethod
     def serialize_result(result: object) -> dict[str, object]:
         to_document = getattr(result, "to_document", None)
@@ -1471,6 +1503,7 @@ class AsyncDatabaseCommandService:
         started_at = time.perf_counter_ns()
         should_track = parsed.command_name not in {"currentOp", "killOp"}
         command_namespace = self._command_namespace(parsed)
+        self._ensure_session_can_use_engine(session)
         try:
             if parsed.command_name != "configureFailPoint":
                 fail_command = self._failpoints.consume_fail_command(
@@ -1529,9 +1562,9 @@ class AsyncDatabaseCommandService:
             ) if should_track else _null_operation_tracker() as _opid:
                 serialized = self.serialize_result(await self.execute(parsed, session=session))
         except Exception as exc:
-            recorder = getattr(self._engine, "_record_profile_event", None)
-            if callable(recorder) and parsed.command_name != "profile":
-                recorder(
+            if parsed.command_name != "profile":
+                _record_command_profile_event(
+                    self._engine,
                     parsed.db_name,
                     op="command",
                     command=dict(parsed.spec),
@@ -1540,9 +1573,9 @@ class AsyncDatabaseCommandService:
                     errmsg=str(exc),
                 )
             raise
-        recorder = getattr(self._engine, "_record_profile_event", None)
-        if callable(recorder) and parsed.command_name != "profile":
-            recorder(
+        if parsed.command_name != "profile":
+            _record_command_profile_event(
+                self._engine,
                 parsed.db_name,
                 op="command",
                 command=dict(parsed.spec),

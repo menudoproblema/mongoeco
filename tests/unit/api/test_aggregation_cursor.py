@@ -19,7 +19,8 @@ from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.memory import MemoryEngine
-from mongoeco.errors import ExecutionTimeout, InvalidOperation, OperationFailure
+from mongoeco.engines.sqlite import SQLiteEngine
+from mongoeco.errors import ExecutionTimeout, InvalidOperation, OperationFailure, WriteError
 from mongoeco.session import ClientSession
 from mongoeco.types import PlanningIssue, PlanningMode
 
@@ -167,6 +168,11 @@ class _AsyncAggregationCursorStub:
 
     async def aclose(self):
         self.close_calls += 1
+
+
+class _FailingAsyncAggregationCursorStub(_AsyncAggregationCursorStub):
+    async def __anext__(self):
+        raise InvalidOperation("foreign session")
 
 
 class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
@@ -1062,11 +1068,19 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             await cursor._apply_merge_stage([], {"into": "archive", "whenNotMatched": "upsert"})
         with self.assertRaisesRegex(OperationFailure, "pipelines are not supported"):
             await cursor._apply_merge_stage([], {"into": "archive", "whenMatched": []})
-        with self.assertRaisesRegex(OperationFailure, "requires documents with _id"):
-            await cursor._apply_merge_stage([{"value": 1}], {"into": "archive"})
+        await cursor._apply_merge_stage([{"value": 1}], {"into": "archive"})
+        generated = await database.get_collection("archive").find_one({"value": 1})
+        self.assertIsNotNone(generated)
+        self.assertIn("_id", generated)
 
         await cursor._apply_merge_stage([{"_id": "1", "value": 1}], {"into": "archive", "whenNotMatched": "discard"})
         self.assertIsNone(await database.get_collection("archive").find_one({"_id": "1"}))
+        with self.assertRaises(WriteError) as array_id_context:
+            await cursor._apply_merge_stage(
+                [{"_id": [1], "value": 1}],
+                {"into": "archive", "whenNotMatched": "discard"},
+            )
+        self.assertEqual(array_id_context.exception.code, 53)
         with self.assertRaisesRegex(OperationFailure, "whenNotMatched=fail"):
             await cursor._apply_merge_stage([{"_id": "1", "value": 1}], {"into": "archive", "whenNotMatched": "fail"})
 
@@ -1081,6 +1095,60 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         merged = await database.get_collection("archive").find_one({"_id": "2"})
         self.assertEqual(merged["value"], 40)
         self.assertTrue(merged["merged"])
+
+    async def test_merge_rejects_mismatched_target_storage_key_even_for_keep_existing(self):
+        async def _exercise(engine_type):
+            engine = engine_type()
+            await engine.connect()
+            try:
+                database = AsyncDatabase(engine, "db")
+                source = database.get_collection("source")
+                target = database.get_collection("target")
+                await source.insert_one({"_id": "new", "value": "incoming"})
+                await target.insert_one({"_id": "old", "value": "target"})
+                if isinstance(engine, MemoryEngine):
+                    engine._storage["db"]["target"][
+                        engine._storage_key("old")
+                    ] = engine._encode_storage_document(
+                        {"_id": "new", "value": "corrupt-target"}
+                    )
+                else:
+                    with engine._lock:
+                        conn = engine._require_connection(None)
+                        conn.execute(
+                            (
+                                "UPDATE documents SET document = ? "
+                                "WHERE db_name = ? AND coll_name = ? AND storage_key = ?"
+                            ),
+                            (
+                                engine._serialize_document(
+                                    {"_id": "new", "value": "corrupt-target"}
+                                ),
+                                "db",
+                                "target",
+                                engine._storage_key("old"),
+                            ),
+                        )
+                        conn.commit()
+
+                cursor = AsyncAggregationCursor(source, [])
+                with self.assertRaises(WriteError) as context:
+                    await cursor._apply_merge_stage(
+                        [{"_id": "new", "value": "incoming"}],
+                        {"into": "target", "whenMatched": "keepExisting"},
+                    )
+                return context.exception, await target.find({}).to_list()
+            finally:
+                await engine.disconnect()
+
+        for engine_type in (MemoryEngine, SQLiteEngine):
+            with self.subTest(engine=engine_type.__name__):
+                error, target_documents = await _exercise(engine_type)
+                self.assertEqual(error.code, 66)
+                self.assertEqual(
+                    target_documents,
+                    [{"_id": "new", "value": "corrupt-target"}],
+                )
 
     async def test_aggregation_cursor_collstats_and_stream_batches_cover_fallback_branches(self):
         collection = _FakeCollection([{"_id": "1"}, {"_id": "2"}])
@@ -1441,6 +1509,18 @@ class SyncAggregationCursorTests(unittest.TestCase):
 
         with self.assertRaises(StopIteration):
             next(iterator)
+
+    def test_iterator_closes_active_async_iterator_when_pull_fails(self):
+        async_cursor = _FailingAsyncAggregationCursorStub([{"_id": "1"}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+        iterator = iter(cursor)
+
+        with self.assertRaisesRegex(InvalidOperation, "foreign session"):
+            next(iterator)
+
+        self.assertTrue(iterator._closed)
+        self.assertIsNone(cursor._active_async_iterable)
+        self.assertEqual(async_cursor.close_calls, 1)
 
     def test_first_returns_none_for_loaded_empty_cache(self):
         async_cursor = _AsyncAggregationCursorStub([])

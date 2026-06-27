@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING
 
+from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.errors import BulkWriteError, OperationFailure, WriteError
 from mongoeco.types import (
     BulkWriteErrorDetails,
@@ -64,6 +65,7 @@ class BulkWritePreparationContext:
                 original = collection._require_document(request.document)
                 if "_id" not in original:
                     original["_id"] = ObjectId()
+                assert_valid_root_document_id(original["_id"])
                 return PreparedBulkWriteRequest(
                     index=index,
                     request=request,
@@ -127,7 +129,7 @@ async def execute_bulk_write(
         request = prepared.request
         if prepared.preparation_error is not None:
             exc = prepared.preparation_error
-            if ordered:
+            if ordered and not isinstance(exc, WriteError):
                 raise exc
             write_errors.append(
                 WriteErrorEntry(
@@ -137,6 +139,8 @@ async def execute_bulk_write(
                     operation=request.__class__.__name__,
                 )
             )
+            if ordered:
+                break
             continue
         try:
             if isinstance(request, InsertOne):

@@ -1,5 +1,6 @@
 import unittest
-from mongoeco.errors import OperationFailure
+from mongoeco import InsertOne, UpdateOne
+from mongoeco.errors import BulkWriteError, OperationFailure
 from tests.support import ENGINE_FACTORIES, open_client
 
 class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
@@ -117,6 +118,231 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
 
                     with self.assertRaises(OperationFailure):
                         await coll.update_one({"_id": "1"}, {"$set": {"_id": "2"}})
+
+                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Val"})
+                    self.assertIsNone(await coll.find_one({"_id": "2"}))
+
+    async def test_update_one_allows_set_on_insert_id_matching_filter(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    coll = client.test_db.test_coll
+
+                    result = await coll.update_one(
+                        {"_id": "seed"},
+                        {"$setOnInsert": {"_id": "seed", "name": "Val"}},
+                        upsert=True,
+                    )
+
+                    self.assertEqual(result.upserted_id, "seed")
+                    self.assertEqual(
+                        await coll.find_one({"_id": "seed"}),
+                        {"_id": "seed", "name": "Val"},
+                    )
+
+    async def test_update_one_rejects_set_on_insert_id_conflicting_with_filter(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    coll = client.test_db.test_coll
+
+                    with self.assertRaises(OperationFailure):
+                        await coll.update_one(
+                            {"_id": "seed"},
+                            {"$setOnInsert": {"_id": "other", "name": "Val"}},
+                            upsert=True,
+                        )
+
+                    self.assertEqual(await coll.find({}).to_list(), [])
+
+    async def test_pipeline_update_preserves_id_and_rejects_storage_corruption(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    coll = client.test_db.test_coll
+                    await coll.insert_many(
+                        [
+                            {"_id": "1", "name": "Ada", "legacy": True},
+                            {"_id": "2", "name": "Bob"},
+                        ]
+                    )
+
+                    unset_result = await coll.update_one({"_id": "1"}, [{"$unset": "_id"}])
+                    self.assertEqual(unset_result.matched_count, 1)
+                    self.assertEqual(unset_result.modified_count, 1)
+                    self.assertEqual(
+                        await coll.find_one({"_id": "1"}),
+                        {"_id": "1", "name": "Ada", "legacy": True},
+                    )
+
+                    with self.assertRaises(OperationFailure):
+                        await coll.update_one({"_id": "1"}, [{"$set": {"_id": "2"}}])
+
+                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Ada", "legacy": True})
+                    self.assertEqual(await coll.find_one({"_id": "2"}), {"_id": "2", "name": "Bob"})
+                    self.assertEqual((await coll.delete_one({"_id": "1"})).deleted_count, 1)
+                    self.assertEqual(
+                        await coll.find({}, sort=[("_id", 1)]).to_list(),
+                        [{"_id": "2", "name": "Bob"}],
+                    )
+
+    async def test_pipeline_upsert_uses_seed_or_created_id(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    coll = client.test_db.test_coll
+
+                    seeded = await coll.update_one(
+                        {"_id": "seed"},
+                        [{"$set": {"name": "Seeded"}}],
+                        upsert=True,
+                    )
+                    created = await coll.update_one(
+                        {"kind": "generated"},
+                        [{"$set": {"_id": "pipeline-id", "name": "Generated"}}],
+                        upsert=True,
+                    )
+
+                    self.assertEqual(seeded.upserted_id, "seed")
+                    self.assertEqual(created.upserted_id, "pipeline-id")
+                    self.assertEqual(await coll.find_one({"_id": "seed"}), {"_id": "seed", "name": "Seeded"})
+                    self.assertEqual(
+                        await coll.find_one({"_id": "pipeline-id"}),
+                        {"kind": "generated", "_id": "pipeline-id", "name": "Generated"},
+                    )
+
+    async def test_insert_rejects_root_array_id_but_allows_nested_array_document_id(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    coll = client.test_db.test_coll
+
+                    with self.assertRaises(OperationFailure):
+                        await coll.insert_one({"_id": [1]})
+
+                    await coll.insert_one({"_id": {"a": [1]}, "ok": True})
+                    self.assertEqual(
+                        await coll.find_one({"_id": {"a": [1]}}),
+                        {"_id": {"a": [1]}, "ok": True},
+                    )
+
+                    with self.assertRaises(OperationFailure):
+                        await coll.insert_many([{"_id": "valid-before-error"}, {"_id": [2]}])
+                    self.assertIsNone(await coll.find_one({"_id": "valid-before-error"}))
+
+                    with self.assertRaises(BulkWriteError) as bulk_error:
+                        await coll.bulk_write(
+                            [
+                                InsertOne({"_id": "bulk-valid"}),
+                                InsertOne({"_id": [3]}),
+                            ],
+                            ordered=False,
+                        )
+
+                    self.assertEqual(bulk_error.exception.details["writeErrors"][0]["index"], 1)
+                    self.assertEqual(await coll.find_one({"_id": "bulk-valid"}), {"_id": "bulk-valid"})
+
+                    with self.assertRaises(BulkWriteError) as ordered_bulk_error:
+                        await coll.bulk_write(
+                            [
+                                InsertOne({"_id": "ordered-bulk-valid"}),
+                                InsertOne({"_id": [4]}),
+                                InsertOne({"_id": "ordered-bulk-after"}),
+                            ],
+                        )
+
+                    self.assertEqual(ordered_bulk_error.exception.details["writeErrors"][0]["index"], 1)
+                    self.assertEqual(ordered_bulk_error.exception.details["writeErrors"][0]["code"], 53)
+                    self.assertEqual(ordered_bulk_error.exception.details["nInserted"], 1)
+                    self.assertEqual(await coll.find_one({"_id": "ordered-bulk-valid"}), {"_id": "ordered-bulk-valid"})
+                    self.assertIsNone(await coll.find_one({"_id": "ordered-bulk-after"}))
+
+    async def test_bulk_update_rejects_pipeline_id_change_without_corrupting_storage(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    coll = client.test_db.test_coll
+                    await coll.insert_many([{"_id": "1", "name": "Ada"}, {"_id": "2", "name": "Bob"}])
+
+                    with self.assertRaises(BulkWriteError) as bulk_error:
+                        await coll.bulk_write(
+                            [
+                                UpdateOne({"_id": "1"}, [{"$set": {"_id": "2"}}]),
+                            ]
+                        )
+
+                    self.assertEqual(bulk_error.exception.details["writeErrors"][0]["index"], 0)
+                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
+                    self.assertEqual(await coll.find_one({"_id": "2"}), {"_id": "2", "name": "Bob"})
+
+    async def test_update_commands_share_id_preservation_rules(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    database = client.test_db
+                    coll = database.test_coll
+
+                    update_result = await database.command(
+                        {
+                            "update": "test_coll",
+                            "updates": [
+                                {
+                                    "q": {"_id": "seed"},
+                                    "u": {"$setOnInsert": {"_id": "seed", "name": "Val"}},
+                                    "upsert": True,
+                                }
+                            ],
+                        }
+                    )
+
+                    self.assertEqual(update_result["n"], 0)
+                    self.assertEqual(update_result["nModified"], 0)
+                    self.assertEqual(update_result["upserted"], [{"index": 0, "_id": "seed"}])
+                    self.assertEqual(await coll.find_one({"_id": "seed"}), {"_id": "seed", "name": "Val"})
+
+                    await coll.insert_one({"_id": "1", "name": "Ada"})
+                    with self.assertRaises(BulkWriteError) as command_error:
+                        await database.command(
+                            {
+                                "update": "test_coll",
+                                "updates": [
+                                    {"q": {"_id": "1"}, "u": [{"$set": {"_id": "2"}}]},
+                                ],
+                            }
+                        )
+
+                    self.assertEqual(command_error.exception.details["writeErrors"][0]["index"], 0)
+                    self.assertEqual(command_error.exception.details["writeErrors"][0]["code"], 66)
+                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
+                    self.assertIsNone(await coll.find_one({"_id": "2"}))
+
+                    with self.assertRaises(BulkWriteError) as replacement_command_error:
+                        await database.command(
+                            {
+                                "update": "test_coll",
+                                "updates": [
+                                    {"q": {"_id": "1"}, "u": {"_id": "2", "name": "Grace"}},
+                                ],
+                            }
+                        )
+
+                    self.assertEqual(replacement_command_error.exception.details["writeErrors"][0]["index"], 0)
+                    self.assertEqual(replacement_command_error.exception.details["writeErrors"][0]["code"], 66)
+                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
+                    self.assertIsNone(await coll.find_one({"_id": "2"}))
+
+                    with self.assertRaises(OperationFailure):
+                        await database.command(
+                            {
+                                "findAndModify": "test_coll",
+                                "query": {"_id": "1"},
+                                "update": [{"$set": {"_id": "2"}}],
+                                "new": True,
+                            }
+                        )
+
+                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
+                    self.assertIsNone(await coll.find_one({"_id": "2"}))
 
     async def test_update_one_supports_setting_array_index(self):
         for engine_name in ENGINE_FACTORIES:

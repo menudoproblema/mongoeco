@@ -608,7 +608,7 @@ class ClientSessionTests(unittest.TestCase):
                 self.assertEqual(calls["count"], 2)
                 self.assertFalse(session.in_transaction)
 
-    def test_close_marks_session_closed_even_if_abort_hook_fails(self):
+    def test_close_keeps_session_open_if_abort_hook_fails(self):
         session = ClientSession()
         session.register_transaction_hooks("memory", abort=lambda active: (_ for _ in ()).throw(RuntimeError("abort")))
         session.start_transaction()
@@ -616,6 +616,6 @@ class ClientSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "abort"):
             session.close()
 
-        self.assertTrue(session.has_ended)
-        self.assertFalse(session.in_transaction)
-        self.assertEqual(session.engine_state, {})
+        self.assertFalse(session.has_ended)
+        self.assertTrue(session.in_transaction)
+        self.assertIsNotNone(session.transaction_options)

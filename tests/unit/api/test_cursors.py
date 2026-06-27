@@ -204,6 +204,11 @@ class _StreamingAsyncCursorStub:
         self.close_calls += 1
 
 
+class _FailingStreamingAsyncCursorStub(_StreamingAsyncCursorStub):
+    async def __anext__(self):
+        raise InvalidOperation("foreign session")
+
+
 class _StreamingAsyncCollectionStub:
     def __init__(self, documents):
         self._documents = documents
@@ -213,6 +218,13 @@ class _StreamingAsyncCollectionStub:
     def find(self, *args, **kwargs):
         self.calls += 1
         self.last_cursor = _StreamingAsyncCursorStub(self._documents)
+        return self.last_cursor
+
+
+class _FailingStreamingAsyncCollectionStub(_StreamingAsyncCollectionStub):
+    def find(self, *args, **kwargs):
+        self.calls += 1
+        self.last_cursor = _FailingStreamingAsyncCursorStub(self._documents)
         return self.last_cursor
 
 
@@ -1126,6 +1138,18 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(StopIteration):
             next(iterator)
+
+    def test_sync_cursor_iterator_closes_active_async_iterator_when_pull_fails(self):
+        collection = _FailingStreamingAsyncCollectionStub([{"_id": "1"}])
+        cursor = Cursor(_SyncClientStub(), collection, {}, None)
+        iterator = iter(cursor)
+
+        with self.assertRaisesRegex(InvalidOperation, "foreign session"):
+            next(iterator)
+
+        self.assertTrue(iterator._closed)
+        self.assertIsNone(cursor._active_async_iterable)
+        self.assertEqual(collection.last_cursor.close_calls, 1)
 
     def test_sync_cursor_del_swallows_close_errors(self):
         cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)

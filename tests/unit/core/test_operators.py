@@ -1,6 +1,7 @@
 import math
 import re
 import unittest
+from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -103,12 +104,225 @@ class UpdateEngineTests(unittest.TestCase):
             UpdateEngine.apply_update({"a": 1}, {"$set": []})  # type: ignore[dict-item]
 
     def test_set_cannot_modify_immutable_id(self):
+        document = {"_id": "old", "name": "Ada"}
+
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(document, {"$set": {"_id": "new"}})
+
+        self.assertEqual(document, {"_id": "old", "name": "Ada"})
+
+    def test_set_same_id_is_allowed(self):
+        document = {"_id": "old", "name": "Ada"}
+
+        modified = UpdateEngine.apply_update(document, {"$set": {"_id": "old"}})
+
+        self.assertFalse(modified)
+        self.assertEqual(document, {"_id": "old", "name": "Ada"})
+
+    def test_set_on_insert_can_create_or_preserve_seeded_id(self):
+        seeded = {"_id": "seed", "kind": "user"}
+        modified = UpdateEngine.apply_update(
+            seeded,
+            {"$setOnInsert": {"_id": "seed", "state": "new"}},
+            is_upsert_insert=True,
+        )
+
+        self.assertTrue(modified)
+        self.assertEqual(seeded, {"_id": "seed", "kind": "user", "state": "new"})
+
+        unseeded: dict[str, object] = {}
+        modified_unseeded = UpdateEngine.apply_update(
+            unseeded,
+            {"$setOnInsert": {"_id": "created"}},
+            is_upsert_insert=True,
+        )
+
+        self.assertTrue(modified_unseeded)
+        self.assertEqual(unseeded, {"_id": "created"})
+
+        conflict = {"_id": "seed", "kind": "user"}
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                conflict,
+                {"$setOnInsert": {"_id": "other", "state": "new"}},
+                is_upsert_insert=True,
+            )
+        self.assertEqual(conflict, {"_id": "seed", "kind": "user"})
+
+    def test_classic_update_can_create_valid_id_when_original_has_none(self):
+        cases = [
+            ({"$set": {"_id": "set"}}, "set"),
+            ({"$inc": {"_id": 4}}, 4),
+            ({"$min": {"_id": 2}}, 2),
+            ({"$max": {"_id": 9}}, 9),
+            ({"$mul": {"_id": 3}}, 0),
+            ({"$bit": {"_id": {"or": 4}}}, 4),
+        ]
+
+        for update, expected_id in cases:
+            with self.subTest(update=update):
+                document: dict[str, object] = {}
+                modified = UpdateEngine.apply_update(
+                    document,
+                    update,
+                    is_upsert_insert=True,
+                )
+
+                self.assertTrue(modified)
+                self.assertEqual(document["_id"], expected_id)
+
+        dated: dict[str, object] = {}
+        self.assertTrue(
+            UpdateEngine.apply_update(
+                dated,
+                {"$currentDate": {"_id": True}},
+                is_upsert_insert=True,
+            )
+        )
+        self.assertIsInstance(dated["_id"], datetime)
+
+    def test_classic_update_rejects_root_array_id_creation_atomically(self):
+        document: dict[str, object] = {}
+
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                document,
+                {"$set": {"_id": [1]}},
+                is_upsert_insert=True,
+            )
+
+        self.assertEqual(document, {})
+
+    def test_classic_update_rejects_existing_root_array_id_atomically(self):
+        document: dict[str, object] = {"_id": [1], "name": "Ada"}
+
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(document, {"$set": {"done": True}})
+
+        self.assertEqual(document, {"_id": [1], "name": "Ada"})
+
+    def test_classic_update_id_noops_are_allowed(self):
+        cases = [
+            ({"$set": {"_id": 7}}, 7),
+            ({"$inc": {"_id": 0}}, 7),
+            ({"$mul": {"_id": 1}}, 7),
+            ({"$min": {"_id": 9}}, 7),
+            ({"$max": {"_id": 3}}, 7),
+            ({"$bit": {"_id": {"and": 7}}}, 7),
+        ]
+
+        for update, initial_id in cases:
+            with self.subTest(update=update):
+                document = {"_id": initial_id, "name": "Ada"}
+                modified = UpdateEngine.apply_update(document, update)
+
+                self.assertFalse(modified)
+                self.assertEqual(document, {"_id": initial_id, "name": "Ada"})
+
+    def test_classic_update_rejects_real_id_changes_atomically(self):
+        cases = [
+            {"$set": {"_id": "new"}},
+            {"$inc": {"_id": 1}},
+            {"$unset": {"_id": ""}},
+            {"$rename": {"_id": "old_id"}},
+        ]
+
+        for update in cases:
+            with self.subTest(update=update):
+                document = {"_id": "old" if "$inc" not in update else 1, "name": "Ada"}
+                original = dict(document)
+
+                with self.assertRaises(OperationFailure):
+                    UpdateEngine.apply_update(document, update)
+
+                self.assertEqual(document, original)
+
+    def test_rename_can_create_id_or_noop_but_not_replace_existing_id(self):
+        created = {"source": "seed"}
+        self.assertTrue(
+            UpdateEngine.apply_update(
+                created,
+                {"$rename": {"source": "_id"}},
+                is_upsert_insert=True,
+            )
+        )
+        self.assertEqual(created, {"_id": "seed"})
+
+        noop = {"_id": "seed", "name": "Ada"}
+        self.assertFalse(UpdateEngine.apply_update(noop, {"$rename": {"missing": "_id"}}))
+        self.assertEqual(noop, {"_id": "seed", "name": "Ada"})
+
+        conflict = {"_id": "seed", "source": "other"}
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(conflict, {"$rename": {"source": "_id"}})
+        self.assertEqual(conflict, {"_id": "seed", "source": "other"})
+
+    def test_descendant_id_paths_preserve_whole_id_value(self):
+        created: dict[str, object] = {}
+        self.assertTrue(UpdateEngine.apply_update(created, {"$set": {"_id.a": [1]}}))
+        self.assertEqual(created, {"_id": {"a": [1]}})
+
+        noop = {"_id": {"a": [1]}, "name": "Ada"}
+        self.assertFalse(UpdateEngine.apply_update(noop, {"$set": {"_id.a": [1]}}))
+        self.assertEqual(noop, {"_id": {"a": [1]}, "name": "Ada"})
+
+        changed = {"_id": {"a": 1}, "name": "Ada"}
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(changed, {"$set": {"_id.a": 2}})
+        self.assertEqual(changed, {"_id": {"a": 1}, "name": "Ada"})
+
+    def test_pipeline_updates_preserve_or_validate_id(self):
+        same = {"_id": "1", "name": "Ada"}
+        self.assertFalse(UpdateEngine.apply_update(same, [{"$set": {"_id": "1"}}]))
+        self.assertEqual(same, {"_id": "1", "name": "Ada"})
+
+        unset = {"_id": "1", "name": "Ada"}
+        self.assertTrue(UpdateEngine.apply_update(unset, [{"$unset": "_id"}]))
+        self.assertEqual(unset, {"name": "Ada", "_id": "1"})
+
+        projected = {"_id": "1", "name": "Ada", "legacy": True}
+        self.assertTrue(UpdateEngine.apply_update(projected, [{"$project": {"_id": 0, "name": 1}}]))
+        self.assertEqual(projected, {"name": "Ada", "_id": "1"})
+
+        replaced = {"_id": "1", "name": "Ada", "legacy": True}
+        self.assertTrue(
+            UpdateEngine.apply_update(
+                replaced,
+                [{"$replaceRoot": {"newRoot": {"name": "Ada"}}}],
+            )
+        )
+        self.assertEqual(replaced, {"name": "Ada", "_id": "1"})
+
+        changed = {"_id": "1", "name": "Ada"}
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(changed, [{"$set": {"_id": "2"}}])
+        self.assertEqual(changed, {"_id": "1", "name": "Ada"})
+
+        created: dict[str, object] = {"name": "Ada"}
+        self.assertTrue(UpdateEngine.apply_update(created, [{"$set": {"_id": "created"}}]))
+        self.assertEqual(created, {"name": "Ada", "_id": "created"})
+
+        invalid: dict[str, object] = {"name": "Ada"}
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(invalid, [{"$set": {"_id": [1]}}])
+        self.assertEqual(invalid, {"name": "Ada"})
+
+        invalid_existing = {"_id": [1], "name": "Ada"}
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(invalid_existing, [{"$project": {"_id": 0, "name": 1}}])
+        self.assertEqual(invalid_existing, {"_id": [1], "name": "Ada"})
+
+    def test_set_rejects_different_immutable_id(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"_id": "old", "name": "Ada"}, {"$set": {"_id": "new"}})
 
     def test_unset_cannot_modify_immutable_id(self):
+        document = {"_id": "old", "name": "Ada"}
+
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({"_id": "old", "name": "Ada"}, {"$unset": {"_id": ""}})
+            UpdateEngine.apply_update(document, {"$unset": {"_id": ""}})
+
+        self.assertEqual(document, {"_id": "old", "name": "Ada"})
 
     def test_update_rejects_legacy_positional_and_missing_array_filter_paths(self):
         with self.assertRaises(OperationFailure):
@@ -377,12 +591,10 @@ class UpdateEngineTests(unittest.TestCase):
         seen_paths = ["profile"]
         with self.assertRaisesRegex(OperationFailure, "conflicting update paths"):
             UpdateEngine._register_update_path(seen_paths, "profile.name")
-        with self.assertRaisesRegex(OperationFailure, "immutable field '_id'"):
-            UpdateEngine._assert_mutable_path("_id")
+        UpdateEngine._assert_mutable_path("_id")
         with self.assertRaisesRegex(OperationFailure, "Positional and array-filter update paths are not supported"):
             UpdateEngine._assert_mutable_path("items.$[].qty")
-        with self.assertRaisesRegex(OperationFailure, "immutable field '_id'"):
-            UpdateEngine._assert_rename_path("_id")
+        UpdateEngine._assert_rename_path("_id")
         with self.assertRaisesRegex(OperationFailure, "Positional and array-filter update paths are not supported"):
             UpdateEngine._assert_rename_path("items.$[].qty")
         with self.assertRaisesRegex(OperationFailure, "embedded documents in arrays"):
@@ -544,6 +756,17 @@ class UpdateEngineTests(unittest.TestCase):
             UpdateEngine.apply_update({"name": "Ada"}, {"$rename": {"name": "name"}})
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"profile": {"name": "Ada"}}, {"$rename": {"profile": "profile.name"}})
+
+    def test_classic_update_runtime_failures_leave_document_unchanged(self):
+        document = {"a": 1, "items": [{"name": "Ada"}]}
+
+        with self.assertRaises(OperationFailure):
+            UpdateEngine.apply_update(
+                document,
+                {"$rename": {"a": "b", "items.name": "names"}},
+            )
+
+        self.assertEqual(document, {"a": 1, "items": [{"name": "Ada"}]})
 
     def test_path_array_prefixes_keep_non_numeric_prefixes_before_index_segments(self):
         self.assertEqual(_path_array_prefixes("a.0.b.c"), ("a", "a.0.b"))
@@ -758,9 +981,15 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertTrue(xor_modified)
         self.assertEqual(document, {"score": 9, "flags": [1, 1, 6]})
 
-    def test_bit_rejects_missing_non_integer_or_invalid_operation_shapes(self):
-        with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({}, {"$bit": {"score": {"and": 1}}})
+    def test_bit_creates_missing_field_from_zero(self):
+        document: dict[str, object] = {}
+
+        modified = UpdateEngine.apply_update(document, {"$bit": {"score": {"or": 4}}})
+
+        self.assertTrue(modified)
+        self.assertEqual(document, {"score": 4})
+
+    def test_bit_rejects_non_integer_or_invalid_operation_shapes(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update({"score": 1.5}, {"$bit": {"score": {"and": 1}}})
         with self.assertRaises(OperationFailure):

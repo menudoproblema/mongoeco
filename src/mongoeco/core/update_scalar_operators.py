@@ -225,7 +225,9 @@ def apply_bit(
         for target in application.targets:
             found, current = get_document_value(doc, target.concrete_path)
             if not found:
-                raise OperationFailure("$bit requires the target field to exist and be an integer")
+                if set_document_value(doc, target.concrete_path, bson_bitwise(operator, 0, operand)):
+                    modified = True
+                continue
             if not helpers._is_integral(current) or not _is_signed_int64(current):
                 raise OperationFailure("$bit requires the target field to be a signed 64-bit integer")
             replacement = bson_bitwise(operator, current, operand)

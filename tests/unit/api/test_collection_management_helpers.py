@@ -897,10 +897,11 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(type(stream).__name__, "AsyncChangeStreamCursor")
         self.assertEqual(engine.rename_calls[0][0], ("db", "coll", "renamed"))
         self.assertEqual(engine.search_calls[0][0], "create")
-        self.assertEqual(engine.search_calls[1][0], "create")
-        self.assertEqual(engine.search_calls[2][0], "list")
-        self.assertEqual(engine.search_calls[3][0], "update")
-        self.assertEqual(engine.search_calls[4][0], "drop")
+        self.assertEqual(engine.search_calls[1][0], "list")
+        self.assertEqual(engine.search_calls[2][0], "create")
+        self.assertEqual(engine.search_calls[3][0], "list")
+        self.assertEqual(engine.search_calls[4][0], "update")
+        self.assertEqual(engine.search_calls[5][0], "drop")
 
         with self.assertRaises(TypeError):
             self.collection.watch(max_await_time_ms=-1)
@@ -1148,12 +1149,13 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             hub = HubStub()
             collection = AsyncCollection(MemoryEngine(), "db", "coll", change_hub=hub)
 
-            selected = {"_id": "1"}
+            selected = {"_id": "1", "done": False}
             updated = {"_id": "1", "done": True}
+            lookup_results = [selected, updated, updated]
 
             collection._build_cursor = lambda *args, **kwargs: CursorStub(selected)  # type: ignore[method-assign]
             collection._engine_update_with_operation = lambda *args, **kwargs: asyncio.sleep(0, result=UpdateResult(matched_count=1, modified_count=1))  # type: ignore[method-assign]
-            collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(0, result=updated)  # type: ignore[method-assign]
+            collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(0, result=lookup_results.pop(0))  # type: ignore[method-assign]
 
             hinted = await collection.update_one({"_id": "1"}, {"$set": {"done": True}}, hint="idx")
             plain = await collection.update_one({"_id": "1"}, {"$set": {"done": True}})
@@ -1207,9 +1209,11 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
 
         async def _exercise_missing_after():
             collection = AsyncCollection(MemoryEngine(), "db", "coll")
-            collection._select_first_document = lambda *args, **kwargs: asyncio.sleep(0, result={"_id": "1", "done": False})  # type: ignore[method-assign]
+            before = {"_id": "1", "done": False}
+            lookup_results = [before, None]
+            collection._select_first_document = lambda *args, **kwargs: asyncio.sleep(0, result=before)  # type: ignore[method-assign]
             collection._engine_update_with_operation = lambda *args, **kwargs: asyncio.sleep(0, result=UpdateResult(matched_count=1, modified_count=1))  # type: ignore[method-assign]
-            collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(0, result=None)  # type: ignore[method-assign]
+            collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(0, result=lookup_results.pop(0))  # type: ignore[method-assign]
             return await collection.find_one_and_update(
                 {"_id": "1"},
                 {"$set": {"done": True}},
@@ -1222,9 +1226,11 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
     def test_find_one_and_replace_returns_none_when_after_document_disappears(self):
         async def _exercise():
             collection = AsyncCollection(MemoryEngine(), "db", "coll")
-            collection._select_first_document = lambda *args, **kwargs: asyncio.sleep(0, result={"_id": "1", "done": False})  # type: ignore[method-assign]
+            before = {"_id": "1", "done": False}
+            lookup_results = [before, before, None]
+            collection._select_first_document = lambda *args, **kwargs: asyncio.sleep(0, result=before)  # type: ignore[method-assign]
             collection.replace_one = lambda *args, **kwargs: asyncio.sleep(0, result=UpdateResult(matched_count=1, modified_count=1))  # type: ignore[method-assign]
-            collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(0, result=None)  # type: ignore[method-assign]
+            collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(0, result=lookup_results.pop(0))  # type: ignore[method-assign]
             return await collection.find_one_and_replace(
                 {"_id": "1"},
                 {"done": True},
@@ -1256,6 +1262,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 collection = AsyncCollection(engine, "db", "coll", change_hub=hub)
                 collection._build_cursor = lambda *args, **kwargs: CursorStub({"_id": "1"})  # type: ignore[method-assign]
                 collection._engine_delete_with_operation = lambda *args, **kwargs: asyncio.sleep(0, result=DeleteResult(deleted_count=1))  # type: ignore[method-assign]
+                collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(0, result={"_id": "1"})  # type: ignore[method-assign]
 
                 plain = await collection.delete_one({"_id": "1"})
                 hinted_none = await collection.delete_one({"_id": "missing"}, hint="idx")

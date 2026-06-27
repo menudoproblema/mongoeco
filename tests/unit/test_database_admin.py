@@ -9,7 +9,9 @@ from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async._database_admin_command_compiler import DatabaseAdminCommandCompiler
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines.memory import MemoryEngine
-from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
+from mongoeco.engines.sqlite import SQLiteEngine
+from mongoeco.errors import BulkWriteError, CollectionInvalid, InvalidOperation, OperationFailure, WriteError
+from mongoeco.session import ClientSession
 
 
 class _AsyncCursor:
@@ -146,6 +148,37 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                 await service.create_collection("events", capped=True, size=0)
             with self.assertRaisesRegex(ValueError, "max must be > 0"):
                 await service.create_collection("events", capped=True, size=1024, max=0)
+
+        asyncio.run(_run())
+
+    def test_parsed_command_execute_rejects_foreign_session_before_static_shortcuts(self):
+        async def _run():
+            for engine_factory in (MemoryEngine, SQLiteEngine):
+                owner_engine = engine_factory()
+                foreign_engine = engine_factory()
+                await owner_engine.connect()
+                await foreign_engine.connect()
+                try:
+                    session = ClientSession()
+                    owner_engine.create_session_state(session)
+                    service = AsyncDatabase(foreign_engine, "db")._admin._commands
+
+                    for spec in (
+                        {"ping": 1},
+                        {"buildInfo": 1},
+                        {"serverStatus": 1},
+                        {"connectionStatus": 1},
+                        {"currentOp": 1},
+                        {"killOp": 1, "op": "missing"},
+                        {"configureFailPoint": "failCommand", "mode": "off"},
+                    ):
+                        with self.subTest(engine=engine_factory.__name__, command=next(iter(spec))):
+                            parsed = service.parse_raw_command(spec)
+                            with self.assertRaises(InvalidOperation):
+                                await service.execute(parsed, session=session)
+                finally:
+                    await foreign_engine.disconnect()
+                    await owner_engine.disconnect()
 
         asyncio.run(_run())
 
@@ -563,6 +596,51 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
         self.assertEqual(update_details["upserted"][0]["_id"], "upserted-1")
         self.assertEqual(delete_details["nRemoved"], 1)
         self.assertEqual(delete_details["writeErrors"][0]["index"], 0)
+
+    def test_write_commands_preserve_write_error_codes(self):
+        database = AsyncDatabase(MemoryEngine(), "db")
+        service = database._admin
+        fake_collection = _FakeCollection()
+
+        async def _insert_one(document, **kwargs):
+            del document, kwargs
+            raise WriteError("invalid id", code=53)
+
+        async def _update_one(query, update, **kwargs):
+            del query, update, kwargs
+            raise WriteError("immutable id", code=66)
+
+        async def _run_insert():
+            fake_collection.insert_one = _insert_one
+            with patch.object(database, "get_collection", return_value=fake_collection):
+                with self.assertRaises(BulkWriteError) as exc_info:
+                    await service._command_insert(
+                        {
+                            "insert": "users",
+                            "documents": [{"_id": [1]}],
+                        }
+                    )
+                return exc_info.exception.details
+
+        async def _run_update():
+            fake_collection.update_one = _update_one
+            with patch.object(database, "get_collection", return_value=fake_collection):
+                with self.assertRaises(BulkWriteError) as exc_info:
+                    await service._command_update(
+                        {
+                            "update": "users",
+                            "updates": [
+                                {"q": {"_id": "1"}, "u": [{"$set": {"_id": "2"}}]},
+                            ],
+                        }
+                    )
+                return exc_info.exception.details
+
+        insert_details = asyncio.run(_run_insert())
+        update_details = asyncio.run(_run_update())
+
+        self.assertEqual(insert_details["writeErrors"][0]["code"], 53)
+        self.assertEqual(update_details["writeErrors"][0]["code"], 66)
 
     def test_database_admin_helpers_and_command_wrappers_cover_edge_paths(self):
         database = AsyncDatabase(MemoryEngine(), "db")

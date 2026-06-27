@@ -51,9 +51,10 @@ class WireSessionStore:
             raise TypeError("endSessions must be a list")
         for session_spec in session_specs:
             key = self._key_for_lsid(session_spec)
-            context = self._sessions.pop(key, None)
+            context = self._sessions.get(key)
             if context is not None:
                 context.session.close()
+                self._sessions.pop(key, None)
         return {"ok": 1.0}
 
     def commit_transaction(self, body: dict[str, Any]) -> dict[str, Any]:

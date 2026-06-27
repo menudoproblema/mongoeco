@@ -153,6 +153,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             try:
                 collection = AsyncCollection(engine, "db", "coll")
                 session = ClientSession()
+                engine.create_session_state(session)
                 published = []
                 collection._publish_change_event = lambda **payload: published.append(payload)  # type: ignore[method-assign]
                 result = await collection.insert_many([{"_id": "1"}, {"_id": "2"}], session=session)
@@ -541,6 +542,34 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(ctx.exception.details["nInserted"], 1)
         self.assertEqual(ctx.exception.details["nModified"], 0)
 
+    def test_bulk_write_ordered_wraps_prepared_write_errors(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                try:
+                    await collection.bulk_write(
+                        [
+                            InsertOne({"_id": "ok"}),
+                            InsertOne({"_id": [1]}),
+                            InsertOne({"_id": "after"}),
+                        ],
+                    )
+                except BulkWriteError as exc:
+                    documents = await collection.find({}).to_list()
+                    return exc, documents
+                raise AssertionError("bulk_write should have failed")
+            finally:
+                await engine.disconnect()
+
+        error, documents = asyncio.run(_exercise())
+
+        self.assertEqual(error.details["writeErrors"][0]["index"], 1)
+        self.assertEqual(error.details["writeErrors"][0]["code"], 53)
+        self.assertEqual(error.details["nInserted"], 1)
+        self.assertEqual(documents, [{"_id": "ok"}])
+
     def test_bulk_write_rejects_sort_write_models_for_older_profile(self):
         async def _exercise():
             engine = MemoryEngine()
@@ -615,6 +644,31 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(error.details["writeErrors"][0]["index"], 0)
         self.assertEqual(error.details["nModified"], 1)
         self.assertEqual(document, {"_id": "1", "name": "Ada", "done": True})
+
+    def test_bulk_write_preserves_replacement_id_write_error_code(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, "db", "coll")
+                await collection.insert_one({"_id": "1", "name": "Ada"})
+                try:
+                    await collection.bulk_write(
+                        [
+                            ReplaceOne({"_id": "1"}, {"_id": "2", "name": "Grace"}),
+                        ]
+                    )
+                except BulkWriteError as exc:
+                    return exc, await collection.find({}).to_list()
+                raise AssertionError("bulk_write should have failed")
+            finally:
+                await engine.disconnect()
+
+        error, documents = asyncio.run(_exercise())
+
+        self.assertEqual(error.details["writeErrors"][0]["index"], 0)
+        self.assertEqual(error.details["writeErrors"][0]["code"], 66)
+        self.assertEqual(documents, [{"_id": "1", "name": "Ada"}])
 
     def test_bulk_write_propagates_request_and_bulk_level_write_options(self):
         class EngineStub:

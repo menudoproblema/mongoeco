@@ -5,6 +5,7 @@ from copy import deepcopy
 import sqlite3
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.identity import document_matches_root_id_lookup
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.search import (
     attach_search_highlights,
@@ -43,8 +44,11 @@ def get_document(
     ).fetchone()
     if row is None:
         return None
+    document = deserialize_document(row[0])
+    if not document_matches_root_id_lookup(document, doc_id, dialect=effective_dialect):
+        return None
     return apply_projection(
-        deserialize_document(row[0]),
+        document,
         projection,
         dialect=effective_dialect,
     )

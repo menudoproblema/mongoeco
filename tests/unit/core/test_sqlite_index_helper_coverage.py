@@ -10,7 +10,7 @@ from mongoeco.core.query_plan import MatchAll
 from mongoeco.engines import _sqlite_index_admin as index_admin
 from mongoeco.engines import _sqlite_index_runtime as index_runtime
 from mongoeco.engines import _sqlite_modify_ops as modify_ops
-from mongoeco.errors import DuplicateKeyError
+from mongoeco.errors import DuplicateKeyError, OperationFailure
 
 
 class SQLiteIndexHelperCoverageTests(unittest.TestCase):
@@ -134,6 +134,245 @@ class SQLiteIndexHelperCoverageTests(unittest.TestCase):
             )
 
         rollback.assert_called_once_with(conn)
+
+    def test_update_with_operation_rolls_back_non_integrity_fast_path_failures(self):
+        conn = sqlite3.connect(":memory:")
+        try:
+            conn.execute(
+                "CREATE TABLE documents (db_name TEXT, coll_name TEXT, storage_key TEXT, document TEXT)"
+            )
+            original_payload = "{'_id': '1', 'kind': 'view'}"
+            updated_payload = "{'_id': '1', 'kind': 'note'}"
+            conn.execute(
+                "INSERT INTO documents VALUES (?, ?, ?, ?)",
+                ("db", "coll", "1", original_payload),
+            )
+            conn.commit()
+
+            class _CompiledPlan:
+                def apply(self, document):
+                    document["kind"] = "note"
+                    return True
+
+            semantics = SimpleNamespace(
+                dialect=MONGODB_DIALECT_70,
+                collation=None,
+                query_plan=MatchAll(),
+                compiled_update_plan=_CompiledPlan(),
+                compiled_upsert_plan=SimpleNamespace(apply=lambda _document: None),
+            )
+
+            with self.assertRaisesRegex(OperationFailure, "boom"):
+                modify_ops.update_with_operation(
+                    db_name="db",
+                    coll_name="coll",
+                    operation=SimpleNamespace(array_filters=None),
+                    upsert=False,
+                    upsert_seed=None,
+                    selector_filter=None,
+                    dialect=None,
+                    bypass_document_validation=True,
+                    compile_update_semantics=lambda *_args, **_kwargs: semantics,
+                    require_connection=lambda: conn,
+                    purge_expired_documents=lambda *_args: None,
+                    collection_options_or_empty=lambda *_args: {},
+                    dialect_requires_python_fallback=lambda _dialect: False,
+                    select_first_document_for_plan=lambda *_args: ("1", {"_id": "1", "kind": "view"}),
+                    load_documents=lambda *_args: [],
+                    match_plan=lambda *_args: False,
+                    enforce_collection_document_validation=lambda *_args, **_kwargs: None,
+                    validate_document_against_unique_indexes=lambda *_args: None,
+                    load_indexes=lambda *_args: [],
+                    load_search_index_rows=lambda *_args: [],
+                    begin_write=lambda current: current.execute("BEGIN"),
+                    commit_write=lambda current: current.commit(),
+                    rollback_write=lambda current: current.rollback(),
+                    translate_compiled_update_plan=lambda *_args: ("?", (updated_payload,)),
+                    compiled_update_plan_type=_CompiledPlan,
+                    rebuild_multikey_entries_for_document=lambda *_args: None,
+                    rebuild_scalar_entries_for_document=lambda *_args: None,
+                    replace_search_entries_for_document=lambda *_args: (_ for _ in ()).throw(OperationFailure("boom")),
+                    serialize_document=lambda document: str(document),
+                    storage_key_for_id=lambda value: str(value),
+                    new_object_id=lambda: "new-id",
+                    invalidate_collection_features_cache=lambda *_args: None,
+                )
+
+            self.assertFalse(conn.in_transaction)
+            self.assertEqual(
+                conn.execute("SELECT document FROM documents").fetchone(),
+                (original_payload,),
+            )
+        finally:
+            conn.close()
+
+    def test_delete_matching_document_rolls_back_non_integrity_fast_path_failures(self):
+        conn = sqlite3.connect(":memory:")
+        try:
+            conn.execute(
+                "CREATE TABLE documents (db_name TEXT, coll_name TEXT, storage_key TEXT, document TEXT)"
+            )
+            payload = "{'_id': '1', 'kind': 'view'}"
+            conn.execute(
+                "INSERT INTO documents VALUES (?, ?, ?, ?)",
+                ("db", "coll", "1", payload),
+            )
+            conn.commit()
+            semantics = SimpleNamespace(
+                collation=None,
+                query_plan=MatchAll(),
+                dialect=MONGODB_DIALECT_70,
+            )
+
+            with self.assertRaisesRegex(OperationFailure, "boom"):
+                modify_ops.delete_matching_document(
+                    db_name="db",
+                    coll_name="coll",
+                    filter_spec={},
+                    plan=None,
+                    dialect=None,
+                    collation=None,
+                    compile_find_semantics=lambda *_args, **_kwargs: semantics,
+                    ensure_query_plan=lambda *_args, **_kwargs: MatchAll(),
+                    require_connection=lambda: conn,
+                    purge_expired_documents=lambda *_args: None,
+                    select_first_document_for_plan=lambda *_args: ("1", {"_id": "1", "kind": "view"}),
+                    storage_key_for_id=lambda value: str(value),
+                    begin_write=lambda current: current.execute("BEGIN"),
+                    commit_write=lambda current: current.commit(),
+                    rollback_write=lambda current: current.rollback(),
+                    delete_multikey_entries_for_storage_key=lambda *_args: None,
+                    delete_scalar_entries_for_storage_key=lambda *_args: None,
+                    delete_search_entries_for_storage_key=lambda *_args: (_ for _ in ()).throw(OperationFailure("boom")),
+                    load_documents=lambda *_args: [],
+                    match_plan=lambda *_args: False,
+                    invalidate_collection_features_cache=lambda *_args: None,
+                )
+
+            self.assertFalse(conn.in_transaction)
+            self.assertEqual(
+                conn.execute("SELECT document FROM documents").fetchone(),
+                (payload,),
+            )
+        finally:
+            conn.close()
+
+    def test_create_index_rolls_back_non_integrity_failures_after_begin(self):
+        conn = sqlite3.connect(":memory:")
+        try:
+            conn.execute(
+                "CREATE TABLE documents (db_name TEXT, coll_name TEXT, storage_key TEXT, document TEXT)"
+            )
+            conn.execute(
+                """
+                CREATE TABLE indexes (
+                    db_name TEXT,
+                    coll_name TEXT,
+                    name TEXT,
+                    physical_name TEXT,
+                    fields TEXT,
+                    keys TEXT,
+                    unique_flag INTEGER,
+                    sparse_flag INTEGER,
+                    hidden_flag INTEGER,
+                    collation_json TEXT,
+                    partial_filter_json TEXT,
+                    expire_after_seconds INTEGER,
+                    text_weights_json TEXT,
+                    default_language TEXT,
+                    language_override TEXT,
+                    min_value REAL,
+                    max_value REAL,
+                    bucket_size REAL,
+                    multikey_flag INTEGER,
+                    multikey_physical_name TEXT,
+                    scalar_physical_name TEXT
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE scalar_index_entries (
+                    collection_id INTEGER,
+                    index_name TEXT,
+                    storage_key TEXT,
+                    element_type TEXT,
+                    type_score INTEGER,
+                    element_key TEXT
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE multikey_entries (
+                    collection_id INTEGER,
+                    index_name TEXT,
+                    storage_key TEXT,
+                    element_type TEXT,
+                    type_score INTEGER,
+                    element_key TEXT
+                )
+                """
+            )
+            conn.commit()
+
+            calls = 0
+
+            def enforce_deadline(_deadline):
+                nonlocal calls
+                calls += 1
+                if calls == 3:
+                    raise OperationFailure("deadline")
+
+            with self.assertRaisesRegex(OperationFailure, "deadline"):
+                index_admin.create_index(
+                    conn,
+                    db_name="db",
+                    coll_name="coll",
+                    keys=[("kind", 1)],
+                    unique=False,
+                    name="kind_idx",
+                    sparse=False,
+                    hidden=False,
+                    collation=None,
+                    partial_filter_expression=None,
+                    expire_after_seconds=None,
+                    deadline=1.0,
+                    enforce_deadline_fn=enforce_deadline,
+                    begin_write=lambda current: current.execute("BEGIN"),
+                    commit_write=lambda current: current.commit(),
+                    rollback_write=lambda current: current.rollback(),
+                    purge_expired_documents=lambda *_args: None,
+                    mark_index_metadata_changed=lambda *_args: None,
+                    invalidate_collection_features_cache=lambda *_args: None,
+                    load_indexes=lambda *_args: [],
+                    field_traverses_array_in_collection=lambda *_args: False,
+                    supports_multikey_index=lambda *_args: False,
+                    physical_index_name=lambda *_args: "physical_kind_idx",
+                    physical_multikey_index_name=lambda *_args: "multi_kind_idx",
+                    physical_scalar_index_name=lambda *_args: "scalar_kind_idx",
+                    is_builtin_id_index=lambda _keys: False,
+                    replace_multikey_entries_for_document=lambda *_args: None,
+                    replace_scalar_entries_for_document=lambda *_args: None,
+                    load_documents=lambda *_args: [],
+                    quote_identifier=lambda value: f'"{value}"',
+                )
+
+            self.assertFalse(conn.in_transaction)
+            self.assertEqual(conn.execute("SELECT name FROM indexes").fetchall(), [])
+            self.assertEqual(
+                conn.execute(
+                    """
+                    SELECT name
+                    FROM sqlite_master
+                    WHERE type = 'index' AND name IN ('physical_kind_idx', 'scalar_kind_idx')
+                    ORDER BY name
+                    """
+                ).fetchall(),
+                [],
+            )
+        finally:
+            conn.close()
 
     def test_replace_scalar_entries_for_index_for_document_returns_when_index_is_not_scalar_supported(self):
         conn = Mock()

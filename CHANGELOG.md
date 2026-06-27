@@ -8,9 +8,170 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
-### Added
+### Changed
 
-- Nothing yet.
+- Se centraliza la validacion de documentos seleccionados contra storage key en
+  `mongoeco.core.identity`, reduciendo duplicacion entre API, `$merge`, Memory
+  y SQLite.
+
+### Fixed
+
+- Se alinea la semantica de `_id` en updates/upserts con MongoDB:
+  los operadores clasicos y pipeline updates preservan el `_id` final,
+  rechazan cambios reales y evitan corrupcion entre documento y storage key.
+- Se rechaza `_id` raiz de tipo array en inserts, bulk inserts y upserts,
+  manteniendo validos los documentos `_id` con arrays descendientes.
+- Las escrituras y borrados seleccionados sobre documentos legacy con `_id`
+  raiz de tipo array fallan con `code=53` antes de mutar o eliminar datos.
+- Los `writeErrors` de `bulk_write` y comandos admin conservan indice y codigo
+  MongoDB al propagar violaciones de escritura sobre `_id`.
+- Los replacement updates (`replace_one` y `find_one_and_replace`) reportan
+  `code=66` cuando intentan cambiar el `_id`.
+- Las escrituras sobre documentos legacy sin `_id` o con `_id` desalineado
+  respecto al storage key ya no producen `KeyError`, no inventan `_id: None`
+  en replacements, bloquean retargets corruptos y evitan que los lookups por
+  la storage key antigua devuelvan o borren un documento con otro `_id`.
+- Los borrados directos del engine y las inserciones nuevas ya no pueden operar
+  sobre la storage key antigua ni duplicar un `_id` que ya existe en el payload
+  de un documento corrupto.
+- Las operaciones seleccionadas (`update_many`, `find_one_and_update`,
+  `find_one_and_replace`, `delete_many` y `find_one_and_delete`) vuelven a poder
+  operar sobre documentos legacy sin `_id` cuando viven bajo la storage key
+  estable, mientras `delete_one` y los deletes internos rechazan documentos cuyo
+  `_id` del payload no corresponde a su storage key.
+- Los updates no-op sobre documentos cuyo `_id` del payload no corresponde a su
+  storage key ya no reportan `matched_count=1`; ahora fallan con `code=66` antes
+  de aplicar el operador.
+- `$merge` valida que el documento target encontrado por `_id` tenga una storage
+  key coherente antes de resolver `whenMatched`, incluyendo `keepExisting`, para
+  evitar éxitos silenciosos sobre targets corruptos.
+- El purgado TTL oportunista valida `_id` antes de borrar, evitando que
+  documentos legacy con `_id` raiz array o storage key desalineada desaparezcan
+  durante lecturas o escrituras no relacionadas.
+- La creacion de indices TTL prevalida los documentos que quedarian expirados:
+  si detecta identidad corrupta falla sin registrar parcialmente el indice.
+- Las actualizaciones clasicas aplicadas con `UpdateEngine.apply_update` son
+  atomicas ante errores runtime: si una instruccion posterior falla, el
+  documento de entrada queda intacto.
+- La creacion de indices SQLite hace rollback tambien ante errores runtime no
+  `IntegrityError` (por ejemplo deadlines durante el backfill), evitando que
+  queden metadatos o indices fisicos parcialmente creados en una transaccion
+  abierta.
+- Las rutas SQLite de update/upsert/delete hacen rollback ante errores runtime
+  durante la reconstruccion o limpieza de indices/search, no solo ante
+  `IntegrityError`, evitando que un commit posterior persista documentos ya
+  modificados o borrados parcialmente.
+- Las escrituras SQLite dentro de una transaccion de sesion usan savepoints por
+  operacion, evitando que un fallo intermedio deje cambios parciales que luego
+  puedan confirmarse con el commit externo de la sesion.
+- Las rutas SQLite invalidan caches y metadatos antes de liberar el savepoint o
+  confirmar la escritura, de modo que un fallo en callbacks post-escritura no
+  deje cambios parciales confirmables dentro de transacciones de sesion.
+- El purgado TTL oportunista que se dispara despues de crear un indice SQLite es
+  best-effort: si falla tras haberse confirmado el indice, ya no convierte la
+  creacion exitosa del indice en una excepcion con cambios persistidos.
+- Los rollbacks SQLite limpian caches runtime sensibles (`collection_id`,
+  indices fisicos multikey y backends search/vector), evitando que una cache
+  adelantada sobreviva a un savepoint o transaccion abortada.
+- Los rollbacks y cambios de backend search SQLite limpian tambien las caches
+  auxiliares de ranking compound, evitando reusar buckets antiguos si una
+  version search vuelve a `0` tras abortar una transaccion.
+- Los change streams locales ya no publican eventos de escrituras dentro de
+  transacciones abortadas; los eventos se encolan en la sesion y solo se
+  publican despues de que el commit del engine haya tenido exito.
+- El fast path SQLite de seleccion del primer documento respeta la sesion de
+  lectura, evitando fallos al preleer documentos para eventos dentro de una
+  transaccion activa.
+- Los fallos del hub local de change streams ya no hacen fallar escrituras o
+  commits que el engine ya habia completado, evitando resultados ambiguos con
+  datos persistidos y excepciones de publicacion.
+- Los fallos de profiling y metadata operacional son best-effort y ya no
+  enmascaran operaciones completadas ni errores originales del engine.
+- Las sesiones cerradas se validan antes de entrar en los flujos publicos de
+  cliente, base de datos, coleccion y comandos, evitando que inserts, bulk
+  writes, indices o cambios de namespace se apliquen antes de fallar al
+  actualizar metadata causal.
+- `create_search_indexes()` deshace ahora los search indexes que haya creado en
+  la misma llamada si un modelo posterior falla, igualando el comportamiento
+  atomico que ya tenia `create_indexes()`.
+- `renameCollection` con `dropTarget: true` valida que el origen exista y que
+  origen y destino sean distintos antes de borrar el destino, evitando perder la
+  coleccion destino cuando el comando acaba fallando.
+- La limpieza de profiler tras `drop_database()` es best-effort en Memory y
+  SQLite, evitando que un fallo de observabilidad convierta un drop ya aplicado
+  en excepcion publica.
+- SQLite invalida caches de `drop_database()` antes del commit, de modo que un
+  fallo en esa fase revierte la escritura en vez de dejar la base borrada con
+  una excepcion publica.
+- `insert_many()` mantiene semantica de insert en Memory cuando existe un `_id`
+  duplicado en el lote, conserva el documento previo y no ejecuta documentos
+  posteriores al fallo; los inserts previos al error publican sus eventos de
+  change stream.
+- `insert_many()` en Memory trata tambien los duplicados de indices unicos
+  secundarios como fallo ordenado del documento actual, alineandose con SQLite
+  y publicando los eventos de los inserts previos al error.
+- Memory prevalida los documentos de `insert_many()` contra el validador de
+  coleccion antes de escribir, evitando batches parcialmente insertados cuando
+  un documento posterior falla validacion.
+- `MemoryEngine.create_index()` revierte ahora el indice, sus datos auxiliares
+  y el registro de coleccion creado implicitamente si falla un paso posterior
+  del flujo, evitando que una excepcion deje metadatos de indice parciales.
+- Las mutaciones de search indexes en Memory (`create`, `update` y `drop`)
+  ejecutan los pasos que pueden fallar antes de alterar el catalogo, evitando
+  que un fallo de invalidacion de cache deje cambios aplicados pese a la
+  excepcion publica.
+- Las mutaciones de search indexes en Memory (`create` y `update`) restauran
+  tambien catalogo y caches runtime si falla la marca de indice pendiente tras
+  iniciar la mutacion.
+- `MemoryEngine.drop_collection()` invalida caches antes de borrar el namespace,
+  de modo que un fallo en esa fase no elimina la coleccion mientras la llamada
+  publica acaba fallando.
+- Las escrituras Memory de documentos (`insert`, `update`, `upsert` y `delete`)
+  invalidan caches antes de tocar storage e indices, evitando mutaciones
+  persistidas cuando la llamada termina fallando por esa invalidacion.
+- Memory restaura ahora el estado de coleccion si falla la codificacion o la
+  actualizacion de indices durante inserts, updates, upserts, deletes o purgado
+  TTL, evitando documentos persistidos sin indices coherentes.
+- `MemoryEngine.rename_collection()` restaura origen, destino y caches runtime
+  si falla un paso intermedio del rename, evitando namespaces parcialmente
+  movidos.
+- `MemoryEngine.create_collection()` copia las opciones antes de registrar el
+  nombre, evitando namespaces fantasma si falla la normalizacion de opciones.
+- SQLite marca como asegurados los indices fisicos multikey y backends FTS solo
+  despues de que su commit interno haya terminado, evitando caches adelantadas
+  si ese commit falla.
+- `MemoryEngine` conserva el snapshot MVCC cuando un commit detecta conflicto
+  de escritura, evitando que la sesion siga activa sin aislamiento y que
+  escrituras posteriores se filtren al storage global.
+- SQLite conserva el owner transaccional si fallan `commit()` o `rollback()`,
+  y no pierde el savepoint si falla `ROLLBACK TO SAVEPOINT`, evitando sesiones
+  activas con estado engine ya limpiado.
+- Las sesiones transaccionales de otro cliente/engine se rechazan en Memory y
+  SQLite, en vez de ejecutar lecturas o escrituras fuera de la transaccion que
+  luego no serian afectadas por `abort_transaction()`.
+- Las sesiones de otro cliente/engine se rechazan tambien fuera de transaccion
+  en Memory y SQLite, incluyendo lecturas, escrituras, planning y comandos de
+  profiling, evitando mezclar ownership y metadata causal entre clientes.
+- Los comandos admin estaticos como `ping` y `hello` tambien validan la
+  pertenencia de la sesion al engine antes de responder, cerrando rutas que no
+  pasaban por el storage engine.
+- Los atajos internos de `system.profile` validan ahora la pertenencia de la
+  sesion antes de leer, listar, borrar o limpiar entradas del profiler, evitando
+  que una sesion de otro cliente acceda o borre observabilidad local.
+- Los fallbacks de lectura SQLite, incluido `count_documents()` con filtros que
+  requieren evaluacion Python, validan la pertenencia de la sesion antes de
+  cargar documentos locales.
+- La ejecucion directa de comandos admin ya parseados valida ahora la
+  pertenencia de la sesion antes de resolver comandos estaticos, `currentOp`,
+  `killOp` o `configureFailPoint`.
+- Los stages informativos de aggregation, como `$currentOp`, validan ahora la
+  pertenencia de la sesion antes de tomar snapshots runtime del engine.
+- `ClientSession.close()` conserva la sesion activa si falla el abort de una
+  transaccion pendiente, permitiendo reintentar el rollback en vez de dejar el
+  engine con owner transaccional inaccesible.
+- `endSessions` en el wire proxy solo elimina una sesion del store despues de
+  cerrarla correctamente, evitando perder la referencia si el abort implicito
+  falla.
 
 ## [3.4.0] - 2026-04-09
 

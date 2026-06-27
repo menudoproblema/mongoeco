@@ -474,6 +474,38 @@ async def assert_database_command_supports_rename_collection_within_current_data
     for engine_name in engine_names:
         with case.subTest(engine=engine_name):
             async with open_client(engine_name) as client:
+                await _maybe_await(client.alpha.protected.insert_one({"_id": "keep"}))
+
+                with case.assertRaises(CollectionInvalid):
+                    await _maybe_await(
+                        client.alpha.command(
+                            {
+                                "renameCollection": "alpha.missing",
+                                "to": "alpha.protected",
+                                "dropTarget": True,
+                            }
+                        )
+                    )
+                case.assertEqual(
+                    await _maybe_await(client.alpha.protected.find_one({"_id": "keep"})),
+                    {"_id": "keep"},
+                )
+
+                with case.assertRaises(CollectionInvalid):
+                    await _maybe_await(
+                        client.alpha.command(
+                            {
+                                "renameCollection": "alpha.protected",
+                                "to": "alpha.protected",
+                                "dropTarget": True,
+                            }
+                        )
+                    )
+                case.assertEqual(
+                    await _maybe_await(client.alpha.protected.find_one({"_id": "keep"})),
+                    {"_id": "keep"},
+                )
+
                 await _maybe_await(client.alpha.events.insert_one({"_id": "1", "kind": "view"}))
                 await _maybe_await(client.alpha.events.insert_one({"_id": "ttl-1", "expires_at": "soon"}))
                 await _maybe_await(client.alpha.events.create_index([("kind", 1)], name="kind_idx"))
@@ -493,7 +525,10 @@ async def assert_database_command_supports_rename_collection_within_current_data
                 )
 
                 case.assertEqual(renamed, {"ok": 1.0})
-                case.assertEqual(await _maybe_await(client.alpha.list_collection_names()), ["archived"])
+                case.assertEqual(
+                    await _maybe_await(client.alpha.list_collection_names()),
+                    ["archived", "protected"],
+                )
                 case.assertEqual(
                     await _maybe_await(client.alpha.archived.find_one({"_id": "1"})),
                     {"_id": "1", "kind": "view"},

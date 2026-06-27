@@ -10,6 +10,11 @@ from mongoeco.core.aggregation import CompiledPipelinePlan, Pipeline, apply_pipe
 from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.bson_scalars import is_bson_numeric, unwrap_bson_numeric
 from mongoeco.core.filtering import BSONComparator, QueryEngine
+from mongoeco.core.identity import (
+    assert_classic_update_preserves_id,
+    assert_valid_root_document_id,
+    preserve_and_validate_pipeline_id,
+)
 from mongoeco.errors import OperationFailure
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.update_paths import (
@@ -87,12 +92,26 @@ class CompiledUpdatePlan:
     update_spec: dict[str, Any]
     compiled_operators: tuple[CompiledUpdateOperator, ...]
     context: UpdateExecutionContext
+    touches_document_id: bool = False
 
     def apply(self, doc: dict[str, Any]) -> bool:
+        if "_id" in doc:
+            assert_valid_root_document_id(doc["_id"])
+        original = deepcopy(doc)
+        working = deepcopy(doc)
         modified = False
         for compiled_operator in self.compiled_operators:
-            if compiled_operator.apply(doc, context=self.context):
+            if compiled_operator.apply(working, context=self.context):
                 modified = True
+        if self.touches_document_id:
+            assert_classic_update_preserves_id(
+                original,
+                working,
+                dialect=self.context.dialect,
+            )
+        if modified:
+            doc.clear()
+            doc.update(working)
         return modified
 
 
@@ -120,6 +139,11 @@ class CompiledUpdatePipelinePlan:
             raise OperationFailure("Update pipeline must produce a single document")
         replacement = result[0]
         modified = not self.context.dialect.values_equal(original, replacement)
+        preserve_and_validate_pipeline_id(
+            original,
+            replacement,
+            dialect=self.context.dialect,
+        )
         if modified:
             doc.clear()
             doc.update(replacement)
@@ -218,14 +242,16 @@ class UpdateEngine:
             )
         if not isinstance(update_spec, dict) or not update_spec:
             raise OperationFailure("update specification must be a non-empty document")
+        compiled_operators = UpdateEngine._compile_update_spec(
+            update_spec,
+            execution.compiled_array_filters,
+            dialect=execution.dialect,
+        )
         return CompiledUpdatePlan(
             update_spec=update_spec,
-            compiled_operators=UpdateEngine._compile_update_spec(
-                update_spec,
-                execution.compiled_array_filters,
-                dialect=execution.dialect,
-            ),
+            compiled_operators=compiled_operators,
             context=execution,
+            touches_document_id=UpdateEngine._compiled_operators_touch_document_id(compiled_operators),
         )
 
     @staticmethod
@@ -433,8 +459,6 @@ class UpdateEngine:
     ) -> list[ResolvedUpdatePath]:
         compiled_path = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
         segments = compiled_path.segments
-        if segments[0].raw == "_id":
-            raise OperationFailure("Modifying the immutable field '_id' is not allowed")
         if not allow_positional and any(
             segment.kind in {"positional", "all_positional", "filtered_positional"}
             for segment in segments
@@ -591,8 +615,6 @@ class UpdateEngine:
     ) -> None:
         compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
         segments = compiled.segments
-        if segments[0].raw == "_id":
-            raise OperationFailure("Modifying the immutable field '_id' is not allowed")
         if not allow_positional:
             for segment in segments:
                 if segment.kind in {"positional", "all_positional", "filtered_positional"}:
@@ -602,8 +624,6 @@ class UpdateEngine:
     def _assert_rename_path(path: str | CompiledUpdatePath) -> None:
         compiled = path if isinstance(path, CompiledUpdatePath) else compile_update_path(path)
         segments = compiled.segments
-        if segments[0].raw == "_id":
-            raise OperationFailure("Modifying the immutable field '_id' is not allowed")
         if any(
             segment.kind in {"positional", "all_positional", "filtered_positional"}
             for segment in segments
@@ -631,6 +651,21 @@ class UpdateEngine:
             return [(path, value) for path, value in dialect.policy.sort_update_path_items(params)]
         except TypeError as exc:
             raise OperationFailure("update field names must be strings") from exc
+
+    @staticmethod
+    def _compiled_operators_touch_document_id(
+        compiled_operators: tuple[CompiledUpdateOperator, ...],
+    ) -> bool:
+        for compiled_operator in compiled_operators:
+            for instruction in compiled_operator.instructions:
+                if instruction.path.segments[0].raw == "_id":
+                    return True
+                if (
+                    instruction.target_path is not None
+                    and instruction.target_path.segments[0].raw == "_id"
+                ):
+                    return True
+        return False
 
 
 def _normalize_update_collation(collation: object | None) -> CollationSpec | None:

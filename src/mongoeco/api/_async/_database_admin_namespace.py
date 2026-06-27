@@ -14,6 +14,7 @@ class DatabaseNamespaceAdminService:
         self._admin = admin_service
 
     async def collection_stats(self, collection_name: str, *, scale: int = 1, session: ClientSession | None = None):
+        self._admin._ensure_session_active(session)
         collection = self._admin._database.get_collection(collection_name)
         documents = await collection.find({}, session=session).to_list()
         indexes = await collection.list_indexes(session=session).to_list()
@@ -31,6 +32,7 @@ class DatabaseNamespaceAdminService:
         )
 
     async def database_stats(self, *, scale: int = 1, session: ClientSession | None = None) -> DatabaseStatsSnapshot:
+        self._admin._ensure_session_active(session)
         collection_names = await self._admin._engine.list_collections(self._admin._db_name, context=session)
         objects = 0
         data_size = 0
@@ -53,6 +55,7 @@ class DatabaseNamespaceAdminService:
         )
 
     async def list_database_snapshots(self, *, session: ClientSession | None = None) -> list[DatabaseListingSnapshot]:
+        self._admin._ensure_session_active(session)
         database_names = await self._admin._engine.list_databases(context=session)
         snapshots: list[DatabaseListingSnapshot] = []
         for database_name in database_names:
@@ -79,6 +82,7 @@ class DatabaseNamespaceAdminService:
         return snapshots
 
     async def list_database_documents(self, *, session: ClientSession | None = None) -> list[DatabaseListingDocument]:
+        self._admin._ensure_session_active(session)
         return [
             snapshot.to_document()
             for snapshot in await self.list_database_snapshots(session=session)
@@ -94,6 +98,7 @@ class DatabaseNamespaceAdminService:
         session: ClientSession | None = None,
         comment: object | None = None,
     ) -> CollectionValidationSnapshot:
+        self._admin._ensure_session_active(session)
         normalize_validate_command_options(
             scandata=scandata,
             full=full,

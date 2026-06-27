@@ -33,6 +33,10 @@ from mongoeco.core.aggregation import (
 )
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.identity import (
+    assert_document_matches_stored_lookup,
+    assert_valid_root_document_id,
+)
 from mongoeco.core.search import (
     build_search_meta_document,
     compile_search_stage,
@@ -40,7 +44,8 @@ from mongoeco.core.search import (
 )
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import AggregateExplanation, Document, QueryPlanExplanation
+from mongoeco.session_guards import ensure_session_can_use_engine
+from mongoeco.types import AggregateExplanation, Document, ObjectId, QueryPlanExplanation
 
 
 class AsyncAggregationCursor:
@@ -103,6 +108,9 @@ class AsyncAggregationCursor:
         self._collation = normalize_collation(operation.collation)
         self._let = operation.let
         self._session = session
+
+    def _ensure_session_can_use_engine(self) -> None:
+        ensure_session_can_use_engine(self._collection._engine, self._session)
 
     def _leading_search_stage(self) -> tuple[str, object] | None:
         if not self._pipeline:
@@ -281,7 +289,8 @@ class AsyncAggregationCursor:
         for source_document in documents:
             candidate = strip_search_result_metadata(deepcopy(source_document))
             if "_id" not in candidate:
-                raise OperationFailure("$merge currently requires documents with _id")
+                candidate["_id"] = ObjectId()
+            assert_valid_root_document_id(candidate["_id"])
             existing = await target_collection.find_one({"_id": candidate["_id"]}, session=self._session)
             if existing is None:
                 if when_not_matched == "insert":
@@ -290,6 +299,12 @@ class AsyncAggregationCursor:
                 if when_not_matched == "discard":
                     continue
                 raise OperationFailure(f"$merge whenNotMatched=fail found no target document for _id={candidate['_id']!r}")
+            stable_existing = await target_collection._document_by_id(candidate["_id"], session=self._session)
+            assert_document_matches_stored_lookup(
+                existing,
+                stable_existing,
+                dialect=target_collection._mongodb_dialect,
+            )
             if when_matched == "keepExisting":
                 continue
             if when_matched == "fail":
@@ -700,6 +715,7 @@ class AsyncAggregationCursor:
 
     async def _materialize(self) -> list[Document]:
         _ensure_operation_executable(self._collection, self._operation)
+        self._ensure_session_can_use_engine()
         deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         pipeline = self._effective_pipeline()
@@ -853,6 +869,7 @@ class AsyncAggregationCursor:
 
     async def _stream_batches(self) -> AsyncIterator[Document]:
         _ensure_operation_executable(self._collection, self._operation)
+        self._ensure_session_can_use_engine()
         if self._leading_search_stage() is not None:
             for document in await self._materialize():
                 yield self._materialize_document(document)
@@ -981,6 +998,7 @@ class AsyncAggregationCursor:
         return None
 
     async def explain(self) -> dict[str, object]:
+        self._ensure_session_can_use_engine()
         if self._operation.planning_issues:
             explanation = AggregateExplanation(
                 engine_plan=QueryPlanExplanation(
