@@ -5,6 +5,7 @@ from copy import deepcopy
 import sqlite3
 
 from mongoeco.core.operation_limits import enforce_deadline
+from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.sqlite_query import index_expressions_sql
 from mongoeco.engines.virtual_indexes import normalize_partial_filter_expression
 from mongoeco.errors import DuplicateKeyError, OperationFailure
@@ -255,131 +256,133 @@ def create_index(
         validate_ttl_index_candidates(ttl_indexes)
 
     try:
-        begin_write(conn)
-        if physical_name is not None and expressions is not None:
-            conn.execute(
-                f"CREATE {unique_sql}INDEX {quote_identifier(physical_name)} "
-                f"ON documents ({expressions})"
-            )
-        if multikey:
-            enforce_deadline_fn(deadline)
-            conn.execute(
-                f"CREATE INDEX {quote_identifier(str(multikey_physical_name))} "
-                "ON multikey_entries (collection_id, index_name, type_score, element_key, storage_key)"
-            )
-        if scalar_physical_name is not None:
-            enforce_deadline_fn(deadline)
-            conn.execute(
-                f"CREATE INDEX {quote_identifier(str(scalar_physical_name))} "
-                "ON scalar_index_entries (collection_id, index_name, type_score, element_key, storage_key)"
-            )
-        conn.execute(
-            """
-            INSERT INTO indexes (
-                db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                db_name,
-                coll_name,
-                index_name,
-                physical_name,
-                json_dumps_compact(fields),
-                json_dumps_compact(normalized_keys),
-                1 if unique else 0,
-                1 if sparse else 0,
-                1 if hidden else 0,
-                json_dumps_compact(collation) if collation is not None else None,
-                json_dumps_compact(partial_filter_expression) if partial_filter_expression is not None else None,
-                expire_after_seconds,
-                json_dumps_compact(definition.weights) if definition.weights is not None else None,
-                definition.default_language,
-                definition.language_override,
-                definition.min_value,
-                definition.max_value,
-                definition.bucket_size,
-                1 if multikey else 0,
-                multikey_physical_name if multikey else None,
-                scalar_physical_name,
-            ),
-        )
-        if multikey:
-            enforce_deadline_fn(deadline)
-            index_metadata = EngineIndexRecord(
-                name=index_name,
-                physical_name=physical_name,
-                fields=fields,
-                key=normalized_keys,
-                unique=unique,
-                sparse=sparse,
-                hidden=hidden,
-                collation=deepcopy(collation),
-                partial_filter_expression=deepcopy(partial_filter_expression),
-                expire_after_seconds=expire_after_seconds,
-                weights=deepcopy(definition.weights),
-                default_language=definition.default_language,
-                language_override=definition.language_override,
-                min_value=definition.min_value,
-                max_value=definition.max_value,
-                bucket_size=definition.bucket_size,
-                multikey=True,
-                multikey_physical_name=multikey_physical_name,
-                scalar_physical_name=scalar_physical_name,
-            )
-            for storage_key, document in load_documents(db_name, coll_name):
+        with sqlite_write_scope(
+            conn,
+            begin_write=begin_write,
+            commit_write=commit_write,
+            rollback_write=rollback_write,
+        ):
+            if physical_name is not None and expressions is not None:
+                conn.execute(
+                    f"CREATE {unique_sql}INDEX {quote_identifier(physical_name)} "
+                    f"ON documents ({expressions})"
+                )
+            if multikey:
                 enforce_deadline_fn(deadline)
-                replace_multikey_entries_for_document(
-                    conn,
+                conn.execute(
+                    f"CREATE INDEX {quote_identifier(str(multikey_physical_name))} "
+                    "ON multikey_entries (collection_id, index_name, type_score, element_key, storage_key)"
+                )
+            if scalar_physical_name is not None:
+                enforce_deadline_fn(deadline)
+                conn.execute(
+                    f"CREATE INDEX {quote_identifier(str(scalar_physical_name))} "
+                    "ON scalar_index_entries (collection_id, index_name, type_score, element_key, storage_key)"
+                )
+            conn.execute(
+                """
+                INSERT INTO indexes (
+                    db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
                     db_name,
                     coll_name,
-                    storage_key,
-                    document,
-                    index_metadata,
-                )
-        if scalar_physical_name is not None:
-            enforce_deadline_fn(deadline)
-            index_metadata = EngineIndexRecord(
-                name=index_name,
-                physical_name=physical_name,
-                fields=fields,
-                key=normalized_keys,
-                unique=unique,
-                sparse=sparse,
-                hidden=hidden,
-                collation=deepcopy(collation),
-                partial_filter_expression=deepcopy(partial_filter_expression),
-                expire_after_seconds=expire_after_seconds,
-                weights=deepcopy(definition.weights),
-                default_language=definition.default_language,
-                language_override=definition.language_override,
-                min_value=definition.min_value,
-                max_value=definition.max_value,
-                bucket_size=definition.bucket_size,
-                multikey=multikey,
-                multikey_physical_name=multikey_physical_name,
-                scalar_physical_name=scalar_physical_name,
+                    index_name,
+                    physical_name,
+                    json_dumps_compact(fields),
+                    json_dumps_compact(normalized_keys),
+                    1 if unique else 0,
+                    1 if sparse else 0,
+                    1 if hidden else 0,
+                    json_dumps_compact(collation) if collation is not None else None,
+                    json_dumps_compact(partial_filter_expression) if partial_filter_expression is not None else None,
+                    expire_after_seconds,
+                    json_dumps_compact(definition.weights) if definition.weights is not None else None,
+                    definition.default_language,
+                    definition.language_override,
+                    definition.min_value,
+                    definition.max_value,
+                    definition.bucket_size,
+                    1 if multikey else 0,
+                    multikey_physical_name if multikey else None,
+                    scalar_physical_name,
+                ),
             )
-            for storage_key, document in load_documents(db_name, coll_name):
+            if multikey:
                 enforce_deadline_fn(deadline)
-                replace_scalar_entries_for_document(
-                    conn,
-                    db_name,
-                    coll_name,
-                    storage_key,
-                    document,
-                    index_metadata,
+                index_metadata = EngineIndexRecord(
+                    name=index_name,
+                    physical_name=physical_name,
+                    fields=fields,
+                    key=normalized_keys,
+                    unique=unique,
+                    sparse=sparse,
+                    hidden=hidden,
+                    collation=deepcopy(collation),
+                    partial_filter_expression=deepcopy(partial_filter_expression),
+                    expire_after_seconds=expire_after_seconds,
+                    weights=deepcopy(definition.weights),
+                    default_language=definition.default_language,
+                    language_override=definition.language_override,
+                    min_value=definition.min_value,
+                    max_value=definition.max_value,
+                    bucket_size=definition.bucket_size,
+                    multikey=True,
+                    multikey_physical_name=multikey_physical_name,
+                    scalar_physical_name=scalar_physical_name,
                 )
-        enforce_deadline_fn(deadline)
-        mark_index_metadata_changed(db_name, coll_name)
-        invalidate_collection_features_cache(db_name, coll_name)
-        commit_write(conn)
+                for storage_key, document in load_documents(db_name, coll_name):
+                    enforce_deadline_fn(deadline)
+                    replace_multikey_entries_for_document(
+                        conn,
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        document,
+                        index_metadata,
+                    )
+            if scalar_physical_name is not None:
+                enforce_deadline_fn(deadline)
+                index_metadata = EngineIndexRecord(
+                    name=index_name,
+                    physical_name=physical_name,
+                    fields=fields,
+                    key=normalized_keys,
+                    unique=unique,
+                    sparse=sparse,
+                    hidden=hidden,
+                    collation=deepcopy(collation),
+                    partial_filter_expression=deepcopy(partial_filter_expression),
+                    expire_after_seconds=expire_after_seconds,
+                    weights=deepcopy(definition.weights),
+                    default_language=definition.default_language,
+                    language_override=definition.language_override,
+                    min_value=definition.min_value,
+                    max_value=definition.max_value,
+                    bucket_size=definition.bucket_size,
+                    multikey=multikey,
+                    multikey_physical_name=multikey_physical_name,
+                    scalar_physical_name=scalar_physical_name,
+                )
+                for storage_key, document in load_documents(db_name, coll_name):
+                    enforce_deadline_fn(deadline)
+                    replace_scalar_entries_for_document(
+                        conn,
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        document,
+                        index_metadata,
+                    )
+            enforce_deadline_fn(deadline)
+            mark_index_metadata_changed(db_name, coll_name)
+            invalidate_collection_features_cache(db_name, coll_name)
     except sqlite3.IntegrityError as exc:
-        rollback_write(conn)
         mark_index_metadata_changed(db_name, coll_name)
         raise DuplicateKeyError(str(exc)) from exc
     except Exception:
-        rollback_write(conn)
         mark_index_metadata_changed(db_name, coll_name)
         raise
     # TTL cleanup is opportunistic; index creation has already succeeded.
@@ -437,8 +440,12 @@ def drop_index(
         )
         raise OperationFailure(missing_target)
 
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         conn.execute(
             f"DROP INDEX IF EXISTS {quote_identifier(str(target['physical_name']))}"
         )
@@ -474,10 +481,6 @@ def drop_index(
         )
         mark_index_metadata_changed(db_name, coll_name)
         invalidate_collection_features_cache(db_name, coll_name)
-        commit_write(conn)
-    except Exception:
-        rollback_write(conn)
-        raise
 
 
 def drop_all_indexes(
@@ -495,8 +498,12 @@ def drop_all_indexes(
     invalidate_collection_features_cache: Callable[[str, str], None],
 ) -> None:
     indexes = load_indexes(db_name, coll_name)
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         for index in indexes:
             conn.execute(
                 f"DROP INDEX IF EXISTS {quote_identifier(str(index['physical_name']))}"
@@ -533,7 +540,3 @@ def drop_all_indexes(
         )
         mark_index_metadata_changed(db_name, coll_name)
         invalidate_collection_features_cache(db_name, coll_name)
-        commit_write(conn)
-    except Exception:
-        rollback_write(conn)
-        raise

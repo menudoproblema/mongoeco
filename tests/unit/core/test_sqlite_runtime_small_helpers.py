@@ -12,11 +12,75 @@ from mongoeco.engines._sqlite_plan_heuristics import plan_requires_python_for_ar
 from mongoeco.engines._sqlite_read_ops import build_search_explain
 from mongoeco.engines._sqlite_read_runtime import plan_find_semantics_sync
 from mongoeco.engines._sqlite_session_runtime import SQLiteSessionRuntime
+from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.types import SearchIndexDefinition
 
 
 class SQLiteRuntimeSmallHelperTests(unittest.TestCase):
+    def test_sqlite_write_scope_commits_on_success(self):
+        conn = object()
+        events: list[str] = []
+
+        with sqlite_write_scope(
+            conn,
+            begin_write=lambda current: events.append(f"begin:{current is conn}"),
+            commit_write=lambda current: events.append(f"commit:{current is conn}"),
+            rollback_write=lambda current: events.append(f"rollback:{current is conn}"),
+        ):
+            events.append("body")
+
+        self.assertEqual(events, ["begin:True", "body", "commit:True"])
+
+    def test_sqlite_write_scope_rolls_back_on_exception(self):
+        conn = object()
+        events: list[str] = []
+
+        with self.assertRaisesRegex(RuntimeError, "boom"):
+            with sqlite_write_scope(
+                conn,
+                begin_write=lambda _current: events.append("begin"),
+                commit_write=lambda _current: events.append("commit"),
+                rollback_write=lambda _current: events.append("rollback"),
+            ):
+                events.append("body")
+                raise RuntimeError("boom")
+
+        self.assertEqual(events, ["begin", "body", "rollback"])
+
+    def test_sqlite_write_scope_explicit_rollback_prevents_commit(self):
+        conn = object()
+        events: list[str] = []
+
+        with sqlite_write_scope(
+            conn,
+            begin_write=lambda _current: events.append("begin"),
+            commit_write=lambda _current: events.append("commit"),
+            rollback_write=lambda _current: events.append("rollback"),
+        ) as write:
+            write.rollback()
+
+        self.assertEqual(events, ["begin", "rollback"])
+
+    def test_sqlite_write_scope_rolls_back_when_commit_fails(self):
+        conn = object()
+        events: list[str] = []
+
+        def commit(_current):
+            events.append("commit")
+            raise RuntimeError("commit boom")
+
+        with self.assertRaisesRegex(RuntimeError, "commit boom"):
+            with sqlite_write_scope(
+                conn,
+                begin_write=lambda _current: events.append("begin"),
+                commit_write=commit,
+                rollback_write=lambda _current: events.append("rollback"),
+            ):
+                events.append("body")
+
+        self.assertEqual(events, ["begin", "body", "commit", "rollback"])
+
     def test_active_operation_registry_cancel_invokes_task_cancel(self):
         registry = LocalActiveOperationRegistry()
         task = Mock()

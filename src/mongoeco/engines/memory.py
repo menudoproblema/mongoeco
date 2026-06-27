@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from contextlib import AsyncExitStack
+from contextlib import AsyncExitStack, contextmanager
 import datetime
 from dataclasses import dataclass
 import heapq
@@ -12,7 +12,7 @@ import threading
 import time
 import uuid
 from copy import deepcopy
-from typing import Any, AsyncIterable, override
+from typing import Any, AsyncIterable, Iterator, override
 
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -506,7 +506,7 @@ class MemoryEngine(AsyncStorageEngine):
                 expired_storage_keys.append(storage_key)
         if not expired_storage_keys:
             return 0
-        snapshot = self._snapshot_collection_state_locked(
+        with self._collection_state_rollback_locked(
             db_name,
             coll_name,
             storage=storage_source,
@@ -515,8 +515,7 @@ class MemoryEngine(AsyncStorageEngine):
             search_indexes=self._search_indexes_view(context),
             collections=self._collections_view(context),
             options=self._collection_options_view(context),
-        )
-        try:
+        ):
             for storage_key in expired_storage_keys:
                 document = self._borrow_storage_document(coll[storage_key])
                 self._update_indexes_locked(
@@ -529,19 +528,6 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes_view=indexes_source,
                 )
                 del coll[storage_key]
-        except Exception:
-            self._restore_collection_state_locked(
-                db_name,
-                coll_name,
-                snapshot,
-                storage=storage_source,
-                indexes=indexes_source,
-                index_data=index_data_source,
-                search_indexes=self._search_indexes_view(context),
-                collections=self._collections_view(context),
-                options=self._collection_options_view(context),
-            )
-            raise
         return len(expired_storage_keys)
 
     def _assert_expired_documents_have_stable_identity_locked(
@@ -1104,6 +1090,45 @@ class MemoryEngine(AsyncStorageEngine):
                     collections.pop(db_name, None)
         self._restore_nested_mapping_entry(options, db_name, coll_name, snapshot.options)
 
+    @contextmanager
+    def _collection_state_rollback_locked(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        storage: dict[str, dict[str, dict[Any, Any]]],
+        indexes: dict[str, dict[str, list[EngineIndexRecord]]],
+        index_data: dict[str, dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]]],
+        search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]],
+        collections: dict[str, set[str]],
+        options: dict[str, dict[str, Document]],
+    ) -> Iterator[_MemoryCollectionSnapshot]:
+        snapshot = self._snapshot_collection_state_locked(
+            db_name,
+            coll_name,
+            storage=storage,
+            indexes=indexes,
+            index_data=index_data,
+            search_indexes=search_indexes,
+            collections=collections,
+            options=options,
+        )
+        try:
+            yield snapshot
+        except Exception:
+            self._restore_collection_state_locked(
+                db_name,
+                coll_name,
+                snapshot,
+                storage=storage,
+                indexes=indexes,
+                index_data=index_data,
+                search_indexes=search_indexes,
+                collections=collections,
+                options=options,
+            )
+            raise
+
     def _snapshot_search_runtime_state_locked(
         self,
         db_name: str,
@@ -1141,6 +1166,19 @@ class MemoryEngine(AsyncStorageEngine):
             for key in [key for key in mapping if key[0] == db_name and key[1] in coll_names]:
                 del mapping[key]
             mapping.update(entries)
+
+    @contextmanager
+    def _search_runtime_rollback_locked(
+        self,
+        db_name: str,
+        coll_names: set[str],
+    ) -> Iterator[_MemorySearchRuntimeSnapshot]:
+        snapshot = self._snapshot_search_runtime_state_locked(db_name, coll_names)
+        try:
+            yield snapshot
+        except Exception:
+            self._restore_search_runtime_state_locked(db_name, coll_names, snapshot)
+            raise
 
     def _namespace_exists_locked(self, db_name: str, coll_name: str) -> bool:
         return (
@@ -1319,7 +1357,7 @@ class MemoryEngine(AsyncStorageEngine):
                 index_data_view=index_data_view,
                 storage_view=storage,
             )
-            snapshot = self._snapshot_collection_state_locked(
+            with self._collection_state_rollback_locked(
                 db_name,
                 coll_name,
                 storage=storage,
@@ -1328,8 +1366,7 @@ class MemoryEngine(AsyncStorageEngine):
                 search_indexes=search_indexes_view,
                 collections=collections,
                 options=option_store,
-            )
-            try:
+            ):
                 with self._meta_lock:
                     db = storage.setdefault(db_name, {})
                     coll = db.setdefault(coll_name, {})
@@ -1419,19 +1456,6 @@ class MemoryEngine(AsyncStorageEngine):
                     results.append(True)
                     modified_any = True
                 return results
-            except Exception:
-                self._restore_collection_state_locked(
-                    db_name,
-                    coll_name,
-                    snapshot,
-                    storage=storage,
-                    indexes=indexes_view,
-                    index_data=index_data_view,
-                    search_indexes=search_indexes_view,
-                    collections=collections,
-                    options=option_store,
-                )
-                raise
 
     @override
     async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
@@ -1486,7 +1510,7 @@ class MemoryEngine(AsyncStorageEngine):
                     assert_valid_root_document_id(public_document["_id"])
                 if not document_matches_root_id_lookup(public_document, doc_id, dialect=MONGODB_DIALECT_70):
                     return False
-                snapshot = self._snapshot_collection_state_locked(
+                with self._collection_state_rollback_locked(
                     db_name,
                     coll_name,
                     storage=storage_view,
@@ -1495,8 +1519,7 @@ class MemoryEngine(AsyncStorageEngine):
                     search_indexes=search_indexes_view,
                     collections=collections_view,
                     options=option_store,
-                )
-                try:
+                ):
                     self._invalidate_search_runtime_cache(db_name, coll_name)
                     self._update_indexes_locked(
                         db_name,
@@ -1508,19 +1531,6 @@ class MemoryEngine(AsyncStorageEngine):
                         indexes_view=indexes_view,
                     )
                     del coll[storage_key]
-                except Exception:
-                    self._restore_collection_state_locked(
-                        db_name,
-                        coll_name,
-                        snapshot,
-                        storage=storage_view,
-                        indexes=indexes_view,
-                        index_data=index_data_view,
-                        search_indexes=search_indexes_view,
-                        collections=collections_view,
-                        options=option_store,
-                    )
-                    raise
                 return True
             return False
 
@@ -1771,7 +1781,7 @@ class MemoryEngine(AsyncStorageEngine):
                     storage_view=storage_view,
                     index_data_view=index_data_view,
                 )
-                snapshot = self._snapshot_collection_state_locked(
+                with self._collection_state_rollback_locked(
                     db_name,
                     coll_name,
                     storage=storage_view,
@@ -1780,8 +1790,7 @@ class MemoryEngine(AsyncStorageEngine):
                     search_indexes=search_indexes_view,
                     collections=collections_view,
                     options=option_store,
-                )
-                try:
+                ):
                     self._invalidate_search_runtime_cache(db_name, coll_name)
                     self._update_indexes_locked(
                         db_name,
@@ -1802,19 +1811,6 @@ class MemoryEngine(AsyncStorageEngine):
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
-                except Exception:
-                    self._restore_collection_state_locked(
-                        db_name,
-                        coll_name,
-                        snapshot,
-                        storage=storage_view,
-                        indexes=indexes_view,
-                        index_data=index_data_view,
-                        search_indexes=search_indexes_view,
-                        collections=collections_view,
-                        options=option_store,
-                    )
-                    raise
                 return UpdateResult(
                     matched_count=1,
                     modified_count=1 if modified else 0,
@@ -1837,7 +1833,7 @@ class MemoryEngine(AsyncStorageEngine):
                     dialect=semantics.dialect,
                 )
 
-            snapshot = self._snapshot_collection_state_locked(
+            with self._collection_state_rollback_locked(
                 db_name,
                 coll_name,
                 storage=storage_view,
@@ -1846,30 +1842,29 @@ class MemoryEngine(AsyncStorageEngine):
                 search_indexes=search_indexes_view,
                 collections=collections_view,
                 options=option_store,
-            )
-            with self._meta_lock:
-                db = storage_view.setdefault(db_name, {})
-                coll = db.setdefault(coll_name, {})
-                self._register_collection_locked(
+            ):
+                with self._meta_lock:
+                    db = storage_view.setdefault(db_name, {})
+                    coll = db.setdefault(coll_name, {})
+                    self._register_collection_locked(
+                        db_name,
+                        coll_name,
+                        collections=collections_view,
+                        collection_options=option_store,
+                    )
+
+                storage_key = self._storage_key(new_doc["_id"])
+                if storage_key in coll:
+                    raise DuplicateKeyError(f"Duplicate key: _id={new_doc['_id']}")
+
+                self._ensure_unique_indexes(
                     db_name,
                     coll_name,
-                    collections=collections_view,
-                    collection_options=option_store,
+                    new_doc,
+                    indexes_view=indexes_view,
+                    storage_view=storage_view,
+                    index_data_view=index_data_view,
                 )
-
-            storage_key = self._storage_key(new_doc["_id"])
-            if storage_key in coll:
-                raise DuplicateKeyError(f"Duplicate key: _id={new_doc['_id']}")
-
-            self._ensure_unique_indexes(
-                db_name,
-                coll_name,
-                new_doc,
-                indexes_view=indexes_view,
-                storage_view=storage_view,
-                index_data_view=index_data_view,
-            )
-            try:
                 self._invalidate_search_runtime_cache(db_name, coll_name)
                 coll[storage_key] = self._encode_storage_document(new_doc)
                 self._update_indexes_locked(
@@ -1881,19 +1876,6 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=index_data_view,
                     indexes_view=indexes_view,
                 )
-            except Exception:
-                self._restore_collection_state_locked(
-                    db_name,
-                    coll_name,
-                    snapshot,
-                    storage=storage_view,
-                    indexes=indexes_view,
-                    index_data=index_data_view,
-                    search_indexes=search_indexes_view,
-                    collections=collections_view,
-                    options=option_store,
-                )
-                raise
             return UpdateResult(
                 matched_count=0,
                 modified_count=0,
@@ -1943,7 +1925,7 @@ class MemoryEngine(AsyncStorageEngine):
                     storage_key,
                     storage_key_for_id=self._storage_key,
                 )
-                snapshot = self._snapshot_collection_state_locked(
+                with self._collection_state_rollback_locked(
                     db_name,
                     coll_name,
                     storage=storage_view,
@@ -1952,8 +1934,7 @@ class MemoryEngine(AsyncStorageEngine):
                     search_indexes=search_indexes_view,
                     collections=collections_view,
                     options=option_store,
-                )
-                try:
+                ):
                     self._invalidate_search_runtime_cache(db_name, coll_name)
                     self._update_indexes_locked(
                         db_name,
@@ -1965,19 +1946,6 @@ class MemoryEngine(AsyncStorageEngine):
                         indexes_view=indexes_view,
                     )
                     del coll[storage_key]
-                except Exception:
-                    self._restore_collection_state_locked(
-                        db_name,
-                        coll_name,
-                        snapshot,
-                        storage=storage_view,
-                        indexes=indexes_view,
-                        index_data=index_data_view,
-                        search_indexes=search_indexes_view,
-                        collections=collections_view,
-                        options=option_store,
-                    )
-                    raise
                 return DeleteResult(deleted_count=1)
             return DeleteResult(deleted_count=0)
 
@@ -2097,7 +2065,7 @@ class MemoryEngine(AsyncStorageEngine):
             option_store = self._collection_options_view(context)
             search_indexes = self._search_indexes_view(context)
             enforce_deadline(deadline)
-            mutation_snapshot = self._snapshot_collection_state_locked(
+            with self._collection_state_rollback_locked(
                 db_name,
                 coll_name,
                 storage=storage_view,
@@ -2106,110 +2074,109 @@ class MemoryEngine(AsyncStorageEngine):
                 search_indexes=search_indexes,
                 collections=collections,
                 options=option_store,
-            )
-            with self._meta_lock:
-                db_indexes = indexes_view.setdefault(db_name, {})
-                coll_indexes = db_indexes.setdefault(coll_name, [])
-                self._register_collection_locked(
-                    db_name,
-                    coll_name,
-                    collections=collections,
-                    collection_options=option_store,
+            ):
+                with self._meta_lock:
+                    db_indexes = indexes_view.setdefault(db_name, {})
+                    coll_indexes = db_indexes.setdefault(coll_name, [])
+                    self._register_collection_locked(
+                        db_name,
+                        coll_name,
+                        collections=collections,
+                        collection_options=option_store,
+                    )
+
+                for index in coll_indexes:
+                    enforce_deadline(deadline)
+                    if index["name"] == index_name:
+                        if (
+                            index["key"] != normalized_keys
+                            or index["unique"] != unique
+                            or index.get("sparse") != sparse
+                            or index.get("hidden") != hidden
+                            or index.get("collation") != collation
+                            or index.get("partial_filter_expression") != partial_filter_expression
+                            or index.get("expire_after_seconds") != expire_after_seconds
+                            or index.get("weights") != index_definition.weights
+                            or index.get("default_language") != index_definition.default_language
+                            or index.get("language_override") != index_definition.language_override
+                            or index.get("min_value") != index_definition.min_value
+                            or index.get("max_value") != index_definition.max_value
+                            or index.get("bucket_size") != index_definition.bucket_size
+                        ):
+                            raise OperationFailure(
+                                f"Conflicting index definition for '{index_name}'"
+                            )
+                        return index_name
+                    if index["key"] == normalized_keys:
+                        if (
+                            index["unique"] != unique
+                            or index.get("sparse") != sparse
+                            or index.get("hidden") != hidden
+                            or index.get("collation") != collation
+                            or index.get("partial_filter_expression") != partial_filter_expression
+                            or index.get("expire_after_seconds") != expire_after_seconds
+                            or index.get("weights") != index_definition.weights
+                            or index.get("default_language") != index_definition.default_language
+                            or index.get("language_override") != index_definition.language_override
+                            or index.get("min_value") != index_definition.min_value
+                            or index.get("max_value") != index_definition.max_value
+                            or index.get("bucket_size") != index_definition.bucket_size
+                        ):
+                            raise OperationFailure(
+                                f"Conflicting index definition for key pattern '{normalized_keys!r}'"
+                            )
+                        continue
+
+                new_index = EngineIndexRecord(
+                    name=index_name,
+                    fields=fields.copy(),
+                    key=deepcopy(normalized_keys),
+                    unique=unique,
+                    sparse=sparse,
+                    hidden=hidden,
+                    collation=deepcopy(collation),
+                    partial_filter_expression=deepcopy(partial_filter_expression),
+                    expire_after_seconds=expire_after_seconds,
+                    weights=deepcopy(index_definition.weights),
+                    default_language=index_definition.default_language,
+                    language_override=index_definition.language_override,
+                    min_value=index_definition.min_value,
+                    max_value=index_definition.max_value,
+                    bucket_size=index_definition.bucket_size,
                 )
 
-            for index in coll_indexes:
+                if unique:
+                    seen: set[tuple[Any, ...]] = set()
+                    coll = storage_view.get(db_name, {}).get(coll_name, {})
+                    for data in coll.values():
+                        enforce_deadline(deadline)
+                        document = self._borrow_storage_document(data)
+                        if not document_in_virtual_index(document, new_index):
+                            continue
+                        key = self._index_key(document, fields)
+                        if key in seen:
+                            raise DuplicateKeyError(
+                                f"Duplicate key for unique index '{index_name}': {fields}={key!r}"
+                            )
+                        seen.add(key)
+
+                ttl_indexes = [
+                    index
+                    for index in coll_indexes
+                    if index.expire_after_seconds is not None
+                ]
+                if new_index.expire_after_seconds is not None:
+                    ttl_indexes.append(new_index)
+                self._assert_expired_documents_have_stable_identity_locked(
+                    db_name,
+                    coll_name,
+                    ttl_indexes,
+                    context=context,
+                    storage_view=storage_view,
+                )
+
                 enforce_deadline(deadline)
-                if index["name"] == index_name:
-                    if (
-                        index["key"] != normalized_keys
-                        or index["unique"] != unique
-                        or index.get("sparse") != sparse
-                        or index.get("hidden") != hidden
-                        or index.get("collation") != collation
-                        or index.get("partial_filter_expression") != partial_filter_expression
-                        or index.get("expire_after_seconds") != expire_after_seconds
-                        or index.get("weights") != index_definition.weights
-                        or index.get("default_language") != index_definition.default_language
-                        or index.get("language_override") != index_definition.language_override
-                        or index.get("min_value") != index_definition.min_value
-                        or index.get("max_value") != index_definition.max_value
-                        or index.get("bucket_size") != index_definition.bucket_size
-                    ):
-                        raise OperationFailure(
-                            f"Conflicting index definition for '{index_name}'"
-                        )
-                    return index_name
-                if index["key"] == normalized_keys:
-                    if (
-                        index["unique"] != unique
-                        or index.get("sparse") != sparse
-                        or index.get("hidden") != hidden
-                        or index.get("collation") != collation
-                        or index.get("partial_filter_expression") != partial_filter_expression
-                        or index.get("expire_after_seconds") != expire_after_seconds
-                        or index.get("weights") != index_definition.weights
-                        or index.get("default_language") != index_definition.default_language
-                        or index.get("language_override") != index_definition.language_override
-                        or index.get("min_value") != index_definition.min_value
-                        or index.get("max_value") != index_definition.max_value
-                        or index.get("bucket_size") != index_definition.bucket_size
-                    ):
-                        raise OperationFailure(
-                            f"Conflicting index definition for key pattern '{normalized_keys!r}'"
-                        )
-                    continue
-
-            new_index = EngineIndexRecord(
-                name=index_name,
-                fields=fields.copy(),
-                key=deepcopy(normalized_keys),
-                unique=unique,
-                sparse=sparse,
-                hidden=hidden,
-                collation=deepcopy(collation),
-                partial_filter_expression=deepcopy(partial_filter_expression),
-                expire_after_seconds=expire_after_seconds,
-                weights=deepcopy(index_definition.weights),
-                default_language=index_definition.default_language,
-                language_override=index_definition.language_override,
-                min_value=index_definition.min_value,
-                max_value=index_definition.max_value,
-                bucket_size=index_definition.bucket_size,
-            )
-
-            if unique:
-                seen: set[tuple[Any, ...]] = set()
-                coll = storage_view.get(db_name, {}).get(coll_name, {})
-                for data in coll.values():
-                    enforce_deadline(deadline)
-                    document = self._borrow_storage_document(data)
-                    if not document_in_virtual_index(document, new_index):
-                        continue
-                    key = self._index_key(document, fields)
-                    if key in seen:
-                        raise DuplicateKeyError(
-                            f"Duplicate key for unique index '{index_name}': {fields}={key!r}"
-                        )
-                    seen.add(key)
-
-            ttl_indexes = [
-                index
-                for index in coll_indexes
-                if index.expire_after_seconds is not None
-            ]
-            if new_index.expire_after_seconds is not None:
-                ttl_indexes.append(new_index)
-            self._assert_expired_documents_have_stable_identity_locked(
-                db_name,
-                coll_name,
-                ttl_indexes,
-                context=context,
-                storage_view=storage_view,
-            )
-
-            enforce_deadline(deadline)
-            coll_indexes.append(new_index)
-            try:
+                coll_indexes.append(new_index)
                 if is_ordered_index_spec(normalized_keys):
                     self._rebuild_index_data_locked(
                         db_name,
@@ -2226,19 +2193,6 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=index_data_view,
                     storage_view=storage_view,
                 )
-            except Exception:
-                self._restore_collection_state_locked(
-                    db_name,
-                    coll_name,
-                    mutation_snapshot,
-                    storage=storage_view,
-                    indexes=indexes_view,
-                    index_data=index_data_view,
-                    search_indexes=search_indexes,
-                    collections=collections,
-                    options=option_store,
-                )
-                raise
         return index_name
 
     @override
@@ -2277,6 +2231,10 @@ class MemoryEngine(AsyncStorageEngine):
         async with self._get_lock(db_name, coll_name):
             indexes_view = self._indexes_view(context)
             index_data_view = self._index_data_view(context)
+            storage_view = self._storage_view(context)
+            search_indexes_view = self._search_indexes_view(context)
+            collections_view = self._collections_view(context)
+            option_store = self._collection_options_view(context)
             indexes = indexes_view.get(db_name, {}).get(coll_name, [])
             normalized_keys: IndexKeySpec | None = None
             target_name: str | None = None
@@ -2296,28 +2254,42 @@ class MemoryEngine(AsyncStorageEngine):
                         f"multiple indexes found with key pattern {normalized_keys!r}; drop by name instead"
                     )
                 target_name = str(matches[0]["name"])
-            for idx, index in enumerate(indexes):
-                if index["name"] == target_name:
-                    del indexes[idx]
-                    self._prune_index_data_locked(
-                        db_name,
-                        coll_name,
-                        index_name=target_name,
-                        index_data=index_data_view,
+            with self._collection_state_rollback_locked(
+                db_name,
+                coll_name,
+                storage=storage_view,
+                indexes=indexes_view,
+                index_data=index_data_view,
+                search_indexes=search_indexes_view,
+                collections=collections_view,
+                options=option_store,
+            ):
+                for idx, index in enumerate(indexes):
+                    if index["name"] == target_name:
+                        del indexes[idx]
+                        self._prune_index_data_locked(
+                            db_name,
+                            coll_name,
+                            index_name=target_name,
+                            index_data=index_data_view,
+                        )
+                        break
+                else:
+                    missing_target = (
+                        f"index not found with name [{index_or_name}]"
+                        if isinstance(index_or_name, str)
+                        else f"index not found with key pattern {normalized_keys!r}"
                     )
-                    break
-            else:
-                missing_target = (
-                    f"index not found with name [{index_or_name}]"
-                    if isinstance(index_or_name, str)
-                    else f"index not found with key pattern {normalized_keys!r}"
-                )
-                raise OperationFailure(missing_target)
+                    raise OperationFailure(missing_target)
 
-            if db_name in indexes_view and coll_name in indexes_view[db_name] and not indexes_view[db_name][coll_name]:
-                del indexes_view[db_name][coll_name]
-                if not indexes_view[db_name]:
-                    del indexes_view[db_name]
+                if (
+                    db_name in indexes_view
+                    and coll_name in indexes_view[db_name]
+                    and not indexes_view[db_name][coll_name]
+                ):
+                    del indexes_view[db_name][coll_name]
+                    if not indexes_view[db_name]:
+                        del indexes_view[db_name]
 
     async def drop_database(
         self,
@@ -2384,15 +2356,25 @@ class MemoryEngine(AsyncStorageEngine):
         async with self._get_lock(db_name, coll_name):
             indexes_view = self._indexes_view(context)
             index_data_view = self._index_data_view(context)
-            if db_name in indexes_view and coll_name in indexes_view[db_name]:
-                del indexes_view[db_name][coll_name]
-                if not indexes_view[db_name]:
-                    del indexes_view[db_name]
-            self._prune_index_data_locked(
+            with self._collection_state_rollback_locked(
                 db_name,
                 coll_name,
+                storage=self._storage_view(context),
+                indexes=indexes_view,
                 index_data=index_data_view,
-            )
+                search_indexes=self._search_indexes_view(context),
+                collections=self._collections_view(context),
+                options=self._collection_options_view(context),
+            ):
+                if db_name in indexes_view and coll_name in indexes_view[db_name]:
+                    del indexes_view[db_name][coll_name]
+                    if not indexes_view[db_name]:
+                        del indexes_view[db_name]
+                self._prune_index_data_locked(
+                    db_name,
+                    coll_name,
+                    index_data=index_data_view,
+                )
 
     @override
     async def create_search_index(
@@ -2410,6 +2392,9 @@ class MemoryEngine(AsyncStorageEngine):
             search_indexes = self._search_indexes_view(context)
             collections = self._collections_view(context)
             option_store = self._collection_options_view(context)
+            storage_view = self._storage_view(context)
+            indexes_view = self._indexes_view(context)
+            index_data_view = self._index_data_view(context)
             enforce_deadline(deadline)
             coll_search_indexes = search_indexes.get(db_name, {}).get(coll_name, [])
             for existing in coll_search_indexes:
@@ -2419,21 +2404,19 @@ class MemoryEngine(AsyncStorageEngine):
                             f"Conflicting search index definition for '{normalized_definition.name}'"
                         )
                     return normalized_definition.name
-            mutation_snapshot = self._snapshot_collection_state_locked(
+            with self._search_runtime_rollback_locked(
+                db_name,
+                {coll_name},
+            ), self._collection_state_rollback_locked(
                 db_name,
                 coll_name,
-                storage=self._storage_view(context),
-                indexes=self._indexes_view(context),
-                index_data=self._index_data_view(context),
+                storage=storage_view,
+                indexes=indexes_view,
+                index_data=index_data_view,
                 search_indexes=search_indexes,
                 collections=collections,
                 options=option_store,
-            )
-            runtime_snapshot = self._snapshot_search_runtime_state_locked(
-                db_name,
-                {coll_name},
-            )
-            try:
+            ):
                 self._invalidate_search_runtime_cache(
                     db_name,
                     coll_name,
@@ -2451,25 +2434,6 @@ class MemoryEngine(AsyncStorageEngine):
                     coll_search_indexes.append(normalized_definition)
                     self._mark_search_index_pending(db_name, coll_name, normalized_definition.name)
                     return normalized_definition.name
-            except Exception:
-                with self._meta_lock:
-                    self._restore_collection_state_locked(
-                        db_name,
-                        coll_name,
-                        mutation_snapshot,
-                        storage=self._storage_view(context),
-                        indexes=self._indexes_view(context),
-                        index_data=self._index_data_view(context),
-                        search_indexes=search_indexes,
-                        collections=collections,
-                        options=option_store,
-                    )
-                    self._restore_search_runtime_state_locked(
-                        db_name,
-                        {coll_name},
-                        runtime_snapshot,
-                    )
-                raise
 
     @override
     async def list_search_indexes(
@@ -2517,21 +2481,22 @@ class MemoryEngine(AsyncStorageEngine):
                     )
                     collections = self._collections_view(context)
                     option_store = self._collection_options_view(context)
-                    mutation_snapshot = self._snapshot_collection_state_locked(
+                    storage_view = self._storage_view(context)
+                    indexes_view = self._indexes_view(context)
+                    index_data_view = self._index_data_view(context)
+                    with self._search_runtime_rollback_locked(
+                        db_name,
+                        {coll_name},
+                    ), self._collection_state_rollback_locked(
                         db_name,
                         coll_name,
-                        storage=self._storage_view(context),
-                        indexes=self._indexes_view(context),
-                        index_data=self._index_data_view(context),
+                        storage=storage_view,
+                        indexes=indexes_view,
+                        index_data=index_data_view,
                         search_indexes=search_indexes,
                         collections=collections,
                         options=option_store,
-                    )
-                    runtime_snapshot = self._snapshot_search_runtime_state_locked(
-                        db_name,
-                        {coll_name},
-                    )
-                    try:
+                    ):
                         self._invalidate_search_runtime_cache(
                             db_name,
                             coll_name,
@@ -2544,24 +2509,6 @@ class MemoryEngine(AsyncStorageEngine):
                         )
                         self._mark_search_index_pending(db_name, coll_name, name)
                         return
-                    except Exception:
-                        self._restore_collection_state_locked(
-                            db_name,
-                            coll_name,
-                            mutation_snapshot,
-                            storage=self._storage_view(context),
-                            indexes=self._indexes_view(context),
-                            index_data=self._index_data_view(context),
-                            search_indexes=search_indexes,
-                            collections=collections,
-                            options=option_store,
-                        )
-                        self._restore_search_runtime_state_locked(
-                            db_name,
-                            {coll_name},
-                            runtime_snapshot,
-                        )
-                        raise
         raise OperationFailure(f"search index not found with name [{name}]")
 
     @override
@@ -2581,17 +2528,30 @@ class MemoryEngine(AsyncStorageEngine):
             enforce_deadline(deadline)
             for idx, existing in enumerate(coll_search_indexes):
                 if existing.name == name:
-                    self._invalidate_search_runtime_cache(
+                    with self._search_runtime_rollback_locked(
+                        db_name,
+                        {coll_name},
+                    ), self._collection_state_rollback_locked(
                         db_name,
                         coll_name,
-                        index_name=name,
-                    )
-                    del coll_search_indexes[idx]
-                    self._search_index_ready_at.pop((db_name, coll_name, name), None)
-                    if not coll_search_indexes:
-                        del search_indexes[db_name][coll_name]
-                    if not search_indexes[db_name]:
-                        del search_indexes[db_name]
+                        storage=self._storage_view(context),
+                        indexes=self._indexes_view(context),
+                        index_data=self._index_data_view(context),
+                        search_indexes=search_indexes,
+                        collections=self._collections_view(context),
+                        options=self._collection_options_view(context),
+                    ):
+                        self._invalidate_search_runtime_cache(
+                            db_name,
+                            coll_name,
+                            index_name=name,
+                        )
+                        del coll_search_indexes[idx]
+                        self._search_index_ready_at.pop((db_name, coll_name, name), None)
+                        if not coll_search_indexes:
+                            del search_indexes[db_name][coll_name]
+                        if not search_indexes[db_name]:
+                            del search_indexes[db_name]
                     return
         raise OperationFailure(f"search index not found with name [{name}]")
 
@@ -2987,17 +2947,11 @@ class MemoryEngine(AsyncStorageEngine):
                 ):
                     raise CollectionInvalid(f"collection '{new_name}' already exists")
 
-                source_snapshot = self._snapshot_collection_state_locked(
+                affected_names = {coll_name, new_name}
+                with self._search_runtime_rollback_locked(
                     db_name,
-                    coll_name,
-                    storage=storage,
-                    indexes=indexes,
-                    index_data=index_data,
-                    search_indexes=search_indexes,
-                    collections=collections,
-                    options=option_store,
-                )
-                target_snapshot = self._snapshot_collection_state_locked(
+                    affected_names,
+                ), self._collection_state_rollback_locked(
                     db_name,
                     new_name,
                     storage=storage,
@@ -3006,14 +2960,16 @@ class MemoryEngine(AsyncStorageEngine):
                     search_indexes=search_indexes,
                     collections=collections,
                     options=option_store,
-                )
-                affected_names = {coll_name, new_name}
-                runtime_snapshot = self._snapshot_search_runtime_state_locked(
+                ), self._collection_state_rollback_locked(
                     db_name,
-                    affected_names,
-                )
-
-                try:
+                    coll_name,
+                    storage=storage,
+                    indexes=indexes,
+                    index_data=index_data,
+                    search_indexes=search_indexes,
+                    collections=collections,
+                    options=option_store,
+                ):
                     db_storage = storage.get(db_name)
                     if db_storage is not None and coll_name in db_storage:
                         db_storage[new_name] = db_storage.pop(coll_name)
@@ -3070,35 +3026,6 @@ class MemoryEngine(AsyncStorageEngine):
                         collections=collections,
                         collection_options=option_store,
                     )
-                except Exception:
-                    self._restore_collection_state_locked(
-                        db_name,
-                        coll_name,
-                        source_snapshot,
-                        storage=storage,
-                        indexes=indexes,
-                        index_data=index_data,
-                        search_indexes=search_indexes,
-                        collections=collections,
-                        options=option_store,
-                    )
-                    self._restore_collection_state_locked(
-                        db_name,
-                        new_name,
-                        target_snapshot,
-                        storage=storage,
-                        indexes=indexes,
-                        index_data=index_data,
-                        search_indexes=search_indexes,
-                        collections=collections,
-                        options=option_store,
-                    )
-                    self._restore_search_runtime_state_locked(
-                        db_name,
-                        affected_names,
-                        runtime_snapshot,
-                    )
-                    raise
 
     @override
     async def drop_collection(
@@ -3119,31 +3046,44 @@ class MemoryEngine(AsyncStorageEngine):
             search_indexes = self._search_indexes_view(context)
             collections = self._collections_view(context)
             option_store = self._collection_options_view(context)
-            with self._meta_lock:
-                self._invalidate_search_runtime_cache(db_name, coll_name)
-                self._prune_collection_registry_locked(
-                    db_name,
-                    coll_name,
-                    collections=collections,
-                    collection_options=option_store,
-                )
-                if db_name in storage and coll_name in storage[db_name]:
-                    del storage[db_name][coll_name]
-                    if not storage[db_name]:
-                        del storage[db_name]
-                if db_name in indexes and coll_name in indexes[db_name]:
-                    del indexes[db_name][coll_name]
-                    if not indexes[db_name]:
-                        del indexes[db_name]
-                self._prune_index_data_locked(
-                    db_name,
-                    coll_name,
-                    index_data=index_data,
-                )
-                if db_name in search_indexes and coll_name in search_indexes[db_name]:
-                    del search_indexes[db_name][coll_name]
-                    if not search_indexes[db_name]:
-                        del search_indexes[db_name]
-                ready_at = self._search_index_ready_at
-                for key in [key for key in ready_at if key[0] == db_name and key[1] == coll_name]:
-                    del ready_at[key]
+            with self._search_runtime_rollback_locked(
+                db_name,
+                {coll_name},
+            ), self._collection_state_rollback_locked(
+                db_name,
+                coll_name,
+                storage=storage,
+                indexes=indexes,
+                index_data=index_data,
+                search_indexes=search_indexes,
+                collections=collections,
+                options=option_store,
+            ):
+                with self._meta_lock:
+                    self._invalidate_search_runtime_cache(db_name, coll_name)
+                    self._prune_collection_registry_locked(
+                        db_name,
+                        coll_name,
+                        collections=collections,
+                        collection_options=option_store,
+                    )
+                    if db_name in storage and coll_name in storage[db_name]:
+                        del storage[db_name][coll_name]
+                        if not storage[db_name]:
+                            del storage[db_name]
+                    if db_name in indexes and coll_name in indexes[db_name]:
+                        del indexes[db_name][coll_name]
+                        if not indexes[db_name]:
+                            del indexes[db_name]
+                    self._prune_index_data_locked(
+                        db_name,
+                        coll_name,
+                        index_data=index_data,
+                    )
+                    if db_name in search_indexes and coll_name in search_indexes[db_name]:
+                        del search_indexes[db_name][coll_name]
+                        if not search_indexes[db_name]:
+                            del search_indexes[db_name]
+                    ready_at = self._search_index_ready_at
+                    for key in [key for key in ready_at if key[0] == db_name and key[1] == coll_name]:
+                        del ready_at[key]

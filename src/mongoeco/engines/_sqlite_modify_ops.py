@@ -10,6 +10,7 @@ from mongoeco.core.identity import (
     assert_document_matches_storage_key,
     assert_valid_root_document_id,
 )
+from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.types import DeleteResult, Document, DocumentId, Filter, UpdateResult
 
@@ -60,24 +61,27 @@ def delete_matching_document(
             storage_key,
             storage_key_for_id=storage_key_for_id,
         )
-        begin_write(conn)
-        conn.execute(
-            """
-            DELETE FROM documents
-            WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-            """,
-            (db_name, coll_name, storage_key),
-        )
-        delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-        invalidate_collection_features_cache(db_name, coll_name)
-        commit_write(conn)
+        with sqlite_write_scope(
+            conn,
+            begin_write=begin_write,
+            commit_write=commit_write,
+            rollback_write=rollback_write,
+        ):
+            conn.execute(
+                """
+                DELETE FROM documents
+                WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                """,
+                (db_name, coll_name, storage_key),
+            )
+            delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+            delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+            delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+            invalidate_collection_features_cache(db_name, coll_name)
         return DeleteResult(deleted_count=1)
     except (NotImplementedError, TypeError):
-        rollback_write(conn)
+        pass
     except Exception:
-        rollback_write(conn)
         raise
 
     for storage_key, document in load_documents(db_name, coll_name):
@@ -93,8 +97,12 @@ def delete_matching_document(
             storage_key,
             storage_key_for_id=storage_key_for_id,
         )
-        try:
-            begin_write(conn)
+        with sqlite_write_scope(
+            conn,
+            begin_write=begin_write,
+            commit_write=commit_write,
+            rollback_write=rollback_write,
+        ):
             conn.execute(
                 """
                 DELETE FROM documents
@@ -106,11 +114,7 @@ def delete_matching_document(
             delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
             delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
             invalidate_collection_features_cache(db_name, coll_name)
-            commit_write(conn)
-            return DeleteResult(deleted_count=1)
-        except Exception:
-            rollback_write(conn)
-            raise
+        return DeleteResult(deleted_count=1)
     return DeleteResult(deleted_count=0)
 
 
@@ -224,93 +228,97 @@ def update_with_operation(
                 semantics.compiled_update_plan,
                 original_document,
             )
-            begin_write(conn)
-            conn.execute(
-                f"""
-                UPDATE documents
-                SET document = {update_sql}
-                WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-                """,
-                (*update_params, db_name, coll_name, storage_key),
-            )
-            rebuild_multikey_entries_for_document(
+            with sqlite_write_scope(
                 conn,
-                db_name,
-                coll_name,
-                storage_key,
-                document,
-                indexes,
-            )
-            rebuild_scalar_entries_for_document(
-                conn,
-                db_name,
-                coll_name,
-                storage_key,
-                document,
-                indexes,
-            )
-            replace_search_entries_for_document(
-                conn,
-                db_name,
-                coll_name,
-                storage_key,
-                document,
-                search_indexes,
-            )
-            invalidate_collection_features_cache(db_name, coll_name)
-            commit_write(conn)
+                begin_write=begin_write,
+                commit_write=commit_write,
+                rollback_write=rollback_write,
+            ):
+                conn.execute(
+                    f"""
+                    UPDATE documents
+                    SET document = {update_sql}
+                    WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                    """,
+                    (*update_params, db_name, coll_name, storage_key),
+                )
+                rebuild_multikey_entries_for_document(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    indexes,
+                )
+                rebuild_scalar_entries_for_document(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    indexes,
+                )
+                replace_search_entries_for_document(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    search_indexes,
+                )
+                invalidate_collection_features_cache(db_name, coll_name)
             return UpdateResult(matched_count=1, modified_count=1)
         except (NotImplementedError, TypeError):
-            rollback_write(conn)
+            pass
         except sqlite3.IntegrityError as exc:
-            rollback_write(conn)
             raise DuplicateKeyError(str(exc)) from exc
         except Exception:
-            rollback_write(conn)
             raise
 
         try:
-            begin_write(conn)
-            conn.execute(
-                """
-                UPDATE documents
-                SET document = ?
-                WHERE db_name = ? AND coll_name = ? AND storage_key = ?
-                """,
-                (serialize_document(document), db_name, coll_name, storage_key),
-            )
-            rebuild_multikey_entries_for_document(
+            with sqlite_write_scope(
                 conn,
-                db_name,
-                coll_name,
-                storage_key,
-                document,
-                indexes,
-            )
-            rebuild_scalar_entries_for_document(
-                conn,
-                db_name,
-                coll_name,
-                storage_key,
-                document,
-                indexes,
-            )
-            replace_search_entries_for_document(
-                conn,
-                db_name,
-                coll_name,
-                storage_key,
-                document,
-                search_indexes,
-            )
-            invalidate_collection_features_cache(db_name, coll_name)
-            commit_write(conn)
+                begin_write=begin_write,
+                commit_write=commit_write,
+                rollback_write=rollback_write,
+            ):
+                conn.execute(
+                    """
+                    UPDATE documents
+                    SET document = ?
+                    WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                    """,
+                    (serialize_document(document), db_name, coll_name, storage_key),
+                )
+                rebuild_multikey_entries_for_document(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    indexes,
+                )
+                rebuild_scalar_entries_for_document(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    indexes,
+                )
+                replace_search_entries_for_document(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    search_indexes,
+                )
+                invalidate_collection_features_cache(db_name, coll_name)
             return UpdateResult(matched_count=1, modified_count=1)
         except sqlite3.IntegrityError as exc:
-            rollback_write(conn)
             raise DuplicateKeyError(str(exc)) from exc
         except Exception:
-            rollback_write(conn)
             raise
 
     if not upsert:
@@ -335,45 +343,47 @@ def update_with_operation(
     indexes = load_indexes(db_name, coll_name)
     search_indexes = load_search_index_rows(db_name, coll_name)
     try:
-        begin_write(conn)
-        conn.execute(
-            """
-            INSERT INTO documents (db_name, coll_name, storage_key, document)
-            VALUES (?, ?, ?, ?)
-            """,
-            (db_name, coll_name, storage_key, serialize_document(new_doc)),
-        )
-        rebuild_multikey_entries_for_document(
+        with sqlite_write_scope(
             conn,
-            db_name,
-            coll_name,
-            storage_key,
-            new_doc,
-            indexes,
-        )
-        rebuild_scalar_entries_for_document(
-            conn,
-            db_name,
-            coll_name,
-            storage_key,
-            new_doc,
-            indexes,
-        )
-        replace_search_entries_for_document(
-            conn,
-            db_name,
-            coll_name,
-            storage_key,
-            new_doc,
-            search_indexes,
-        )
-        invalidate_collection_features_cache(db_name, coll_name)
-        commit_write(conn)
+            begin_write=begin_write,
+            commit_write=commit_write,
+            rollback_write=rollback_write,
+        ):
+            conn.execute(
+                """
+                INSERT INTO documents (db_name, coll_name, storage_key, document)
+                VALUES (?, ?, ?, ?)
+                """,
+                (db_name, coll_name, storage_key, serialize_document(new_doc)),
+            )
+            rebuild_multikey_entries_for_document(
+                conn,
+                db_name,
+                coll_name,
+                storage_key,
+                new_doc,
+                indexes,
+            )
+            rebuild_scalar_entries_for_document(
+                conn,
+                db_name,
+                coll_name,
+                storage_key,
+                new_doc,
+                indexes,
+            )
+            replace_search_entries_for_document(
+                conn,
+                db_name,
+                coll_name,
+                storage_key,
+                new_doc,
+                search_indexes,
+            )
+            invalidate_collection_features_cache(db_name, coll_name)
     except sqlite3.IntegrityError as exc:
-        rollback_write(conn)
         raise DuplicateKeyError(str(exc)) from exc
     except Exception:
-        rollback_write(conn)
         raise
 
     return UpdateResult(

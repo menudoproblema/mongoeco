@@ -2652,6 +2652,24 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_put_document_rolls_back_when_commit_write_fails(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            with patch.object(
+                engine,
+                "_commit_write",
+                side_effect=RuntimeError("commit boom"),
+            ), patch.object(engine, "_rollback_write", wraps=engine._rollback_write) as rollback_write:
+                with self.assertRaisesRegex(RuntimeError, "commit boom"):
+                    await engine.put_document("db", "coll", {"_id": "1", "name": "Ada"})
+
+            self.assertGreaterEqual(rollback_write.call_count, 1)
+            self.assertIsNone(await engine.get_document("db", "coll", "1"))
+            self.assertEqual(await engine.list_collections("db"), [])
+        finally:
+            await engine.disconnect()
+
     async def test_drop_index_and_drop_indexes_preserve_builtin_id_index(self):
         engine = SQLiteEngine()
         await engine.connect()

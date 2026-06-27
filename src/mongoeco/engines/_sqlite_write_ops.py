@@ -7,6 +7,7 @@ from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.errors import DuplicateKeyError
 from mongoeco.engines.semantic_core import enforce_collection_document_validation
+from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.types import Document, EngineIndexRecord
 
 
@@ -39,15 +40,19 @@ def put_document(
     if "_id" in document:
         assert_valid_root_document_id(document["_id"])
     purge_expired_documents(conn, db_name, coll_name)
-    begin_write(conn)
-    try:
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ) as write:
         collection_options = collection_options_or_empty(conn, db_name, coll_name)
         original_document = None
         if not bypass_document_validation or not overwrite:
             original_document = load_existing_document_for_storage_key(conn, db_name, coll_name, storage_key)
 
         if not overwrite and original_document is not None:
-            rollback_write(conn)
+            write.rollback()
             return False
 
         if not bypass_document_validation:
@@ -106,11 +111,7 @@ def put_document(
             )
 
         invalidate_collection_features_cache(db_name, coll_name)
-        commit_write(conn)
         return True
-    except Exception:
-        rollback_write(conn)
-        raise
 
 
 def put_documents_bulk(
@@ -159,8 +160,12 @@ def put_documents_bulk(
     indexes = load_indexes(db_name, coll_name)
     search_indexes = load_search_index_rows(db_name, coll_name)
     results: list[bool] = []
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         ensure_collection_row(conn, db_name, coll_name)
         collection_id = lookup_collection_id(conn, db_name, coll_name, True)
         for document, (storage_key, serialized_document, prepared_multikey_rows) in zip(
@@ -247,11 +252,7 @@ def put_documents_bulk(
                 results.append(False)
                 break
         invalidate_collection_features_cache(db_name, coll_name)
-        commit_write(conn)
         return results
-    except Exception:
-        rollback_write(conn)
-        raise
 
 
 def delete_document(
@@ -268,8 +269,12 @@ def delete_document(
     delete_search_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
     invalidate_collection_features_cache: Callable[[str, str], None],
 ) -> bool:
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         cursor = conn.execute(
             """
             DELETE FROM documents
@@ -281,8 +286,4 @@ def delete_document(
         delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
         delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
         invalidate_collection_features_cache(db_name, coll_name)
-        commit_write(conn)
         return cursor.rowcount > 0
-    except Exception:
-        rollback_write(conn)
-        raise

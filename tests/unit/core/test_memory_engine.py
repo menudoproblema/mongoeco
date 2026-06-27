@@ -1390,6 +1390,32 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_drop_index_rolls_back_memory_state_on_prune_failure(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], name="email_1")
+
+            with patch.object(
+                engine,
+                "_prune_index_data_locked",
+                side_effect=RuntimeError("prune boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "prune boom"):
+                    await engine.drop_index("db", "coll", "email_1")
+
+            self.assertEqual(
+                await engine.list_indexes("db", "coll"),
+                [
+                    {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                    {"name": "email_1", "key": {"email": 1}, "unique": False},
+                ],
+            )
+            self.assertIn("email_1", engine._index_data["db"]["coll"])
+        finally:
+            await engine.disconnect()
+
     async def test_drop_indexes_prunes_collection_index_data(self):
         engine = MemoryEngine()
         await engine.connect()
@@ -1400,6 +1426,35 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
             await engine.drop_indexes("db", "coll")
             self.assertNotIn("db", engine._index_data)
+        finally:
+            await engine.disconnect()
+
+    async def test_drop_indexes_rolls_back_memory_state_on_prune_failure(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], name="email_1")
+            await engine.create_index("db", "coll", ["_id", "email"], name="id_email_1")
+
+            with patch.object(
+                engine,
+                "_prune_index_data_locked",
+                side_effect=RuntimeError("prune boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "prune boom"):
+                    await engine.drop_indexes("db", "coll")
+
+            self.assertEqual(
+                await engine.list_indexes("db", "coll"),
+                [
+                    {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                    {"name": "email_1", "key": {"email": 1}, "unique": False},
+                    {"name": "id_email_1", "key": {"_id": 1, "email": 1}, "unique": False},
+                ],
+            )
+            self.assertIn("email_1", engine._index_data["db"]["coll"])
+            self.assertIn("id_email_1", engine._index_data["db"]["coll"])
         finally:
             await engine.disconnect()
 
@@ -1426,6 +1481,35 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
             await engine.drop_collection("db", "coll")
             self.assertNotIn("db", engine._index_data)
+        finally:
+            await engine.disconnect()
+
+    async def test_drop_collection_rolls_back_memory_state_on_late_prune_failure(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "1", "email": "a@example.com"})
+            await engine.create_index("db", "coll", ["email"], name="email_1")
+            await engine.create_search_index(
+                "db",
+                "coll",
+                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="by_text"),
+            )
+            engine._search_index_ready_at[("db", "coll", "by_text")] = None
+
+            with patch.object(
+                engine,
+                "_prune_index_data_locked",
+                side_effect=RuntimeError("prune boom"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "prune boom"):
+                    await engine.drop_collection("db", "coll")
+
+            self.assertEqual(await engine.list_collections("db"), ["coll"])
+            self.assertEqual(await engine.get_document("db", "coll", "1"), {"_id": "1", "email": "a@example.com"})
+            self.assertIn("email_1", engine._index_data["db"]["coll"])
+            self.assertEqual(len(await engine.list_search_indexes("db", "coll")), 1)
+            self.assertIn(("db", "coll", "by_text"), engine._search_index_ready_at)
         finally:
             await engine.disconnect()
 
@@ -2410,6 +2494,30 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 },
             )
             self.assertEqual([doc["_id"] for doc in vector_hits], ["1"])
+        finally:
+            await engine.disconnect()
+
+    async def test_drop_search_index_rolls_back_memory_state_on_ready_state_failure(self):
+        class _FailingPopDict(dict):
+            def pop(self, key, default=None):
+                super().pop(key, default)
+                raise RuntimeError("ready boom")
+
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="search")
+            await engine.create_search_index("db", "coll", definition)
+            ready_key = ("db", "coll", "search")
+            engine._search_index_ready_at[ready_key] = None
+            engine._search_index_ready_at = _FailingPopDict(engine._search_index_ready_at)
+            self.assertIn(ready_key, engine._search_index_ready_at)
+
+            with self.assertRaisesRegex(RuntimeError, "ready boom"):
+                await engine.drop_search_index("db", "coll", "search")
+
+            self.assertEqual(await engine.list_search_indexes("db", "coll"), [definition.to_document()])
+            self.assertIn(ready_key, engine._search_index_ready_at)
         finally:
             await engine.disconnect()
 

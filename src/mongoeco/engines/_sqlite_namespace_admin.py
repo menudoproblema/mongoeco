@@ -6,6 +6,7 @@ from collections.abc import Callable
 from mongoeco.errors import CollectionInvalid
 from mongoeco.types import SearchIndexDefinition
 
+from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines._shared_namespace_admin import (
     merge_profile_collection_names,
     merge_profile_database_names,
@@ -76,15 +77,15 @@ def create_collection(
     collection_exists: Callable[[sqlite3.Connection, str, str], bool],
     ensure_collection_row: Callable[[sqlite3.Connection, str, str], None],
 ) -> None:
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         if collection_exists(conn, db_name, coll_name):
             raise CollectionInvalid(f"collection '{coll_name}' already exists")
         ensure_collection_row(conn, db_name, coll_name, options=options)
-        commit_write(conn)
-    except Exception:
-        rollback_write(conn)
-        raise
 
 
 def rename_collection(
@@ -103,8 +104,12 @@ def rename_collection(
 ) -> None:
     if coll_name == new_name:
         raise CollectionInvalid("collection names must differ")
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         if not collection_exists(conn, db_name, coll_name):
             raise CollectionInvalid(f"collection '{coll_name}' does not exist")
         if collection_exists(conn, db_name, new_name):
@@ -124,10 +129,6 @@ def rename_collection(
         invalidate_collection_id_cache(db_name, new_name)
         invalidate_collection_features_cache(db_name, coll_name)
         invalidate_collection_features_cache(db_name, new_name)
-        commit_write(conn)
-    except Exception:
-        rollback_write(conn)
-        raise
 
 
 def drop_collection(
@@ -149,8 +150,12 @@ def drop_collection(
 ) -> None:
     indexes = load_indexes(db_name, coll_name)
     search_indexes = load_search_index_rows(db_name, coll_name)
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         collection_id = lookup_collection_id(conn, db_name, coll_name)
         for index in indexes:
             conn.execute(f"DROP INDEX IF EXISTS {quote_identifier(str(index['physical_name']))}")
@@ -210,10 +215,6 @@ def drop_collection(
         mark_index_metadata_changed(db_name, coll_name)
         invalidate_collection_id_cache(db_name, coll_name)
         invalidate_collection_features_cache(db_name, coll_name)
-        commit_write(conn)
-    except Exception:
-        rollback_write(conn)
-        raise
 
 
 def drop_database(
@@ -247,8 +248,12 @@ def drop_database(
         """,
         (db_name,),
     ).fetchall()
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         for physical_name, multikey_physical_name, scalar_physical_name in index_rows:
             if physical_name:
                 conn.execute(
@@ -314,10 +319,6 @@ def drop_database(
         invalidate_index_cache()
         invalidate_collection_id_cache()
         invalidate_collection_features_cache()
-        commit_write(conn)
-    except Exception:
-        rollback_write(conn)
-        raise
     try:
         clear_profiler(db_name)
     except Exception:

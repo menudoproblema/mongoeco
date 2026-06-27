@@ -8,6 +8,7 @@ from mongoeco.core.json_compat import json_dumps_compact, json_loads
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, SearchIndexDefinition, SearchIndexDocument
 
+from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines._shared_search_admin import (
     build_search_index_documents,
     normalize_search_index_definition,
@@ -48,8 +49,12 @@ def create_search_index(
 ) -> str:
     normalized_definition = normalize_search_index_definition(definition)
     physical_name = physical_search_index_name(db_name, coll_name, normalized_definition.name)
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         ensure_collection_row(conn, db_name, coll_name)
         row = conn.execute(
             """
@@ -69,7 +74,6 @@ def create_search_index(
                 raise OperationFailure(
                     f"Conflicting search index definition for '{normalized_definition.name}'"
                 )
-            commit_write(conn)
             return normalized_definition.name
         enforce_deadline(deadline)
         conn.execute(
@@ -95,11 +99,7 @@ def create_search_index(
             normalized_definition,
             physical_name,
         )
-        commit_write(conn)
         return normalized_definition.name
-    except Exception:
-        rollback_write(conn)
-        raise
 
 
 def update_search_index(
@@ -118,8 +118,12 @@ def update_search_index(
     physical_search_index_name: Callable[[str, str, str], str],
     pending_ready_at: Callable[[], float | None],
 ) -> None:
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         row = conn.execute(
             """
             SELECT index_type, physical_name
@@ -163,10 +167,6 @@ def update_search_index(
             ),
             physical_name,
         )
-        commit_write(conn)
-    except Exception:
-        rollback_write(conn)
-        raise
 
 
 def drop_search_index(
@@ -181,8 +181,12 @@ def drop_search_index(
     rollback_write: Callable[[sqlite3.Connection], None],
     drop_search_backend: Callable[[sqlite3.Connection, str | None], None],
 ) -> None:
-    try:
-        begin_write(conn)
+    with sqlite_write_scope(
+        conn,
+        begin_write=begin_write,
+        commit_write=commit_write,
+        rollback_write=rollback_write,
+    ):
         row = conn.execute(
             """
             SELECT physical_name
@@ -202,7 +206,3 @@ def drop_search_index(
             (db_name, coll_name, name),
         )
         drop_search_backend(conn, row[0])
-        commit_write(conn)
-    except Exception:
-        rollback_write(conn)
-        raise

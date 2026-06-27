@@ -13,6 +13,9 @@ usa Semantic Versioning.
 - Se centraliza la validacion de documentos seleccionados contra storage key en
   `mongoeco.core.identity`, reduciendo duplicacion entre API, `$merge`, Memory
   y SQLite.
+- Se centraliza la atomicidad de escrituras SQLite en un scope interno comun y
+  la restauracion de snapshots Memory en scopes de coleccion/runtime, reduciendo
+  duplicacion de begin/commit/rollback y snapshot/restore.
 
 ### Fixed
 
@@ -132,6 +135,9 @@ usa Semantic Versioning.
 - Memory restaura ahora el estado de coleccion si falla la codificacion o la
   actualizacion de indices durante inserts, updates, upserts, deletes o purgado
   TTL, evitando documentos persistidos sin indices coherentes.
+- Memory protege tambien `drop_index`, `drop_indexes`, `drop_search_index` y
+  `drop_collection` con snapshots de coleccion/runtime, evitando catalogos o
+  caches parciales si falla una poda o invalidacion intermedia.
 - `MemoryEngine.rename_collection()` restaura origen, destino y caches runtime
   si falla un paso intermedio del rename, evitando namespaces parcialmente
   movidos.

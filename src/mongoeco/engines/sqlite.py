@@ -82,6 +82,7 @@ from mongoeco.engines._sqlite_explain_contract import (
 )
 from mongoeco.engines._sqlite_runtime import SQLiteCacheState, SQLiteRuntimeState
 from mongoeco.engines._sqlite_session_runtime import SQLiteSessionRuntime
+from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines._sqlite_vector_backend import (
     SQLiteVectorBackendState,
     vector_backend_stats_document,
@@ -817,8 +818,12 @@ class SQLiteEngine(AsyncStorageEngine):
                 expired.append((storage_key, document))
         if not expired:
             return 0
-        self._begin_write(conn, context)
-        try:
+        with sqlite_write_scope(
+            conn,
+            begin_write=lambda current: self._begin_write(current, context),
+            commit_write=lambda current: self._commit_write(current, context),
+            rollback_write=lambda current: self._rollback_write(current, context),
+        ):
             for storage_key, _document in expired:
                 conn.execute(
                     """
@@ -830,10 +835,6 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                 self._delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
                 self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-            self._commit_write(conn, context)
-        except Exception:
-            self._rollback_write(conn, context)
-            raise
         self._invalidate_collection_features_cache(db_name, coll_name)
         return len(expired)
 
