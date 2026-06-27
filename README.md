@@ -1,12 +1,14 @@
 # mongoeco
 
-`mongoeco` is an async-first embedded runtime aligned with the canonical CXP
-`database/mongodb` interface, with a MongoDB-like surface and pluggable
+`mongoeco` is an async-first local MongoDB mock/runtime for tests, local
+development and embedded workflows, with a MongoDB-like surface and pluggable
 storage engines.
 
 It is built for local development, test environments, embedded persistence and
 compatibility work where a PyMongo-shaped API is useful without requiring a
-real MongoDB server for every workflow.
+real MongoDB server for every workflow. It uses CXP to expose its
+`database/mongodb` capabilities in a structured way for tooling and
+interoperability.
 
 ## Current Scope
 
@@ -16,7 +18,7 @@ What is already in place:
 * memory and SQLite engines
 * transactional local sessions and local admin/runtime introspection
 * aggregation runtime with pushdown and spill guardrails
-* a canonical public capability model for `database/mongodb` through CXP
+* a structured CXP capability export for the local `database/mongodb` surface
 * compatibility modeling across MongoDB dialects and PyMongo profiles
 * local wire/driver runtime
 * local geospatial, classic `$text`, `$search` and ANN-backed `$vectorSearch`

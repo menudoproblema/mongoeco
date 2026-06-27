@@ -10,6 +10,8 @@ What `mongoeco` gives you:
 * embedded `MemoryEngine` and `SQLiteEngine`;
 * explicit compatibility modeling through `mongodb_dialect` and
   `pymongo_profile`;
+* structured CXP capability metadata for tooling that needs to inspect or gate
+  the supported local surface;
 * local `$text`, `$search`, `$vectorSearch`, geospatial, aggregation and
   admin/runtime introspection within the documented subset.
 
@@ -26,12 +28,14 @@ matter more than distributed infrastructure.
 
 ## `mongoeco` vs `mongomock`
 
-The project is no longer positioned as "another mock".
+The project is best understood as a stronger local mock/runtime rather than
+"another mock".
 
 `mongoeco` is stronger when you need:
 
 * explicit compatibility policy instead of best-effort imitation;
 * local explainability and planning visibility;
+* auditable capability metadata for tooling and profile gates;
 * richer embedded behavior for aggregation, search, vector search and runtime
   admin surfaces;
 * both in-memory and SQLite-backed execution with cross-engine parity tests.
@@ -62,6 +66,6 @@ Do not treat them as interchangeable just because they share the same API:
 
 ## Positioning in one sentence
 
-`mongoeco` is best understood as an embedded MongoDB-like runtime for local
-development, testing, demos and single-node persistence, with explicit
-contracts about what is and is not supported.
+`mongoeco` is best understood as a reliable, auditable and interchangeable
+local MongoDB mock/runtime for tests, development, demos and single-node
+persistence, with explicit contracts about what is and is not supported.
