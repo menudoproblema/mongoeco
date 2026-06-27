@@ -8,8 +8,15 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-06-27
+
 ### Changed
 
+- Se añade soporte oficial para el perfil de compatibilidad PyMongo 4.17,
+  incluyendo resolucion explicita, deteccion `auto-installed`, snapshots de
+  catalogo y matriz de superficie publica contrastada con PyMongo real.
+- La matriz de perfiles PyMongo puede generar directamente el resumen estable
+  usado como fixture, evitando edicion manual al incorporar nuevas versiones.
 - Se centraliza la validacion de documentos seleccionados contra storage key en
   `mongoeco.core.identity`, reduciendo duplicacion entre API, `$merge`, Memory
   y SQLite.

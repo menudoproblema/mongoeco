@@ -6,7 +6,7 @@ Esta lista prepara una release sin obligar a publicar nada.
 
 - revisar [README.md](../README.md) para que el
   alcance embebido/local y sus limites sean explicitos;
-- revisar [release-3.4.0.md](release-3.4.0.md)
+- revisar [release-3.5.0.md](release-3.5.0.md)
   para confirmar que la narrativa de release sigue el capability model CXP
   canónico;
 - revisar [COMPATIBILITY.md](../COMPATIBILITY.md)
