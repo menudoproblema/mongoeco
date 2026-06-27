@@ -12,6 +12,66 @@ usa Semantic Versioning.
 
 - Nothing yet.
 
+## [3.4.0] - 2026-04-09
+
+### Added
+
+- Controlador local de failpoints de driver para pruebas de runtime con
+  `configureFailPoint`, incluyendo fallos retryable, errores transitorios de
+  transaccion, timeouts de write concern, timeouts de seleccion de servidor y
+  scoping por namespace.
+- Reintentos de `with_transaction()` a nivel de cliente ante errores
+  transitorios del callback o del commit, con eventos de monitorizacion
+  coherentes para los intentos del driver.
+- Proyeccion estricta `mongoeco.compat.export_mock_safe_profile_catalog()` para
+  tooling de mocks/tests sobre el capability model canonico CXP.
+- Baseline diferencial local con fixture golden y tests de replay para comparar
+  Memory y SQLite contra casos derivados de MongoDB real.
+- Stages locales de introspeccion de aggregation, incluyendo `$currentOp`,
+  `$indexStats`, `$planCacheStats` y `$listSessions`.
+- Soporte ampliado de aggregation con `$redact` y operadores/acumuladores de
+  ventana avanzados.
+- Nuevas capacidades locales de `$search` y `$searchMeta`: count/facet,
+  metadatos `includeMeta`, facets tipados para boolean, ObjectId y UUID,
+  highlight `maxNumPassages`, regex flags/options, wildcard/autocomplete
+  enriquecidos, fuzzy autocomplete y semantica clasica `$text` con frases,
+  exclusiones e indices textuales hinted.
+- Mejoras de `$vectorSearch` y explain de retrieval: orden determinista,
+  fuentes de prefiltrado hibrido, pruning summary, retention ratios y paridad
+  estable entre Memory y SQLite.
+- Compatibilidad administrativa de indices para `background`,
+  `wildcardProjection`, `min`, `max` y `bucketSize` como metadata local
+  validada.
+
+### Changed
+
+- Se regeneran snapshots de compatibilidad y catalogos CXP para reflejar la
+  surface real de search, vector search, `searchMeta`, indices y runtime local.
+- Se endurece la ordenacion determinista de resultados empatados en search y
+  vector search para que Memory y SQLite tengan resultados reproducibles.
+- Los eventos de monitorizacion del driver incluyen metadata mas rica en
+  refresh de topologia, seleccion fallida, failpoints y planes de ejecucion.
+- La documentacion de search/vector aclara ratios de retencion, fuentes de
+  prefiltrado, semantica de `searchMeta` count/facet y fronteras de negociacion
+  CXP.
+
+### Fixed
+
+- Se corrigen ramas de cobertura y paridad en search/vector, incluyendo regex
+  analizado, fallback SQLite, facets tipados, orden estable y explain
+  determinista.
+- Se valida la pertenencia de documentos a indices virtuales durante expiracion
+  TTL para evitar que el purgado use metadata incompatible.
+- Se estabiliza la exposicion de failpoints y writeConcernTimeout en comandos
+  de insert y rutas de driver, preservando monitor events esperados.
+
+### Quality
+
+- Se anade smoke de contrato publicado contra PyPI para `3.3.0` y se deja la
+  release `3.4.0` preparada con version bump y validacion de snapshots.
+- La suite de tests y coverage de la release se mantiene cerrada en `100%`
+  segun la validacion local de `3.4.0`.
+
 ## [3.3.0] - 2026-04-08
 ### Added
 

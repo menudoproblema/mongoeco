@@ -42,11 +42,11 @@ What this is not:
 
 Reference:
 
-* [docs/use-cases.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases.md)
-* [docs/use-cases/embedded-app.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/embedded-app.md)
-* [docs/use-cases/test-runtime.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/test-runtime.md)
-* [docs/use-cases/local-search-and-retrieval.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/local-search-and-retrieval.md)
-* [docs/comparisons.md](/Users/uve/Proyectos/mongoeco2/docs/comparisons.md)
+* [docs/use-cases.md](docs/use-cases.md)
+* [docs/use-cases/embedded-app.md](docs/use-cases/embedded-app.md)
+* [docs/use-cases/test-runtime.md](docs/use-cases/test-runtime.md)
+* [docs/use-cases/local-search-and-retrieval.md](docs/use-cases/local-search-and-retrieval.md)
+* [docs/comparisons.md](docs/comparisons.md)
 
 ## Installation
 
@@ -66,7 +66,7 @@ The base install now also includes `cxp>=3.0.0`, so `mongoeco` can expose the
 canonical `database/mongodb` contract directly.
 Reference:
 
-* [docs/cxp.md](/Users/uve/Proyectos/mongoeco2/docs/cxp.md)
+* [docs/cxp.md](docs/cxp.md)
 
 The public compatibility export and the top-level `cxp` blocks surfaced by
 `find(...).explain()` / `aggregate(...).explain()` are now projected from that
@@ -303,14 +303,14 @@ with MongoClient(SQLiteEngine("mongoeco.db")) as client:
 
 ## Examples
 
-Executable examples live under [examples/README.md](/Users/uve/Proyectos/mongoeco2/examples/README.md):
+Executable examples live under [examples/README.md](examples/README.md):
 
-* [memory_quickstart.py](/Users/uve/Proyectos/mongoeco2/examples/memory_quickstart.py)
-* [sqlite_embedded_app.py](/Users/uve/Proyectos/mongoeco2/examples/sqlite_embedded_app.py)
-* [test_runtime_local.py](/Users/uve/Proyectos/mongoeco2/examples/test_runtime_local.py)
-* [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
-* [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
-* [cxp_adapter.py](/Users/uve/Proyectos/mongoeco2/examples/cxp_adapter.py)
+* [memory_quickstart.py](examples/memory_quickstart.py)
+* [sqlite_embedded_app.py](examples/sqlite_embedded_app.py)
+* [test_runtime_local.py](examples/test_runtime_local.py)
+* [search_and_vector_local.py](examples/search_and_vector_local.py)
+* [vector_search_diagnostics.py](examples/vector_search_diagnostics.py)
+* [cxp_adapter.py](examples/cxp_adapter.py)
 
 The local `$search` subset now includes:
 
@@ -339,10 +339,10 @@ The local `$search` subset now includes:
 
 Examples worth showing first:
 
-* [test_runtime_local.py](/Users/uve/Proyectos/mongoeco2/examples/test_runtime_local.py)
+* [test_runtime_local.py](examples/test_runtime_local.py)
   demonstrates `MemoryEngine` and `SQLiteEngine` as local contract runtimes
   with the same `$search.phrase` behavior.
-* [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
+* [search_and_vector_local.py](examples/search_and_vector_local.py)
   demonstrates exact `phrase` versus `phrase.slop`, numeric `near`, richer
   local search field mappings including explicit `document` and
   `embeddedDocuments` paths, parent-path resolution for `metadata` and
@@ -355,12 +355,12 @@ Examples worth showing first:
   `count` / `facet` previews in `explain()`, and a local
   `compound` query with visible embedded path/ranking explain metadata plus
   `equals` + `in` + `range` + `near` + `exists` + `regex`.
-* [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
+* [vector_search_diagnostics.py](examples/vector_search_diagnostics.py)
   compares `MemoryEngine` and `SQLiteEngine` for local hybrid retrieval,
   including `scoreBreakdown`, `candidatePlan`, `hybridRetrieval`,
   `pruningSummary`, `prefilterSources`, projected `vectorSearchScore`,
   residual filtering and exact fallback in local `$vectorSearch`.
-* [cxp_adapter.py](/Users/uve/Proyectos/mongoeco2/examples/cxp_adapter.py)
+* [cxp_adapter.py](examples/cxp_adapter.py)
   demonstrates the canonical CXP `database/mongodb` catalog and the `cxp`
   projection exposed by `aggregate(...).explain()`.
 
@@ -460,9 +460,9 @@ best treated as pre-release.
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
-* [docs/release-3.4.0-draft.md](/Users/uve/Proyectos/mongoeco2/docs/release-3.4.0-draft.md)
-* [TODO.md](/Users/uve/Proyectos/mongoeco2/TODO.md)
-* [MISSING_FEATURES.md](/Users/uve/Proyectos/mongoeco2/MISSING_FEATURES.md)
+* [docs/release-3.4.0.md](docs/release-3.4.0.md)
+* [TODO.md](TODO.md)
+* [MISSING_FEATURES.md](MISSING_FEATURES.md)
 
 ## License
 

@@ -1,6 +1,7 @@
-# Release Draft 3.4.0
+# Release 3.4.0
 
-Status: prepared locally for the `3.4.0` cut. Publication to PyPI is optional.
+Status: published to PyPI on 2026-04-09 from the committed `3.4.0`
+release code at `c419ea9`.
 
 ## Headline
 
@@ -54,4 +55,3 @@ golden replay, and deterministic vector explain parity checks.
   MongoDB server replacement.
 * CXP negotiation/lifecycle remains outside `mongoeco` core and belongs to
   runner/orchestrator layers.
-
