@@ -3,35 +3,52 @@ from mongoeco import InsertOne, UpdateOne
 from mongoeco.errors import BulkWriteError, OperationFailure
 from tests.support import ENGINE_FACTORIES, open_client
 
+
 class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
     async def test_update_one_set(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "name": "Val", "age": 30})
+                    await coll.insert_one(
+                        {'_id': '1', 'name': 'Val', 'age': 30}
+                    )
 
-                    result = await coll.update_one({"_id": "1"}, {"$set": {"age": 31, "city": "Madrid"}})
+                    result = await coll.update_one(
+                        {'_id': '1'}, {'$set': {'age': 31, 'city': 'Madrid'}}
+                    )
 
                     self.assertEqual(result.matched_count, 1)
                     self.assertEqual(result.modified_count, 1)
 
-                    doc = await coll.find_one({"_id": "1"})
-                    self.assertEqual(doc["age"], 31)
-                    self.assertEqual(doc["city"], "Madrid")
+                    doc = await coll.find_one({'_id': '1'})
+                    self.assertEqual(doc['age'], 31)
+                    self.assertEqual(doc['city'], 'Madrid')
 
     async def test_update_one_nested_set(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "profile": {"name": "Val"}})
+                    await coll.insert_one(
+                        {'_id': '1', 'profile': {'name': 'Val'}}
+                    )
 
-                    await coll.update_one({"_id": "1"}, {"$set": {"profile.age": 30, "profile.details.city": "Madrid"}})
+                    await coll.update_one(
+                        {'_id': '1'},
+                        {
+                            '$set': {
+                                'profile.age': 30,
+                                'profile.details.city': 'Madrid',
+                            }
+                        },
+                    )
 
-                    doc = await coll.find_one({"_id": "1"})
-                    self.assertEqual(doc["profile"]["age"], 30)
-                    self.assertEqual(doc["profile"]["details"]["city"], "Madrid")
+                    doc = await coll.find_one({'_id': '1'})
+                    self.assertEqual(doc['profile']['age'], 30)
+                    self.assertEqual(
+                        doc['profile']['details']['city'], 'Madrid'
+                    )
 
     async def test_update_one_upsert(self):
         for engine_name in ENGINE_FACTORIES:
@@ -39,15 +56,17 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
 
-                    result = await coll.update_one({"name": "New"}, {"$set": {"age": 20}}, upsert=True)
+                    result = await coll.update_one(
+                        {'name': 'New'}, {'$set': {'age': 20}}, upsert=True
+                    )
 
                     self.assertEqual(result.matched_count, 0)
                     self.assertEqual(result.modified_count, 0)
                     self.assertIsNotNone(result.upserted_id)
 
-                    doc = await coll.find_one({"_id": result.upserted_id})
-                    self.assertEqual(doc["name"], "New")
-                    self.assertEqual(doc["age"], 20)
+                    doc = await coll.find_one({'_id': result.upserted_id})
+                    self.assertEqual(doc['name'], 'New')
+                    self.assertEqual(doc['age'], 20)
 
     async def test_update_one_upsert_seeds_nested_and_eq_filter_fields(self):
         for engine_name in ENGINE_FACTORIES:
@@ -56,71 +75,87 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                     coll = client.test_db.test_coll
 
                     result = await coll.update_one(
-                        {"profile.name": {"$eq": "Val"}, "kind": "user"},
-                        {"$set": {"profile.age": 30}},
+                        {'profile.name': {'$eq': 'Val'}, 'kind': 'user'},
+                        {'$set': {'profile.age': 30}},
                         upsert=True,
                     )
 
                     self.assertEqual(result.modified_count, 0)
-                    doc = await coll.find_one({"_id": result.upserted_id})
-                    self.assertEqual(doc["kind"], "user")
-                    self.assertEqual(doc["profile"]["name"], "Val")
-                    self.assertEqual(doc["profile"]["age"], 30)
+                    doc = await coll.find_one({'_id': result.upserted_id})
+                    self.assertEqual(doc['kind'], 'user')
+                    self.assertEqual(doc['profile']['name'], 'Val')
+                    self.assertEqual(doc['profile']['age'], 30)
 
-    async def test_update_one_upsert_seeds_singleton_in_and_top_level_and_fields(self):
+    async def test_update_one_upsert_seeds_singleton_in_and_top_level_and_fields(
+        self,
+    ):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
 
                     result = await coll.update_one(
-                        {"$and": [{"kind": {"$in": ["user"]}}, {"tenant": "eu"}]},
-                        {"$set": {"done": True}},
+                        {
+                            '$and': [
+                                {'kind': {'$in': ['user']}},
+                                {'tenant': 'eu'},
+                            ]
+                        },
+                        {'$set': {'done': True}},
                         upsert=True,
                     )
 
-                    doc = await coll.find_one({"_id": result.upserted_id})
-                    self.assertEqual(doc["kind"], "user")
-                    self.assertEqual(doc["tenant"], "eu")
-                    self.assertEqual(doc["done"], True)
+                    doc = await coll.find_one({'_id': result.upserted_id})
+                    self.assertEqual(doc['kind'], 'user')
+                    self.assertEqual(doc['tenant'], 'eu')
+                    self.assertEqual(doc['done'], True)
 
     async def test_update_one_set_none_creates_field(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1"})
+                    await coll.insert_one({'_id': '1'})
 
-                    result = await coll.update_one({"_id": "1"}, {"$set": {"field": None}})
-                    doc = await coll.find_one({"_id": "1"})
+                    result = await coll.update_one(
+                        {'_id': '1'}, {'$set': {'field': None}}
+                    )
+                    doc = await coll.find_one({'_id': '1'})
 
                     self.assertEqual(result.matched_count, 1)
                     self.assertEqual(result.modified_count, 1)
-                    self.assertIn("field", doc)
-                    self.assertIsNone(doc["field"])
+                    self.assertIn('field', doc)
+                    self.assertIsNone(doc['field'])
 
     async def test_update_one_unknown_operator_raises_operation_failure(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "arr": []})
+                    await coll.insert_one({'_id': '1', 'arr': []})
 
                     with self.assertRaises(OperationFailure):
-                        await coll.update_one({"_id": "1"}, {"$bit": {"arr": {"and": 1}}})
+                        await coll.update_one(
+                            {'_id': '1'}, {'$bit': {'arr': {'and': 1}}}
+                        )
 
     async def test_update_one_rejects_modifying_id(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "name": "Val"})
+                    await coll.insert_one({'_id': '1', 'name': 'Val'})
 
                     with self.assertRaises(OperationFailure):
-                        await coll.update_one({"_id": "1"}, {"$set": {"_id": "2"}})
+                        await coll.update_one(
+                            {'_id': '1'}, {'$set': {'_id': '2'}}
+                        )
 
-                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Val"})
-                    self.assertIsNone(await coll.find_one({"_id": "2"}))
+                    self.assertEqual(
+                        await coll.find_one({'_id': '1'}),
+                        {'_id': '1', 'name': 'Val'},
+                    )
+                    self.assertIsNone(await coll.find_one({'_id': '2'}))
 
     async def test_update_one_allows_set_on_insert_id_matching_filter(self):
         for engine_name in ENGINE_FACTORIES:
@@ -129,18 +164,20 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                     coll = client.test_db.test_coll
 
                     result = await coll.update_one(
-                        {"_id": "seed"},
-                        {"$setOnInsert": {"_id": "seed", "name": "Val"}},
+                        {'_id': 'seed'},
+                        {'$setOnInsert': {'_id': 'seed', 'name': 'Val'}},
                         upsert=True,
                     )
 
-                    self.assertEqual(result.upserted_id, "seed")
+                    self.assertEqual(result.upserted_id, 'seed')
                     self.assertEqual(
-                        await coll.find_one({"_id": "seed"}),
-                        {"_id": "seed", "name": "Val"},
+                        await coll.find_one({'_id': 'seed'}),
+                        {'_id': 'seed', 'name': 'Val'},
                     )
 
-    async def test_update_one_rejects_set_on_insert_id_conflicting_with_filter(self):
+    async def test_update_one_rejects_set_on_insert_id_conflicting_with_filter(
+        self,
+    ):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
@@ -148,42 +185,56 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
 
                     with self.assertRaises(OperationFailure):
                         await coll.update_one(
-                            {"_id": "seed"},
-                            {"$setOnInsert": {"_id": "other", "name": "Val"}},
+                            {'_id': 'seed'},
+                            {'$setOnInsert': {'_id': 'other', 'name': 'Val'}},
                             upsert=True,
                         )
 
                     self.assertEqual(await coll.find({}).to_list(), [])
 
-    async def test_pipeline_update_preserves_id_and_rejects_storage_corruption(self):
+    async def test_pipeline_update_preserves_id_and_rejects_storage_corruption(
+        self,
+    ):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
                     await coll.insert_many(
                         [
-                            {"_id": "1", "name": "Ada", "legacy": True},
-                            {"_id": "2", "name": "Bob"},
+                            {'_id': '1', 'name': 'Ada', 'legacy': True},
+                            {'_id': '2', 'name': 'Bob'},
                         ]
                     )
 
-                    unset_result = await coll.update_one({"_id": "1"}, [{"$unset": "_id"}])
+                    unset_result = await coll.update_one(
+                        {'_id': '1'}, [{'$unset': '_id'}]
+                    )
                     self.assertEqual(unset_result.matched_count, 1)
                     self.assertEqual(unset_result.modified_count, 1)
                     self.assertEqual(
-                        await coll.find_one({"_id": "1"}),
-                        {"_id": "1", "name": "Ada", "legacy": True},
+                        await coll.find_one({'_id': '1'}),
+                        {'_id': '1', 'name': 'Ada', 'legacy': True},
                     )
 
                     with self.assertRaises(OperationFailure):
-                        await coll.update_one({"_id": "1"}, [{"$set": {"_id": "2"}}])
+                        await coll.update_one(
+                            {'_id': '1'}, [{'$set': {'_id': '2'}}]
+                        )
 
-                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Ada", "legacy": True})
-                    self.assertEqual(await coll.find_one({"_id": "2"}), {"_id": "2", "name": "Bob"})
-                    self.assertEqual((await coll.delete_one({"_id": "1"})).deleted_count, 1)
                     self.assertEqual(
-                        await coll.find({}, sort=[("_id", 1)]).to_list(),
-                        [{"_id": "2", "name": "Bob"}],
+                        await coll.find_one({'_id': '1'}),
+                        {'_id': '1', 'name': 'Ada', 'legacy': True},
+                    )
+                    self.assertEqual(
+                        await coll.find_one({'_id': '2'}),
+                        {'_id': '2', 'name': 'Bob'},
+                    )
+                    self.assertEqual(
+                        (await coll.delete_one({'_id': '1'})).deleted_count, 1
+                    )
+                    self.assertEqual(
+                        await coll.find({}, sort=[('_id', 1)]).to_list(),
+                        [{'_id': '2', 'name': 'Bob'}],
                     )
 
     async def test_pipeline_upsert_uses_seed_or_created_id(self):
@@ -193,87 +244,154 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                     coll = client.test_db.test_coll
 
                     seeded = await coll.update_one(
-                        {"_id": "seed"},
-                        [{"$set": {"name": "Seeded"}}],
+                        {'_id': 'seed'},
+                        [{'$set': {'name': 'Seeded'}}],
                         upsert=True,
                     )
                     created = await coll.update_one(
-                        {"kind": "generated"},
-                        [{"$set": {"_id": "pipeline-id", "name": "Generated"}}],
+                        {'kind': 'generated'},
+                        [
+                            {
+                                '$set': {
+                                    '_id': 'pipeline-id',
+                                    'name': 'Generated',
+                                }
+                            }
+                        ],
                         upsert=True,
                     )
 
-                    self.assertEqual(seeded.upserted_id, "seed")
-                    self.assertEqual(created.upserted_id, "pipeline-id")
-                    self.assertEqual(await coll.find_one({"_id": "seed"}), {"_id": "seed", "name": "Seeded"})
+                    self.assertEqual(seeded.upserted_id, 'seed')
+                    self.assertEqual(created.upserted_id, 'pipeline-id')
                     self.assertEqual(
-                        await coll.find_one({"_id": "pipeline-id"}),
-                        {"kind": "generated", "_id": "pipeline-id", "name": "Generated"},
+                        await coll.find_one({'_id': 'seed'}),
+                        {'_id': 'seed', 'name': 'Seeded'},
+                    )
+                    self.assertEqual(
+                        await coll.find_one({'_id': 'pipeline-id'}),
+                        {
+                            'kind': 'generated',
+                            '_id': 'pipeline-id',
+                            'name': 'Generated',
+                        },
                     )
 
-    async def test_insert_rejects_root_array_id_but_allows_nested_array_document_id(self):
+    async def test_insert_rejects_root_array_id_but_allows_nested_array_document_id(
+        self,
+    ):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
 
                     with self.assertRaises(OperationFailure):
-                        await coll.insert_one({"_id": [1]})
+                        await coll.insert_one({'_id': [1]})
 
-                    await coll.insert_one({"_id": {"a": [1]}, "ok": True})
+                    await coll.insert_one({'_id': {'a': [1]}, 'ok': True})
                     self.assertEqual(
-                        await coll.find_one({"_id": {"a": [1]}}),
-                        {"_id": {"a": [1]}, "ok": True},
+                        await coll.find_one({'_id': {'a': [1]}}),
+                        {'_id': {'a': [1]}, 'ok': True},
                     )
 
                     with self.assertRaises(OperationFailure):
-                        await coll.insert_many([{"_id": "valid-before-error"}, {"_id": [2]}])
-                    self.assertIsNone(await coll.find_one({"_id": "valid-before-error"}))
+                        await coll.insert_many(
+                            [{'_id': 'valid-before-error'}, {'_id': [2]}]
+                        )
+                    self.assertIsNone(
+                        await coll.find_one({'_id': 'valid-before-error'})
+                    )
 
                     with self.assertRaises(BulkWriteError) as bulk_error:
                         await coll.bulk_write(
                             [
-                                InsertOne({"_id": "bulk-valid"}),
-                                InsertOne({"_id": [3]}),
+                                InsertOne({'_id': 'bulk-valid'}),
+                                InsertOne({'_id': [3]}),
                             ],
                             ordered=False,
                         )
 
-                    self.assertEqual(bulk_error.exception.details["writeErrors"][0]["index"], 1)
-                    self.assertEqual(await coll.find_one({"_id": "bulk-valid"}), {"_id": "bulk-valid"})
+                    self.assertEqual(
+                        bulk_error.exception.details['writeErrors'][0][
+                            'index'
+                        ],
+                        1,
+                    )
+                    self.assertEqual(
+                        await coll.find_one({'_id': 'bulk-valid'}),
+                        {'_id': 'bulk-valid'},
+                    )
 
-                    with self.assertRaises(BulkWriteError) as ordered_bulk_error:
+                    with self.assertRaises(
+                        BulkWriteError
+                    ) as ordered_bulk_error:
                         await coll.bulk_write(
                             [
-                                InsertOne({"_id": "ordered-bulk-valid"}),
-                                InsertOne({"_id": [4]}),
-                                InsertOne({"_id": "ordered-bulk-after"}),
+                                InsertOne({'_id': 'ordered-bulk-valid'}),
+                                InsertOne({'_id': [4]}),
+                                InsertOne({'_id': 'ordered-bulk-after'}),
                             ],
                         )
 
-                    self.assertEqual(ordered_bulk_error.exception.details["writeErrors"][0]["index"], 1)
-                    self.assertEqual(ordered_bulk_error.exception.details["writeErrors"][0]["code"], 53)
-                    self.assertEqual(ordered_bulk_error.exception.details["nInserted"], 1)
-                    self.assertEqual(await coll.find_one({"_id": "ordered-bulk-valid"}), {"_id": "ordered-bulk-valid"})
-                    self.assertIsNone(await coll.find_one({"_id": "ordered-bulk-after"}))
+                    self.assertEqual(
+                        ordered_bulk_error.exception.details['writeErrors'][0][
+                            'index'
+                        ],
+                        1,
+                    )
+                    self.assertEqual(
+                        ordered_bulk_error.exception.details['writeErrors'][0][
+                            'code'
+                        ],
+                        53,
+                    )
+                    self.assertEqual(
+                        ordered_bulk_error.exception.details['nInserted'], 1
+                    )
+                    self.assertEqual(
+                        await coll.find_one({'_id': 'ordered-bulk-valid'}),
+                        {'_id': 'ordered-bulk-valid'},
+                    )
+                    self.assertIsNone(
+                        await coll.find_one({'_id': 'ordered-bulk-after'})
+                    )
 
-    async def test_bulk_update_rejects_pipeline_id_change_without_corrupting_storage(self):
+    async def test_bulk_update_rejects_pipeline_id_change_without_corrupting_storage(
+        self,
+    ):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_many([{"_id": "1", "name": "Ada"}, {"_id": "2", "name": "Bob"}])
+                    await coll.insert_many(
+                        [
+                            {'_id': '1', 'name': 'Ada'},
+                            {'_id': '2', 'name': 'Bob'},
+                        ]
+                    )
 
                     with self.assertRaises(BulkWriteError) as bulk_error:
                         await coll.bulk_write(
                             [
-                                UpdateOne({"_id": "1"}, [{"$set": {"_id": "2"}}]),
+                                UpdateOne(
+                                    {'_id': '1'}, [{'$set': {'_id': '2'}}]
+                                ),
                             ]
                         )
 
-                    self.assertEqual(bulk_error.exception.details["writeErrors"][0]["index"], 0)
-                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
-                    self.assertEqual(await coll.find_one({"_id": "2"}), {"_id": "2", "name": "Bob"})
+                    self.assertEqual(
+                        bulk_error.exception.details['writeErrors'][0][
+                            'index'
+                        ],
+                        0,
+                    )
+                    self.assertEqual(
+                        await coll.find_one({'_id': '1'}),
+                        {'_id': '1', 'name': 'Ada'},
+                    )
+                    self.assertEqual(
+                        await coll.find_one({'_id': '2'}),
+                        {'_id': '2', 'name': 'Bob'},
+                    )
 
     async def test_update_commands_share_id_preservation_rules(self):
         for engine_name in ENGINE_FACTORIES:
@@ -284,127 +402,276 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
 
                     update_result = await database.command(
                         {
-                            "update": "test_coll",
-                            "updates": [
+                            'update': 'test_coll',
+                            'updates': [
                                 {
-                                    "q": {"_id": "seed"},
-                                    "u": {"$setOnInsert": {"_id": "seed", "name": "Val"}},
-                                    "upsert": True,
+                                    'q': {'_id': 'seed'},
+                                    'u': {
+                                        '$setOnInsert': {
+                                            '_id': 'seed',
+                                            'name': 'Val',
+                                        }
+                                    },
+                                    'upsert': True,
                                 }
                             ],
                         }
                     )
 
-                    self.assertEqual(update_result["n"], 0)
-                    self.assertEqual(update_result["nModified"], 0)
-                    self.assertEqual(update_result["upserted"], [{"index": 0, "_id": "seed"}])
-                    self.assertEqual(await coll.find_one({"_id": "seed"}), {"_id": "seed", "name": "Val"})
+                    self.assertEqual(update_result['n'], 0)
+                    self.assertEqual(update_result['nModified'], 0)
+                    self.assertEqual(
+                        update_result['upserted'],
+                        [{'index': 0, '_id': 'seed'}],
+                    )
+                    self.assertEqual(
+                        await coll.find_one({'_id': 'seed'}),
+                        {'_id': 'seed', 'name': 'Val'},
+                    )
 
-                    await coll.insert_one({"_id": "1", "name": "Ada"})
+                    await coll.insert_one({'_id': '1', 'name': 'Ada'})
                     with self.assertRaises(BulkWriteError) as command_error:
                         await database.command(
                             {
-                                "update": "test_coll",
-                                "updates": [
-                                    {"q": {"_id": "1"}, "u": [{"$set": {"_id": "2"}}]},
+                                'update': 'test_coll',
+                                'updates': [
+                                    {
+                                        'q': {'_id': '1'},
+                                        'u': [{'$set': {'_id': '2'}}],
+                                    },
                                 ],
                             }
                         )
 
-                    self.assertEqual(command_error.exception.details["writeErrors"][0]["index"], 0)
-                    self.assertEqual(command_error.exception.details["writeErrors"][0]["code"], 66)
-                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
-                    self.assertIsNone(await coll.find_one({"_id": "2"}))
+                    self.assertEqual(
+                        command_error.exception.details['writeErrors'][0][
+                            'index'
+                        ],
+                        0,
+                    )
+                    self.assertEqual(
+                        command_error.exception.details['writeErrors'][0][
+                            'code'
+                        ],
+                        66,
+                    )
+                    self.assertEqual(
+                        await coll.find_one({'_id': '1'}),
+                        {'_id': '1', 'name': 'Ada'},
+                    )
+                    self.assertIsNone(await coll.find_one({'_id': '2'}))
 
-                    with self.assertRaises(BulkWriteError) as replacement_command_error:
+                    with self.assertRaises(
+                        BulkWriteError
+                    ) as replacement_command_error:
                         await database.command(
                             {
-                                "update": "test_coll",
-                                "updates": [
-                                    {"q": {"_id": "1"}, "u": {"_id": "2", "name": "Grace"}},
+                                'update': 'test_coll',
+                                'updates': [
+                                    {
+                                        'q': {'_id': '1'},
+                                        'u': {'_id': '2', 'name': 'Grace'},
+                                    },
                                 ],
                             }
                         )
 
-                    self.assertEqual(replacement_command_error.exception.details["writeErrors"][0]["index"], 0)
-                    self.assertEqual(replacement_command_error.exception.details["writeErrors"][0]["code"], 66)
-                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
-                    self.assertIsNone(await coll.find_one({"_id": "2"}))
+                    self.assertEqual(
+                        replacement_command_error.exception.details[
+                            'writeErrors'
+                        ][0]['index'],
+                        0,
+                    )
+                    self.assertEqual(
+                        replacement_command_error.exception.details[
+                            'writeErrors'
+                        ][0]['code'],
+                        66,
+                    )
+                    self.assertEqual(
+                        await coll.find_one({'_id': '1'}),
+                        {'_id': '1', 'name': 'Ada'},
+                    )
+                    self.assertIsNone(await coll.find_one({'_id': '2'}))
 
                     with self.assertRaises(OperationFailure):
                         await database.command(
                             {
-                                "findAndModify": "test_coll",
-                                "query": {"_id": "1"},
-                                "update": [{"$set": {"_id": "2"}}],
-                                "new": True,
+                                'findAndModify': 'test_coll',
+                                'query': {'_id': '1'},
+                                'update': [{'$set': {'_id': '2'}}],
+                                'new': True,
                             }
                         )
 
-                    self.assertEqual(await coll.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
-                    self.assertIsNone(await coll.find_one({"_id": "2"}))
+                    self.assertEqual(
+                        await coll.find_one({'_id': '1'}),
+                        {'_id': '1', 'name': 'Ada'},
+                    )
+                    self.assertIsNone(await coll.find_one({'_id': '2'}))
 
     async def test_update_one_supports_setting_array_index(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "tags": ["old", "keep"]})
+                    await coll.insert_one(
+                        {'_id': '1', 'tags': ['old', 'keep']}
+                    )
 
-                    result = await coll.update_one({"_id": "1"}, {"$set": {"tags.0": "new"}})
-                    doc = await coll.find_one({"_id": "1"})
+                    result = await coll.update_one(
+                        {'_id': '1'}, {'$set': {'tags.0': 'new'}}
+                    )
+                    doc = await coll.find_one({'_id': '1'})
 
                     self.assertEqual(result.modified_count, 1)
-                    self.assertEqual(doc["tags"], ["new", "keep"])
+                    self.assertEqual(doc['tags'], ['new', 'keep'])
 
     async def test_update_one_supports_unsetting_array_index_to_none(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "tags": ["old", "keep"]})
+                    await coll.insert_one(
+                        {'_id': '1', 'tags': ['old', 'keep']}
+                    )
 
-                    result = await coll.update_one({"_id": "1"}, {"$unset": {"tags.0": ""}})
-                    doc = await coll.find_one({"_id": "1"})
+                    result = await coll.update_one(
+                        {'_id': '1'}, {'$unset': {'tags.0': ''}}
+                    )
+                    doc = await coll.find_one({'_id': '1'})
 
                     self.assertEqual(result.modified_count, 1)
-                    self.assertEqual(doc["tags"], [None, "keep"])
+                    self.assertEqual(doc['tags'], [None, 'keep'])
 
-    async def test_update_one_supports_setting_nested_array_path_with_gap_expansion(self):
+    async def test_update_one_supports_setting_nested_array_path_with_gap_expansion(
+        self,
+    ):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "items": []})
+                    await coll.insert_one({'_id': '1', 'items': []})
 
-                    result = await coll.update_one({"_id": "1"}, {"$set": {"items.2.name": "Ada"}})
-                    doc = await coll.find_one({"_id": "1"})
+                    result = await coll.update_one(
+                        {'_id': '1'}, {'$set': {'items.2.name': 'Ada'}}
+                    )
+                    doc = await coll.find_one({'_id': '1'})
 
                     self.assertEqual(result.modified_count, 1)
-                    self.assertEqual(doc["items"], [None, None, {"name": "Ada"}])
+                    self.assertEqual(
+                        doc['items'], [None, None, {'name': 'Ada'}]
+                    )
+
+    async def test_update_one_positional_operator_supports_or_array_selector_with_siblings(
+        self,
+    ):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    coll = client.test_db.test_coll
+                    await coll.insert_many(
+                        [
+                            {
+                                '_id': 'open',
+                                'state': 'open',
+                                'items': [
+                                    {'name': 'Grace', 'done': False},
+                                    {'name': 'Ada', 'done': False},
+                                ],
+                            },
+                            {
+                                '_id': 'closed',
+                                'state': 'closed',
+                                'items': [{'name': 'Ada', 'done': False}],
+                            },
+                        ]
+                    )
+
+                    result = await coll.update_one(
+                        {
+                            '$or': [
+                                {'items.name': 'Ada'},
+                                {'items.name': 'Linus'},
+                            ],
+                            'state': 'open',
+                        },
+                        {'$set': {'items.$.done': True}},
+                    )
+                    open_doc = await coll.find_one({'_id': 'open'})
+                    closed_doc = await coll.find_one({'_id': 'closed'})
+
+                    self.assertEqual(result.matched_count, 1)
+                    self.assertEqual(result.modified_count, 1)
+                    self.assertEqual(
+                        open_doc['items'],
+                        [
+                            {'name': 'Grace', 'done': False},
+                            {'name': 'Ada', 'done': True},
+                        ],
+                    )
+                    self.assertEqual(
+                        closed_doc['items'], [{'name': 'Ada', 'done': False}]
+                    )
+
+                    await coll.insert_one(
+                        {
+                            '_id': 'branch',
+                            'state': 'open',
+                            'items': [
+                                {'name': 'Ada', 'done': False},
+                                {'name': 'Linus', 'done': False},
+                            ],
+                        }
+                    )
+                    branch_result = await coll.update_one(
+                        {
+                            '_id': 'branch',
+                            '$or': [
+                                {'items.name': 'Ada', 'state': 'closed'},
+                                {'items.name': 'Linus', 'state': 'open'},
+                            ],
+                        },
+                        {'$set': {'items.$.done': True}},
+                    )
+                    branch_doc = await coll.find_one({'_id': 'branch'})
+
+                    self.assertEqual(branch_result.matched_count, 1)
+                    self.assertEqual(branch_result.modified_count, 1)
+                    self.assertEqual(
+                        branch_doc['items'],
+                        [
+                            {'name': 'Ada', 'done': False},
+                            {'name': 'Linus', 'done': True},
+                        ],
+                    )
 
     async def test_update_one_rejects_crossing_scalar_parent(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "profile": 1})
+                    await coll.insert_one({'_id': '1', 'profile': 1})
 
                     with self.assertRaises(OperationFailure):
-                        await coll.update_one({"_id": "1"}, {"$set": {"profile.name": "Ada"}})
+                        await coll.update_one(
+                            {'_id': '1'}, {'$set': {'profile.name': 'Ada'}}
+                        )
 
-                    doc = await coll.find_one({"_id": "1"})
-                    self.assertEqual(doc, {"_id": "1", "profile": 1})
+                    doc = await coll.find_one({'_id': '1'})
+                    self.assertEqual(doc, {'_id': '1', 'profile': 1})
 
     async def test_update_one_rejects_excessive_array_index_expansion(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "items": []})
+                    await coll.insert_one({'_id': '1', 'items': []})
 
                     with self.assertRaises(OperationFailure):
-                        await coll.update_one({"_id": "1"}, {"$set": {"items.10001.name": "Ada"}})
+                        await coll.update_one(
+                            {'_id': '1'}, {'$set': {'items.10001.name': 'Ada'}}
+                        )
 
     async def test_update_one_upsert_rejects_conflicting_seed_paths(self):
         for engine_name in ENGINE_FACTORIES:
@@ -414,8 +681,8 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
 
                     with self.assertRaises(OperationFailure):
                         await coll.update_one(
-                            {"a": 1, "a.b": 2},
-                            {"$set": {"done": True}},
+                            {'a': 1, 'a.b': 2},
+                            {'$set': {'done': True}},
                             upsert=True,
                         )
 
@@ -424,26 +691,50 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "tags": ["python"], "roles": ["admin"]})
+                    await coll.insert_one(
+                        {'_id': '1', 'tags': ['python'], 'roles': ['admin']}
+                    )
 
-                    await coll.update_one({"_id": "1"}, {"$push": {"tags": {"$each": ["mongodb", "sqlite"]}}})
-                    await coll.update_one({"_id": "1"}, {"$addToSet": {"roles": {"$each": ["admin", "staff", "staff"]}}})
+                    await coll.update_one(
+                        {'_id': '1'},
+                        {'$push': {'tags': {'$each': ['mongodb', 'sqlite']}}},
+                    )
+                    await coll.update_one(
+                        {'_id': '1'},
+                        {
+                            '$addToSet': {
+                                'roles': {'$each': ['admin', 'staff', 'staff']}
+                            }
+                        },
+                    )
 
-                    doc = await coll.find_one({"_id": "1"})
-                    self.assertEqual(doc["tags"], ["python", "mongodb", "sqlite"])
-                    self.assertEqual(doc["roles"], ["admin", "staff"])
+                    doc = await coll.find_one({'_id': '1'})
+                    self.assertEqual(
+                        doc['tags'], ['python', 'mongodb', 'sqlite']
+                    )
+                    self.assertEqual(doc['roles'], ['admin', 'staff'])
 
     async def test_update_one_rejects_invalid_each_modifier_payloads(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "tags": []})
+                    await coll.insert_one({'_id': '1', 'tags': []})
 
                     with self.assertRaises(OperationFailure):
-                        await coll.update_one({"_id": "1"}, {"$push": {"tags": {"$each": "python"}}})
+                        await coll.update_one(
+                            {'_id': '1'},
+                            {'$push': {'tags': {'$each': 'python'}}},
+                        )
                     with self.assertRaises(OperationFailure):
-                        await coll.update_one({"_id": "1"}, {"$addToSet": {"tags": {"$each": ["python"], "$slice": 1}}})
+                        await coll.update_one(
+                            {'_id': '1'},
+                            {
+                                '$addToSet': {
+                                    'tags': {'$each': ['python'], '$slice': 1}
+                                }
+                            },
+                        )
 
     async def test_update_one_supports_push_modifiers(self):
         for engine_name in ENGINE_FACTORIES:
@@ -452,46 +743,55 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                     coll = client.test_db.test_coll
                     await coll.insert_one(
                         {
-                            "_id": "1",
-                            "scores": [4, 1],
-                            "quizzes": [
-                                {"wk": 1, "score": 10},
-                                {"wk": 2, "score": 8},
-                                {"wk": 3, "score": 5},
-                                {"wk": 4, "score": 6},
+                            '_id': '1',
+                            'scores': [4, 1],
+                            'quizzes': [
+                                {'wk': 1, 'score': 10},
+                                {'wk': 2, 'score': 8},
+                                {'wk': 3, 'score': 5},
+                                {'wk': 4, 'score': 6},
                             ],
                         }
                     )
 
                     await coll.update_one(
-                        {"_id": "1"},
-                        {"$push": {"scores": {"$each": [3, 2], "$position": 1, "$sort": 1, "$slice": 3}}},
+                        {'_id': '1'},
+                        {
+                            '$push': {
+                                'scores': {
+                                    '$each': [3, 2],
+                                    '$position': 1,
+                                    '$sort': 1,
+                                    '$slice': 3,
+                                }
+                            }
+                        },
                     )
                     await coll.update_one(
-                        {"_id": "1"},
+                        {'_id': '1'},
                         {
-                            "$push": {
-                                "quizzes": {
-                                    "$each": [
-                                        {"wk": 5, "score": 8},
-                                        {"wk": 6, "score": 7},
-                                        {"wk": 7, "score": 6},
+                            '$push': {
+                                'quizzes': {
+                                    '$each': [
+                                        {'wk': 5, 'score': 8},
+                                        {'wk': 6, 'score': 7},
+                                        {'wk': 7, 'score': 6},
                                     ],
-                                    "$sort": {"score": -1},
-                                    "$slice": 3,
+                                    '$sort': {'score': -1},
+                                    '$slice': 3,
                                 }
                             }
                         },
                     )
 
-                    doc = await coll.find_one({"_id": "1"})
-                    self.assertEqual(doc["scores"], [1, 2, 3])
+                    doc = await coll.find_one({'_id': '1'})
+                    self.assertEqual(doc['scores'], [1, 2, 3])
                     self.assertEqual(
-                        doc["quizzes"],
+                        doc['quizzes'],
                         [
-                            {"wk": 1, "score": 10},
-                            {"wk": 2, "score": 8},
-                            {"wk": 5, "score": 8},
+                            {'wk': 1, 'score': 10},
+                            {'wk': 2, 'score': 8},
+                            {'wk': 5, 'score': 8},
                         ],
                     )
 
@@ -500,64 +800,94 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "count": 1, "tags": ["python"]})
+                    await coll.insert_one(
+                        {'_id': '1', 'count': 1, 'tags': ['python']}
+                    )
 
-                    await coll.update_one({"_id": "1"}, {"$inc": {"count": 2}})
-                    await coll.update_one({"_id": "1"}, {"$push": {"tags": "mongodb"}})
-                    await coll.update_one({"_id": "1"}, {"$addToSet": {"tags": "python"}})
-                    await coll.update_one({"_id": "1"}, {"$addToSet": {"tags": "sqlite"}})
-                    await coll.update_one({"_id": "1"}, {"$pull": {"tags": "mongodb"}})
+                    await coll.update_one({'_id': '1'}, {'$inc': {'count': 2}})
+                    await coll.update_one(
+                        {'_id': '1'}, {'$push': {'tags': 'mongodb'}}
+                    )
+                    await coll.update_one(
+                        {'_id': '1'}, {'$addToSet': {'tags': 'python'}}
+                    )
+                    await coll.update_one(
+                        {'_id': '1'}, {'$addToSet': {'tags': 'sqlite'}}
+                    )
+                    await coll.update_one(
+                        {'_id': '1'}, {'$pull': {'tags': 'mongodb'}}
+                    )
 
-                    doc = await coll.find_one({"_id": "1"})
-                    self.assertEqual(doc["count"], 3)
-                    self.assertEqual(doc["tags"], ["python", "sqlite"])
+                    doc = await coll.find_one({'_id': '1'})
+                    self.assertEqual(doc['count'], 3)
+                    self.assertEqual(doc['tags'], ['python', 'sqlite'])
 
-    async def test_update_one_rejects_invalid_inc_and_array_operator_targets(self):
+    async def test_update_one_rejects_invalid_inc_and_array_operator_targets(
+        self,
+    ):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "count": "x", "tags": "python"})
+                    await coll.insert_one(
+                        {'_id': '1', 'count': 'x', 'tags': 'python'}
+                    )
 
                     with self.assertRaises(OperationFailure):
-                        await coll.update_one({"_id": "1"}, {"$inc": {"count": 1}})
+                        await coll.update_one(
+                            {'_id': '1'}, {'$inc': {'count': 1}}
+                        )
                     with self.assertRaises(OperationFailure):
-                        await coll.update_one({"_id": "1"}, {"$push": {"tags": "mongodb"}})
+                        await coll.update_one(
+                            {'_id': '1'}, {'$push': {'tags': 'mongodb'}}
+                        )
 
     async def test_update_one_supports_pop(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
-                    await coll.insert_one({"_id": "1", "tags": ["python", "mongodb", "sqlite"]})
+                    await coll.insert_one(
+                        {'_id': '1', 'tags': ['python', 'mongodb', 'sqlite']}
+                    )
 
-                    await coll.update_one({"_id": "1"}, {"$pop": {"tags": -1}})
-                    await coll.update_one({"_id": "1"}, {"$pop": {"tags": 1}})
+                    await coll.update_one({'_id': '1'}, {'$pop': {'tags': -1}})
+                    await coll.update_one({'_id': '1'}, {'$pop': {'tags': 1}})
 
-                    doc = await coll.find_one({"_id": "1"})
-                    self.assertEqual(doc["tags"], ["mongodb"])
+                    doc = await coll.find_one({'_id': '1'})
+                    self.assertEqual(doc['tags'], ['mongodb'])
 
-    async def test_update_one_supports_nested_pop_and_embedded_document_array_mutation(self):
+    async def test_update_one_supports_nested_pop_and_embedded_document_array_mutation(
+        self,
+    ):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):
                 async with open_client(engine_name) as client:
                     coll = client.test_db.test_coll
                     await coll.insert_one(
                         {
-                            "_id": "1",
-                            "profile": {"tags": ["python"]},
-                            "items": [{"kind": "a"}],
+                            '_id': '1',
+                            'profile': {'tags': ['python']},
+                            'items': [{'kind': 'a'}],
                         }
                     )
 
-                    await coll.update_one({"_id": "1"}, {"$pop": {"profile.tags": 1}})
-                    await coll.update_one({"_id": "1"}, {"$addToSet": {"items": {"kind": "a"}}})
-                    await coll.update_one({"_id": "1"}, {"$addToSet": {"items": {"kind": "b"}}})
-                    await coll.update_one({"_id": "1"}, {"$pull": {"items": {"kind": "a"}}})
+                    await coll.update_one(
+                        {'_id': '1'}, {'$pop': {'profile.tags': 1}}
+                    )
+                    await coll.update_one(
+                        {'_id': '1'}, {'$addToSet': {'items': {'kind': 'a'}}}
+                    )
+                    await coll.update_one(
+                        {'_id': '1'}, {'$addToSet': {'items': {'kind': 'b'}}}
+                    )
+                    await coll.update_one(
+                        {'_id': '1'}, {'$pull': {'items': {'kind': 'a'}}}
+                    )
 
-                    doc = await coll.find_one({"_id": "1"})
-                    self.assertEqual(doc["profile"]["tags"], [])
-                    self.assertEqual(doc["items"], [{"kind": "b"}])
+                    doc = await coll.find_one({'_id': '1'})
+                    self.assertEqual(doc['profile']['tags'], [])
+                    self.assertEqual(doc['items'], [{'kind': 'b'}])
 
     async def test_update_one_supports_pull_with_predicate_document(self):
         for engine_name in ENGINE_FACTORIES:
@@ -566,16 +896,19 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                     coll = client.test_db.test_coll
                     await coll.insert_one(
                         {
-                            "_id": "1",
-                            "items": [
-                                {"kind": "a", "qty": 1},
-                                {"kind": "b", "qty": 3},
-                                {"kind": "c", "qty": 5},
+                            '_id': '1',
+                            'items': [
+                                {'kind': 'a', 'qty': 1},
+                                {'kind': 'b', 'qty': 3},
+                                {'kind': 'c', 'qty': 5},
                             ],
                         }
                     )
 
-                    await coll.update_one({"_id": "1"}, {"$pull": {"items": {"qty": {"$gte": 3}}}})
+                    await coll.update_one(
+                        {'_id': '1'},
+                        {'$pull': {'items': {'qty': {'$gte': 3}}}},
+                    )
 
-                    doc = await coll.find_one({"_id": "1"})
-                    self.assertEqual(doc["items"], [{"kind": "a", "qty": 1}])
+                    doc = await coll.find_one({'_id': '1'})
+                    self.assertEqual(doc['items'], [{'kind': 'a', 'qty': 1}])

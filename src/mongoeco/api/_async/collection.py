@@ -12,7 +12,9 @@ from mongoeco.api._async._collection_bulk import (
 from mongoeco.api._async import _collection_indexing
 from mongoeco.api._async import _collection_modify
 from mongoeco.api._async import _collection_reads
-from mongoeco.api._async._collection_runtime import CollectionRuntimeCoordinator
+from mongoeco.api._async._collection_runtime import (
+    CollectionRuntimeCoordinator,
+)
 from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async._collection_watch import (
     CollectionChangeStreamConfig,
@@ -40,10 +42,18 @@ from mongoeco.api.public_api import (
     COLLECTION_REPLACE_ONE_SPEC,
     COLLECTION_UPDATE_MANY_SPEC,
     COLLECTION_UPDATE_ONE_SPEC,
+    normalize_aggregate_operation_arguments,
     normalize_public_operation_arguments,
 )
-from mongoeco.api.operations import AggregateOperation, FindOperation, UpdateOperation, compile_aggregate_operation, compile_find_operation
+from mongoeco.api.operations import (
+    AggregateOperation,
+    FindOperation,
+    UpdateOperation,
+    compile_aggregate_operation,
+    compile_find_operation,
+)
 from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
 from mongoeco.compat import (
     MongoDialect,
@@ -62,22 +72,59 @@ from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.core.validation import is_document, is_filter, is_projection, is_update
+from mongoeco.core.validation import (
+    is_document,
+    is_filter,
+    is_projection,
+    is_update,
+)
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    ArrayFilters, BulkWriteResult, CodecOptions, CollationDocument, DeleteResult, Document, DocumentId, Filter,
-    IndexInformation, IndexKeySpec, IndexModel, InsertManyResult, InsertOne, InsertOneResult, ObjectId, Projection,
-    PlanningMode, ReadConcern, ReadPreference, ReplaceOne, ReturnDocument, SearchIndexDefinition, SearchIndexDocument,
-    SearchIndexModel, SortSpec, Update, UpdateMany, UpdateOne, UpdateResult,
-    WriteConcern, WriteModel, DeleteOne, DeleteMany,
-    normalize_codec_options, normalize_index_keys,
-    normalize_read_concern, normalize_read_preference, normalize_write_concern,
+    ArrayFilters,
+    BulkWriteResult,
+    CodecOptions,
+    CollationDocument,
+    DeleteResult,
+    Document,
+    DocumentId,
+    Filter,
+    IndexInformation,
+    IndexKeySpec,
+    IndexModel,
+    InsertManyResult,
+    InsertOne,
+    InsertOneResult,
+    ObjectId,
+    Projection,
+    PlanningMode,
+    ReadConcern,
+    ReadPreference,
+    ReplaceOne,
+    ReturnDocument,
+    SearchIndexDefinition,
+    SearchIndexDocument,
+    SearchIndexModel,
+    SortSpec,
+    Update,
+    UpdateMany,
+    UpdateOne,
+    UpdateResult,
+    WriteConcern,
+    WriteModel,
+    DeleteOne,
+    DeleteMany,
+    normalize_codec_options,
+    normalize_index_keys,
+    normalize_read_concern,
+    normalize_read_preference,
+    normalize_write_concern,
 )
 from mongoeco.errors import DuplicateKeyError, OperationFailure
 
 _FILTER_UNSET = ARG_UNSET
 _UPDATE_UNSET = ARG_UNSET
 _resolve_distinct_candidates = _collection_reads.resolve_distinct_candidates
+
 
 class AsyncCollection:
     """Representa una colección de MongoDB."""
@@ -111,13 +158,17 @@ class AsyncCollection:
             if mongodb_dialect_resolution is not None
             else resolve_mongodb_dialect_resolution(mongodb_dialect)
         )
-        self._mongodb_dialect = self._mongodb_dialect_resolution.resolved_dialect
+        self._mongodb_dialect = (
+            self._mongodb_dialect_resolution.resolved_dialect
+        )
         self._pymongo_profile_resolution = (
             pymongo_profile_resolution
             if pymongo_profile_resolution is not None
             else resolve_pymongo_profile_resolution(pymongo_profile)
         )
-        self._pymongo_profile = self._pymongo_profile_resolution.resolved_profile
+        self._pymongo_profile = (
+            self._pymongo_profile_resolution.resolved_profile
+        )
         self._write_concern = normalize_write_concern(write_concern)
         self._read_concern = normalize_read_concern(read_concern)
         self._read_preference = normalize_read_preference(read_preference)
@@ -146,7 +197,7 @@ class AsyncCollection:
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
         planning_mode: PlanningMode | None = None,
-    ) -> "AsyncCollection":
+    ) -> 'AsyncCollection':
         return type(self)(
             self._engine,
             self._db_name,
@@ -155,11 +206,21 @@ class AsyncCollection:
             mongodb_dialect_resolution=self._mongodb_dialect_resolution,
             pymongo_profile=self._pymongo_profile,
             pymongo_profile_resolution=self._pymongo_profile_resolution,
-            write_concern=self._write_concern if write_concern is None else write_concern,
-            read_concern=self._read_concern if read_concern is None else read_concern,
-            read_preference=self._read_preference if read_preference is None else read_preference,
-            codec_options=self._codec_options if codec_options is None else codec_options,
-            planning_mode=self._planning_mode if planning_mode is None else planning_mode,
+            write_concern=self._write_concern
+            if write_concern is None
+            else write_concern,
+            read_concern=self._read_concern
+            if read_concern is None
+            else read_concern,
+            read_preference=self._read_preference
+            if read_preference is None
+            else read_preference,
+            codec_options=self._codec_options
+            if codec_options is None
+            else codec_options,
+            planning_mode=self._planning_mode
+            if planning_mode is None
+            else planning_mode,
             change_hub=self._change_hub,
             change_stream_history_size=self._change_stream_history_size,
             change_stream_journal_path=self._change_stream_journal_path,
@@ -167,16 +228,16 @@ class AsyncCollection:
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
         )
 
-    def __getattr__(self, name: str) -> "AsyncCollection":
-        if name.startswith("_"):
+    def __getattr__(self, name: str) -> 'AsyncCollection':
+        if name.startswith('_'):
             raise AttributeError(name)
         return self.__getitem__(name)
 
-    def __getitem__(self, name: str) -> "AsyncCollection":
+    def __getitem__(self, name: str) -> 'AsyncCollection':
         if not isinstance(name, str) or not name:
-            raise TypeError("subcollection name must be a non-empty string")
+            raise TypeError('subcollection name must be a non-empty string')
         return self.database.get_collection(
-            f"{self._collection_name}.{name}",
+            f'{self._collection_name}.{name}',
             write_concern=self._write_concern,
             read_concern=self._read_concern,
             read_preference=self._read_preference,
@@ -190,19 +251,20 @@ class AsyncCollection:
     @staticmethod
     def _require_document(document: object) -> Document:
         if not is_document(document):
-            raise TypeError("document must be a dict")
+            raise TypeError('document must be a dict')
         return document
 
     @classmethod
     def _require_documents(cls, documents: object) -> list[Document]:
-        if (
-            not isinstance(documents, Iterable)
-            or isinstance(documents, (str, bytes, bytearray, dict))
+        if not isinstance(documents, Iterable) or isinstance(
+            documents, (str, bytes, bytearray, dict)
         ):
-            raise TypeError("documents must be a non-empty iterable of documents")
+            raise TypeError(
+                'documents must be a non-empty iterable of documents'
+            )
         normalized = list(documents)
         if not normalized:
-            raise ValueError("documents must not be empty")
+            raise ValueError('documents must not be empty')
         return [cls._require_document(document) for document in normalized]
 
     @staticmethod
@@ -210,7 +272,7 @@ class AsyncCollection:
         if filter_spec is None:
             return {}
         if not is_filter(filter_spec):
-            raise TypeError("filter_spec must be a dict")
+            raise TypeError('filter_spec must be a dict')
         return filter_spec
 
     @staticmethod
@@ -218,52 +280,71 @@ class AsyncCollection:
         if projection is None:
             return None
         if not is_projection(projection):
-            raise TypeError("projection must be a dict")
+            raise TypeError('projection must be a dict')
         return projection
 
     @staticmethod
     def _require_write_requests(requests: object) -> list[WriteModel]:
         if not isinstance(requests, list):
-            raise TypeError("requests must be a list of write models")
+            raise TypeError('requests must be a list of write models')
         normalized = list(requests)
         if not normalized:
-            raise ValueError("requests must not be empty")
-        supported = (InsertOne, UpdateOne, UpdateMany, ReplaceOne, DeleteOne, DeleteMany)
+            raise ValueError('requests must not be empty')
+        supported = (
+            InsertOne,
+            UpdateOne,
+            UpdateMany,
+            ReplaceOne,
+            DeleteOne,
+            DeleteMany,
+        )
         if not all(isinstance(request, supported) for request in normalized):
-            raise TypeError("bulk_write requests must be write model instances")
+            raise TypeError(
+                'bulk_write requests must be write model instances'
+            )
         return normalized
 
     @staticmethod
     def _require_update(update_spec: object) -> Update:
         if isinstance(update_spec, list):
             if not update_spec:
-                raise ValueError("update_spec must not be empty")
+                raise ValueError('update_spec must not be empty')
             for stage in update_spec:
                 if not is_document(stage):
-                    raise TypeError("update pipeline stages must be dicts")
+                    raise TypeError('update pipeline stages must be dicts')
                 if len(stage) != 1:
-                    raise ValueError("update pipeline stages must be single-key documents")
+                    raise ValueError(
+                        'update pipeline stages must be single-key documents'
+                    )
                 operator = next(iter(stage))
-                if not isinstance(operator, str) or not operator.startswith("$"):
-                    raise ValueError("update pipeline stages must start with '$'")
+                if not isinstance(operator, str) or not operator.startswith(
+                    '$'
+                ):
+                    raise ValueError(
+                        "update pipeline stages must start with '$'"
+                    )
             return update_spec
         if not is_update(update_spec):
-            raise TypeError("update_spec must be a dict or list")
+            raise TypeError('update_spec must be a dict or list')
         if not update_spec:
-            raise ValueError("update_spec must not be empty")
-        if not all(isinstance(key, str) and key.startswith("$") for key in update_spec):
-            raise ValueError("update_spec must contain only update operators")
+            raise ValueError('update_spec must not be empty')
+        if not all(
+            isinstance(key, str) and key.startswith('$') for key in update_spec
+        ):
+            raise ValueError('update_spec must contain only update operators')
         for operator, params in update_spec.items():
             if not is_document(params):
-                raise TypeError(f"{operator} value must be a dict")
+                raise TypeError(f'{operator} value must be a dict')
         return update_spec
 
     @staticmethod
     def _require_replacement(replacement: object) -> Document:
         if not is_document(replacement):
-            raise TypeError("replacement must be a dict")
-        if any(isinstance(key, str) and key.startswith("$") for key in replacement):
-            raise ValueError("replacement must not contain update operators")
+            raise TypeError('replacement must be a dict')
+        if any(
+            isinstance(key, str) and key.startswith('$') for key in replacement
+        ):
+            raise ValueError('replacement must not contain update operators')
         return replacement
 
     @staticmethod
@@ -285,7 +366,9 @@ class AsyncCollection:
         return batch_size
 
     @staticmethod
-    def _normalize_collation(collation: object | None) -> CollationDocument | None:
+    def _normalize_collation(
+        collation: object | None,
+    ) -> CollationDocument | None:
         normalized = normalize_collation(collation)
         if normalized is None:
             return None
@@ -303,17 +386,19 @@ class AsyncCollection:
         if let is None:
             return None
         if not isinstance(let, dict):
-            raise TypeError("let must be a dict")
+            raise TypeError('let must be a dict')
         return let
 
     @staticmethod
-    def _normalize_array_filters(array_filters: object | None) -> ArrayFilters | None:
+    def _normalize_array_filters(
+        array_filters: object | None,
+    ) -> ArrayFilters | None:
         if array_filters is None:
             return None
         if not isinstance(array_filters, list):
-            raise TypeError("array_filters must be a list of dicts")
+            raise TypeError('array_filters must be a list of dicts')
         if not all(is_filter(item) for item in array_filters):
-            raise TypeError("array_filters must be a list of dicts")
+            raise TypeError('array_filters must be a list of dicts')
         return array_filters
 
     def _apply_codec_options_to_document(self, document: Document) -> Document:
@@ -322,7 +407,9 @@ class AsyncCollection:
             codec_options=self._codec_options,
         )
         if not isinstance(materialized, dict):
-            raise TypeError("codec_options.document_class must produce dict-compatible documents")
+            raise TypeError(
+                'codec_options.document_class must produce dict-compatible documents'
+            )
         return materialized
 
     def _apply_codec_options_to_optional_document(
@@ -342,73 +429,77 @@ class AsyncCollection:
         if value is None:
             return None
         if not isinstance(value, int) or isinstance(value, bool) or value < 0:
-            raise TypeError("expire_after_seconds must be a non-negative int or None")
+            raise TypeError(
+                'expire_after_seconds must be a non-negative int or None'
+            )
         return value
 
     @classmethod
     def _normalize_index_models(cls, indexes: object) -> list[IndexModel]:
         if not isinstance(indexes, list):
-            raise TypeError("indexes must be a list of IndexModel instances")
+            raise TypeError('indexes must be a list of IndexModel instances')
         normalized = [cls._normalize_index_model(index) for index in indexes]
         if not normalized:
-            raise ValueError("indexes must not be empty")
+            raise ValueError('indexes must not be empty')
         return normalized
 
     @staticmethod
     def _normalize_index_model(model: object) -> IndexModel:
         if isinstance(model, IndexModel):
             return model
-        document = getattr(model, "document", None)
+        document = getattr(model, 'document', None)
         if not isinstance(document, dict):
-            raise TypeError("indexes must contain only IndexModel instances")
-        if "key" not in document:
+            raise TypeError('indexes must contain only IndexModel instances')
+        if 'key' not in document:
             raise TypeError("index model document must contain 'key'")
         unsupported = set(document) - {
-            "key",
-            "name",
-            "unique",
-            "sparse",
-            "background",
-            "hidden",
-            "collation",
-            "partialFilterExpression",
-            "partial_filter_expression",
-            "expireAfterSeconds",
-            "expire_after_seconds",
-            "weights",
-            "wildcardProjection",
-            "wildcard_projection",
-            "defaultLanguage",
-            "default_language",
-            "languageOverride",
-            "language_override",
+            'key',
+            'name',
+            'unique',
+            'sparse',
+            'background',
+            'hidden',
+            'collation',
+            'partialFilterExpression',
+            'partial_filter_expression',
+            'expireAfterSeconds',
+            'expire_after_seconds',
+            'weights',
+            'wildcardProjection',
+            'wildcard_projection',
+            'defaultLanguage',
+            'default_language',
+            'languageOverride',
+            'language_override',
         }
         if unsupported:
-            unsupported_names = ", ".join(sorted(unsupported))
-            raise TypeError(f"unsupported IndexModel options: {unsupported_names}")
+            unsupported_names = ', '.join(sorted(unsupported))
+            raise TypeError(
+                f'unsupported IndexModel options: {unsupported_names}'
+            )
         kwargs: dict[str, object] = {}
         for field in (
-            "name",
-            "unique",
-            "sparse",
-            "background",
-            "hidden",
-            "collation",
-            "partialFilterExpression",
-            "partial_filter_expression",
-            "expireAfterSeconds",
-            "expire_after_seconds",
-            "weights",
-            "wildcardProjection",
-            "wildcard_projection",
-            "defaultLanguage",
-            "default_language",
-            "languageOverride",
-            "language_override",
+            'name',
+            'unique',
+            'sparse',
+            'background',
+            'hidden',
+            'collation',
+            'partialFilterExpression',
+            'partial_filter_expression',
+            'expireAfterSeconds',
+            'expire_after_seconds',
+            'weights',
+            'wildcardProjection',
+            'wildcard_projection',
+            'defaultLanguage',
+            'default_language',
+            'languageOverride',
+            'language_override',
         ):
             if field in document:
                 kwargs[field] = document[field]
-        return IndexModel(document["key"], **kwargs)
+        return IndexModel(document['key'], **kwargs)
 
     @staticmethod
     def _normalize_search_index_model(model: object) -> SearchIndexModel:
@@ -416,21 +507,29 @@ class AsyncCollection:
             return model
         if isinstance(model, dict):
             return SearchIndexModel(model)
-        raise TypeError("model must be a SearchIndexModel or a dict definition")
+        raise TypeError(
+            'model must be a SearchIndexModel or a dict definition'
+        )
 
     @classmethod
-    def _normalize_search_index_models(cls, indexes: object) -> list[SearchIndexModel]:
+    def _normalize_search_index_models(
+        cls, indexes: object
+    ) -> list[SearchIndexModel]:
         if not isinstance(indexes, list):
-            raise TypeError("indexes must be a list of SearchIndexModel instances")
-        normalized = [cls._normalize_search_index_model(index) for index in indexes]
+            raise TypeError(
+                'indexes must be a list of SearchIndexModel instances'
+            )
+        normalized = [
+            cls._normalize_search_index_model(index) for index in indexes
+        ]
         if not normalized:
-            raise ValueError("indexes must not be empty")
+            raise ValueError('indexes must not be empty')
         return normalized
 
     @staticmethod
     def _normalize_search_index_name(name: object) -> str:
         if not isinstance(name, str) or not name:
-            raise TypeError("name must be a non-empty string")
+            raise TypeError('name must be a non-empty string')
         return name
 
     @staticmethod
@@ -441,14 +540,14 @@ class AsyncCollection:
             return value
         if isinstance(value, bool):
             return ReturnDocument.AFTER if value else ReturnDocument.BEFORE
-        enum_name = getattr(value, "name", None)
+        enum_name = getattr(value, 'name', None)
         if isinstance(enum_name, str):
             normalized_name = enum_name.upper()
-            if normalized_name == "BEFORE":
+            if normalized_name == 'BEFORE':
                 return ReturnDocument.BEFORE
-            if normalized_name == "AFTER":
+            if normalized_name == 'AFTER':
                 return ReturnDocument.AFTER
-        raise TypeError("return_document must be a ReturnDocument value")
+        raise TypeError('return_document must be a ReturnDocument value')
 
     def _record_operation_metadata(
         self,
@@ -570,13 +669,16 @@ class AsyncCollection:
 
     @staticmethod
     def _can_use_direct_id_lookup(filter_spec: Filter) -> bool:
-        if len(filter_spec) != 1 or "_id" not in filter_spec:
+        if len(filter_spec) != 1 or '_id' not in filter_spec:
             return False
 
-        id_selector = filter_spec["_id"]
+        id_selector = filter_spec['_id']
         return not (
             isinstance(id_selector, dict)
-            and any(isinstance(key, str) and key.startswith("$") for key in id_selector)
+            and any(
+                isinstance(key, str) and key.startswith('$')
+                for key in id_selector
+            )
         )
 
     async def _select_first_document(
@@ -602,7 +704,9 @@ class AsyncCollection:
             session=session,
         )
 
-    def _ensure_operation_executable(self, operation: FindOperation | UpdateOperation | AggregateOperation) -> None:
+    def _ensure_operation_executable(
+        self, operation: FindOperation | UpdateOperation | AggregateOperation
+    ) -> None:
         self._runtime.ensure_operation_executable(operation)
 
     def _build_cursor(
@@ -644,21 +748,25 @@ class AsyncCollection:
         )
 
     @staticmethod
-    def _materialize_replacement_document(selected: Document, replacement: Document) -> Document:
+    def _materialize_replacement_document(
+        selected: Document, replacement: Document
+    ) -> Document:
         return CollectionRuntimeCoordinator.materialize_replacement_document(
             selected,
             replacement,
         )
 
-    def _validate_bulk_write_request_against_profile(self, request: WriteModel) -> None:
+    def _validate_bulk_write_request_against_profile(
+        self, request: WriteModel
+    ) -> None:
         if (
             isinstance(request, (UpdateOne, ReplaceOne))
             and request.sort is not None
             and not self._pymongo_profile.supports_update_one_sort()
         ):
             raise TypeError(
-                f"sort is not supported by PyMongo profile {self._pymongo_profile.key} "
-                f"for {type(request).__name__} in bulk_write()"
+                f'sort is not supported by PyMongo profile {self._pymongo_profile.key} '
+                f'for {type(request).__name__} in bulk_write()'
             )
 
     async def insert_one(
@@ -670,20 +778,20 @@ class AsyncCollection:
     ) -> InsertOneResult[DocumentId]:
         self._ensure_session_active(session)
         original = self._require_document(document)
-        if "_id" not in original:
-            original["_id"] = ObjectId()
-        assert_valid_root_document_id(original["_id"])
+        if '_id' not in original:
+            original['_id'] = ObjectId()
+        assert_valid_root_document_id(original['_id'])
         doc = deepcopy(original)
 
         started_at = time.perf_counter_ns()
         try:
             with track_active_operation(
                 self._engine,
-                command_name="insert",
-                operation_type="write",
-                namespace=f"{self._db_name}.{self._collection_name}",
+                command_name='insert',
+                operation_type='write',
+                namespace=f'{self._db_name}.{self._collection_name}',
                 session=session,
-                metadata={"kind": "insert_one"},
+                metadata={'kind': 'insert_one'},
                 killable=False,
             ):
                 success = await self._engine.put_document(
@@ -696,36 +804,36 @@ class AsyncCollection:
                 )
         except Exception as exc:
             await self._profile_operation(
-                op="insert",
+                op='insert',
                 command={
-                    "insert": self._collection_name,
-                    "documents": [deepcopy(doc)],
-                    "bypassDocumentValidation": bypass_document_validation,
+                    'insert': self._collection_name,
+                    'documents': [deepcopy(doc)],
+                    'bypassDocumentValidation': bypass_document_validation,
                 },
                 duration_ns=time.perf_counter_ns() - started_at,
                 errmsg=str(exc),
             )
             raise
         if not success:
-            raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
+            raise DuplicateKeyError(f'Duplicate key: _id={doc["_id"]}')
         await self._profile_operation(
-            op="insert",
+            op='insert',
             command={
-                "insert": self._collection_name,
-                "documents": [deepcopy(doc)],
-                "bypassDocumentValidation": bypass_document_validation,
+                'insert': self._collection_name,
+                'documents': [deepcopy(doc)],
+                'bypassDocumentValidation': bypass_document_validation,
             },
             duration_ns=time.perf_counter_ns() - started_at,
         )
         if session is not None:
             session.observe_operation()
         self._publish_change_event(
-            operation_type="insert",
-            document_key={"_id": deepcopy(doc["_id"])},
+            operation_type='insert',
+            document_key={'_id': deepcopy(doc['_id'])},
             full_document=deepcopy(doc),
             session=session,
         )
-        return InsertOneResult(inserted_id=doc["_id"])
+        return InsertOneResult(inserted_id=doc['_id'])
 
     async def insert_many(
         self,
@@ -740,39 +848,44 @@ class AsyncCollection:
         started_at = time.perf_counter_ns()
         normalized_documents: list[Document] = []
         for original in self._require_documents(documents):
-            if "_id" not in original:
-                original["_id"] = ObjectId()
-            assert_valid_root_document_id(original["_id"])
+            if '_id' not in original:
+                original['_id'] = ObjectId()
+            assert_valid_root_document_id(original['_id'])
             doc = deepcopy(original)
             normalized_documents.append(doc)
             command_documents.append(deepcopy(doc))
 
-        bulk_put = getattr(self._engine, "put_documents_bulk", None)
+        bulk_put = getattr(self._engine, 'put_documents_bulk', None)
         if callable(bulk_put):
             try:
                 with track_active_operation(
                     self._engine,
-                    command_name="insert",
-                    operation_type="write",
-                    namespace=f"{self._db_name}.{self._collection_name}",
+                    command_name='insert',
+                    operation_type='write',
+                    namespace=f'{self._db_name}.{self._collection_name}',
                     session=session,
-                    metadata={"kind": "insert_many", "documents": len(normalized_documents)},
+                    metadata={
+                        'kind': 'insert_many',
+                        'documents': len(normalized_documents),
+                    },
                     killable=False,
                 ):
-                    results = list(await bulk_put(
-                        self._db_name,
-                        self._collection_name,
-                        normalized_documents,
-                        context=session,
-                        bypass_document_validation=bypass_document_validation,
-                    ))
+                    results = list(
+                        await bulk_put(
+                            self._db_name,
+                            self._collection_name,
+                            normalized_documents,
+                            context=session,
+                            bypass_document_validation=bypass_document_validation,
+                        )
+                    )
             except Exception as exc:
                 await self._profile_operation(
-                    op="insert",
+                    op='insert',
                     command={
-                        "insert": self._collection_name,
-                        "documents": command_documents,
-                        "bypassDocumentValidation": bypass_document_validation,
+                        'insert': self._collection_name,
+                        'documents': command_documents,
+                        'bypassDocumentValidation': bypass_document_validation,
                     },
                     duration_ns=time.perf_counter_ns() - started_at,
                     errmsg=str(exc),
@@ -783,17 +896,19 @@ class AsyncCollection:
                 and (not results or results[-1])
             ):
                 raise RuntimeError(
-                    "bulk insert engine returned a result count different from the number of documents"
+                    'bulk insert engine returned a result count different from the number of documents'
                 )
-            for doc, success in zip(normalized_documents, results, strict=False):
+            for doc, success in zip(
+                normalized_documents, results, strict=False
+            ):
                 if not success:
-                    message = f"Duplicate key: _id={doc['_id']}"
+                    message = f'Duplicate key: _id={doc["_id"]}'
                     await self._profile_operation(
-                        op="insert",
+                        op='insert',
                         command={
-                            "insert": self._collection_name,
-                            "documents": command_documents,
-                            "bypassDocumentValidation": bypass_document_validation,
+                            'insert': self._collection_name,
+                            'documents': command_documents,
+                            'bypassDocumentValidation': bypass_document_validation,
                         },
                         duration_ns=time.perf_counter_ns() - started_at,
                         errmsg=message,
@@ -802,19 +917,19 @@ class AsyncCollection:
                         session.observe_operation()
                     for inserted in command_documents[: len(inserted_ids)]:
                         self._publish_change_event(
-                            operation_type="insert",
-                            document_key={"_id": deepcopy(inserted["_id"])},
+                            operation_type='insert',
+                            document_key={'_id': deepcopy(inserted['_id'])},
                             full_document=deepcopy(inserted),
                             session=session,
                         )
                     raise DuplicateKeyError(message)
-                inserted_ids.append(doc["_id"])
+                inserted_ids.append(doc['_id'])
             await self._profile_operation(
-                op="insert",
+                op='insert',
                 command={
-                    "insert": self._collection_name,
-                    "documents": command_documents,
-                    "bypassDocumentValidation": bypass_document_validation,
+                    'insert': self._collection_name,
+                    'documents': command_documents,
+                    'bypassDocumentValidation': bypass_document_validation,
                 },
                 duration_ns=time.perf_counter_ns() - started_at,
             )
@@ -822,8 +937,8 @@ class AsyncCollection:
                 session.observe_operation()
             for inserted in command_documents[: len(inserted_ids)]:
                 self._publish_change_event(
-                    operation_type="insert",
-                    document_key={"_id": deepcopy(inserted["_id"])},
+                    operation_type='insert',
+                    document_key={'_id': deepcopy(inserted['_id'])},
                     full_document=deepcopy(inserted),
                     session=session,
                 )
@@ -833,11 +948,14 @@ class AsyncCollection:
             try:
                 with track_active_operation(
                     self._engine,
-                    command_name="insert",
-                    operation_type="write",
-                    namespace=f"{self._db_name}.{self._collection_name}",
+                    command_name='insert',
+                    operation_type='write',
+                    namespace=f'{self._db_name}.{self._collection_name}',
                     session=session,
-                    metadata={"kind": "insert_many", "documents": len(normalized_documents)},
+                    metadata={
+                        'kind': 'insert_many',
+                        'documents': len(normalized_documents),
+                    },
                     killable=False,
                 ):
                     success = await self._engine.put_document(
@@ -850,24 +968,24 @@ class AsyncCollection:
                     )
             except Exception as exc:
                 await self._profile_operation(
-                    op="insert",
+                    op='insert',
                     command={
-                        "insert": self._collection_name,
-                        "documents": command_documents,
-                        "bypassDocumentValidation": bypass_document_validation,
+                        'insert': self._collection_name,
+                        'documents': command_documents,
+                        'bypassDocumentValidation': bypass_document_validation,
                     },
                     duration_ns=time.perf_counter_ns() - started_at,
                     errmsg=str(exc),
                 )
                 raise
             if not success:
-                message = f"Duplicate key: _id={doc['_id']}"
+                message = f'Duplicate key: _id={doc["_id"]}'
                 await self._profile_operation(
-                    op="insert",
+                    op='insert',
                     command={
-                        "insert": self._collection_name,
-                        "documents": command_documents,
-                        "bypassDocumentValidation": bypass_document_validation,
+                        'insert': self._collection_name,
+                        'documents': command_documents,
+                        'bypassDocumentValidation': bypass_document_validation,
                     },
                     duration_ns=time.perf_counter_ns() - started_at,
                     errmsg=message,
@@ -876,20 +994,20 @@ class AsyncCollection:
                     session.observe_operation()
                 for inserted in command_documents[: len(inserted_ids)]:
                     self._publish_change_event(
-                        operation_type="insert",
-                        document_key={"_id": deepcopy(inserted["_id"])},
+                        operation_type='insert',
+                        document_key={'_id': deepcopy(inserted['_id'])},
                         full_document=deepcopy(inserted),
                         session=session,
                     )
                 raise DuplicateKeyError(message)
-            inserted_ids.append(doc["_id"])
+            inserted_ids.append(doc['_id'])
 
         await self._profile_operation(
-            op="insert",
+            op='insert',
             command={
-                "insert": self._collection_name,
-                "documents": command_documents,
-                "bypassDocumentValidation": bypass_document_validation,
+                'insert': self._collection_name,
+                'documents': command_documents,
+                'bypassDocumentValidation': bypass_document_validation,
             },
             duration_ns=time.perf_counter_ns() - started_at,
         )
@@ -897,8 +1015,8 @@ class AsyncCollection:
             session.observe_operation()
         for inserted in command_documents:
             self._publish_change_event(
-                operation_type="insert",
-                document_key={"_id": deepcopy(inserted["_id"])},
+                operation_type='insert',
+                document_key={'_id': deepcopy(inserted['_id'])},
                 full_document=deepcopy(inserted),
                 session=session,
             )
@@ -917,7 +1035,7 @@ class AsyncCollection:
         self._ensure_session_active(session)
         requests = self._require_write_requests(requests)
         if not isinstance(ordered, bool):
-            raise TypeError("ordered must be a bool")
+            raise TypeError('ordered must be a bool')
         let = self._normalize_let(let)
         result = await execute_bulk_write(
             self,
@@ -929,7 +1047,7 @@ class AsyncCollection:
             session=session,
         )
         self._record_operation_metadata(
-            operation="bulk_write",
+            operation='bulk_write',
             comment=comment,
             session=session,
         )
@@ -975,38 +1093,38 @@ class AsyncCollection:
         options = normalize_public_operation_arguments(
             COLLECTION_FIND_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "projection": projection,
-                "collation": collation,
-                "sort": sort,
-                "skip": skip,
-                "limit": limit,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "batch_size": batch_size,
-                "session": session,
+                'filter_spec': filter_spec,
+                'projection': projection,
+                'collation': collation,
+                'sort': sort,
+                'skip': skip,
+                'limit': limit,
+                'hint': hint,
+                'comment': comment,
+                'max_time_ms': max_time_ms,
+                'batch_size': batch_size,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._pymongo_profile,
         )
         operation = compile_find_operation(
-            options.get("filter_spec"),
-            projection=options.get("projection"),
-            collation=options.get("collation"),
-            sort=options.get("sort"),
-            skip=options.get("skip", 0),
-            limit=options.get("limit"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            batch_size=options.get("batch_size"),
+            options.get('filter_spec'),
+            projection=options.get('projection'),
+            collation=options.get('collation'),
+            sort=options.get('sort'),
+            skip=options.get('skip', 0),
+            limit=options.get('limit'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            max_time_ms=options.get('max_time_ms'),
+            batch_size=options.get('batch_size'),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
         return self._build_cursor(
             operation,
-            session=options.get("session"),
+            session=options.get('session'),
         )
 
     def aggregate(
@@ -1018,12 +1136,14 @@ class AsyncCollection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
-        allow_disk_use: bool | None = None,
+        allow_disk_use: object = ARG_UNSET,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> AsyncAggregationCursor:
-        operation = compile_aggregate_operation(
-            pipeline,
+        options = normalize_aggregate_operation_arguments(
+            'AsyncCollection.aggregate',
+            pipeline=pipeline,
             collation=collation,
             hint=hint,
             comment=comment,
@@ -1031,10 +1151,24 @@ class AsyncCollection:
             batch_size=batch_size,
             allow_disk_use=allow_disk_use,
             let=let,
+            session=session,
+            extra_kwargs=kwargs,
+        )
+        operation = compile_aggregate_operation(
+            options['pipeline'],
+            collation=options.get('collation'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            max_time_ms=options.get('max_time_ms'),
+            batch_size=options.get('batch_size'),
+            allow_disk_use=options.get('allow_disk_use'),
+            let=options.get('let'),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
-        return self._build_aggregation_cursor(operation, session=session)
+        return self._build_aggregation_cursor(
+            operation, session=options.get('session')
+        )
 
     def find_raw_batches(
         self,
@@ -1053,38 +1187,36 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> AsyncRawBatchCursor:
-        from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
-
         options = normalize_public_operation_arguments(
             COLLECTION_FIND_RAW_BATCHES_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "projection": projection,
-                "collation": collation,
-                "sort": sort,
-                "skip": skip,
-                "limit": limit,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "batch_size": batch_size,
-                "session": session,
+                'filter_spec': filter_spec,
+                'projection': projection,
+                'collation': collation,
+                'sort': sort,
+                'skip': skip,
+                'limit': limit,
+                'hint': hint,
+                'comment': comment,
+                'max_time_ms': max_time_ms,
+                'batch_size': batch_size,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._pymongo_profile,
         )
         cursor = self.find(
-            options.get("filter_spec", _FILTER_UNSET),
-            options.get("projection"),
-            collation=options.get("collation"),
-            sort=options.get("sort"),
-            skip=options.get("skip", 0),
-            limit=options.get("limit"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            batch_size=options.get("batch_size"),
-            session=options.get("session"),
+            options.get('filter_spec', _FILTER_UNSET),
+            options.get('projection'),
+            collation=options.get('collation'),
+            sort=options.get('sort'),
+            skip=options.get('skip', 0),
+            limit=options.get('limit'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            max_time_ms=options.get('max_time_ms'),
+            batch_size=options.get('batch_size'),
+            session=options.get('session'),
         )
         offset = 0
 
@@ -1105,14 +1237,14 @@ class AsyncCollection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
-        allow_disk_use: bool | None = None,
+        allow_disk_use: object = ARG_UNSET,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> AsyncRawBatchCursor:
-        from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
-
-        cursor = self.aggregate(
-            pipeline,
+        options = normalize_aggregate_operation_arguments(
+            'AsyncCollection.aggregate_raw_batches',
+            pipeline=pipeline,
             collation=collation,
             hint=hint,
             comment=comment,
@@ -1121,6 +1253,18 @@ class AsyncCollection:
             allow_disk_use=allow_disk_use,
             let=let,
             session=session,
+            extra_kwargs=kwargs,
+        )
+        cursor = self.aggregate(
+            options['pipeline'],
+            collation=options.get('collation'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            max_time_ms=options.get('max_time_ms'),
+            batch_size=options.get('batch_size'),
+            allow_disk_use=options.get('allow_disk_use'),
+            let=options.get('let'),
+            session=options.get('session'),
         )
         iterator = cursor.__aiter__()
 
@@ -1689,8 +1833,8 @@ class AsyncCollection:
             context=session,
         )
         self._publish_change_event(
-            operation_type="invalidate",
-            document_key={"_id": self.full_name},
+            operation_type='invalidate',
+            document_key={'_id': self.full_name},
             session=session,
         )
 
@@ -1699,10 +1843,10 @@ class AsyncCollection:
         new_name: str,
         *,
         session: ClientSession | None = None,
-    ) -> "AsyncCollection":
+    ) -> 'AsyncCollection':
         self._ensure_session_active(session)
         if not isinstance(new_name, str) or not new_name:
-            raise TypeError("new_name must be a non-empty string")
+            raise TypeError('new_name must be a non-empty string')
         await self._engine.rename_collection(
             self._db_name,
             self._collection_name,
@@ -1729,7 +1873,9 @@ class AsyncCollection:
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
         )
 
-    async def options(self, *, session: ClientSession | None = None) -> dict[str, object]:
+    async def options(
+        self, *, session: ClientSession | None = None
+    ) -> dict[str, object]:
         self._ensure_session_active(session)
         return await self._engine.collection_options(
             self._db_name,
@@ -1745,7 +1891,7 @@ class AsyncCollection:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
-        full_document: str = "default",
+        full_document: str = 'default',
         session: ClientSession | None = None,
     ) -> AsyncChangeStreamCursor:
         return open_collection_change_stream(
@@ -1771,7 +1917,7 @@ class AsyncCollection:
 
     @property
     def full_name(self) -> str:
-        return f"{self._db_name}.{self._collection_name}"
+        return f'{self._db_name}.{self._collection_name}'
 
     @property
     def database(self):

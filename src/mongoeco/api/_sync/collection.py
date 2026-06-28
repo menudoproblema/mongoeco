@@ -19,6 +19,7 @@ from mongoeco.api.public_api import (
     COLLECTION_REPLACE_ONE_SPEC,
     COLLECTION_UPDATE_MANY_SPEC,
     COLLECTION_UPDATE_ONE_SPEC,
+    normalize_aggregate_operation_arguments,
     normalize_public_operation_arguments,
 )
 from mongoeco.change_streams import ChangeStreamCursor
@@ -31,9 +32,30 @@ from mongoeco.compat import (
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    ArrayFilters, BulkWriteResult, CodecOptions, CollationDocument, DeleteResult, Document, DocumentId, Filter, InsertManyResult,
-    IndexInformation, IndexModel, IndexKeySpec, InsertOneResult, Projection, ReadConcern, ReadPreference,
-    PlanningMode, ReturnDocument, SearchIndexModel, SortSpec, Update, UpdateResult, WriteConcern, WriteModel,
+    ArrayFilters,
+    BulkWriteResult,
+    CodecOptions,
+    CollationDocument,
+    DeleteResult,
+    Document,
+    DocumentId,
+    Filter,
+    InsertManyResult,
+    IndexInformation,
+    IndexModel,
+    IndexKeySpec,
+    InsertOneResult,
+    Projection,
+    ReadConcern,
+    ReadPreference,
+    PlanningMode,
+    ReturnDocument,
+    SearchIndexModel,
+    SortSpec,
+    Update,
+    UpdateResult,
+    WriteConcern,
+    WriteModel,
 )
 
 _FILTER_UNSET = ARG_UNSET
@@ -65,7 +87,9 @@ class Collection:
             client.read_concern if read_concern is None else read_concern
         )
         self._read_preference = (
-            client.read_preference if read_preference is None else read_preference
+            client.read_preference
+            if read_preference is None
+            else read_preference
         )
         self._codec_options = (
             client.codec_options if codec_options is None else codec_options
@@ -74,19 +98,23 @@ class Collection:
 
     def _async_collection(self):
         self._client._ensure_connected()
-        return self._client._async_client.get_database(
-            self._db_name,
-            write_concern=self._write_concern,
-            read_concern=self._read_concern,
-            read_preference=self._read_preference,
-            codec_options=self._codec_options,
-        ).get_collection(
-            self._collection_name,
-            write_concern=self._write_concern,
-            read_concern=self._read_concern,
-            read_preference=self._read_preference,
-            codec_options=self._codec_options,
-        ).with_options(planning_mode=self._planning_mode)
+        return (
+            self._client._async_client.get_database(
+                self._db_name,
+                write_concern=self._write_concern,
+                read_concern=self._read_concern,
+                read_preference=self._read_preference,
+                codec_options=self._codec_options,
+            )
+            .get_collection(
+                self._collection_name,
+                write_concern=self._write_concern,
+                read_concern=self._read_concern,
+                read_preference=self._read_preference,
+                codec_options=self._codec_options,
+            )
+            .with_options(planning_mode=self._planning_mode)
+        )
 
     def _run_collection_method(self, method_name: str, /, *args, **kwargs):
         collection = self._async_collection()
@@ -101,28 +129,38 @@ class Collection:
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
         planning_mode: PlanningMode | None = None,
-    ) -> "Collection":
+    ) -> 'Collection':
         return type(self)(
             self._client,
             self._db_name,
             self._collection_name,
-            write_concern=self._write_concern if write_concern is None else write_concern,
-            read_concern=self._read_concern if read_concern is None else read_concern,
-            read_preference=self._read_preference if read_preference is None else read_preference,
-            codec_options=self._codec_options if codec_options is None else codec_options,
-            planning_mode=self._planning_mode if planning_mode is None else planning_mode,
+            write_concern=self._write_concern
+            if write_concern is None
+            else write_concern,
+            read_concern=self._read_concern
+            if read_concern is None
+            else read_concern,
+            read_preference=self._read_preference
+            if read_preference is None
+            else read_preference,
+            codec_options=self._codec_options
+            if codec_options is None
+            else codec_options,
+            planning_mode=self._planning_mode
+            if planning_mode is None
+            else planning_mode,
         )
 
-    def __getattr__(self, name: str) -> "Collection":
-        if name.startswith("_"):
+    def __getattr__(self, name: str) -> 'Collection':
+        if name.startswith('_'):
             raise AttributeError(name)
         return self.__getitem__(name)
 
-    def __getitem__(self, name: str) -> "Collection":
+    def __getitem__(self, name: str) -> 'Collection':
         if not isinstance(name, str) or not name:
-            raise TypeError("subcollection name must be a non-empty string")
+            raise TypeError('subcollection name must be a non-empty string')
         return self.database.get_collection(
-            f"{self._collection_name}.{name}",
+            f'{self._collection_name}.{name}',
             write_concern=self._write_concern,
             read_concern=self._read_concern,
             read_preference=self._read_preference,
@@ -137,7 +175,7 @@ class Collection:
         session: ClientSession | None = None,
     ) -> InsertOneResult[DocumentId]:
         return self._run_collection_method(
-            "insert_one",
+            'insert_one',
             document,
             bypass_document_validation=bypass_document_validation,
             session=session,
@@ -151,7 +189,7 @@ class Collection:
         session: ClientSession | None = None,
     ) -> InsertManyResult[DocumentId]:
         return self._run_collection_method(
-            "insert_many",
+            'insert_many',
             documents,
             bypass_document_validation=bypass_document_validation,
             session=session,
@@ -170,23 +208,23 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_FIND_ONE_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "projection": projection,
-                "collation": collation,
-                "session": session,
+                'filter_spec': filter_spec,
+                'projection': projection,
+                'collation': collation,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "find_one",
-            options.get("filter_spec", _FILTER_UNSET),
-            options.get("projection"),
-            collation=options.get("collation"),
-            session=options.get("session"),
+            'find_one',
+            options.get('filter_spec', _FILTER_UNSET),
+            options.get('projection'),
+            collation=options.get('collation'),
+            session=options.get('session'),
             **{
                 key: options[key]
-                for key in ("sort", "skip", "hint", "comment", "max_time_ms")
+                for key in ('sort', 'skip', 'hint', 'comment', 'max_time_ms')
                 if key in options
             },
         )
@@ -202,7 +240,7 @@ class Collection:
         session: ClientSession | None = None,
     ) -> BulkWriteResult[DocumentId]:
         return self._run_collection_method(
-            "bulk_write",
+            'bulk_write',
             requests,
             ordered=ordered,
             bypass_document_validation=bypass_document_validation,
@@ -231,36 +269,38 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_FIND_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "projection": projection,
-                "collation": collation,
-                "sort": sort,
-                "skip": skip,
-                "limit": limit,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "batch_size": batch_size,
-                "session": session,
+                'filter_spec': filter_spec,
+                'projection': projection,
+                'collation': collation,
+                'sort': sort,
+                'skip': skip,
+                'limit': limit,
+                'hint': hint,
+                'comment': comment,
+                'max_time_ms': max_time_ms,
+                'batch_size': batch_size,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._client.pymongo_profile,
         )
         async_collection = self._async_collection()
         return Cursor(
             self._client,
             async_collection,
-            {} if options.get("filter_spec") is None else options.get("filter_spec"),
-            options.get("projection"),
-            collation=options.get("collation"),
-            sort=options.get("sort"),
-            skip=options.get("skip", 0),
-            limit=options.get("limit"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            batch_size=options.get("batch_size"),
-            session=options.get("session"),
+            {}
+            if options.get('filter_spec') is None
+            else options.get('filter_spec'),
+            options.get('projection'),
+            collation=options.get('collation'),
+            sort=options.get('sort'),
+            skip=options.get('skip', 0),
+            limit=options.get('limit'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            max_time_ms=options.get('max_time_ms'),
+            batch_size=options.get('batch_size'),
+            session=options.get('session'),
         )
 
     def aggregate(
@@ -272,22 +312,36 @@ class Collection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
-        allow_disk_use: bool | None = None,
+        allow_disk_use: object = ARG_UNSET,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> AggregationCursor:
+        options = normalize_aggregate_operation_arguments(
+            'Collection.aggregate',
+            pipeline=pipeline,
+            collation=collation,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            batch_size=batch_size,
+            allow_disk_use=allow_disk_use,
+            let=let,
+            session=session,
+            extra_kwargs=kwargs,
+        )
         return AggregationCursor(
             self._client,
             self._async_collection().aggregate(
-                pipeline,
-                collation=collation,
-                hint=hint,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                batch_size=batch_size,
-                allow_disk_use=allow_disk_use,
-                let=let,
-                session=session,
+                options['pipeline'],
+                collation=options.get('collation'),
+                hint=options.get('hint'),
+                comment=options.get('comment'),
+                max_time_ms=options.get('max_time_ms'),
+                batch_size=options.get('batch_size'),
+                allow_disk_use=options.get('allow_disk_use'),
+                let=options.get('let'),
+                session=options.get('session'),
             ),
         )
 
@@ -311,35 +365,35 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_FIND_RAW_BATCHES_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "projection": projection,
-                "collation": collation,
-                "sort": sort,
-                "skip": skip,
-                "limit": limit,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "batch_size": batch_size,
-                "session": session,
+                'filter_spec': filter_spec,
+                'projection': projection,
+                'collation': collation,
+                'sort': sort,
+                'skip': skip,
+                'limit': limit,
+                'hint': hint,
+                'comment': comment,
+                'max_time_ms': max_time_ms,
+                'batch_size': batch_size,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return RawBatchCursor(
             self._client,
             self._async_collection().find_raw_batches(
-                options.get("filter_spec", _FILTER_UNSET),
-                options.get("projection"),
-                collation=options.get("collation"),
-                sort=options.get("sort"),
-                skip=options.get("skip", 0),
-                limit=options.get("limit"),
-                hint=options.get("hint"),
-                comment=options.get("comment"),
-                max_time_ms=options.get("max_time_ms"),
-                batch_size=options.get("batch_size"),
-                session=options.get("session"),
+                options.get('filter_spec', _FILTER_UNSET),
+                options.get('projection'),
+                collation=options.get('collation'),
+                sort=options.get('sort'),
+                skip=options.get('skip', 0),
+                limit=options.get('limit'),
+                hint=options.get('hint'),
+                comment=options.get('comment'),
+                max_time_ms=options.get('max_time_ms'),
+                batch_size=options.get('batch_size'),
+                session=options.get('session'),
             ),
         )
 
@@ -352,22 +406,36 @@ class Collection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
-        allow_disk_use: bool | None = None,
+        allow_disk_use: object = ARG_UNSET,
         let: dict[str, object] | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> RawBatchCursor:
+        options = normalize_aggregate_operation_arguments(
+            'Collection.aggregate_raw_batches',
+            pipeline=pipeline,
+            collation=collation,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            batch_size=batch_size,
+            allow_disk_use=allow_disk_use,
+            let=let,
+            session=session,
+            extra_kwargs=kwargs,
+        )
         return RawBatchCursor(
             self._client,
             self._async_collection().aggregate_raw_batches(
-                pipeline,
-                collation=collation,
-                hint=hint,
-                comment=comment,
-                max_time_ms=max_time_ms,
-                batch_size=batch_size,
-                allow_disk_use=allow_disk_use,
-                let=let,
-                session=session,
+                options['pipeline'],
+                collation=options.get('collation'),
+                hint=options.get('hint'),
+                comment=options.get('comment'),
+                max_time_ms=options.get('max_time_ms'),
+                batch_size=options.get('batch_size'),
+                allow_disk_use=options.get('allow_disk_use'),
+                let=options.get('let'),
+                session=options.get('session'),
             ),
         )
 
@@ -392,34 +460,36 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_UPDATE_ONE_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "update_spec": update_spec,
-                "upsert": upsert,
-                "collation": collation,
-                "sort": sort,
-                "array_filters": array_filters,
-                "hint": hint,
-                "comment": comment,
-                "let": let,
-                "bypass_document_validation": bypass_document_validation,
-                "session": session,
+                'filter_spec': filter_spec,
+                'update_spec': update_spec,
+                'upsert': upsert,
+                'collation': collation,
+                'sort': sort,
+                'array_filters': array_filters,
+                'hint': hint,
+                'comment': comment,
+                'let': let,
+                'bypass_document_validation': bypass_document_validation,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, "update": update, **kwargs},
+            extra_kwargs={'filter': filter, 'update': update, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "update_one",
-            options["filter_spec"],
-            options["update_spec"],
-            options.get("upsert", False),
-            collation=options.get("collation"),
-            sort=options.get("sort"),
-            array_filters=options.get("array_filters"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            let=options.get("let"),
-            bypass_document_validation=options.get("bypass_document_validation", False),
-            session=options.get("session"),
+            'update_one',
+            options['filter_spec'],
+            options['update_spec'],
+            options.get('upsert', False),
+            collation=options.get('collation'),
+            sort=options.get('sort'),
+            array_filters=options.get('array_filters'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            let=options.get('let'),
+            bypass_document_validation=options.get(
+                'bypass_document_validation', False
+            ),
+            session=options.get('session'),
         )
 
     def replace_one(
@@ -441,32 +511,34 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_REPLACE_ONE_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "replacement": replacement,
-                "upsert": upsert,
-                "collation": collation,
-                "sort": sort,
-                "hint": hint,
-                "comment": comment,
-                "let": let,
-                "bypass_document_validation": bypass_document_validation,
-                "session": session,
+                'filter_spec': filter_spec,
+                'replacement': replacement,
+                'upsert': upsert,
+                'collation': collation,
+                'sort': sort,
+                'hint': hint,
+                'comment': comment,
+                'let': let,
+                'bypass_document_validation': bypass_document_validation,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "replace_one",
-            options["filter_spec"],
-            options["replacement"],
-            options.get("upsert", False),
-            collation=options.get("collation"),
-            sort=options.get("sort"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            let=options.get("let"),
-            bypass_document_validation=options.get("bypass_document_validation", False),
-            session=options.get("session"),
+            'replace_one',
+            options['filter_spec'],
+            options['replacement'],
+            options.get('upsert', False),
+            collation=options.get('collation'),
+            sort=options.get('sort'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            let=options.get('let'),
+            bypass_document_validation=options.get(
+                'bypass_document_validation', False
+            ),
+            session=options.get('session'),
         )
 
     def find_one_and_update(
@@ -493,40 +565,42 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_FIND_ONE_AND_UPDATE_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "update_spec": update_spec,
-                "projection": projection,
-                "collation": collation,
-                "sort": sort,
-                "upsert": upsert,
-                "return_document": return_document,
-                "array_filters": array_filters,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "let": let,
-                "bypass_document_validation": bypass_document_validation,
-                "session": session,
+                'filter_spec': filter_spec,
+                'update_spec': update_spec,
+                'projection': projection,
+                'collation': collation,
+                'sort': sort,
+                'upsert': upsert,
+                'return_document': return_document,
+                'array_filters': array_filters,
+                'hint': hint,
+                'comment': comment,
+                'max_time_ms': max_time_ms,
+                'let': let,
+                'bypass_document_validation': bypass_document_validation,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, "update": update, **kwargs},
+            extra_kwargs={'filter': filter, 'update': update, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "find_one_and_update",
-            options["filter_spec"],
-            options["update_spec"],
-            projection=options.get("projection"),
-            collation=options.get("collation"),
-            sort=options.get("sort"),
-            upsert=options.get("upsert", False),
-            return_document=options.get("return_document"),
-            array_filters=options.get("array_filters"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            let=options.get("let"),
-            bypass_document_validation=options.get("bypass_document_validation", False),
-            session=options.get("session"),
+            'find_one_and_update',
+            options['filter_spec'],
+            options['update_spec'],
+            projection=options.get('projection'),
+            collation=options.get('collation'),
+            sort=options.get('sort'),
+            upsert=options.get('upsert', False),
+            return_document=options.get('return_document'),
+            array_filters=options.get('array_filters'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            max_time_ms=options.get('max_time_ms'),
+            let=options.get('let'),
+            bypass_document_validation=options.get(
+                'bypass_document_validation', False
+            ),
+            session=options.get('session'),
         )
 
     def find_one_and_replace(
@@ -551,38 +625,40 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_FIND_ONE_AND_REPLACE_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "replacement": replacement,
-                "projection": projection,
-                "collation": collation,
-                "sort": sort,
-                "upsert": upsert,
-                "return_document": return_document,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "let": let,
-                "bypass_document_validation": bypass_document_validation,
-                "session": session,
+                'filter_spec': filter_spec,
+                'replacement': replacement,
+                'projection': projection,
+                'collation': collation,
+                'sort': sort,
+                'upsert': upsert,
+                'return_document': return_document,
+                'hint': hint,
+                'comment': comment,
+                'max_time_ms': max_time_ms,
+                'let': let,
+                'bypass_document_validation': bypass_document_validation,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "find_one_and_replace",
-            options["filter_spec"],
-            options["replacement"],
-            projection=options.get("projection"),
-            collation=options.get("collation"),
-            sort=options.get("sort"),
-            upsert=options.get("upsert", False),
-            return_document=options.get("return_document"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            let=options.get("let"),
-            bypass_document_validation=options.get("bypass_document_validation", False),
-            session=options.get("session"),
+            'find_one_and_replace',
+            options['filter_spec'],
+            options['replacement'],
+            projection=options.get('projection'),
+            collation=options.get('collation'),
+            sort=options.get('sort'),
+            upsert=options.get('upsert', False),
+            return_document=options.get('return_document'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            max_time_ms=options.get('max_time_ms'),
+            let=options.get('let'),
+            bypass_document_validation=options.get(
+                'bypass_document_validation', False
+            ),
+            session=options.get('session'),
         )
 
     def find_one_and_delete(
@@ -603,30 +679,30 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_FIND_ONE_AND_DELETE_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "projection": projection,
-                "collation": collation,
-                "sort": sort,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "let": let,
-                "session": session,
+                'filter_spec': filter_spec,
+                'projection': projection,
+                'collation': collation,
+                'sort': sort,
+                'hint': hint,
+                'comment': comment,
+                'max_time_ms': max_time_ms,
+                'let': let,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "find_one_and_delete",
-            options["filter_spec"],
-            projection=options.get("projection"),
-            collation=options.get("collation"),
-            sort=options.get("sort"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            let=options.get("let"),
-            session=options.get("session"),
+            'find_one_and_delete',
+            options['filter_spec'],
+            projection=options.get('projection'),
+            collation=options.get('collation'),
+            sort=options.get('sort'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            max_time_ms=options.get('max_time_ms'),
+            let=options.get('let'),
+            session=options.get('session'),
         )
 
     def delete_one(
@@ -644,24 +720,24 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_DELETE_ONE_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "collation": collation,
-                "hint": hint,
-                "comment": comment,
-                "let": let,
-                "session": session,
+                'filter_spec': filter_spec,
+                'collation': collation,
+                'hint': hint,
+                'comment': comment,
+                'let': let,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "delete_one",
-            options["filter_spec"],
-            collation=options.get("collation"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            let=options.get("let"),
-            session=options.get("session"),
+            'delete_one',
+            options['filter_spec'],
+            collation=options.get('collation'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            let=options.get('let'),
+            session=options.get('session'),
         )
 
     def update_many(
@@ -684,32 +760,34 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_UPDATE_MANY_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "update_spec": update_spec,
-                "upsert": upsert,
-                "collation": collation,
-                "array_filters": array_filters,
-                "hint": hint,
-                "comment": comment,
-                "let": let,
-                "bypass_document_validation": bypass_document_validation,
-                "session": session,
+                'filter_spec': filter_spec,
+                'update_spec': update_spec,
+                'upsert': upsert,
+                'collation': collation,
+                'array_filters': array_filters,
+                'hint': hint,
+                'comment': comment,
+                'let': let,
+                'bypass_document_validation': bypass_document_validation,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, "update": update, **kwargs},
+            extra_kwargs={'filter': filter, 'update': update, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "update_many",
-            options["filter_spec"],
-            options["update_spec"],
-            options.get("upsert", False),
-            collation=options.get("collation"),
-            array_filters=options.get("array_filters"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            let=options.get("let"),
-            bypass_document_validation=options.get("bypass_document_validation", False),
-            session=options.get("session"),
+            'update_many',
+            options['filter_spec'],
+            options['update_spec'],
+            options.get('upsert', False),
+            collation=options.get('collation'),
+            array_filters=options.get('array_filters'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            let=options.get('let'),
+            bypass_document_validation=options.get(
+                'bypass_document_validation', False
+            ),
+            session=options.get('session'),
         )
 
     def delete_many(
@@ -727,24 +805,24 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_DELETE_MANY_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "collation": collation,
-                "hint": hint,
-                "comment": comment,
-                "let": let,
-                "session": session,
+                'filter_spec': filter_spec,
+                'collation': collation,
+                'hint': hint,
+                'comment': comment,
+                'let': let,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "delete_many",
-            options["filter_spec"],
-            collation=options.get("collation"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            let=options.get("let"),
-            session=options.get("session"),
+            'delete_many',
+            options['filter_spec'],
+            collation=options.get('collation'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            let=options.get('let'),
+            session=options.get('session'),
         )
 
     def count_documents(
@@ -764,28 +842,28 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_COUNT_DOCUMENTS_SPEC,
             explicit={
-                "filter_spec": filter_spec,
-                "collation": collation,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "skip": skip,
-                "limit": limit,
-                "session": session,
+                'filter_spec': filter_spec,
+                'collation': collation,
+                'hint': hint,
+                'comment': comment,
+                'max_time_ms': max_time_ms,
+                'skip': skip,
+                'limit': limit,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "count_documents",
-            options["filter_spec"],
-            collation=options.get("collation"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            skip=options.get("skip", 0),
-            limit=options.get("limit"),
-            session=options.get("session"),
+            'count_documents',
+            options['filter_spec'],
+            collation=options.get('collation'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            max_time_ms=options.get('max_time_ms'),
+            skip=options.get('skip', 0),
+            limit=options.get('limit'),
+            session=options.get('session'),
         )
 
     def estimated_document_count(
@@ -796,7 +874,7 @@ class Collection:
         session: ClientSession | None = None,
     ) -> int:
         return self._run_collection_method(
-            "estimated_document_count",
+            'estimated_document_count',
             comment=comment,
             max_time_ms=max_time_ms,
             session=session,
@@ -818,26 +896,26 @@ class Collection:
         options = normalize_public_operation_arguments(
             COLLECTION_DISTINCT_SPEC,
             explicit={
-                "key": key,
-                "filter_spec": filter_spec,
-                "collation": collation,
-                "hint": hint,
-                "comment": comment,
-                "max_time_ms": max_time_ms,
-                "session": session,
+                'key': key,
+                'filter_spec': filter_spec,
+                'collation': collation,
+                'hint': hint,
+                'comment': comment,
+                'max_time_ms': max_time_ms,
+                'session': session,
             },
-            extra_kwargs={"filter": filter, **kwargs},
+            extra_kwargs={'filter': filter, **kwargs},
             profile=self._client.pymongo_profile,
         )
         return self._run_collection_method(
-            "distinct",
-            options["key"],
-            options.get("filter_spec", _FILTER_UNSET),
-            collation=options.get("collation"),
-            hint=options.get("hint"),
-            comment=options.get("comment"),
-            max_time_ms=options.get("max_time_ms"),
-            session=options.get("session"),
+            'distinct',
+            options['key'],
+            options.get('filter_spec', _FILTER_UNSET),
+            collation=options.get('collation'),
+            hint=options.get('hint'),
+            comment=options.get('comment'),
+            max_time_ms=options.get('max_time_ms'),
+            session=options.get('session'),
         )
 
     def create_index(
@@ -906,7 +984,9 @@ class Collection:
     ) -> IndexCursor:
         return IndexCursor(
             self._client,
-            self._async_collection().list_indexes(comment=comment, session=session),
+            self._async_collection().list_indexes(
+                comment=comment, session=session
+            ),
         )
 
     def index_information(
@@ -916,7 +996,9 @@ class Collection:
         session: ClientSession | None = None,
     ) -> IndexInformation:
         return self._client._run(
-            self._async_collection().index_information(comment=comment, session=session)
+            self._async_collection().index_information(
+                comment=comment, session=session
+            )
         )
 
     def drop_index(
@@ -927,7 +1009,9 @@ class Collection:
         session: ClientSession | None = None,
     ) -> None:
         self._client._run(
-            self._async_collection().drop_index(index_or_name, comment=comment, session=session)
+            self._async_collection().drop_index(
+                index_or_name, comment=comment, session=session
+            )
         )
 
     def drop_indexes(
@@ -936,7 +1020,11 @@ class Collection:
         comment: object | None = None,
         session: ClientSession | None = None,
     ) -> None:
-        self._client._run(self._async_collection().drop_indexes(comment=comment, session=session))
+        self._client._run(
+            self._async_collection().drop_indexes(
+                comment=comment, session=session
+            )
+        )
 
     def create_search_index(
         self,
@@ -1032,7 +1120,7 @@ class Collection:
         new_name: str,
         *,
         session: ClientSession | None = None,
-    ) -> "Collection":
+    ) -> 'Collection':
         return self._client._run_resource(
             self._async_collection().rename(new_name, session=session),
             lambda: type(self)(
@@ -1047,8 +1135,12 @@ class Collection:
             ),
         )
 
-    def options(self, *, session: ClientSession | None = None) -> dict[str, object]:
-        return self._client._run(self._async_collection().options(session=session))
+    def options(
+        self, *, session: ClientSession | None = None
+    ) -> dict[str, object]:
+        return self._client._run(
+            self._async_collection().options(session=session)
+        )
 
     def watch(
         self,
@@ -1058,7 +1150,7 @@ class Collection:
         resume_after: dict[str, object] | None = None,
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
-        full_document: str = "default",
+        full_document: str = 'default',
         session: ClientSession | None = None,
     ) -> ChangeStreamCursor:
         return ChangeStreamCursor(
@@ -1138,7 +1230,7 @@ class Collection:
 
     @property
     def full_name(self) -> str:
-        return f"{self._db_name}.{self._collection_name}"
+        return f'{self._db_name}.{self._collection_name}'
 
     @property
     def database(self):

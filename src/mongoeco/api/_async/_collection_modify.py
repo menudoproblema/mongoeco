@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
+from mongoeco.api.argument_validation import HintSpec
 from mongoeco.api.operations import (
     compile_find_selection_from_update_operation,
     compile_update_operation,
@@ -45,9 +46,9 @@ if TYPE_CHECKING:
 
 
 def _require_selected_document_id(document: Document) -> DocumentId:
-    if "_id" not in document:
-        raise OperationFailure("Cannot target a selected document without _id")
-    return document["_id"]
+    if '_id' not in document:
+        raise OperationFailure('Cannot target a selected document without _id')
+    return document['_id']
 
 
 async def _require_stable_selected_storage_identity(
@@ -56,7 +57,7 @@ async def _require_stable_selected_storage_identity(
     *,
     session: ClientSession | None,
 ) -> DocumentId:
-    document_id = document.get("_id")
+    document_id = document.get('_id')
     stored = await collection._document_by_id(document_id, session=session)
     assert_document_matches_stored_lookup(
         document,
@@ -87,7 +88,9 @@ async def _delete_selected_document(
     *,
     session: ClientSession | None,
 ) -> tuple[bool, Document | None]:
-    document_key = {"_id": deepcopy(document["_id"])} if "_id" in document else None
+    document_key = (
+        {'_id': deepcopy(document['_id'])} if '_id' in document else None
+    )
     document_id = await _require_stable_selected_storage_identity(
         collection,
         document,
@@ -122,8 +125,8 @@ async def perform_upsert_update(
         is_upsert_insert=True,
         variables=let,
     )
-    if "_id" not in new_doc:
-        new_doc["_id"] = ObjectId()
+    if '_id' not in new_doc:
+        new_doc['_id'] = ObjectId()
     await collection._put_replacement_document(
         new_doc,
         overwrite=False,
@@ -131,15 +134,15 @@ async def perform_upsert_update(
         bypass_document_validation=bypass_document_validation,
     )
     collection._publish_change_event(
-        operation_type="insert",
-        document_key={"_id": deepcopy(new_doc["_id"])},
+        operation_type='insert',
+        document_key={'_id': deepcopy(new_doc['_id'])},
         full_document=deepcopy(new_doc),
         session=session,
     )
     return UpdateResult(
         matched_count=0,
         modified_count=0,
-        upserted_id=new_doc["_id"],
+        upserted_id=new_doc['_id'],
     )
 
 
@@ -164,51 +167,57 @@ async def update_one(
     options = normalize_public_operation_arguments(
         COLLECTION_UPDATE_ONE_SPEC,
         explicit={
-            "filter_spec": filter_spec,
-            "update_spec": update_spec,
-            "upsert": upsert,
-            "collation": collation,
-            "sort": sort,
-            "array_filters": array_filters,
-            "hint": hint,
-            "comment": comment,
-            "let": let,
-            "bypass_document_validation": bypass_document_validation,
-            "session": session,
+            'filter_spec': filter_spec,
+            'update_spec': update_spec,
+            'upsert': upsert,
+            'collation': collation,
+            'sort': sort,
+            'array_filters': array_filters,
+            'hint': hint,
+            'comment': comment,
+            'let': let,
+            'bypass_document_validation': bypass_document_validation,
+            'session': session,
         },
-        extra_kwargs={"filter": filter, "update": update, **extra_kwargs},
+        extra_kwargs={'filter': filter, 'update': update, **extra_kwargs},
         profile=collection._pymongo_profile,
     )
-    filter_spec = collection._normalize_filter(options["filter_spec"])
-    update_spec = collection._require_update(options["update_spec"])
-    upsert = bool(options.get("upsert", False))
-    bypass_document_validation = bool(options.get("bypass_document_validation", False))
-    session = options.get("session")
+    filter_spec = collection._normalize_filter(options['filter_spec'])
+    update_spec = collection._require_update(options['update_spec'])
+    upsert = bool(options.get('upsert', False))
+    bypass_document_validation = bool(
+        options.get('bypass_document_validation', False)
+    )
+    session = options.get('session')
     collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
-        collation=options.get("collation"),
-        sort=options.get("sort"),
-        array_filters=options.get("array_filters"),
-        hint=options.get("hint"),
-        comment=options.get("comment"),
-        let=options.get("let"),
+        collation=options.get('collation'),
+        sort=options.get('sort'),
+        array_filters=options.get('array_filters'),
+        hint=options.get('hint'),
+        comment=options.get('comment'),
+        let=options.get('let'),
         dialect=collection._mongodb_dialect,
         update_spec=update_spec,
         planning_mode=collection._planning_mode,
     )
     event_selected_id: DocumentId | None = None
-    if collection._change_hub is not None and operation.sort is None and operation.hint is None:
+    if (
+        collection._change_hub is not None
+        and operation.sort is None
+        and operation.hint is None
+    ):
         selected = await collection._build_cursor(
             compile_find_selection_from_update_operation(
                 operation,
-                projection={"_id": 1},
+                projection={'_id': 1},
                 limit=1,
             ),
             session=session,
         ).first()
-        if selected is not None and "_id" in selected:
-            event_selected_id = selected["_id"]
+        if selected is not None and '_id' in selected:
+            event_selected_id = selected['_id']
     if operation.sort is not None:
         selected = await collection._build_cursor(
             compile_find_selection_from_update_operation(operation, limit=1),
@@ -217,9 +226,13 @@ async def update_one(
         if selected is None and not upsert:
             return UpdateResult(matched_count=0, modified_count=0)
         if selected is not None:
-            selected_id = await _require_stable_selected_storage_identity(collection, selected, session=session)
-            identity_filter = {"_id": selected_id}
-            identity_plan = compile_filter(identity_filter, dialect=collection._mongodb_dialect)
+            selected_id = await _require_stable_selected_storage_identity(
+                collection, selected, session=session
+            )
+            identity_filter = {'_id': selected_id}
+            identity_plan = compile_filter(
+                identity_filter, dialect=collection._mongodb_dialect
+            )
             result = await collection._engine_update_with_operation(
                 operation.with_overrides(
                     filter_spec=identity_filter,
@@ -233,16 +246,18 @@ async def update_one(
                 bypass_document_validation=bypass_document_validation,
             )
             collection._record_operation_metadata(
-                operation="update_one",
+                operation='update_one',
                 comment=operation.comment,
                 hint=operation.hint,
                 session=session,
             )
-            updated = await collection._document_by_id(selected_id, session=session)
-            if updated is not None and "_id" in selected:
+            updated = await collection._document_by_id(
+                selected_id, session=session
+            )
+            if updated is not None and '_id' in selected:
                 collection._publish_change_event(
-                    operation_type="update",
-                    document_key={"_id": deepcopy(selected_id)},
+                    operation_type='update',
+                    document_key={'_id': deepcopy(selected_id)},
                     full_document=deepcopy(updated),
                     session=session,
                 )
@@ -276,9 +291,13 @@ async def update_one(
                     bypass_document_validation=bypass_document_validation,
                 )
             return UpdateResult(matched_count=0, modified_count=0)
-        selected_id = await _require_stable_selected_storage_identity(collection, selected, session=session)
-        identity_filter = {"_id": selected_id}
-        identity_plan = compile_filter(identity_filter, dialect=collection._mongodb_dialect)
+        selected_id = await _require_stable_selected_storage_identity(
+            collection, selected, session=session
+        )
+        identity_filter = {'_id': selected_id}
+        identity_plan = compile_filter(
+            identity_filter, dialect=collection._mongodb_dialect
+        )
         result = await collection._engine_update_with_operation(
             operation.with_overrides(
                 filter_spec=identity_filter,
@@ -291,16 +310,18 @@ async def update_one(
             bypass_document_validation=bypass_document_validation,
         )
         collection._record_operation_metadata(
-            operation="update_one",
+            operation='update_one',
             comment=operation.comment,
             hint=operation.hint,
             session=session,
         )
-        updated = await collection._document_by_id(selected_id, session=session)
-        if updated is not None and "_id" in selected:
+        updated = await collection._document_by_id(
+            selected_id, session=session
+        )
+        if updated is not None and '_id' in selected:
             collection._publish_change_event(
-                operation_type="update",
-                document_key={"_id": deepcopy(selected_id)},
+                operation_type='update',
+                document_key={'_id': deepcopy(selected_id)},
                 full_document=deepcopy(updated),
                 session=session,
             )
@@ -319,26 +340,30 @@ async def update_one(
         bypass_document_validation=bypass_document_validation,
     )
     collection._record_operation_metadata(
-        operation="update_one",
+        operation='update_one',
         comment=operation.comment,
         hint=operation.hint,
         session=session,
     )
     if result.upserted_id is not None:
-        inserted = await collection._document_by_id(result.upserted_id, session=session)
+        inserted = await collection._document_by_id(
+            result.upserted_id, session=session
+        )
         if inserted is not None:
             collection._publish_change_event(
-                operation_type="insert",
-                document_key={"_id": deepcopy(result.upserted_id)},
+                operation_type='insert',
+                document_key={'_id': deepcopy(result.upserted_id)},
                 full_document=deepcopy(inserted),
                 session=session,
             )
     elif event_selected_id is not None:
-        updated = await collection._document_by_id(event_selected_id, session=session)
+        updated = await collection._document_by_id(
+            event_selected_id, session=session
+        )
         if updated is not None:
             collection._publish_change_event(
-                operation_type="update",
-                document_key={"_id": deepcopy(event_selected_id)},
+                operation_type='update',
+                document_key={'_id': deepcopy(event_selected_id)},
                 full_document=deepcopy(updated),
                 session=session,
             )
@@ -365,33 +390,35 @@ async def update_many(
     options = normalize_public_operation_arguments(
         COLLECTION_UPDATE_MANY_SPEC,
         explicit={
-            "filter_spec": filter_spec,
-            "update_spec": update_spec,
-            "upsert": upsert,
-            "collation": collation,
-            "array_filters": array_filters,
-            "hint": hint,
-            "comment": comment,
-            "let": let,
-            "bypass_document_validation": bypass_document_validation,
-            "session": session,
+            'filter_spec': filter_spec,
+            'update_spec': update_spec,
+            'upsert': upsert,
+            'collation': collation,
+            'array_filters': array_filters,
+            'hint': hint,
+            'comment': comment,
+            'let': let,
+            'bypass_document_validation': bypass_document_validation,
+            'session': session,
         },
-        extra_kwargs={"filter": filter, "update": update, **extra_kwargs},
+        extra_kwargs={'filter': filter, 'update': update, **extra_kwargs},
         profile=collection._pymongo_profile,
     )
-    filter_spec = collection._normalize_filter(options["filter_spec"])
-    update_spec = collection._require_update(options["update_spec"])
-    upsert = bool(options.get("upsert", False))
-    bypass_document_validation = bool(options.get("bypass_document_validation", False))
-    session = options.get("session")
+    filter_spec = collection._normalize_filter(options['filter_spec'])
+    update_spec = collection._require_update(options['update_spec'])
+    upsert = bool(options.get('upsert', False))
+    bypass_document_validation = bool(
+        options.get('bypass_document_validation', False)
+    )
+    session = options.get('session')
     collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
-        collation=options.get("collation"),
-        array_filters=options.get("array_filters"),
-        hint=options.get("hint"),
-        comment=options.get("comment"),
-        let=options.get("let"),
+        collation=options.get('collation'),
+        array_filters=options.get('array_filters'),
+        hint=options.get('hint'),
+        comment=options.get('comment'),
+        let=options.get('let'),
         dialect=collection._mongodb_dialect,
         update_spec=update_spec,
         planning_mode=collection._planning_mode,
@@ -425,9 +452,13 @@ async def update_many(
 
     modified_count = 0
     for matched in matched_documents:
-        matched_id = await _require_stable_selected_storage_identity(collection, matched, session=session)
-        identity_filter = {"_id": matched_id}
-        identity_plan = compile_filter(identity_filter, dialect=collection._mongodb_dialect)
+        matched_id = await _require_stable_selected_storage_identity(
+            collection, matched, session=session
+        )
+        identity_filter = {'_id': matched_id}
+        identity_plan = compile_filter(
+            identity_filter, dialect=collection._mongodb_dialect
+        )
         result = await collection._engine_update_with_operation(
             operation.with_overrides(
                 filter_spec=identity_filter,
@@ -441,16 +472,16 @@ async def update_many(
         )
         modified_count += result.modified_count
         updated = await collection._document_by_id(matched_id, session=session)
-        if updated is not None and "_id" in matched:
+        if updated is not None and '_id' in matched:
             collection._publish_change_event(
-                operation_type="update",
-                document_key={"_id": deepcopy(matched_id)},
+                operation_type='update',
+                document_key={'_id': deepcopy(matched_id)},
                 full_document=deepcopy(updated),
                 session=session,
             )
 
     collection._record_operation_metadata(
-        operation="update_many",
+        operation='update_many',
         comment=operation.comment,
         hint=operation.hint,
         session=session,
@@ -480,33 +511,35 @@ async def replace_one(
     options = normalize_public_operation_arguments(
         COLLECTION_REPLACE_ONE_SPEC,
         explicit={
-            "filter_spec": filter_spec,
-            "replacement": replacement,
-            "upsert": upsert,
-            "collation": collation,
-            "sort": sort,
-            "hint": hint,
-            "comment": comment,
-            "let": let,
-            "bypass_document_validation": bypass_document_validation,
-            "session": session,
+            'filter_spec': filter_spec,
+            'replacement': replacement,
+            'upsert': upsert,
+            'collation': collation,
+            'sort': sort,
+            'hint': hint,
+            'comment': comment,
+            'let': let,
+            'bypass_document_validation': bypass_document_validation,
+            'session': session,
         },
-        extra_kwargs={"filter": filter, **extra_kwargs},
+        extra_kwargs={'filter': filter, **extra_kwargs},
         profile=collection._pymongo_profile,
     )
-    filter_spec = collection._normalize_filter(options["filter_spec"])
-    replacement = collection._require_replacement(options["replacement"])
-    upsert = bool(options.get("upsert", False))
-    bypass_document_validation = bool(options.get("bypass_document_validation", False))
-    session = options.get("session")
+    filter_spec = collection._normalize_filter(options['filter_spec'])
+    replacement = collection._require_replacement(options['replacement'])
+    upsert = bool(options.get('upsert', False))
+    bypass_document_validation = bool(
+        options.get('bypass_document_validation', False)
+    )
+    session = options.get('session')
     collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
-        collation=options.get("collation"),
-        sort=options.get("sort"),
-        hint=options.get("hint"),
-        comment=options.get("comment"),
-        let=options.get("let"),
+        collation=options.get('collation'),
+        sort=options.get('sort'),
+        hint=options.get('hint'),
+        comment=options.get('comment'),
+        let=options.get('let'),
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
@@ -522,7 +555,9 @@ async def replace_one(
     if selected is None:
         if not upsert:
             return UpdateResult(matched_count=0, modified_count=0)
-        document = collection._build_upsert_replacement_document(operation.filter_spec, replacement)
+        document = collection._build_upsert_replacement_document(
+            operation.filter_spec, replacement
+        )
         await collection._put_replacement_document(
             document,
             overwrite=False,
@@ -530,32 +565,45 @@ async def replace_one(
             bypass_document_validation=bypass_document_validation,
         )
         collection._record_operation_metadata(
-            operation="replace_one",
+            operation='replace_one',
             comment=operation.comment,
             hint=operation.hint,
             session=session,
         )
         collection._publish_change_event(
-            operation_type="insert",
-            document_key={"_id": deepcopy(document["_id"])},
+            operation_type='insert',
+            document_key={'_id': deepcopy(document['_id'])},
             full_document=deepcopy(document),
             session=session,
         )
         return UpdateResult(
             matched_count=0,
             modified_count=0,
-            upserted_id=document["_id"],
+            upserted_id=document['_id'],
         )
 
-    if "_id" in replacement and (
-        "_id" not in selected
-        or not collection._mongodb_dialect.values_equal(replacement["_id"], selected["_id"])
+    if '_id' in replacement and (
+        '_id' not in selected
+        or not collection._mongodb_dialect.values_equal(
+            replacement['_id'], selected['_id']
+        )
     ):
-        raise WriteError("The _id field cannot be changed in a replacement document", code=66)
-    if "_id" in selected:
-        await _require_stable_selected_document_id(collection, selected, session=session)
-    document = collection._materialize_replacement_document(selected, replacement)
-    modified_count = 0 if collection._mongodb_dialect.values_equal(selected, document) else 1
+        raise WriteError(
+            'The _id field cannot be changed in a replacement document',
+            code=66,
+        )
+    if '_id' in selected:
+        await _require_stable_selected_document_id(
+            collection, selected, session=session
+        )
+    document = collection._materialize_replacement_document(
+        selected, replacement
+    )
+    modified_count = (
+        0
+        if collection._mongodb_dialect.values_equal(selected, document)
+        else 1
+    )
     await collection._put_replacement_document(
         document,
         overwrite=True,
@@ -563,15 +611,15 @@ async def replace_one(
         bypass_document_validation=bypass_document_validation,
     )
     collection._record_operation_metadata(
-        operation="replace_one",
+        operation='replace_one',
         comment=operation.comment,
         hint=operation.hint,
         session=session,
     )
-    if "_id" in document:
+    if '_id' in document:
         collection._publish_change_event(
-            operation_type="replace",
-            document_key={"_id": deepcopy(document["_id"])},
+            operation_type='replace',
+            document_key={'_id': deepcopy(document['_id'])},
             full_document=deepcopy(document),
             session=session,
         )
@@ -602,41 +650,45 @@ async def find_one_and_update(
     options = normalize_public_operation_arguments(
         COLLECTION_FIND_ONE_AND_UPDATE_SPEC,
         explicit={
-            "filter_spec": filter_spec,
-            "update_spec": update_spec,
-            "projection": projection,
-            "collation": collation,
-            "sort": sort,
-            "upsert": upsert,
-            "return_document": return_document,
-            "array_filters": array_filters,
-            "hint": hint,
-            "comment": comment,
-            "max_time_ms": max_time_ms,
-            "let": let,
-            "bypass_document_validation": bypass_document_validation,
-            "session": session,
+            'filter_spec': filter_spec,
+            'update_spec': update_spec,
+            'projection': projection,
+            'collation': collation,
+            'sort': sort,
+            'upsert': upsert,
+            'return_document': return_document,
+            'array_filters': array_filters,
+            'hint': hint,
+            'comment': comment,
+            'max_time_ms': max_time_ms,
+            'let': let,
+            'bypass_document_validation': bypass_document_validation,
+            'session': session,
         },
-        extra_kwargs={"filter": filter, "update": update, **extra_kwargs},
+        extra_kwargs={'filter': filter, 'update': update, **extra_kwargs},
         profile=collection._pymongo_profile,
     )
-    filter_spec = collection._normalize_filter(options["filter_spec"])
-    update_spec = collection._require_update(options["update_spec"])
-    projection = collection._normalize_projection(options.get("projection"))
-    return_document = collection._normalize_return_document(options.get("return_document"))
-    upsert = bool(options.get("upsert", False))
-    bypass_document_validation = bool(options.get("bypass_document_validation", False))
-    session = options.get("session")
+    filter_spec = collection._normalize_filter(options['filter_spec'])
+    update_spec = collection._require_update(options['update_spec'])
+    projection = collection._normalize_projection(options.get('projection'))
+    return_document = collection._normalize_return_document(
+        options.get('return_document')
+    )
+    upsert = bool(options.get('upsert', False))
+    bypass_document_validation = bool(
+        options.get('bypass_document_validation', False)
+    )
+    session = options.get('session')
     collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
-        collation=options.get("collation"),
-        sort=options.get("sort"),
-        array_filters=options.get("array_filters"),
-        hint=options.get("hint"),
-        comment=options.get("comment"),
-        max_time_ms=options.get("max_time_ms"),
-        let=options.get("let"),
+        collation=options.get('collation'),
+        sort=options.get('sort'),
+        array_filters=options.get('array_filters'),
+        hint=options.get('hint'),
+        comment=options.get('comment'),
+        max_time_ms=options.get('max_time_ms'),
+        let=options.get('let'),
         dialect=collection._mongodb_dialect,
         update_spec=update_spec,
         planning_mode=collection._planning_mode,
@@ -670,7 +722,7 @@ async def find_one_and_update(
         if return_document is ReturnDocument.BEFORE:
             return None
         return await collection.find(
-            {"_id": result.upserted_id},
+            {'_id': result.upserted_id},
             projection,
             collation=operation.collation,
             limit=1,
@@ -680,9 +732,13 @@ async def find_one_and_update(
             session=session,
         ).first()
 
-    before_id = await _require_stable_selected_storage_identity(collection, before, session=session)
-    identity_filter = {"_id": before_id}
-    identity_plan = compile_filter(identity_filter, dialect=collection._mongodb_dialect)
+    before_id = await _require_stable_selected_storage_identity(
+        collection, before, session=session
+    )
+    identity_filter = {'_id': before_id}
+    identity_plan = compile_filter(
+        identity_filter, dialect=collection._mongodb_dialect
+    )
     await collection._engine_update_with_operation(
         operation.with_overrides(
             filter_spec=identity_filter,
@@ -696,10 +752,10 @@ async def find_one_and_update(
         bypass_document_validation=bypass_document_validation,
     )
     after = await collection._document_by_id(before_id, session=session)
-    if after is not None and "_id" in before:
+    if after is not None and '_id' in before:
         collection._publish_change_event(
-            operation_type="update",
-            document_key={"_id": deepcopy(before_id)},
+            operation_type='update',
+            document_key={'_id': deepcopy(before_id)},
             full_document=deepcopy(after),
             session=session,
         )
@@ -742,39 +798,43 @@ async def find_one_and_replace(
     options = normalize_public_operation_arguments(
         COLLECTION_FIND_ONE_AND_REPLACE_SPEC,
         explicit={
-            "filter_spec": filter_spec,
-            "replacement": replacement,
-            "projection": projection,
-            "collation": collation,
-            "sort": sort,
-            "upsert": upsert,
-            "return_document": return_document,
-            "hint": hint,
-            "comment": comment,
-            "max_time_ms": max_time_ms,
-            "let": let,
-            "bypass_document_validation": bypass_document_validation,
-            "session": session,
+            'filter_spec': filter_spec,
+            'replacement': replacement,
+            'projection': projection,
+            'collation': collation,
+            'sort': sort,
+            'upsert': upsert,
+            'return_document': return_document,
+            'hint': hint,
+            'comment': comment,
+            'max_time_ms': max_time_ms,
+            'let': let,
+            'bypass_document_validation': bypass_document_validation,
+            'session': session,
         },
-        extra_kwargs={"filter": filter, **extra_kwargs},
+        extra_kwargs={'filter': filter, **extra_kwargs},
         profile=collection._pymongo_profile,
     )
-    filter_spec = collection._normalize_filter(options["filter_spec"])
-    replacement = collection._require_replacement(options["replacement"])
-    projection = collection._normalize_projection(options.get("projection"))
-    return_document = collection._normalize_return_document(options.get("return_document"))
-    upsert = bool(options.get("upsert", False))
-    bypass_document_validation = bool(options.get("bypass_document_validation", False))
-    session = options.get("session")
+    filter_spec = collection._normalize_filter(options['filter_spec'])
+    replacement = collection._require_replacement(options['replacement'])
+    projection = collection._normalize_projection(options.get('projection'))
+    return_document = collection._normalize_return_document(
+        options.get('return_document')
+    )
+    upsert = bool(options.get('upsert', False))
+    bypass_document_validation = bool(
+        options.get('bypass_document_validation', False)
+    )
+    session = options.get('session')
     collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
-        collation=options.get("collation"),
-        sort=options.get("sort"),
-        hint=options.get("hint"),
-        comment=options.get("comment"),
-        max_time_ms=options.get("max_time_ms"),
-        let=options.get("let"),
+        collation=options.get('collation'),
+        sort=options.get('sort'),
+        hint=options.get('hint'),
+        comment=options.get('comment'),
+        max_time_ms=options.get('max_time_ms'),
+        let=options.get('let'),
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
@@ -807,7 +867,7 @@ async def find_one_and_replace(
         if return_document is ReturnDocument.BEFORE:
             return None
         return await collection.find(
-            {"_id": result.upserted_id},
+            {'_id': result.upserted_id},
             projection,
             collation=operation.collation,
             limit=1,
@@ -817,8 +877,10 @@ async def find_one_and_replace(
             session=session,
         ).first()
 
-    before_id = await _require_stable_selected_storage_identity(collection, before, session=session)
-    identity_filter = {"_id": before_id}
+    before_id = await _require_stable_selected_storage_identity(
+        collection, before, session=session
+    )
+    identity_filter = {'_id': before_id}
     await replace_one(
         collection,
         identity_filter,
@@ -870,31 +932,31 @@ async def find_one_and_delete(
     options = normalize_public_operation_arguments(
         COLLECTION_FIND_ONE_AND_DELETE_SPEC,
         explicit={
-            "filter_spec": filter_spec,
-            "projection": projection,
-            "collation": collation,
-            "sort": sort,
-            "hint": hint,
-            "comment": comment,
-            "max_time_ms": max_time_ms,
-            "let": let,
-            "session": session,
+            'filter_spec': filter_spec,
+            'projection': projection,
+            'collation': collation,
+            'sort': sort,
+            'hint': hint,
+            'comment': comment,
+            'max_time_ms': max_time_ms,
+            'let': let,
+            'session': session,
         },
-        extra_kwargs={"filter": filter, **extra_kwargs},
+        extra_kwargs={'filter': filter, **extra_kwargs},
         profile=collection._pymongo_profile,
     )
-    filter_spec = collection._normalize_filter(options["filter_spec"])
-    projection = collection._normalize_projection(options.get("projection"))
-    session = options.get("session")
+    filter_spec = collection._normalize_filter(options['filter_spec'])
+    projection = collection._normalize_projection(options.get('projection'))
+    session = options.get('session')
     collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
-        collation=options.get("collation"),
-        sort=options.get("sort"),
-        hint=options.get("hint"),
-        comment=options.get("comment"),
-        max_time_ms=options.get("max_time_ms"),
-        let=options.get("let"),
+        collation=options.get('collation'),
+        sort=options.get('sort'),
+        hint=options.get('hint'),
+        comment=options.get('comment'),
+        max_time_ms=options.get('max_time_ms'),
+        let=options.get('let'),
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
@@ -921,7 +983,7 @@ async def find_one_and_delete(
         return None
     if document_key is not None:
         collection._publish_change_event(
-            operation_type="delete",
+            operation_type='delete',
             document_key=document_key,
             session=session,
         )
@@ -948,25 +1010,25 @@ async def delete_one(
     options = normalize_public_operation_arguments(
         COLLECTION_DELETE_ONE_SPEC,
         explicit={
-            "filter_spec": filter_spec,
-            "collation": collation,
-            "hint": hint,
-            "comment": comment,
-            "let": let,
-            "session": session,
+            'filter_spec': filter_spec,
+            'collation': collation,
+            'hint': hint,
+            'comment': comment,
+            'let': let,
+            'session': session,
         },
-        extra_kwargs={"filter": filter, **extra_kwargs},
+        extra_kwargs={'filter': filter, **extra_kwargs},
         profile=collection._pymongo_profile,
     )
-    filter_spec = collection._normalize_filter(options["filter_spec"])
-    session = options.get("session")
+    filter_spec = collection._normalize_filter(options['filter_spec'])
+    session = options.get('session')
     collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
-        collation=options.get("collation"),
-        hint=options.get("hint"),
-        comment=options.get("comment"),
-        let=options.get("let"),
+        collation=options.get('collation'),
+        hint=options.get('hint'),
+        comment=options.get('comment'),
+        let=options.get('let'),
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
@@ -975,14 +1037,14 @@ async def delete_one(
         selected_for_event = await collection._build_cursor(
             compile_find_selection_from_update_operation(
                 operation,
-                projection={"_id": 1},
+                projection={'_id': 1},
                 limit=1,
             ),
             session=session,
         ).first()
         if selected_for_event is not None:
-            if "_id" in selected_for_event:
-                event_selected_id = selected_for_event["_id"]
+            if '_id' in selected_for_event:
+                event_selected_id = selected_for_event['_id']
     if operation.hint is not None:
         selected = await collection._build_cursor(
             compile_find_selection_from_update_operation(
@@ -999,7 +1061,7 @@ async def delete_one(
             session=session,
         )
         collection._record_operation_metadata(
-            operation="delete_one",
+            operation='delete_one',
             comment=operation.comment,
             hint=operation.hint,
             session=session,
@@ -1007,22 +1069,24 @@ async def delete_one(
         if deleted:
             if document_key is not None:
                 collection._publish_change_event(
-                    operation_type="delete",
+                    operation_type='delete',
                     document_key=document_key,
                     session=session,
                 )
         return DeleteResult(deleted_count=1 if deleted else 0)
-    result = await collection._engine_delete_with_operation(operation, session=session)
+    result = await collection._engine_delete_with_operation(
+        operation, session=session
+    )
     collection._record_operation_metadata(
-        operation="delete_one",
+        operation='delete_one',
         comment=operation.comment,
         hint=operation.hint,
         session=session,
     )
     if result.deleted_count and event_selected_id is not None:
         collection._publish_change_event(
-            operation_type="delete",
-            document_key={"_id": deepcopy(event_selected_id)},
+            operation_type='delete',
+            document_key={'_id': deepcopy(event_selected_id)},
             session=session,
         )
     return result
@@ -1043,25 +1107,25 @@ async def delete_many(
     options = normalize_public_operation_arguments(
         COLLECTION_DELETE_MANY_SPEC,
         explicit={
-            "filter_spec": filter_spec,
-            "collation": collation,
-            "hint": hint,
-            "comment": comment,
-            "let": let,
-            "session": session,
+            'filter_spec': filter_spec,
+            'collation': collation,
+            'hint': hint,
+            'comment': comment,
+            'let': let,
+            'session': session,
         },
-        extra_kwargs={"filter": filter, **extra_kwargs},
+        extra_kwargs={'filter': filter, **extra_kwargs},
         profile=collection._pymongo_profile,
     )
-    filter_spec = collection._normalize_filter(options["filter_spec"])
-    session = options.get("session")
+    filter_spec = collection._normalize_filter(options['filter_spec'])
+    session = options.get('session')
     collection._ensure_session_active(session)
     operation = compile_update_operation(
         filter_spec,
-        collation=options.get("collation"),
-        hint=options.get("hint"),
-        comment=options.get("comment"),
-        let=options.get("let"),
+        collation=options.get('collation'),
+        hint=options.get('hint'),
+        comment=options.get('comment'),
+        let=options.get('let'),
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
@@ -1082,12 +1146,12 @@ async def delete_many(
             deleted_count += 1
             if document_key is not None:
                 collection._publish_change_event(
-                    operation_type="delete",
+                    operation_type='delete',
                     document_key=document_key,
                     session=session,
                 )
     collection._record_operation_metadata(
-        operation="delete_many",
+        operation='delete_many',
         comment=operation.comment,
         hint=operation.hint,
         session=session,

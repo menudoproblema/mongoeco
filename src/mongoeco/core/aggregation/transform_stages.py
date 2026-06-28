@@ -7,6 +7,9 @@ from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import delete_document_value, set_document_value
 from mongoeco.core.projections import apply_projection
+from mongoeco.core.query_operators import (
+    require_non_empty_document_clause_list,
+)
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
@@ -23,6 +26,8 @@ from mongoeco.core.aggregation.planning import (
     _require_unset_spec,
 )
 
+_NO_EXPR = object()
+
 
 def _apply_match(
     documents: list[Document],
@@ -33,34 +38,44 @@ def _apply_match(
     collation: CollationSpec | None = None,
 ) -> list[Document]:
     if not isinstance(spec, dict):
-        raise OperationFailure("$match requires a document specification")
+        raise OperationFailure('$match requires a document specification')
 
     def _match_spec(document: Document, match_spec: dict[str, Any]) -> bool:
-        expr = match_spec.get("$expr")
-        filter_spec = {key: value for key, value in match_spec.items() if key != "$expr"}
-        if "$and" in filter_spec:
-            clauses = filter_spec.pop("$and")
-            if not isinstance(clauses, list):
-                raise OperationFailure("$and in $match requires a list")
+        expr = match_spec.get('$expr', _NO_EXPR)
+        filter_spec = {
+            key: value for key, value in match_spec.items() if key != '$expr'
+        }
+        if '$and' in filter_spec:
+            clauses = require_non_empty_document_clause_list(
+                filter_spec.pop('$and'),
+                operator='$and',
+                context='$match',
+            )
             if not all(_match_spec(document, clause) for clause in clauses):
                 return False
-        if "$or" in filter_spec:
-            clauses = filter_spec.pop("$or")
-            if not isinstance(clauses, list):
-                raise OperationFailure("$or in $match requires a list")
+        if '$or' in filter_spec:
+            clauses = require_non_empty_document_clause_list(
+                filter_spec.pop('$or'),
+                operator='$or',
+                context='$match',
+            )
             if not any(_match_spec(document, clause) for clause in clauses):
                 return False
-        if "$nor" in filter_spec:
-            clauses = filter_spec.pop("$nor")
-            if not isinstance(clauses, list):
-                raise OperationFailure("$nor in $match requires a list")
+        if '$nor' in filter_spec:
+            clauses = require_non_empty_document_clause_list(
+                filter_spec.pop('$nor'),
+                operator='$nor',
+                context='$match',
+            )
             if any(_match_spec(document, clause) for clause in clauses):
                 return False
         if filter_spec:
             plan = compile_filter(filter_spec, dialect=dialect)
-            if not QueryEngine.match_plan(document, plan, dialect=dialect, collation=collation):
+            if not QueryEngine.match_plan(
+                document, plan, dialect=dialect, collation=collation
+            ):
                 return False
-        if expr is not None and not _expression_truthy(
+        if expr is not _NO_EXPR and not _expression_truthy(
             evaluate_expression(document, expr, variables, dialect=dialect),
             dialect=dialect,
         ):
@@ -68,7 +83,9 @@ def _apply_match(
         return True
 
     if _match_spec_contains_expr(spec):
-        return [document for document in documents if _match_spec(document, spec)]
+        return [
+            document for document in documents if _match_spec(document, spec)
+        ]
 
     plan = compile_filter(spec, dialect=dialect) if spec else None
     result: list[Document] = []
@@ -92,15 +109,17 @@ def _apply_add_fields(
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> list[Document]:
     if not isinstance(spec, dict):
-        raise OperationFailure("$addFields requires a document specification")
+        raise OperationFailure('$addFields requires a document specification')
     for path in spec:
         if not isinstance(path, str):
-            raise OperationFailure("$addFields field names must be strings")
+            raise OperationFailure('$addFields field names must be strings')
     result: list[Document] = []
     for document in documents:
         enriched = deepcopy(document)
         evaluated = {
-            path: evaluate_expression(document, expression, variables, dialect=dialect)
+            path: evaluate_expression(
+                document, expression, variables, dialect=dialect
+            )
             for path, expression in spec.items()
         }
         for path in spec:
@@ -160,17 +179,23 @@ def _apply_project(
         for key, value in projection.items()
         if _projection_flag(value, dialect=dialect) is not None
     }
-    include_id = include_fields.get("_id", 1) != 0
+    include_id = include_fields.get('_id', 1) != 0
     result: list[Document] = []
     for document in documents:
         projected: Document = {}
-        include_mode = any(value == 1 for key, value in include_fields.items() if key != "_id")
+        include_mode = any(
+            value == 1 for key, value in include_fields.items() if key != '_id'
+        )
         if include_mode:
-            projected = apply_projection(document, include_fields, dialect=dialect)
-        elif include_id and "_id" in document:
-            projected["_id"] = deepcopy(document["_id"])
+            projected = apply_projection(
+                document, include_fields, dialect=dialect
+            )
+        elif include_id and '_id' in document:
+            projected['_id'] = deepcopy(document['_id'])
         for path, expression in computed_fields.items():
-            value = evaluate_expression(document, expression, variables, dialect=dialect)
+            value = evaluate_expression(
+                document, expression, variables, dialect=dialect
+            )
             if value is _REMOVE:
                 delete_document_value(projected, path)
                 continue
@@ -188,16 +213,24 @@ def _apply_replace_root(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> list[Document]:
-    if not isinstance(spec, dict) or "newRoot" not in spec:
-        raise OperationFailure("$replaceRoot requires a document with newRoot")
-    new_root_spec = spec["newRoot"]
-    if new_root_spec is None or isinstance(new_root_spec, (int, float, bool, list)):
-        raise OperationFailure("$replaceRoot newRoot must be a document-producing expression")
+    if not isinstance(spec, dict) or 'newRoot' not in spec:
+        raise OperationFailure('$replaceRoot requires a document with newRoot')
+    new_root_spec = spec['newRoot']
+    if new_root_spec is None or isinstance(
+        new_root_spec, (int, float, bool, list)
+    ):
+        raise OperationFailure(
+            '$replaceRoot newRoot must be a document-producing expression'
+        )
     result: list[Document] = []
     for document in documents:
-        new_root = evaluate_expression(document, new_root_spec, variables, dialect=dialect)
+        new_root = evaluate_expression(
+            document, new_root_spec, variables, dialect=dialect
+        )
         if not isinstance(new_root, dict):
-            raise OperationFailure("$replaceRoot newRoot must evaluate to a document")
+            raise OperationFailure(
+                '$replaceRoot newRoot must evaluate to a document'
+            )
         result.append(deepcopy(new_root))
     return result
 

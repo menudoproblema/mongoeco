@@ -1,6 +1,9 @@
 import unittest
 
-from mongoeco.core.search import compile_search_stage, search_query_operator_name
+from mongoeco.core.search import (
+    compile_search_stage,
+    search_query_operator_name,
+)
 from mongoeco.engines._sqlite_compound_prefilter import (
     _intersect_storage_key_lists,
     _storage_keys_with_minimum_frequency,
@@ -19,48 +22,50 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
     def setUp(self) -> None:
         self.definition = SearchIndexDefinition(
             {
-                "mappings": {
-                    "dynamic": False,
-                    "fields": {
-                        "title": {"type": "string"},
-                        "body": {"type": "autocomplete"},
-                        "kind": {"type": "token"},
-                        "meta": {
-                            "type": "document",
-                            "fields": {
-                                "summary": {"type": "string"},
-                                "ignored": [],
+                'mappings': {
+                    'dynamic': False,
+                    'fields': {
+                        'title': {'type': 'string'},
+                        'body': {'type': 'autocomplete'},
+                        'kind': {'type': 'token'},
+                        'meta': {
+                            'type': 'document',
+                            'fields': {
+                                'summary': {'type': 'string'},
+                                'ignored': [],
                             },
                         },
                     },
                 }
             },
-            name="by_text",
-            index_type="search",
+            name='by_text',
+            index_type='search',
         )
 
-    def test_sqlite_compound_candidate_plan_covers_empty_and_exclusion_paths(self) -> None:
+    def test_sqlite_compound_candidate_plan_covers_empty_and_exclusion_paths(
+        self,
+    ) -> None:
         compound = compile_search_stage(
-            "$search",
+            '$search',
             {
-                "index": "by_text",
-                "compound": {
-                    "must": [{"text": {"query": "ada", "path": "title"}}],
-                    "should": [{"phrase": {"query": "Ada", "path": "title"}}],
-                    "mustNot": [{"exists": {"path": "body"}}],
-                    "minimumShouldMatch": 1,
+                'index': 'by_text',
+                'compound': {
+                    'must': [{'text': {'query': 'ada', 'path': 'title'}}],
+                    'should': [{'phrase': {'query': 'Ada', 'path': 'title'}}],
+                    'mustNot': [{'exists': {'path': 'body'}}],
+                    'minimumShouldMatch': 1,
                 },
             },
         )
 
         def resolver(clause):
             operator = search_query_operator_name(clause)
-            if operator == "text":
-                return ["a", "b"], "fts5", True
-            if operator == "phrase":
-                return ["b"], "fts5", True
-            if operator == "exists":
-                return ["b"], "fts5", False
+            if operator == 'text':
+                return ['a', 'b'], 'fts5', True
+            if operator == 'phrase':
+                return ['b'], 'fts5', True
+            if operator == 'exists':
+                return ['b'], 'fts5', False
             return None, None, False
 
         plan = sqlite_compound_candidate_plan(
@@ -68,16 +73,16 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
             compound,
             candidate_resolver=resolver,
         )
-        self.assertEqual(plan.candidates, ("b",))
+        self.assertEqual(plan.candidates, ('b',))
         self.assertFalse(plan.exact)
 
         impossible = compile_search_stage(
-            "$search",
+            '$search',
             {
-                "index": "by_text",
-                "compound": {
-                    "should": [{"text": {"query": "ada", "path": "title"}}],
-                    "minimumShouldMatch": 1,
+                'index': 'by_text',
+                'compound': {
+                    'should': [{'text': {'query': 'ada', 'path': 'title'}}],
+                    'minimumShouldMatch': 1,
                 },
             },
         )
@@ -89,33 +94,50 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
         self.assertIsNone(no_candidates.candidates)
         self.assertFalse(no_candidates.exact)
 
-    def test_clause_state_and_description_cover_downstream_refinements(self) -> None:
-        clause = compile_search_stage("$search", {"index": "by_text", "text": {"query": "ada", "path": "title"}})
+    def test_clause_state_and_description_cover_downstream_refinements(
+        self,
+    ) -> None:
+        clause = compile_search_stage(
+            '$search',
+            {'index': 'by_text', 'text': {'query': 'ada', 'path': 'title'}},
+        )
         state = compound_clause_candidate_state(
             definition=self.definition,
             clause=clause,
-            candidate_resolver=lambda _clause: (["a", "b"], "fts5", True),
-            downstream_filter_storage_keys=["b"],
-            downstream_filter_spec={"title": "Ada algorithms"},
+            candidate_resolver=lambda _clause: (['a', 'b'], 'fts5', True),
+            downstream_filter_storage_keys=['b'],
+            downstream_filter_spec={'title': 'Ada algorithms'},
             downstream_filter_exact=True,
         )
         storage_keys, backend, exact, refinement = state
-        self.assertEqual(storage_keys, ["b"])
-        self.assertEqual(backend, "fts5+downstream-filter")
+        self.assertEqual(storage_keys, ['b'])
+        self.assertEqual(backend, 'fts5+downstream-filter')
         self.assertTrue(exact)
         self.assertIsNotNone(refinement)
         assert refinement is not None
-        self.assertEqual(refinement.path, "title")
+        self.assertEqual(refinement.path, 'title')
+
+        false_implication = compound_clause_candidate_state(
+            definition=self.definition,
+            clause=clause,
+            candidate_resolver=lambda _clause: (None, None, False),
+            downstream_filter_storage_keys=['a', 'b'],
+            downstream_filter_spec={
+                '$or': [{'title': 'Ada algorithms'}, {'kind': 'note'}]
+            },
+            downstream_filter_exact=True,
+        )
+        self.assertEqual(false_implication, (None, None, False, None))
 
         query = compile_search_stage(
-            "$search",
+            '$search',
             {
-                "index": "by_text",
-                "compound": {
-                    "must": [{"text": {"query": "ada", "path": "title"}}],
-                    "should": [
-                        {"exists": {"path": "title"}},
-                        {"autocomplete": {"query": "alg", "path": "body"}},
+                'index': 'by_text',
+                'compound': {
+                    'must': [{'text': {'query': 'ada', 'path': 'title'}}],
+                    'should': [
+                        {'exists': {'path': 'title'}},
+                        {'autocomplete': {'query': 'alg', 'path': 'body'}},
                     ],
                 },
             },
@@ -124,58 +146,83 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
             self.definition,
             query,
             candidate_resolver=lambda clause: (
-                ["a"],
+                ['a'],
                 search_query_operator_name(clause),
-                search_query_operator_name(clause) != "autocomplete",
+                search_query_operator_name(clause) != 'autocomplete',
             ),
-            physical_name="fts_table",
-            downstream_filter={"spec": {"title": "Ada algorithms"}, "exact": True},
-            downstream_filter_storage_keys=["a"],
+            physical_name='fts_table',
+            downstream_filter={
+                'spec': {'title': 'Ada algorithms'},
+                'exact': True,
+            },
+            downstream_filter_storage_keys=['a'],
         )
-        self.assertEqual(metadata["candidateableShouldCount"], 2)
-        self.assertEqual(metadata["requiredCandidateableShould"], 0)
-        self.assertEqual(metadata["partialRanking"]["strategy"], "fts-materialized-entries")
-        self.assertEqual(metadata["clauseClasses"]["should"][0], "candidateable-exact")
-        self.assertEqual(metadata["clauseClasses"]["should"][1], "candidateable-ranking")
+        self.assertEqual(metadata['candidateableShouldCount'], 2)
+        self.assertEqual(metadata['requiredCandidateableShould'], 0)
+        self.assertEqual(
+            metadata['partialRanking']['strategy'], 'fts-materialized-entries'
+        )
+        self.assertEqual(
+            metadata['clauseClasses']['should'][0], 'candidateable-exact'
+        )
+        self.assertEqual(
+            metadata['clauseClasses']['should'][1], 'candidateable-ranking'
+        )
 
-    def test_textual_field_types_and_downstream_filter_implication_cover_invalid_shapes(self) -> None:
+    def test_textual_field_types_and_downstream_filter_implication_cover_invalid_shapes(
+        self,
+    ) -> None:
         self.assertEqual(
             textual_search_field_types(
-                SearchIndexDefinition({"mappings": {"fields": []}}, name="bad", index_type="search")
+                SearchIndexDefinition(
+                    {'mappings': {'fields': []}},
+                    name='bad',
+                    index_type='search',
+                )
             ),
             {},
         )
         self.assertEqual(
             textual_search_field_types(
-                SearchIndexDefinition({"mappings": "bad"}, name="bad", index_type="search")
+                SearchIndexDefinition(
+                    {'mappings': 'bad'}, name='bad', index_type='search'
+                )
             ),
             {},
         )
         self.assertEqual(
             textual_search_field_types(self.definition),
             {
-                "title": "string",
-                "body": "autocomplete",
-                "kind": "token",
-                "meta.summary": "string",
+                'title': 'string',
+                'body': 'autocomplete',
+                'kind': 'token',
+                'meta.summary': 'string',
             },
         )
 
-        exists_clause = compile_search_stage("$search", {"index": "by_text", "exists": {"path": "title"}})
+        exists_clause = compile_search_stage(
+            '$search', {'index': 'by_text', 'exists': {'path': 'title'}}
+        )
         implied_path, implied_values = downstream_filter_implies_clause(
             exists_clause,
             definition=self.definition,
-            filter_spec={"title": {"$exists": True}},
+            filter_spec={'title': {'$exists': True}},
         )
-        self.assertEqual(implied_path, "title")
+        self.assertEqual(implied_path, 'title')
         self.assertEqual(len(implied_values or []), 1)
 
-        near_clause = compile_search_stage("$search", {"index": "by_text", "near": {"path": "score", "origin": 5, "pivot": 2}})
+        near_clause = compile_search_stage(
+            '$search',
+            {
+                'index': 'by_text',
+                'near': {'path': 'score', 'origin': 5, 'pivot': 2},
+            },
+        )
         self.assertEqual(
             downstream_filter_implies_clause(
                 near_clause,
                 definition=self.definition,
-                filter_spec={"title": "Ada algorithms"},
+                filter_spec={'title': 'Ada algorithms'},
             ),
             (None, None),
         )
@@ -183,60 +230,87 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
             downstream_filter_implies_clause(
                 exists_clause,
                 definition=self.definition,
-                filter_spec={"title": {"$in": [1]}},
+                filter_spec={'title': {'$in': [1]}},
             ),
             (None, None),
         )
 
-        self.assertEqual(document_for_search_path("meta.summary", "ada"), {"meta": {"summary": "ada"}})
-        self.assertTrue(compound_entry_ranking_supported(
-            compile_search_stage(
-                "$search",
-                {"index": "by_text", "compound": {"should": [{"exists": {"path": "title"}}]}},
-            ),
-            physical_name="fts_table",
-        ))
-        self.assertFalse(compound_entry_ranking_supported(
-            compile_search_stage(
-                "$search",
-                {"index": "by_text", "compound": {"should": [{"near": {"path": "score", "origin": 5, "pivot": 1}}]}},
-            ),
-            physical_name="fts_table",
-        ))
+        self.assertEqual(
+            document_for_search_path('meta.summary', 'ada'),
+            {'meta': {'summary': 'ada'}},
+        )
+        self.assertTrue(
+            compound_entry_ranking_supported(
+                compile_search_stage(
+                    '$search',
+                    {
+                        'index': 'by_text',
+                        'compound': {
+                            'should': [{'exists': {'path': 'title'}}]
+                        },
+                    },
+                ),
+                physical_name='fts_table',
+            )
+        )
+        self.assertFalse(
+            compound_entry_ranking_supported(
+                compile_search_stage(
+                    '$search',
+                    {
+                        'index': 'by_text',
+                        'compound': {
+                            'should': [
+                                {
+                                    'near': {
+                                        'path': 'score',
+                                        'origin': 5,
+                                        'pivot': 1,
+                                    }
+                                }
+                            ]
+                        },
+                    },
+                ),
+                physical_name='fts_table',
+            )
+        )
 
-    def test_compound_plan_and_downstream_implication_cover_empty_and_skip_paths(self) -> None:
+    def test_compound_plan_and_downstream_implication_cover_empty_and_skip_paths(
+        self,
+    ) -> None:
         only_should = compile_search_stage(
-            "$search",
+            '$search',
             {
-                "index": "by_text",
-                "compound": {
-                    "should": [{"text": {"query": "ada", "path": "title"}}],
-                    "minimumShouldMatch": 1,
+                'index': 'by_text',
+                'compound': {
+                    'should': [{'text': {'query': 'ada', 'path': 'title'}}],
+                    'minimumShouldMatch': 1,
                 },
             },
         )
         plan = sqlite_compound_candidate_plan(
             self.definition,
             only_should,
-            candidate_resolver=lambda _clause: (["a", "b"], "fts5", True),
+            candidate_resolver=lambda _clause: (['a', 'b'], 'fts5', True),
         )
-        self.assertEqual(plan.candidates, ("a", "b"))
+        self.assertEqual(plan.candidates, ('a', 'b'))
         self.assertTrue(plan.exact)
 
         impossible = sqlite_compound_candidate_plan(
             self.definition,
             only_should,
-            candidate_resolver=lambda _clause: ([], "fts5", True),
+            candidate_resolver=lambda _clause: ([], 'fts5', True),
         )
         self.assertEqual(impossible.candidates, ())
         self.assertTrue(impossible.exact)
 
         must_only = compile_search_stage(
-            "$search",
+            '$search',
             {
-                "index": "by_text",
-                "compound": {
-                    "must": [{"text": {"query": "ada", "path": "title"}}],
+                'index': 'by_text',
+                'compound': {
+                    'must': [{'text': {'query': 'ada', 'path': 'title'}}],
                 },
             },
         )
@@ -249,48 +323,51 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
         self.assertFalse(no_candidates.exact)
 
         optional_should = compile_search_stage(
-            "$search",
+            '$search',
             {
-                "index": "by_text",
-                "compound": {
-                    "should": [{"text": {"query": "ada", "path": "title"}}],
-                    "minimumShouldMatch": 0,
+                'index': 'by_text',
+                'compound': {
+                    'should': [{'text': {'query': 'ada', 'path': 'title'}}],
+                    'minimumShouldMatch': 0,
                 },
             },
         )
         no_candidates_after_should = sqlite_compound_candidate_plan(
             self.definition,
             optional_should,
-            candidate_resolver=lambda _clause: (["a"], "fts5", True),
+            candidate_resolver=lambda _clause: (['a'], 'fts5', True),
         )
         self.assertIsNone(no_candidates_after_should.candidates)
         self.assertFalse(no_candidates_after_should.exact)
 
         must_not_unknown = compile_search_stage(
-            "$search",
+            '$search',
             {
-                "index": "by_text",
-                "compound": {
-                    "must": [{"text": {"query": "ada", "path": "title"}}],
-                    "mustNot": [{"exists": {"path": "title"}}],
+                'index': 'by_text',
+                'compound': {
+                    'must': [{'text': {'query': 'ada', 'path': 'title'}}],
+                    'mustNot': [{'exists': {'path': 'title'}}],
                 },
             },
         )
         must_not_plan = sqlite_compound_candidate_plan(
             self.definition,
             must_not_unknown,
-            candidate_resolver=lambda clause: (["a"], "fts5", True),
+            candidate_resolver=lambda clause: (['a'], 'fts5', True),
             must_not_resolver=lambda _clause: (None, None, False),
         )
-        self.assertEqual(must_not_plan.candidates, ("a",))
+        self.assertEqual(must_not_plan.candidates, ('a',))
         self.assertFalse(must_not_plan.exact)
 
-        text_clause = compile_search_stage("$search", {"index": "by_text", "text": {"query": "ada", "path": "title"}})
+        text_clause = compile_search_stage(
+            '$search',
+            {'index': 'by_text', 'text': {'query': 'ada', 'path': 'title'}},
+        )
         self.assertEqual(
             downstream_filter_implies_clause(
                 text_clause,
                 definition=self.definition,
-                filter_spec={"body": {"$exists": True}},
+                filter_spec={'body': {'$exists': True}},
             ),
             (None, None),
         )
@@ -298,7 +375,7 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
             downstream_filter_implies_clause(
                 text_clause,
                 definition=self.definition,
-                filter_spec={"title": {"$in": [1]}},
+                filter_spec={'title': {'$in': [1]}},
             ),
             (None, None),
         )
@@ -306,7 +383,7 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
             downstream_filter_implies_clause(
                 text_clause,
                 definition=self.definition,
-                filter_spec={"title": {"$in": []}},
+                filter_spec={'title': {'$in': []}},
             ),
             (None, None),
         )
@@ -314,7 +391,7 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
             downstream_filter_implies_clause(
                 text_clause,
                 definition=self.definition,
-                filter_spec={"title": {"$exists": True}},
+                filter_spec={'title': {'$exists': True}},
             ),
             (None, None),
         )
@@ -322,7 +399,7 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
             downstream_filter_implies_clause(
                 text_clause,
                 definition=self.definition,
-                filter_spec={"title": 5},
+                filter_spec={'title': 5},
             ),
             (None, None),
         )
@@ -330,12 +407,89 @@ class SQLiteCompoundPrefilterTests(unittest.TestCase):
             downstream_filter_implies_clause(
                 text_clause,
                 definition=self.definition,
-                filter_spec={"title": {"$in": ["ada", "ada"]}},
+                filter_spec={'title': {'$in': ['ada', 'ada']}},
             ),
-            ("title", ["ada", "ada"]),
+            ('title', ['ada', 'ada']),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={'$or': [{'title': 'ada'}, {'kind': 'note'}]},
+            ),
+            (None, None),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={
+                    '$or': [{'kind': 'note'}, {'kind': 'reference'}],
+                    'title': 'ada',
+                },
+            ),
+            ('title', ['ada']),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={'$and': [], 'title': 'ada'},
+            ),
+            (None, None),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={'$nor': [], 'title': 'ada'},
+            ),
+            (None, None),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={'$unknown': 1, 'title': 'ada'},
+            ),
+            (None, None),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={'$nor': [{'kind': 'note'}], 'title': 'ada'},
+            ),
+            ('title', ['ada']),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={'$expr': {'$eq': [1, 1]}, 'title': 'ada'},
+            ),
+            ('title', ['ada']),
+        )
+        self.assertEqual(
+            downstream_filter_implies_clause(
+                text_clause,
+                definition=self.definition,
+                filter_spec={
+                    '$or': [{'title': 'ada'}, {'title': {'$in': ['ada']}}]
+                },
+            ),
+            ('title', ['ada', 'ada']),
         )
 
     def test_storage_key_helpers_cover_empty_and_frequency_paths(self) -> None:
         self.assertEqual(_intersect_storage_key_lists([]), [])
-        self.assertEqual(_storage_keys_with_minimum_frequency([["a", "b"], ["b", "c"]], 1), ["a", "b", "c"])
-        self.assertEqual(_storage_keys_with_minimum_frequency([["a", "b"], ["b", "c"], ["b"]], 2), ["b"])
+        self.assertEqual(
+            _storage_keys_with_minimum_frequency([['a', 'b'], ['b', 'c']], 1),
+            ['a', 'b', 'c'],
+        )
+        self.assertEqual(
+            _storage_keys_with_minimum_frequency(
+                [['a', 'b'], ['b', 'c'], ['b']], 2
+            ),
+            ['b'],
+        )

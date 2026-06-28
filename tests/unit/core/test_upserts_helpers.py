@@ -6,17 +6,21 @@ from mongoeco.core.upserts import _iter_seedable_filters
 
 
 class UpsertHelperTests(unittest.TestCase):
-    def test_iter_seedable_filters_skips_non_list_and_unknown_operator_shapes(self):
+    def test_iter_seedable_filters_skips_non_list_and_unknown_operator_shapes(
+        self,
+    ):
         self.assertEqual(
             list(
                 _iter_seedable_filters(
                     {
-                        "$and": "bad",
-                        "$or": [{"tenant": {"$eq": "ignored"}}],
-                        "tenant": {"$eq": "a"},
-                        "kind": {"$in": ["note"]},
+                        '$and': 'bad',
+                        '$or': [{'tenant': {'$eq': 'ignored'}}],
+                        1: 'ignored',
+                        'tenant': {'$eq': 'a'},
+                        'kind': {'$in': ['note']},
+                        'ambiguous': {'$eq': 'ignored', 'nested': 1},
                     }
                 )
             ),
-            [("tenant", "a"), ("kind", "note")],
+            [('tenant', 'a'), ('kind', 'note')],
         )

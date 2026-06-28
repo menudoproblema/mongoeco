@@ -23,16 +23,20 @@ from mongoeco.core.search import (
     matches_search_query,
     search_query_operator_name,
 )
-from mongoeco.core.search_filter_prefilter import flatten_candidate_filter_clauses
+from mongoeco.core.query_operators import is_non_empty_document_clause_list
 from mongoeco.types import Document, SearchIndexDefinition
 
 
 class _SQLiteCompoundEngine(Protocol):
-    def _sqlite_table_exists(self, conn: sqlite3.Connection, table_name: str) -> bool: ...
+    def _sqlite_table_exists(
+        self, conn: sqlite3.Connection, table_name: str
+    ) -> bool: ...
     def _quote_identifier(self, identifier: str) -> str: ...
 
 
-CandidateResolver = Callable[[SearchQuery], tuple[list[str] | None, str | None, bool]]
+CandidateResolver = Callable[
+    [SearchQuery], tuple[list[str] | None, str | None, bool]
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,11 +49,11 @@ class DownstreamFilterRefinement:
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "applied": self.applied,
-            "path": self.path,
-            "valueCount": self.value_count,
-            "backend": self.backend,
-            "exact": self.exact,
+            'applied': self.applied,
+            'path': self.path,
+            'valueCount': self.value_count,
+            'backend': self.backend,
+            'exact': self.exact,
         }
 
 
@@ -64,20 +68,22 @@ class CompoundClausePlan:
     @property
     def clause_class(self) -> str:
         if not self.candidateable:
-            return "post-match-only"
+            return 'post-match-only'
         if self.exact:
-            return "candidateable-exact"
-        return "candidateable-ranking"
+            return 'candidateable-exact'
+        return 'candidateable-ranking'
 
     def to_dict(self) -> dict[str, object]:
         payload: dict[str, object] = {
-            "operator": self.operator,
-            "candidateable": self.candidateable,
-            "exact": self.exact if self.candidateable else False,
-            "backend": self.backend,
+            'operator': self.operator,
+            'candidateable': self.candidateable,
+            'exact': self.exact if self.candidateable else False,
+            'backend': self.backend,
         }
         if self.downstream_refinement is not None:
-            payload["downstreamRefinement"] = self.downstream_refinement.to_dict()
+            payload['downstreamRefinement'] = (
+                self.downstream_refinement.to_dict()
+            )
         return payload
 
 
@@ -88,8 +94,8 @@ class CompoundPartialRankingPlan:
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "supported": self.supported,
-            "strategy": self.strategy,
+            'supported': self.supported,
+            'strategy': self.strategy,
         }
 
 
@@ -101,7 +107,9 @@ class CompoundCandidatePlan:
     should_candidates: tuple[tuple[str, ...], ...]
     non_candidateable_should: int
 
-    def to_legacy_tuple(self) -> tuple[list[str] | None, str | None, bool, list[list[str]], int]:
+    def to_legacy_tuple(
+        self,
+    ) -> tuple[list[str] | None, str | None, bool, list[list[str]], int]:
         return (
             list(self.candidates) if self.candidates is not None else None,
             self.backend,
@@ -127,13 +135,15 @@ def sqlite_compound_candidate_plan(
     exact = True
 
     for clause in (*query.must, *query.filter):
-        storage_keys, _backend, clause_exact, _refinement = compound_clause_candidate_state(
-            definition=definition,
-            clause=clause,
-            candidate_resolver=candidate_resolver,
-            downstream_filter_storage_keys=downstream_filter_storage_keys,
-            downstream_filter_spec=downstream_filter_spec,
-            downstream_filter_exact=downstream_filter_exact,
+        storage_keys, _backend, clause_exact, _refinement = (
+            compound_clause_candidate_state(
+                definition=definition,
+                clause=clause,
+                candidate_resolver=candidate_resolver,
+                downstream_filter_storage_keys=downstream_filter_storage_keys,
+                downstream_filter_spec=downstream_filter_spec,
+                downstream_filter_exact=downstream_filter_exact,
+            )
         )
         if storage_keys is not None:
             candidate_intersections.append(storage_keys)
@@ -142,13 +152,15 @@ def sqlite_compound_candidate_plan(
             exact = False
 
     for clause in query.should:
-        storage_keys, _backend, clause_exact, _refinement = compound_clause_candidate_state(
-            definition=definition,
-            clause=clause,
-            candidate_resolver=candidate_resolver,
-            downstream_filter_storage_keys=downstream_filter_storage_keys,
-            downstream_filter_spec=downstream_filter_spec,
-            downstream_filter_exact=downstream_filter_exact,
+        storage_keys, _backend, clause_exact, _refinement = (
+            compound_clause_candidate_state(
+                definition=definition,
+                clause=clause,
+                candidate_resolver=candidate_resolver,
+                downstream_filter_storage_keys=downstream_filter_storage_keys,
+                downstream_filter_spec=downstream_filter_spec,
+                downstream_filter_exact=downstream_filter_exact,
+            )
         )
         if storage_keys is None:
             non_candidateable_should += 1
@@ -157,9 +169,15 @@ def sqlite_compound_candidate_plan(
         should_candidates.append(storage_keys)
         exact = exact and clause_exact
 
-    candidates = _intersect_storage_key_lists(candidate_intersections) if candidate_intersections else None
+    candidates = (
+        _intersect_storage_key_lists(candidate_intersections)
+        if candidate_intersections
+        else None
+    )
     if should_candidates:
-        required_candidateable_should = max(0, query.minimum_should_match - non_candidateable_should)
+        required_candidateable_should = max(
+            0, query.minimum_should_match - non_candidateable_should
+        )
         if required_candidateable_should > 0:
             merged_should = _storage_keys_with_minimum_frequency(
                 should_candidates,
@@ -169,13 +187,19 @@ def sqlite_compound_candidate_plan(
                 candidates = merged_should
             else:
                 merged_should_set = set(merged_should)
-                candidates = [storage_key for storage_key in candidates if storage_key in merged_should_set]
+                candidates = [
+                    storage_key
+                    for storage_key in candidates
+                    if storage_key in merged_should_set
+                ]
     elif candidates is None:
         return CompoundCandidatePlan(
             candidates=None,
             backend=None,
             exact=False,
-            should_candidates=tuple(tuple(values) for values in should_candidates),
+            should_candidates=tuple(
+                tuple(values) for values in should_candidates
+            ),
             non_candidateable_should=non_candidateable_should,
         )
 
@@ -184,13 +208,19 @@ def sqlite_compound_candidate_plan(
             candidates=None,
             backend=None,
             exact=False,
-            should_candidates=tuple(tuple(values) for values in should_candidates),
+            should_candidates=tuple(
+                tuple(values) for values in should_candidates
+            ),
             non_candidateable_should=non_candidateable_should,
         )
 
     if downstream_filter_storage_keys is not None:
         downstream_set = set(downstream_filter_storage_keys)
-        candidates = [storage_key for storage_key in candidates if storage_key in downstream_set]
+        candidates = [
+            storage_key
+            for storage_key in candidates
+            if storage_key in downstream_set
+        ]
         exact = exact and downstream_filter_exact
 
     if query.must_not:
@@ -206,11 +236,15 @@ def sqlite_compound_candidate_plan(
             else:
                 exact = False
         if excluded:
-            candidates = [storage_key for storage_key in candidates if storage_key not in excluded]
+            candidates = [
+                storage_key
+                for storage_key in candidates
+                if storage_key not in excluded
+            ]
 
     return CompoundCandidatePlan(
         candidates=tuple(candidates),
-        backend="fts5-prefilter",
+        backend='fts5-prefilter',
         exact=exact,
         should_candidates=tuple(tuple(values) for values in should_candidates),
         non_candidateable_should=non_candidateable_should,
@@ -225,7 +259,9 @@ def compound_clause_candidate_state(
     downstream_filter_storage_keys: list[str] | None,
     downstream_filter_spec: dict[str, object] | None,
     downstream_filter_exact: bool,
-) -> tuple[list[str] | None, str | None, bool, DownstreamFilterRefinement | None]:
+) -> tuple[
+    list[str] | None, str | None, bool, DownstreamFilterRefinement | None
+]:
     storage_keys, backend, clause_exact = candidate_resolver(clause)
     implied_path, implied_values = downstream_filter_implies_clause(
         clause,
@@ -237,14 +273,23 @@ def compound_clause_candidate_state(
     refined_keys = downstream_filter_storage_keys
     if storage_keys is not None:
         refined_set = set(refined_keys)
-        refined_keys = [storage_key for storage_key in storage_keys if storage_key in refined_set]
-    refined_backend = "downstream-filter" if backend is None else f"{backend}+downstream-filter"
+        refined_keys = [
+            storage_key
+            for storage_key in storage_keys
+            if storage_key in refined_set
+        ]
+    refined_backend = (
+        'downstream-filter'
+        if backend is None
+        else f'{backend}+downstream-filter'
+    )
     refinement = DownstreamFilterRefinement(
         applied=True,
         path=implied_path,
         value_count=len(implied_values or ()),
         backend=refined_backend,
-        exact=downstream_filter_exact and (clause_exact if storage_keys is not None else True),
+        exact=downstream_filter_exact
+        and (clause_exact if storage_keys is not None else True),
     )
     return refined_keys, refined_backend, refinement.exact, refinement
 
@@ -259,20 +304,25 @@ def describe_compound_prefilter(
     downstream_filter_storage_keys: list[str] | None = None,
 ) -> dict[str, object]:
     downstream_filter_spec = (
-        downstream_filter.get("spec")
-        if isinstance(downstream_filter, dict) and isinstance(downstream_filter.get("spec"), dict)
+        downstream_filter.get('spec')
+        if isinstance(downstream_filter, dict)
+        and isinstance(downstream_filter.get('spec'), dict)
         else None
     )
-    downstream_filter_exact = bool(isinstance(downstream_filter, dict) and downstream_filter.get("exact"))
+    downstream_filter_exact = bool(
+        isinstance(downstream_filter, dict) and downstream_filter.get('exact')
+    )
 
     def _describe_clause(clause: SearchQuery) -> CompoundClausePlan:
-        storage_keys, backend, exact, refinement = compound_clause_candidate_state(
-            definition=definition,
-            clause=clause,
-            candidate_resolver=candidate_resolver,
-            downstream_filter_storage_keys=downstream_filter_storage_keys,
-            downstream_filter_spec=downstream_filter_spec,
-            downstream_filter_exact=downstream_filter_exact,
+        storage_keys, backend, exact, refinement = (
+            compound_clause_candidate_state(
+                definition=definition,
+                clause=clause,
+                candidate_resolver=candidate_resolver,
+                downstream_filter_storage_keys=downstream_filter_storage_keys,
+                downstream_filter_spec=downstream_filter_spec,
+                downstream_filter_exact=downstream_filter_exact,
+            )
         )
         return CompoundClausePlan(
             operator=search_query_operator_name(clause),
@@ -286,46 +336,64 @@ def describe_compound_prefilter(
     filter_plans = [_describe_clause(clause) for clause in query.filter]
     should_plans = [_describe_clause(clause) for clause in query.should]
     must_not_plans = [_describe_clause(clause) for clause in query.must_not]
-    non_candidateable_should = sum(1 for clause in should_plans if not clause.candidateable)
+    non_candidateable_should = sum(
+        1 for clause in should_plans if not clause.candidateable
+    )
     partial_ranking = CompoundPartialRankingPlan(
-        supported=compound_entry_ranking_supported(query, physical_name=physical_name),
-        strategy="fts-materialized-entries" if compound_entry_ranking_supported(query, physical_name=physical_name) else None,
+        supported=compound_entry_ranking_supported(
+            query, physical_name=physical_name
+        ),
+        strategy='fts-materialized-entries'
+        if compound_entry_ranking_supported(query, physical_name=physical_name)
+        else None,
     )
     return {
-        "must": [plan.to_dict() for plan in must_plans],
-        "filter": [plan.to_dict() for plan in filter_plans],
-        "should": [plan.to_dict() for plan in should_plans],
-        "mustNot": [plan.to_dict() for plan in must_not_plans],
-        "clauseClasses": {
-            "must": [plan.clause_class for plan in must_plans],
-            "filter": [plan.clause_class for plan in filter_plans],
-            "should": [plan.clause_class for plan in should_plans],
-            "mustNot": [plan.clause_class for plan in must_not_plans],
+        'must': [plan.to_dict() for plan in must_plans],
+        'filter': [plan.to_dict() for plan in filter_plans],
+        'should': [plan.to_dict() for plan in should_plans],
+        'mustNot': [plan.to_dict() for plan in must_not_plans],
+        'clauseClasses': {
+            'must': [plan.clause_class for plan in must_plans],
+            'filter': [plan.clause_class for plan in filter_plans],
+            'should': [plan.clause_class for plan in should_plans],
+            'mustNot': [plan.clause_class for plan in must_not_plans],
         },
-        "downstreamFilter": deepcopy(downstream_filter) if downstream_filter is not None else None,
-        "requiredCandidateableShould": max(0, query.minimum_should_match - non_candidateable_should),
-        "candidateableShouldCount": sum(1 for clause in should_plans if clause.candidateable),
-        "candidateableShouldOperators": [plan.operator for plan in should_plans if plan.candidateable],
-        "partialRanking": partial_ranking.to_dict(),
+        'downstreamFilter': deepcopy(downstream_filter)
+        if downstream_filter is not None
+        else None,
+        'requiredCandidateableShould': max(
+            0, query.minimum_should_match - non_candidateable_should
+        ),
+        'candidateableShouldCount': sum(
+            1 for clause in should_plans if clause.candidateable
+        ),
+        'candidateableShouldOperators': [
+            plan.operator for plan in should_plans if plan.candidateable
+        ],
+        'partialRanking': partial_ranking.to_dict(),
     }
 
 
-def textual_search_field_types(definition: SearchIndexDefinition) -> dict[str, str]:
+def textual_search_field_types(
+    definition: SearchIndexDefinition,
+) -> dict[str, str]:
     result: dict[str, str] = {}
-    mappings = definition.definition.get("mappings")
+    mappings = definition.definition.get('mappings')
     if not isinstance(mappings, dict):
         return result
 
-    def _walk(node: dict[str, object], prefix: str = "") -> None:
-        fields = node.get("fields")
+    def _walk(node: dict[str, object], prefix: str = '') -> None:
+        fields = node.get('fields')
         if not isinstance(fields, dict):
             return
         for field_name, field_spec in fields.items():
-            if not isinstance(field_name, str) or not isinstance(field_spec, dict):
+            if not isinstance(field_name, str) or not isinstance(
+                field_spec, dict
+            ):
                 continue
-            path = f"{prefix}.{field_name}" if prefix else field_name
-            mapping_type = field_spec.get("type", "document")
-            if mapping_type == "document":
+            path = f'{prefix}.{field_name}' if prefix else field_name
+            mapping_type = field_spec.get('type', 'document')
+            if mapping_type == 'document':
                 _walk(field_spec, path)
                 continue
             if isinstance(mapping_type, str):
@@ -343,37 +411,130 @@ def downstream_filter_implies_clause(
 ) -> tuple[str | None, list[object] | None]:
     if filter_spec is None:
         return None, None
-    clauses = flatten_candidate_filter_clauses(filter_spec)
     search_paths = clause_search_paths(clause)
-    if clauses is None or search_paths is None:
+    if search_paths is None:
         return None, None
-    for path, raw_value in clauses:
-        if path not in search_paths:
+    implied = _filter_implied_search_clause(
+        filter_spec,
+        clause=clause,
+        definition=definition,
+        search_paths=search_paths,
+    )
+    return implied if implied is not None else (None, None)
+
+
+def _filter_implied_search_clause(
+    filter_spec: dict[str, object],
+    *,
+    clause: SearchQuery,
+    definition: SearchIndexDefinition,
+    search_paths: tuple[str, ...],
+) -> tuple[str, list[object]] | None:
+    implied: list[tuple[str, list[object]]] = []
+    for key, value in filter_spec.items():
+        if key == '$and':
+            if not is_non_empty_document_clause_list(value):
+                return None
+            for item in value:
+                nested = _filter_implied_search_clause(
+                    item,
+                    clause=clause,
+                    definition=definition,
+                    search_paths=search_paths,
+                )
+                if nested is not None:
+                    implied.append(nested)
             continue
-        values: list[object]
-        if raw_value == {"$exists": True}:
-            if isinstance(clause, SearchExistsQuery):
-                return path, [object()]
-            continue
-        if isinstance(raw_value, str):
-            values = [raw_value]
-        elif isinstance(raw_value, dict) and set(raw_value) == {"$in"} and isinstance(raw_value["$in"], list):
-            if not raw_value["$in"] or not all(isinstance(item, str) for item in raw_value["$in"]):
+        if key == '$or':
+            nested_values: list[tuple[str, list[object]]] = []
+            if not is_non_empty_document_clause_list(value):
+                return None
+            for item in value:
+                nested = _filter_implied_search_clause(
+                    item,
+                    clause=clause,
+                    definition=definition,
+                    search_paths=search_paths,
+                )
+                if nested is None:
+                    nested_values = []
+                    break
+                nested_values.append(nested)
+            if not nested_values:
                 continue
-            values = list(raw_value["$in"])
-        else:
+            nested_paths = {path for path, _values in nested_values}
+            if len(nested_paths) != 1:
+                continue
+            path = next(iter(nested_paths))
+            values = [
+                item
+                for _path, branch_values in nested_values
+                for item in branch_values
+            ]
+            implied.append((path, values))
             continue
-        if all(
-            matches_search_query(
-                document_for_search_path(path, value),
-                definition=definition,
-                query=clause,
-                materialized=materialize_search_document(document_for_search_path(path, value), definition),
-            )
-            for value in values
+        if key == '$nor':
+            if not is_non_empty_document_clause_list(value):
+                return None
+            continue
+        if key in {'$comment', '$expr', '$jsonSchema', '$where'}:
+            continue
+        if not isinstance(key, str) or key.startswith('$'):
+            return None
+        nested = _filter_field_implied_search_clause(
+            key,
+            value,
+            clause=clause,
+            definition=definition,
+            search_paths=search_paths,
+        )
+        if nested is not None:
+            implied.append(nested)
+    return implied[0] if implied else None
+
+
+def _filter_field_implied_search_clause(
+    path: str,
+    raw_value: object,
+    *,
+    clause: SearchQuery,
+    definition: SearchIndexDefinition,
+    search_paths: tuple[str, ...],
+) -> tuple[str, list[object]] | None:
+    if path not in search_paths:
+        return None
+    values: list[object]
+    if raw_value == {'$exists': True}:
+        if isinstance(clause, SearchExistsQuery):
+            return path, [object()]
+        return None
+    if isinstance(raw_value, str):
+        values = [raw_value]
+    elif (
+        isinstance(raw_value, dict)
+        and set(raw_value) == {'$in'}
+        and isinstance(raw_value['$in'], list)
+    ):
+        if not raw_value['$in'] or not all(
+            isinstance(item, str) for item in raw_value['$in']
         ):
-            return path, values
-    return None, None
+            return None
+        values = list(raw_value['$in'])
+    else:
+        return None
+    if all(
+        matches_search_query(
+            document_for_search_path(path, value),
+            definition=definition,
+            query=clause,
+            materialized=materialize_search_document(
+                document_for_search_path(path, value), definition
+            ),
+        )
+        for value in values
+    ):
+        return path, values
+    return None
 
 
 def clause_search_paths(clause: SearchQuery) -> tuple[str, ...] | None:
@@ -391,12 +552,18 @@ def clause_search_paths(clause: SearchQuery) -> tuple[str, ...] | None:
             SearchRangeQuery,
         ),
     ):
-        return (clause.path,) if isinstance(clause, (SearchInQuery, SearchEqualsQuery, SearchRangeQuery)) else clause.paths
+        return (
+            (clause.path,)
+            if isinstance(
+                clause, (SearchInQuery, SearchEqualsQuery, SearchRangeQuery)
+            )
+            else clause.paths
+        )
     return None
 
 
 def document_for_search_path(path: str, value: object) -> Document:
-    parts = [part for part in path.split(".") if part]
+    parts = [part for part in path.split('.') if part]
     document: dict[str, object] = {}
     current = document
     for part in parts[:-1]:
@@ -417,7 +584,16 @@ def compound_entry_ranking_supported(
         physical_name
         and query.should
         and not any(
-            isinstance(clause, (SearchInQuery, SearchEqualsQuery, SearchRangeQuery, SearchNearQuery, SearchCompoundQuery))
+            isinstance(
+                clause,
+                (
+                    SearchInQuery,
+                    SearchEqualsQuery,
+                    SearchRangeQuery,
+                    SearchNearQuery,
+                    SearchCompoundQuery,
+                ),
+            )
             for clause in query.should
         )
     )
@@ -446,7 +622,9 @@ def _storage_keys_with_minimum_frequency(
             order.setdefault(storage_key, len(order))
     return [
         storage_key
-        for storage_key, count in sorted(counts.items(), key=lambda item: order[item[0]])
+        for storage_key, count in sorted(
+            counts.items(), key=lambda item: order[item[0]]
+        )
         if count >= minimum
     ]
 
