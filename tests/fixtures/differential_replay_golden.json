@@ -24,6 +24,46 @@
         ]
       }
     ],
+    "boolean_filter_matrix": {
+      "find_or_with_siblings": [
+        "active-update-open",
+        "active-work-open",
+        "missing-status-open"
+      ],
+      "find_nested_and_or": [
+        "active-update-open",
+        "active-work-open",
+        "missing-status-open"
+      ],
+      "find_nor_with_sibling": [
+        "active-update-open",
+        "active-work-open",
+        "missing-status-open"
+      ],
+      "find_dotted_array_or": [
+        "active-work-done",
+        "active-work-open",
+        "retired-work-open"
+      ],
+      "find_expr_with_or_and_siblings": [
+        "active-work-open",
+        "pending-quiz-open"
+      ],
+      "aggregate_match_or_with_siblings": [
+        "active-update-open",
+        "active-work-open",
+        "missing-status-open"
+      ],
+      "aggregate_match_expr_with_or_and_siblings": [
+        "active-work-open",
+        "pending-quiz-open"
+      ],
+      "aggregate_match_dotted_array_or": [
+        "active-work-done",
+        "active-work-open",
+        "retired-work-open"
+      ]
+    },
     "find_all_with_multiple_elem_match": [
       "1"
     ],
