@@ -8,6 +8,8 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.5.1] - 2026-06-28
+
 ### Added
 
 - Se añade un caso diferencial contra MongoDB real para una matriz de filtros
