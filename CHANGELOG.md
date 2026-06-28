@@ -8,6 +8,43 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Se añade un caso diferencial contra MongoDB real para una matriz de filtros
+  booleanos que cubre `$or` con campos hermanos, `$and` anidado, `$nor`,
+  `$expr` y dotted paths sobre arrays en `find()` y `aggregate()`, junto con
+  replay golden local para Memory y SQLite.
+
+### Changed
+
+- Se centraliza la clasificacion de operadores de query y la validacion de
+  listas de clausulas booleanas en `mongoeco.core.query_operators`, compartida
+  por `$match`, prefilters de search/vector, `$pull`, `$elemMatch`, upserts y
+  traduccion SQL.
+
+### Fixed
+
+- Las operaciones basadas en documentos previamente seleccionados validan ahora
+  identidad estable por `_id`/storage key en vez de comparar el documento
+  completo, evitando falsos `selected document storage mismatch` en rutas como
+  `delete_many()`, `find_one_and_delete()`, `update_many()`,
+  `find_one_and_update()` y `find_one_and_replace()`.
+- `aggregate()` acepta el alias PyMongo `allowDiskUse` ademas de
+  `allow_disk_use`, y el mock async incorpora soporte de `bulk_write()` para
+  los casos `UpdateOne`/upsert usados por migraciones idempotentes.
+- `$match` y los prefilters locales preservan correctamente combinaciones de
+  `$or` con campos hermanos, `$expr`, `$and`/`$nor` anidados y dotted paths
+  sobre arrays, evitando falsos negativos en aggregation y filtros downstream
+  de `$search`/`$vectorSearch`.
+- `$pull` soporta condiciones con operadores top-level como `$or`, `$and`,
+  `$nor` y `$expr` sobre documentos embebidos, y las rutas posicionales de
+  update/projection manejan selectores de array con `$or` y campos hermanos.
+- Los filtros con claves de campo no-string fallan o degradan de forma
+  controlada en `compile_filter()`, prefilters y upsert seeding, evitando
+  `AttributeError` en rutas indirectas de optimizacion.
+- La traduccion SQL de nodos booleanos vacios queda alineada con la semantica
+  canonica local: `AndCondition(())` es verdadero y `OrCondition(())` es falso.
+
 ## [3.5.0] - 2026-06-27
 
 ### Changed
