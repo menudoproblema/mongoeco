@@ -1,0 +1,224 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - sanity
+  - quality
+  - test
+  - contract
+  - package
+  - artifact
+  - diagnostics
+  - external
+
+default:
+  interruptible: true
+  retry:
+    max: 1
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+
+variables:
+  PYTHON_VERSION: "3.13"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_ROOT_USER_ACTION: "ignore"
+  MONGOECO_PYPI_CONTRACT_VERSION: "3.3.0"
+
+.python-job:
+  image: "python:${PYTHON_VERSION}-bookworm"
+  cache:
+    key: "pip-${CI_JOB_NAME_SLUG}-${PYTHON_VERSION}"
+    paths:
+      - .cache/pip/
+  before_script:
+    - python -VV
+    - python -m pip install --upgrade pip
+
+sanity:minimal-imports:
+  extends: .python-job
+  stage: sanity
+  script:
+    - python -m pip install -e '.[dev]'
+    - python -m unittest tests.unit.test_optional_bson_imports tests.unit.test_module_imports tests.unit.test_public_exports
+
+quality:compile:
+  extends: .python-job
+  stage: quality
+  script:
+    - python -m pip install -e '.[dev,wire]'
+    - python -m compileall -q src tests scripts benchmarks
+    - python -m ruff check --select E9 src tests scripts benchmarks
+
+quality:pre-commit:
+  extends: .python-job
+  stage: quality
+  allow_failure: true
+  script:
+    - python -m pip install -e '.[dev]'
+    - pre-commit run --all-files --show-diff-on-failure
+  rules:
+    - if: '$MONGOECO_RUN_PRE_COMMIT == "1"'
+    - when: manual
+      allow_failure: true
+
+test:pytest:
+  extends: .python-job
+  stage: test
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.13", "3.14"]
+  coverage: '/^TOTAL\s+.*\s+(\d+(?:\.\d+)?)%$/'
+  script:
+    - python -m pip install -e '.[dev,wire,json-fast]'
+    - python -m pip install -r benchmarks/requirements.txt
+    - mkdir -p reports
+    - python -m pytest --junitxml=reports/pytest.xml --cov=src/mongoeco --cov-report=xml:reports/coverage.xml --cov-report=term-missing --cov-fail-under=99 -q
+  artifacts:
+    when: always
+    expire_in: 1 week
+    reports:
+      junit: reports/pytest.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: reports/coverage.xml
+    paths:
+      - reports/
+
+test:unittest-discovery:
+  extends: .python-job
+  stage: test
+  script:
+    - python -m pip install -e '.[dev,wire]'
+    - python -m unittest discover -s tests -p 'test*.py'
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$MONGOECO_RUN_UNITTEST == "1"'
+    - when: manual
+      allow_failure: true
+
+contract:compat-snapshots:
+  extends: .python-job
+  stage: contract
+  script:
+    - python -m pip install -e '.[dev,wire]'
+    - python scripts/update_compat_snapshots.py
+    - git diff --exit-code -- tests/fixtures/compat_catalog_snapshot.json tests/fixtures/compat_catalog_snapshot.md
+
+contract:pypi-release:
+  extends: .python-job
+  stage: contract
+  allow_failure: true
+  script:
+    - python scripts/smoke_pypi_contract.py --version "$MONGOECO_PYPI_CONTRACT_VERSION"
+  rules:
+    - if: '$MONGOECO_RUN_PYPI_CONTRACT == "1"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - when: manual
+      allow_failure: true
+
+package:dist:
+  extends: .python-job
+  stage: package
+  script:
+    - python -m pip install -e '.[dev,wire]'
+    - rm -rf build dist src/*.egg-info
+    - python -m build --sdist --wheel
+    - python -m twine check dist/*
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - dist/
+
+artifact:smoke-install:
+  extends: .python-job
+  stage: artifact
+  needs:
+    - job: package:dist
+      artifacts: true
+  script:
+    - python scripts/smoke_installed_wheel.py --wheel dist/*.whl
+    - python scripts/smoke_installed_wheel.py --sdist dist/*.tar.gz
+
+diagnostics:benchmark-smoke:
+  extends: .python-job
+  stage: diagnostics
+  variables:
+    PYTHON_VERSION: "3.14"
+  script:
+    - python -m pip install -e '.[dev,wire,json-fast]'
+    - python -m pip install -r benchmarks/requirements.txt
+    - mkdir -p reports/benchmarks
+    - python -m benchmarks.run --engine memory-sync --size 250 --warmup 0 --repetitions 1 --workload search_diagnostics --workload vector_search_diagnostics --format json > reports/benchmarks/memory-search-vector.json
+    - python -m benchmarks.run --engine sqlite-sync --size 250 --warmup 0 --repetitions 1 --workload search_diagnostics --workload vector_search_diagnostics --format json > reports/benchmarks/sqlite-search-vector.json
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - reports/benchmarks/
+  rules:
+    - if: '$MONGOECO_SKIP_BENCHMARK_SMOKE == "1"'
+      when: never
+    - when: on_success
+
+.real-mongodb-differential:
+  extends: .python-job
+  stage: external
+  variables:
+    MONGOECO_REAL_MONGODB_URI: "mongodb://mongodb:27017"
+  before_script:
+    - python -VV
+    - python -m pip install --upgrade pip
+    - python -m pip install -e '.[dev,mongodb-real]'
+    - |
+      python - <<'PY'
+      import os
+      import time
+
+      from pymongo import MongoClient
+
+      uri = os.environ["MONGOECO_REAL_MONGODB_URI"]
+      deadline = time.time() + 45
+      last_error = None
+      while time.time() < deadline:
+          try:
+              client = MongoClient(uri, serverSelectionTimeoutMS=1000)
+              client.admin.command("ping")
+              print("mongodb", client.server_info().get("version"))
+              break
+          except Exception as exc:
+              last_error = exc
+              time.sleep(1)
+      else:
+          raise SystemExit(f"MongoDB service did not become ready: {last_error}")
+      PY
+  rules:
+    - if: '$MONGOECO_RUN_REAL_MONGODB == "1"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - when: manual
+      allow_failure: true
+
+external:mongodb7-differential:
+  extends: .real-mongodb-differential
+  services:
+    - name: mongo:7.0
+      alias: mongodb
+  script:
+    - python scripts/run_mongodb7_differential.py
+
+external:mongodb8-differential:
+  extends: .real-mongodb-differential
+  services:
+    - name: mongo:8.0
+      alias: mongodb
+  script:
+    - python scripts/run_mongodb8_differential.py
