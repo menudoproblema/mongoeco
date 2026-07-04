@@ -1,4 +1,5 @@
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from itertools import product
 
 from mongoeco.core.compiled_query import CompiledQuery
@@ -286,3 +287,37 @@ class CompiledQueryTests(unittest.TestCase):
                 {'score': 5}
             )
         )
+
+    def test_compiled_query_template_cache_does_not_share_values(self):
+        CompiledQuery._compile_expression.cache_clear()
+        active = CompiledQuery(compile_filter({'status': 'active'}))
+        retired = CompiledQuery(compile_filter({'status': 'retired'}))
+
+        self.assertIs(active._match_func, retired._match_func)
+        self.assertTrue(active.match({'status': 'active'}))
+        self.assertFalse(active.match({'status': 'retired'}))
+        self.assertTrue(retired.match({'status': 'retired'}))
+        self.assertFalse(retired.match({'status': 'active'}))
+        self.assertGreaterEqual(
+            CompiledQuery._compile_expression.cache_info().hits,
+            1,
+        )
+
+    def test_compiled_query_template_cache_is_safe_under_threads(self):
+        filters = [
+            {'status': f'status-{index % 4}'}
+            for index in range(64)
+        ]
+
+        def _exercise(filter_spec):
+            compiled = CompiledQuery(compile_filter(filter_spec))
+            expected = filter_spec['status']
+            return (
+                compiled.match({'status': expected}),
+                compiled.match({'status': 'other'}),
+            )
+
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            results = list(executor.map(_exercise, filters))
+
+        self.assertEqual(results, [(True, False)] * len(filters))

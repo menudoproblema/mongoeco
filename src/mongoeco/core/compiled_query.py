@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Any
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec, compare_with_collation
@@ -43,38 +44,44 @@ class CompiledQuery:
         self.dialect = dialect
         self.collation = collation
         self._variable_prefix = variable_prefix
-        self._context: dict[str, Any] = {
-            'dialect': dialect,
-            'collation': collation,
-            'compare': compare_with_collation,
-        }
+        self._values: list[Any] = []
         self._store_counter = 0
-
-        from mongoeco.core.filtering import QueryEngine
-
-        self._context['extract'] = QueryEngine.extract_values
-        self._context['eq_matches'] = QueryEngine._query_equality_matches
-        self._context['top_eq'] = QueryEngine._match_top_level_equals
-        self._context['top_compare'] = QueryEngine._match_top_level_comparison
-        self._context['in_matches'] = QueryEngine._in_item_matches_candidate
-        self._context['match_plan'] = QueryEngine.match_plan
+        self._local_counter = 0
 
         self._match_func = self._compile(plan)
 
     def match(self, document: Document) -> bool:
-        return self._match_func(document)
+        return self._match_func(document, self._values, self.dialect, self.collation)
 
     def get_inline_code(self, prefix: str | None = None) -> str:
         if prefix is not None:
             self._variable_prefix = prefix
         self._store_counter = 0
+        self._local_counter = 0
+        self._values = []
         return self._node_to_code(self.plan, depth=0)
 
     def _compile(self, node: QueryNode) -> Any:
         expression = self.get_inline_code()
+        return self._compile_expression(expression)
+
+    @staticmethod
+    @lru_cache(maxsize=2048)
+    def _compile_expression(expression: str) -> Any:
+        from mongoeco.core.filtering import QueryEngine
+
+        context: dict[str, Any] = {
+            'compare': compare_with_collation,
+            'extract': QueryEngine.extract_values,
+            'eq_matches': QueryEngine._query_equality_matches,
+            'top_eq': QueryEngine._match_top_level_equals,
+            'top_compare': QueryEngine._match_top_level_comparison,
+            'in_matches': QueryEngine._in_item_matches_candidate,
+            'match_plan': QueryEngine.match_plan,
+        }
         # Local variable binding for performance
         function_code = (
-            'def match_logic(doc):\n'
+            'def match_logic(doc, values, dialect, collation):\n'
             '    _extract = extract\n'
             '    _eq_matches = eq_matches\n'
             '    _top_eq = top_eq\n'
@@ -88,7 +95,7 @@ class CompiledQuery:
         )
 
         local_vars: dict[str, Any] = {}
-        exec(function_code, self._context, local_vars)
+        exec(function_code, context, local_vars)
         return local_vars['match_logic']
 
     def _node_to_code(self, node: QueryNode, depth: int) -> str:
@@ -100,7 +107,7 @@ class CompiledQuery:
                 value=value,
                 null_matches_undefined=null_matches_undefined,
             ):
-                field_key = self._store('field', field)
+                field_key = self._field(field)
                 value_key = self._store('value', value)
                 if '.' not in field:
                     return (
@@ -117,7 +124,7 @@ class CompiledQuery:
                     ')'
                 )
             case NotEqualsCondition(field=field, value=value):
-                field_key = self._store('field', field)
+                field_key = self._field(field)
                 value_key = self._store('value', value)
                 values_name = self._local('ne_values')
                 return (
@@ -141,7 +148,7 @@ class CompiledQuery:
                 values=values,
                 null_matches_undefined=null_matches_undefined,
             ):
-                field_key = self._store('field', field)
+                field_key = self._field(field)
                 value_key = self._store('values', values)
                 return (
                     'any('
@@ -156,7 +163,7 @@ class CompiledQuery:
                 values=values,
                 null_matches_undefined=null_matches_undefined,
             ):
-                field_key = self._store('field', field)
+                field_key = self._field(field)
                 value_key = self._store('values', values)
                 values_name = self._local('nin_values')
                 return (
@@ -193,14 +200,14 @@ class CompiledQuery:
             case NotCondition(clause=clause):
                 return f'not ({self._node_to_code(clause, depth + 1)})'
             case ExistsCondition(field=field, value=value):
-                field_key = self._store('field', field)
+                field_key = self._field(field)
                 return f'bool(_extract(doc, {field_key})) == {value}'
             case _:
                 node_key = self._store('node', node)
                 return f'match_plan(doc, {node_key}, dialect=dialect, collation=collation)'
 
     def _comparison_code(self, field: str, value: Any, operator: str) -> str:
-        field_key = self._store('field', field)
+        field_key = self._field(field)
         value_key = self._store('value', value)
         if '.' not in field:
             return (
@@ -215,12 +222,17 @@ class CompiledQuery:
         )
 
     def _store(self, prefix: str, value: Any) -> str:
-        key = f'{self._variable_prefix}{prefix}_{self._store_counter}'
+        del prefix
+        key = f'values[{self._store_counter}]'
         self._store_counter += 1
-        self._context[key] = value
+        self._values.append(value)
         return key
 
+    @staticmethod
+    def _field(field: str) -> str:
+        return repr(field)
+
     def _local(self, prefix: str) -> str:
-        key = f'_{self._variable_prefix}{prefix}_{self._store_counter}'
-        self._store_counter += 1
+        key = f'_{self._variable_prefix}{prefix}_{self._local_counter}'
+        self._local_counter += 1
         return key
