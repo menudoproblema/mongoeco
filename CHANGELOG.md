@@ -17,6 +17,13 @@ usa Semantic Versioning.
   agregador solo-imports.
 - Los tests de imports y exports publicos ejecutan los subprocess en paralelo
   con salida determinista por nombre de modulo o paquete.
+- Los exports raiz de `mongoeco.__all__` se validan tambien con un interprete
+  frio por simbolo, cubriendo el caso canonico `from mongoeco import X`.
+- Se añade un benchmark local de contencion sync para comparar cliente
+  compartido frente a cliente por worker en Memory y SQLite.
+- `CompiledQuery` reutiliza plantillas compiladas con LRU acotado y valores
+  parametrizados por instancia, evitando recompilar el mismo shape sin mezclar
+  literales entre filtros.
 - Los tests de change streams usan ventanas `max_await_time_ms` mas cortas en
   esperas negativas, reduciendo cola sin cambiar el contrato publico.
 
@@ -32,9 +39,26 @@ usa Semantic Versioning.
 - Los snapshots de rollback del `MemoryEngine` copian contenedores de estado sin
   duplicar todos los documentos, reutilizando la invariante MVCC de documentos
   tratados como inmutables por reemplazo.
+- La validacion de unicidad de `_id` evita scans completos en Memory y SQLite,
+  incluido `insert_many`, manteniendo los unique secundarios sin cambios.
+- `MemoryEngine` usa point lookup por `_id` en `update_one` y `delete_one`
+  cuando el filtro lo permite, resolviendo contra la vista MVCC activa dentro de
+  transacciones.
+- `AggregationCursor` sync agrupa la iteracion por chunks para reducir cruces
+  sync/async por documento.
+- `count_documents` en Memory cuenta sobre documentos internos filtrados sin
+  materializar documentos publicos cuando no es necesario.
 - El cliente sync reutiliza un helper persistente y lazy solo cuando una llamada
   sync se hace desde un loop activo, y evita deadlocks si el cierre se solicita
   desde el propio helper.
+
+### Known Debt
+
+- SQLite mantiene fallback Python O(N) para algunos unique secundarios
+  compuestos; queda fuera de este ciclo porque requiere otra pasada sobre los
+  indices auxiliares.
+- SQLite `find` sin indice puede caer a full-scan con `json_extract` por fila;
+  la correccion real pertenece al planner y queda fuera de esta release.
 
 ## [3.5.1] - 2026-06-28
 
