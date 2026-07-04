@@ -74,6 +74,44 @@ class PublicExportsTests(unittest.TestCase):
                         f'stderr:\n{result.stderr}'
                     )
 
+    def test_root_public_symbols_import_in_fresh_interpreters(self):
+        import mongoeco
+
+        exported_names = sorted(
+            name for name in mongoeco.__all__ if not name.startswith('_')
+        )
+        pythonpath_entries = [str(self._repo_root() / 'src')]
+        if existing_pythonpath := os.environ.get('PYTHONPATH'):
+            pythonpath_entries.append(existing_pythonpath)
+        env = os.environ | {'PYTHONPATH': os.pathsep.join(pythonpath_entries)}
+
+        def _check_export(exported_name: str) -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                [
+                    sys.executable,
+                    '-c',
+                    f'from mongoeco import {exported_name}\nassert {exported_name!r}\n',
+                ],
+                cwd=self._repo_root(),
+                capture_output=True,
+                text=True,
+                env=env,
+                check=False,
+            )
+
+        with ThreadPoolExecutor(max_workers=min(16, len(exported_names) or 1)) as executor:
+            results = dict(zip(exported_names, executor.map(_check_export, exported_names)))
+
+        for exported_name in exported_names:
+            with self.subTest(export=exported_name):
+                result = results[exported_name]
+                if result.returncode != 0:
+                    self.fail(
+                        f'Root export failed for {exported_name}\n'
+                        f'stdout:\n{result.stdout}\n'
+                        f'stderr:\n{result.stderr}'
+                    )
+
     def test_async_and_sync_api_packages_export_public_cursor_types(self):
         from mongoeco.api import _async as async_api
         from mongoeco.api import _sync as sync_api
