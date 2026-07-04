@@ -617,6 +617,15 @@ la persistencia con:
 * `change_stream_journal_fsync=True`
 * `change_stream_journal_max_bytes=<limite>`
 
+Cuando no existe ningun watcher activo y no hay journal persistente, las
+escrituras locales pueden omitir la materializacion del evento de change stream
+para no pagar el coste de preseleccion, relectura y `deepcopy()` de documentos.
+Esa omision no es silenciosa para la reanudacion: el hub registra un gap de
+historial y cualquier `resume_after`, `start_after` o `startAtOperationTime`
+anterior al gap falla con el error publico de token no disponible. Si hay al
+menos un watcher activo, o si el journal esta habilitado, los eventos siguen
+materializandose y reteniendose como antes.
+
 Además, cliente, base de datos y colección exponen `change_stream_state()`
 para inspeccionar en runtime:
 

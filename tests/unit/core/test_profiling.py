@@ -64,6 +64,21 @@ class EngineProfilerTests(unittest.TestCase):
         self.assertEqual(profiler.count_entries("db"), 1)
         self.assertTrue(profiler.namespace_visible("db"))
 
+    def test_is_active_matches_recording_levels(self):
+        profiler = EngineProfiler("memory")
+
+        self.assertFalse(profiler.is_active("db"))
+
+        profiler.set_level("db", 1, slow_ms=5)
+
+        self.assertTrue(profiler.is_active("db"))
+        self.assertFalse(profiler.is_active("db", duration_micros=4_999))
+        self.assertTrue(profiler.is_active("db", duration_micros=5_000))
+
+        profiler.set_level("db", 2, slow_ms=5)
+
+        self.assertTrue(profiler.is_active("db", duration_micros=1))
+
     def test_record_keeps_command_copy_and_serializes_lineage_and_error(self):
         profiler = EngineProfiler("memory")
         profiler.set_level("db", 2, slow_ms=0)

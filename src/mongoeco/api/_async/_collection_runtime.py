@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from copy import deepcopy
-from typing import TYPE_CHECKING, AsyncIterable
+from typing import TYPE_CHECKING, AsyncIterable, Callable
 
 from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
 from mongoeco.api.operations import AggregateOperation, FindOperation, UpdateOperation, compile_find_operation
@@ -62,7 +62,8 @@ class CollectionRuntimeCoordinator:
         self,
         *,
         op: str,
-        command: dict[str, object],
+        command: dict[str, object] | None = None,
+        command_factory: Callable[[], dict[str, object]] | None = None,
         duration_ns: int,
         operation: FindOperation | None = None,
         errmsg: str | None = None,
@@ -71,6 +72,34 @@ class CollectionRuntimeCoordinator:
             return
         recorder = getattr(self._collection._engine, "_record_profile_event", None)
         if not callable(recorder):
+            return
+        duration_micros = max(1, duration_ns // 1000)
+        active = True
+        is_active = getattr(self._collection._engine, "_profile_is_active", None)
+        if callable(is_active):
+            try:
+                active = bool(
+                    is_active(
+                        self._collection._db_name,
+                        duration_micros=duration_micros,
+                    )
+                )
+            except Exception:
+                active = True
+        if not active:
+            try:
+                recorder(
+                    self._collection._db_name,
+                    op=op,
+                    command={},
+                    duration_micros=duration_micros,
+                    execution_lineage=(),
+                    fallback_reason=None,
+                    ok=0.0 if errmsg is not None else 1.0,
+                    errmsg=errmsg,
+                )
+            except Exception:
+                pass
             return
         execution_lineage: tuple[object, ...] = ()
         fallback_reason: str | None = None
@@ -90,12 +119,17 @@ class CollectionRuntimeCoordinator:
                 except Exception:
                     execution_lineage = ()
                     fallback_reason = None
+        resolved_command = command
+        if resolved_command is None and command_factory is not None:
+            resolved_command = command_factory()
+        if resolved_command is None:
+            resolved_command = {}
         try:
             recorder(
                 self._collection._db_name,
                 op=op,
-                command=command,
-                duration_micros=max(1, duration_ns // 1000),
+                command=resolved_command,
+                duration_micros=duration_micros,
                 execution_lineage=tuple(execution_lineage),
                 fallback_reason=fallback_reason,
                 ok=0.0 if errmsg is not None else 1.0,
@@ -130,6 +164,11 @@ class CollectionRuntimeCoordinator:
         change_hub = self._collection._change_hub
         if change_hub is None:
             return
+        if (
+            session is None or not bool(getattr(session, "in_transaction", False))
+        ) and not self._change_hub_should_publish(change_hub):
+            self._mark_change_hub_gap(change_hub)
+            return
         payload = {
             "operation_type": operation_type,
             "db_name": self._collection._db_name,
@@ -143,6 +182,32 @@ class CollectionRuntimeCoordinator:
             pending_events.append(payload)
             return
         self._publish_change_payload(payload)
+
+    def should_publish_change_events(self, *, session: ClientSession | None = None) -> bool:
+        change_hub = self._collection._change_hub
+        if change_hub is None:
+            return False
+        if session is not None and bool(getattr(session, "in_transaction", False)):
+            return True
+        return self._change_hub_should_publish(change_hub)
+
+    def mark_change_event_gap(self) -> None:
+        change_hub = self._collection._change_hub
+        if change_hub is not None:
+            self._mark_change_hub_gap(change_hub)
+
+    @staticmethod
+    def _change_hub_should_publish(change_hub: object) -> bool:
+        should_publish = getattr(change_hub, "should_publish_events", None)
+        if callable(should_publish):
+            return bool(should_publish())
+        return True
+
+    @staticmethod
+    def _mark_change_hub_gap(change_hub: object) -> None:
+        mark_gap = getattr(change_hub, "mark_gap", None)
+        if callable(mark_gap):
+            mark_gap()
 
     def _pending_transaction_change_events(self, session: ClientSession) -> list[dict[str, object]]:
         change_hub = self._collection._change_hub

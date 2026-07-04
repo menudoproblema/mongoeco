@@ -1299,6 +1299,47 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(events[0][1]['fallback_reason'], None)
         self.assertEqual(events[0][1]['execution_lineage'], ())
 
+    def test_profile_operation_skips_planner_and_command_factory_when_inactive(
+        self,
+    ):
+        class EngineStub:
+            def __init__(self):
+                self.events = []
+                self.planner_calls = 0
+
+            def _profile_is_active(self, *args, **kwargs):
+                return False
+
+            def _record_profile_event(self, *args, **kwargs):
+                self.events.append((args, kwargs))
+
+            async def plan_find_execution(self, *args, **kwargs):
+                self.planner_calls += 1
+                raise AssertionError("planner should not be called")
+
+        async def _exercise():
+            engine = EngineStub()
+            collection = AsyncCollection(engine, 'db', 'coll')
+            operation = collection.find({'kind': 'view'})._as_operation()
+
+            def _command_factory():
+                raise AssertionError("command factory should not be called")
+
+            await collection._profile_operation(
+                op='query',
+                command_factory=_command_factory,
+                duration_ns=1000,
+                operation=operation,
+            )
+            return engine
+
+        engine = asyncio.run(_exercise())
+
+        self.assertEqual(engine.planner_calls, 0)
+        self.assertEqual(len(engine.events), 1)
+        self.assertEqual(engine.events[0][1]['command'], {})
+        self.assertEqual(engine.events[0][1]['execution_lineage'], ())
+
     def test_engine_update_requires_update_with_operation_and_rejects_deferred_issues(
         self,
     ):

@@ -6,6 +6,7 @@ import sys
 import textwrap
 import unittest
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 
@@ -117,30 +118,36 @@ class ModuleImportSmokeTests(unittest.TestCase):
         if existing_pythonpath := os.environ.get("PYTHONPATH"):
             pythonpath_entries.append(existing_pythonpath)
         env = os.environ | {"PYTHONPATH": os.pathsep.join(pythonpath_entries)}
+        module_names = self._source_modules()
 
-        for module_name in self._source_modules():
+        def _import_module(module_name: str) -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    textwrap.dedent(
+                        """
+                        import importlib
+                        import sys
+
+                        importlib.import_module(sys.argv[1])
+                        """
+                    ),
+                    module_name,
+                ],
+                cwd=repo_root,
+                capture_output=True,
+                text=True,
+                env=env,
+                check=False,
+            )
+
+        with ThreadPoolExecutor(max_workers=min(16, len(module_names) or 1)) as executor:
+            results = dict(zip(module_names, executor.map(_import_module, module_names)))
+
+        for module_name in module_names:
             with self.subTest(module=module_name):
-                result = subprocess.run(
-                    [
-                        sys.executable,
-                        "-c",
-                        textwrap.dedent(
-                            """
-                            import importlib
-                            import sys
-
-                            importlib.import_module(sys.argv[1])
-                            """
-                        ),
-                        module_name,
-                    ],
-                    cwd=repo_root,
-                    capture_output=True,
-                    text=True,
-                    env=env,
-                    check=False,
-                )
-
+                result = results[module_name]
                 if result.returncode != 0:
                     self.fail(
                         f"Import failed for {module_name}\n"

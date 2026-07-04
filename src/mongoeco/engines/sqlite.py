@@ -671,6 +671,17 @@ class SQLiteEngine(AsyncStorageEngine):
             errmsg=errmsg,
         )
 
+    def _profile_is_active(
+        self,
+        db_name: str,
+        *,
+        duration_micros: int | None = None,
+    ) -> bool:
+        return self._profiler.is_active(
+            db_name,
+            duration_micros=duration_micros,
+        )
+
     def _record_runtime_opcounter(self, op: str, *, amount: int = 1) -> None:
         self._runtime_metrics.record(op, amount=amount)
 

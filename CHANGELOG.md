@@ -8,6 +8,33 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- Los facades publicos principales (`mongoeco`, `mongoeco.api`,
+  `mongoeco.compat`, `mongoeco.cxp` y `mongoeco.engines`) resuelven exports
+  publicos bajo demanda, conservando `__all__` y reduciendo coste/ciclos de
+  importacion.
+- Los tests de imports y exports publicos ejecutan los subprocess en paralelo
+  con salida determinista por nombre de modulo o paquete.
+- Los tests de change streams usan ventanas `max_await_time_ms` mas cortas en
+  esperas negativas, reduciendo cola sin cambiar el contrato publico.
+
+### Fixed
+
+- El profiler evita planificar y construir payloads pesados cuando el profiling
+  esta desactivado o la operacion queda por debajo de `slow_ms`; los comandos de
+  insert con `deepcopy()` se construyen ahora solo si pueden registrarse.
+- Los change streams locales saltan la materializacion de eventos cuando no hay
+  watchers ni journal persistente. Las escrituras omitidas dejan un gap
+  explicito, y reanudar con un token anterior al gap falla con el error publico
+  de token no disponible en vez de saltarse eventos en silencio.
+- Los snapshots de rollback del `MemoryEngine` copian contenedores de estado sin
+  duplicar todos los documentos, reutilizando la invariante MVCC de documentos
+  tratados como inmutables por reemplazo.
+- El cliente sync reutiliza un helper persistente y lazy solo cuando una llamada
+  sync se hace desde un loop activo, y evita deadlocks si el cierre se solicita
+  desde el propio helper.
+
 ## [3.5.1] - 2026-06-28
 
 ### Added

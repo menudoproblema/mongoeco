@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from functools import lru_cache
 
 import msgspec
 
@@ -547,7 +548,8 @@ def _serialize_profile_validation(validation: object) -> dict[str, object]:
     }
 
 
-def _exported_profile_support() -> dict[str, dict[str, object]]:
+@lru_cache(maxsize=1)
+def _cached_exported_profile_support() -> tuple[tuple[str, dict[str, object]], ...]:
     snapshot = _build_public_cxp_component_snapshot()
     exported_profiles = _exported_profiles()
     profile_entries = (
@@ -568,7 +570,14 @@ def _exported_profile_support() -> dict[str, dict[str, object]]:
             'supported': validation.is_valid(),
             'validation': _serialize_profile_validation(validation),
         }
-    return support
+    return tuple(support.items())
+
+
+def _exported_profile_support() -> dict[str, dict[str, object]]:
+    return {
+        profile_name: deepcopy(profile_support)
+        for profile_name, profile_support in _cached_exported_profile_support()
+    }
 
 
 def _compatible_profile_names_for_capability(capability_name: str) -> list[str]:

@@ -4,6 +4,7 @@ import asyncio
 import base64
 import json
 import time
+import weakref
 
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ChangeEventDocument
@@ -42,6 +43,8 @@ class AsyncChangeStreamCursor:
         self._max_await_time_ms = max_await_time_ms
         self._full_document = normalize_full_document_mode(full_document)
         self._closed = False
+        hub.register_watcher()
+        self._watcher_finalizer = weakref.finalize(self, hub.unregister_watcher)
 
     def _ensure_open(self) -> None:
         if self._closed:
@@ -109,7 +112,10 @@ class AsyncChangeStreamCursor:
         return _iterate()
 
     def close(self) -> None:
+        if self._closed:
+            return
         self._closed = True
+        self._watcher_finalizer()
 
     @property
     def alive(self) -> bool:

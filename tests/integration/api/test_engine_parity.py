@@ -1279,10 +1279,10 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(OperationFailure) as expired_ctx:
                     collection.watch(
                         resume_after={"_data": "1"},
-                        max_await_time_ms=50,
+                        max_await_time_ms=5,
                     )
 
-                invalidate_stream = collection.watch(max_await_time_ms=50)
+                invalidate_stream = collection.watch(max_await_time_ms=5)
                 await collection.drop()
                 invalidate_event = await invalidate_stream.try_next()
                 self.assertIsNotNone(invalidate_event)
@@ -2118,7 +2118,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
         for engine_name in ("memory", "sqlite"):
             async with open_client(engine_name) as client:
                 collection = client.observe.get_collection("items")
-                stream = collection.watch(max_await_time_ms=100, full_document="updateLookup")
+                stream = collection.watch(max_await_time_ms=5, full_document="updateLookup")
 
                 await collection.insert_one({"_id": "1", "name": "Ada"})
                 await collection.update_one({"_id": "1"}, {"$set": {"name": "Ada Lovelace"}})

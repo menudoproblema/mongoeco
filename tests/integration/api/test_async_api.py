@@ -2187,12 +2187,12 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 async with open_client(engine_name) as client:
                     collection = client.observe.get_collection("items")
                     other = client.observe.get_collection("other")
-                    client_stream = client.watch(max_await_time_ms=100)
-                    lookup_stream = client.watch(max_await_time_ms=100, full_document="updateLookup")
-                    database_stream = client.observe.watch(max_await_time_ms=100)
+                    client_stream = client.watch(max_await_time_ms=5)
+                    lookup_stream = client.watch(max_await_time_ms=5, full_document="updateLookup")
+                    database_stream = client.observe.watch(max_await_time_ms=5)
                     collection_stream = collection.watch(
                         [{"$match": {"operationType": "insert"}}],
-                        max_await_time_ms=100,
+                        max_await_time_ms=5,
                     )
 
                     await collection.insert_one({"_id": 1, "name": "Ada"})
@@ -2214,7 +2214,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertIsNotNone(second_insert)
                     self.assertEqual(second_insert["operationType"], "insert")
 
-                    lookup_stream = client.observe.watch(max_await_time_ms=100, full_document="updateLookup")
+                    lookup_stream = client.observe.watch(max_await_time_ms=5, full_document="updateLookup")
                     await collection.update_one({"_id": 1}, {"$set": {"name": "Ada Lovelace"}})
                     await collection.delete_one({"_id": 1})
                     update_event = await client_stream.try_next()
@@ -2225,7 +2225,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(update_lookup_event["fullDocument"]["name"], "Ada Lovelace")
                     self.assertEqual(delete_event["operationType"], "delete")
 
-                    invalidate_stream = collection.watch(max_await_time_ms=100)
+                    invalidate_stream = collection.watch(max_await_time_ms=5)
                     await other.drop()
                     self.assertIsNone(await invalidate_stream.try_next())
                     await collection.drop()
@@ -2244,7 +2244,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             {"_id": "delete-target", "name": "Grace"},
                         ]
                     )
-                    stream = collection.watch(max_await_time_ms=25)
+                    stream = collection.watch(max_await_time_ms=5)
 
                     session = client.start_session()
                     session.start_transaction()
@@ -3556,7 +3556,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 async with open_client(engine_name) as client:
                     collection = client.observe.get_collection("items")
                     await collection.insert_one({"_id": "dup", "value": "original"})
-                    stream = collection.watch(max_await_time_ms=25)
+                    stream = collection.watch(max_await_time_ms=5)
 
                     with self.assertRaises(DuplicateKeyError):
                         await collection.insert_many(
@@ -3585,7 +3585,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 async with open_client(engine_name) as client:
                     collection = client.observe.get_collection("items")
                     await collection.create_index(["email"], unique=True)
-                    stream = collection.watch(max_await_time_ms=25)
+                    stream = collection.watch(max_await_time_ms=5)
 
                     with self.assertRaises(DuplicateKeyError):
                         await collection.insert_many(
@@ -3614,7 +3614,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         "validated_items",
                         validator={"$jsonSchema": {"required": ["name"]}},
                     )
-                    stream = collection.watch(max_await_time_ms=25)
+                    stream = collection.watch(max_await_time_ms=5)
 
                     with self.assertRaises(DocumentValidationFailure):
                         await collection.insert_many(

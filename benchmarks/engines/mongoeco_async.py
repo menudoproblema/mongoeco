@@ -20,7 +20,7 @@ class _MongoecoAsyncEngine(BenchmarkEngine):
         raise NotImplementedError
 
     def setup(self) -> None:
-        self._runner = asyncio.Runner()
+        self._runner = asyncio.Runner(debug=False)
         engine = self._build_engine()
         self.client = self._runner.run(self._open_client(engine))
 

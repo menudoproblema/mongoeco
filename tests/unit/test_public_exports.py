@@ -4,6 +4,7 @@ import subprocess
 import sys
 import textwrap
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 
 
 class PublicExportsTests(unittest.TestCase):
@@ -29,38 +30,43 @@ class PublicExportsTests(unittest.TestCase):
             pythonpath_entries.append(existing_pythonpath)
         env = os.environ | {'PYTHONPATH': os.pathsep.join(pythonpath_entries)}
 
+        def _check_package(package_name: str) -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                [
+                    sys.executable,
+                    '-c',
+                    textwrap.dedent(
+                        '''
+                        import importlib
+                        import sys
+
+                        module = importlib.import_module(sys.argv[1])
+                        exported_names = getattr(module, '__all__', ())
+                        assert exported_names, sys.argv[1]
+
+                        for exported_name in exported_names:
+                            value = getattr(module, exported_name)
+                            assert value is not None, (
+                                sys.argv[1],
+                                exported_name,
+                            )
+                        '''
+                    ),
+                    package_name,
+                ],
+                cwd=self._repo_root(),
+                capture_output=True,
+                text=True,
+                env=env,
+                check=False,
+            )
+
+        with ThreadPoolExecutor(max_workers=min(16, len(package_names) or 1)) as executor:
+            results = dict(zip(package_names, executor.map(_check_package, package_names)))
+
         for package_name in package_names:
             with self.subTest(package=package_name):
-                result = subprocess.run(
-                    [
-                        sys.executable,
-                        '-c',
-                        textwrap.dedent(
-                            '''
-                            import importlib
-                            import sys
-
-                            module = importlib.import_module(sys.argv[1])
-                            exported_names = getattr(module, '__all__', ())
-                            assert exported_names, sys.argv[1]
-
-                            for exported_name in exported_names:
-                                value = getattr(module, exported_name)
-                                assert value is not None, (
-                                    sys.argv[1],
-                                    exported_name,
-                                )
-                            '''
-                        ),
-                        package_name,
-                    ],
-                    cwd=self._repo_root(),
-                    capture_output=True,
-                    text=True,
-                    env=env,
-                    check=False,
-                )
-
+                result = results[package_name]
                 if result.returncode != 0:
                     self.fail(
                         f'Public exports failed for {package_name}\n'

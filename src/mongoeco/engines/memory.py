@@ -854,6 +854,17 @@ class MemoryEngine(AsyncStorageEngine):
             errmsg=errmsg,
         )
 
+    def _profile_is_active(
+        self,
+        db_name: str,
+        *,
+        duration_micros: int | None = None,
+    ) -> bool:
+        return self._profiler.is_active(
+            db_name,
+            duration_micros=duration_micros,
+        )
+
     def _record_runtime_opcounter(self, op: str, *, amount: int = 1) -> None:
         self._runtime_metrics.record(op, amount=amount)
 
@@ -1033,17 +1044,31 @@ class MemoryEngine(AsyncStorageEngine):
         collections: dict[str, set[str]],
         options: dict[str, dict[str, Document]],
     ) -> _MemoryCollectionSnapshot:
-        def _copy_entry(mapping: dict[str, dict[str, Any]]) -> object:
+        def _copy_entry(
+            mapping: dict[str, dict[str, Any]],
+            copy_value,
+        ) -> object:
             value = mapping.get(db_name, {}).get(coll_name, _MISSING)
-            return _MISSING if value is _MISSING else deepcopy(value)
+            return _MISSING if value is _MISSING else copy_value(value)
+
+        def _copy_index_data(
+            value: dict[str, dict[tuple[Any, ...], set[Any]]],
+        ) -> dict[str, dict[tuple[Any, ...], set[Any]]]:
+            return {
+                index_name: {
+                    key: document_ids.copy()
+                    for key, document_ids in index_map.items()
+                }
+                for index_name, index_map in value.items()
+            }
 
         return _MemoryCollectionSnapshot(
-            storage=_copy_entry(storage),
-            indexes=_copy_entry(indexes),
-            index_data=_copy_entry(index_data),
-            search_indexes=_copy_entry(search_indexes),
+            storage=_copy_entry(storage, dict.copy),
+            indexes=_copy_entry(indexes, list.copy),
+            index_data=_copy_entry(index_data, _copy_index_data),
+            search_indexes=_copy_entry(search_indexes, list.copy),
             collection_registered=coll_name in collections.get(db_name, set()),
-            options=_copy_entry(options),
+            options=_copy_entry(options, dict.copy),
         )
 
     @staticmethod

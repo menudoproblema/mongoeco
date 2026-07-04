@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import queue
 import threading
 from typing import TYPE_CHECKING
 
@@ -48,12 +49,16 @@ class _SyncRunner:
     """Ejecuta la API async en un loop dedicado y estable."""
 
     def __init__(self):
-        self._runner = asyncio.Runner()
+        self._runner = asyncio.Runner(debug=False)
         self._closed = False
         self._closing = False
         self._state_condition = threading.Condition()
         self._active_runs = 0
         self._runner_lock = threading.Lock()
+        self._helper_lock = threading.Lock()
+        self._helper_queue: queue.Queue[object] = queue.Queue()
+        self._helper_thread: threading.Thread | None = None
+        self._deferred_helper_close = False
 
     def _run_direct(self, awaitable):
         try:
@@ -76,10 +81,34 @@ class _SyncRunner:
             raise error
 
     def _invoke_on_helper_thread(self, operation):
+        if threading.current_thread() is self._helper_thread:
+            return operation()
         outcome: dict[str, object] = {}
         done = threading.Event()
+        self._ensure_helper_thread()
+        self._helper_queue.put((operation, outcome, done))
+        done.wait()
+        self._rethrow_helper_error(outcome)
+        return outcome.get("result")
 
-        def _worker() -> None:
+    def _ensure_helper_thread(self) -> None:
+        with self._helper_lock:
+            if self._helper_thread is not None and self._helper_thread.is_alive():
+                return
+            worker = threading.Thread(
+                target=self._helper_worker,
+                name="mongoeco-sync-runner-helper",
+                daemon=True,
+            )
+            self._helper_thread = worker
+            worker.start()
+
+    def _helper_worker(self) -> None:
+        while True:
+            item = self._helper_queue.get()
+            if item is None:
+                return
+            operation, outcome, done = item
             try:
                 outcome["result"] = operation()
             except BaseException as exc:  # pragma: no cover - rethrown synchronously below
@@ -87,15 +116,15 @@ class _SyncRunner:
             finally:
                 done.set()
 
-        worker = threading.Thread(
-            target=_worker,
-            name="mongoeco-sync-runner-helper",
-            daemon=True,
-        )
-        worker.start()
-        done.wait()
-        self._rethrow_helper_error(outcome)
-        return outcome.get("result")
+    def _stop_helper_thread(self) -> None:
+        helper_thread = self._helper_thread
+        if helper_thread is None:
+            return
+        self._helper_queue.put(None)
+        if threading.current_thread() is helper_thread:
+            return
+        helper_thread.join(timeout=1)
+        self._helper_thread = None
 
     def _cleanup_pending_tasks(self) -> None:
         if self._closed:
@@ -141,6 +170,7 @@ class _SyncRunner:
                 raise InvalidOperation("El cliente sincronico ya esta cerrado")
             self._active_runs += 1
 
+        deferred_close = False
         try:
             try:
                 asyncio.get_running_loop()
@@ -151,7 +181,12 @@ class _SyncRunner:
         finally:
             with self._state_condition:
                 self._active_runs -= 1
+                if self._active_runs == 0 and self._deferred_helper_close:
+                    self._deferred_helper_close = False
+                    deferred_close = True
                 self._state_condition.notify_all()
+            if deferred_close:
+                self.close()
 
     def _close_runner_resources(self) -> None:
         self._cleanup_pending_tasks()
@@ -162,8 +197,14 @@ class _SyncRunner:
             close_runner()
 
     def close(self) -> None:
+        current_thread_is_helper = threading.current_thread() is self._helper_thread
         with self._state_condition:
             if self._closed:
+                return
+            if current_thread_is_helper and self._active_runs > 0:
+                self._closing = True
+                self._deferred_helper_close = True
+                self._state_condition.notify_all()
                 return
             self._closing = True
             while self._active_runs > 0:
@@ -180,6 +221,7 @@ class _SyncRunner:
                     self._invoke_on_helper_thread(self._close_runner_resources)
                 else:
                     self._close_runner_resources()
+                self._stop_helper_thread()
             finally:
                 with self._state_condition:
                     self._closed = True

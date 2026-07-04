@@ -1,21 +1,6 @@
-from mongoeco.api import AsyncMongoClient, MongoClient
-from mongoeco._version import __version__
-from mongoeco.driver import (
-    MongoClientOptions,
-    MongoUri,
-    build_read_concern_from_uri,
-    build_read_preference_from_uri,
-    build_write_concern_from_uri,
-    parse_mongo_uri,
-)
-from mongoeco.session import ClientSession
-from mongoeco.types import (
-    Binary, BulkWriteResult, CodecOptions, DBRef, Decimal128, DeleteMany, DeleteOne, IndexDefinition,
-    IndexModel, InsertOne, ObjectId, ReadConcern, ReadPreference, ReadPreferenceMode, Regex, ReplaceOne,
-    ReturnDocument, SearchIndexDefinition, SearchIndexModel, SON, Timestamp, TransactionOptions, UNDEFINED,
-    UuidRepresentation,
-    UndefinedType, UpdateMany, UpdateOne, WriteConcern,
-)
+from importlib import import_module
+
+from mongoeco._version import __version__ as __version__
 
 _CLIENT_EXPORTS = (
     "AsyncMongoClient",
@@ -67,6 +52,28 @@ __all__ = [
     *_TYPE_EXPORTS,
 ]
 
+_EXPORT_MODULES = {
+    "AsyncMongoClient": "mongoeco.api",
+    "MongoClient": "mongoeco.api",
+    "ClientSession": "mongoeco.session",
+    "MongoClientOptions": "mongoeco.driver",
+    "MongoUri": "mongoeco.driver",
+    "build_read_concern_from_uri": "mongoeco.driver",
+    "build_read_preference_from_uri": "mongoeco.driver",
+    "build_write_concern_from_uri": "mongoeco.driver",
+    "parse_mongo_uri": "mongoeco.driver",
+    **dict.fromkeys(_TYPE_EXPORTS, "mongoeco.types"),
+}
+
 
 def __getattr__(name: str):
-    raise AttributeError(name)
+    module_name = _EXPORT_MODULES.get(name)
+    if module_name is None:
+        raise AttributeError(name)
+    value = getattr(import_module(module_name), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted({*globals(), *__all__})

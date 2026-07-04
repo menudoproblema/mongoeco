@@ -55,8 +55,10 @@ class ChangeStreamHub:
             raise TypeError("journal_max_log_bytes must be a positive integer or None")
         self._condition = threading.Condition()
         self._events: list[ChangeEventSnapshot] = []
+        self._gaps: list[tuple[int, int]] = []
         self._base_offset = 0
         self._next_token = 1
+        self._watcher_count = 0
         self._max_retained_events = max_retained_events
         self._journal_path = journal_path
         self._journal_fsync = journal_fsync
@@ -126,11 +128,44 @@ class ChangeStreamHub:
         with self._condition:
             return self._end_offset_locked()
 
+    def register_watcher(self) -> None:
+        with self._condition:
+            self._watcher_count += 1
+
+    def unregister_watcher(self) -> None:
+        with self._condition:
+            if self._watcher_count > 0:
+                self._watcher_count -= 1
+
+    @property
+    def watcher_count(self) -> int:
+        with self._condition:
+            return self._watcher_count
+
+    def should_publish_events(self) -> bool:
+        with self._condition:
+            return self._journal_path is not None or self._watcher_count > 0
+
+    def mark_gap(self) -> None:
+        with self._condition:
+            token = self._next_token
+            if self._gaps and self._gaps[-1][1] == token - 1:
+                start, _end = self._gaps[-1]
+                self._gaps[-1] = (start, token)
+            else:
+                self._gaps.append((token, token))
+            self._next_token += 1
+            self._condition.notify_all()
+
     def offset_after_token(self, token: int) -> int:
         with self._condition:
             retained_start = self._retained_start_token_locked()
             if retained_start is not None and token < retained_start and self._base_offset > 0:
                 raise OperationFailure("resume token is no longer available in retained change stream history")
+            self._raise_if_token_crosses_gap_locked(
+                token,
+                "resume token is no longer available in retained change stream history",
+            )
             for index, event in enumerate(self._events):
                 if event.token > token:
                     return self._base_offset + index
@@ -141,6 +176,10 @@ class ChangeStreamHub:
             retained_start = self._retained_start_token_locked()
             if retained_start is not None and cluster_time < retained_start and self._base_offset > 0:
                 raise OperationFailure("start_at_operation_time is no longer available in retained change stream history")
+            self._raise_if_token_crosses_gap_locked(
+                cluster_time,
+                "start_at_operation_time is no longer available in retained change stream history",
+            )
             for index, event in enumerate(self._events):
                 if event.token >= cluster_time:
                     return self._base_offset + index
@@ -213,6 +252,11 @@ class ChangeStreamHub:
         if not self._events:
             return None
         return self._events[0].token
+
+    def _raise_if_token_crosses_gap_locked(self, token: int, message: str) -> None:
+        for _start, end in self._gaps:
+            if token <= end:
+                raise OperationFailure(message)
 
     def _prune_locked(self) -> bool:
         if self._max_retained_events is None:

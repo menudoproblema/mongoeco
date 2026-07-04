@@ -145,6 +145,26 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             runner.close()
 
+    def test_sync_runner_creates_persistent_helper_only_for_active_event_loop(self):
+        runner = _SyncRunner()
+        try:
+            self.assertIsNone(runner._helper_thread)
+            self.assertEqual(runner.run(_noop()), None)
+            self.assertIsNone(runner._helper_thread)
+
+            async def _exercise() -> None:
+                self.assertEqual(runner.run(_noop()), None)
+                helper_thread = runner._helper_thread
+                self.assertIsNotNone(helper_thread)
+                self.assertTrue(helper_thread.is_alive())
+                self.assertEqual(runner.run(_noop()), None)
+                self.assertIs(runner._helper_thread, helper_thread)
+
+            asyncio.run(_exercise())
+        finally:
+            runner.close()
+        self.assertIsNone(runner._helper_thread)
+
     def test_sync_runner_runs_inside_active_event_loop_from_secondary_thread(self):
         runner = _SyncRunner()
         captured: list[object] = []
@@ -186,6 +206,20 @@ class SyncClientUnitTests(unittest.TestCase):
 
         asyncio.run(_exercise())
         self.assertTrue(runner._closed)
+
+    def test_sync_runner_defers_close_requested_from_helper(self):
+        runner = _SyncRunner()
+
+        async def _close_from_helper() -> str:
+            runner.close()
+            return "closed"
+
+        async def _exercise() -> None:
+            self.assertEqual(runner.run(_close_from_helper()), "closed")
+
+        asyncio.run(_exercise())
+        self.assertTrue(runner._closed)
+        self.assertIsNone(runner._helper_thread)
 
     def test_sync_runner_marks_itself_closed_even_if_runner_close_fails(self):
         runner = _SyncRunner()

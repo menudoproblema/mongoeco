@@ -22,6 +22,19 @@ class EngineProfiler:
     def get_settings(self, db_name: str) -> ProfilingSettingsSnapshot:
         return self._settings.get(db_name, ProfilingSettingsSnapshot())
 
+    def is_active(
+        self,
+        db_name: str,
+        *,
+        duration_micros: int | None = None,
+    ) -> bool:
+        settings = self.get_settings(db_name)
+        if settings.level == 0:
+            return False
+        if duration_micros is None:
+            return True
+        return settings.level != 1 or duration_micros >= settings.slow_ms * 1000
+
     def set_level(
         self,
         db_name: str,

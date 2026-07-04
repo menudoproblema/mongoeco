@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterable, Iterable, Sequence
+from collections.abc import AsyncIterable, Callable, Iterable, Sequence
 from copy import deepcopy
 import time
 
@@ -574,7 +574,8 @@ class AsyncCollection:
         self,
         *,
         op: str,
-        command: dict[str, object],
+        command: dict[str, object] | None = None,
+        command_factory: Callable[[], dict[str, object]] | None = None,
         duration_ns: int,
         operation: FindOperation | None = None,
         errmsg: str | None = None,
@@ -582,6 +583,7 @@ class AsyncCollection:
         await self._runtime.profile_operation(
             op=op,
             command=command,
+            command_factory=command_factory,
             duration_ns=duration_ns,
             operation=operation,
             errmsg=errmsg,
@@ -614,6 +616,18 @@ class AsyncCollection:
             update_description=update_description,
             session=session,
         )
+
+    def _should_publish_change_events(
+        self,
+        *,
+        session: ClientSession | None = None,
+    ) -> bool:
+        if "_publish_change_event" in self.__dict__:
+            return True
+        return self._runtime.should_publish_change_events(session=session)
+
+    def _mark_change_event_gap(self) -> None:
+        self._runtime.mark_change_event_gap()
 
     async def _engine_update_with_operation(
         self,
@@ -783,6 +797,13 @@ class AsyncCollection:
         assert_valid_root_document_id(original['_id'])
         doc = deepcopy(original)
 
+        def _insert_one_profile_command() -> dict[str, object]:
+            return {
+                'insert': self._collection_name,
+                'documents': [deepcopy(doc)],
+                'bypassDocumentValidation': bypass_document_validation,
+            }
+
         started_at = time.perf_counter_ns()
         try:
             with track_active_operation(
@@ -805,11 +826,7 @@ class AsyncCollection:
         except Exception as exc:
             await self._profile_operation(
                 op='insert',
-                command={
-                    'insert': self._collection_name,
-                    'documents': [deepcopy(doc)],
-                    'bypassDocumentValidation': bypass_document_validation,
-                },
+                command_factory=_insert_one_profile_command,
                 duration_ns=time.perf_counter_ns() - started_at,
                 errmsg=str(exc),
             )
@@ -818,21 +835,20 @@ class AsyncCollection:
             raise DuplicateKeyError(f'Duplicate key: _id={doc["_id"]}')
         await self._profile_operation(
             op='insert',
-            command={
-                'insert': self._collection_name,
-                'documents': [deepcopy(doc)],
-                'bypassDocumentValidation': bypass_document_validation,
-            },
+            command_factory=_insert_one_profile_command,
             duration_ns=time.perf_counter_ns() - started_at,
         )
         if session is not None:
             session.observe_operation()
-        self._publish_change_event(
-            operation_type='insert',
-            document_key={'_id': deepcopy(doc['_id'])},
-            full_document=deepcopy(doc),
-            session=session,
-        )
+        if self._should_publish_change_events(session=session):
+            self._publish_change_event(
+                operation_type='insert',
+                document_key={'_id': deepcopy(doc['_id'])},
+                full_document=deepcopy(doc),
+                session=session,
+            )
+        else:
+            self._mark_change_event_gap()
         return InsertOneResult(inserted_id=doc['_id'])
 
     async def insert_many(
@@ -844,7 +860,6 @@ class AsyncCollection:
     ) -> InsertManyResult[DocumentId]:
         self._ensure_session_active(session)
         inserted_ids: list[DocumentId] = []
-        command_documents: list[Document] = []
         started_at = time.perf_counter_ns()
         normalized_documents: list[Document] = []
         for original in self._require_documents(documents):
@@ -853,7 +868,13 @@ class AsyncCollection:
             assert_valid_root_document_id(original['_id'])
             doc = deepcopy(original)
             normalized_documents.append(doc)
-            command_documents.append(deepcopy(doc))
+
+        def _insert_many_profile_command() -> dict[str, object]:
+            return {
+                'insert': self._collection_name,
+                'documents': [deepcopy(doc) for doc in normalized_documents],
+                'bypassDocumentValidation': bypass_document_validation,
+            }
 
         bulk_put = getattr(self._engine, 'put_documents_bulk', None)
         if callable(bulk_put):
@@ -882,11 +903,7 @@ class AsyncCollection:
             except Exception as exc:
                 await self._profile_operation(
                     op='insert',
-                    command={
-                        'insert': self._collection_name,
-                        'documents': command_documents,
-                        'bypassDocumentValidation': bypass_document_validation,
-                    },
+                    command_factory=_insert_many_profile_command,
                     duration_ns=time.perf_counter_ns() - started_at,
                     errmsg=str(exc),
                 )
@@ -905,43 +922,43 @@ class AsyncCollection:
                     message = f'Duplicate key: _id={doc["_id"]}'
                     await self._profile_operation(
                         op='insert',
-                        command={
-                            'insert': self._collection_name,
-                            'documents': command_documents,
-                            'bypassDocumentValidation': bypass_document_validation,
-                        },
+                        command_factory=_insert_many_profile_command,
                         duration_ns=time.perf_counter_ns() - started_at,
                         errmsg=message,
                     )
                     if inserted_ids and session is not None:
                         session.observe_operation()
-                    for inserted in command_documents[: len(inserted_ids)]:
-                        self._publish_change_event(
-                            operation_type='insert',
-                            document_key={'_id': deepcopy(inserted['_id'])},
-                            full_document=deepcopy(inserted),
-                            session=session,
-                        )
+                    if self._should_publish_change_events(session=session):
+                        for inserted in normalized_documents[: len(inserted_ids)]:
+                            self._publish_change_event(
+                                operation_type='insert',
+                                document_key={'_id': deepcopy(inserted['_id'])},
+                                full_document=deepcopy(inserted),
+                                session=session,
+                            )
+                    else:
+                        for _inserted_id in inserted_ids:
+                            self._mark_change_event_gap()
                     raise DuplicateKeyError(message)
                 inserted_ids.append(doc['_id'])
             await self._profile_operation(
                 op='insert',
-                command={
-                    'insert': self._collection_name,
-                    'documents': command_documents,
-                    'bypassDocumentValidation': bypass_document_validation,
-                },
+                command_factory=_insert_many_profile_command,
                 duration_ns=time.perf_counter_ns() - started_at,
             )
             if session is not None:
                 session.observe_operation()
-            for inserted in command_documents[: len(inserted_ids)]:
-                self._publish_change_event(
-                    operation_type='insert',
-                    document_key={'_id': deepcopy(inserted['_id'])},
-                    full_document=deepcopy(inserted),
-                    session=session,
-                )
+            if self._should_publish_change_events(session=session):
+                for inserted in normalized_documents[: len(inserted_ids)]:
+                    self._publish_change_event(
+                        operation_type='insert',
+                        document_key={'_id': deepcopy(inserted['_id'])},
+                        full_document=deepcopy(inserted),
+                        session=session,
+                    )
+            else:
+                for _inserted_id in inserted_ids:
+                    self._mark_change_event_gap()
             return InsertManyResult(inserted_ids=inserted_ids)
 
         for doc in normalized_documents:
@@ -969,11 +986,7 @@ class AsyncCollection:
             except Exception as exc:
                 await self._profile_operation(
                     op='insert',
-                    command={
-                        'insert': self._collection_name,
-                        'documents': command_documents,
-                        'bypassDocumentValidation': bypass_document_validation,
-                    },
+                    command_factory=_insert_many_profile_command,
                     duration_ns=time.perf_counter_ns() - started_at,
                     errmsg=str(exc),
                 )
@@ -982,44 +995,44 @@ class AsyncCollection:
                 message = f'Duplicate key: _id={doc["_id"]}'
                 await self._profile_operation(
                     op='insert',
-                    command={
-                        'insert': self._collection_name,
-                        'documents': command_documents,
-                        'bypassDocumentValidation': bypass_document_validation,
-                    },
+                    command_factory=_insert_many_profile_command,
                     duration_ns=time.perf_counter_ns() - started_at,
                     errmsg=message,
                 )
                 if inserted_ids and session is not None:
                     session.observe_operation()
-                for inserted in command_documents[: len(inserted_ids)]:
-                    self._publish_change_event(
-                        operation_type='insert',
-                        document_key={'_id': deepcopy(inserted['_id'])},
-                        full_document=deepcopy(inserted),
-                        session=session,
-                    )
+                if self._should_publish_change_events(session=session):
+                    for inserted in normalized_documents[: len(inserted_ids)]:
+                        self._publish_change_event(
+                            operation_type='insert',
+                            document_key={'_id': deepcopy(inserted['_id'])},
+                            full_document=deepcopy(inserted),
+                            session=session,
+                        )
+                else:
+                    for _inserted_id in inserted_ids:
+                        self._mark_change_event_gap()
                 raise DuplicateKeyError(message)
             inserted_ids.append(doc['_id'])
 
         await self._profile_operation(
             op='insert',
-            command={
-                'insert': self._collection_name,
-                'documents': command_documents,
-                'bypassDocumentValidation': bypass_document_validation,
-            },
+            command_factory=_insert_many_profile_command,
             duration_ns=time.perf_counter_ns() - started_at,
         )
         if session is not None:
             session.observe_operation()
-        for inserted in command_documents:
-            self._publish_change_event(
-                operation_type='insert',
-                document_key={'_id': deepcopy(inserted['_id'])},
-                full_document=deepcopy(inserted),
-                session=session,
-            )
+        if self._should_publish_change_events(session=session):
+            for inserted in normalized_documents:
+                self._publish_change_event(
+                    operation_type='insert',
+                    document_key={'_id': deepcopy(inserted['_id'])},
+                    full_document=deepcopy(inserted),
+                    session=session,
+                )
+        else:
+            for _inserted_id in inserted_ids:
+                self._mark_change_event_gap()
         return InsertManyResult(inserted_ids=inserted_ids)
 
     async def bulk_write(

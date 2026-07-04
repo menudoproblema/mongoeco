@@ -1,4 +1,5 @@
 import asyncio
+import gc
 import json
 import os
 import tempfile
@@ -616,6 +617,49 @@ class ChangeStreamJournalTests(unittest.TestCase):
 
 
 class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
+    async def test_cursor_registers_and_unregisters_watcher_count(self):
+        hub = ChangeStreamHub()
+        cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope())
+
+        self.assertEqual(hub.watcher_count, 1)
+        self.assertTrue(hub.should_publish_events())
+
+        cursor.close()
+        cursor.close()
+
+        self.assertEqual(hub.watcher_count, 0)
+        self.assertFalse(hub.should_publish_events())
+
+    async def test_abandoned_cursor_unregisters_watcher_count(self):
+        hub = ChangeStreamHub()
+        cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope())
+
+        self.assertEqual(hub.watcher_count, 1)
+
+        del cursor
+        gc.collect()
+
+        self.assertEqual(hub.watcher_count, 0)
+
+    async def test_gap_rejects_resume_tokens_before_omitted_events(self):
+        hub = ChangeStreamHub()
+        hub.publish(
+            operation_type="insert",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 1},
+            full_document={"_id": 1},
+        )
+
+        hub.mark_gap()
+
+        with self.assertRaisesRegex(OperationFailure, "resume token is no longer available"):
+            AsyncChangeStreamCursor(
+                hub,
+                scope=ChangeStreamScope(),
+                resume_after={"_data": encode_change_stream_token(1)},
+            )
+
     async def test_cursor_filters_by_scope_pipeline_and_timeout(self):
         hub = ChangeStreamHub()
         cursor = AsyncChangeStreamCursor(
@@ -626,7 +670,7 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
                 {"$addFields": {"kind": "$operationType"}},
                 {"$project": {"operationType": 1, "documentKey": 1, "kind": 1}},
             ],
-            max_await_time_ms=25,
+            max_await_time_ms=5,
         )
 
         self.assertIsNone(await cursor.try_next())
@@ -872,7 +916,7 @@ class ChangeStreamCursorTests(unittest.TestCase):
         async_cursor = AsyncChangeStreamCursor(
             hub,
             scope=ChangeStreamScope(),
-            max_await_time_ms=25,
+            max_await_time_ms=5,
         )
         cursor = ChangeStreamCursor(_FakeClient(), async_cursor)
         hub.publish(

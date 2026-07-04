@@ -133,12 +133,15 @@ async def perform_upsert_update(
         session=session,
         bypass_document_validation=bypass_document_validation,
     )
-    collection._publish_change_event(
-        operation_type='insert',
-        document_key={'_id': deepcopy(new_doc['_id'])},
-        full_document=deepcopy(new_doc),
-        session=session,
-    )
+    if collection._should_publish_change_events(session=session):
+        collection._publish_change_event(
+            operation_type='insert',
+            document_key={'_id': deepcopy(new_doc['_id'])},
+            full_document=deepcopy(new_doc),
+            session=session,
+        )
+    else:
+        collection._mark_change_event_gap()
     return UpdateResult(
         matched_count=0,
         modified_count=0,
@@ -202,9 +205,12 @@ async def update_one(
         update_spec=update_spec,
         planning_mode=collection._planning_mode,
     )
+    should_publish_change_events = collection._should_publish_change_events(
+        session=session,
+    )
     event_selected_id: DocumentId | None = None
     if (
-        collection._change_hub is not None
+        should_publish_change_events
         and operation.sort is None
         and operation.hint is None
     ):
@@ -251,16 +257,19 @@ async def update_one(
                 hint=operation.hint,
                 session=session,
             )
-            updated = await collection._document_by_id(
-                selected_id, session=session
-            )
-            if updated is not None and '_id' in selected:
-                collection._publish_change_event(
-                    operation_type='update',
-                    document_key={'_id': deepcopy(selected_id)},
-                    full_document=deepcopy(updated),
-                    session=session,
+            if should_publish_change_events:
+                updated = await collection._document_by_id(
+                    selected_id, session=session
                 )
+                if updated is not None and '_id' in selected:
+                    collection._publish_change_event(
+                        operation_type='update',
+                        document_key={'_id': deepcopy(selected_id)},
+                        full_document=deepcopy(updated),
+                        session=session,
+                    )
+            elif result.matched_count > 0:
+                collection._mark_change_event_gap()
             return result
         return await perform_upsert_update(
             collection,
@@ -315,16 +324,19 @@ async def update_one(
             hint=operation.hint,
             session=session,
         )
-        updated = await collection._document_by_id(
-            selected_id, session=session
-        )
-        if updated is not None and '_id' in selected:
-            collection._publish_change_event(
-                operation_type='update',
-                document_key={'_id': deepcopy(selected_id)},
-                full_document=deepcopy(updated),
-                session=session,
+        if should_publish_change_events:
+            updated = await collection._document_by_id(
+                selected_id, session=session
             )
+            if updated is not None and '_id' in selected:
+                collection._publish_change_event(
+                    operation_type='update',
+                    document_key={'_id': deepcopy(selected_id)},
+                    full_document=deepcopy(updated),
+                    session=session,
+                )
+        elif result.matched_count > 0:
+            collection._mark_change_event_gap()
         return result
     upsert_seed = None
     if upsert:
@@ -345,7 +357,10 @@ async def update_one(
         hint=operation.hint,
         session=session,
     )
-    if result.upserted_id is not None:
+    if not should_publish_change_events:
+        if result.upserted_id is not None or result.matched_count > 0:
+            collection._mark_change_event_gap()
+    elif result.upserted_id is not None:
         inserted = await collection._document_by_id(
             result.upserted_id, session=session
         )
@@ -1032,8 +1047,11 @@ async def delete_one(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
+    should_publish_change_events = collection._should_publish_change_events(
+        session=session,
+    )
     event_selected_id: DocumentId | None = None
-    if collection._change_hub is not None and operation.hint is None:
+    if should_publish_change_events and operation.hint is None:
         selected_for_event = await collection._build_cursor(
             compile_find_selection_from_update_operation(
                 operation,
@@ -1067,12 +1085,14 @@ async def delete_one(
             session=session,
         )
         if deleted:
-            if document_key is not None:
+            if should_publish_change_events and document_key is not None:
                 collection._publish_change_event(
                     operation_type='delete',
                     document_key=document_key,
                     session=session,
                 )
+            elif not should_publish_change_events:
+                collection._mark_change_event_gap()
         return DeleteResult(deleted_count=1 if deleted else 0)
     result = await collection._engine_delete_with_operation(
         operation, session=session
@@ -1083,12 +1103,18 @@ async def delete_one(
         hint=operation.hint,
         session=session,
     )
-    if result.deleted_count and event_selected_id is not None:
+    if (
+        should_publish_change_events
+        and result.deleted_count
+        and event_selected_id is not None
+    ):
         collection._publish_change_event(
             operation_type='delete',
             document_key={'_id': deepcopy(event_selected_id)},
             session=session,
         )
+    elif result.deleted_count and not should_publish_change_events:
+        collection._mark_change_event_gap()
     return result
 
 
