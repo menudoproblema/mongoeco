@@ -8,6 +8,32 @@ class _AggregationCursorIterator:
         self._async_iterable = async_iterable
         self._closed = False
 
+    def _pull_chunk(self) -> bool:
+        if self._cursor._sync_buffer_index < len(self._cursor._sync_buffer):
+            return True
+        if self._cursor._exhausted:
+            self.close()
+            return False
+
+        batch_size = self._cursor._batch_size or 101
+
+        async def _pull() -> list[Document]:
+            items: list[Document] = []
+            while len(items) < batch_size:
+                try:
+                    items.append(await self._async_iterable.__anext__())
+                except StopAsyncIteration:
+                    self._cursor._exhausted = True
+                    break
+            return items
+
+        self._cursor._sync_buffer = self._cursor._client._run(_pull())
+        self._cursor._sync_buffer_index = 0
+        if not self._cursor._sync_buffer:
+            self.close()
+            return False
+        return True
+
     def __iter__(self):
         return self
 
@@ -18,17 +44,24 @@ class _AggregationCursorIterator:
             self._closed = True
             raise StopIteration
         try:
-            return self._cursor._client._run(self._async_iterable.__anext__())
-        except StopAsyncIteration:
-            self._cursor._exhausted = True
-            self.close()
-            raise StopIteration
+            has_chunk = self._pull_chunk()
         except Exception:
             try:
                 self.close()
             except Exception:
                 pass
             raise
+        if not has_chunk:
+            self._cursor._exhausted = True
+            raise StopIteration
+        if has_chunk:
+            value = self._cursor._sync_buffer[self._cursor._sync_buffer_index]
+            self._cursor._sync_buffer_index += 1
+            if self._cursor._sync_buffer_index >= len(self._cursor._sync_buffer):
+                self._cursor._sync_buffer = []
+                self._cursor._sync_buffer_index = 0
+            return value
+        raise StopIteration
 
     def close(self) -> None:
         if self._closed:
@@ -54,6 +87,9 @@ class AggregationCursor:
         self._closed = False
         self._active_async_iterable = None
         self._exhausted = False
+        self._batch_size = getattr(async_aggregation_cursor, "_batch_size", None)
+        self._sync_buffer: list[Document] = []
+        self._sync_buffer_index = 0
 
     def _ensure_open(self) -> None:
         if self._closed:
@@ -78,11 +114,18 @@ class AggregationCursor:
         finally:
             if self._active_async_iterable is async_iterable:
                 self._active_async_iterable = None
+                self._sync_buffer = []
+                self._sync_buffer_index = 0
 
     def __iter__(self):
         self._ensure_open()
         if self._cache is not None:
             return iter(self._cache)
+        if (
+            self._active_async_iterable is not None
+            and self._sync_buffer_index < len(self._sync_buffer)
+        ):
+            return _AggregationCursorIterator(self, self._active_async_iterable)
         if self._exhausted:
             return iter(())
 
@@ -101,6 +144,13 @@ class AggregationCursor:
         self._ensure_open()
         if self._cache is not None:
             return self._cache[0] if self._cache else None
+        if self._sync_buffer_index < len(self._sync_buffer):
+            value = self._sync_buffer[self._sync_buffer_index]
+            self._sync_buffer_index += 1
+            if self._sync_buffer_index >= len(self._sync_buffer):
+                self._sync_buffer = []
+                self._sync_buffer_index = 0
+            return value
         if self._exhausted:
             return None
         active = self._active_async_iterable

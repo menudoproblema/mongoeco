@@ -145,6 +145,15 @@ class _SyncClientStub:
         return asyncio.run(awaitable)
 
 
+class _CountingSyncClientStub(_SyncClientStub):
+    def __init__(self):
+        self.run_calls = 0
+
+    def _run(self, awaitable):
+        self.run_calls += 1
+        return super()._run(awaitable)
+
+
 class _BrokenSyncClientStub:
     def _run(self, awaitable):
         close = getattr(awaitable, 'close', None)
@@ -2162,6 +2171,21 @@ class SyncAggregationCursorTests(unittest.TestCase):
         self.assertEqual(list(cursor), [])
         self.assertEqual(cursor.to_list(), [])
         self.assertIsNone(cursor.first())
+        self.assertEqual(async_cursor.close_calls, 1)
+
+    def test_iterator_pulls_sync_batches_with_one_run_per_chunk(self):
+        async_cursor = _AsyncAggregationCursorStub(
+            [{'_id': str(index)} for index in range(5)]
+        )
+        async_cursor._batch_size = 2
+        client = _CountingSyncClientStub()
+        cursor = AggregationCursor(client, async_cursor)
+
+        self.assertEqual(
+            list(cursor),
+            [{'_id': str(index)} for index in range(5)],
+        )
+        self.assertEqual(client.run_calls, 4)
         self.assertEqual(async_cursor.close_calls, 1)
 
     def test_iter_uses_cache_when_loaded(self):
