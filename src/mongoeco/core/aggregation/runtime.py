@@ -4,7 +4,7 @@ import decimal
 import math
 import re
 import uuid
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
@@ -39,16 +39,13 @@ from mongoeco.core.aggregation.scalar_expressions import (
 from mongoeco.core.bson_scalars import (
     bson_numeric_alias,
 )
-from mongoeco.core.filtering import BSONComparator
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
-from mongoeco.core.projections import apply_projection, validate_projection_spec
-from mongoeco.core.query_plan import compile_filter
+from mongoeco.core.paths import get_document_value, set_document_value
 from mongoeco.core.search import TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Binary, DBRef, Decimal128, Document, ObjectId, Regex, Timestamp, UndefinedType
 from mongoeco.core.aggregation.accumulators import _evaluate_pick_n_input
-from mongoeco.core.aggregation.planning import Pipeline, _require_sort
+from mongoeco.core.aggregation.planning import Pipeline
 from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 
 
@@ -773,27 +770,34 @@ def evaluate_expression(
     return rendered
 
 
-from mongoeco.core.aggregation.grouping_stages import (  # noqa: E402
-    _apply_bucket,
-    _apply_bucket_auto,
-    _apply_count,
-    _apply_group,
-    _apply_set_window_fields,
-    _apply_sort_by_count,
-)
-from mongoeco.core.aggregation.join_stages import (  # noqa: E402
-    _apply_facet,
-    _apply_lookup,
-    _apply_union_with,
-)
-from mongoeco.core.aggregation.transform_stages import (  # noqa: E402
-    _apply_add_fields,
-    _apply_match,
-    _apply_project,
-    _apply_replace_root,
-    _apply_sample,
-    _apply_unset,
-)
+_COMPAT_EXPORT_MODULES = {
+    "_apply_bucket": "mongoeco.core.aggregation.grouping_stages",
+    "_apply_bucket_auto": "mongoeco.core.aggregation.grouping_stages",
+    "_apply_count": "mongoeco.core.aggregation.grouping_stages",
+    "_apply_group": "mongoeco.core.aggregation.grouping_stages",
+    "_apply_set_window_fields": "mongoeco.core.aggregation.grouping_stages",
+    "_apply_sort_by_count": "mongoeco.core.aggregation.grouping_stages",
+    "_apply_facet": "mongoeco.core.aggregation.join_stages",
+    "_apply_lookup": "mongoeco.core.aggregation.join_stages",
+    "_apply_union_with": "mongoeco.core.aggregation.join_stages",
+    "_apply_add_fields": "mongoeco.core.aggregation.transform_stages",
+    "_apply_match": "mongoeco.core.aggregation.transform_stages",
+    "_apply_project": "mongoeco.core.aggregation.transform_stages",
+    "_apply_replace_root": "mongoeco.core.aggregation.transform_stages",
+    "_apply_sample": "mongoeco.core.aggregation.transform_stages",
+    "_apply_unset": "mongoeco.core.aggregation.transform_stages",
+    "AGGREGATION_STAGE_HANDLERS": "mongoeco.core.aggregation.stages",
+    "AggregationStageHandler": "mongoeco.core.aggregation.stages",
+    "apply_pipeline": "mongoeco.core.aggregation.stages",
+}
 
 
-from mongoeco.core.aggregation.stages import AGGREGATION_STAGE_HANDLERS, AggregationStageHandler, apply_pipeline
+def __getattr__(name: str):
+    module_name = _COMPAT_EXPORT_MODULES.get(name)
+    if module_name is None:
+        raise AttributeError(name)
+    from importlib import import_module
+
+    value = getattr(import_module(module_name), name)
+    globals()[name] = value
+    return value

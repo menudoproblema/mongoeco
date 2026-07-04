@@ -10,10 +10,11 @@ usa Semantic Versioning.
 
 ### Changed
 
-- Los facades publicos principales (`mongoeco`, `mongoeco.api`,
-  `mongoeco.compat`, `mongoeco.cxp` y `mongoeco.engines`) resuelven exports
-  publicos bajo demanda, conservando `__all__` y reduciendo coste/ciclos de
-  importacion.
+- Los facades publicos (`mongoeco`, `_types`, `mongoeco.api`,
+  `mongoeco.compat`, `mongoeco.cxp`, `core.aggregation`, `driver`, `engines`
+  y `wire`) resuelven exports bajo demanda, conservando `__all__` y reduciendo
+  coste/ciclos de importacion. `mongoeco.types` conserva su contrato de
+  agregador solo-imports.
 - Los tests de imports y exports publicos ejecutan los subprocess en paralelo
   con salida determinista por nombre de modulo o paquete.
 - Los tests de change streams usan ventanas `max_await_time_ms` mas cortas en

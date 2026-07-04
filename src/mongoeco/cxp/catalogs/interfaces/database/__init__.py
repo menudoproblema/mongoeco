@@ -1,12 +1,73 @@
-from . import mongodb as _mongodb
+from importlib import import_module
 
-
-def _reexport(module) -> tuple[str, ...]:
-    names = tuple(getattr(module, '__all__', ()))
-    globals().update({name: getattr(module, name) for name in names})
-    return names
-
-
-_MONGODB_EXPORTS = _reexport(_mongodb)
+_MONGODB_EXPORTS = (
+    'MongoAggregationMetadata',
+    'MongoCollationMetadata',
+    'MongoPersistenceMetadata',
+    'MongoSearchMetadata',
+    'MongoTopologyDiscoveryMetadata',
+    'MongoVectorSearchMetadata',
+    'MONGODB_AGGREGATE',
+    'MONGODB_AGGREGATE_RICH_PROFILE',
+    'MONGODB_AGGREGATE_RICH_PROFILE_NAME',
+    'MONGODB_AGGREGATION',
+    'MONGODB_BULK_WRITE',
+    'MONGODB_CATALOG',
+    'MONGODB_CHANGE_STREAMS',
+    'MONGODB_COLLATION',
+    'MONGODB_CORE_PROFILE',
+    'MONGODB_CORE_PROFILE_NAME',
+    'MONGODB_CORE_TIER',
+    'MONGODB_COUNT_DOCUMENTS',
+    'MONGODB_DELETE_MANY',
+    'MONGODB_DELETE_ONE',
+    'MONGODB_DISTINCT',
+    'MONGODB_ESTIMATED_DOCUMENT_COUNT',
+    'MONGODB_FIND',
+    'MONGODB_FIND_ONE',
+    'MONGODB_FULL_CAPABILITIES',
+    'MONGODB_INSERT_MANY',
+    'MONGODB_INSERT_ONE',
+    'MONGODB_INTERFACE',
+    'MONGODB_MINIMAL_CAPABILITIES',
+    'MONGODB_PERSISTENCE',
+    'MONGODB_PLATFORM_PROFILE',
+    'MONGODB_PLATFORM_PROFILE_NAME',
+    'MONGODB_PLATFORM_TIER',
+    'MONGODB_READ',
+    'MONGODB_REPLACE_ONE',
+    'MONGODB_SEARCH',
+    'MONGODB_TEXT_SEARCH_PROFILE',
+    'MONGODB_TEXT_SEARCH_PROFILE_NAME',
+    'MONGODB_SEARCH_PROFILE',
+    'MONGODB_SEARCH_PROFILE_NAME',
+    'MONGODB_SEARCH_TIER',
+    'MONGODB_START_SESSION',
+    'MONGODB_TOPOLOGY_DISCOVERY',
+    'MONGODB_TRANSACTIONS',
+    'MONGODB_UPDATE_MANY',
+    'MONGODB_UPDATE_ONE',
+    'MONGODB_VECTOR_SEARCH',
+    'MONGODB_WATCH',
+    'MONGODB_WITH_TRANSACTION',
+    'MONGODB_WRITE',
+)
 
 __all__ = [*_MONGODB_EXPORTS]
+
+_EXPORT_MODULES = {
+    **dict.fromkeys(_MONGODB_EXPORTS, 'mongoeco.cxp.catalogs.interfaces.database.mongodb'),
+}
+
+
+def __getattr__(name: str):
+    module_name = _EXPORT_MODULES.get(name)
+    if module_name is None:
+        raise AttributeError(name)
+    value = getattr(import_module(module_name), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted({*globals(), *__all__})

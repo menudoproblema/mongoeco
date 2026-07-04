@@ -62,7 +62,7 @@ _EXPORT_MODULES = {
     "build_read_preference_from_uri": "mongoeco.driver",
     "build_write_concern_from_uri": "mongoeco.driver",
     "parse_mongo_uri": "mongoeco.driver",
-    **dict.fromkeys(_TYPE_EXPORTS, "mongoeco.types"),
+    **dict.fromkeys(_TYPE_EXPORTS, "mongoeco._types"),
 }
 
 

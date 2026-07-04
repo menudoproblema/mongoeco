@@ -1,70 +1,104 @@
-from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_dns, resolve_srv_seeds
-from mongoeco.driver.execution import (
-    AsyncCommandTransport,
-    RequestAttempt,
-    RequestExecutionResult,
-    RequestExecutionTrace,
-    classify_request_exception,
-    execute_request_pipeline,
+from importlib import import_module
+
+_URI_EXPORTS = (
+    "MongoClientOptions",
+    "MongoAuthOptions",
+    "MongoTlsOptions",
+    "MongoUri",
+    "MongoUriSeed",
+    "parse_mongo_uri",
+    "build_write_concern_from_uri",
+    "build_read_concern_from_uri",
+    "build_read_preference_from_uri",
 )
-from mongoeco.driver.failpoints import DriverFailpointController
-from mongoeco.driver.monitoring import (
-    CommandFailedEvent,
-    CommandStartedEvent,
-    CommandSucceededEvent,
-    ConnectionCheckedInEvent,
-    ConnectionCheckedOutEvent,
-    DriverEvent,
-    DriverMonitor,
-    ServerSelectedEvent,
-    ServerSelectionFailedEvent,
-    TopologyRefreshedEvent,
+
+_DISCOVERY_EXPORTS = (
+    "SrvResolution",
+    "resolve_srv_dns",
+    "resolve_srv_seeds",
+    "materialize_srv_uri",
 )
-from mongoeco.driver.connections import (
-    ConnectionLease,
-    ConnectionPool,
-    ConnectionPoolOptions,
-    ConnectionPoolSnapshot,
-    ConnectionRegistry,
-    ConnectionState,
-    DriverConnection,
-    PoolKey,
-    build_connection_pool_options,
+
+_CONNECTION_EXPORTS = (
+    "PoolKey",
+    "ConnectionState",
+    "ConnectionPoolOptions",
+    "DriverConnection",
+    "ConnectionLease",
+    "ConnectionPoolSnapshot",
+    "ConnectionPool",
+    "ConnectionRegistry",
+    "build_connection_pool_options",
 )
-from mongoeco.driver.policies import (
-    ConcernPolicy,
-    RetryPolicy,
-    SelectionPolicy,
-    TimeoutPolicy,
-    build_concern_policy,
-    build_retry_policy,
-    build_selection_policy,
-    build_timeout_policy,
+
+_EXECUTION_EXPORTS = (
+    "AsyncCommandTransport",
+    "RequestAttempt",
+    "RequestExecutionTrace",
+    "RequestExecutionResult",
+    "classify_request_exception",
+    "execute_request_pipeline",
 )
-from mongoeco.driver.requests import CommandRequest, PreparedRequestExecution, RequestExecutionPlan, RequestOutcome
-from mongoeco.driver.runtime import DriverRuntime
-from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
-from mongoeco.driver.topology import (
-    SdamCapabilitiesInfo,
-    ServerDescription,
-    ServerState,
-    ServerType,
-    TopologyDescription,
-    TopologyType,
-    build_local_topology_description,
-    sdam_capabilities_info,
+
+_FAILPOINT_EXPORTS = ("DriverFailpointController",)
+
+_MONITORING_EXPORTS = (
+    "DriverEvent",
+    "DriverMonitor",
+    "ServerSelectedEvent",
+    "ServerSelectionFailedEvent",
+    "TopologyRefreshedEvent",
+    "ConnectionCheckedOutEvent",
+    "ConnectionCheckedInEvent",
+    "CommandStartedEvent",
+    "CommandSucceededEvent",
+    "CommandFailedEvent",
 )
-from mongoeco.driver.topology_monitor import refresh_topology
-from mongoeco.driver.uri import (
-    MongoAuthOptions,
-    MongoClientOptions,
-    MongoTlsOptions,
-    MongoUri,
-    MongoUriSeed,
-    build_read_concern_from_uri,
-    build_read_preference_from_uri,
-    build_write_concern_from_uri,
-    parse_mongo_uri,
+
+_TOPOLOGY_EXPORTS = (
+    "ServerDescription",
+    "ServerState",
+    "ServerType",
+    "SdamCapabilitiesInfo",
+    "TopologyDescription",
+    "TopologyType",
+    "build_local_topology_description",
+    "sdam_capabilities_info",
+)
+
+_TOPOLOGY_MONITOR_EXPORTS = ("refresh_topology",)
+
+_POLICY_EXPORTS = (
+    "TimeoutPolicy",
+    "RetryPolicy",
+    "SelectionPolicy",
+    "ConcernPolicy",
+    "build_timeout_policy",
+    "build_retry_policy",
+    "build_selection_policy",
+    "build_concern_policy",
+)
+
+_SECURITY_EXPORTS = (
+    "AuthPolicy",
+    "TlsPolicy",
+    "build_auth_policy",
+    "build_tls_policy",
+)
+
+_REQUEST_EXPORTS = (
+    "CommandRequest",
+    "PreparedRequestExecution",
+    "RequestExecutionPlan",
+    "RequestOutcome",
+)
+
+_RUNTIME_EXPORTS = ("DriverRuntime",)
+
+_TRANSPORT_EXPORTS = (
+    "CallbackCommandTransport",
+    "LocalCommandTransport",
+    "WireProtocolCommandTransport",
 )
 
 __all__ = [
@@ -138,21 +172,31 @@ __all__ = [
     "WireProtocolCommandTransport",
 ]
 
+_EXPORT_MODULES = {
+    **dict.fromkeys(_URI_EXPORTS, "mongoeco.driver.uri"),
+    **dict.fromkeys(_DISCOVERY_EXPORTS, "mongoeco.driver.discovery"),
+    **dict.fromkeys(_CONNECTION_EXPORTS, "mongoeco.driver.connections"),
+    **dict.fromkeys(_EXECUTION_EXPORTS, "mongoeco.driver.execution"),
+    **dict.fromkeys(_FAILPOINT_EXPORTS, "mongoeco.driver.failpoints"),
+    **dict.fromkeys(_MONITORING_EXPORTS, "mongoeco.driver.monitoring"),
+    **dict.fromkeys(_TOPOLOGY_EXPORTS, "mongoeco.driver.topology"),
+    **dict.fromkeys(_TOPOLOGY_MONITOR_EXPORTS, "mongoeco.driver.topology_monitor"),
+    **dict.fromkeys(_POLICY_EXPORTS, "mongoeco.driver.policies"),
+    **dict.fromkeys(_SECURITY_EXPORTS, "mongoeco.driver.security"),
+    **dict.fromkeys(_REQUEST_EXPORTS, "mongoeco.driver.requests"),
+    **dict.fromkeys(_RUNTIME_EXPORTS, "mongoeco.driver.runtime"),
+    **dict.fromkeys(_TRANSPORT_EXPORTS, "mongoeco.driver.transports"),
+}
+
 
 def __getattr__(name: str):
-    if name in {"CallbackCommandTransport", "LocalCommandTransport", "WireProtocolCommandTransport"}:
-        from mongoeco.driver.transports import (
-            CallbackCommandTransport,
-            LocalCommandTransport,
-            WireProtocolCommandTransport,
-        )
+    module_name = _EXPORT_MODULES.get(name)
+    if module_name is None:
+        raise AttributeError(name)
+    value = getattr(import_module(module_name), name)
+    globals()[name] = value
+    return value
 
-        mapping = {
-            "CallbackCommandTransport": CallbackCommandTransport,
-            "LocalCommandTransport": LocalCommandTransport,
-            "WireProtocolCommandTransport": WireProtocolCommandTransport,
-        }
-        value = mapping[name]
-        globals()[name] = value
-        return value
-    raise AttributeError(name)
+
+def __dir__() -> list[str]:
+    return sorted({*globals(), *__all__})
