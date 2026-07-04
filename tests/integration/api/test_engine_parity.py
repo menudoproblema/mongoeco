@@ -13,13 +13,16 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, InvalidOperation, OperationFailure
 from mongoeco.types import (
+    Binary,
     DBRef,
     DeleteOne,
+    Decimal128,
     InsertOne,
     ObjectId,
     ReplaceOne,
     ReturnDocument,
     SearchIndexModel,
+    SON,
     UNDEFINED,
     UpdateMany,
     UpdateOne,
@@ -85,6 +88,44 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(memory_documents, sqlite_documents)
+
+    async def test_id_uniqueness_preserves_storage_key_semantics(self):
+        ids = [
+            SON([("a", 1), ("b", 2)]),
+            Binary(b"abc", subtype=1),
+            Decimal128("12.50"),
+        ]
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("ids")
+                for index, document_id in enumerate(ids):
+                    with self.subTest(engine=engine_name, document_id=repr(document_id)):
+                        await collection.insert_one({"_id": document_id, "index": index})
+                        with self.assertRaises(DuplicateKeyError):
+                            await collection.insert_one({"_id": document_id, "index": index + 100})
+
+                await collection.insert_one({"_id": 1, "kind": "int"})
+                await collection.insert_one({"_id": 1.0, "kind": "float"})
+                self.assertEqual(await collection.count_documents({}), len(ids) + 2)
+
+    async def test_insert_many_duplicate_id_stops_at_duplicate_in_memory_and_sqlite(self):
+        for engine_name in ("memory", "sqlite"):
+            async with open_client(engine_name) as client:
+                collection = client.get_database("db").get_collection("bulk_ids")
+                with self.subTest(engine=engine_name):
+                    with self.assertRaises(DuplicateKeyError):
+                        await collection.insert_many(
+                            [
+                                {"_id": "a", "value": 1},
+                                {"_id": "b", "value": 2},
+                                {"_id": "a", "value": 3},
+                                {"_id": "c", "value": 4},
+                            ]
+                        )
+                    self.assertEqual(
+                        await collection.find({}, {"_id": 1}).to_list(),
+                        [{"_id": "a"}, {"_id": "b"}],
+                    )
 
     async def test_classic_text_query_and_text_score_match_in_memory_and_sqlite(self):
         results: dict[str, list[dict[str, object]]] = {}

@@ -79,7 +79,7 @@ from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.codec import DocumentCodec
-from mongoeco.core.query_plan import QueryNode, ensure_query_plan
+from mongoeco.core.query_plan import AndCondition, EqualsCondition, QueryNode, ensure_query_plan
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.search import (
     attach_text_score,
@@ -1250,22 +1250,28 @@ class MemoryEngine(AsyncStorageEngine):
         indexes_view: dict[str, dict[str, list[EngineIndexRecord]]] | None = None,
         storage_view: dict[str, dict[str, dict[Any, Any]]] | None = None,
         index_data_view: dict | None = None,
+        check_id_storage: bool = False,
+        scan_payload_id: bool = False,
     ) -> None:
         indexes = (self._indexes if indexes_view is None else indexes_view).get(db_name, {}).get(coll_name, [])
         coll = (self._storage if storage_view is None else storage_view).get(db_name, {}).get(coll_name, {})
         normalized_exclude = exclude_storage_key
         if exclude_storage_key is not None and exclude_storage_key not in coll:
             normalized_exclude = self._storage_key(exclude_storage_key)
-        if "_id" in candidate:
+        if check_id_storage and "_id" in candidate:
             candidate_id_storage_key = self._storage_key(candidate["_id"])
-            for storage_key, data in coll.items():
-                if normalized_exclude is not None and storage_key == normalized_exclude:
-                    continue
-                if storage_key == candidate_id_storage_key:
-                    continue
-                existing = self._borrow_storage_document(data)
-                if "_id" in existing and self._storage_key(existing["_id"]) == candidate_id_storage_key:
-                    raise DuplicateKeyError(f"Duplicate key: _id={candidate['_id']}")
+            if candidate_id_storage_key in coll and candidate_id_storage_key != normalized_exclude:
+                raise DuplicateKeyError(f"Duplicate key: _id={candidate['_id']}")
+            if scan_payload_id:
+                for storage_key, data in coll.items():
+                    if normalized_exclude is not None and storage_key == normalized_exclude:
+                        continue
+                    existing = self._borrow_storage_document(data)
+                    if (
+                        "_id" in existing
+                        and self._storage_key(existing["_id"]) == candidate_id_storage_key
+                    ):
+                        raise DuplicateKeyError(f"Duplicate key: _id={candidate['_id']}")
 
         for index in indexes:
             if not index.get("unique"):
@@ -1304,6 +1310,39 @@ class MemoryEngine(AsyncStorageEngine):
     async def connect(self) -> None:
         with self._meta_lock:
             self._connection_count += 1
+
+    @staticmethod
+    def _direct_id_lookup_from_plan(query_plan: QueryNode) -> Any | None:
+        if isinstance(query_plan, EqualsCondition) and query_plan.field == "_id":
+            return query_plan.value
+        if isinstance(query_plan, AndCondition):
+            for clause in query_plan.clauses:
+                if isinstance(clause, EqualsCondition) and clause.field == "_id":
+                    return clause.value
+        return None
+
+    def _candidate_items_for_plan_locked(
+        self,
+        coll: dict[Any, Any],
+        query_plan: QueryNode,
+        *,
+        dialect: MongoDialect,
+    ) -> list[tuple[Any, Any]]:
+        id_lookup = self._direct_id_lookup_from_plan(query_plan)
+        if id_lookup is None:
+            return list(coll.items())
+        storage_key = self._storage_key(id_lookup)
+        data = coll.get(storage_key)
+        if data is None:
+            return list(coll.items())
+        document = self._borrow_storage_document(data)
+        if document_matches_root_id_lookup(
+            DocumentCodec.to_public(document),
+            id_lookup,
+            dialect=dialect,
+        ):
+            return [(storage_key, data)]
+        return list(coll.items())
 
     @override
     async def disconnect(self) -> None:
@@ -1448,6 +1487,8 @@ class MemoryEngine(AsyncStorageEngine):
                             indexes_view=indexes_view,
                             storage_view=storage,
                             index_data_view=index_data_view,
+                            check_id_storage=True,
+                            scan_payload_id=len(documents) == 1,
                         )
                     except DuplicateKeyError:
                         if overwrite or len(documents) == 1:
@@ -1616,38 +1657,16 @@ class MemoryEngine(AsyncStorageEngine):
                 else:
                     resolve_classic_text_index_for_hint(indexes, semantics.hint)
 
-                # Intento de optimización: Point lookup por _id
-                from mongoeco.core.query_plan import EqualsCondition, AndCondition
-                id_lookup = None
-                if isinstance(semantics.query_plan, EqualsCondition) and semantics.query_plan.field == "_id":
-                    id_lookup = semantics.query_plan.value
-                elif isinstance(semantics.query_plan, AndCondition):
-                    for clause in semantics.query_plan.clauses:
-                        if isinstance(clause, EqualsCondition) and clause.field == "_id":
-                            id_lookup = clause.value
-                            break
-
-                if id_lookup is not None:
-                    storage_key = self._storage_key(id_lookup)
-                    data = coll.get(storage_key)
-                    if data is not None:
-                        document = self._borrow_storage_document(data)
-                        if document_matches_root_id_lookup(
-                            DocumentCodec.to_public(document),
-                            id_lookup,
-                            dialect=semantics.dialect,
-                        ):
-                            document_source = [document]
-                        else:
-                            document_source = (
-                                self._borrow_storage_document(data)
-                                for data in coll.values()
-                            )
-                    else:
-                        document_source = (
-                            self._borrow_storage_document(data)
-                            for data in coll.values()
-                        )
+                candidate_items = self._candidate_items_for_plan_locked(
+                    coll,
+                    semantics.query_plan,
+                    dialect=semantics.dialect,
+                )
+                if len(candidate_items) < len(coll):
+                    document_source = (
+                        self._borrow_storage_document(data)
+                        for _storage_key, data in candidate_items
+                    )
                 else:
                     # Intento de optimización: Otros índices (igualdad simple)
                     target_index_match = None
@@ -1685,7 +1704,7 @@ class MemoryEngine(AsyncStorageEngine):
                         enforce_deadline(deadline)
                         document_source = (
                             self._borrow_storage_document(data)
-                            for data in coll.values()
+                            for _storage_key, data in candidate_items
                         )
 
                 # Pipeline de procesamiento perezoso (streaming)
@@ -1766,7 +1785,11 @@ class MemoryEngine(AsyncStorageEngine):
             if coll is None:
                 coll = {}
 
-            for storage_key, data in list(coll.items()):
+            for storage_key, data in self._candidate_items_for_plan_locked(
+                coll,
+                semantics.query_plan,
+                dialect=semantics.dialect,
+            ):
                 borrowed_document = self._borrow_storage_document(data)
                 if not QueryEngine.match_plan(
                     borrowed_document,
@@ -1805,6 +1828,8 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes_view=indexes_view,
                     storage_view=storage_view,
                     index_data_view=index_data_view,
+                    check_id_storage=True,
+                    scan_payload_id=False,
                 )
                 with self._collection_state_rollback_locked(
                     db_name,
@@ -1889,6 +1914,8 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes_view=indexes_view,
                     storage_view=storage_view,
                     index_data_view=index_data_view,
+                    check_id_storage=True,
+                    scan_payload_id=False,
                 )
                 self._invalidate_search_runtime_cache(db_name, coll_name)
                 coll[storage_key] = self._encode_storage_document(new_doc)
@@ -1936,7 +1963,11 @@ class MemoryEngine(AsyncStorageEngine):
                 index_data_view=index_data_view,
                 storage_view=storage_view,
             )
-            for storage_key, data in list(coll.items()):
+            for storage_key, data in self._candidate_items_for_plan_locked(
+                coll,
+                query_plan,
+                dialect=effective_dialect,
+            ):
                 document = self._borrow_storage_document(data)
                 if not QueryEngine.match_plan(
                     document,
@@ -1983,15 +2014,107 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> int:
-        count = 0
-        async for _ in self.scan_find_semantics(
-            db_name,
-            coll_name,
-            semantics,
-            context=context,
-        ):
-            count += 1
-        return count
+        def _count_filtered(documents: Iterable[Document]) -> int:
+            skipped = semantics.skip
+            remaining = semantics.limit
+            total = 0
+            for _document in documents:
+                enforce_deadline(semantics.deadline)
+                if skipped:
+                    skipped -= 1
+                    continue
+                if remaining is not None and remaining <= 0:
+                    return total
+                total += 1
+                if remaining is not None:
+                    remaining -= 1
+            return total
+
+        if self._is_profile_namespace(coll_name):
+            documents = self._iter_documents_for_classic_text_query(
+                self._profile_documents(db_name),
+                indexes=[],
+                semantics=semantics,
+            )
+            return _count_filtered(iter_filtered_documents(documents, semantics))
+
+        async with self._get_lock(db_name, coll_name):
+            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
+            indexes = self._indexes_view(context).get(db_name, {}).get(coll_name, [])
+            index_data = self._index_data_view(context).get(db_name, {}).get(coll_name, {})
+            self._purge_expired_documents_locked(
+                db_name,
+                coll_name,
+                context=context,
+                indexes_view=self._indexes_view(context),
+                index_data_view=self._index_data_view(context),
+                storage_view=self._storage_view(context),
+            )
+            if semantics.text_query is None:
+                self._resolve_hint_index(
+                    db_name,
+                    coll_name,
+                    semantics.hint,
+                    indexes=indexes,
+                    plan=semantics.query_plan,
+                    dialect=semantics.dialect,
+                )
+            else:
+                resolve_classic_text_index_for_hint(indexes, semantics.hint)
+
+            candidate_items = self._candidate_items_for_plan_locked(
+                coll,
+                semantics.query_plan,
+                dialect=semantics.dialect,
+            )
+            if len(candidate_items) < len(coll):
+                document_source = (
+                    self._borrow_storage_document(data)
+                    for _storage_key, data in candidate_items
+                )
+            else:
+                target_index_match = None
+                target_key = None
+
+                def find_usable_index(node):
+                    if isinstance(node, EqualsCondition):
+                        for idx in indexes:
+                            if idx["key"] == [(node.field, 1)]:
+                                return idx, self._index_key({node.field: node.value}, idx["fields"])
+                    elif isinstance(node, AndCondition):
+                        for clause in node.clauses:
+                            idx, key = find_usable_index(clause)
+                            if idx:
+                                return idx, key
+                    return None, None
+
+                target_index_match, target_key = find_usable_index(semantics.query_plan)
+                if target_index_match and target_index_match["name"] in index_data:
+                    storage_keys = index_data[target_index_match["name"]].get(target_key, set())
+                    if len(storage_keys) <= 1:
+                        document_source = (
+                            self._borrow_storage_document(coll[sk])
+                            for sk in storage_keys
+                            if sk in coll
+                        )
+                    else:
+                        document_source = (
+                            self._borrow_storage_document(data)
+                            for sk, data in coll.items()
+                            if sk in storage_keys
+                        )
+                else:
+                    document_source = (
+                        self._borrow_storage_document(data)
+                        for _storage_key, data in candidate_items
+                    )
+
+            document_source = self._iter_documents_for_classic_text_query(
+                document_source,
+                indexes=indexes,
+                semantics=semantics,
+            )
+            return _count_filtered(iter_filtered_documents(document_source, semantics))
 
     @override
     async def create_index(

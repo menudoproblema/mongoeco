@@ -28,7 +28,7 @@ def put_document(
     collection_options_or_empty: Callable[[sqlite3.Connection, str, str], dict[str, object]],
     load_existing_document_for_storage_key: Callable[[sqlite3.Connection, str, str, str], Document | None],
     ensure_collection_row: Callable[..., None],
-    validate_document_against_unique_indexes: Callable[[str, str, Document, str | None], None],
+    validate_document_against_unique_indexes: Callable[..., None],
     load_indexes: Callable[[str, str], list[EngineIndexRecord]],
     rebuild_multikey_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, list[EngineIndexRecord]], None],
     supports_scalar_index: Callable[[EngineIndexRecord], bool],
@@ -69,6 +69,8 @@ def put_document(
             coll_name,
             document,
             storage_key if overwrite else None,
+            False,
+            True,
         )
 
         try:
@@ -131,7 +133,7 @@ def put_documents_bulk(
     begin_write: Callable[[sqlite3.Connection], None],
     ensure_collection_row: Callable[..., None],
     lookup_collection_id: Callable[[sqlite3.Connection, str, str, bool], int | None],
-    validate_document_against_unique_indexes: Callable[[str, str, Document, str | None], None],
+    validate_document_against_unique_indexes: Callable[..., None],
     delete_multikey_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
     delete_scalar_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
     build_multikey_rows_for_document: Callable[[str, Document, list[EngineIndexRecord]], list[tuple[str, str, int, str]]],
@@ -168,6 +170,23 @@ def put_documents_bulk(
     ):
         ensure_collection_row(conn, db_name, coll_name)
         collection_id = lookup_collection_id(conn, db_name, coll_name, True)
+        storage_keys = [storage_key for storage_key, _serialized, _rows in prepared_documents]
+        existing_storage_keys: set[str] = set()
+        for offset in range(0, len(storage_keys), 900):
+            chunk = storage_keys[offset : offset + 900]
+            if not chunk:
+                continue
+            placeholders = ", ".join("?" for _ in chunk)
+            rows = conn.execute(
+                f"""
+                SELECT storage_key
+                FROM documents
+                WHERE db_name = ? AND coll_name = ? AND storage_key IN ({placeholders})
+                """,
+                (db_name, coll_name, *chunk),
+            ).fetchall()
+            existing_storage_keys.update(row[0] for row in rows)
+        seen_storage_keys: set[str] = set()
         for document, (storage_key, serialized_document, prepared_multikey_rows) in zip(
             documents,
             prepared_documents,
@@ -176,11 +195,17 @@ def put_documents_bulk(
             try:
                 if "_id" in document:
                     assert_valid_root_document_id(document["_id"])
+                if storage_key in seen_storage_keys or storage_key in existing_storage_keys:
+                    results.append(False)
+                    break
+                seen_storage_keys.add(storage_key)
                 validate_document_against_unique_indexes(
                     db_name,
                     coll_name,
                     document,
-                    None,
+                    storage_key,
+                    True,
+                    False,
                 )
                 cursor = conn.execute(
                     """

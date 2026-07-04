@@ -2084,27 +2084,34 @@ class SQLiteEngine(AsyncStorageEngine):
         document: Document,
         *,
         exclude_storage_key: str | None = None,
+        skip_id_check: bool = False,
+        scan_payload_id: bool = False,
     ) -> None:
         conn = self._require_connection()
         collection_id = self._lookup_collection_id(conn, db_name, coll_name)
-        if "_id" in document:
+        if "_id" in document and not skip_id_check:
             document_id_storage_key = self._storage_key(document["_id"])
-            rows = conn.execute(
-                """
-                SELECT storage_key, document
-                FROM documents
-                WHERE db_name = ? AND coll_name = ?
-                """,
-                (db_name, coll_name),
-            ).fetchall()
-            for storage_key, payload in rows:
-                if exclude_storage_key is not None and storage_key == exclude_storage_key:
-                    continue
-                if storage_key == document_id_storage_key:
-                    continue
-                existing_document = self._deserialize_document(payload)
-                if "_id" in existing_document and self._storage_key(existing_document["_id"]) == document_id_storage_key:
+            if exclude_storage_key != document_id_storage_key:
+                row = conn.execute(
+                    """
+                    SELECT 1
+                    FROM documents
+                    WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                    LIMIT 1
+                    """,
+                    (db_name, coll_name, document_id_storage_key),
+                ).fetchone()
+                if row is not None:
                     raise DuplicateKeyError(f"Duplicate key: _id={document['_id']}")
+            if scan_payload_id:
+                for storage_key, existing_document in self._load_documents(db_name, coll_name):
+                    if exclude_storage_key is not None and storage_key == exclude_storage_key:
+                        continue
+                    if (
+                        "_id" in existing_document
+                        and self._storage_key(existing_document["_id"]) == document_id_storage_key
+                    ):
+                        raise DuplicateKeyError(f"Duplicate key: _id={document['_id']}")
         for index in self._load_indexes(db_name, coll_name):
             if not index["unique"]:
                 continue
@@ -3410,11 +3417,13 @@ class SQLiteEngine(AsyncStorageEngine):
                     collection_options_or_empty=self._collection_options_or_empty_sync,
                     load_existing_document_for_storage_key=self._load_existing_document_for_storage_key,
                     ensure_collection_row=self._ensure_collection_row,
-                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key: self._validate_document_against_unique_indexes(
+                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: self._validate_document_against_unique_indexes(
                         current_db_name,
                         current_coll_name,
                         current_document,
                         exclude_storage_key=exclude_storage_key,
+                        skip_id_check=skip_id_check,
+                        scan_payload_id=scan_payload_id,
                     ),
                     load_indexes=self._load_indexes,
                     rebuild_multikey_entries_for_document=self._rebuild_multikey_entries_for_document,
@@ -3490,11 +3499,13 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_coll_name,
                         create=create,
                     ),
-                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key: self._validate_document_against_unique_indexes(
+                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: self._validate_document_against_unique_indexes(
                         current_db_name,
                         current_coll_name,
                         current_document,
                         exclude_storage_key=exclude_storage_key,
+                        skip_id_check=skip_id_check,
+                        scan_payload_id=scan_payload_id,
                     ),
                     delete_multikey_entries_for_storage_key=self._delete_multikey_entries_for_storage_key,
                     delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
@@ -4661,11 +4672,13 @@ class SQLiteEngine(AsyncStorageEngine):
                         collation=current_collation,
                     ),
                     enforce_collection_document_validation=enforce_collection_document_validation,
-                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, document, exclude_storage_key: self._validate_document_against_unique_indexes(
+                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: self._validate_document_against_unique_indexes(
                         current_db_name,
                         current_coll_name,
                         document,
                         exclude_storage_key=exclude_storage_key,
+                        skip_id_check=skip_id_check,
+                        scan_payload_id=scan_payload_id,
                     ),
                     load_indexes=self._load_indexes,
                     load_search_index_rows=lambda current_db_name, current_coll_name: self._load_search_index_rows(

@@ -2859,6 +2859,40 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
             self.assertIsNone(client.alpha.users.find_one({"_id": "after-conflict"}))
 
+    def test_memory_engine_id_fast_path_uses_transaction_snapshot(self):
+        with MongoClient(MemoryEngine()) as client:
+            collection = client.alpha.users
+            collection.insert_one({"_id": "1", "state": "draft", "value": 0})
+            session = client.start_session()
+            session.start_transaction()
+
+            first = collection.update_one(
+                {"_id": "1"},
+                {"$set": {"state": "session"}},
+                session=session,
+            )
+            second = collection.update_one(
+                {"_id": "1", "state": "session"},
+                {"$set": {"value": 1}},
+                session=session,
+            )
+            deleted = collection.delete_one(
+                {"_id": "1", "value": 1},
+                session=session,
+            )
+
+            self.assertEqual(first.matched_count, 1)
+            self.assertEqual(second.matched_count, 1)
+            self.assertEqual(deleted.deleted_count, 1)
+            self.assertEqual(
+                collection.find_one({"_id": "1"}),
+                {"_id": "1", "state": "draft", "value": 0},
+            )
+            self.assertIsNone(collection.find_one({"_id": "1"}, session=session))
+
+            session.commit_transaction()
+            self.assertIsNone(collection.find_one({"_id": "1"}))
+
     def test_transaction_session_cannot_write_through_foreign_engine(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
