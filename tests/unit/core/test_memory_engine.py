@@ -2214,6 +2214,59 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 {"_id": "1"},
             )
 
+    def test_decode_codec_payload_caches_signature_until_codec_changes(self):
+        class PreserveCodec:
+            @staticmethod
+            def decode(payload, *, preserve_bson_wrappers: bool = False):
+                return {
+                    "payload": payload,
+                    "preserve": preserve_bson_wrappers,
+                }
+
+        class LegacyCodec:
+            @staticmethod
+            def decode(payload):
+                return payload
+
+        engine = MemoryEngine(codec=PreserveCodec)
+        calls = 0
+        real_signature = memory_module.inspect.signature
+
+        def _counted_signature(callable_object):
+            nonlocal calls
+            calls += 1
+            return real_signature(callable_object)
+
+        with patch(
+            "mongoeco.engines.memory.inspect.signature",
+            side_effect=_counted_signature,
+        ):
+            self.assertEqual(
+                engine._decode_codec_payload(
+                    {"_id": "1"},
+                    preserve_bson_wrappers=True,
+                ),
+                {"payload": {"_id": "1"}, "preserve": True},
+            )
+            self.assertEqual(
+                engine._decode_codec_payload(
+                    {"_id": "2"},
+                    preserve_bson_wrappers=False,
+                ),
+                {"payload": {"_id": "2"}, "preserve": False},
+            )
+            self.assertEqual(calls, 1)
+
+            engine._codec = LegacyCodec
+            self.assertEqual(
+                engine._decode_codec_payload(
+                    {"_id": "3"},
+                    preserve_bson_wrappers=True,
+                ),
+                {"_id": "3"},
+            )
+            self.assertEqual(calls, 2)
+
     def test_decode_storage_document_supports_public_decode_from_stored_payload(self):
         engine = MemoryEngine()
         payload = engine._encode_storage_document({"_id": "1", "kind": "view"})

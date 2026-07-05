@@ -12,7 +12,7 @@ import threading
 import time
 import uuid
 from copy import deepcopy
-from typing import Any, AsyncIterable, Iterator, override
+from typing import Any, AsyncIterable, Iterable, Iterator, override
 
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -267,6 +267,20 @@ class MemoryEngine(AsyncStorageEngine):
     """Motor de almacenamiento en memoria ultra-rápido."""
 
     _PROFILE_COLLECTION_NAME = "system.profile"
+    sync_inline_collection_operations = frozenset(
+        {
+            "insert_one",
+            "insert_many",
+            "find_one",
+            "update_one",
+            "update_many",
+            "replace_one",
+            "delete_one",
+            "delete_many",
+            "count_documents",
+            "estimated_document_count",
+        }
+    )
 
     def __init__(
         self,
@@ -295,6 +309,7 @@ class MemoryEngine(AsyncStorageEngine):
         self._meta_lock = threading.Lock()
         self._connection_count = 0
         self._codec = codec
+        self._decode_signature_cache: tuple[object, object, bool] | None = None
         self._profiler = EngineProfiler("memory")
         self._runtime_metrics = LocalRuntimeMetrics()
         self._active_operations = LocalActiveOperationRegistry()
@@ -598,13 +613,31 @@ class MemoryEngine(AsyncStorageEngine):
         preserve_bson_wrappers: bool,
     ) -> Document:
         decode = self._codec.decode
+        if not self._decode_accepts_preserve_bson_wrappers(decode):
+            return decode(payload)
+        return decode(payload, preserve_bson_wrappers=preserve_bson_wrappers)
+
+    def _decode_accepts_preserve_bson_wrappers(self, decode: object) -> bool:
+        decode_identity = getattr(decode, "__func__", decode)
+        cached = self._decode_signature_cache
+        if (
+            cached is not None
+            and cached[0] is self._codec
+            and cached[1] is decode_identity
+        ):
+            return cached[2]
         try:
             parameters = inspect.signature(decode).parameters
         except (TypeError, ValueError):
-            parameters = {}
-        if "preserve_bson_wrappers" not in parameters:
-            return decode(payload)
-        return decode(payload, preserve_bson_wrappers=preserve_bson_wrappers)
+            accepts_preserve = False
+        else:
+            accepts_preserve = "preserve_bson_wrappers" in parameters
+        self._decode_signature_cache = (
+            self._codec,
+            decode_identity,
+            accepts_preserve,
+        )
+        return accepts_preserve
 
     def _borrow_public_storage_document(self, payload: object) -> Document:
         if isinstance(payload, _StoredDocument):

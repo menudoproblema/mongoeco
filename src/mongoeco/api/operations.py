@@ -1,4 +1,6 @@
+from collections import OrderedDict
 from dataclasses import dataclass, replace
+import threading
 
 from mongoeco.api.argument_validation import (
     HintSpec,
@@ -10,7 +12,12 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage
 from mongoeco.core.collation import normalize_collation
-from mongoeco.core.operators import CompiledExecutableUpdatePlan, UpdateEngine
+from mongoeco.core.operators import (
+    CompiledExecutableUpdatePlan,
+    CompiledUpdateOperator,
+    CompiledUpdatePlan,
+    UpdateEngine,
+)
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.search import (
     TEXT_SCORE_FIELD,
@@ -18,6 +25,7 @@ from mongoeco.core.search import (
     split_classic_text_filter,
     validate_search_stage_pipeline,
 )
+from mongoeco.core.update_paths import CompiledUpdateInstruction
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ArrayFilters, CollationDocument, Filter, PlanningIssue, PlanningMode, Projection, SortSpec, Update
@@ -81,6 +89,123 @@ class AggregateOperation:
 
     def with_overrides(self, **changes: object) -> "AggregateOperation":
         return replace(self, **changes)
+
+
+_CACHEABLE_UPDATE_OPERATORS = frozenset(
+    {
+        "$set",
+        "$unset",
+        "$inc",
+        "$mul",
+        "$min",
+        "$max",
+    }
+)
+_UPDATE_PLAN_TEMPLATE_CACHE_MAX_SIZE = 2_048
+_UPDATE_PLAN_TEMPLATE_CACHE_LOCK = threading.RLock()
+_UPDATE_PLAN_TEMPLATE_CACHE: OrderedDict[
+    tuple[object, ...],
+    tuple["_UpdatePlanTemplate", "_UpdatePlanTemplate"],
+] = OrderedDict()
+
+
+@dataclass(frozen=True, slots=True)
+class _UpdateInstructionTemplate:
+    operator: str
+    path: object
+    value_slot: int
+    target_path: object | None = None
+
+    def bind(self, values: tuple[object, ...]) -> CompiledUpdateInstruction:
+        return CompiledUpdateInstruction(
+            operator=self.operator,
+            path=self.path,
+            value=values[self.value_slot],
+            target_path=self.target_path,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class _UpdateOperatorTemplate:
+    operator: str
+    instructions: tuple[_UpdateInstructionTemplate, ...]
+    handler: object
+
+    def bind(self, values: tuple[object, ...]) -> CompiledUpdateOperator:
+        return CompiledUpdateOperator(
+            operator=self.operator,
+            instructions=tuple(
+                instruction.bind(values) for instruction in self.instructions
+            ),
+            handler=self.handler,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class _UpdatePlanTemplate:
+    operators: tuple[_UpdateOperatorTemplate, ...]
+    touches_document_id: bool
+    is_upsert_insert: bool
+
+    @classmethod
+    def from_plan(
+        cls,
+        plan: CompiledExecutableUpdatePlan,
+        *,
+        slot_map: dict[tuple[str, str], int],
+        is_upsert_insert: bool,
+    ) -> "_UpdatePlanTemplate":
+        if not isinstance(plan, CompiledUpdatePlan):
+            raise AssertionError("cached update templates require classic plans")
+        return cls(
+            operators=tuple(
+                _UpdateOperatorTemplate(
+                    operator=operator.operator,
+                    instructions=tuple(
+                        _UpdateInstructionTemplate(
+                            operator=instruction.operator,
+                            path=instruction.path,
+                            value_slot=slot_map[
+                                (instruction.operator, instruction.path.raw)
+                            ],
+                            target_path=instruction.target_path,
+                        )
+                        for instruction in operator.instructions
+                    ),
+                    handler=operator.handler,
+                )
+                for operator in plan.compiled_operators
+            ),
+            touches_document_id=plan.touches_document_id,
+            is_upsert_insert=is_upsert_insert,
+        )
+
+    def bind(
+        self,
+        update_spec: Update,
+        values: tuple[object, ...],
+        *,
+        dialect: MongoDialect,
+        selector_filter: Filter,
+    ) -> CompiledUpdatePlan:
+        context = UpdateEngine.build_execution_context(
+            dialect=dialect,
+            selector_filter=selector_filter,
+            is_upsert_insert=self.is_upsert_insert,
+        )
+        return CompiledUpdatePlan(
+            update_spec=update_spec,
+            compiled_operators=tuple(
+                operator.bind(values) for operator in self.operators
+            ),
+            context=context,
+            touches_document_id=self.touches_document_id,
+        )
+
+
+def _clear_update_plan_template_cache() -> None:
+    with _UPDATE_PLAN_TEMPLATE_CACHE_LOCK:
+        _UPDATE_PLAN_TEMPLATE_CACHE.clear()
 
 
 def compile_find_selection_from_update_operation(
@@ -304,6 +429,150 @@ def _collect_update_planning_issues(
     return tuple(issues)
 
 
+def _update_dialect_cache_key(dialect: MongoDialect) -> tuple[object, ...]:
+    policy = dialect.catalog_policy_spec
+    update_operators = dialect.catalog_update_operators
+    return (
+        type(dialect),
+        dialect.key,
+        dialect.server_version,
+        tuple(sorted(dialect.catalog_behavior_flags.items())),
+        (
+            policy.null_query_matches_undefined,
+            policy.expression_truthiness,
+            policy.projection_flag_mode,
+            policy.update_path_sort_mode,
+            policy.equality_mode,
+            policy.comparison_mode,
+        ),
+        tuple(sorted(dialect.catalog_capabilities)),
+        None if update_operators is None else tuple(sorted(update_operators)),
+    )
+
+
+def _field_only_update_path(path: object) -> str | None:
+    if not isinstance(path, str) or path == "":
+        return None
+    segments = path.split(".")
+    if any(segment == "" for segment in segments):
+        return None
+    if any(
+        segment.isdigit()
+        or segment == "$"
+        or segment == "$[]"
+        or (segment.startswith("$[") and segment.endswith("]"))
+        for segment in segments
+    ):
+        return None
+    return path
+
+
+def _build_update_plan_template_cache_key(
+    update_spec: Update,
+    *,
+    dialect: MongoDialect,
+    collation: CollationDocument | None,
+    array_filters: ArrayFilters | None,
+    variables: dict[str, object] | None,
+    planning_mode: PlanningMode,
+) -> tuple[tuple[object, ...], tuple[object, ...]] | None:
+    if planning_mode is not PlanningMode.STRICT:
+        return None
+    if collation is not None or array_filters is not None or variables is not None:
+        return None
+    if not isinstance(update_spec, dict):
+        return None
+
+    values: list[object] = []
+    operator_shapes: list[tuple[str, tuple[str, ...]]] = []
+    for operator, params in update_spec.items():
+        if operator not in _CACHEABLE_UPDATE_OPERATORS:
+            return None
+        if not dialect.supports_update_operator(operator):
+            return None
+        try:
+            ordered_items = UpdateEngine._iter_ordered_update_items(
+                params,
+                dialect=dialect,
+            )
+        except OperationFailure:
+            return None
+        if not ordered_items:
+            return None
+        paths: list[str] = []
+        for path, value in ordered_items:
+            compiled_path = _field_only_update_path(path)
+            if compiled_path is None:
+                return None
+            paths.append(compiled_path)
+            values.append(value)
+        operator_shapes.append((operator, tuple(paths)))
+
+    if not operator_shapes:
+        return None
+    cache_key = (
+        _update_dialect_cache_key(dialect),
+        tuple(operator_shapes),
+    )
+    return cache_key, tuple(values)
+
+
+def _slot_map_from_update_plan_cache_key(
+    cache_key: tuple[object, ...],
+) -> dict[tuple[str, str], int]:
+    _dialect_key, operator_shapes = cache_key
+    slot_map: dict[tuple[str, str], int] = {}
+    slot = 0
+    for operator, paths in operator_shapes:
+        for path in paths:
+            slot_map[(operator, path)] = slot
+            slot += 1
+    return slot_map
+
+
+def _get_or_compile_update_plan_templates(
+    cache_key: tuple[object, ...],
+    *,
+    update_spec: Update,
+    dialect: MongoDialect,
+    selector_filter: Filter,
+) -> tuple[_UpdatePlanTemplate, _UpdatePlanTemplate]:
+    with _UPDATE_PLAN_TEMPLATE_CACHE_LOCK:
+        cached = _UPDATE_PLAN_TEMPLATE_CACHE.get(cache_key)
+        if cached is not None:
+            _UPDATE_PLAN_TEMPLATE_CACHE.move_to_end(cache_key)
+            return cached
+
+        compiled_update_plan = UpdateEngine.compile_update_plan(
+            update_spec,
+            dialect=dialect,
+            selector_filter=selector_filter,
+        )
+        compiled_upsert_plan = UpdateEngine.compile_update_plan(
+            update_spec,
+            dialect=dialect,
+            selector_filter=selector_filter,
+            is_upsert_insert=True,
+        )
+        slot_map = _slot_map_from_update_plan_cache_key(cache_key)
+        templates = (
+            _UpdatePlanTemplate.from_plan(
+                compiled_update_plan,
+                slot_map=slot_map,
+                is_upsert_insert=False,
+            ),
+            _UpdatePlanTemplate.from_plan(
+                compiled_upsert_plan,
+                slot_map=slot_map,
+                is_upsert_insert=True,
+            ),
+        )
+        _UPDATE_PLAN_TEMPLATE_CACHE[cache_key] = templates
+        if len(_UPDATE_PLAN_TEMPLATE_CACHE) > _UPDATE_PLAN_TEMPLATE_CACHE_MAX_SIZE:
+            _UPDATE_PLAN_TEMPLATE_CACHE.popitem(last=False)
+        return templates
+
+
 def _compile_update_plans(
     update_spec: Update | None,
     *,
@@ -322,6 +591,36 @@ def _compile_update_plans(
             return None, None
         raise OperationFailure(shape_issue)
     try:
+        template_cache_entry = _build_update_plan_template_cache_key(
+            update_spec,
+            dialect=dialect,
+            collation=collation,
+            array_filters=array_filters,
+            variables=variables,
+            planning_mode=planning_mode,
+        )
+        if template_cache_entry is not None:
+            template_cache_key, values = template_cache_entry
+            plan_template, upsert_template = _get_or_compile_update_plan_templates(
+                template_cache_key,
+                update_spec=update_spec,
+                dialect=dialect,
+                selector_filter=selector_filter,
+            )
+            return (
+                plan_template.bind(
+                    update_spec,
+                    values,
+                    dialect=dialect,
+                    selector_filter=selector_filter,
+                ),
+                upsert_template.bind(
+                    update_spec,
+                    values,
+                    dialect=dialect,
+                    selector_filter=selector_filter,
+                ),
+            )
         return (
             UpdateEngine.compile_update_plan(
                 update_spec,

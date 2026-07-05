@@ -7,11 +7,16 @@ from unittest.mock import patch
 from mongoeco.compat import MongoDialect80, PyMongoProfile417
 from mongoeco.api._sync.client import MongoClient, _SyncRunner
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import ExecutionTimeout, InvalidOperation, ServerSelectionTimeoutError
 
 
 async def _noop() -> None:
     return None
+
+
+async def _value() -> str:
+    return "ok"
 
 
 class SyncClientUnitTests(unittest.TestCase):
@@ -60,6 +65,27 @@ class SyncClientUnitTests(unittest.TestCase):
                 runner.run(coroutine)
         finally:
             coroutine.close()
+
+    def test_sync_runner_inline_completes_without_asyncio_runner(self):
+        runner = _SyncRunner()
+        try:
+            with patch.object(runner._runner, "run", side_effect=AssertionError("runner used")):
+                self.assertEqual(runner.run(_value(), inline=True), "ok")
+        finally:
+            runner.close()
+
+    def test_sync_runner_inline_rejects_suspending_coroutine(self):
+        runner = _SyncRunner()
+
+        async def _suspends_once():
+            await asyncio.sleep(0)
+            return "late"
+
+        try:
+            with self.assertRaisesRegex(InvalidOperation, "inline operation suspended"):
+                runner.run(_suspends_once(), inline=True)
+        finally:
+            runner.close()
 
     def test_sync_runner_cleanup_returns_early_when_closed(self):
         runner = _SyncRunner()
@@ -165,6 +191,17 @@ class SyncClientUnitTests(unittest.TestCase):
             runner.close()
         self.assertIsNone(runner._helper_thread)
 
+    def test_sync_runner_inline_uses_helper_inside_active_event_loop(self):
+        runner = _SyncRunner()
+        try:
+            async def _exercise() -> None:
+                self.assertEqual(runner.run(_value(), inline=True), "ok")
+                self.assertIsNotNone(runner._helper_thread)
+
+            asyncio.run(_exercise())
+        finally:
+            runner.close()
+
     def test_sync_runner_runs_inside_active_event_loop_from_secondary_thread(self):
         runner = _SyncRunner()
         captured: list[object] = []
@@ -194,6 +231,92 @@ class SyncClientUnitTests(unittest.TestCase):
             backend = database.change_stream_backend_info()
             self.assertIn("retainedEvents", state)
             self.assertIn("persistent", backend)
+        finally:
+            client.close()
+
+    def test_memory_sync_collection_whitelisted_methods_use_inline(self):
+        client = MongoClient(MemoryEngine())
+        collection = client.test.hot
+        try:
+            collection.insert_one({"_id": 1, "count": 0})
+            with patch.object(
+                client._runner._runner,
+                "run",
+                side_effect=AssertionError("asyncio runner used"),
+            ):
+                self.assertEqual(collection.find_one({"_id": 1})["count"], 0)
+                result = collection.update_one({"_id": 1}, {"$inc": {"count": 1}})
+                self.assertEqual(result.matched_count, 1)
+                self.assertEqual(collection.count_documents({"_id": 1}), 1)
+        finally:
+            client.close()
+
+    def test_sqlite_sync_collection_never_uses_inline_fast_path(self):
+        client = MongoClient(SQLiteEngine())
+        collection = client.test.hot
+        try:
+            collection.insert_one({"_id": 1, "count": 0})
+            with patch.object(
+                client._runner,
+                "_run_inline_direct",
+                side_effect=AssertionError("inline used"),
+            ):
+                self.assertEqual(collection.find_one({"_id": 1})["count"], 0)
+        finally:
+            client.close()
+
+    def test_memory_sync_collection_session_disables_inline_fast_path(self):
+        client = MongoClient(MemoryEngine())
+        collection = client.test.hot
+        session = client.start_session()
+        try:
+            collection.insert_one({"_id": 1, "count": 0})
+            with patch.object(
+                client._runner,
+                "_run_inline_direct",
+                side_effect=AssertionError("inline used"),
+            ):
+                self.assertEqual(
+                    collection.find_one({"_id": 1}, session=session)["count"],
+                    0,
+                )
+        finally:
+            session.close()
+            client.close()
+
+    def test_memory_sync_inline_serializes_shared_client_across_threads(self):
+        client = MongoClient(MemoryEngine())
+        collection = client.test.counters
+        workers = 4
+        iterations = 80
+        errors: list[BaseException] = []
+        start = threading.Event()
+        collection.insert_one({"_id": "counter", "value": 0})
+
+        def _worker() -> None:
+            start.wait()
+            try:
+                for _ in range(iterations):
+                    collection.update_one(
+                        {"_id": "counter"},
+                        {"$inc": {"value": 1}},
+                    )
+            except BaseException as exc:  # pragma: no cover - asserted below
+                errors.append(exc)
+
+        threads = [threading.Thread(target=_worker) for _ in range(workers)]
+        try:
+            for thread in threads:
+                thread.start()
+            start.set()
+            for thread in threads:
+                thread.join()
+
+            self.assertEqual(errors, [])
+            self.assertEqual(
+                collection.find_one({"_id": "counter"})["value"],
+                workers * iterations,
+            )
         finally:
             client.close()
 

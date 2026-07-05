@@ -106,7 +106,7 @@ from mongoeco.types import (
     WriteErrorEntry,
     WriteCommandResult,
 )
-from mongoeco.core.operators import CompiledUpdatePipelinePlan, UpdateEngine
+from mongoeco.core.operators import CompiledUpdatePipelinePlan, CompiledUpdatePlan, UpdateEngine
 
 
 
@@ -578,7 +578,95 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
 
         self.assertEqual(compiled, (None, None))
 
+    def test_update_plan_template_cache_reuses_shape_without_value_leaks(self):
+        operations_module._clear_update_plan_template_cache()
+        original_compile = operations_module.UpdateEngine.compile_update_plan
+
+        with mock.patch.object(
+            operations_module.UpdateEngine,
+            "compile_update_plan",
+            wraps=original_compile,
+        ) as compile_mock:
+            first = compile_update_operation(
+                {"_id": 1},
+                update_spec={
+                    "$set": {"meta.last_seen": 1},
+                    "$inc": {"count": 1},
+                },
+            )
+            second = compile_update_operation(
+                {"_id": 2},
+                update_spec={
+                    "$set": {"meta.last_seen": 7},
+                    "$inc": {"count": 3},
+                },
+            )
+
+        self.assertEqual(compile_mock.call_count, 2)
+        self.assertIsInstance(first.compiled_update_plan, CompiledUpdatePlan)
+        self.assertIsInstance(second.compiled_update_plan, CompiledUpdatePlan)
+
+        first_document = {"_id": 1, "meta": {"last_seen": 0}, "count": 0}
+        second_document = {"_id": 2, "meta": {"last_seen": 0}, "count": 0}
+        first.compiled_update_plan.apply(first_document)
+        second.compiled_update_plan.apply(second_document)
+
+        self.assertEqual(first_document["meta"]["last_seen"], 1)
+        self.assertEqual(first_document["count"], 1)
+        self.assertEqual(second_document["meta"]["last_seen"], 7)
+        self.assertEqual(second_document["count"], 3)
+
+    def test_update_plan_template_cache_excludes_unsafe_shapes(self):
+        excluded_updates = [
+            (
+                {"$push": {"items": {"$each": [1], "$slice": -3}}},
+                {},
+            ),
+            (
+                {"$setOnInsert": {"created": True}},
+                {},
+            ),
+            (
+                [{"$set": {"name": "Ada"}}],
+                {},
+            ),
+            (
+                {"$set": {"items.$[item].hot": True}},
+                {"array_filters": [{"item.kind": "target"}]},
+            ),
+            (
+                {"$set": {"name": "$$name"}},
+                {"let": {"name": "Ada"}},
+            ),
+            (
+                {"$set": {"name": "Ada"}},
+                {"collation": {"locale": "en"}},
+            ),
+        ]
+
+        for update_spec, kwargs in excluded_updates:
+            with self.subTest(update_spec=update_spec, kwargs=kwargs):
+                operations_module._clear_update_plan_template_cache()
+                original_compile = operations_module.UpdateEngine.compile_update_plan
+                with mock.patch.object(
+                    operations_module.UpdateEngine,
+                    "compile_update_plan",
+                    wraps=original_compile,
+                ) as compile_mock:
+                    compile_update_operation(
+                        {"_id": 1},
+                        update_spec=update_spec,
+                        **kwargs,
+                    )
+                    compile_update_operation(
+                        {"_id": 2},
+                        update_spec=update_spec,
+                        **kwargs,
+                    )
+                self.assertEqual(compile_mock.call_count, 4)
+
     def test_private_update_compilation_reraises_in_strict_mode_after_engine_failure(self):
+        operations_module._clear_update_plan_template_cache()
         with mock.patch.object(
             operations_module.UpdateEngine,
             "compile_update_plan",

@@ -19,11 +19,12 @@ usa Semantic Versioning.
   con salida determinista por nombre de modulo o paquete.
 - Los exports raiz de `mongoeco.__all__` se validan tambien con un interprete
   frio por simbolo, cubriendo el caso canonico `from mongoeco import X`.
-- Se añade un benchmark local de contencion sync para comparar cliente
-  compartido frente a cliente por worker en Memory y SQLite.
-- `CompiledQuery` reutiliza plantillas compiladas con LRU acotado y valores
-  parametrizados por instancia, evitando recompilar el mismo shape sin mezclar
-  literales entre filtros.
+- Se añaden benchmarks locales de contencion sync y hot paths sync para
+  comparar cliente compartido/por worker y medir `find_one`, `update_one` y la
+  compilacion de updates sobre workloads fijos.
+- `CompiledQuery` y `compile_update_operation` reutilizan plantillas compiladas
+  con LRU acotado y valores parametrizados por instancia, evitando recompilar el
+  mismo shape sin mezclar literales entre filtros o updates.
 - Los tests de change streams usan ventanas `max_await_time_ms` mas cortas en
   esperas negativas, reduciendo cola sin cambiar el contrato publico.
 
@@ -46,11 +47,14 @@ usa Semantic Versioning.
   transacciones.
 - `AggregationCursor` sync agrupa la iteracion por chunks para reducir cruces
   sync/async por documento.
+- `MemoryEngine` cachea por instancia la inspeccion de la firma del codec de
+  decode e invalida si cambia el codec o su callable `decode`.
 - `count_documents` en Memory cuenta sobre documentos internos filtrados sin
   materializar documentos publicos cuando no es necesario.
 - El cliente sync reutiliza un helper persistente y lazy solo cuando una llamada
-  sync se hace desde un loop activo, y evita deadlocks si el cierre se solicita
-  desde el propio helper.
+  sync se hace desde un loop activo, permite completar inline operaciones
+  cortas de `MemoryEngine` sin sesiones bajo el mismo lock del runner, y evita
+  deadlocks si el cierre se solicita desde el propio helper.
 
 ### Known Debt
 

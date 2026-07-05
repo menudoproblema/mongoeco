@@ -116,10 +116,22 @@ class Collection:
             .with_options(planning_mode=self._planning_mode)
         )
 
-    def _run_collection_method(self, method_name: str, /, *args, **kwargs):
+    def _run_collection_method(
+        self,
+        method_name: str,
+        /,
+        *args,
+        inline: bool = False,
+        **kwargs,
+    ):
         collection = self._async_collection()
         method = getattr(collection, method_name)
-        return self._client._run(method(*args, **kwargs))
+        session = kwargs.get('session')
+        use_inline = inline and self._client._can_inline_collection_operation(
+            method_name,
+            session=session,
+        )
+        return self._client._run(method(*args, **kwargs), inline=use_inline)
 
     def with_options(
         self,
@@ -179,6 +191,7 @@ class Collection:
             document,
             bypass_document_validation=bypass_document_validation,
             session=session,
+            inline=True,
         )
 
     def insert_many(
@@ -193,6 +206,7 @@ class Collection:
             documents,
             bypass_document_validation=bypass_document_validation,
             session=session,
+            inline=True,
         )
 
     def find_one(
@@ -222,6 +236,7 @@ class Collection:
             options.get('projection'),
             collation=options.get('collation'),
             session=options.get('session'),
+            inline=True,
             **{
                 key: options[key]
                 for key in ('sort', 'skip', 'hint', 'comment', 'max_time_ms')
@@ -490,6 +505,7 @@ class Collection:
                 'bypass_document_validation', False
             ),
             session=options.get('session'),
+            inline=True,
         )
 
     def replace_one(
@@ -539,6 +555,7 @@ class Collection:
                 'bypass_document_validation', False
             ),
             session=options.get('session'),
+            inline=True,
         )
 
     def find_one_and_update(
@@ -738,6 +755,7 @@ class Collection:
             comment=options.get('comment'),
             let=options.get('let'),
             session=options.get('session'),
+            inline=True,
         )
 
     def update_many(
@@ -788,6 +806,7 @@ class Collection:
                 'bypass_document_validation', False
             ),
             session=options.get('session'),
+            inline=True,
         )
 
     def delete_many(
@@ -823,6 +842,7 @@ class Collection:
             comment=options.get('comment'),
             let=options.get('let'),
             session=options.get('session'),
+            inline=True,
         )
 
     def count_documents(
@@ -864,6 +884,7 @@ class Collection:
             skip=options.get('skip', 0),
             limit=options.get('limit'),
             session=options.get('session'),
+            inline=True,
         )
 
     def estimated_document_count(
@@ -878,6 +899,7 @@ class Collection:
             comment=comment,
             max_time_ms=max_time_ms,
             session=session,
+            inline=True,
         )
 
     def distinct(

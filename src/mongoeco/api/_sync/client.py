@@ -74,6 +74,27 @@ class _SyncRunner:
         except ServerSelectionTimeoutError as exc:
             raise ServerSelectionTimeoutError(f"sync server selection timed out: {exc}") from exc
 
+    def _run_inline_direct(self, awaitable):
+        try:
+            with self._runner_lock:
+                try:
+                    awaitable.send(None)
+                except StopIteration as exc:
+                    return exc.value
+        except ExecutionTimeout as exc:
+            raise ExecutionTimeout(
+                f"sync operation timed out: {exc}",
+                code=exc.code,
+                details=exc.details,
+                error_labels=exc.error_labels,
+            ) from exc
+        except ServerSelectionTimeoutError as exc:
+            raise ServerSelectionTimeoutError(f"sync server selection timed out: {exc}") from exc
+        close = getattr(awaitable, "close", None)
+        if callable(close):
+            close()
+        raise InvalidOperation("sync inline operation suspended unexpectedly")
+
     @staticmethod
     def _rethrow_helper_error(outcome: dict[str, object]) -> None:
         error = outcome.get("error")
@@ -164,7 +185,7 @@ class _SyncRunner:
             with self._runner_lock:
                 self._runner.run(shutdown_default_executor())
 
-    def run(self, awaitable):
+    def run(self, awaitable, *, inline: bool = False):
         with self._state_condition:
             if self._closed or self._closing:
                 raise InvalidOperation("El cliente sincronico ya esta cerrado")
@@ -175,6 +196,8 @@ class _SyncRunner:
             try:
                 asyncio.get_running_loop()
             except RuntimeError:
+                if inline:
+                    return self._run_inline_direct(awaitable)
                 return self._run_direct(awaitable)
 
             return self._invoke_on_helper_thread(lambda: self._run_direct(awaitable))
@@ -514,8 +537,23 @@ class MongoClient:
         self._connected = False
         self._closed = False
 
-    def _run(self, awaitable):
-        return self._runner.run(awaitable)
+    def _run(self, awaitable, *, inline: bool = False):
+        return self._runner.run(awaitable, inline=inline)
+
+    def _can_inline_collection_operation(
+        self,
+        operation_name: str,
+        *,
+        session: ClientSession | None,
+    ) -> bool:
+        if session is not None:
+            return False
+        inline_operations = getattr(
+            self._async_client._engine,
+            "sync_inline_collection_operations",
+            (),
+        )
+        return operation_name in inline_operations
 
     def _run_resource(self, awaitable, factory):
         self._run(awaitable)
