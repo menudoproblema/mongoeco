@@ -8,6 +8,8 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-07-05
+
 ### Changed
 
 - Los facades publicos (`mongoeco`, `_types`, `mongoeco.api`,
