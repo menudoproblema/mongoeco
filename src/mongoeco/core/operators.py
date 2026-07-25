@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from copy import deepcopy
 from dataclasses import dataclass, field
+from collections.abc import Mapping
 from typing import Any, Callable
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -13,6 +14,7 @@ from mongoeco.core.aggregation import (
     compile_pipeline,
 )
 from mongoeco.core.collation import CollationSpec, normalize_collation
+from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.bson_scalars import is_bson_numeric, unwrap_bson_numeric
 from mongoeco.core.filtering import BSONComparator, QueryEngine
 from mongoeco.core.identity import (
@@ -110,7 +112,13 @@ class CompiledUpdatePlan:
     context: UpdateExecutionContext
     touches_document_id: bool = False
 
-    def apply(self, doc: dict[str, Any]) -> bool:
+    def apply(
+        self,
+        doc: dict[str, Any],
+        *,
+        variables: Mapping[str, Any] | None = None,
+    ) -> bool:
+        del variables
         if '_id' in doc:
             assert_valid_root_document_id(doc['_id'])
         original = deepcopy(doc)
@@ -135,21 +143,26 @@ class CompiledUpdatePlan:
 class CompiledUpdatePipelinePlan:
     update_spec: Pipeline
     context: UpdateExecutionContext
-    variables: dict[str, Any] | None = None
     compiled_pipeline: CompiledPipelinePlan | None = None
 
-    def apply(self, doc: dict[str, Any]) -> bool:
+    def apply(
+        self,
+        doc: dict[str, Any],
+        *,
+        variables: Mapping[str, Any] | None = None,
+    ) -> bool:
+        variables = ensure_expression_context(variables)
         original = deepcopy(doc)
         working = deepcopy(doc)
         if self.compiled_pipeline is not None:
             result = self.compiled_pipeline.execute(
-                [working], variables=self.variables
+                [working], variables=variables
             )
         else:
             result = apply_pipeline(
                 [working],
                 self.update_spec,
-                variables=self.variables,
+                variables=variables,
                 dialect=self.context.dialect,
                 collation=self.context.collation,
             )
@@ -253,7 +266,7 @@ class UpdateEngine:
         selector_filter: Filter | None = None,
         array_filters: ArrayFilters | None = None,
         is_upsert_insert: bool = False,
-        variables: dict[str, Any] | None = None,
+        variables: Mapping[str, Any] | None = None,
         context: UpdateExecutionContext | None = None,
     ) -> bool:
         """
@@ -272,6 +285,7 @@ class UpdateEngine:
                 variables=variables,
                 context=context,
             ),
+            variables=variables,
         )
 
     @staticmethod
@@ -283,7 +297,7 @@ class UpdateEngine:
         selector_filter: Filter | None = None,
         array_filters: ArrayFilters | None = None,
         is_upsert_insert: bool = False,
-        variables: dict[str, Any] | None = None,
+        variables: Mapping[str, Any] | None = None,
         context: UpdateExecutionContext | None = None,
     ) -> CompiledExecutableUpdatePlan:
         execution = context or UpdateEngine.build_execution_context(
@@ -321,15 +335,17 @@ class UpdateEngine:
     def apply_compiled_update(
         doc: dict[str, Any],
         plan: CompiledExecutableUpdatePlan,
+        *,
+        variables: Mapping[str, Any] | None = None,
     ) -> bool:
-        return plan.apply(doc)
+        return plan.apply(doc, variables=variables)
 
     @staticmethod
     def compile_update_pipeline_plan(
         update_spec: Pipeline,
         *,
         context: UpdateExecutionContext,
-        variables: dict[str, Any] | None = None,
+        variables: Mapping[str, Any] | None = None,
     ) -> CompiledUpdatePipelinePlan:
         UpdateEngine.validate_update_pipeline(
             update_spec, dialect=context.dialect
@@ -348,7 +364,6 @@ class UpdateEngine:
         return CompiledUpdatePipelinePlan(
             update_spec=list(update_spec),
             context=context,
-            variables=variables,
             compiled_pipeline=compile_pipeline(
                 update_spec,
                 dialect=context.dialect,

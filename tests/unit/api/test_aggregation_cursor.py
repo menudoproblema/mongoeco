@@ -372,6 +372,11 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIsNone(
             AsyncAggregationCursor._leading_search_downstream_filter_spec(
+                [{'$match': {'$expr': {'$ne': ['$$NOW', None]}}}]
+            )
+        )
+        self.assertIsNone(
+            AsyncAggregationCursor._leading_search_downstream_filter_spec(
                 [{'$match': {'kind': 'note'}, '$project': {'_id': 1}}]
             )
         )

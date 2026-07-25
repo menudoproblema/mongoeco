@@ -8,6 +8,7 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from mongoeco.core.identity import assert_valid_root_document_id
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.errors import BulkWriteError, OperationFailure, WriteError
 from mongoeco.types import (
     BulkWriteErrorDetails,
@@ -105,6 +106,77 @@ class BulkWritePreparationContext:
             return PreparedBulkWriteRequest(index=index, request=request, preparation_error=exc)
 
 
+_CLASSIC_BULK_BATCH_LIMIT = 100_000
+
+
+def _bulk_family(request: WriteModel) -> str:
+    if isinstance(request, InsertOne):
+        return "insert"
+    if isinstance(request, (UpdateOne, UpdateMany, ReplaceOne)):
+        return "update"
+    if isinstance(request, (DeleteOne, DeleteMany)):
+        return "delete"
+    raise TypeError("bulk_write requests must be write model instances")
+
+
+def _classic_bulk_batches(
+    prepared_requests: list[PreparedBulkWriteRequest],
+    *,
+    ordered: bool,
+) -> list[list[PreparedBulkWriteRequest]]:
+    """Forma lotes lógicos clásicos sin imponer límites de tamaño BSON.
+
+    En el modo ordenado sólo se agrupan runs contiguos; el modo no ordenado
+    puede agrupar familias separadas, igual que los comandos insert/update/delete
+    tradicionales. Cada lote conserva los índices de los modelos para informar
+    errores y upserts con el contrato de la API.
+    """
+    if ordered:
+        batches: list[list[PreparedBulkWriteRequest]] = []
+        current: list[PreparedBulkWriteRequest] = []
+        current_family: str | None = None
+        for prepared in prepared_requests:
+            family = None if prepared.preparation_error is not None else _bulk_family(prepared.request)
+            if (
+                current
+                and (
+                    family != current_family
+                    or len(current) >= _CLASSIC_BULK_BATCH_LIMIT
+                )
+            ):
+                batches.append(current)
+                current = []
+            current.append(prepared)
+            current_family = family
+            if prepared.preparation_error is not None:
+                batches.append(current)
+                current = []
+                current_family = None
+        if current:
+            batches.append(current)
+        return batches
+
+    grouped: dict[str, list[PreparedBulkWriteRequest]] = {
+        "insert": [],
+        "update": [],
+        "delete": [],
+    }
+    invalid: list[PreparedBulkWriteRequest] = []
+    for prepared in prepared_requests:
+        if prepared.preparation_error is not None:
+            invalid.append(prepared)
+        else:
+            grouped[_bulk_family(prepared.request)].append(prepared)
+    batches = [[prepared] for prepared in invalid]
+    for family in ("insert", "update", "delete"):
+        requests = grouped[family]
+        batches.extend(
+            requests[index : index + _CLASSIC_BULK_BATCH_LIMIT]
+            for index in range(0, len(requests), _CLASSIC_BULK_BATCH_LIMIT)
+        )
+    return batches
+
+
 async def execute_bulk_write(
     collection: AsyncCollection,
     requests: Sequence[WriteModel],
@@ -124,121 +196,120 @@ async def execute_bulk_write(
     upserted_ids: dict[int, DocumentId] = {}
     write_errors: list[WriteErrorEntry] = []
 
-    for prepared in prepared_requests:
-        index = prepared.index
-        request = prepared.request
-        if prepared.preparation_error is not None:
-            exc = prepared.preparation_error
-            if ordered and not isinstance(exc, WriteError):
-                raise exc
-            write_errors.append(
-                WriteErrorEntry(
-                    index=index,
-                    code=getattr(exc, "code", None),
-                    errmsg=str(exc),
-                    operation=request.__class__.__name__,
+    stop = False
+    for batch in _classic_bulk_batches(prepared_requests, ordered=ordered):
+        if stop:
+            break
+        batch_context = ExpressionExecutionContext()
+        for prepared in batch:
+            index = prepared.index
+            request = prepared.request
+            if prepared.preparation_error is not None:
+                exc = prepared.preparation_error
+                if ordered and not isinstance(exc, WriteError):
+                    raise exc
+                write_errors.append(
+                    WriteErrorEntry(
+                        index=index,
+                        code=getattr(exc, "code", None),
+                        errmsg=str(exc),
+                        operation=request.__class__.__name__,
+                    )
                 )
+                if ordered:
+                    stop = True
+                continue
+            variables = batch_context.with_bindings(
+                request.let if getattr(request, "let", None) is not None else let or {}
             )
-            if ordered:
-                break
-            continue
-        try:
-            if isinstance(request, InsertOne):
-                insert_kwargs = {"session": session}
-                if bypass_document_validation:
-                    insert_kwargs["bypass_document_validation"] = True
-                await collection.insert_one(prepared.insert_document or request.document, **insert_kwargs)
-                inserted_count += 1
-            elif isinstance(request, UpdateOne):
-                update_one_kwargs = {
-                    "sort": request.sort,
-                    "array_filters": request.array_filters,
-                    "hint": request.hint,
-                    "comment": request.comment if request.comment is not None else comment,
-                    "let": request.let if request.let is not None else let,
-                    "session": session,
-                }
-                if bypass_document_validation:
-                    update_one_kwargs["bypass_document_validation"] = True
-                result = await collection.update_one(
-                    request.filter,
-                    request.update,
-                    request.upsert,
-                    **update_one_kwargs,
+            try:
+                if isinstance(request, InsertOne):
+                    insert_kwargs = {"session": session}
+                    if bypass_document_validation:
+                        insert_kwargs["bypass_document_validation"] = True
+                    await collection.insert_one(prepared.insert_document or request.document, **insert_kwargs)
+                    inserted_count += 1
+                elif isinstance(request, UpdateOne):
+                    update_one_kwargs = {
+                        "sort": request.sort,
+                        "array_filters": request.array_filters,
+                        "hint": request.hint,
+                        "comment": request.comment if request.comment is not None else comment,
+                        "let": variables,
+                        "session": session,
+                    }
+                    if bypass_document_validation:
+                        update_one_kwargs["bypass_document_validation"] = True
+                    result = await collection.update_one(request.filter, request.update, request.upsert, **update_one_kwargs)
+                    matched_count += result.matched_count
+                    modified_count += result.modified_count
+                    if result.upserted_id is not None:
+                        upserted_ids[index] = result.upserted_id
+                elif isinstance(request, UpdateMany):
+                    update_many_kwargs = {
+                        "array_filters": request.array_filters,
+                        "hint": request.hint,
+                        "comment": request.comment if request.comment is not None else comment,
+                        "let": variables,
+                        "session": session,
+                    }
+                    if bypass_document_validation:
+                        update_many_kwargs["bypass_document_validation"] = True
+                    result = await collection.update_many(request.filter, request.update, request.upsert, **update_many_kwargs)
+                    matched_count += result.matched_count
+                    modified_count += result.modified_count
+                    if result.upserted_id is not None:
+                        upserted_ids[index] = result.upserted_id
+                elif isinstance(request, ReplaceOne):
+                    replace_one_kwargs = {
+                        "sort": request.sort,
+                        "hint": request.hint,
+                        "comment": request.comment if request.comment is not None else comment,
+                        "let": variables,
+                        "session": session,
+                    }
+                    if bypass_document_validation:
+                        replace_one_kwargs["bypass_document_validation"] = True
+                    result = await collection.replace_one(
+                        request.filter,
+                        prepared.replacement_document or request.replacement,
+                        request.upsert,
+                        **replace_one_kwargs,
+                    )
+                    matched_count += result.matched_count
+                    modified_count += result.modified_count
+                    if result.upserted_id is not None:
+                        upserted_ids[index] = result.upserted_id
+                elif isinstance(request, DeleteOne):
+                    result = await collection.delete_one(
+                        request.filter,
+                        hint=request.hint,
+                        comment=request.comment if request.comment is not None else comment,
+                        let=variables,
+                        session=session,
+                    )
+                    deleted_count += result.deleted_count
+                elif isinstance(request, DeleteMany):
+                    result = await collection.delete_many(
+                        request.filter,
+                        hint=request.hint,
+                        comment=request.comment if request.comment is not None else comment,
+                        let=variables,
+                        session=session,
+                    )
+                    deleted_count += result.deleted_count
+            except (WriteError, OperationFailure, TypeError, ValueError) as exc:
+                write_errors.append(
+                    WriteErrorEntry(
+                        index=index,
+                        code=getattr(exc, "code", None),
+                        errmsg=str(exc),
+                        operation=request.__class__.__name__,
+                    )
                 )
-                matched_count += result.matched_count
-                modified_count += result.modified_count
-                if result.upserted_id is not None:
-                    upserted_ids[index] = result.upserted_id
-            elif isinstance(request, UpdateMany):
-                update_many_kwargs = {
-                    "array_filters": request.array_filters,
-                    "hint": request.hint,
-                    "comment": request.comment if request.comment is not None else comment,
-                    "let": request.let if request.let is not None else let,
-                    "session": session,
-                }
-                if bypass_document_validation:
-                    update_many_kwargs["bypass_document_validation"] = True
-                result = await collection.update_many(
-                    request.filter,
-                    request.update,
-                    request.upsert,
-                    **update_many_kwargs,
-                )
-                matched_count += result.matched_count
-                modified_count += result.modified_count
-                if result.upserted_id is not None:
-                    upserted_ids[index] = result.upserted_id
-            elif isinstance(request, ReplaceOne):
-                replace_one_kwargs = {
-                    "sort": request.sort,
-                    "hint": request.hint,
-                    "comment": request.comment if request.comment is not None else comment,
-                    "let": request.let if request.let is not None else let,
-                    "session": session,
-                }
-                if bypass_document_validation:
-                    replace_one_kwargs["bypass_document_validation"] = True
-                result = await collection.replace_one(
-                    request.filter,
-                    prepared.replacement_document or request.replacement,
-                    request.upsert,
-                    **replace_one_kwargs,
-                )
-                matched_count += result.matched_count
-                modified_count += result.modified_count
-                if result.upserted_id is not None:
-                    upserted_ids[index] = result.upserted_id
-            elif isinstance(request, DeleteOne):
-                result = await collection.delete_one(
-                    request.filter,
-                    hint=request.hint,
-                    comment=request.comment if request.comment is not None else comment,
-                    let=request.let if request.let is not None else let,
-                    session=session,
-                )
-                deleted_count += result.deleted_count
-            elif isinstance(request, DeleteMany):
-                result = await collection.delete_many(
-                    request.filter,
-                    hint=request.hint,
-                    comment=request.comment if request.comment is not None else comment,
-                    let=request.let if request.let is not None else let,
-                    session=session,
-                )
-                deleted_count += result.deleted_count
-        except (WriteError, OperationFailure, TypeError, ValueError) as exc:
-            write_errors.append(
-                WriteErrorEntry(
-                    index=index,
-                    code=getattr(exc, "code", None),
-                    errmsg=str(exc),
-                    operation=request.__class__.__name__,
-                )
-            )
-            if ordered:
-                break
+                if ordered:
+                    stop = True
+                    break
 
     result = BulkWriteResult(
         inserted_count=inserted_count,
@@ -249,6 +320,7 @@ async def execute_bulk_write(
         upserted_ids=upserted_ids,
     )
     if write_errors:
+        write_errors.sort(key=lambda entry: entry.index)
         raise BulkWriteError(
             "bulk write failed",
             details=BulkWriteErrorDetails(

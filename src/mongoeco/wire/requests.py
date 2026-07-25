@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.session import ClientSession
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.wire.capabilities import WireCommandCapability
 from mongoeco.wire.connections import WireConnectionContext
 
@@ -17,3 +18,4 @@ class WireRequestContext:
     capability: WireCommandCapability
     connection: WireConnectionContext
     session: ClientSession | None = None
+    execution_context: ExpressionExecutionContext | None = None

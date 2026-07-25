@@ -695,16 +695,26 @@ class AsyncDatabaseAdminService:
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
+        execution_context=None,
     ) -> object:
-        return await self._write_commands.command_update(spec, session=session)
+        return await self._write_commands.command_update(
+            spec,
+            session=session,
+            execution_context=execution_context,
+        )
 
     async def _command_delete(
         self,
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
+        execution_context=None,
     ) -> object:
-        return await self._write_commands.command_delete(spec, session=session)
+        return await self._write_commands.command_delete(
+            spec,
+            session=session,
+            execution_context=execution_context,
+        )
 
     async def _command_find(
         self,

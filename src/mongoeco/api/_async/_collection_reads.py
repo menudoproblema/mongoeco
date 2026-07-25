@@ -59,6 +59,7 @@ async def find_one(
         hint=options.get("hint"),
         comment=options.get("comment"),
         max_time_ms=options.get("max_time_ms"),
+        variables=options.get("let"),
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
@@ -131,6 +132,7 @@ async def count_documents(
     max_time_ms: int | None = None,
     skip: int = 0,
     limit: int | None = None,
+    let: dict[str, object] | None = None,
     session: object | None = None,
     extra_kwargs: dict[str, object] | None = None,
 ) -> int:
@@ -144,6 +146,7 @@ async def count_documents(
             "max_time_ms": max_time_ms,
             "skip": skip,
             "limit": limit,
+            "let": let,
             "session": session,
         },
         extra_kwargs={"filter": filter, **(extra_kwargs or {})},
@@ -158,6 +161,7 @@ async def count_documents(
         hint=options.get("hint"),
         comment=options.get("comment"),
         max_time_ms=options.get("max_time_ms"),
+        variables=options.get("let"),
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )

@@ -53,6 +53,7 @@ if BsonCode is not None:
 if BsonMaxKey is not None:
     _DEFAULT_BSON_TYPE_ORDER[BsonMaxKey] = 127
 DEFAULT_BSON_TYPE_ORDER = MappingProxyType(_DEFAULT_BSON_TYPE_ORDER)
+SUPPORTED_SYSTEM_VARIABLES = frozenset({"$$NOW"})
 
 MONGODB_DIALECT_CATALOG = MappingProxyType(
     {
@@ -64,6 +65,7 @@ MONGODB_DIALECT_CATALOG = MappingProxyType(
             behavior_flags=MappingProxyType({"null_query_matches_undefined": True}),
             policy_spec=MongoBehaviorPolicySpec(null_query_matches_undefined=True),
             capabilities=frozenset({MONGODB_CAP_NULL_QUERY_MATCHES_UNDEFINED}),
+            system_variables=SUPPORTED_SYSTEM_VARIABLES,
         ),
         "8.0": MongoDialectCatalogEntry(
             key="8.0",
@@ -73,6 +75,7 @@ MONGODB_DIALECT_CATALOG = MappingProxyType(
             behavior_flags=MappingProxyType({"null_query_matches_undefined": False}),
             policy_spec=MongoBehaviorPolicySpec(null_query_matches_undefined=False),
             capabilities=frozenset(),
+            system_variables=SUPPORTED_SYSTEM_VARIABLES,
         ),
     }
 )

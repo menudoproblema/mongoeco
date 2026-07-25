@@ -55,6 +55,25 @@ Regla importante:
 
 La versión instalada de `pymongo` **no** decide la semántica del servidor MongoDB.
 
+### Variables de ejecución
+
+Los dialectos MongoDB `7.0` y `8.0` declaran `$$NOW` como variable de sistema
+efectiva. Cada comando real captura una fecha UTC naïve, truncada a milisegundos,
+y reutiliza ese valor en sus filtros `$expr`, actualizaciones por pipeline,
+agregaciones y subpipelines. Esta semántica pertenece al dialecto MongoDB y no
+varía con el perfil PyMongo.
+
+Las variables de usuario `let` son efectivas en `find` y `count_documents`,
+además de las operaciones de escritura y `aggregate` que ya las declaraban. No
+se declara `let` en `distinct`; aun así, `distinct` captura su propio `$$NOW`.
+Una variable no definida falla con `OperationFailure` código `17276`.
+
+`bulk_write` agrupa modelos en lotes lógicos clásicos `insert`/`update`/`delete`
+de hasta 100.000 modelos: runs contiguos en modo ordenado y grupos por familia
+en modo no ordenado. Cada lote comparte un `$$NOW`. No emula todavía límites de
+tamaño BSON/mensaje ni el comando `bulkWrite` introducido para clientes modernos
+de MongoDB 8.0.
+
 ## 1.1 Baseline soportado
 
 `mongoeco` no persigue compatibilidad hacia atrás por debajo de estos mínimos:
@@ -249,12 +268,14 @@ Hoy el catálogo oficial incluye:
 * `4.9`
 * `4.11`
 * `4.13`
+* `4.17`
 
 Regla práctica:
 
 * `4.9` es la baseline de API pública
 * `4.11` activa el primer delta real: `update_one(sort=...)`
 * `4.13` queda disponible como perfil posterior compatible
+* `4.17` queda disponible como perfil posterior compatible
 * no existe catálogo oficial para perfiles anteriores a `4.9`
 
 ## 5. Autodetección de PyMongo instalada

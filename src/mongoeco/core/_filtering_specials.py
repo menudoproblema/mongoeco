@@ -5,6 +5,7 @@ import decimal
 import math
 import re
 import uuid
+from collections.abc import Mapping
 from typing import Any
 
 try:
@@ -444,6 +445,7 @@ class FilteringSpecialOperatorsMixin:
         compiled_plan=None,
         compiled_dialect_key: str | None = None,
         wrap_value: bool = False,
+        variables: Mapping[str, Any] | None = None,
     ) -> bool:
         values = cls._extract_values(doc, field)
         for array_candidate in (
@@ -458,6 +460,7 @@ class FilteringSpecialOperatorsMixin:
                     compiled_plan=compiled_plan,
                     compiled_dialect_key=compiled_dialect_key,
                     wrap_value=wrap_value,
+                    variables=variables,
                 )
                 for candidate in array_candidate
             ):
@@ -475,6 +478,7 @@ class FilteringSpecialOperatorsMixin:
         compiled_plan=None,
         compiled_dialect_key: str | None = None,
         wrap_value: bool = False,
+        variables: Mapping[str, Any] | None = None,
     ) -> bool:
         if not isinstance(condition, dict):
             return cls._values_equal(
@@ -487,6 +491,7 @@ class FilteringSpecialOperatorsMixin:
                     compiled_plan,
                     dialect=dialect,
                     collation=collation,
+                    variables=variables,
                 )
             if not isinstance(candidate, dict):
                 return False
@@ -495,6 +500,7 @@ class FilteringSpecialOperatorsMixin:
                 compiled_plan,
                 dialect=dialect,
                 collation=collation,
+                variables=variables,
             )
         operator_keys = query_operator_keys(condition)
         if operator_keys:
@@ -512,5 +518,9 @@ class FilteringSpecialOperatorsMixin:
         if not isinstance(candidate, dict):
             return False
         return cls.match(
-            candidate, condition, dialect=dialect, collation=collation
+            candidate,
+            condition,
+            dialect=dialect,
+            collation=collation,
+            variables=variables,
         )

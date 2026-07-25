@@ -420,6 +420,7 @@ class CollectionRuntimeCoordinator:
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
+        variables=None,
         session: ClientSession | None = None,
     ) -> Document | None:
         operation = compile_find_operation(
@@ -430,6 +431,7 @@ class CollectionRuntimeCoordinator:
             hint=hint,
             comment=comment,
             max_time_ms=max_time_ms,
+            variables=variables,
             dialect=self._collection._mongodb_dialect,
             plan=plan,
             planning_mode=self._collection._planning_mode,
@@ -442,6 +444,7 @@ class CollectionRuntimeCoordinator:
         *,
         session: ClientSession | None = None,
         apply_codec_options: bool = True,
+        execution_variables=None,
     ) -> AsyncCursor:
         return AsyncCursor(
             self._collection,
@@ -456,6 +459,8 @@ class CollectionRuntimeCoordinator:
             comment=operation.comment,
             max_time_ms=operation.max_time_ms,
             batch_size=operation.batch_size,
+            let=operation.let,
+            execution_variables=execution_variables,
             session=session,
             apply_codec_options=apply_codec_options,
         )

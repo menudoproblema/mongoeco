@@ -16,6 +16,7 @@ class MongoDialectCatalogEntry:
     capabilities: frozenset[str] = frozenset()
     query_field_operators: frozenset[str] | None = None
     update_operators: frozenset[str] | None = None
+    system_variables: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True, slots=True)

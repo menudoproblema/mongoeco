@@ -16,6 +16,7 @@ from mongoeco.types import Document
 
 from mongoeco.core.aggregation.runtime import (
     _expression_truthy,
+    _evaluate_expression_with_missing,
     evaluate_expression,
 )
 from mongoeco.core.aggregation.planning import (
@@ -72,7 +73,11 @@ def _apply_match(
         if filter_spec:
             plan = compile_filter(filter_spec, dialect=dialect)
             if not QueryEngine.match_plan(
-                document, plan, dialect=dialect, collation=collation
+                document,
+                plan,
+                dialect=dialect,
+                collation=collation,
+                variables=variables,
             ):
                 return False
         if expr is not _NO_EXPR and not _expression_truthy(
@@ -95,6 +100,7 @@ def _apply_match(
             plan,
             dialect=dialect,
             collation=collation,
+            variables=variables,
         ):
             continue
         result.append(document)
@@ -117,7 +123,7 @@ def _apply_add_fields(
     for document in documents:
         enriched = deepcopy(document)
         evaluated = {
-            path: evaluate_expression(
+            path: _evaluate_expression_with_missing(
                 document, expression, variables, dialect=dialect
             )
             for path, expression in spec.items()
@@ -193,7 +199,7 @@ def _apply_project(
         elif include_id and '_id' in document:
             projected['_id'] = deepcopy(document['_id'])
         for path, expression in computed_fields.items():
-            value = evaluate_expression(
+            value = _evaluate_expression_with_missing(
                 document, expression, variables, dialect=dialect
             )
             if value is _REMOVE:

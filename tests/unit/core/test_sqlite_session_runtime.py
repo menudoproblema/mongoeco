@@ -202,7 +202,8 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
             session.start_transaction()
 
             class _CompiledPlan:
-                def apply(self, document):
+                def apply(self, document, *, variables):
+                    del variables
                     document["kind"] = "note"
                     return True
 
@@ -210,8 +211,11 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
                 dialect=MONGODB_DIALECT_70,
                 collation=None,
                 query_plan=MatchAll(),
+                variables={},
                 compiled_update_plan=_CompiledPlan(),
-                compiled_upsert_plan=SimpleNamespace(apply=lambda _document: None),
+                compiled_upsert_plan=SimpleNamespace(
+                    apply=lambda _document, **_kwargs: None,
+                ),
             )
 
             with self.assertRaisesRegex(OperationFailure, "boom"):

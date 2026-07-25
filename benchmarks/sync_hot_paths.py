@@ -19,6 +19,9 @@ if str(SRC) not in sys.path:
 
 from mongoeco import MongoClient
 from mongoeco.api.operations import compile_update_operation
+from mongoeco.core.compiled_query import CompiledQuery
+from mongoeco.core.expression_context import ExpressionExecutionContext
+from mongoeco.core.query_plan import compile_filter
 from mongoeco.engines.memory import MemoryEngine
 
 
@@ -26,6 +29,7 @@ COLLECTION_SIZE = 2_000
 FIND_ITERATIONS = 5_000
 UPDATE_ITERATIONS = 2_000
 COMPILE_ITERATIONS = 20_000
+MATCH_ITERATIONS = 100_000
 REPEATS = 3
 
 UPDATE_SHAPE = {
@@ -150,6 +154,34 @@ def bench_compile_update_operation() -> float:
     return _time_per_op(_run, COMPILE_ITERATIONS)
 
 
+def bench_compiled_filter_guard() -> float:
+    """Caso guardián: el filtro compilado común no usa $expr ni let."""
+    compiled = CompiledQuery(
+        compile_filter({'kind': 'kind-3', 'meta.flags.hot': False})
+    )
+    document = _document(3)
+
+    def _run() -> None:
+        if not compiled.match(document):
+            raise AssertionError('compiled guard filter did not match')
+
+    return _time_per_op(_run, MATCH_ITERATIONS)
+
+
+def bench_compiled_filter_with_context() -> float:
+    compiled = CompiledQuery(
+        compile_filter({'$expr': {'$lt': ['$meta.score', '$$limit']}})
+    )
+    document = _document(3)
+    variables = ExpressionExecutionContext({'limit': 100})
+
+    def _run() -> None:
+        if not compiled.match(document, variables=variables):
+            raise AssertionError('compiled contextual filter did not match')
+
+    return _time_per_op(_run, MATCH_ITERATIONS)
+
+
 def _format_us(seconds: float) -> str:
     return f'{seconds * 1_000_000:.1f}us/op'
 
@@ -158,9 +190,9 @@ def _run_repeated(name: str, callback: Callable[[], float]) -> None:
     samples = [callback() for _ in range(REPEATS)]
     best = min(samples)
     rendered = ', '.join(_format_us(sample) for sample in samples)
-    mean = statistics.mean(samples)
+    median = statistics.median(samples)
     print(
-        f'{name}: best={_format_us(best)} mean={_format_us(mean)} [{rendered}]'
+        f'{name}: best={_format_us(best)} median={_format_us(median)} [{rendered}]'
     )
 
 
@@ -219,6 +251,8 @@ def main() -> int:
     _run_repeated(
         'compile_update_operation($set meta.*)', bench_compile_update_operation
     )
+    _run_repeated('compiled filter guard (no $expr / let)', bench_compiled_filter_guard)
+    _run_repeated('compiled filter with execution context', bench_compiled_filter_with_context)
     return 0
 
 

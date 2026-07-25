@@ -1,5 +1,6 @@
 import asyncio
 import atexit
+from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, nullcontext
 import datetime
@@ -3910,6 +3911,7 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
         dialect: MongoDialect | None = None,
         collation: CollationDocument | None = None,
+        variables: Mapping[str, object] | None = None,
     ) -> DeleteResult:
         with self._lock:
             conn = self._require_connection(context)
@@ -3921,6 +3923,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     plan=plan,
                     dialect=dialect or MONGODB_DIALECT_70,
                     collation=collation,
+                    variables=variables,
                     compile_find_semantics=compile_find_semantics,
                     ensure_query_plan=lambda current_filter, current_plan: ensure_query_plan(
                         current_filter,
@@ -3943,11 +3946,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
                     delete_search_entries_for_storage_key=self._delete_search_entries_for_storage_key,
                     load_documents=self._load_documents,
-                    match_plan=lambda document, query_plan, current_dialect, current_collation: QueryEngine.match_plan(
+                    match_plan=lambda document, query_plan, current_dialect, current_collation, variables: QueryEngine.match_plan(
                         document,
                         query_plan,
                         dialect=current_dialect,
                         collation=current_collation,
+                        variables=variables,
                     ),
                     invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                 )
@@ -4002,6 +4006,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             semantics.query_plan,
                             dialect=effective_dialect,
                             collation=semantics.collation,
+                            variables=semantics.variables,
                         )
                     )
 
@@ -4665,11 +4670,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     dialect_requires_python_fallback=self._dialect_requires_python_fallback,
                     select_first_document_for_plan=self._select_first_document_for_plan,
                     load_documents=self._load_documents,
-                    match_plan=lambda document, query_plan, current_dialect, current_collation: QueryEngine.match_plan(
+                    match_plan=lambda document, query_plan, current_dialect, current_collation, variables: QueryEngine.match_plan(
                         document,
                         query_plan,
                         dialect=current_dialect,
                         collation=current_collation,
+                        variables=variables,
                     ),
                     enforce_collection_document_validation=enforce_collection_document_validation,
                     validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: self._validate_document_against_unique_indexes(
@@ -4728,6 +4734,7 @@ class SQLiteEngine(AsyncStorageEngine):
             context,
             dialect,
             operation.collation,
+            operation.let,
         )
 
     @override

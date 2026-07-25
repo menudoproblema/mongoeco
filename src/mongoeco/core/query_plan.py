@@ -179,7 +179,6 @@ class BitwiseCondition(QueryNode):
 @dataclass(frozen=True)
 class ExprCondition(QueryNode):
     expression: Any
-    variables: BsonBindings
 
 
 @dataclass(frozen=True)
@@ -849,9 +848,7 @@ def _compile_filter_strict(
             continue
         if key == '$expr':
             clauses.append(
-                ExprCondition(
-                    value, {} if variables is None else dict(variables)
-                )
+                ExprCondition(value)
             )
             continue
         if key == '$where':

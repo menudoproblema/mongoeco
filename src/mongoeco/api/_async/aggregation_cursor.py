@@ -31,8 +31,13 @@ from mongoeco.core.aggregation import (
     is_streamable_aggregation_stage,
     split_pushdown_pipeline,
 )
+from mongoeco.core.aggregation.planning import _match_spec_contains_expr
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.expression_context import (
+    ExpressionExecutionContext,
+    ensure_expression_context,
+)
 from mongoeco.core.identity import (
     assert_document_matches_stored_lookup,
     assert_valid_root_document_id,
@@ -107,7 +112,13 @@ class AsyncAggregationCursor:
         self._allow_disk_use = operation.allow_disk_use
         self._collation = normalize_collation(operation.collation)
         self._let = operation.let
+        self._execution_context: ExpressionExecutionContext | None = None
         self._session = session
+
+    def _execution_variables(self) -> ExpressionExecutionContext:
+        if self._execution_context is None:
+            self._execution_context = ensure_expression_context(self._let)
+        return self._execution_context
 
     def _ensure_session_can_use_engine(self) -> None:
         ensure_session_can_use_engine(self._collection._engine, self._session)
@@ -199,6 +210,11 @@ class AsyncAggregationCursor:
             if operator != "$match":
                 break
             if not isinstance(spec, dict):
+                return None
+            # El runtime de búsqueda no recibe bindings de expresiones. Dejar
+            # estos $match en el pipeline evita capturar un NOW distinto o
+            # perder un let de usuario durante la optimización de búsqueda.
+            if _match_spec_contains_expr(spec):
                 return None
             clauses.append(deepcopy(spec))
         if not clauses:
@@ -408,7 +424,7 @@ class AsyncAggregationCursor:
             transformed = apply_pipeline(
                 documents,
                 pipeline,
-                variables=self._let,
+                variables=self._execution_variables(),
                 dialect=dialect,
                 collation=self._collation,
                 spill_policy=self._spill_policy(),
@@ -660,7 +676,11 @@ class AsyncAggregationCursor:
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
         from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
 
-        semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
+        semantics = compile_find_semantics_from_operation(
+            operation,
+            dialect=dialect,
+            variables=self._execution_variables(),
+        )
         return engine.scan_find_semantics(
             self._collection._db_name,
             collection_name,
@@ -691,6 +711,7 @@ class AsyncAggregationCursor:
                     operation,
                     session=self._session,
                     apply_codec_options=False,
+                    execution_variables=self._execution_variables(),
                 )
             except TypeError as exc:
                 if "apply_codec_options" not in str(exc):
@@ -699,19 +720,33 @@ class AsyncAggregationCursor:
                     operation,
                     session=self._session,
                 )
-        return self._collection.find(
-            operation.filter_spec,
-            operation.projection,
-            collation=operation.collation,
-            sort=operation.sort,
-            skip=operation.skip,
-            limit=operation.limit,
-            hint=operation.hint,
-            comment=operation.comment,
-            max_time_ms=operation.max_time_ms,
-            batch_size=operation.batch_size,
-            session=self._session,
-        )
+        options = {
+            "collation": operation.collation,
+            "sort": operation.sort,
+            "skip": operation.skip,
+            "limit": operation.limit,
+            "hint": operation.hint,
+            "comment": operation.comment,
+            "max_time_ms": operation.max_time_ms,
+            "batch_size": operation.batch_size,
+            "let": operation.let,
+            "session": self._session,
+        }
+        try:
+            return self._collection.find(
+                operation.filter_spec,
+                operation.projection,
+                **options,
+            )
+        except TypeError as exc:
+            if "let" not in str(exc):
+                raise
+            options.pop("let")
+            return self._collection.find(
+                operation.filter_spec,
+                operation.projection,
+                **options,
+            )
 
     async def _materialize(self) -> list[Document]:
         _ensure_operation_executable(self._collection, self._operation)
@@ -804,7 +839,7 @@ class AsyncAggregationCursor:
                 current_op_resolver=current_op_resolver,
                 plan_cache_stats_resolver=plan_cache_stats_resolver,
                 list_sessions_resolver=list_sessions_resolver,
-                variables=self._let,
+                variables=self._execution_variables(),
                 dialect=dialect,
                 collation=self._collation,
                 spill_policy=self._spill_policy(),
@@ -858,6 +893,7 @@ class AsyncAggregationCursor:
             comment=self._comment,
             max_time_ms=self._max_time_ms,
             batch_size=batch_size if batch_size is not None else self._batch_size,
+            variables=self._let,
             dialect=dialect,
         )
 
@@ -931,7 +967,7 @@ class AsyncAggregationCursor:
                 page,
                 streamable_pipeline,
                 collection_resolver=referenced_collections.get,
-                variables=self._let,
+                variables=self._execution_variables(),
                 dialect=dialect,
                 collation=self._collation,
                 spill_policy=self._spill_policy(),

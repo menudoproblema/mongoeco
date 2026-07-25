@@ -69,6 +69,7 @@ from mongoeco.engines.virtual_indexes import (
     query_can_use_index,
 )
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.identity import (
     assert_document_kept_storage_key,
     assert_document_matches_storage_key,
@@ -1829,6 +1830,7 @@ class MemoryEngine(AsyncStorageEngine):
                     semantics.query_plan,
                     dialect=semantics.dialect,
                     collation=semantics.collation,
+                    variables=semantics.variables,
                 ):
                     continue
 
@@ -1839,7 +1841,10 @@ class MemoryEngine(AsyncStorageEngine):
                     storage_key,
                     storage_key_for_id=self._storage_key,
                 )
-                modified = semantics.compiled_update_plan.apply(document)
+                modified = semantics.compiled_update_plan.apply(
+                    document,
+                    variables=semantics.variables,
+                )
                 if modified:
                     assert_document_kept_storage_key(
                         document,
@@ -1903,7 +1908,10 @@ class MemoryEngine(AsyncStorageEngine):
                 return UpdateResult(matched_count=0, modified_count=0)
 
             new_doc = deepcopy(upsert_seed or {})
-            semantics.compiled_upsert_plan.apply(new_doc)
+            semantics.compiled_upsert_plan.apply(
+                new_doc,
+                variables=semantics.variables,
+            )
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
             assert_valid_root_document_id(new_doc["_id"])
@@ -1978,6 +1986,7 @@ class MemoryEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> DeleteResult:
         effective_dialect = dialect or MONGODB_DIALECT_70
+        variables = ensure_expression_context(operation.let)
         query_plan = ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect)
         effective_collation = normalize_collation(operation.collation)
         async with self._get_lock(db_name, coll_name):
@@ -2007,6 +2016,7 @@ class MemoryEngine(AsyncStorageEngine):
                     query_plan,
                     dialect=effective_dialect,
                     collation=effective_collation,
+                    variables=variables,
                 ):
                     continue
                 assert_document_matches_storage_key(

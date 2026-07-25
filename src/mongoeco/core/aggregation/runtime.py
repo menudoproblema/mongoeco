@@ -4,13 +4,14 @@ import decimal
 import math
 import re
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec
+from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.aggregation.array_string_expressions import (
     ARRAY_STRING_EXPRESSION_OPERATORS,
     evaluate_array_string_expression,
@@ -100,7 +101,7 @@ class AggregationStageContext:
     current_op_resolver: Callable[[], list[Document]] | None = None
     plan_cache_stats_resolver: Callable[[], list[Document]] | None = None
     list_sessions_resolver: Callable[[], list[Document]] | None = None
-    variables: dict[str, Any] | None = None
+    variables: Mapping[str, Any] | None = None
     dialect: MongoDialect = MONGODB_DIALECT_70
     collation: CollationSpec | None = None
     spill_policy: AggregationSpillPolicy | None = None
@@ -329,18 +330,28 @@ def _append_unique_values(
         target.append(deepcopy(value))
 
 
-def _resolve_variable_expression(expression: str, variables: dict[str, Any]) -> Any:
+def _resolve_variable_expression(expression: str, variables: Mapping[str, Any]) -> Any:
     name_and_path = expression[2:]
     name, _, path = name_and_path.partition(".")
     if name == "REMOVE":
-        return _REMOVE if not path else None
-    value = variables.get(name)
+        return _REMOVE if not path else _MISSING
+    if name not in variables:
+        raise OperationFailure(f"Use of undefined variable: {name}", code=17276)
+    value = variables[name]
     if not path:
         return value
     if value is None:
         return None
     resolved = _resolve_aggregation_field_path(value, path)
     return None if resolved is _MISSING else resolved
+
+
+def _variables_for_document(
+    document: Document,
+    variables: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    context = ensure_expression_context(variables)
+    return {**context, "ROOT": document, "CURRENT": document}
 
 
 _MISSING = object()
@@ -513,10 +524,11 @@ def _subtract_values(left: Any, right: Any) -> Any:
 def _evaluate_expression_with_missing(
     document: Document,
     expression: object,
-    variables: dict[str, Any],
+    variables: Mapping[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> Any:
+    variables = _variables_for_document(document, variables)
     if isinstance(expression, str):
         if expression.startswith("$$"):
             return _resolve_variable_expression(expression, variables)
@@ -528,18 +540,16 @@ def _evaluate_expression_with_missing(
 def evaluate_expression(
     document: Document,
     expression: object,
-    variables: dict[str, Any] | None = None,
+    variables: Mapping[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> Any:
-    if variables is None:
-        variables = {"ROOT": document, "CURRENT": document}
-    else:
-        variables = {**variables, "ROOT": document, "CURRENT": document}
+    variables = _variables_for_document(document, variables)
 
     if isinstance(expression, str):
         if expression.startswith("$$"):
-            return _resolve_variable_expression(expression, variables)
+            value = _resolve_variable_expression(expression, variables)
+            return None if value is _MISSING else value
         if expression.startswith("$"):
             value = _resolve_aggregation_field_path(document, expression[1:])
             return None if value is _MISSING else value

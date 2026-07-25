@@ -554,17 +554,20 @@ class QueryEngineTests(unittest.TestCase):
                     ]
                 }
             },
-            variables={'tenant': 'a', 'min_score': 5},
         )
 
-        self.assertTrue(QueryEngine.match_plan(document, plan))
+        self.assertTrue(
+            QueryEngine.match_plan(
+                document,
+                plan,
+                variables={'tenant': 'a', 'min_score': 5},
+            )
+        )
         self.assertFalse(
             QueryEngine.match_plan(
                 document,
-                compile_filter(
-                    {'$expr': {'$eq': ['$tenant', '$$tenant']}},
-                    variables={'tenant': 'b'},
-                ),
+                compile_filter({'$expr': {'$eq': ['$tenant', '$$tenant']}}),
+                variables={'tenant': 'b'},
             )
         )
 

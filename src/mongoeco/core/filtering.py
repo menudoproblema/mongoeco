@@ -1,4 +1,5 @@
 import re
+from collections.abc import Mapping
 from typing import Any, assert_never
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -12,6 +13,7 @@ from mongoeco.core._filtering_support import (
     path_mapping as _path_mapping,
 )
 from mongoeco.core.collation import CollationSpec, values_equal_with_collation
+from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.geo import (
     geometry_intersects_geometry,
     geometry_within_geometry,
@@ -166,12 +168,14 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
+        variables: Mapping[str, Any] | None = None,
     ) -> bool:
         return QueryEngine.match_plan(
             document,
             compile_filter(filter_spec, dialect=dialect),
             dialect=dialect,
             collation=collation,
+            variables=variables,
         )
 
     @staticmethod
@@ -181,7 +185,9 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
         *,
         dialect: MongoDialect = MONGODB_DIALECT_70,
         collation: CollationSpec | None = None,
+        variables: Mapping[str, Any] | None = None,
     ) -> bool:
+        variables = ensure_expression_context(variables)
         if not is_concrete_query_node(plan):
             raise TypeError(f"Unsupported query plan node: {type(plan)!r}")
         match plan:
@@ -301,6 +307,7 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                     clause,
                     dialect=dialect,
                     collation=collation,
+                    variables=variables,
                 )
             case ElemMatchCondition(
                 field=field,
@@ -318,6 +325,7 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                     compiled_plan=compiled_plan,
                     compiled_dialect_key=compiled_dialect_key,
                     wrap_value=wrap_value,
+                    variables=variables,
                 )
             case ExistsCondition(field=field, value=value):
                 return QueryEngine._evaluate_exists(document, field, value)
@@ -325,7 +333,7 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                 return QueryEngine._evaluate_type(document, field, values, aliases=aliases)
             case BitwiseCondition(field=field, operator=operator, operand=operand, mask=mask):
                 return QueryEngine._evaluate_bitwise(document, field, operator, operand, mask=mask)
-            case ExprCondition(expression=expression, variables=variables):
+            case ExprCondition(expression=expression):
                 from mongoeco.core.aggregation import _expression_truthy, evaluate_expression
 
                 value = evaluate_expression(document, expression, variables, dialect=dialect)
@@ -360,12 +368,24 @@ class QueryEngine(FilteringMatchingMixin, FilteringSpecialOperatorsMixin):
                 return validator.validate(document).valid
             case AndCondition(clauses=clauses):
                 return all(
-                    QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation)
+                    QueryEngine.match_plan(
+                        document,
+                        clause,
+                        dialect=dialect,
+                        collation=collation,
+                        variables=variables,
+                    )
                     for clause in clauses
                 )
             case OrCondition(clauses=clauses):
                 return any(
-                    QueryEngine.match_plan(document, clause, dialect=dialect, collation=collation)
+                    QueryEngine.match_plan(
+                        document,
+                        clause,
+                        dialect=dialect,
+                        collation=collation,
+                        variables=variables,
+                    )
                     for clause in clauses
                 )
             case _:

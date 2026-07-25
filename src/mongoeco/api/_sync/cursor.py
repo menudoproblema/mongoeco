@@ -96,6 +96,7 @@ class Cursor:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
     ):
         self._client = client
@@ -110,6 +111,7 @@ class Cursor:
         self._comment = comment
         self._max_time_ms = max_time_ms
         self._batch_size = batch_size
+        self._let = let
         self._session = session
         self._cache: list[Document] | None = None
         self._started = False
@@ -206,6 +208,7 @@ class Cursor:
                     comment=self._comment,
                     max_time_ms=self._max_time_ms,
                     batch_size=self._batch_size,
+                    let=self._let,
                     session=self._session,
                 ).to_list()
             )
@@ -248,6 +251,7 @@ class Cursor:
                 comment=self._comment,
                 max_time_ms=self._max_time_ms,
                 batch_size=self._batch_size,
+                let=self._let,
                 session=self._session,
             )
             async_iterable = async_cursor.__aiter__()
@@ -319,6 +323,7 @@ class Cursor:
             comment=self._comment,
             max_time_ms=self._max_time_ms,
             batch_size=self._batch_size,
+            let=self._let,
             session=self._session,
         )
 
@@ -353,6 +358,7 @@ class Cursor:
             comment=self._comment,
             max_time_ms=self._max_time_ms,
             batch_size=self._batch_size,
+            variables=self._let,
             dialect=getattr(self._async_collection, "mongodb_dialect", MONGODB_DIALECT_70),
             planning_mode=_resolve_planning_mode(self._async_collection),
         )

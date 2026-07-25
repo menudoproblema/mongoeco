@@ -101,13 +101,14 @@ _AGGREGATE_ALIAS = MappingProxyType({'allowDiskUse': 'allow_disk_use'})
 
 _SESSION_OPTION = frozenset({'session'})
 _READ_COMMAND_OPTIONS = _options('collation', 'hint', 'comment', 'max_time_ms')
+_READ_EXPRESSION_COMMAND_OPTIONS = _options(_READ_COMMAND_OPTIONS, 'let')
 _READ_SELECTION_OPTIONS = _options(_READ_COMMAND_OPTIONS, 'sort', 'skip')
 _WRITE_COMMAND_OPTIONS = _options(
     'collation', 'hint', 'comment', 'let', 'session'
 )
 _SINGLE_WRITE_SELECTION_OPTIONS = _options(_WRITE_COMMAND_OPTIONS, 'sort')
 _FIND_PROJECTION_OPTIONS = _options(
-    _READ_SELECTION_OPTIONS, 'projection', 'filter_spec'
+    _READ_SELECTION_OPTIONS, 'projection', 'filter_spec', 'let'
 )
 _FIND_CURSOR_OPTIONS = _options(
     _FIND_PROJECTION_OPTIONS, 'limit', 'batch_size'
@@ -115,7 +116,7 @@ _FIND_CURSOR_OPTIONS = _options(
 _FILTER_ONLY_OPTIONS = _options('filter_spec', _SESSION_OPTION)
 _DELETE_OPTIONS = _options('filter_spec', _WRITE_COMMAND_OPTIONS)
 _COUNT_OPTIONS = _options(
-    'filter_spec', _READ_COMMAND_OPTIONS, 'skip', 'limit', 'session'
+    'filter_spec', _READ_EXPRESSION_COMMAND_OPTIONS, 'skip', 'limit', 'session'
 )
 _AGGREGATE_OPTIONS = _options(
     'pipeline',

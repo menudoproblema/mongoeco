@@ -1069,6 +1069,7 @@
               "supportedOptions": [
                 "comment",
                 "hint",
+                "let",
                 "max_time_ms"
               ],
               "supportsExplain": false,
@@ -1128,6 +1129,7 @@
                 "batch_size",
                 "comment",
                 "hint",
+                "let",
                 "max_time_ms"
               ],
               "supportsExplain": true,
@@ -4105,6 +4107,7 @@
             "supportedOptions": [
               "comment",
               "hint",
+              "let",
               "max_time_ms"
             ],
             "supportsExplain": false,
@@ -6322,6 +6325,7 @@
               "batch_size",
               "comment",
               "hint",
+              "let",
               "max_time_ms"
             ],
             "supportsExplain": true,
@@ -12659,6 +12663,9 @@
         "$where"
       ],
       "server_version": "7.0",
+      "system_variables": [
+        "$$NOW"
+      ],
       "update_operators": [
         "$addToSet",
         "$bit",
@@ -12956,6 +12963,9 @@
         "$where"
       ],
       "server_version": "8.0",
+      "system_variables": [
+        "$$NOW"
+      ],
       "update_operators": [
         "$addToSet",
         "$bit",
@@ -13051,6 +13061,10 @@
       },
       "hint": {
         "note": "Applied through the underlying find() path used to count matching documents.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Propagated into the find-selection path used to count matching documents.",
         "status": "effective"
       },
       "max_time_ms": {
@@ -13153,6 +13167,10 @@
       },
       "hint": {
         "note": "Validated against existing indexes and applied to read planning/explain where engines can honor it.",
+        "status": "effective"
+      },
+      "let": {
+        "note": "Command-level let variables are available through $expr in find filters and cursor execution.",
         "status": "effective"
       },
       "max_time_ms": {

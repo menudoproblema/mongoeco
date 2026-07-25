@@ -130,16 +130,26 @@ class DatabaseAdminRoutingService:
         spec: dict[str, object],
         *,
         session: "ClientSession | None" = None,
+        execution_context=None,
     ) -> object:
-        return await self._admin._write_commands.command_update(spec, session=session)
+        return await self._admin._write_commands.command_update(
+            spec,
+            session=session,
+            execution_context=execution_context,
+        )
 
     async def command_delete(
         self,
         spec: dict[str, object],
         *,
         session: "ClientSession | None" = None,
+        execution_context=None,
     ) -> object:
-        return await self._admin._write_commands.command_delete(spec, session=session)
+        return await self._admin._write_commands.command_delete(
+            spec,
+            session=session,
+            execution_context=execution_context,
+        )
 
     async def command_find(
         self,
@@ -278,11 +288,31 @@ class DatabaseAdminRoutingService:
     async def _command_insert(self, spec: dict[str, object], *, session: "ClientSession | None" = None) -> object:
         return await self.command_insert(spec, session=session)
 
-    async def _command_update(self, spec: dict[str, object], *, session: "ClientSession | None" = None) -> object:
-        return await self.command_update(spec, session=session)
+    async def _command_update(
+        self,
+        spec: dict[str, object],
+        *,
+        session: "ClientSession | None" = None,
+        execution_context=None,
+    ) -> object:
+        return await self.command_update(
+            spec,
+            session=session,
+            execution_context=execution_context,
+        )
 
-    async def _command_delete(self, spec: dict[str, object], *, session: "ClientSession | None" = None) -> object:
-        return await self.command_delete(spec, session=session)
+    async def _command_delete(
+        self,
+        spec: dict[str, object],
+        *,
+        session: "ClientSession | None" = None,
+        execution_context=None,
+    ) -> object:
+        return await self.command_delete(
+            spec,
+            session=session,
+            execution_context=execution_context,
+        )
 
     async def _command_find(self, spec: dict[str, object], *, session: "ClientSession | None" = None) -> object:
         return await self.command_find(spec, session=session)

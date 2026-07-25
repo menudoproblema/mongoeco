@@ -338,12 +338,11 @@ class AggregationCoreTests(unittest.TestCase):
             evaluate_expression(document, {"$map": {"input": "$tags", "in": "$$this"}}),
             ["a", "b", "c"],
         )
-        self.assertIsNone(
+        with self.assertRaisesRegex(OperationFailure, "Use of undefined variable: this"):
             evaluate_expression(
                 document,
                 {"$map": {"input": "$tags", "as": "tag", "in": "$$this"}},
-            )[0]
-        )
+            )
         self.assertEqual(
             evaluate_expression(document, {"$filter": {"input": "$tags", "as": "tag", "cond": {"$in": ["$$tag", ["a", "c"]]}}}),
             ["a", "c"],

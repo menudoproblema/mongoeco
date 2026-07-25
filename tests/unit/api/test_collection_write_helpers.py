@@ -896,6 +896,16 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(result.matched_count, 4)
         self.assertEqual(result.modified_count, 4)
         self.assertEqual(result.deleted_count, 3)
+        recorded = [
+            (
+                operation,
+                {
+                    **kwargs,
+                    'let': dict(kwargs['let'].bindings),
+                },
+            )
+            for operation, kwargs in recorded
+        ]
         self.assertEqual(
             recorded,
             [

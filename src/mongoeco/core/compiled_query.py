@@ -1,4 +1,5 @@
 from functools import lru_cache
+from collections.abc import Mapping
 from typing import Any
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec, compare_with_collation
@@ -50,8 +51,19 @@ class CompiledQuery:
 
         self._match_func = self._compile(plan)
 
-    def match(self, document: Document) -> bool:
-        return self._match_func(document, self._values, self.dialect, self.collation)
+    def match(
+        self,
+        document: Document,
+        *,
+        variables: Mapping[str, Any] | None = None,
+    ) -> bool:
+        return self._match_func(
+            document,
+            self._values,
+            self.dialect,
+            self.collation,
+            variables,
+        )
 
     def get_inline_code(self, prefix: str | None = None) -> str:
         if prefix is not None:
@@ -81,7 +93,7 @@ class CompiledQuery:
         }
         # Local variable binding for performance
         function_code = (
-            'def match_logic(doc, values, dialect, collation):\n'
+            'def match_logic(doc, values, dialect, collation, variables):\n'
             '    _extract = extract\n'
             '    _eq_matches = eq_matches\n'
             '    _top_eq = top_eq\n'
@@ -204,7 +216,10 @@ class CompiledQuery:
                 return f'bool(_extract(doc, {field_key})) == {value}'
             case _:
                 node_key = self._store('node', node)
-                return f'match_plan(doc, {node_key}, dialect=dialect, collation=collation)'
+                return (
+                    f'match_plan(doc, {node_key}, dialect=dialect, '
+                    'collation=collation, variables=variables)'
+                )
 
     def _comparison_code(self, field: str, value: Any, operator: str) -> str:
         field_key = self._field(field)

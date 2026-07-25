@@ -32,10 +32,7 @@ async def _execute_connection_status_command(
     client,
 ) -> dict[str, Any]:
     database = client.get_database(context.db_name)
-    result = await database.command(
-        context.command_document,
-        session=context.session,
-    )
+    result = await _execute_database_command(database, context)
     if not isinstance(result, dict):
         raise OperationFailure("wire command must resolve to a document response")
     return patch_connection_status_auth_info(
@@ -53,12 +50,28 @@ async def _execute_authenticated_passthrough_command(
 ) -> dict[str, Any]:
     auth.require_authenticated(context.connection, context.command_name)
     database = client.get_database(context.db_name)
-    result = await database.command(context.command_document, session=context.session)
+    result = await _execute_database_command(database, context)
     return _materialize_passthrough_result(
         context.command_document,
         result,
         cursor_store=cursor_store,
     )
+
+
+async def _execute_database_command(database, context):
+    try:
+        return await database.command(
+            context.command_document,
+            session=context.session,
+            execution_context=context.execution_context,
+        )
+    except TypeError as exc:
+        if "execution_context" not in str(exc):
+            raise
+        return await database.command(
+            context.command_document,
+            session=context.session,
+        )
 
 
 def _materialize_passthrough_result(

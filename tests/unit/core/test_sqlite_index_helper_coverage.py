@@ -150,7 +150,8 @@ class SQLiteIndexHelperCoverageTests(unittest.TestCase):
             conn.commit()
 
             class _CompiledPlan:
-                def apply(self, document):
+                def apply(self, document, *, variables):
+                    del variables
                     document["kind"] = "note"
                     return True
 
@@ -158,8 +159,11 @@ class SQLiteIndexHelperCoverageTests(unittest.TestCase):
                 dialect=MONGODB_DIALECT_70,
                 collation=None,
                 query_plan=MatchAll(),
+                variables={},
                 compiled_update_plan=_CompiledPlan(),
-                compiled_upsert_plan=SimpleNamespace(apply=lambda _document: None),
+                compiled_upsert_plan=SimpleNamespace(
+                    apply=lambda _document, **_kwargs: None,
+                ),
             )
 
             with self.assertRaisesRegex(OperationFailure, "boom"):
@@ -434,7 +438,8 @@ class SQLiteIndexHelperCoverageTests(unittest.TestCase):
         rollback = Mock()
 
         class _CompiledPlan:
-            def apply(self, document):
+            def apply(self, document, *, variables):
+                del variables
                 document["kind"] = "note"
                 return True
 
@@ -442,8 +447,11 @@ class SQLiteIndexHelperCoverageTests(unittest.TestCase):
             dialect=MONGODB_DIALECT_70,
             collation=None,
             query_plan=MatchAll(),
+            variables={},
             compiled_update_plan=_CompiledPlan(),
-            compiled_upsert_plan=SimpleNamespace(apply=lambda _document: None),
+            compiled_upsert_plan=SimpleNamespace(
+                apply=lambda _document, **_kwargs: None,
+            ),
         )
 
         with self.assertRaisesRegex(DuplicateKeyError, "dup"):

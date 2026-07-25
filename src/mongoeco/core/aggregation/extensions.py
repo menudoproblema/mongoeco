@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from threading import RLock
 from typing import TYPE_CHECKING, Any
@@ -14,14 +14,14 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class AggregationExpressionExtensionContext:
-    evaluate_expression: Callable[[Document, object, dict[str, Any] | None], Any]
-    evaluate_expression_with_missing: Callable[[Document, object, dict[str, Any] | None], Any]
+    evaluate_expression: Callable[[Document, object, Mapping[str, Any] | None], Any]
+    evaluate_expression_with_missing: Callable[[Document, object, Mapping[str, Any] | None], Any]
     require_expression_args: Callable[[str, object, int, int | None], list[object]]
     missing_sentinel: object
 
 
 type AggregationExpressionExtensionHandler = Callable[
-    [Document, object, dict[str, Any], MongoDialect, AggregationExpressionExtensionContext],
+    [Document, object, Mapping[str, Any], MongoDialect, AggregationExpressionExtensionContext],
     Any,
 ]
 

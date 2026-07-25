@@ -45,6 +45,13 @@ type PreparedAccumulatorSpecs = tuple[tuple[str, str, object], ...]
 type AccumulatorSpecsInput = dict[str, object] | PreparedAccumulatorSpecs | None
 
 
+def _normalize_remove_value(value: Any) -> Any:
+    """Impide que el centinela interno $$REMOVE salga de acumuladores."""
+    from mongoeco.core.aggregation.runtime import _REMOVE
+
+    return None if value is _REMOVE else value
+
+
 @dataclass(slots=True)
 class _AverageAccumulator:
     total: object = 0
@@ -171,6 +178,7 @@ def _evaluate_pick_n_input(
     if not isinstance(expression, dict) or not {"input", "n"} <= set(expression):
         raise OperationFailure(f"{operator} requires input and n")
     value = evaluate_expression_with_missing(document, expression["input"], variables or {})
+    value = _normalize_remove_value(value)
     if value is missing_sentinel or isinstance(value, UndefinedType):
         value = None
     size = _normalize_pick_n_size(
@@ -215,7 +223,9 @@ def _evaluate_ordered_accumulator_input(
     for field, _direction in sort_spec:
         resolved = resolve_aggregation_field_path(document, field)
         sort_values.append(None if resolved is missing_sentinel else resolved)
-    output = evaluate_expression(document, expression["output"], variables)
+    output = _normalize_remove_value(
+        evaluate_expression(document, expression["output"], variables)
+    )
     size: int | None = None
     if operator in {"$topN", "$bottomN"}:
         if "n" not in expression:
@@ -461,7 +471,13 @@ def _apply_accumulators(
     values = bucket.values if isinstance(bucket, _AccumulatorBucket) else bucket
     flags = bucket.flags if isinstance(bucket, _AccumulatorBucket) else _accumulator_flags(bucket)
     for field, operator, expression in prepared_specs:
-        value = None if operator == "$count" or operator in _ACCUMULATORS_WITH_INTERNAL_EVALUATION else evaluate_expression(document, expression, variables)
+        value = (
+            None
+            if operator == "$count" or operator in _ACCUMULATORS_WITH_INTERNAL_EVALUATION
+            else _normalize_remove_value(
+                evaluate_expression(document, expression, variables)
+            )
+        )
         if operator in {"$sum", "$count"}:
             if operator == "$count":
                 values[field] += 1

@@ -1559,14 +1559,69 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
             _is_simple_projection({'name': {'$toString': '$score'}})
         )
 
-    def test_remove_variable_with_path_suffix_returns_null_not_sentinel(self):
+    def test_remove_variable_with_path_suffix_omits_a_computed_field(self):
         documents = [{'_id': '1', 'value': 1}]
 
         self.assertEqual(
             apply_pipeline(
                 documents, [{'$addFields': {'extra': '$$REMOVE.field'}}]
             ),
-            [{'_id': '1', 'value': 1, 'extra': None}],
+            [{'_id': '1', 'value': 1}],
+        )
+
+    def test_remove_variable_preserves_missing_only_for_field_transformations(self):
+        document = {'_id': '1'}
+
+        self.assertEqual(
+            apply_pipeline(
+                [document],
+                [{'$project': {'value': {'$ifNull': ['$$REMOVE', 'fallback']}}}],
+            ),
+            [{'_id': '1', 'value': 'fallback'}],
+        )
+        self.assertEqual(
+            apply_pipeline(
+                [document],
+                [
+                    {
+                        '$group': {
+                            '_id': None,
+                            'first': {'$first': '$$REMOVE'},
+                            'pushed': {'$push': '$$REMOVE'},
+                            'unique': {'$addToSet': '$$REMOVE'},
+                        }
+                    }
+                ],
+            ),
+            [{'_id': None, 'first': None, 'pushed': [None], 'unique': [None]}],
+        )
+
+    def test_remove_path_is_null_like_outside_a_field_transformation(self):
+        self.assertEqual(
+            evaluate_expression({}, {'$cond': ['$$REMOVE.path', 'yes', 'no']}),
+            'no',
+        )
+        self.assertEqual(
+            evaluate_expression(
+                {},
+                {
+                    '$switch': {
+                        'branches': [{'case': '$$REMOVE.path', 'then': 'yes'}],
+                        'default': 'no',
+                    }
+                },
+            ),
+            'no',
+        )
+        self.assertTrue(
+            evaluate_expression({}, {'$eq': ['$$REMOVE.path', None]})
+        )
+        self.assertEqual(
+            apply_pipeline(
+                [{'_id': '1'}],
+                [{'$match': {'$expr': {'$eq': ['$$REMOVE.path', None]}}}],
+            ),
+            [{'_id': '1'}],
         )
 
     def test_bucket_rejects_non_strictly_increasing_boundaries(self):

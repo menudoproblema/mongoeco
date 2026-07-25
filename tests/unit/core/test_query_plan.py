@@ -477,14 +477,11 @@ class QueryPlanTests(unittest.TestCase):
 
     def test_compile_filter_supports_expr_with_optional_bound_variables(self):
         plan = compile_filter({'$expr': {'$gt': ['$a', 1]}})
-        bound = compile_filter(
-            {'$expr': {'$eq': ['$tenant', '$$tenant']}},
-            variables={'tenant': 'a'},
-        )
+        bound = compile_filter({'$expr': {'$eq': ['$tenant', '$$tenant']}})
 
         self.assertEqual(type(plan).__name__, 'ExprCondition')
         self.assertEqual(type(bound).__name__, 'ExprCondition')
-        self.assertEqual(bound.variables, {'tenant': 'a'})
+        self.assertFalse(hasattr(bound, 'variables'))
 
     def test_compile_filter_rejects_unknown_top_level_operators(self):
         with self.assertRaises(OperationFailure):

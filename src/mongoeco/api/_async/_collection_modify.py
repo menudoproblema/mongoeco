@@ -20,6 +20,7 @@ from mongoeco.api.public_api import (
     normalize_public_operation_arguments,
 )
 from mongoeco.core.operators import UpdateEngine
+from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.identity import assert_document_matches_stored_lookup
@@ -43,6 +44,11 @@ from mongoeco.types import (
 
 if TYPE_CHECKING:
     from mongoeco.api._async.collection import AsyncCollection
+
+
+def _bind_execution_context(operation):
+    """Enlaza los bindings de una operación al comando que la ejecuta."""
+    return operation.with_overrides(let=ensure_expression_context(operation.let))
 
 
 def _require_selected_document_id(document: Document) -> DocumentId:
@@ -205,6 +211,7 @@ async def update_one(
         update_spec=update_spec,
         planning_mode=collection._planning_mode,
     )
+    operation = _bind_execution_context(operation)
     should_publish_change_events = collection._should_publish_change_events(
         session=session,
     )
@@ -438,6 +445,7 @@ async def update_many(
         update_spec=update_spec,
         planning_mode=collection._planning_mode,
     )
+    operation = _bind_execution_context(operation)
     matched_documents = await collection._build_cursor(
         compile_find_selection_from_update_operation(
             operation,
@@ -558,6 +566,7 @@ async def replace_one(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
+    operation = _bind_execution_context(operation)
     selected = await collection._select_first_document(
         operation.filter_spec,
         plan=operation.plan,
@@ -565,6 +574,7 @@ async def replace_one(
         sort=operation.sort,
         hint=operation.hint,
         comment=operation.comment,
+        variables=operation.let,
         session=session,
     )
     if selected is None:
@@ -708,6 +718,7 @@ async def find_one_and_update(
         update_spec=update_spec,
         planning_mode=collection._planning_mode,
     )
+    operation = _bind_execution_context(operation)
     before = await collection._select_first_document(
         operation.filter_spec,
         plan=operation.plan,
@@ -716,6 +727,7 @@ async def find_one_and_update(
         hint=operation.hint,
         comment=operation.comment,
         max_time_ms=operation.max_time_ms,
+        variables=operation.let,
         session=session,
     )
     if before is None:
@@ -853,6 +865,7 @@ async def find_one_and_replace(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
+    operation = _bind_execution_context(operation)
 
     before = await collection._select_first_document(
         operation.filter_spec,
@@ -862,6 +875,7 @@ async def find_one_and_replace(
         hint=operation.hint,
         comment=operation.comment,
         max_time_ms=operation.max_time_ms,
+        variables=operation.let,
         session=session,
     )
     if before is None:
@@ -975,6 +989,7 @@ async def find_one_and_delete(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
+    operation = _bind_execution_context(operation)
 
     before = await collection._select_first_document(
         operation.filter_spec,
@@ -984,6 +999,7 @@ async def find_one_and_delete(
         hint=operation.hint,
         comment=operation.comment,
         max_time_ms=operation.max_time_ms,
+        variables=operation.let,
         session=session,
     )
     if before is None:
@@ -1047,6 +1063,7 @@ async def delete_one(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
+    operation = _bind_execution_context(operation)
     should_publish_change_events = collection._should_publish_change_events(
         session=session,
     )
@@ -1155,6 +1172,7 @@ async def delete_many(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
+    operation = _bind_execution_context(operation)
     matched_documents = await collection._build_cursor(
         compile_find_selection_from_update_operation(
             operation,

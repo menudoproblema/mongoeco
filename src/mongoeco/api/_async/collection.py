@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterable, Callable, Iterable, Sequence
 from copy import deepcopy
+import re
 import time
 
 from mongoeco.api._async._collection_bulk import execute_bulk_write
@@ -66,6 +67,7 @@ from mongoeco.compat import (
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
@@ -123,6 +125,7 @@ from mongoeco.errors import DuplicateKeyError, OperationFailure
 
 _FILTER_UNSET = ARG_UNSET
 _UPDATE_UNSET = ARG_UNSET
+_LET_VARIABLE_RE = re.compile(r"^(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*$")
 _resolve_distinct_candidates = _collection_reads.resolve_distinct_candidates
 
 
@@ -382,11 +385,18 @@ class AsyncCollection:
         return max_time_ms
 
     @staticmethod
-    def _normalize_let(let: object | None) -> dict[str, object] | None:
+    def _normalize_let(let: object | None) -> dict[str, object] | ExpressionExecutionContext | None:
         if let is None:
             return None
+        if isinstance(let, ExpressionExecutionContext):
+            return let
         if not isinstance(let, dict):
             raise TypeError('let must be a dict')
+        for name in let:
+            if not isinstance(name, str) or not _LET_VARIABLE_RE.match(name):
+                raise OperationFailure(
+                    '$lookup let variable names must begin with a lowercase letter or non-ascii character'
+                )
         return let
 
     @staticmethod
@@ -705,6 +715,7 @@ class AsyncCollection:
         hint: HintSpec | None = None,
         comment: object | None = None,
         max_time_ms: int | None = None,
+        variables=None,
         session: ClientSession | None = None,
     ) -> Document | None:
         return await self._runtime.select_first_document(
@@ -715,6 +726,7 @@ class AsyncCollection:
             hint=hint,
             comment=comment,
             max_time_ms=max_time_ms,
+            variables=variables,
             session=session,
         )
 
@@ -729,11 +741,13 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
         apply_codec_options: bool = True,
+        execution_variables=None,
     ) -> AsyncCursor:
         return self._runtime.build_cursor(
             operation,
             session=session,
             apply_codec_options=apply_codec_options,
+            execution_variables=execution_variables,
         )
 
     async def _put_replacement_document(
@@ -1100,6 +1114,7 @@ class AsyncCollection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
         **kwargs: object,
     ):
@@ -1116,6 +1131,7 @@ class AsyncCollection:
                 'comment': comment,
                 'max_time_ms': max_time_ms,
                 'batch_size': batch_size,
+                'let': let,
                 'session': session,
             },
             extra_kwargs={'filter': filter, **kwargs},
@@ -1132,6 +1148,7 @@ class AsyncCollection:
             comment=options.get('comment'),
             max_time_ms=options.get('max_time_ms'),
             batch_size=options.get('batch_size'),
+            variables=options.get('let'),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
@@ -1595,6 +1612,7 @@ class AsyncCollection:
         max_time_ms: int | None = None,
         skip: int = 0,
         limit: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> int:
@@ -1608,6 +1626,7 @@ class AsyncCollection:
             max_time_ms=max_time_ms,
             skip=skip,
             limit=limit,
+            let=let,
             session=session,
             extra_kwargs=kwargs,
         )

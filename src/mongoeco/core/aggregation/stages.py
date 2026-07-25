@@ -45,6 +45,7 @@ from mongoeco.core.aggregation.runtime import (
     _apply_unwind,
     evaluate_expression,
 )
+from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.paths import get_document_value, set_document_value
 from mongoeco.core.aggregation.transform_stages import (
     _apply_add_fields,
@@ -453,6 +454,7 @@ def _stage_geo_near(
             query_spec,
             dialect=context.dialect,
             collation=context.collation,
+            variables=context.variables,
         ):
             continue
         found, location = get_document_value(document, key)
@@ -872,6 +874,7 @@ def apply_pipeline(
     collation: CollationSpec | None = None,
     spill_policy: AggregationSpillPolicy | None = None,
 ) -> list[Document]:
+    variables = ensure_expression_context(variables)
     compiled_plan = compile_pipeline(
         pipeline,
         dialect=dialect,

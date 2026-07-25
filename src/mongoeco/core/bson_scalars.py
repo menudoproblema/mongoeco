@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import decimal
 import math
+from datetime import UTC, datetime
 from dataclasses import dataclass
 from typing import Any
 
@@ -14,6 +15,12 @@ INT32_MAX = (1 << 31) - 1
 INT64_MIN = -(1 << 63)
 INT64_MAX = (1 << 63) - 1
 DECIMAL128_CONTEXT = decimal.Context(prec=34, Emin=-6143, Emax=6144)
+
+
+def utc_bson_now() -> datetime:
+    """Devuelve la hora UTC compatible con la precisión BSON."""
+    now = datetime.now(UTC).replace(tzinfo=None)
+    return now.replace(microsecond=(now.microsecond // 1_000) * 1_000)
 
 
 class BsonScalarOverflowError(OverflowError):

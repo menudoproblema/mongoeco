@@ -1,5 +1,7 @@
 from collections import OrderedDict
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
+import re
 import threading
 
 from mongoeco.api.argument_validation import (
@@ -10,6 +12,7 @@ from mongoeco.api.argument_validation import (
 )
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.operators import (
@@ -18,6 +21,8 @@ from mongoeco.core.operators import (
     CompiledUpdatePlan,
     UpdateEngine,
 )
+from mongoeco.core.expression_context import ExpressionExecutionContext
+from mongoeco.core.json_compat import json_dumps_compact
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.search import (
     TEXT_SCORE_FIELD,
@@ -46,6 +51,7 @@ class FindOperation:
     comment: object | None = None
     max_time_ms: int | None = None
     batch_size: int | None = None
+    let: Mapping[str, object] | None = None
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
 
@@ -66,7 +72,7 @@ class UpdateOperation:
     hint: HintSpec | None = None
     comment: object | None = None
     max_time_ms: int | None = None
-    let: dict[str, object] | None = None
+    let: Mapping[str, object] | None = None
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
 
@@ -83,7 +89,7 @@ class AggregateOperation:
     max_time_ms: int | None = None
     batch_size: int | None = None
     allow_disk_use: bool | None = None
-    let: dict[str, object] | None = None
+    let: Mapping[str, object] | None = None
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
 
@@ -107,6 +113,8 @@ _UPDATE_PLAN_TEMPLATE_CACHE: OrderedDict[
     tuple[object, ...],
     tuple["_UpdatePlanTemplate", "_UpdatePlanTemplate"],
 ] = OrderedDict()
+
+_LET_VARIABLE_RE = re.compile(r"^(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,6 +233,7 @@ def compile_find_selection_from_update_operation(
         hint=operation.hint,
         comment=operation.comment,
         max_time_ms=operation.max_time_ms,
+        let=operation.let,
         planning_mode=operation.planning_mode,
         planning_issues=operation.planning_issues,
     )
@@ -257,6 +266,7 @@ def compile_find_operation(
     normalized_batch_size = _normalize_batch_size(batch_size)
     normalized_skip = _normalize_skip(skip)
     normalized_limit = _normalize_limit(limit)
+    normalized_let = _normalize_let(variables)
     if text_query is None:
         if _projection_requests_text_score(normalized_projection):
             raise OperationFailure("$meta textScore projection requires a $text query")
@@ -265,7 +275,11 @@ def compile_find_operation(
     return FindOperation(
         filter_spec=normalized_filter,
         selector_filter=selector_filter,
-        plan=compile_filter(selector_filter, dialect=dialect, variables=variables, planning_mode=planning_mode)
+        plan=compile_filter(
+            selector_filter,
+            dialect=dialect,
+            planning_mode=planning_mode,
+        )
         if plan is None
         else plan,
         text_query=text_query,
@@ -278,8 +292,14 @@ def compile_find_operation(
         comment=comment,
         max_time_ms=normalized_max_time_ms,
         batch_size=normalized_batch_size,
+        let=normalized_let,
         planning_mode=planning_mode,
-        planning_issues=_collect_query_planning_issues(selector_filter, dialect=dialect, variables=variables, planning_mode=planning_mode),
+        planning_issues=_collect_query_planning_issues(
+            selector_filter,
+            dialect=dialect,
+            variables=normalized_let,
+            planning_mode=planning_mode,
+        ),
     )
 
 
@@ -319,7 +339,6 @@ def compile_update_operation(
         plan=compile_filter(
             normalized_filter,
             dialect=dialect,
-            variables=normalized_let,
             planning_mode=planning_mode,
         )
         if plan is None
@@ -381,7 +400,7 @@ def _collect_query_planning_issues(
     filter_spec: Filter,
     *,
     dialect: MongoDialect,
-    variables: dict[str, object] | None,
+    variables: Mapping[str, object] | None,
     planning_mode: PlanningMode,
 ) -> tuple[PlanningIssue, ...]:
     if planning_mode is not PlanningMode.RELAXED:
@@ -478,7 +497,7 @@ def _build_update_plan_template_cache_key(
 ) -> tuple[tuple[object, ...], tuple[object, ...]] | None:
     if planning_mode is not PlanningMode.STRICT:
         return None
-    if collation is not None or array_filters is not None or variables is not None:
+    if collation is not None or array_filters is not None:
         return None
     if not isinstance(update_spec, dict):
         return None
@@ -510,9 +529,23 @@ def _build_update_plan_template_cache_key(
 
     if not operator_shapes:
         return None
+    user_let = (
+        variables.bindings
+        if isinstance(variables, ExpressionExecutionContext)
+        else variables
+    )
+    try:
+        let_fingerprint = (
+            None
+            if user_let is None
+            else json_dumps_compact(DocumentCodec.encode(dict(user_let)), sort_keys=True)
+        )
+    except (TypeError, ValueError, OperationFailure):
+        return None
     cache_key = (
         _update_dialect_cache_key(dialect),
         tuple(operator_shapes),
+        let_fingerprint,
     )
     return cache_key, tuple(values)
 
@@ -520,7 +553,7 @@ def _build_update_plan_template_cache_key(
 def _slot_map_from_update_plan_cache_key(
     cache_key: tuple[object, ...],
 ) -> dict[tuple[str, str], int]:
-    _dialect_key, operator_shapes = cache_key
+    _dialect_key, operator_shapes, _let_fingerprint = cache_key
     slot_map: dict[tuple[str, str], int] = {}
     slot = 0
     for operator, paths in operator_shapes:
@@ -580,7 +613,7 @@ def _compile_update_plans(
     selector_filter: Filter,
     collation: CollationDocument | None,
     array_filters: ArrayFilters | None,
-    variables: dict[str, object] | None,
+    variables: Mapping[str, object] | None,
     planning_mode: PlanningMode,
 ) -> tuple[CompiledExecutableUpdatePlan | None, CompiledExecutableUpdatePlan | None]:
     if update_spec is None:
@@ -756,11 +789,18 @@ def _normalize_array_filters(array_filters: object | None) -> ArrayFilters | Non
     return array_filters
 
 
-def _normalize_let(let: object | None) -> dict[str, object] | None:
+def _normalize_let(let: object | None) -> Mapping[str, object] | None:
     if let is None:
         return None
+    if isinstance(let, ExpressionExecutionContext):
+        return let
     if not isinstance(let, dict):
         raise TypeError("let must be a dict")
+    for name in let:
+        if not isinstance(name, str) or not _LET_VARIABLE_RE.match(name):
+            raise OperationFailure(
+                "$lookup let variable names must begin with a lowercase letter or non-ascii character"
+            )
     return let
 
 

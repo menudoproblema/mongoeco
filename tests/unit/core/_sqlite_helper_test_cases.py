@@ -121,7 +121,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     ElemMatchCondition("items", EqualsCondition("value", 1), wrap_value=True),
                     TypeCondition("value", ("number",)),
                     BitwiseCondition("flags", "$bitsAllSet", 1),
-                    ExprCondition({"$gt": ["$score", 1]}, {}),
+                    ExprCondition({"$gt": ["$score", 1]}),
                     JsonSchemaCondition({"required": ["name"]}),
                     NotCondition(LessThanCondition("score", 0)),
                 )
@@ -2065,8 +2065,13 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         dialect=MONGODB_DIALECT_70,
                         collation=None,
                         query_plan=MatchAll(),
-                        compiled_update_plan=SimpleNamespace(apply=lambda _doc: True),
-                        compiled_upsert_plan=SimpleNamespace(apply=lambda _doc: None),
+                        variables={},
+                        compiled_update_plan=SimpleNamespace(
+                            apply=lambda _doc, **_kwargs: True,
+                        ),
+                        compiled_upsert_plan=SimpleNamespace(
+                            apply=lambda _doc, **_kwargs: None,
+                        ),
                     ),
                     require_connection=lambda: conn,
                     purge_expired_documents=lambda *_args: None,

@@ -1,6 +1,7 @@
 import time
 from dataclasses import replace
 from collections import deque
+from collections.abc import Mapping
 
 from mongoeco.api.argument_validation import (
     HintSpec,
@@ -198,6 +199,8 @@ class AsyncCursor:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
+        let: dict[str, object] | None = None,
+        execution_variables: Mapping[str, object] | None = None,
         session: ClientSession | None = None,
         apply_codec_options: bool = True,
     ):
@@ -213,6 +216,8 @@ class AsyncCursor:
         self._comment = comment
         self._max_time_ms = max_time_ms
         self._batch_size = batch_size
+        self._let = let
+        self._execution_variables = execution_variables
         self._session = session
         self._apply_codec_options = apply_codec_options
         self._started = False
@@ -244,6 +249,7 @@ class AsyncCursor:
             self._semantics_cache = compile_find_semantics_from_operation(
                 self._base_operation(),
                 dialect=self._current_dialect(),
+                variables=self._execution_variables,
             )
         return self._semantics_cache
 
@@ -465,6 +471,7 @@ class AsyncCursor:
             self._active_async_iterable = None
         self._started = False
         self._exhausted = False
+        self._semantics_cache = None
         return self
 
     def clone(self) -> "AsyncCursor":
@@ -481,6 +488,8 @@ class AsyncCursor:
             comment=self._comment,
             max_time_ms=self._max_time_ms,
             batch_size=self._batch_size,
+            let=self._let,
+            execution_variables=self._execution_variables,
             session=self._session,
         )
 
@@ -499,6 +508,7 @@ class AsyncCursor:
                 comment=self._comment,
                 max_time_ms=self._max_time_ms,
                 batch_size=self._batch_size,
+                variables=self._let,
                 dialect=self._current_dialect(),
                 planning_mode=_resolve_planning_mode(self._collection),
                 plan=self._plan,

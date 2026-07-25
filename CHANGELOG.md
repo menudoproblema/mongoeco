@@ -8,6 +8,33 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- `$$NOW` es efectivo en los dialectos MongoDB 7.0 y 8.0 mediante un contexto
+  de ejecución inmutable, UTC naïve y truncado a milisegundos, compartido por
+  cada comando real o lote clásico de `bulk_write`.
+- `find` y `count_documents` declaran soporte efectivo para `let`; las
+  variables inexistentes informan `OperationFailure` código 17276.
+
+### Changed
+
+- Los planes de consulta y de updates por pipeline ya no almacenan bindings;
+  éstos viajan exclusivamente por la ejecución. Los cursores, agregaciones,
+  subpipelines, comandos de base de datos, wire y evaluadores directos del
+  núcleo preservan el mismo contexto.
+- `$currentDate` conserva su evaluación por documento, pero sus fechas usan la
+  precisión BSON de milisegundos.
+- `bulk_write` usa lotes lógicos clásicos de hasta 100.000 modelos y captura
+  un `$$NOW` por lote, sin pretender emular `bulkWrite` ni límites BSON.
+
+### Fixed
+
+- `$$REMOVE.path` conserva *missing* sólo al calcular campos de
+  `$project`/`$addFields`/`$set`; en expresiones de valor se normaliza a `null`.
+  Además, `$$REMOVE` ya no puede filtrarse a `$ifNull` ni a acumuladores.
+- SQLite preserva `let` y el contexto temporal al borrar, y el *pushdown* de
+  `$search` ya no descarta `$match` con `$expr` dependientes de variables.
+
 ## [3.6.0] - 2026-07-05
 
 ### Changed

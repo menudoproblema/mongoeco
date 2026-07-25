@@ -663,7 +663,8 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
                         update_spec=update_spec,
                         **kwargs,
                     )
-                self.assertEqual(compile_mock.call_count, 4)
+                expected_compile_count = 2 if "let" in kwargs else 4
+                self.assertEqual(compile_mock.call_count, expected_compile_count)
 
     def test_private_update_compilation_reraises_in_strict_mode_after_engine_failure(self):
         operations_module._clear_update_plan_template_cache()

@@ -239,7 +239,7 @@ class Collection:
             inline=True,
             **{
                 key: options[key]
-                for key in ('sort', 'skip', 'hint', 'comment', 'max_time_ms')
+                for key in ('sort', 'skip', 'hint', 'comment', 'max_time_ms', 'let')
                 if key in options
             },
         )
@@ -278,6 +278,7 @@ class Collection:
         comment: object | None = None,
         max_time_ms: int | None = None,
         batch_size: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> Cursor:
@@ -294,6 +295,7 @@ class Collection:
                 'comment': comment,
                 'max_time_ms': max_time_ms,
                 'batch_size': batch_size,
+                'let': let,
                 'session': session,
             },
             extra_kwargs={'filter': filter, **kwargs},
@@ -315,6 +317,7 @@ class Collection:
             comment=options.get('comment'),
             max_time_ms=options.get('max_time_ms'),
             batch_size=options.get('batch_size'),
+            let=options.get('let'),
             session=options.get('session'),
         )
 
@@ -856,6 +859,7 @@ class Collection:
         max_time_ms: int | None = None,
         skip: int = 0,
         limit: int | None = None,
+        let: dict[str, object] | None = None,
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> int:
@@ -869,6 +873,7 @@ class Collection:
                 'max_time_ms': max_time_ms,
                 'skip': skip,
                 'limit': limit,
+                'let': let,
                 'session': session,
             },
             extra_kwargs={'filter': filter, **kwargs},
@@ -883,6 +888,7 @@ class Collection:
             max_time_ms=options.get('max_time_ms'),
             skip=options.get('skip', 0),
             limit=options.get('limit'),
+            let=options.get('let'),
             session=options.get('session'),
             inline=True,
         )

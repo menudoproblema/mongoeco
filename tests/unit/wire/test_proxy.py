@@ -701,6 +701,28 @@ class WireProxyUnitTests(unittest.TestCase):
 
 
 class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
+    async def test_wire_update_command_reuses_one_now_for_all_statements(self):
+        async with AsyncMongoEcoProxyServer() as proxy:
+            connection = proxy._connections.create(("127.0.0.1", 27017))
+            collection = proxy._client.alpha.events
+            await collection.insert_many([{"_id": "a"}, {"_id": "b"}])
+
+            result = await proxy._executor.execute_command(
+                {
+                    "update": "events",
+                    "updates": [
+                        {"q": {"_id": "a"}, "u": [{"$set": {"at": "$$NOW"}}]},
+                        {"q": {"_id": "b"}, "u": [{"$set": {"at": "$$NOW"}}]},
+                    ],
+                    "$db": "alpha",
+                },
+                connection=connection,
+            )
+
+            documents = await collection.find({}, sort=[("_id", 1)]).to_list()
+            self.assertEqual(result["n"], 2)
+            self.assertEqual(documents[0]["at"], documents[1]["at"])
+
     async def test_executor_routes_hello_through_handshake_service_and_connection_context(self):
         proxy = AsyncMongoEcoProxyServer()
         connection = proxy._connections.create(("127.0.0.1", 27017))

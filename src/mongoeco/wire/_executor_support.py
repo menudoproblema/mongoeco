@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from mongoeco.api import AsyncMongoClient
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.errors import MongoEcoError, OperationFailure, PyMongoError
 from mongoeco.wire._executor_validation import validate_wire_command_document
 from mongoeco.wire.capabilities import resolve_wire_command_capability
@@ -70,6 +71,7 @@ def build_request_context(
         capability=capability,
         connection=connection,
         session=session,
+        execution_context=ExpressionExecutionContext(),
     )
 
 

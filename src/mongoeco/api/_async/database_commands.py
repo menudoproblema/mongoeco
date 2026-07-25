@@ -10,7 +10,7 @@ import threading
 import time
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Generic, TypeVar
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from mongoeco.api.admin_parsing import (
     FindAndModifyCommandOptions,
@@ -28,6 +28,7 @@ from mongoeco.api._async._database_command_contract import (
     wire_command_surface_count,
 )
 from mongoeco.core.collation import collation_backend_info
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.json_compat import get_json_backend_name
 from mongoeco.driver.topology import sdam_capabilities_info
 from mongoeco.engines.base import AsyncStorageEngine
@@ -1301,8 +1302,12 @@ class AsyncDatabaseCommandService:
         command: AsyncDatabaseCommandService.AdminCommand[CommandResultT],
         *,
         session: ClientSession | None = None,
+        execution_context: ExpressionExecutionContext | None = None,
     ) -> CommandResultT:
         self._ensure_session_can_use_engine(session)
+        if execution_context is None:
+            execution_context = ExpressionExecutionContext()
+        command = self._bind_execution_context(command, execution_context)
         if isinstance(command, self.StaticAdminCommand):
             return self._execute_static(command)  # type: ignore[return-value]
         if isinstance(command, self.ConnectionStatusCommand):
@@ -1412,9 +1417,40 @@ class AsyncDatabaseCommandService:
             assert command.route is not None
             handler = getattr(self._routing, command.route.handler_name)
             if command.route.passes_spec:
+                if command.command_name in {"update", "delete"}:
+                    return await handler(
+                        command.spec,
+                        session=session,
+                        execution_context=execution_context,
+                    )
                 return await handler(command.spec, session=session)
             return await handler(session=session)
         raise AssertionError(f"Unexpected admin command type: {type(command)!r}")
+
+    def _bind_execution_context(
+        self,
+        command: "AsyncDatabaseCommandService.AdminCommand[CommandResultT]",
+        execution_context: ExpressionExecutionContext,
+    ) -> "AsyncDatabaseCommandService.AdminCommand[CommandResultT]":
+        if isinstance(
+            command,
+            (self.FindCommand, self.AggregateCommand, self.CountCommand, self.DistinctCommand),
+        ):
+            operation = command.operation
+            if operation is not None and hasattr(operation, "with_overrides"):
+                operation = operation.with_overrides(
+                    let=execution_context.with_bindings(getattr(operation, "let", None) or {})
+                )
+                return replace(command, operation=operation)
+        if isinstance(command, self.FindAndModifyCommand) and command.options is not None:
+            return replace(
+                command,
+                options=replace(
+                    command.options,
+                    let=execution_context.with_bindings(command.options.let or {}),
+                ),
+            )
+        return command
 
     def _execute_static(
         self,
@@ -1493,6 +1529,7 @@ class AsyncDatabaseCommandService:
         command: object | AsyncDatabaseCommandService.AdminCommand[object],
         *,
         session: ClientSession | None = None,
+        execution_context: ExpressionExecutionContext | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
         parsed = (
@@ -1500,6 +1537,8 @@ class AsyncDatabaseCommandService:
             if isinstance(command, self.AdminCommand)
             else self.parse_raw_command(command, **kwargs)
         )
+        if execution_context is None:
+            execution_context = ExpressionExecutionContext()
         started_at = time.perf_counter_ns()
         should_track = parsed.command_name not in {"currentOp", "killOp"}
         command_namespace = self._command_namespace(parsed)
@@ -1560,7 +1599,17 @@ class AsyncDatabaseCommandService:
                 killable=should_track,
                 metadata={"db": parsed.db_name},
             ) if should_track else _null_operation_tracker() as _opid:
-                serialized = self.serialize_result(await self.execute(parsed, session=session))
+                try:
+                    result = await self.execute(
+                        parsed,
+                        session=session,
+                        execution_context=execution_context,
+                    )
+                except TypeError as exc:
+                    if "execution_context" not in str(exc):
+                        raise
+                    result = await self.execute(parsed, session=session)
+                serialized = self.serialize_result(result)
         except Exception as exc:
             if parsed.command_name != "profile":
                 _record_command_profile_event(
@@ -1588,11 +1637,13 @@ class AsyncDatabaseCommandService:
         command: object,
         *,
         session: ClientSession | None = None,
+        execution_context: ExpressionExecutionContext | None = None,
         **kwargs: object,
     ) -> dict[str, object]:
         return await self.execute_document(
             command,
             session=session,
+            execution_context=execution_context,
             **kwargs,
         )
 

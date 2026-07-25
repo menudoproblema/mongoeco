@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     BulkWriteErrorDetails,
@@ -139,6 +140,7 @@ class DatabaseAdminWriteCommandService:
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
+        execution_context: ExpressionExecutionContext | None = None,
     ) -> object:
         collection_name = self._admin._require_collection_name(spec.get("update"), "update")
         updates = self._admin._normalize_update_specs(spec.get("updates"))
@@ -147,6 +149,10 @@ class DatabaseAdminWriteCommandService:
         if not isinstance(bypass_document_validation, bool):
             raise TypeError("bypassDocumentValidation must be a bool")
         collection = self._admin._database.get_collection(collection_name)
+        command_context = execution_context or ExpressionExecutionContext()
+        command_let = spec.get("let")
+        if command_let is not None and not isinstance(command_let, dict):
+            raise TypeError("let must be a dict")
         matched = 0
         modified = 0
         upserted: list[UpsertedWriteEntry] = []
@@ -170,9 +176,10 @@ class DatabaseAdminWriteCommandService:
                 ):
                     raise TypeError("arrayFilters must be a list of dicts")
                 hint = self._admin._normalize_hint_from_command(update_spec.get("hint"))
-                let = update_spec.get("let")
+                let = update_spec.get("let", command_let)
                 if let is not None and not isinstance(let, dict):
                     raise TypeError("let must be a dict")
+                variables = command_context.with_bindings(let or {})
 
                 is_operator_update = self.is_operator_update(update_document)
                 if multi:
@@ -186,7 +193,7 @@ class DatabaseAdminWriteCommandService:
                         array_filters=array_filters,
                         hint=hint,
                         comment=spec.get("comment"),
-                        let=let,
+                        let=variables,
                         bypass_document_validation=bypass_document_validation,
                         session=session,
                     )
@@ -199,7 +206,7 @@ class DatabaseAdminWriteCommandService:
                         array_filters=array_filters,
                         hint=hint,
                         comment=spec.get("comment"),
-                        let=let,
+                        let=variables,
                         bypass_document_validation=bypass_document_validation,
                         session=session,
                     )
@@ -211,7 +218,7 @@ class DatabaseAdminWriteCommandService:
                         collation=update_spec.get("collation"),
                         hint=hint,
                         comment=spec.get("comment"),
-                        let=let,
+                        let=variables,
                         bypass_document_validation=bypass_document_validation,
                         session=session,
                     )
@@ -252,11 +259,16 @@ class DatabaseAdminWriteCommandService:
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
+        execution_context: ExpressionExecutionContext | None = None,
     ) -> object:
         collection_name = self._admin._require_collection_name(spec.get("delete"), "delete")
         deletes = self._admin._normalize_delete_specs(spec.get("deletes"))
         ordered = self._admin._normalize_ordered_from_command(spec.get("ordered"))
         collection = self._admin._database.get_collection(collection_name)
+        command_context = execution_context or ExpressionExecutionContext()
+        command_let = spec.get("let")
+        if command_let is not None and not isinstance(command_let, dict):
+            raise TypeError("let must be a dict")
         deleted = 0
         write_errors: list[WriteErrorEntry] = []
         for index, delete_spec in enumerate(deletes):
@@ -266,16 +278,17 @@ class DatabaseAdminWriteCommandService:
                 if limit not in (0, 1):
                     raise TypeError("limit must be 0 or 1")
                 hint = self._admin._normalize_hint_from_command(delete_spec.get("hint"))
-                let = delete_spec.get("let")
+                let = delete_spec.get("let", command_let)
                 if let is not None and not isinstance(let, dict):
                     raise TypeError("let must be a dict")
+                variables = command_context.with_bindings(let or {})
                 if limit == 1:
                     result = await collection.delete_one(
                         query,
                         collation=delete_spec.get("collation"),
                         hint=hint,
                         comment=spec.get("comment"),
-                        let=let,
+                        let=variables,
                         session=session,
                     )
                 else:
@@ -284,7 +297,7 @@ class DatabaseAdminWriteCommandService:
                         collation=delete_spec.get("collation"),
                         hint=hint,
                         comment=spec.get("comment"),
-                        let=let,
+                        let=variables,
                         session=session,
                     )
                 deleted += result.deleted_count

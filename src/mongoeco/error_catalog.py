@@ -30,6 +30,10 @@ SERVER_SELECTION_TIMEOUT_ERROR = MongoErrorDescriptor(
 )
 WRITE_ERROR = MongoErrorDescriptor(name="WriteError")
 OPERATION_FAILURE = MongoErrorDescriptor(name="OperationFailure")
+UNDEFINED_VARIABLE_ERROR = MongoErrorDescriptor(
+    name="UndefinedVariable",
+    code=17276,
+)
 
 ERROR_DESCRIPTORS: dict[str, MongoErrorDescriptor] = {
     descriptor.name: descriptor
@@ -40,6 +44,7 @@ ERROR_DESCRIPTORS: dict[str, MongoErrorDescriptor] = {
         SERVER_SELECTION_TIMEOUT_ERROR,
         WRITE_ERROR,
         OPERATION_FAILURE,
+        UNDEFINED_VARIABLE_ERROR,
     )
 }
 

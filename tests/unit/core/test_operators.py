@@ -1001,6 +1001,7 @@ class UpdateEngineTests(unittest.TestCase):
                     'updated_at': True,
                     'reviewed_at': {'$type': 'date'},
                     'clustered_at': {'$type': 'timestamp'},
+                    'clustered_again_at': {'$type': 'timestamp'},
                 }
             },
         )
@@ -1009,7 +1010,14 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertIsInstance(
             document['updated_at'], type(document['reviewed_at'])
         )
+        self.assertEqual(document['updated_at'], document['reviewed_at'])
+        self.assertIsNone(document['updated_at'].tzinfo)
+        self.assertEqual(document['updated_at'].microsecond % 1_000, 0)
         self.assertIsInstance(document['clustered_at'], Timestamp)
+        self.assertEqual(
+            {document['clustered_at'].inc, document['clustered_again_at'].inc},
+            {1, 2},
+        )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
                 {},

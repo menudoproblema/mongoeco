@@ -165,7 +165,11 @@ class SemanticCoreUnitTests(unittest.TestCase):
 
     def test_iter_filtered_documents_covers_match_all_and_compiled_query_deadline_paths(self):
         match_all_semantics = compile_find_semantics({}, max_time_ms=1)
-        compiled = type("Compiled", (), {"match": lambda self, document: document["_id"] == "2"})()
+        compiled = type(
+            "Compiled",
+            (),
+            {"match": lambda self, document, **_kwargs: document["_id"] == "2"},
+        )()
         compiled_semantics = EngineFindSemantics(
             filter_spec={"name": "Ada"},
             selector_filter={"name": "Ada"},

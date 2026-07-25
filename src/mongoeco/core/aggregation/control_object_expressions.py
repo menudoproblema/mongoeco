@@ -188,12 +188,15 @@ def evaluate_control_object_expression(
         )
 
     if operator == '$ifNull':
+        from mongoeco.core.aggregation.runtime import _REMOVE
+
         args = require_expression_args(operator, spec, 2, None)
         for item in args:
             value = evaluate_expression(document, item, variables)
             if (
                 value is not None
                 and value is not missing_sentinel
+                and value is not _REMOVE
                 and not isinstance(value, UndefinedType)
             ):
                 return value

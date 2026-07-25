@@ -7,6 +7,7 @@ from typing import Any
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.compiled_query import CompiledQuery
+from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage_registration
 from mongoeco.core.aggregation.planning import (
     Pipeline,
@@ -149,6 +150,7 @@ class CompiledPipelinePlan:
     ) -> list[Document]:
         del collection_resolver
         del spill_policy
+        variables = ensure_expression_context(variables)
 
         result = list(documents)
         for node in self.nodes:

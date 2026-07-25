@@ -106,6 +106,7 @@ def export_mongodb_dialect_catalog() -> dict[str, dict[str, object]]:
             "query_field_operators": sorted(entry.query_field_operators or SUPPORTED_QUERY_FIELD_OPERATORS),
             "query_top_level_operators": sorted(SUPPORTED_QUERY_TOP_LEVEL_OPERATORS),
             "update_operators": sorted(entry.update_operators or SUPPORTED_UPDATE_OPERATORS),
+            "system_variables": sorted(entry.system_variables),
             "aggregation_expression_operators": sorted(SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS),
             "aggregation_stages": sorted(SUPPORTED_AGGREGATION_STAGES),
             "group_accumulators": sorted(SUPPORTED_GROUP_ACCUMULATORS),

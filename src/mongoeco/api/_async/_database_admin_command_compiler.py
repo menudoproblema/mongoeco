@@ -90,6 +90,7 @@ class DatabaseAdminCommandCompiler:
         skip_field: str = "skip",
         limit_field: str = "limit",
         batch_size_field: str | None = "batchSize",
+        let_field: str | None = "let",
         default_projection: Projection | None = None,
         default_limit: int | None = None,
     ) -> tuple[str, FindOperation]:
@@ -125,6 +126,7 @@ class DatabaseAdminCommandCompiler:
                 comment=spec.get(comment_field),
                 max_time_ms=normalize_command_max_time_ms(spec.get(max_time_ms_field)),
                 batch_size=batch_size,
+                variables=None if let_field is None else spec.get(let_field),
                 dialect=self._admin._mongodb_dialect,
             ),
         )
@@ -217,6 +219,7 @@ class DatabaseAdminCommandCompiler:
             collection_field="count",
             filter_field="query",
             default_projection={"_id": 1},
+            let_field=None,
         )
 
     def compile_distinct_operation(self, spec: dict[str, object]) -> tuple[str, str, FindOperation]:
@@ -232,6 +235,7 @@ class DatabaseAdminCommandCompiler:
             collection_field="distinct",
             filter_field="query",
             batch_size_field=None,
+            let_field=None,
         )
         return collection_name, key, operation
 

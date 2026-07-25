@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from collections.abc import Mapping
 from typing import Iterable
 
 from mongoeco.api.operations import FindOperation, UpdateOperation
@@ -8,6 +9,7 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.operators import CompiledExecutableUpdatePlan
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.expression_context import ExpressionExecutionContext, ensure_expression_context
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
@@ -47,6 +49,9 @@ class EngineFindSemantics:
     comment: object | None
     max_time_ms: int | None
     dialect: MongoDialect
+    variables: ExpressionExecutionContext = field(
+        default_factory=ExpressionExecutionContext
+    )
     compiled_query: CompiledQuery | None = field(default=None, compare=False, hash=False)
 
     @property
@@ -72,6 +77,9 @@ class EngineUpdateSemantics:
     selector_filter: Filter
     collation: CollationSpec | None
     dialect: MongoDialect
+    variables: ExpressionExecutionContext = field(
+        default_factory=ExpressionExecutionContext
+    )
 
 
 def compile_collection_validation_semantics(
@@ -145,6 +153,7 @@ def compile_find_semantics(
     max_time_ms: int | None = None,
     dialect: MongoDialect | None = None,
     compiled_query: CompiledQuery | None = None,
+    variables: Mapping[str, object] | None = None,
 ) -> EngineFindSemantics:
     effective_dialect = dialect or MONGODB_DIALECT_70
     if skip < 0:
@@ -169,6 +178,7 @@ def compile_find_semantics(
         comment=comment,
         max_time_ms=max_time_ms,
         dialect=effective_dialect,
+        variables=ensure_expression_context(variables),
         compiled_query=compiled_query
         if compiled_query is not None
         else CompiledQuery(
@@ -184,6 +194,7 @@ def compile_find_semantics_from_operation(
     *,
     dialect: MongoDialect | None = None,
     compiled_query: CompiledQuery | None = None,
+    variables: Mapping[str, object] | None = None,
 ) -> EngineFindSemantics:
     return compile_find_semantics(
         operation.filter_spec,
@@ -200,6 +211,7 @@ def compile_find_semantics_from_operation(
         max_time_ms=operation.max_time_ms,
         dialect=dialect,
         compiled_query=compiled_query,
+        variables=operation.let if variables is None else variables,
     )
 
 
@@ -208,6 +220,7 @@ def compile_update_semantics(
     *,
     dialect: MongoDialect | None = None,
     selector_filter: Filter | None = None,
+    variables: Mapping[str, object] | None = None,
 ) -> EngineUpdateSemantics:
     effective_dialect = dialect or MONGODB_DIALECT_70
     if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
@@ -220,6 +233,9 @@ def compile_update_semantics(
         selector_filter=selector_filter or operation.filter_spec,
         collation=normalize_collation(operation.collation),
         dialect=effective_dialect,
+        variables=ensure_expression_context(
+            operation.let if variables is None else variables
+        ),
     )
 
 
@@ -250,12 +266,12 @@ def iter_filtered_documents(
     if compiled is not None:
         if deadline is None:
             for document in documents:
-                if compiled.match(document):
+                if compiled.match(document, variables=semantics.variables):
                     yield document
             return
         for document in documents:
             enforce_deadline(deadline)
-            if compiled.match(document):
+            if compiled.match(document, variables=semantics.variables):
                 yield document
         enforce_deadline(deadline)
         return
@@ -267,6 +283,7 @@ def iter_filtered_documents(
                 semantics.query_plan,
                 dialect=semantics.dialect,
                 collation=semantics.collation,
+                variables=semantics.variables,
             ):
                 yield document
         return
@@ -278,6 +295,7 @@ def iter_filtered_documents(
             semantics.query_plan,
             dialect=semantics.dialect,
             collation=semantics.collation,
+            variables=semantics.variables,
         ):
             yield document
     enforce_deadline(deadline)

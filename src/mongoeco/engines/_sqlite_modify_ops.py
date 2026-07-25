@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from copy import deepcopy
 import sqlite3
 
@@ -23,6 +23,7 @@ def delete_matching_document(
     plan: object | None,
     dialect: MongoDialect | None,
     collation: dict[str, object] | None,
+    variables: Mapping[str, object] | None = None,
     compile_find_semantics: Callable[..., object],
     ensure_query_plan: Callable[[Filter, object | None], object],
     require_connection: Callable[[], sqlite3.Connection],
@@ -36,7 +37,7 @@ def delete_matching_document(
     delete_scalar_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
     delete_search_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
     load_documents: Callable[[str, str], Iterable[tuple[str, Document]]],
-    match_plan: Callable[[Document, object, MongoDialect, dict[str, object] | None], bool],
+    match_plan: Callable[[Document, object, MongoDialect, object | None, object], bool],
     invalidate_collection_features_cache: Callable[[str, str], None],
 ) -> DeleteResult:
     effective_dialect = dialect
@@ -46,6 +47,7 @@ def delete_matching_document(
         plan=plan,
         collation=collation,
         dialect=effective_dialect,
+        variables=variables,
     )
     conn = require_connection()
     purge_expired_documents(conn, db_name, coll_name)
@@ -90,6 +92,7 @@ def delete_matching_document(
             semantics.query_plan,
             semantics.dialect,
             semantics.collation,
+            semantics.variables,
         ):
             continue
         assert_document_matches_storage_key(
@@ -135,7 +138,7 @@ def update_with_operation(
     dialect_requires_python_fallback: Callable[[MongoDialect], bool],
     select_first_document_for_plan: Callable[[str, str, object], tuple[str, Document] | None],
     load_documents: Callable[[str, str], Iterable[tuple[str, Document]]],
-    match_plan: Callable[[Document, object, MongoDialect, dict[str, object] | None], bool],
+    match_plan: Callable[[Document, object, MongoDialect, object | None, object], bool],
     enforce_collection_document_validation: Callable[..., None],
     validate_document_against_unique_indexes: Callable[[str, str, Document, str | None], None],
     load_indexes: Callable[[str, str], list[object]],
@@ -180,6 +183,7 @@ def update_with_operation(
                 semantics.query_plan,
                 semantics.dialect,
                 semantics.collation,
+                semantics.variables,
             ):
                 continue
             selected = (storage_key, document)
@@ -193,7 +197,10 @@ def update_with_operation(
             storage_key_for_id=storage_key_for_id,
         )
         document = deepcopy(original_document)
-        modified = semantics.compiled_update_plan.apply(document)
+        modified = semantics.compiled_update_plan.apply(
+            document,
+            variables=semantics.variables,
+        )
         if not modified:
             return UpdateResult(matched_count=1, modified_count=0)
         assert_document_kept_storage_key(
@@ -325,7 +332,7 @@ def update_with_operation(
         return UpdateResult(matched_count=0, modified_count=0)
 
     new_doc = deepcopy(upsert_seed or {})
-    semantics.compiled_upsert_plan.apply(new_doc)
+    semantics.compiled_upsert_plan.apply(new_doc, variables=semantics.variables)
     if "_id" not in new_doc:
         new_doc["_id"] = new_object_id()
     assert_valid_root_document_id(new_doc["_id"])

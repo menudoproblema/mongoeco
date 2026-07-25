@@ -8,6 +8,7 @@ from mongoeco.error_catalog import (
     DUPLICATE_KEY_ERROR,
     EXECUTION_TIMEOUT_ERROR,
     SERVER_SELECTION_TIMEOUT_ERROR,
+    UNDEFINED_VARIABLE_ERROR,
     build_error_metadata,
     descriptor_for,
 )
@@ -195,6 +196,8 @@ class ErrorCatalogUnitTests(unittest.TestCase):
     def test_error_catalog_exposes_descriptors_by_name(self):
         self.assertIs(descriptor_for("DuplicateKeyError"), DUPLICATE_KEY_ERROR)
         self.assertIs(descriptor_for("ExecutionTimeout"), EXECUTION_TIMEOUT_ERROR)
+        self.assertIs(descriptor_for("UndefinedVariable"), UNDEFINED_VARIABLE_ERROR)
+        self.assertEqual(UNDEFINED_VARIABLE_ERROR.code, 17276)
 
     def test_build_error_metadata_merges_code_name_and_unique_labels(self):
         code, code_name, details = build_error_metadata(

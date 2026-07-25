@@ -14,6 +14,7 @@ OPERATION_OPTION_SUPPORT_CATALOG = MappingProxyType(
                 "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata and surfaced by explain()."),
                 "max_time_ms": OperationOptionSupport(_EFFECTIVE, "Enforced as a local deadline during read execution and explain()."),
                 "batch_size": OperationOptionSupport(_EFFECTIVE, "Async and sync find cursors now fetch local batches before yielding results, even though engines remain in-process."),
+                "let": OperationOptionSupport(_EFFECTIVE, "Command-level let variables are available through $expr in find filters and cursor execution."),
             }
         ),
         "count_documents": MappingProxyType(
@@ -21,6 +22,7 @@ OPERATION_OPTION_SUPPORT_CATALOG = MappingProxyType(
                 "hint": OperationOptionSupport(_EFFECTIVE, "Applied through the underlying find() path used to count matching documents."),
                 "comment": OperationOptionSupport(_EFFECTIVE, "Propagated through the underlying read path and session metadata."),
                 "max_time_ms": OperationOptionSupport(_EFFECTIVE, "Enforced through the underlying find() path used to count documents."),
+                "let": OperationOptionSupport(_EFFECTIVE, "Propagated into the find-selection path used to count matching documents."),
             }
         ),
         "distinct": MappingProxyType(

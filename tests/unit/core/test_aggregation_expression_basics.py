@@ -1203,7 +1203,9 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
         self.assertEqual(evaluate_expression(document, "$$item.profile.city", variables), "Madrid")
         self.assertEqual(evaluate_expression(document, "$$ROOT.profile.city", variables), "Sevilla")
         self.assertIsNone(evaluate_expression(document, "$$item.missing", variables))
-        self.assertIsNone(evaluate_expression(document, "$$missing.name", variables))
+        with self.assertRaisesRegex(OperationFailure, "Use of undefined variable: missing") as raised:
+            evaluate_expression(document, "$$missing.name", variables)
+        self.assertEqual(raised.exception.code, 17276)
 
     def test_evaluate_expression_preserves_array_traversal_for_field_and_variable_paths(self):
         document = {
@@ -1499,7 +1501,9 @@ class AggregationExpressionBasicsTests(unittest.TestCase):
             evaluate_expression({"legacy": UNDEFINED}, {"$ifNull": ["$legacy", "fallback"]}),
             "fallback",
         )
-        self.assertIsNone(evaluate_expression(document, "$$missing"))
+        with self.assertRaisesRegex(OperationFailure, "Use of undefined variable: missing") as raised:
+            evaluate_expression(document, "$$missing")
+        self.assertEqual(raised.exception.code, 17276)
         self.assertIsNone(evaluate_expression(document, "$missing"))
         self.assertIsNone(evaluate_expression(document, {"$toString": None}))
         self.assertEqual(
