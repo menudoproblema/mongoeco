@@ -2,6 +2,7 @@ import unittest
 import asyncio
 import threading
 import time
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 from mongoeco.compat import MongoDialect80, PyMongoProfile417
@@ -20,6 +21,27 @@ async def _value() -> str:
 
 
 class SyncClientUnitTests(unittest.TestCase):
+    def test_sync_client_exposes_and_propagates_injected_clock(self):
+        fixed = datetime(2026, 1, 2, 3, 4, 5, 123_456, tzinfo=UTC)
+        factory = lambda: fixed
+        client = MongoClient(MemoryEngine(), now_factory=factory)
+        try:
+            derived = client.with_options()
+            try:
+                self.assertIs(client.now_factory, factory)
+                self.assertIs(derived.now_factory, factory)
+                database = client.clock.with_options()
+                collection = database.values.with_options()
+                self.assertIs(database.now_factory, factory)
+                self.assertIs(collection.now_factory, factory)
+                collection.insert_one({'_id': 1})
+                document = list(collection.aggregate([{'$project': {'now': '$$NOW'}}]))[0]
+                self.assertEqual(document['now'], datetime(2026, 1, 2, 3, 4, 5, 123_000))
+            finally:
+                derived.close()
+        finally:
+            client.close()
+
     def test_sync_client_with_transaction_accepts_async_callback(self):
         client = MongoClient(MemoryEngine())
         try:

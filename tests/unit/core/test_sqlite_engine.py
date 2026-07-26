@@ -2207,6 +2207,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 "db",
                 "coll",
                 context=None,
+                now=engine._ttl_now(),
             )
 
         self.assertEqual(purged, 0)
@@ -2647,7 +2648,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 engine, "_rollback_write", wraps=engine._rollback_write
             ) as rollback_write:
                 with self.assertRaisesRegex(RuntimeError, "boom"):
-                    engine._purge_expired_documents_sync(conn, "db", "ttl", context=None)
+                    engine._purge_expired_documents_sync(
+                        conn, "db", "ttl", context=None, now=engine._ttl_now()
+                    )
             self.assertGreaterEqual(rollback_write.call_count, 1)
         finally:
             await engine.disconnect()
@@ -2842,7 +2845,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     context=session,
                 )
             with self.assertRaises(InvalidOperation):
-                engine._purge_expired_documents_sync(conn, "db", "users", context=session)
+                engine._purge_expired_documents_sync(
+                    conn, "db", "users", context=session, now=engine._ttl_now()
+                )
         finally:
             await engine.disconnect()
             await owner.disconnect()

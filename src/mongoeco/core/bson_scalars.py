@@ -19,8 +19,17 @@ DECIMAL128_CONTEXT = decimal.Context(prec=34, Emin=-6143, Emax=6144)
 
 def utc_bson_now() -> datetime:
     """Devuelve la hora UTC compatible con la precisión BSON."""
-    now = datetime.now(UTC).replace(tzinfo=None)
-    return now.replace(microsecond=(now.microsecond // 1_000) * 1_000)
+    return normalize_utc_bson_datetime(datetime.now(UTC))
+
+
+def normalize_utc_bson_datetime(value: datetime) -> datetime:
+    """Normaliza una fecha al formato UTC naïve y milisegundos de BSON."""
+    if not isinstance(value, datetime):
+        raise TypeError("now_factory must return a datetime")
+    if value.tzinfo is not None:
+        value = value.astimezone(UTC).replace(tzinfo=None)
+    microsecond = (value.microsecond // 1_000) * 1_000
+    return value if microsecond == value.microsecond else value.replace(microsecond=microsecond)
 
 
 class BsonScalarOverflowError(OverflowError):

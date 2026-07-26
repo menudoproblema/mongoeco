@@ -34,9 +34,9 @@ from mongoeco.core.aggregation import (
 from mongoeco.core.aggregation.planning import _match_spec_contains_expr
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.expression_context import (
     ExpressionExecutionContext,
-    ensure_expression_context,
 )
 from mongoeco.core.identity import (
     assert_document_matches_stored_lookup,
@@ -117,7 +117,19 @@ class AsyncAggregationCursor:
 
     def _execution_variables(self) -> ExpressionExecutionContext:
         if self._execution_context is None:
-            self._execution_context = ensure_expression_context(self._let)
+            create_context = getattr(
+                self._collection, '_new_execution_context', None
+            )
+            context = (
+                self._let
+                if isinstance(self._let, ExpressionExecutionContext)
+                else (
+                    create_context()
+                    if callable(create_context)
+                    else ExpressionExecutionContext(now=utc_bson_now())
+                )
+            )
+            self._execution_context = context.with_bindings(self._let)
         return self._execution_context
 
     def _ensure_session_can_use_engine(self) -> None:

@@ -4,6 +4,8 @@ import asyncio
 import inspect
 import queue
 import threading
+from collections.abc import Callable
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from mongoeco.api.public_api import (
@@ -297,6 +299,10 @@ class Database:
             codec_options=self._codec_options,
         )
 
+    @property
+    def now_factory(self) -> Callable[[], datetime] | None:
+        return self._client.now_factory
+
     def __getattr__(self, name: str) -> Collection:
         return self.get_collection(name)
 
@@ -517,6 +523,7 @@ class MongoClient:
         change_stream_journal_path: str | None = None,
         change_stream_journal_fsync: bool = False,
         change_stream_journal_max_bytes: int | None = 1_048_576,
+        now_factory: Callable[[], datetime] | None = None,
     ):
         self._async_client = AsyncMongoClient(
             engine,
@@ -532,6 +539,7 @@ class MongoClient:
             change_stream_journal_path=change_stream_journal_path,
             change_stream_journal_fsync=change_stream_journal_fsync,
             change_stream_journal_max_bytes=change_stream_journal_max_bytes,
+            now_factory=now_factory,
         )
         self._runner = _SyncRunner()
         self._connected = False
@@ -610,6 +618,10 @@ class MongoClient:
     def __getitem__(self, name: str) -> Database:
         return self.get_database(name)
 
+    @property
+    def now_factory(self) -> Callable[[], datetime] | None:
+        return self._async_client.now_factory
+
     def with_options(
         self,
         *,
@@ -637,6 +649,7 @@ class MongoClient:
             change_stream_journal_path=self.change_stream_journal_path,
             change_stream_journal_fsync=self.change_stream_journal_fsync,
             change_stream_journal_max_bytes=self.change_stream_journal_max_bytes,
+            now_factory=self.now_factory,
         )
 
     def get_database(

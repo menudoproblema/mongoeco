@@ -57,16 +57,22 @@ class DatabaseAdminRoutingService:
         spec: dict[str, object],
         *,
         session: "ClientSession | None" = None,
+        execution_context=None,
     ) -> object:
-        return await self._admin._read_commands.command_count(spec, session=session)
+        return await self._admin._read_commands.command_count(
+            spec, session=session, execution_context=execution_context
+        )
 
     async def command_distinct(
         self,
         spec: dict[str, object],
         *,
         session: "ClientSession | None" = None,
+        execution_context=None,
     ) -> object:
-        return await self._admin._read_commands.command_distinct(spec, session=session)
+        return await self._admin._read_commands.command_distinct(
+            spec, session=session, execution_context=execution_context
+        )
 
     async def command_db_hash(
         self,
@@ -156,8 +162,11 @@ class DatabaseAdminRoutingService:
         spec: dict[str, object],
         *,
         session: "ClientSession | None" = None,
+        execution_context=None,
     ) -> object:
-        return await self._admin._read_commands.command_find(spec, session=session)
+        return await self._admin._read_commands.command_find(
+            spec, session=session, execution_context=execution_context
+        )
 
     async def execute_find_command(
         self,
@@ -177,8 +186,11 @@ class DatabaseAdminRoutingService:
         spec: dict[str, object],
         *,
         session: "ClientSession | None" = None,
+        execution_context=None,
     ) -> object:
-        return await self._admin._read_commands.command_aggregate(spec, session=session)
+        return await self._admin._read_commands.command_aggregate(
+            spec, session=session, execution_context=execution_context
+        )
 
     async def execute_aggregate_command(
         self,

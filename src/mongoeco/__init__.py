@@ -4,6 +4,7 @@ from mongoeco._version import __version__ as __version__
 
 _CLIENT_EXPORTS = (
     "AsyncMongoClient",
+    "NowFactory",
     "MongoClient",
     "ClientSession",
     "__version__",
@@ -54,6 +55,7 @@ __all__ = [
 
 _EXPORT_MODULES = {
     "AsyncMongoClient": "mongoeco.api",
+    "NowFactory": "mongoeco.api",
     "MongoClient": "mongoeco.api",
     "ClientSession": "mongoeco.session",
     "MongoClientOptions": "mongoeco.driver",

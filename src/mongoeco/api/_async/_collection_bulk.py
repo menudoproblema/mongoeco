@@ -8,7 +8,6 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from mongoeco.core.identity import assert_valid_root_document_id
-from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.errors import BulkWriteError, OperationFailure, WriteError
 from mongoeco.types import (
     BulkWriteErrorDetails,
@@ -200,7 +199,7 @@ async def execute_bulk_write(
     for batch in _classic_bulk_batches(prepared_requests, ordered=ordered):
         if stop:
             break
-        batch_context = ExpressionExecutionContext()
+        batch_context = None
         for prepared in batch:
             index = prepared.index
             request = prepared.request
@@ -219,6 +218,8 @@ async def execute_bulk_write(
                 if ordered:
                     stop = True
                 continue
+            if batch_context is None:
+                batch_context = collection._new_execution_context()
             variables = batch_context.with_bindings(
                 request.let if getattr(request, "let", None) is not None else let or {}
             )
@@ -227,7 +228,11 @@ async def execute_bulk_write(
                     insert_kwargs = {"session": session}
                     if bypass_document_validation:
                         insert_kwargs["bypass_document_validation"] = True
-                    await collection.insert_one(prepared.insert_document or request.document, **insert_kwargs)
+                    await collection.insert_one(
+                        prepared.insert_document or request.document,
+                        _execution_context=batch_context,
+                        **insert_kwargs,
+                    )
                     inserted_count += 1
                 elif isinstance(request, UpdateOne):
                     update_one_kwargs = {

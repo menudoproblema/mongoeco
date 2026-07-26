@@ -28,6 +28,7 @@ from mongoeco.api._async._database_command_contract import (
     wire_command_surface_count,
 )
 from mongoeco.core.collation import collation_backend_info
+from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.json_compat import get_json_backend_name
 from mongoeco.driver.topology import sdam_capabilities_info
@@ -65,6 +66,15 @@ _PROCESS_STARTED_AT = datetime.datetime.now(datetime.UTC)
 CommandResultT = TypeVar("CommandResultT")
 _FAIL_COMMAND_DEFAULT_CODE = 10107
 _FAIL_COMMAND_DEFAULT_MESSAGE = "failCommand failpoint triggered"
+
+
+def _command_execution_context(admin: object) -> ExpressionExecutionContext:
+    """Crea el contexto del comando sin imponer el cliente real a dobles de test."""
+    database = getattr(admin, "_database", None)
+    create_context = getattr(database, "_new_execution_context", None)
+    if callable(create_context):
+        return create_context()
+    return ExpressionExecutionContext(now=utc_bson_now())
 
 
 @contextmanager
@@ -1306,7 +1316,7 @@ class AsyncDatabaseCommandService:
     ) -> CommandResultT:
         self._ensure_session_can_use_engine(session)
         if execution_context is None:
-            execution_context = ExpressionExecutionContext()
+            execution_context = _command_execution_context(self._admin)
         command = self._bind_execution_context(command, execution_context)
         if isinstance(command, self.StaticAdminCommand):
             return self._execute_static(command)  # type: ignore[return-value]
@@ -1417,7 +1427,14 @@ class AsyncDatabaseCommandService:
             assert command.route is not None
             handler = getattr(self._routing, command.route.handler_name)
             if command.route.passes_spec:
-                if command.command_name in {"update", "delete"}:
+                if command.command_name in {
+                    "find",
+                    "aggregate",
+                    "count",
+                    "distinct",
+                    "update",
+                    "delete",
+                }:
                     return await handler(
                         command.spec,
                         session=session,
@@ -1538,7 +1555,7 @@ class AsyncDatabaseCommandService:
             else self.parse_raw_command(command, **kwargs)
         )
         if execution_context is None:
-            execution_context = ExpressionExecutionContext()
+            execution_context = _command_execution_context(self._admin)
         started_at = time.perf_counter_ns()
         should_track = parsed.command_name not in {"currentOp", "killOp"}
         command_namespace = self._command_namespace(parsed)

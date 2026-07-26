@@ -1,3 +1,6 @@
+from collections.abc import Callable
+from datetime import datetime
+
 from mongoeco.api.argument_validation import HintSpec
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
@@ -115,6 +118,10 @@ class Collection:
             )
             .with_options(planning_mode=self._planning_mode)
         )
+
+    @property
+    def now_factory(self) -> Callable[[], datetime] | None:
+        return self._client.now_factory
 
     def _run_collection_method(
         self,

@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 import atexit
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
@@ -23,6 +24,8 @@ from typing import Any, AsyncIterable, override
 from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS, bson_engine_key, bson_numeric_index_key
+from mongoeco.core.bson_scalars import utc_bson_now
+from mongoeco.core.expression_context import current_execution_now
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.core.filtering import QueryEngine
@@ -270,6 +273,7 @@ atexit.register(_shutdown_sqlite_shared_executors)
 
 
 class SQLiteEngine(AsyncStorageEngine):
+    supports_injected_clock = True
     """Motor SQLite async-first usando la stdlib como backend persistente."""
 
     _PROFILE_COLLECTION_NAME = "system.profile"
@@ -563,7 +567,13 @@ class SQLiteEngine(AsyncStorageEngine):
 
     async def _run_blocking(self, func, /, *args, **kwargs):
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(self._ensure_executor(), partial(func, *args, **kwargs))
+        # SQLite performs the semantic work in a worker thread.  ContextVars
+        # do not cross that boundary implicitly, so copy the command context
+        # (notably the injected clock) for each submitted job.
+        context = contextvars.copy_context()
+        return await loop.run_in_executor(
+            self._ensure_executor(), context.run, partial(func, *args, **kwargs)
+        )
 
     def _engine_key(self) -> str:
         return f"sqlite:{id(self)}"
@@ -796,6 +806,12 @@ class SQLiteEngine(AsyncStorageEngine):
             extract_values=QueryEngine.extract_values,
         )
 
+    @staticmethod
+    def _ttl_now() -> datetime.datetime:
+        return (current_execution_now() or utc_bson_now()).replace(
+            tzinfo=datetime.timezone.utc
+        )
+
     def _purge_expired_documents_sync(
         self,
         conn: sqlite3.Connection,
@@ -803,6 +819,7 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         *,
         context: ClientSession | None,
+        now: datetime.datetime,
     ) -> int:
         self._ensure_session_can_use_engine(context)
         try:
@@ -815,7 +832,6 @@ class SQLiteEngine(AsyncStorageEngine):
             return 0
         if not ttl_indexes:
             return 0
-        now = datetime.datetime.now(datetime.timezone.utc)
         expired: list[tuple[str, Document]] = []
         for storage_key, document in self._load_documents(db_name, coll_name):
             if any(
@@ -861,7 +877,7 @@ class SQLiteEngine(AsyncStorageEngine):
         ]
         if not effective_ttl_indexes:
             return
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = self._ttl_now()
         for storage_key, document in self._load_documents(db_name, coll_name):
             if not any(
                 self._document_expired_by_ttl(document, index, now=now)
@@ -3411,6 +3427,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_db_name,
                         current_coll_name,
                         context=context,
+                        now=self._ttl_now(),
                     ),
                     begin_write=lambda current: self._begin_write(current, context),
                     rollback_write=lambda current: self._rollback_write(current, context),
@@ -3485,6 +3502,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_db_name,
                         current_coll_name,
                         context=context,
+                        now=self._ttl_now(),
                     ),
                     collection_options_or_empty=self._collection_options_or_empty_sync,
                     load_indexes=self._load_indexes,
@@ -3577,7 +3595,9 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
+                self._purge_expired_documents_sync(
+                    conn, db_name, coll_name, context=context, now=self._ttl_now()
+                )
                 return _sqlite_get_document(
                     conn,
                     db_name=db_name,
@@ -3735,6 +3755,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         db_name,
                         coll_name,
                         context=context,
+                        now=self._ttl_now(),
                     )
         if (
             semantics.text_query is None
@@ -3936,6 +3957,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_db_name,
                         current_coll_name,
                         context=context,
+                        now=self._ttl_now(),
                     ),
                     select_first_document_for_plan=self._select_first_document_for_plan,
                     storage_key_for_id=self._storage_key,
@@ -3982,7 +4004,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 conn = self._require_connection(context)
             with self._bind_connection(conn) if conn is not None else nullcontext():
                 if conn is not None:
-                    self._purge_expired_documents_sync(conn, db_name, coll_name, context=context)
+                    self._purge_expired_documents_sync(
+                        conn, db_name, coll_name, context=context, now=self._ttl_now()
+                    )
                 try:
                     execution_plan = self._compile_read_execution_plan(
                         db_name,
@@ -4063,6 +4087,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_db_name,
                         current_coll_name,
                         context=context,
+                        now=self._ttl_now(),
                     ),
                     mark_index_metadata_changed=self._mark_index_metadata_changed,
                     invalidate_collection_features_cache=self._invalidate_collection_features_cache,
@@ -4484,6 +4509,7 @@ class SQLiteEngine(AsyncStorageEngine):
             validations = [
                 loop.run_in_executor(
                     self._ensure_executor(),
+                    contextvars.copy_context().run,
                     partial(
                         enforce_collection_document_validation,
                         document,
@@ -4499,6 +4525,7 @@ class SQLiteEngine(AsyncStorageEngine):
             *[
                 loop.run_in_executor(
                     self._ensure_executor(),
+                    contextvars.copy_context().run,
                     partial(self._prepare_bulk_document_with_indexes_sync, document, snapshot_indexes),
                 )
                 for document in documents
@@ -4665,6 +4692,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_db_name,
                         current_coll_name,
                         context=context,
+                        now=self._ttl_now(),
                     ),
                     collection_options_or_empty=self._collection_options_or_empty_sync,
                     dialect_requires_python_fallback=self._dialect_requires_python_fallback,

@@ -1350,6 +1350,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 indexes_view={"db": {"missing": [ttl_index]}},
                 storage_view={"db": {"missing": {}}},
                 index_data_view={"db": {"missing": {}}},
+                now=now,
             ),
             0,
         )

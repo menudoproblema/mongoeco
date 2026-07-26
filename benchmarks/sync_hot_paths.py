@@ -8,6 +8,7 @@ import pstats
 import statistics
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
@@ -30,7 +31,7 @@ FIND_ITERATIONS = 5_000
 UPDATE_ITERATIONS = 2_000
 COMPILE_ITERATIONS = 20_000
 MATCH_ITERATIONS = 100_000
-REPEATS = 3
+REPEATS = 7
 
 UPDATE_SHAPE = {
     '$set': {
@@ -92,6 +93,27 @@ def _time_per_op(callback: Callable[[], None], iterations: int) -> float:
 
 def bench_find_one() -> float:
     client, collection = _seed_collection()
+    try:
+        cursor = 0
+
+        def _run() -> None:
+            nonlocal cursor
+            document = collection.find_one({'_id': cursor % COLLECTION_SIZE})
+            if document is None:
+                raise AssertionError('document not found')
+            cursor += 1
+
+        return _time_per_op(_run, FIND_ITERATIONS)
+    finally:
+        client.close()
+
+
+def bench_find_one_with_injected_clock() -> float:
+    """Mide el coste del borde de operación cuando se inyecta un reloj."""
+    fixed_now = datetime(2026, 1, 2, 3, 4, 5)
+    client = MongoClient(MemoryEngine(), now_factory=lambda: fixed_now)
+    collection = client.bench.hot
+    collection.insert_many([_document(index) for index in range(COLLECTION_SIZE)])
     try:
         cursor = 0
 
@@ -191,8 +213,10 @@ def _run_repeated(name: str, callback: Callable[[], float]) -> None:
     best = min(samples)
     rendered = ', '.join(_format_us(sample) for sample in samples)
     median = statistics.median(samples)
+    dispersion = statistics.pstdev(samples)
     print(
-        f'{name}: best={_format_us(best)} median={_format_us(median)} [{rendered}]'
+        f'{name}: best={_format_us(best)} median={_format_us(median)} '
+        f'σ={_format_us(dispersion)} [{rendered}]'
     )
 
 
@@ -247,6 +271,7 @@ def main() -> int:
         return 0
 
     _run_repeated('find_one({_id})', bench_find_one)
+    _run_repeated('find_one({_id}) with injected clock', bench_find_one_with_injected_clock)
     _run_repeated('update_one({_id}, $set meta.*)', bench_update_one)
     _run_repeated(
         'compile_update_operation($set meta.*)', bench_compile_update_operation

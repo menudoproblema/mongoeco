@@ -149,7 +149,7 @@ class DatabaseAdminWriteCommandService:
         if not isinstance(bypass_document_validation, bool):
             raise TypeError("bypassDocumentValidation must be a bool")
         collection = self._admin._database.get_collection(collection_name)
-        command_context = execution_context or ExpressionExecutionContext()
+        command_context = execution_context or self._admin._database._new_execution_context()
         command_let = spec.get("let")
         if command_let is not None and not isinstance(command_let, dict):
             raise TypeError("let must be a dict")
@@ -265,7 +265,7 @@ class DatabaseAdminWriteCommandService:
         deletes = self._admin._normalize_delete_specs(spec.get("deletes"))
         ordered = self._admin._normalize_ordered_from_command(spec.get("ordered"))
         collection = self._admin._database.get_collection(collection_name)
-        command_context = execution_context or ExpressionExecutionContext()
+        command_context = execution_context or self._admin._database._new_execution_context()
         command_let = spec.get("let")
         if command_let is not None and not isinstance(command_let, dict):
             raise TypeError("let must be a dict")

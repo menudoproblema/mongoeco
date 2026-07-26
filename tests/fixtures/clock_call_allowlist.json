@@ -1,0 +1,38 @@
+{
+  "datetime.now": {
+    "src/mongoeco/api/_async/aggregation_cursor.py": "captured_at de $indexStats (telemetría)",
+    "src/mongoeco/api/_async/database_commands.py": "handshake y comandos administrativos locales",
+    "src/mongoeco/core/bson_scalars.py": "implementación del reloj semántico por defecto",
+    "src/mongoeco/engines/profiling.py": "marca temporal del profiler",
+    "src/mongoeco/wire/handshake.py": "handshake wire"
+  },
+  "time.time": {
+    "src/mongoeco/_types/_bson_objectid.py": "generación de ObjectId, fuera del contrato del reloj",
+    "src/mongoeco/cxp/driver_telemetry.py": "telemetría del driver",
+    "src/mongoeco/engines/_active_operations.py": "registro de operaciones activas",
+    "src/mongoeco/engines/_sqlite_search_runtime.py": "simulación de disponibilidad de índices de búsqueda",
+    "src/mongoeco/engines/_sqlite_vector_backend.py": "metadatos de índices vectoriales",
+    "src/mongoeco/engines/memory.py": "simulación de disponibilidad de índices de búsqueda",
+    "src/mongoeco/engines/sqlite.py": "metadatos de índices vectoriales"
+  },
+  "time.monotonic": {
+    "src/mongoeco/_change_streams/cursor.py": "timeouts de cursores",
+    "src/mongoeco/_change_streams/hub.py": "timeouts y compactación de change streams",
+    "src/mongoeco/api/_async/_collection_indexing.py": "presupuestos maxTimeMS",
+    "src/mongoeco/core/operation_limits.py": "presupuestos maxTimeMS",
+    "src/mongoeco/driver/_topology_reducer.py": "estado y medición SDAM",
+    "src/mongoeco/driver/connections.py": "timeouts y pool de conexiones",
+    "src/mongoeco/driver/topology.py": "estado SDAM",
+    "src/mongoeco/engines/_active_operations.py": "duración y registro de operaciones activas",
+    "src/mongoeco/engines/memory.py": "registro de operaciones activas",
+    "src/mongoeco/engines/sqlite.py": "registro de operaciones activas"
+  },
+  "utc_bson_now": {
+    "src/mongoeco/api/_async/aggregation_cursor.py": "fallback para doble de prueba sin cliente",
+    "src/mongoeco/api/_async/client.py": "resolución por defecto del borde cliente/base de datos",
+    "src/mongoeco/api/_async/collection.py": "resolución por defecto del borde colección",
+    "src/mongoeco/api/_async/database_commands.py": "fallback para doble de prueba sin base de datos",
+    "src/mongoeco/engines/memory.py": "fallback para invocación directa del engine",
+    "src/mongoeco/engines/sqlite.py": "fallback para invocación directa del engine"
+  }
+}

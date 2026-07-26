@@ -59,6 +59,7 @@ UpdateOperatorHandler = Callable[
         dict[str, Any],
         tuple[CompiledUpdateInstruction, ...],
         'UpdateExecutionContext',
+        Mapping[str, Any] | None,
     ],
     bool,
 ]
@@ -71,8 +72,9 @@ def _unsupported_update_operator_handler(
         doc: dict[str, Any],
         instructions: tuple[CompiledUpdateInstruction, ...],
         context: 'UpdateExecutionContext',
+        variables: Mapping[str, Any] | None,
     ) -> bool:
-        del doc, instructions, context
+        del doc, instructions, context, variables
         raise OperationFailure(f'Unsupported update operator: {operator}')
 
     return _raise
@@ -89,8 +91,9 @@ class CompiledUpdateOperator:
         doc: dict[str, Any],
         *,
         context: 'UpdateExecutionContext',
+        variables: Mapping[str, Any] | None = None,
     ) -> bool:
-        return self.handler(doc, self.instructions, context)
+        return self.handler(doc, self.instructions, context, variables)
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,14 +121,16 @@ class CompiledUpdatePlan:
         *,
         variables: Mapping[str, Any] | None = None,
     ) -> bool:
-        del variables
+        variables = ensure_expression_context(variables)
         if '_id' in doc:
             assert_valid_root_document_id(doc['_id'])
         original = deepcopy(doc)
         working = deepcopy(doc)
         modified = False
         for compiled_operator in self.compiled_operators:
-            if compiled_operator.apply(working, context=self.context):
+            if compiled_operator.apply(
+                working, context=self.context, variables=variables
+            ):
                 modified = True
         if self.touches_document_id:
             assert_classic_update_preserves_id(
@@ -209,49 +214,53 @@ class UpdateEngine:
     )
 
     _OPERATOR_HANDLERS: dict[str, UpdateOperatorHandler] = {
-        '$set': lambda doc, instructions, context: apply_set(
+        '$set': lambda doc, instructions, context, variables: apply_set(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$unset': lambda doc, instructions, context: apply_unset(
+        '$unset': lambda doc, instructions, context, variables: apply_unset(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$inc': lambda doc, instructions, context: apply_inc(
+        '$inc': lambda doc, instructions, context, variables: apply_inc(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$min': lambda doc, instructions, context: apply_min(
+        '$min': lambda doc, instructions, context, variables: apply_min(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$max': lambda doc, instructions, context: apply_max(
+        '$max': lambda doc, instructions, context, variables: apply_max(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$mul': lambda doc, instructions, context: apply_mul(
+        '$mul': lambda doc, instructions, context, variables: apply_mul(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$bit': lambda doc, instructions, context: apply_bit(
+        '$bit': lambda doc, instructions, context, variables: apply_bit(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$rename': lambda doc, instructions, context: apply_rename(
+        '$rename': lambda doc, instructions, context, variables: apply_rename(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$currentDate': lambda doc, instructions, context: apply_current_date(
+        '$currentDate': lambda doc, instructions, context, variables: apply_current_date(
+            doc,
+            instructions,
+            context=context,
+            helpers=UpdateEngine,
+            variables=variables,
+        ),
+        '$setOnInsert': lambda doc, instructions, context, variables: apply_set_on_insert(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$setOnInsert': lambda doc, instructions, context: apply_set_on_insert(
+        '$push': lambda doc, instructions, context, variables: apply_push(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$push': lambda doc, instructions, context: apply_push(
+        '$addToSet': lambda doc, instructions, context, variables: apply_add_to_set(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$addToSet': lambda doc, instructions, context: apply_add_to_set(
+        '$pull': lambda doc, instructions, context, variables: apply_pull(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$pull': lambda doc, instructions, context: apply_pull(
+        '$pullAll': lambda doc, instructions, context, variables: apply_pull_all(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
-        '$pullAll': lambda doc, instructions, context: apply_pull_all(
-            doc, instructions, context=context, helpers=UpdateEngine
-        ),
-        '$pop': lambda doc, instructions, context: apply_pop(
+        '$pop': lambda doc, instructions, context, variables: apply_pop(
             doc, instructions, context=context, helpers=UpdateEngine
         ),
     }

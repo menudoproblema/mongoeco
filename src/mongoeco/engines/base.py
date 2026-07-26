@@ -23,6 +23,8 @@ from mongoeco.types import (
 
 @runtime_checkable
 class AsyncSessionEngine(Protocol):
+    supports_injected_clock: bool
+
     def create_session_state(self, session: ClientSession) -> None: ...
 
 

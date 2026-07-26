@@ -8,6 +8,22 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-07-26
+
+### Added
+
+- `AsyncMongoClient` y `MongoClient` aceptan `now_factory`, una fuente de hora
+  opcional para tests deterministas. Se propaga a bases, colecciones,
+  `with_options()`, comandos, cursores, subpipelines y lotes clásicos.
+- Los engines locales Memory y SQLite declaran soporte de reloj inyectable. TTL
+  se evalúa con el mismo instante de la operación, por lo que puede probarse
+  sin esperar al reloj de pared.
+
+### Changed
+
+- `$$NOW` y `$currentDate` resuelven la hora en el borde de cada comando real
+  o lote lógico; la hora no se guarda en planes de update cacheados.
+
 ## [4.0.0] - 2026-07-26
 
 ### Breaking changes (4.0)

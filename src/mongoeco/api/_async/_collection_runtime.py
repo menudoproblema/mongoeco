@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, AsyncIterable, Callable
 
 from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
 from mongoeco.api.operations import AggregateOperation, FindOperation, UpdateOperation, compile_find_operation
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.errors import DuplicateKeyError, OperationFailure, WriteError
 from mongoeco.session import ClientSession, EngineTransactionContext
 from mongoeco.types import CollationDocument, Document, DocumentId, Filter, HintSpec, ObjectId, SortSpec
@@ -446,6 +447,14 @@ class CollectionRuntimeCoordinator:
         apply_codec_options: bool = True,
         execution_variables=None,
     ) -> AsyncCursor:
+        if execution_variables is None:
+            execution_variables = (
+                operation.let
+                if isinstance(operation.let, ExpressionExecutionContext)
+                else self._collection._new_execution_context().with_bindings(
+                    operation.let
+                )
+            )
         return AsyncCursor(
             self._collection,
             operation.filter_spec,

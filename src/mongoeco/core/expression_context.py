@@ -1,15 +1,26 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
+from contextvars import ContextVar
 from dataclasses import dataclass, field
+from datetime import datetime
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from mongoeco.core.bson_scalars import utc_bson_now
+from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
 
 
-if TYPE_CHECKING:
-    from datetime import datetime
+_CURRENT_EXECUTION_NOW: ContextVar[datetime | None] = ContextVar(
+    'mongoeco_execution_now', default=None
+)
+
+
+def current_execution_now() -> datetime | None:
+    return _CURRENT_EXECUTION_NOW.get()
+
+
+def set_execution_now(now: datetime) -> None:
+    _CURRENT_EXECUTION_NOW.set(now)
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,13 +64,25 @@ class ExpressionExecutionContext(Mapping[str, Any]):
 
 def ensure_expression_context(
     variables: Mapping[str, Any] | None,
+    *,
+    now: datetime | None = None,
 ) -> ExpressionExecutionContext:
     if isinstance(variables, ExpressionExecutionContext):
         return variables
     if variables is None:
-        return ExpressionExecutionContext()
+        return (
+            ExpressionExecutionContext(now=now)
+            if now is not None
+            else ExpressionExecutionContext()
+        )
     bindings = dict(variables)
     inherited_now = bindings.pop("NOW", None)
     if inherited_now is not None:
-        return ExpressionExecutionContext(bindings, now=inherited_now)
-    return ExpressionExecutionContext(bindings)
+        return ExpressionExecutionContext(
+            bindings, now=normalize_utc_bson_datetime(inherited_now)
+        )
+    return (
+        ExpressionExecutionContext(bindings, now=now)
+        if now is not None
+        else ExpressionExecutionContext(bindings)
+    )

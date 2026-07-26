@@ -84,6 +84,19 @@ en modo no ordenado. Cada lote comparte un `$$NOW`. No emula todavía límites d
 tamaño BSON/mensaje ni el comando `bulkWrite` introducido para clientes modernos
 de MongoDB 8.0.
 
+### Reloj inyectable para runtimes locales
+
+`AsyncMongoClient` y `MongoClient` aceptan `now_factory: Callable[[], datetime]
+| None`. Si se proporciona, el cliente lo consulta una vez por comando real o
+lote lógico y normaliza el valor a UTC naïve con precisión BSON de milisegundos.
+El mismo instante alimenta `$$NOW`, `$currentDate` de tipo fecha y la caducidad
+TTL. No afecta a telemetría, handshakes, perfiles ni `ObjectId`.
+
+El contrato sólo está disponible en engines que declaren
+`supports_injected_clock`; Memory y SQLite lo soportan. Un backend externo o
+real lo rechaza al construir el cliente, para no ofrecer una falsa sensación de
+determinismo.
+
 ## 1.1 Baseline soportado
 
 `mongoeco` no persigue compatibilidad hacia atrás por debajo de estos mínimos:

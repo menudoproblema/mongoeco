@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Callable
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async.collection import AsyncCollection
@@ -39,6 +41,7 @@ from mongoeco.driver import (
 )
 from mongoeco.driver.monitoring import DriverMonitor
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -60,6 +63,21 @@ from mongoeco.types import (
 
 if TYPE_CHECKING:
     from mongoeco.driver.transports import WireProtocolCommandTransport
+
+
+type NowFactory = Callable[[], datetime]
+
+
+def _validate_now_factory(now_factory: NowFactory | None) -> None:
+    if now_factory is None:
+        return
+    if not callable(now_factory):
+        raise TypeError('now_factory must be callable')
+    normalize_utc_bson_datetime(now_factory())
+
+
+def _resolve_now(now_factory: NowFactory | None) -> datetime:
+    return utc_bson_now() if now_factory is None else normalize_utc_bson_datetime(now_factory())
 
 
 def _validate_watch_session(session: ClientSession | None) -> None:
@@ -95,8 +113,10 @@ class AsyncDatabase:
         change_stream_journal_path: str | None = None,
         change_stream_journal_fsync: bool = False,
         change_stream_journal_max_bytes: int | None = 1_048_576,
+        now_factory: NowFactory | None = None,
     ):
         self._engine = engine
+        self._now_factory = now_factory
         self._db_name = db_name
         self._mongodb_dialect_resolution = (
             mongodb_dialect_resolution
@@ -130,6 +150,18 @@ class AsyncDatabase:
         )
         self._admin = AsyncDatabaseAdminService(self)
 
+    def _new_execution_context(self):
+        from mongoeco.core.expression_context import ExpressionExecutionContext, set_execution_now
+
+        context = ExpressionExecutionContext(now=_resolve_now(self._now_factory))
+        set_execution_now(context.now)
+        return context
+
+    @property
+    def now_factory(self) -> NowFactory | None:
+        """Factory de reloj heredada del cliente que creó esta base de datos."""
+        return self._now_factory
+
     def __getattr__(self, name: str) -> AsyncCollection:
         return self.get_collection(name)
 
@@ -162,6 +194,7 @@ class AsyncDatabase:
             change_stream_journal_path=self._change_stream_journal_path,
             change_stream_journal_fsync=self._change_stream_journal_fsync,
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
+            now_factory=self._now_factory,
         )
 
     def with_options(
@@ -188,6 +221,7 @@ class AsyncDatabase:
             change_stream_journal_path=self._change_stream_journal_path,
             change_stream_journal_fsync=self._change_stream_journal_fsync,
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
+            now_factory=self._now_factory,
         )
 
     async def list_collection_names(
@@ -374,8 +408,15 @@ class AsyncMongoClient:
         change_stream_journal_path: str | None = None,
         change_stream_journal_fsync: bool = False,
         change_stream_journal_max_bytes: int | None = 1_048_576,
+        now_factory: NowFactory | None = None,
     ):
         self._engine = engine or self._create_default_engine()
+        _validate_now_factory(now_factory)
+        if now_factory is not None and not getattr(
+            self._engine, 'supports_injected_clock', False
+        ):
+            raise ValueError('now_factory requires an engine that supports injected clocks')
+        self._now_factory = now_factory
         self._mongodb_dialect_resolution = resolve_mongodb_dialect_resolution(
             mongodb_dialect
         )
@@ -427,6 +468,13 @@ class AsyncMongoClient:
     async def close(self) -> None:
         await self.__aexit__(None, None, None)
 
+    @property
+    def now_factory(self) -> NowFactory | None:
+        return self._now_factory
+
+    def _resolve_now(self) -> datetime:
+        return _resolve_now(self._now_factory)
+
     def __getattr__(self, name: str) -> AsyncDatabase:
         return self.get_database(name)
 
@@ -460,6 +508,7 @@ class AsyncMongoClient:
             change_stream_journal_path=self._change_stream_journal_path,
             change_stream_journal_fsync=self._change_stream_journal_fsync,
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
+            now_factory=self._now_factory,
         )
 
     def get_database(
@@ -487,6 +536,7 @@ class AsyncMongoClient:
             change_stream_journal_path=self._change_stream_journal_path,
             change_stream_journal_fsync=self._change_stream_journal_fsync,
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
+            now_factory=self._now_factory,
         )
 
     def get_default_database(

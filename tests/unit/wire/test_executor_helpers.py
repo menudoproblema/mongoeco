@@ -1,10 +1,14 @@
 import unittest
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
+from mongoeco.api import AsyncMongoClient
+from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.wire._executor_handlers import WireSpecialCommandHandlers
 from mongoeco.wire._executor_passthrough import _materialize_passthrough_result, execute_passthrough_command
 from mongoeco.wire._executor_validation import _make_collection_name_validator
+from mongoeco.wire.executor import WireCommandExecutor
 from mongoeco.wire.auth import WireAuthUser, WireAuthenticationService
 from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.connections import WireConnectionContext
@@ -33,6 +37,28 @@ class _FakeClient:
 
 
 class WireExecutorHelperCoverageTests(unittest.IsolatedAsyncioTestCase):
+    async def test_wire_request_captures_the_injected_clock_once(self):
+        fixed = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC)
+        calls: list[datetime] = []
+
+        def factory() -> datetime:
+            calls.append(fixed)
+            return fixed
+
+        client = AsyncMongoClient(MemoryEngine(), now_factory=factory)
+        executor = WireCommandExecutor(
+            client,
+            WireCursorStore(),
+            WireSessionStore(),
+        )
+        calls.clear()
+        context = executor._build_request_context(
+            {'find': 'events', '$db': 'db'},
+            connection=WireConnectionContext(connection_id=3),
+        )
+        self.assertEqual(calls, [fixed])
+        self.assertEqual(context.execution_context.now, fixed.replace(tzinfo=None))
+
     async def test_connection_status_passthrough_requires_document_response(self):
         context = WireRequestContext(
             db_name="admin",

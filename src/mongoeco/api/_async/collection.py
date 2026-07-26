@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterable, Callable, Iterable, Sequence
 from copy import deepcopy
+from datetime import datetime
 import re
 import time
 
@@ -67,7 +68,8 @@ from mongoeco.compat import (
 from mongoeco.core.aggregation import Pipeline
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
-from mongoeco.core.expression_context import ExpressionExecutionContext
+from mongoeco.core.expression_context import ExpressionExecutionContext, set_execution_now
+from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
@@ -152,8 +154,10 @@ class AsyncCollection:
         change_stream_journal_path: str | None = None,
         change_stream_journal_fsync: bool = False,
         change_stream_journal_max_bytes: int | None = 1_048_576,
+        now_factory: Callable[[], datetime] | None = None,
     ):
         self._engine = engine
+        self._now_factory = now_factory
         self._db_name = db_name
         self._collection_name = collection_name
         self._mongodb_dialect_resolution = (
@@ -229,7 +233,22 @@ class AsyncCollection:
             change_stream_journal_path=self._change_stream_journal_path,
             change_stream_journal_fsync=self._change_stream_journal_fsync,
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
+            now_factory=self._now_factory,
         )
+
+    @property
+    def now_factory(self) -> Callable[[], datetime] | None:
+        return self._now_factory
+
+    def _resolve_now(self) -> datetime:
+        if self._now_factory is None:
+            return utc_bson_now()
+        return normalize_utc_bson_datetime(self._now_factory())
+
+    def _new_execution_context(self) -> ExpressionExecutionContext:
+        now = self._resolve_now()
+        set_execution_now(now)
+        return ExpressionExecutionContext(now=now)
 
     def __getattr__(self, name: str) -> 'AsyncCollection':
         if name.startswith('_'):
@@ -803,8 +822,11 @@ class AsyncCollection:
         *,
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
+        _execution_context: ExpressionExecutionContext | None = None,
     ) -> InsertOneResult[DocumentId]:
         self._ensure_session_active(session)
+        context = _execution_context or self._new_execution_context()
+        set_execution_now(context.now)
         original = self._require_document(document)
         if '_id' not in original:
             original['_id'] = ObjectId()
@@ -873,6 +895,7 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> InsertManyResult[DocumentId]:
         self._ensure_session_active(session)
+        self._new_execution_context()
         inserted_ids: list[DocumentId] = []
         started_at = time.perf_counter_ns()
         normalized_documents: list[Document] = []
@@ -1903,6 +1926,7 @@ class AsyncCollection:
             change_stream_journal_path=self._change_stream_journal_path,
             change_stream_journal_fsync=self._change_stream_journal_fsync,
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
+            now_factory=self._now_factory,
         )
 
     async def options(

@@ -63,6 +63,9 @@ async def find_one(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
+    operation = operation.with_overrides(
+        let=collection._new_execution_context().with_bindings(operation.let)
+    )
     document = None
     started_at = time.perf_counter_ns()
     record_runtime_opcounter = getattr(collection._engine, "_record_runtime_opcounter", None)
@@ -164,6 +167,9 @@ async def count_documents(
         variables=options.get("let"),
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
+    )
+    operation = operation.with_overrides(
+        let=collection._new_execution_context().with_bindings(operation.let)
     )
     with track_active_operation(
         collection._engine,

@@ -2,6 +2,7 @@ from importlib import import_module
 
 __all__ = [
     "AsyncMongoClient",
+    "NowFactory",
     "AsyncDatabase",
     "AsyncCollection",
     "MongoClient",
@@ -12,6 +13,7 @@ __all__ = [
 
 _EXPORT_MODULES = {
     "AsyncMongoClient": "mongoeco.api._async.client",
+    "NowFactory": "mongoeco.api._async.client",
     "AsyncDatabase": "mongoeco.api._async.client",
     "AsyncCollection": "mongoeco.api._async.collection",
     "MongoClient": "mongoeco.api._sync.client",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from collections.abc import Mapping
 from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
@@ -9,8 +10,8 @@ from mongoeco.core.bson_scalars import (
     bson_bitwise,
     bson_multiply,
     unwrap_bson_numeric,
-    utc_bson_now,
 )
+from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.paths import delete_document_value, get_document_value, set_document_value
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Timestamp
@@ -275,9 +276,10 @@ def apply_current_date(
     *,
     context: "UpdateExecutionContext",
     helpers: Any,
+    variables: Mapping[str, Any] | None = None,
 ) -> bool:
     modified = False
-    now = utc_bson_now()
+    now = ensure_expression_context(variables).now
     now_seconds = int(now.replace(tzinfo=UTC).timestamp())
     timestamp_inc = 0
     for application in helpers._resolve_instruction_applications(

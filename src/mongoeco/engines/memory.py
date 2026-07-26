@@ -17,6 +17,8 @@ from typing import Any, AsyncIterable, Iterable, Iterator, override
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.bson_ordering import bson_engine_key
+from mongoeco.core.bson_scalars import utc_bson_now
+from mongoeco.core.expression_context import current_execution_now
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.engines.base import AsyncStorageEngine
@@ -265,6 +267,7 @@ def _vector_scores_for_rows(
 
 
 class MemoryEngine(AsyncStorageEngine):
+    supports_injected_clock = True
     """Motor de almacenamiento en memoria ultra-rápido."""
 
     _PROFILE_COLLECTION_NAME = "system.profile"
@@ -486,6 +489,12 @@ class MemoryEngine(AsyncStorageEngine):
             extract_values=QueryEngine.extract_values,
         )
 
+    @staticmethod
+    def _ttl_now() -> datetime.datetime:
+        return (current_execution_now() or utc_bson_now()).replace(
+            tzinfo=datetime.timezone.utc
+        )
+
     def _purge_expired_documents_locked(
         self,
         db_name: str,
@@ -495,6 +504,7 @@ class MemoryEngine(AsyncStorageEngine):
         indexes_view: dict[str, dict[str, list[EngineIndexRecord]]] | None = None,
         index_data_view: dict[str, dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]]] | None = None,
         storage_view: dict[str, dict[str, dict[Any, Any]]] | None = None,
+        now: datetime.datetime,
     ) -> int:
         indexes_source = indexes_view if indexes_view is not None else self._indexes_view(context)
         storage_source = storage_view if storage_view is not None else self._storage_view(context)
@@ -506,7 +516,6 @@ class MemoryEngine(AsyncStorageEngine):
         coll = storage_source.get(db_name, {}).get(coll_name, {})
         if not coll:
             return 0
-        now = datetime.datetime.now(datetime.timezone.utc)
         expired_storage_keys: list[Any] = []
         for storage_key, data in coll.items():
             document = self._borrow_storage_document(data)
@@ -564,7 +573,7 @@ class MemoryEngine(AsyncStorageEngine):
         coll = storage_source.get(db_name, {}).get(coll_name, {})
         if not coll:
             return
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = self._ttl_now()
         for storage_key, data in coll.items():
             document = self._borrow_storage_document(data)
             if not any(
@@ -1454,6 +1463,7 @@ class MemoryEngine(AsyncStorageEngine):
                 indexes_view=indexes_view,
                 index_data_view=index_data_view,
                 storage_view=storage,
+                now=self._ttl_now(),
             )
             with self._collection_state_rollback_locked(
                 db_name,
@@ -1567,7 +1577,9 @@ class MemoryEngine(AsyncStorageEngine):
                 return None
             return apply_projection(document, projection, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
-            self._purge_expired_documents_locked(db_name, coll_name, context=context)
+            self._purge_expired_documents_locked(
+                db_name, coll_name, context=context, now=self._ttl_now()
+            )
             storage_key = self._storage_key(doc_id)
             data = self._storage_view(context).get(db_name, {}).get(coll_name, {}).get(storage_key)
         if data is None:
@@ -1601,6 +1613,7 @@ class MemoryEngine(AsyncStorageEngine):
                 indexes_view=indexes_view,
                 index_data_view=index_data_view,
                 storage_view=storage_view,
+                now=self._ttl_now(),
             )
             storage_key = self._storage_key(doc_id)
             if storage_key in coll:
@@ -1678,6 +1691,9 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes_view=self._indexes_view(context),
                     index_data_view=self._index_data_view(context),
                     storage_view=self._storage_view(context),
+                    now=semantics.variables.now.replace(
+                        tzinfo=datetime.timezone.utc
+                    ),
                 )
                 if semantics.text_query is None:
                     self._resolve_hint_index(
@@ -1815,6 +1831,9 @@ class MemoryEngine(AsyncStorageEngine):
                 indexes_view=indexes_view,
                 index_data_view=index_data_view,
                 storage_view=storage_view,
+                now=ensure_expression_context(operation.let).now.replace(
+                    tzinfo=datetime.timezone.utc
+                ),
             )
             if coll is None:
                 coll = {}
@@ -2004,6 +2023,7 @@ class MemoryEngine(AsyncStorageEngine):
                 indexes_view=indexes_view,
                 index_data_view=index_data_view,
                 storage_view=storage_view,
+                now=variables.now.replace(tzinfo=datetime.timezone.utc),
             )
             for storage_key, data in self._candidate_items_for_plan_locked(
                 coll,
@@ -2092,6 +2112,9 @@ class MemoryEngine(AsyncStorageEngine):
                 indexes_view=self._indexes_view(context),
                 index_data_view=self._index_data_view(context),
                 storage_view=self._storage_view(context),
+                now=semantics.variables.now.replace(
+                    tzinfo=datetime.timezone.utc
+                ),
             )
             if semantics.text_query is None:
                 self._resolve_hint_index(
@@ -2383,6 +2406,7 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes_view=indexes_view,
                     index_data_view=index_data_view,
                     storage_view=storage_view,
+                    now=self._ttl_now(),
                 )
         return index_name
 

@@ -108,8 +108,13 @@ class DatabaseAdminReadCommandService:
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
+        execution_context=None,
     ) -> object:
         collection_name, operation = self._admin._command_compiler.compile_count_operation(spec)
+        if execution_context is not None:
+            operation = operation.with_overrides(
+                let=execution_context.with_bindings(operation.let)
+            )
         return await self.execute_count_command(
             collection_name,
             operation,
@@ -121,8 +126,13 @@ class DatabaseAdminReadCommandService:
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
+        execution_context=None,
     ) -> object:
         collection_name, key, operation = self._admin._command_compiler.compile_distinct_operation(spec)
+        if execution_context is not None:
+            operation = operation.with_overrides(
+                let=execution_context.with_bindings(operation.let)
+            )
         return await self.execute_distinct_command(
             collection_name,
             key,
@@ -269,11 +279,16 @@ class DatabaseAdminReadCommandService:
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
+        execution_context=None,
     ) -> object:
         collection_name, operation = self._admin._command_compiler.compile_find_operation(
             spec,
             collection_field="find",
         )
+        if execution_context is not None:
+            operation = operation.with_overrides(
+                let=execution_context.with_bindings(operation.let)
+            )
         return await self.execute_find_command(
             collection_name,
             operation,
@@ -301,8 +316,13 @@ class DatabaseAdminReadCommandService:
         spec: dict[str, object],
         *,
         session: ClientSession | None = None,
+        execution_context=None,
     ) -> object:
         collection_name, operation = self._admin._command_compiler.compile_aggregate_operation(spec)
+        if execution_context is not None:
+            operation = operation.with_overrides(
+                let=execution_context.with_bindings(operation.let)
+            )
         return await self.execute_aggregate_command(
             collection_name,
             operation,
