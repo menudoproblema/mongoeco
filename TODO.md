@@ -175,8 +175,13 @@ Orden recomendado a partir de aquí:
 
 ## 8. Pensando 4.0
 
-No es objetivo inmediato, pero sí conviene ir observando qué justificaría una
-`4.0.0` de verdad.
+No es objetivo inmediato, pero sí conviene observar qué justificaría una
+`4.0.0` de producto. Una corrección de contrato público incompatible también
+puede requerir una major por Semantic Versioning aunque no cambie el centro de
+gravedad del producto. El soporte estricto de variables de ejecución de
+`$$NOW` es un ejemplo: se documenta en la
+[guía de migración 4.0](docs/release-4.0.0.md) y no debe quedar bloqueado por
+los objetivos de producto de esta sección.
 
 Líneas a vigilar:
 
@@ -184,5 +189,5 @@ Líneas a vigilar:
   producto claramente diferenciada;
 * decidir si un provider CXP live opcional merece vivir como adaptador externo
   del runner/orquestador o no existir;
-* reservar una `4.0.0` solo para un cambio real de centro de gravedad, no para
-  seguir ampliando subset local dentro de `3.x`.
+* reservar una `4.0.0` de producto para un cambio real de centro de gravedad,
+  no para seguir ampliando subset local dentro de `3.x`.

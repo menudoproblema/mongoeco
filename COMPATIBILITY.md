@@ -68,6 +68,16 @@ además de las operaciones de escritura y `aggregate` que ya las declaraban. No
 se declara `let` en `distinct`; aun así, `distinct` captura su propio `$$NOW`.
 Una variable no definida falla con `OperationFailure` código `17276`.
 
+`$$REMOVE.path` conserva el estado interno *missing* únicamente durante el
+cálculo de campos de `$project`, `$addFields` y `$set`, donde omite el campo.
+En expresiones de valor se normaliza a `null`, por lo que mantiene la
+veracidad, comparación y persistencia de un valor ausente. El centinela
+interno de `$$REMOVE` tampoco puede escapar a `$ifNull` ni a acumuladores.
+
+`$currentDate` conserva su evaluación por documento y su contador de
+`timestamp`; las fechas de tipo `date` se truncan a milisegundos para respetar
+la precisión BSON.
+
 `bulk_write` agrupa modelos en lotes lógicos clásicos `insert`/`update`/`delete`
 de hasta 100.000 modelos: runs contiguos en modo ordenado y grupos por familia
 en modo no ordenado. Cada lote comparte un `$$NOW`. No emula todavía límites de

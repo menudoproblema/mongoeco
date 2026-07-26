@@ -6,15 +6,18 @@ Esta lista prepara una release sin obligar a publicar nada.
 
 - revisar [README.md](../README.md) para que el
   alcance embebido/local y sus limites sean explicitos;
-- revisar [release-3.5.0.md](release-3.5.0.md)
-  para confirmar que la narrativa de release sigue el capability model CXP
-  canónico;
+- preparar o revisar la nota de release y la guía de migración de la versión
+  objetivo (para 4.0, [release-4.0.0.md](release-4.0.0.md)) para
+  confirmar que la narrativa y los cambios incompatibles son explícitos;
 - revisar [COMPATIBILITY.md](../COMPATIBILITY.md)
   y confirmar que runtime, compat catalog, docs y tests cuentan la misma
   historia;
 - revisar [MISSING_FEATURES.md](../MISSING_FEATURES.md)
   y [TODO.md](../TODO.md) para que no mezclen ya
   backlog de producto con deuda arquitectonica cerrada.
+- actualizar la versión en `src/mongoeco/_version.py`, fechar la sección
+  correspondiente de `CHANGELOG.md` y comprobar que la guía de migración
+  describe todos los cambios incompatibles de la major.
 
 ## 2. Packaging y artefactos
 
@@ -28,6 +31,8 @@ Esta lista prepara una release sin obligar a publicar nada.
   - dependencia core de `usearch`;
   - extras opcionales vigentes;
   - inclusion de `LICENSE`.
+- regenerar y revisar el catálogo de compatibilidad con
+  `python scripts/update_compat_snapshots.py`.
 
 ## 3. Validacion funcional
 
@@ -35,6 +40,12 @@ Esta lista prepara una release sin obligar a publicar nada.
 - ejecutar `python -m unittest discover -s tests -p 'test*.py'`;
 - ejecutar `pytest --cov=src/mongoeco --cov-report=term -q`;
 - confirmar que la cobertura global sigue en `>=99%`.
+- ejecutar `python scripts/run_pymongo_profile_matrix.py --versions 4.9.2
+  4.11.3 4.13.2 4.17.0 --summary-output
+  tests/fixtures/pymongo_profile_matrix.json` y revisar los deltas publicados.
+- ejecutar las suites de paridad real MongoDB 7.0 y 8.0 cuando haya servicios
+  disponibles; para valores temporales, comprobar invariantes y no timestamps
+  exactos.
 
 ## 4. Benchmarks y rendimiento
 

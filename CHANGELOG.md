@@ -8,6 +8,19 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-07-26
+
+### Breaking changes (4.0)
+
+- Una referencia a variable `$$...` que no exista deja de convertirse
+  silenciosamente en `None`: ahora falla con `OperationFailure` código `17276`.
+  Consulte la [guía de migración de la versión 4.0](docs/release-4.0.0.md)
+  antes de actualizar.
+- Las fechas generadas por `$currentDate` se truncan a milisegundos, que es la
+  precisión BSON observable.
+- `$$REMOVE.path` se comporta como un valor ausente al calcular campos en
+  `$project`, `$addFields` y `$set`, en lugar de escribir `null`.
+
 ### Added
 
 - `$$NOW` es efectivo en los dialectos MongoDB 7.0 y 8.0 mediante un contexto

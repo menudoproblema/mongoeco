@@ -5,6 +5,12 @@
 `mongoeco 4.0` should only happen if the project makes its public promise
 clearer and materially easier to trust.
 
+This roadmap describes a product-positioning 4.0. A public behavioral change
+that is incompatible under Semantic Versioning can independently require a
+major release; it does not need to satisfy every product gate in this document.
+The execution-variable contract is documented separately in
+[the 4.0 migration guide](release-4.0.0.md).
+
 The bar should be higher than:
 
 * more subset coverage
