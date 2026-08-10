@@ -10,28 +10,28 @@ Use one of these three entry points:
 Choose this when you want persistence on disk, a PyMongo-shaped API and a
 single-process local runtime.
 
-* Guide: [docs/use-cases/embedded-app.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/embedded-app.md)
-* Example: [examples/sqlite_embedded_app.py](/Users/uve/Proyectos/mongoeco2/examples/sqlite_embedded_app.py)
+* Guide: [embedded-app.md](use-cases/embedded-app.md)
+* Example: [sqlite_embedded_app.py](../examples/sqlite_embedded_app.py)
 
 ## 2. Test Runtime
 
 Choose this when you want a local contract runtime that is more faithful than a
 lightweight mock and can run against both memory and SQLite.
 
-* Guide: [docs/use-cases/test-runtime.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/test-runtime.md)
+* Guide: [test-runtime.md](use-cases/test-runtime.md)
 * Examples:
-  * [examples/memory_quickstart.py](/Users/uve/Proyectos/mongoeco2/examples/memory_quickstart.py)
-  * [examples/test_runtime_local.py](/Users/uve/Proyectos/mongoeco2/examples/test_runtime_local.py)
+  * [memory_quickstart.py](../examples/memory_quickstart.py)
+  * [test_runtime_local.py](../examples/test_runtime_local.py)
 
 ## 3. Local Search And Retrieval
 
 Choose this when you want local `$search` and `$vectorSearch` with explicit
 diagnostics, not a hidden Atlas-like promise.
 
-* Guide: [docs/use-cases/local-search-and-retrieval.md](/Users/uve/Proyectos/mongoeco2/docs/use-cases/local-search-and-retrieval.md)
+* Guide: [local-search-and-retrieval.md](use-cases/local-search-and-retrieval.md)
 * Examples:
-  * [examples/search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
-  * [examples/vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
+  * [search_and_vector_local.py](../examples/search_and_vector_local.py)
+  * [vector_search_diagnostics.py](../examples/vector_search_diagnostics.py)
 
 ## What `mongoeco` is not
 
@@ -42,4 +42,4 @@ diagnostics, not a hidden Atlas-like promise.
 * distributed topology behavior;
 * server-grade operational guarantees outside the documented subset.
 
-For the exact compatibility envelope, see [COMPATIBILITY.md](/Users/uve/Proyectos/mongoeco2/COMPATIBILITY.md).
+For the exact compatibility envelope, see [COMPATIBILITY.md](../COMPATIBILITY.md).

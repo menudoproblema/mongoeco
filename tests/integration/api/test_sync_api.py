@@ -7259,6 +7259,96 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(DuplicateKeyError):
                         collection.insert_one({"_id": "2", "profile": {"email": "a@example.com"}})
 
+    def test_unique_multikey_index_is_enforced_via_public_api(self):
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.events
+                    collection.create_index(["tags"], unique=True)
+                    collection.insert_one({"_id": "1", "tags": ["a", "b", "b"]})
+                    collection.insert_one({"_id": "2", "tags": ["c", "d"]})
+
+                    with self.assertRaises(DuplicateKeyError):
+                        collection.insert_one({"_id": "3", "tags": ["b", "e"]})
+                    with self.assertRaises(DuplicateKeyError):
+                        collection.update_one({"_id": "2"}, {"$set": {"tags": ["b", "d"]}})
+
+                    self.assertEqual(collection.find_one({"_id": "2"}), {"_id": "2", "tags": ["c", "d"]})
+
+                    compound = client.test.compound_events
+                    compound.create_index(["tenant", "tags"], unique=True)
+                    compound.insert_one({"_id": "1", "tenant": "a", "tags": ["x", "shared"]})
+                    compound.insert_one({"_id": "2", "tenant": "b", "tags": ["shared", "z"]})
+                    with self.assertRaises(DuplicateKeyError):
+                        compound.insert_one({"_id": "3", "tenant": "a", "tags": ["shared", "z"]})
+
+                    nested = client.test.nested_events
+                    nested.create_index(["items.name"], unique=True)
+                    nested.insert_one({"_id": "1", "items": [{"name": "a"}, {"name": "b"}]})
+                    with self.assertRaises(DuplicateKeyError):
+                        nested.insert_one({"_id": "2", "items": [{"name": "b"}]})
+
+                    existing_parallel = client.test.existing_parallel_events
+                    existing_parallel.insert_one(
+                        {"_id": "1", "tags": ["a"], "labels": ["priority"]}
+                    )
+                    with self.assertRaises(OperationFailure):
+                        existing_parallel.create_index(["tags", "labels"])
+
+                    parallel = client.test.parallel_events
+                    parallel.create_index(["tags", "labels"])
+                    parallel.insert_one({"_id": "1", "tags": ["a"], "labels": "priority"})
+                    with self.assertRaises(OperationFailure):
+                        parallel.insert_one({"_id": "2", "tags": ["b"], "labels": ["bulk"]})
+                    with self.assertRaises(OperationFailure):
+                        parallel.update_one({"_id": "1"}, {"$set": {"labels": ["bulk"]}})
+                    self.assertEqual(
+                        parallel.find_one({"_id": "1"}),
+                        {"_id": "1", "tags": ["a"], "labels": "priority"},
+                    )
+
+    def test_unique_index_uses_collation_via_public_api(self):
+        collation = {"locale": "en", "strength": 2}
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                with MongoClient(factory()) as client:
+                    collection = client.test.events
+                    collection.create_index(["name"], unique=True, collation=collation)
+                    collection.insert_one({"_id": "1", "name": "Ada"})
+                    collection.insert_one({"_id": "2", "name": "Grace"})
+
+                    with self.assertRaises(DuplicateKeyError):
+                        collection.insert_one({"_id": "3", "name": "ada"})
+                    with self.assertRaises(DuplicateKeyError):
+                        collection.update_one({"_id": "2"}, {"$set": {"name": "ADA"}})
+
+
+    def test_memory_indexed_nested_equality_preserves_read_api_contract(self):
+        target = ObjectId()
+        with MongoClient(MemoryEngine()) as client:
+            collection = client.analytics.events
+            collection.create_index("source.object_id")
+            collection.insert_many(
+                [
+                    {"_id": "match", "source": {"object_id": target}, "kind": "match"},
+                    {"_id": "missing", "kind": "missing"},
+                ]
+            )
+
+            found = collection.find({"source.object_id": target}).to_list()
+            found_one = collection.find_one({"source.object_id": target})
+            count = collection.count_documents({"source.object_id": target})
+            distinct = collection.distinct("kind", {"source.object_id": target})
+            raw_batches = collection.find_raw_batches({"source.object_id": target}).to_list()
+            aggregate = collection.aggregate([{"$match": {"source.object_id": target}}]).to_list()
+
+        self.assertEqual([document["_id"] for document in found], ["match"])
+        self.assertEqual(found_one["_id"] if found_one is not None else None, "match")
+        self.assertEqual(count, 1)
+        self.assertEqual(distinct, ["match"])
+        self.assertEqual(len(raw_batches), 1)
+        self.assertEqual([document["_id"] for document in aggregate], ["match"])
+
     def test_sync_client_exposes_client_session_and_accepts_it(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):

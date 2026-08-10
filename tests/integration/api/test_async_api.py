@@ -7678,6 +7678,98 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(DuplicateKeyError):
                         await collection.insert_one({"_id": "2", "profile": {"email": "a@example.com"}})
 
+    async def test_unique_multikey_index_is_enforced_via_public_api(self):
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.events
+                    await collection.create_index(["tags"], unique=True)
+                    await collection.insert_one({"_id": "1", "tags": ["a", "b", "b"]})
+                    await collection.insert_one({"_id": "2", "tags": ["c", "d"]})
+
+                    with self.assertRaises(DuplicateKeyError):
+                        await collection.insert_one({"_id": "3", "tags": ["b", "e"]})
+                    with self.assertRaises(DuplicateKeyError):
+                        await collection.update_one({"_id": "2"}, {"$set": {"tags": ["b", "d"]}})
+
+                    self.assertEqual(
+                        await collection.find_one({"_id": "2"}),
+                        {"_id": "2", "tags": ["c", "d"]},
+                    )
+
+                    compound = client.test.compound_events
+                    await compound.create_index(["tenant", "tags"], unique=True)
+                    await compound.insert_one({"_id": "1", "tenant": "a", "tags": ["x", "shared"]})
+                    await compound.insert_one({"_id": "2", "tenant": "b", "tags": ["shared", "z"]})
+                    with self.assertRaises(DuplicateKeyError):
+                        await compound.insert_one({"_id": "3", "tenant": "a", "tags": ["shared", "z"]})
+
+                    nested = client.test.nested_events
+                    await nested.create_index(["items.name"], unique=True)
+                    await nested.insert_one({"_id": "1", "items": [{"name": "a"}, {"name": "b"}]})
+                    with self.assertRaises(DuplicateKeyError):
+                        await nested.insert_one({"_id": "2", "items": [{"name": "b"}]})
+
+                    existing_parallel = client.test.existing_parallel_events
+                    await existing_parallel.insert_one(
+                        {"_id": "1", "tags": ["a"], "labels": ["priority"]}
+                    )
+                    with self.assertRaises(OperationFailure):
+                        await existing_parallel.create_index(["tags", "labels"])
+
+                    parallel = client.test.parallel_events
+                    await parallel.create_index(["tags", "labels"])
+                    await parallel.insert_one({"_id": "1", "tags": ["a"], "labels": "priority"})
+                    with self.assertRaises(OperationFailure):
+                        await parallel.insert_one({"_id": "2", "tags": ["b"], "labels": ["bulk"]})
+                    with self.assertRaises(OperationFailure):
+                        await parallel.update_one({"_id": "1"}, {"$set": {"labels": ["bulk"]}})
+                    self.assertEqual(
+                        await parallel.find_one({"_id": "1"}),
+                        {"_id": "1", "tags": ["a"], "labels": "priority"},
+                    )
+
+    async def test_unique_index_uses_collation_via_public_api(self):
+        collation = {"locale": "en", "strength": 2}
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.test.events
+                    await collection.create_index(["name"], unique=True, collation=collation)
+                    await collection.insert_one({"_id": "1", "name": "Ada"})
+                    await collection.insert_one({"_id": "2", "name": "Grace"})
+
+                    with self.assertRaises(DuplicateKeyError):
+                        await collection.insert_one({"_id": "3", "name": "ada"})
+                    with self.assertRaises(DuplicateKeyError):
+                        await collection.update_one({"_id": "2"}, {"$set": {"name": "ADA"}})
+
+    async def test_memory_indexed_nested_equality_preserves_read_api_contract(self):
+        target = ObjectId()
+        async with open_client("memory") as client:
+            collection = client.analytics.events
+            await collection.create_index("source.object_id")
+            await collection.insert_many(
+                [
+                    {"_id": "match", "source": {"object_id": target}, "kind": "match"},
+                    {"_id": "missing", "kind": "missing"},
+                ]
+            )
+
+            found = await collection.find({"source.object_id": target}).to_list()
+            found_one = await collection.find_one({"source.object_id": target})
+            count = await collection.count_documents({"source.object_id": target})
+            distinct = await collection.distinct("kind", {"source.object_id": target})
+            raw_batches = await collection.find_raw_batches({"source.object_id": target}).to_list()
+            aggregate = await collection.aggregate([{"$match": {"source.object_id": target}}]).to_list()
+
+        self.assertEqual([document["_id"] for document in found], ["match"])
+        self.assertEqual(found_one["_id"] if found_one is not None else None, "match")
+        self.assertEqual(count, 1)
+        self.assertEqual(distinct, ["match"])
+        self.assertEqual(len(raw_batches), 1)
+        self.assertEqual([document["_id"] for document in aggregate], ["match"])
+
     async def test_delete_one_removes_first_matching_document(self):
         for engine_name in ENGINE_FACTORIES:
             with self.subTest(engine=engine_name):

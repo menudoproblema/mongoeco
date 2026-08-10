@@ -26,7 +26,7 @@ from mongoeco.errors import (
     OperationFailure,
 )
 from mongoeco.session import ClientSession
-from mongoeco.types import EngineIndexRecord, SearchIndexDefinition, UNDEFINED
+from mongoeco.types import EngineIndexRecord, ObjectId, SearchIndexDefinition, UNDEFINED
 
 
 class _UnhashableValue:
@@ -869,6 +869,112 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
+    async def test_unique_multikey_index_rejects_overlaps_across_documents(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "existing", {"_id": "1", "tags": ["a", "b"]})
+            await engine.put_document("db", "existing", {"_id": "2", "tags": ["b", "c"]})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.create_index("db", "existing", ["tags"], unique=True)
+
+            await engine.create_index("db", "writes", ["tags"], unique=True)
+            await engine.put_document("db", "writes", {"_id": "1", "tags": ["a", "b", "b"]})
+            await engine.put_document("db", "writes", {"_id": "2", "tags": ["c", "d"]})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "writes", {"_id": "3", "tags": ["b", "e"]})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "writes", {"_id": "4", "tags": "a"})
+            with self.assertRaises(DuplicateKeyError):
+                await self._update(
+                    engine,
+                    "db",
+                    "writes",
+                    {"_id": "2"},
+                    {"$set": {"tags": ["b", "d"]}},
+                )
+
+            await engine.put_document(
+                "db",
+                "compound_existing",
+                {"_id": "1", "tenant": "a", "tags": ["x", "shared"]},
+            )
+            await engine.put_document(
+                "db",
+                "compound_existing",
+                {"_id": "2", "tenant": "a", "tags": ["shared", "z"]},
+            )
+            with self.assertRaises(DuplicateKeyError):
+                await engine.create_index("db", "compound_existing", ["tenant", "tags"], unique=True)
+
+            await engine.create_index("db", "compound_writes", ["tenant", "tags"], unique=True)
+            await engine.put_document(
+                "db",
+                "compound_writes",
+                {"_id": "1", "tenant": "a", "tags": ["x", "shared"]},
+            )
+            await engine.put_document(
+                "db",
+                "compound_writes",
+                {"_id": "2", "tenant": "b", "tags": ["shared", "z"]},
+            )
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document(
+                    "db",
+                    "compound_writes",
+                    {"_id": "3", "tenant": "a", "tags": ["shared", "z"]},
+                )
+
+            await engine.create_index(
+                "db",
+                "partial",
+                ["tags"],
+                unique=True,
+                partial_filter_expression={"active": True},
+            )
+            await engine.put_document("db", "partial", {"_id": "1", "tags": ["shared"], "active": False})
+            await engine.put_document("db", "partial", {"_id": "2", "tags": ["shared"], "active": False})
+            await engine.put_document("db", "partial", {"_id": "3", "tags": ["shared"], "active": True})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "partial", {"_id": "4", "tags": ["shared"], "active": True})
+
+            retained = await engine.get_document("db", "writes", "2")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(retained, {"_id": "2", "tags": ["c", "d"]})
+
+    async def test_unique_index_uses_its_collation(self):
+        engine = MemoryEngine()
+        collation = {"locale": "en", "strength": 2}
+        await engine.connect()
+        try:
+            await engine.put_document("db", "existing", {"_id": "1", "name": "Ada"})
+            await engine.put_document("db", "existing", {"_id": "2", "name": "ada"})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.create_index("db", "existing", ["name"], unique=True, collation=collation)
+
+            await engine.create_index("db", "writes", ["name"], unique=True, collation=collation)
+            await engine.put_document("db", "writes", {"_id": "1", "name": "Grace"})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "writes", {"_id": "2", "name": "grace"})
+            await engine.put_document("db", "writes", {"_id": "3", "name": "Lin"})
+            with self.assertRaises(DuplicateKeyError):
+                await self._update(
+                    engine,
+                    "db",
+                    "writes",
+                    {"_id": "3"},
+                    {"$set": {"name": "GRACE"}},
+                )
+
+            await engine.create_index("db", "array_writes", ["names"], unique=True, collation=collation)
+            await engine.put_document("db", "array_writes", {"_id": "1", "names": ["Ada"]})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "array_writes", {"_id": "2", "names": ["ada"]})
+        finally:
+            await engine.disconnect()
+
     async def test_sparse_unique_index_ignores_missing_values_but_rejects_duplicates(self):
         engine = MemoryEngine()
         await engine.connect()
@@ -880,6 +986,97 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
             with self.assertRaises(DuplicateKeyError):
                 await engine.put_document("db", "coll", {"_id": "4", "email": "a@example.com"})
+        finally:
+            await engine.disconnect()
+
+    async def test_unique_index_rejects_repeated_missing_field_values(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], unique=True)
+            await engine.put_document("db", "coll", {"_id": "1"})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "coll", {"_id": "2"})
+        finally:
+            await engine.disconnect()
+
+    async def test_compound_multikey_index_rejects_parallel_arrays(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document(
+                "db",
+                "existing",
+                {"_id": "1", "tags": ["a"], "labels": ["priority"]},
+            )
+            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+                await engine.create_index("db", "existing", ["tags", "labels"])
+
+            await engine.create_index("db", "writes", ["tags", "labels"])
+            await engine.put_document(
+                "db",
+                "writes",
+                {"_id": "1", "tags": ["a"], "labels": "priority"},
+            )
+            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+                await engine.put_document(
+                    "db",
+                    "writes",
+                    {"_id": "2", "tags": ["b"], "labels": ["bulk"]},
+                )
+            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+                await self._update(
+                    engine,
+                    "db",
+                    "writes",
+                    {"_id": "1"},
+                    {"$set": {"labels": ["bulk"]}},
+                )
+
+            await engine.create_index("db", "embedded", ["items.code", "items.rank"])
+            await engine.put_document(
+                "db",
+                "embedded",
+                {
+                    "_id": "1",
+                    "items": [
+                        {"code": "A", "rank": 1},
+                        {"code": "B", "rank": 2},
+                    ],
+                },
+            )
+            retained = await engine.get_document("db", "writes", "1")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(retained, {"_id": "1", "tags": ["a"], "labels": "priority"})
+
+    async def test_unique_compound_index_correlates_fields_from_the_same_array(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "1", "a": [{"loc": "A", "qty": 5}, {"qty": 10}]},
+            )
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "2", "a": [{"loc": "A"}, {"qty": 5}]},
+            )
+            await engine.create_index("db", "coll", ["a.loc", "a.qty"], unique=True)
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "3", "a": [{"loc": "A", "qty": 10}]},
+            )
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document(
+                    "db",
+                    "coll",
+                    {"_id": "4", "a": [{"loc": "A", "qty": 5}]},
+                )
         finally:
             await engine.disconnect()
 
@@ -1788,6 +1985,147 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                 {"_id": "2", "kind": "view", "tag": "mongodb"},
             ],
         )
+
+    async def test_indexed_nested_object_id_equality_matches_scan_and_count(self):
+        engine = MemoryEngine()
+        target = ObjectId()
+        await engine.connect()
+        try:
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "match", "source": {"object_id": target}, "tenant": "a"},
+            )
+            await engine.put_document("db", "coll", {"_id": "missing", "tenant": "a"})
+            unindexed = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"source.object_id": target})
+            ]
+            await engine.create_index("db", "coll", ["source.object_id"], name="source_object_id_1")
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "other", "source": {"object_id": ObjectId()}, "tenant": "a"},
+            )
+
+            direct = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"source.object_id": target})
+            ]
+            explicit_eq = [
+                document["_id"]
+                async for document in self._scan(
+                    engine,
+                    "db",
+                    "coll",
+                    {"source.object_id": {"$eq": target}},
+                )
+            ]
+            conjunction = [
+                document["_id"]
+                async for document in self._scan(
+                    engine,
+                    "db",
+                    "coll",
+                    {"source.object_id": target, "tenant": "a"},
+                )
+            ]
+            count = await self._count(engine, "db", "coll", {"source.object_id": target})
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(unindexed, ["match"])
+        self.assertEqual(direct, unindexed)
+        self.assertEqual(explicit_eq, ["match"])
+        self.assertEqual(conjunction, ["match"])
+        self.assertEqual(count, 1)
+
+    async def test_indexed_equality_preserves_multikey_virtual_and_collation_semantics(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "arrays", {"_id": "top-level", "tags": ["a", "b"]})
+            await engine.put_document("db", "arrays", {"_id": "nested", "source": {"ids": ["a", "b"]}})
+            await engine.create_index("db", "arrays", ["tags"], name="tags_1")
+            await engine.create_index("db", "arrays", ["source.ids"], name="source_ids_1")
+
+            top_level = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "arrays", {"tags": "b"})
+            ]
+            nested = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "arrays", {"source.ids": "b"})
+            ]
+
+            await engine.put_document("db", "sparse", {"_id": "missing"})
+            await engine.put_document("db", "sparse", {"_id": "null", "email": None})
+            await engine.create_index("db", "sparse", ["email"], name="email_sparse", sparse=True)
+            sparse = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "sparse", {"email": None})
+            ]
+
+            await engine.put_document("db", "partial", {"_id": "excluded", "active": False, "email": "x"})
+            await engine.put_document("db", "partial", {"_id": "included", "active": True, "email": "y"})
+            await engine.create_index(
+                "db",
+                "partial",
+                ["email"],
+                name="email_partial",
+                partial_filter_expression={"active": True},
+            )
+            partial = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "partial", {"email": "x"})
+            ]
+
+            await engine.put_document("db", "collated", {"_id": "match", "name": "Ada"})
+            await engine.create_index("db", "collated", ["name"], name="name_1")
+            collated = [
+                document["_id"]
+                async for document in self._scan(
+                    engine,
+                    "db",
+                    "collated",
+                    {"name": "ada"},
+                    collation={"locale": "en", "strength": 2},
+                )
+            ]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(top_level, ["top-level"])
+        self.assertEqual(nested, ["nested"])
+        self.assertEqual(sparse, ["missing", "null"])
+        self.assertEqual(partial, ["excluded"])
+        self.assertEqual(collated, ["match"])
+
+    async def test_indexed_multikey_cache_rebuilds_and_updates_every_array_value(self):
+        engine = MemoryEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "coll", {"_id": "document", "tags": ["a", "b"]})
+            await engine.create_index("db", "coll", ["tags"], name="tags_1")
+
+            index_map = engine._index_data["db"]["coll"]["tags_1"]
+            self.assertEqual(index_map[(engine._typed_engine_key("a"),)], {engine._storage_key("document")})
+            self.assertEqual(index_map[(engine._typed_engine_key("b"),)], {engine._storage_key("document")})
+
+            await engine.put_document("db", "coll", {"_id": "document", "tags": ["b", "c"]})
+
+            index_map = engine._index_data["db"]["coll"]["tags_1"]
+            self.assertNotIn((engine._typed_engine_key("a"),), index_map)
+            self.assertEqual(index_map[(engine._typed_engine_key("b"),)], {engine._storage_key("document")})
+            self.assertEqual(index_map[(engine._typed_engine_key("c"),)], {engine._storage_key("document")})
+            found = [
+                document["_id"]
+                async for document in self._scan(engine, "db", "coll", {"tags": "c"})
+            ]
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(found, ["document"])
 
     async def test_scan_collection_sorts_array_fields_by_min_and_max_element(self):
         engine = MemoryEngine()

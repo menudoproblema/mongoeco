@@ -1379,14 +1379,126 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-    async def test_create_unique_index_rejects_existing_array_traversal_payloads(self):
+    async def test_create_unique_index_enforces_existing_array_traversal_payloads(self):
         engine = SQLiteEngine()
         await engine.connect()
         try:
             await engine.put_document("db", "coll", {"_id": "1", "items": [{"name": "a"}]})
+            await engine.put_document("db", "coll", {"_id": "2", "items": [{"name": "b"}]})
+            await engine.create_index("db", "coll", ["items.name"], unique=True)
 
-            with self.assertRaises(OperationFailure):
-                await engine.create_index("db", "coll", ["items.name"], unique=True)
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "coll", {"_id": "3", "items": [{"name": "a"}]})
+        finally:
+            await engine.disconnect()
+
+    async def test_unique_multikey_index_rejects_overlaps_across_documents(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document("db", "existing", {"_id": "1", "tags": ["a", "b"]})
+            await engine.put_document("db", "existing", {"_id": "2", "tags": ["b", "c"]})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.create_index("db", "existing", ["tags"], unique=True)
+
+            await engine.create_index("db", "writes", ["tags"], unique=True)
+            await engine.put_document("db", "writes", {"_id": "1", "tags": ["a", "b", "b"]})
+            await engine.put_document("db", "writes", {"_id": "2", "tags": ["c", "d"]})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "writes", {"_id": "3", "tags": ["b", "e"]})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "writes", {"_id": "4", "tags": "a"})
+            with self.assertRaises(DuplicateKeyError):
+                await self._update(
+                    engine,
+                    "db",
+                    "writes",
+                    {"_id": "2"},
+                    {"$set": {"tags": ["b", "d"]}},
+                )
+
+            await engine.put_document(
+                "db",
+                "compound_existing",
+                {"_id": "1", "tenant": "a", "tags": ["x", "shared"]},
+            )
+            await engine.put_document(
+                "db",
+                "compound_existing",
+                {"_id": "2", "tenant": "a", "tags": ["shared", "z"]},
+            )
+            with self.assertRaises(DuplicateKeyError):
+                await engine.create_index("db", "compound_existing", ["tenant", "tags"], unique=True)
+
+            await engine.create_index("db", "compound_writes", ["tenant", "tags"], unique=True)
+            await engine.put_document(
+                "db",
+                "compound_writes",
+                {"_id": "1", "tenant": "a", "tags": ["x", "shared"]},
+            )
+            await engine.put_document(
+                "db",
+                "compound_writes",
+                {"_id": "2", "tenant": "b", "tags": ["shared", "z"]},
+            )
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document(
+                    "db",
+                    "compound_writes",
+                    {"_id": "3", "tenant": "a", "tags": ["shared", "z"]},
+                )
+
+            await engine.create_index(
+                "db",
+                "partial",
+                ["tags"],
+                unique=True,
+                partial_filter_expression={"active": True},
+            )
+            await engine.put_document("db", "partial", {"_id": "1", "tags": ["shared"], "active": False})
+            await engine.put_document("db", "partial", {"_id": "2", "tags": ["shared"], "active": False})
+            await engine.put_document("db", "partial", {"_id": "3", "tags": ["shared"], "active": True})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "partial", {"_id": "4", "tags": ["shared"], "active": True})
+
+            retained = await engine.get_document("db", "writes", "2")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(retained, {"_id": "2", "tags": ["c", "d"]})
+
+    async def test_unique_index_uses_its_collation_and_is_scoped_to_its_collection(self):
+        engine = SQLiteEngine()
+        collation = {"locale": "en", "strength": 2}
+        await engine.connect()
+        try:
+            await engine.put_document("db", "existing", {"_id": "1", "name": "Ada"})
+            await engine.put_document("db", "existing", {"_id": "2", "name": "ada"})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.create_index("db", "existing", ["name"], unique=True, collation=collation)
+
+            await engine.create_index("db", "writes", ["name"], unique=True, collation=collation)
+            await engine.put_document("db", "writes", {"_id": "1", "name": "Grace"})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "writes", {"_id": "2", "name": "grace"})
+            await engine.put_document("db", "writes", {"_id": "3", "name": "Lin"})
+            with self.assertRaises(DuplicateKeyError):
+                await self._update(
+                    engine,
+                    "db",
+                    "writes",
+                    {"_id": "3"},
+                    {"$set": {"name": "GRACE"}},
+                )
+
+            await engine.create_index("db", "array_writes", ["names"], unique=True, collation=collation)
+            await engine.put_document("db", "array_writes", {"_id": "1", "names": ["Ada"]})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "array_writes", {"_id": "2", "names": ["ada"]})
+
+            await engine.create_index("db", "indexed", ["email"], unique=True)
+            await engine.put_document("db", "indexed", {"_id": "1", "email": "shared@example.com"})
+            await engine.put_document("db", "other", {"_id": "1", "email": "shared@example.com"})
         finally:
             await engine.disconnect()
 
@@ -1396,6 +1508,97 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         try:
             with patch.object(engine, "_load_indexes", return_value=[{"unique": False, "fields": ["items.name"]}]):
                 engine._validate_document_against_unique_indexes("db", "coll", {"items": [{"name": "a"}]})
+        finally:
+            await engine.disconnect()
+
+    async def test_compound_multikey_index_rejects_parallel_arrays(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document(
+                "db",
+                "existing",
+                {"_id": "1", "tags": ["a"], "labels": ["priority"]},
+            )
+            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+                await engine.create_index("db", "existing", ["tags", "labels"])
+
+            await engine.create_index("db", "writes", ["tags", "labels"])
+            await engine.put_document(
+                "db",
+                "writes",
+                {"_id": "1", "tags": ["a"], "labels": "priority"},
+            )
+            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+                await engine.put_document(
+                    "db",
+                    "writes",
+                    {"_id": "2", "tags": ["b"], "labels": ["bulk"]},
+                )
+            with self.assertRaisesRegex(OperationFailure, "more than one array field"):
+                await self._update(
+                    engine,
+                    "db",
+                    "writes",
+                    {"_id": "1"},
+                    {"$set": {"labels": ["bulk"]}},
+                )
+
+            await engine.create_index("db", "embedded", ["items.code", "items.rank"])
+            await engine.put_document(
+                "db",
+                "embedded",
+                {
+                    "_id": "1",
+                    "items": [
+                        {"code": "A", "rank": 1},
+                        {"code": "B", "rank": 2},
+                    ],
+                },
+            )
+            retained = await engine.get_document("db", "writes", "1")
+        finally:
+            await engine.disconnect()
+
+        self.assertEqual(retained, {"_id": "1", "tags": ["a"], "labels": "priority"})
+
+    async def test_unique_index_rejects_repeated_missing_field_values(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.create_index("db", "coll", ["email"], unique=True)
+            await engine.put_document("db", "coll", {"_id": "1"})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "coll", {"_id": "2"})
+        finally:
+            await engine.disconnect()
+
+    async def test_unique_compound_index_correlates_fields_from_the_same_array(self):
+        engine = SQLiteEngine()
+        await engine.connect()
+        try:
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "1", "a": [{"loc": "A", "qty": 5}, {"qty": 10}]},
+            )
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "2", "a": [{"loc": "A"}, {"qty": 5}]},
+            )
+            await engine.create_index("db", "coll", ["a.loc", "a.qty"], unique=True)
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "3", "a": [{"loc": "A", "qty": 10}]},
+            )
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document(
+                    "db",
+                    "coll",
+                    {"_id": "4", "a": [{"loc": "A", "qty": 5}]},
+                )
         finally:
             await engine.disconnect()
 
@@ -1432,14 +1635,16 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-    async def test_unique_index_rejects_future_documents_that_traverse_arrays(self):
+    async def test_unique_index_enforces_future_documents_that_traverse_arrays(self):
         engine = SQLiteEngine()
         await engine.connect()
         try:
             await engine.create_index("db", "coll", ["items.name"], unique=True)
+            await engine.put_document("db", "coll", {"_id": "1", "items": [{"name": "a"}]})
+            await engine.put_document("db", "coll", {"_id": "2", "items": [{"name": "b"}]})
 
-            with self.assertRaises(OperationFailure):
-                await engine.put_document("db", "coll", {"_id": "1", "items": [{"name": "a"}]})
+            with self.assertRaises(DuplicateKeyError):
+                await engine.put_document("db", "coll", {"_id": "3", "items": [{"name": "a"}]})
         finally:
             await engine.disconnect()
 

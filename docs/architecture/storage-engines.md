@@ -133,6 +133,14 @@ Tambien en el mantenimiento fisico de indices existe ya una frontera propia:
 - `_sqlite_index_runtime.py` concentra asegurado de indices fisicos, rebuild de
   filas derivadas y backfills de `scalar_index_entries` / `multikey_entries`.
 
+Los indices fisicos de SQLite son aceleradores sobre una tabla de documentos
+compartida. La semantica logica de cada indice (en especial `unique`, sparse,
+partial, collation y multikey) se valida por base y coleccion en el engine, no
+mediante una restriccion fisica que pueda cruzar namespaces. `MemoryEngine`
+aplica la misma separacion: sus mapas de indice solo se usan para seleccionar
+candidatos cuando son seguros y el filtrado documental final conserva el
+contrato observable.
+
 Con eso, `sqlite.py` conserva el lifecycle general y el wiring de operaciones,
 pero deja de ser el contenedor principal de:
 

@@ -8,6 +8,19 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.1.1] - 2026-08-11
+
+### Fixed
+
+- `MemoryEngine` ya no descarta coincidencias de igualdad en rutas anidadas
+  cuando existe un indice sobre esa ruta. La seleccion de candidatos conserva
+  las semanticas de indices parciales, sparse, ocultos, multikey y collation.
+- Los indices unicos de Memory y SQLite comparan correctamente entradas
+  multikey, rutas anidadas que atraviesan arrays, collations e indices
+  compuestos; tambien rechazan arrays paralelos en un indice compuesto.
+- SQLite valida la unicidad logica por base y coleccion, evitando que un indice
+  fisico compartido imponga una restriccion entre namespaces distintos.
+
 ## [4.1.0] - 2026-07-26
 
 ### Added

@@ -36,7 +36,7 @@ with MongoClient(SQLiteEngine("app.db")) as client:
 
 ## Example
 
-* [examples/sqlite_embedded_app.py](/Users/uve/Proyectos/mongoeco2/examples/sqlite_embedded_app.py)
+* [sqlite_embedded_app.py](../../examples/sqlite_embedded_app.py)
 
 That example shows:
 

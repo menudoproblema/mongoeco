@@ -4,10 +4,9 @@ from collections.abc import Callable, Iterable
 from copy import deepcopy
 import sqlite3
 
-from mongoeco.core.operation_limits import enforce_deadline
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.sqlite_query import index_expressions_sql
-from mongoeco.engines.virtual_indexes import normalize_partial_filter_expression
+from mongoeco.engines.virtual_indexes import document_in_virtual_index, normalize_partial_filter_expression
 from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.types import (
     Document,
@@ -66,7 +65,6 @@ def create_index(
     mark_index_metadata_changed: Callable[[str, str], None],
     invalidate_collection_features_cache: Callable[[str, str], None],
     load_indexes: Callable[[str, str], list[EngineIndexRecord]],
-    field_traverses_array_in_collection: Callable[[str, str, str], bool],
     supports_multikey_index: Callable[[list[str], bool], bool],
     physical_index_name: Callable[[str, str, str], str],
     physical_multikey_index_name: Callable[[str, str, str], str],
@@ -75,6 +73,8 @@ def create_index(
     replace_multikey_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, EngineIndexRecord], None],
     replace_scalar_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, EngineIndexRecord], None],
     load_documents: Callable[[str, str], Iterable[tuple[str, Document]]],
+    validate_compound_multikey_document: Callable[[Document, EngineIndexRecord], None],
+    unique_index_conflict: Callable[[Document, Document, EngineIndexRecord], tuple[object, ...] | None],
     quote_identifier: Callable[[str], str],
     validate_ttl_index_candidates: Callable[[list[EngineIndexRecord]], None] | None = None,
     weights: dict[str, int] | None = None,
@@ -205,11 +205,6 @@ def create_index(
                 )
             continue
 
-    if unique:
-        for field in fields:
-            if field_traverses_array_in_collection(db_name, coll_name, field):
-                raise OperationFailure("SQLite unique indexes do not support paths that traverse arrays")
-
     expressions = None
     if ordered_index:
         expressions = ", ".join(
@@ -223,7 +218,6 @@ def create_index(
                 ],
             ]
     )
-    unique_sql = "UNIQUE " if unique and not (sparse or partial_filter_expression is not None) else ""
     index_metadata = EngineIndexRecord(
         name=index_name,
         physical_name=physical_name,
@@ -255,6 +249,22 @@ def create_index(
             ttl_indexes.append(index_metadata)
         validate_ttl_index_candidates(ttl_indexes)
 
+    seen_documents: list[Document] = []
+    for _storage_key, document in load_documents(db_name, coll_name):
+        enforce_deadline_fn(deadline)
+        if not document_in_virtual_index(document, index_metadata):
+            continue
+        validate_compound_multikey_document(document, index_metadata)
+        if unique:
+            for existing_document in seen_documents:
+                duplicate_key = unique_index_conflict(document, existing_document, index_metadata)
+                if duplicate_key is None:
+                    continue
+                raise DuplicateKeyError(
+                    f"Duplicate key for unique index '{index_name}': {fields}={duplicate_key!r}"
+                )
+            seen_documents.append(document)
+
     try:
         with sqlite_write_scope(
             conn,
@@ -263,8 +273,10 @@ def create_index(
             rollback_write=rollback_write,
         ):
             if physical_name is not None and expressions is not None:
+                # Physical indexes span every namespace in the shared table.
+                # Unique constraints are enforced above and during writes instead.
                 conn.execute(
-                    f"CREATE {unique_sql}INDEX {quote_identifier(physical_name)} "
+                    f"CREATE INDEX {quote_identifier(physical_name)} "
                     f"ON documents ({expressions})"
                 )
             if multikey:

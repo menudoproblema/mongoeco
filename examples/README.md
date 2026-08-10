@@ -12,31 +12,31 @@ Use them when you want to answer one of these questions quickly:
 
 ## Embedded app
 
-* [memory_quickstart.py](/Users/uve/Proyectos/mongoeco2/examples/memory_quickstart.py)
+* [memory_quickstart.py](memory_quickstart.py)
   Async-first CRUD with `MemoryEngine`.
-* [sqlite_embedded_app.py](/Users/uve/Proyectos/mongoeco2/examples/sqlite_embedded_app.py)
+* [sqlite_embedded_app.py](sqlite_embedded_app.py)
   Small embedded application with `SQLiteEngine`.
 
 ## Test runtime
 
-* [test_runtime_local.py](/Users/uve/Proyectos/mongoeco2/examples/test_runtime_local.py)
+* [test_runtime_local.py](test_runtime_local.py)
   Run the same local contract against `MemoryEngine` and `SQLiteEngine`,
   including `$search.phrase` with `slop`.
 
 ## Local search and retrieval
 
-* [search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
+* [search_and_vector_local.py](search_and_vector_local.py)
   Local `$search` and `$vectorSearch`, including exact `phrase` versus
   `phrase.slop`, numeric `near`, richer field mappings including
   `embeddedDocuments`, plus title/body and embedded-path `compound` with
   `equals` + `in` + `range` + `near` + `exists` + `regex`, and projected
   `vectorSearchScore`.
-* [vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
+* [vector_search_diagnostics.py](vector_search_diagnostics.py)
   Public-facing local hybrid retrieval diagnostics: compare `MemoryEngine`
   versus `SQLiteEngine`, read `scoreBreakdown`, `candidatePlan`,
   `hybridRetrieval`, `pruningSummary`, `prefilterSources`, projected
   `vectorSearchScore`, residual filters and exact fallback.
-* [cxp_adapter.py](/Users/uve/Proyectos/mongoeco2/examples/cxp_adapter.py)
+* [cxp_adapter.py](cxp_adapter.py)
   Inspect the canonical `database/mongodb` catalog, the reusable CXP profile
   export, the evaluated profile support view, an operation-centric catalog, a
   simple profile gate, write operation metadata, and the `cxp` projection

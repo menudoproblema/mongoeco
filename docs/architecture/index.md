@@ -32,14 +32,14 @@ completa de verdad de la estructura interna.
 
 ## Ruta de lectura recomendada
 
-1. [system-overview.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/system-overview.md)
-2. [api-surfaces.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/api-surfaces.md)
-3. [core-runtime.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/core-runtime.md)
-4. [storage-engines.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/storage-engines.md)
-5. [driver-and-wire.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/driver-and-wire.md)
-6. [change-streams-and-collation.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/change-streams-and-collation.md)
-7. [testing-and-compatibility.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/testing-and-compatibility.md)
-8. [decisions/index.md](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/index.md)
+1. [system-overview.md](system-overview.md)
+2. [api-surfaces.md](api-surfaces.md)
+3. [core-runtime.md](core-runtime.md)
+4. [storage-engines.md](storage-engines.md)
+5. [driver-and-wire.md](driver-and-wire.md)
+6. [change-streams-and-collation.md](change-streams-and-collation.md)
+7. [testing-and-compatibility.md](testing-and-compatibility.md)
+8. [decisions/index.md](decisions/index.md)
 
 ## Patrones principales
 
@@ -67,15 +67,15 @@ Los patrones de diseno que aparecen de forma sistematica en el codigo son:
 
 | ADR | Tema | Decision vigente |
 | --- | --- | --- |
-| [ADR-001](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/ADR-001-async-first-y-sync-adaptador.md) | Async-first | La semantica primaria vive en la superficie async y la sync adapta sobre ella |
-| [ADR-002](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/ADR-002-dialecto-y-perfil-como-ejes-distintos.md) | Compatibilidad | `mongodb_dialect` y `pymongo_profile` se modelan como ejes separados |
-| [ADR-003](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/ADR-003-planning-mode-y-degradacion-explicita.md) | Planning | `STRICT` y `RELAXED` hacen visible la degradacion en vez de ocultarla |
-| [ADR-004](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/ADR-004-engines-con-protocolos-delgados.md) | Engines | El contrato de storage se define con protocolos delgados, no con una base monolitica |
-| [ADR-005](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/ADR-005-sqlite-modular-y-memory-como-baseline.md) | Engines locales | `SQLiteEngine` se modulariza por subsistemas y `MemoryEngine` actua como baseline semantico local |
-| [ADR-006](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/ADR-006-change-streams-locales-y-persistencia-opcional.md) | Change streams | Son locales, acotados y opcionalmente persistentes, no distribuidos |
-| [ADR-007](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/ADR-007-sdam-parcial-y-explicito.md) | Driver | Se soporta un subconjunto honesto de SDAM, no una emulacion completa de cluster |
-| [ADR-008](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/ADR-008-pyicu-opcional-y-pyuca-como-fallback.md) | Collation | `PyICU` es opcional y `pyuca` cubre el subset Unicode basico |
-| [ADR-009](/Users/uve/Proyectos/mongoeco2/docs/architecture/decisions/ADR-009-parity-tests-como-politica-de-aceptacion.md) | Testing | Toda feature publica compartida entra con parity tests async/sync y cross-engine |
+| [ADR-001](decisions/ADR-001-async-first-y-sync-adaptador.md) | Async-first | La semantica primaria vive en la superficie async y la sync adapta sobre ella |
+| [ADR-002](decisions/ADR-002-dialecto-y-perfil-como-ejes-distintos.md) | Compatibilidad | `mongodb_dialect` y `pymongo_profile` se modelan como ejes separados |
+| [ADR-003](decisions/ADR-003-planning-mode-y-degradacion-explicita.md) | Planning | `STRICT` y `RELAXED` hacen visible la degradacion en vez de ocultarla |
+| [ADR-004](decisions/ADR-004-engines-con-protocolos-delgados.md) | Engines | El contrato de storage se define con protocolos delgados, no con una base monolitica |
+| [ADR-005](decisions/ADR-005-sqlite-modular-y-memory-como-baseline.md) | Engines locales | `SQLiteEngine` se modulariza por subsistemas y `MemoryEngine` actua como baseline semantico local |
+| [ADR-006](decisions/ADR-006-change-streams-locales-y-persistencia-opcional.md) | Change streams | Son locales, acotados y opcionalmente persistentes, no distribuidos |
+| [ADR-007](decisions/ADR-007-sdam-parcial-y-explicito.md) | Driver | Se soporta un subconjunto honesto de SDAM, no una emulacion completa de cluster |
+| [ADR-008](decisions/ADR-008-pyicu-opcional-y-pyuca-como-fallback.md) | Collation | `PyICU` es opcional y `pyuca` cubre el subset Unicode basico |
+| [ADR-009](decisions/ADR-009-parity-tests-como-politica-de-aceptacion.md) | Testing | Toda feature publica compartida entra con parity tests async/sync y cross-engine |
 
 ## Limites conscientes del producto
 

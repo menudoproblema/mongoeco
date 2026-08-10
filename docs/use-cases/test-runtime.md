@@ -39,7 +39,7 @@ with MongoClient(MemoryEngine()) as client:
 
 ## Example
 
-* [examples/test_runtime_local.py](/Users/uve/Proyectos/mongoeco2/examples/test_runtime_local.py)
+* [test_runtime_local.py](../../examples/test_runtime_local.py)
 
 That example shows:
 

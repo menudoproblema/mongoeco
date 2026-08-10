@@ -898,6 +898,11 @@ Notas observables adicionales de runtime:
 * `createIndexes` y `create_index()` aceptan ya `hidden` como metadata local
   explicita del indice, y los `hint` contra indices ocultos fallan de forma
   estable en lugar de ignorarse silenciosamente.
+* Los indices `unique` se validan por namespace tambien cuando una ruta
+  indexada atraviesa arrays. Entradas multikey repetidas dentro de un mismo
+  documento se permiten, pero las que colisionan con otro documento fallan;
+  un patron compuesto no puede aportar arrays paralelos desde mas de una ruta
+  indexada.
 * `explain` en SQLite materializa tambien un bloque `pushdown` para hacer
   visible si la ruta ejecuta SQL puro, plan hibrido o fallback Python, junto
   con `usesSqlRuntime`, `pythonSort` y `fallbackReason` cuando aplica.

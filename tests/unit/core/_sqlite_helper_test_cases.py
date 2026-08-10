@@ -2741,7 +2741,6 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 mark_index_metadata_changed=lambda *_args: None,
                 invalidate_collection_features_cache=lambda *_args: None,
                 load_indexes=lambda *_args: [],
-                field_traverses_array_in_collection=lambda *_args: False,
                 supports_multikey_index=lambda *_args: False,
                 physical_index_name=lambda *_args: "physical_idx",
                 physical_multikey_index_name=lambda *_args: "multikey_idx",
@@ -2750,6 +2749,8 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 replace_multikey_entries_for_document=lambda *_args: None,
                 replace_scalar_entries_for_document=lambda *_args: None,
                 load_documents=lambda *_args: [],
+                validate_compound_multikey_document=lambda *_args: None,
+                unique_index_conflict=lambda *_args: None,
                 quote_identifier=lambda name: f'"{name}"',
             )
             self.assertEqual(name, "_id_")

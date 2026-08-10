@@ -96,8 +96,8 @@ with MongoClient(SQLiteEngine("search.db")) as client:
 
 ## Examples
 
-* [examples/search_and_vector_local.py](/Users/uve/Proyectos/mongoeco2/examples/search_and_vector_local.py)
-* [examples/vector_search_diagnostics.py](/Users/uve/Proyectos/mongoeco2/examples/vector_search_diagnostics.py)
+* [search_and_vector_local.py](../../examples/search_and_vector_local.py)
+* [vector_search_diagnostics.py](../../examples/vector_search_diagnostics.py)
 
 These examples show:
 
