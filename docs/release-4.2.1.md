@@ -1,6 +1,13 @@
 # Release 4.2.1
 
-Status: release cerrada; publicacion pendiente.
+Status: release cerrada y publicada en PyPI.
+
+Distribucion: <https://pypi.org/project/mongoeco/4.2.1/>
+
+- wheel SHA-256:
+  `19cde0de287dc0d037bdadc267fefad7086b56ad45e95556b15b43c9a6ed4607`;
+- sdist SHA-256:
+  `d93f69ff423327f12ecaffd931fc08efddfcb78b1c4383000d309ee86c30ad65`.
 
 ## Correcciones de persistencia
 
@@ -41,8 +48,10 @@ elevar su minimo a `mongoeco>=4.2.1` y eliminar cualquier normalizador local de
 - reproducciones consumidoras de `PERSIST-008` y `PERSIST-009`;
 - build de wheel/sdist, `twine check` y smoke tests de instalacion limpia.
 
-Los resultados finales de matrices consumidoras y los hashes de artefactos se
-registran tras publicar los bytes definitivos en PyPI.
+Los hashes publicados por PyPI coinciden con los artefactos locales. Las dos
+reproducciones consumidoras bloqueantes y las matrices completas de los siete
+repositorios consumidores pasan contra `mongoeco==4.2.1` instalado desde
+`site-packages`.
 
 Las suites diferenciales contra MongoDB real 7/8 no se ejecutaron porque
 `MONGOECO_REAL_MONGODB_URI` no esta configurada. No bloquean este hotfix: no se
