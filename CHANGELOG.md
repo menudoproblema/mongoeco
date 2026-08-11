@@ -8,6 +8,45 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-08-11
+
+### Added
+
+- Las expresiones de agregacion `$min`, `$max`, `$sum` y `$avg` funcionan en
+  proyecciones y updates por pipeline, incluida la semantica distinta de
+  operandos array unicos y listas de expresiones.
+- `bulk_write` acepta directamente los seis modelos oficiales de PyMongo:
+  `InsertOne`, `UpdateOne`, `UpdateMany`, `ReplaceOne`, `DeleteOne` y
+  `DeleteMany`, preservando `collation`, `array_filters`, `hint` y `sort`.
+- Los cursores async admiten `sort(key, direction)`, consumo incremental con
+  `to_list(length=...)` y cierre explicito; la superficie sync conserva paridad
+  para esas firmas.
+
+### Changed
+
+- La frontera publica devuelve tipos BSON oficiales de PyMongo, incluidos
+  `bson.ObjectId` en documentos y resultados de escritura.
+- Todas las entradas de coleccion normalizan `datetime` a UTC naive y precision
+  BSON de milisegundos antes de filtrar, agregar o persistir.
+- `aggregate()` captura `$$NOW` al crear el cursor, de modo que consumirlo mas
+  tarde no cambia el instante del comando.
+
+### Fixed
+
+- Las selecciones internas de escrituras mantienen tipos BSON internos; esto
+  evita perder la identidad de almacenamiento en SQLite despues de exponer un
+  `_id` publico como `bson.ObjectId`.
+- Los modelos bulk oficiales con `pymongo.collation.Collation` se adaptan a un
+  documento interno sin acoplar el core a tipos del driver.
+- Los `_id` generados mutan los documentos de entrada con `bson.ObjectId` y los
+  upserts parciales de `BulkWriteError.details` tampoco filtran IDs internos.
+- Proyecciones, filtros parciales de indices y pipelines de change streams
+  atraviesan la misma frontera BSON que el resto de operaciones. SQLite
+  persiste la metadata de esos indices con el codec reversible.
+- La metadata publica de indices, los eventos de change streams y el scope de
+  `bson.Code` materializan recursivamente los tipos BSON oficiales; los flags
+  BSON `l` y `u` de `bson.Regex` se conservan en round trips.
+
 ## [4.1.1] - 2026-08-11
 
 ### Fixed

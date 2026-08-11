@@ -1,29 +1,36 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterable, Callable, Iterable, Sequence
-from copy import deepcopy
-from datetime import datetime
 import re
 import time
 
-from mongoeco.api._async._collection_bulk import execute_bulk_write
+from collections.abc import AsyncIterable, Callable, Iterable, Sequence
+from copy import deepcopy
+from datetime import datetime
+
+from mongoeco.api._async import (
+    _collection_indexing,
+    _collection_modify,
+    _collection_reads,
+)
+from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async._collection_bulk import (
     BulkWritePreparationContext as _BulkWriteContext,
     PreparedBulkWriteRequest as _PreparedBulkWriteRequest,
+    execute_bulk_write,
+    normalize_bulk_write_request,
 )
-from mongoeco.api._async import _collection_indexing
-from mongoeco.api._async import _collection_modify
-from mongoeco.api._async import _collection_reads
 from mongoeco.api._async._collection_runtime import (
     CollectionRuntimeCoordinator,
 )
-from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async._collection_watch import (
     CollectionChangeStreamConfig,
     create_change_stream_hub,
     open_collection_change_stream,
 )
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
+from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
+from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
 from mongoeco.api.argument_validation import (
     HintSpec,
     normalize_sort_spec as _normalize_sort_spec,
@@ -31,7 +38,13 @@ from mongoeco.api.argument_validation import (
     validate_hint_spec as _validate_hint_spec,
     validate_max_time_ms as _validate_max_time_ms,
 )
-from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub
+from mongoeco.api.operations import (
+    AggregateOperation,
+    FindOperation,
+    UpdateOperation,
+    compile_aggregate_operation,
+    compile_find_operation,
+)
 from mongoeco.api.public_api import (
     ARG_UNSET,
     COLLECTION_DELETE_MANY_SPEC,
@@ -47,16 +60,7 @@ from mongoeco.api.public_api import (
     normalize_aggregate_operation_arguments,
     normalize_public_operation_arguments,
 )
-from mongoeco.api.operations import (
-    AggregateOperation,
-    FindOperation,
-    UpdateOperation,
-    compile_aggregate_operation,
-    compile_find_operation,
-)
-from mongoeco.api._async.cursor import AsyncCursor
-from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
-from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
+from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -66,28 +70,37 @@ from mongoeco.compat import (
     resolve_pymongo_profile_resolution,
 )
 from mongoeco.core.aggregation import Pipeline
+from mongoeco.core.bson_scalars import (
+    normalize_utc_bson_datetime,
+    utc_bson_now,
+)
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
-from mongoeco.core.expression_context import ExpressionExecutionContext, set_execution_now
-from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
+from mongoeco.core.expression_context import (
+    ExpressionExecutionContext,
+    set_execution_now,
+)
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import QueryNode
-from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.core.validation import (
     is_document,
     is_filter,
     is_projection,
     is_update,
 )
+from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters,
     BulkWriteResult,
     CodecOptions,
     CollationDocument,
+    DeleteMany,
+    DeleteOne,
     DeleteResult,
     Document,
     DocumentId,
@@ -99,8 +112,8 @@ from mongoeco.types import (
     InsertOne,
     InsertOneResult,
     ObjectId,
-    Projection,
     PlanningMode,
+    Projection,
     ReadConcern,
     ReadPreference,
     ReplaceOne,
@@ -115,15 +128,13 @@ from mongoeco.types import (
     UpdateResult,
     WriteConcern,
     WriteModel,
-    DeleteOne,
-    DeleteMany,
     normalize_codec_options,
     normalize_index_keys,
     normalize_read_concern,
     normalize_read_preference,
     normalize_write_concern,
 )
-from mongoeco.errors import DuplicateKeyError, OperationFailure
+
 
 _FILTER_UNSET = ARG_UNSET
 _UPDATE_UNSET = ARG_UNSET
@@ -295,7 +306,7 @@ class AsyncCollection:
             return {}
         if not is_filter(filter_spec):
             raise TypeError('filter_spec must be a dict')
-        return filter_spec
+        return DocumentCodec.to_internal(filter_spec)
 
     @staticmethod
     def _normalize_projection(projection: object | None) -> Projection | None:
@@ -303,28 +314,19 @@ class AsyncCollection:
             return None
         if not is_projection(projection):
             raise TypeError('projection must be a dict')
-        return projection
+        return DocumentCodec.to_internal(projection)
 
     @staticmethod
     def _require_write_requests(requests: object) -> list[WriteModel]:
         if not isinstance(requests, list):
             raise TypeError('requests must be a list of write models')
-        normalized = list(requests)
-        if not normalized:
+        raw_requests = list(requests)
+        if not raw_requests:
             raise ValueError('requests must not be empty')
-        supported = (
-            InsertOne,
-            UpdateOne,
-            UpdateMany,
-            ReplaceOne,
-            DeleteOne,
-            DeleteMany,
-        )
-        if not all(isinstance(request, supported) for request in normalized):
-            raise TypeError(
-                'bulk_write requests must be write model instances'
-            )
-        return normalized
+        return [
+            normalize_bulk_write_request(request)
+            for request in raw_requests
+        ]
 
     @staticmethod
     def _require_update(update_spec: object) -> Update:
@@ -345,7 +347,7 @@ class AsyncCollection:
                     raise ValueError(
                         "update pipeline stages must start with '$'"
                     )
-            return update_spec
+            return DocumentCodec.to_internal(update_spec)
         if not is_update(update_spec):
             raise TypeError('update_spec must be a dict or list')
         if not update_spec:
@@ -357,7 +359,7 @@ class AsyncCollection:
         for operator, params in update_spec.items():
             if not is_document(params):
                 raise TypeError(f'{operator} value must be a dict')
-        return update_spec
+        return DocumentCodec.to_internal(update_spec)
 
     @staticmethod
     def _require_replacement(replacement: object) -> Document:
@@ -367,7 +369,7 @@ class AsyncCollection:
             isinstance(key, str) and key.startswith('$') for key in replacement
         ):
             raise ValueError('replacement must not contain update operators')
-        return replacement
+        return DocumentCodec.to_internal(replacement)
 
     @staticmethod
     def _normalize_hint(hint: object | None) -> HintSpec | None:
@@ -416,7 +418,7 @@ class AsyncCollection:
                 raise OperationFailure(
                     '$lookup let variable names must begin with a lowercase letter or non-ascii character'
                 )
-        return let
+        return DocumentCodec.to_internal(let)
 
     @staticmethod
     def _normalize_array_filters(
@@ -428,11 +430,11 @@ class AsyncCollection:
             raise TypeError('array_filters must be a list of dicts')
         if not all(is_filter(item) for item in array_filters):
             raise TypeError('array_filters must be a list of dicts')
-        return array_filters
+        return DocumentCodec.to_internal(array_filters)
 
     def _apply_codec_options_to_document(self, document: Document) -> Document:
         materialized = DocumentCodec.apply_codec_options(
-            document,
+            DocumentCodec.to_pymongo(document),
             codec_options=self._codec_options,
         )
         if not isinstance(materialized, dict):
@@ -448,6 +450,17 @@ class AsyncCollection:
         if document is None:
             return None
         return self._apply_codec_options_to_document(document)
+
+    @staticmethod
+    def _to_public_update_result(
+        result: UpdateResult[DocumentId],
+    ) -> UpdateResult[DocumentId]:
+        return UpdateResult(
+            matched_count=result.matched_count,
+            modified_count=result.modified_count,
+            upserted_id=DocumentCodec.to_pymongo(result.upserted_id),
+            acknowledged=result.acknowledged,
+        )
 
     @staticmethod
     def _normalize_index_keys(keys: object) -> IndexKeySpec:
@@ -829,9 +842,9 @@ class AsyncCollection:
         set_execution_now(context.now)
         original = self._require_document(document)
         if '_id' not in original:
-            original['_id'] = ObjectId()
+            original['_id'] = DocumentCodec.to_pymongo(ObjectId())
         assert_valid_root_document_id(original['_id'])
-        doc = deepcopy(original)
+        doc = DocumentCodec.to_internal(deepcopy(original))
 
         def _insert_one_profile_command() -> dict[str, object]:
             return {
@@ -885,7 +898,9 @@ class AsyncCollection:
             )
         else:
             self._mark_change_event_gap()
-        return InsertOneResult(inserted_id=doc['_id'])
+        return InsertOneResult(
+            inserted_id=DocumentCodec.to_pymongo(doc['_id'])
+        )
 
     async def insert_many(
         self,
@@ -901,9 +916,9 @@ class AsyncCollection:
         normalized_documents: list[Document] = []
         for original in self._require_documents(documents):
             if '_id' not in original:
-                original['_id'] = ObjectId()
+                original['_id'] = DocumentCodec.to_pymongo(ObjectId())
             assert_valid_root_document_id(original['_id'])
-            doc = deepcopy(original)
+            doc = DocumentCodec.to_internal(deepcopy(original))
             normalized_documents.append(doc)
 
         def _insert_many_profile_command() -> dict[str, object]:
@@ -996,7 +1011,12 @@ class AsyncCollection:
             else:
                 for _inserted_id in inserted_ids:
                     self._mark_change_event_gap()
-            return InsertManyResult(inserted_ids=inserted_ids)
+            return InsertManyResult(
+                inserted_ids=[
+                    DocumentCodec.to_pymongo(document_id)
+                    for document_id in inserted_ids
+                ]
+            )
 
         for doc in normalized_documents:
             try:
@@ -1070,7 +1090,12 @@ class AsyncCollection:
         else:
             for _inserted_id in inserted_ids:
                 self._mark_change_event_gap()
-        return InsertManyResult(inserted_ids=inserted_ids)
+        return InsertManyResult(
+            inserted_ids=[
+                DocumentCodec.to_pymongo(document_id)
+                for document_id in inserted_ids
+            ]
+        )
 
     async def bulk_write(
         self,
@@ -1101,7 +1126,18 @@ class AsyncCollection:
             comment=comment,
             session=session,
         )
-        return result
+        return BulkWriteResult(
+            inserted_count=result.inserted_count,
+            matched_count=result.matched_count,
+            modified_count=result.modified_count,
+            deleted_count=result.deleted_count,
+            upserted_count=result.upserted_count,
+            upserted_ids={
+                index: DocumentCodec.to_pymongo(document_id)
+                for index, document_id in result.upserted_ids.items()
+            },
+            acknowledged=result.acknowledged,
+        )
 
     async def find_one(
         self,
@@ -1161,8 +1197,8 @@ class AsyncCollection:
             profile=self._pymongo_profile,
         )
         operation = compile_find_operation(
-            options.get('filter_spec'),
-            projection=options.get('projection'),
+            self._normalize_filter(options.get('filter_spec')),
+            projection=self._normalize_projection(options.get('projection')),
             collation=options.get('collation'),
             sort=options.get('sort'),
             skip=options.get('skip', 0),
@@ -1171,7 +1207,7 @@ class AsyncCollection:
             comment=options.get('comment'),
             max_time_ms=options.get('max_time_ms'),
             batch_size=options.get('batch_size'),
-            variables=options.get('let'),
+            variables=self._normalize_let(options.get('let')),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
@@ -1208,14 +1244,14 @@ class AsyncCollection:
             extra_kwargs=kwargs,
         )
         operation = compile_aggregate_operation(
-            options['pipeline'],
+            DocumentCodec.to_internal(options['pipeline']),
             collation=options.get('collation'),
             hint=options.get('hint'),
             comment=options.get('comment'),
             max_time_ms=options.get('max_time_ms'),
             batch_size=options.get('batch_size'),
             allow_disk_use=options.get('allow_disk_use'),
-            let=options.get('let'),
+            let=self._normalize_let(options.get('let')),
             dialect=self._mongodb_dialect,
             planning_mode=self._planning_mode,
         )
@@ -1362,7 +1398,7 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> UpdateResult[DocumentId]:
-        return await _collection_modify.update_one(
+        result = await _collection_modify.update_one(
             self,
             filter_spec,
             update_spec,
@@ -1379,6 +1415,7 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
+        return self._to_public_update_result(result)
 
     async def _perform_upsert_update(
         self,
@@ -1417,7 +1454,7 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> UpdateResult[DocumentId]:
-        return await _collection_modify.update_many(
+        result = await _collection_modify.update_many(
             self,
             filter_spec,
             update_spec,
@@ -1433,6 +1470,7 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
+        return self._to_public_update_result(result)
 
     async def replace_one(
         self,
@@ -1450,7 +1488,7 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> UpdateResult[DocumentId]:
-        return await _collection_modify.replace_one(
+        result = await _collection_modify.replace_one(
             self,
             filter_spec,
             replacement,
@@ -1465,6 +1503,7 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
+        return self._to_public_update_result(result)
 
     async def find_one_and_update(
         self,
@@ -1487,7 +1526,7 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> Document | None:
-        return await _collection_modify.find_one_and_update(
+        document = await _collection_modify.find_one_and_update(
             self,
             filter_spec,
             update_spec,
@@ -1507,6 +1546,7 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
+        return self._apply_codec_options_to_optional_document(document)
 
     async def find_one_and_replace(
         self,
@@ -1527,7 +1567,7 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> Document | None:
-        return await _collection_modify.find_one_and_replace(
+        document = await _collection_modify.find_one_and_replace(
             self,
             filter_spec,
             replacement,
@@ -1545,6 +1585,7 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
+        return self._apply_codec_options_to_optional_document(document)
 
     async def find_one_and_delete(
         self,
@@ -1561,7 +1602,7 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> Document | None:
-        return await _collection_modify.find_one_and_delete(
+        document = await _collection_modify.find_one_and_delete(
             self,
             filter_spec,
             filter=filter,
@@ -1575,6 +1616,7 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
+        return self._apply_codec_options_to_optional_document(document)
 
     async def delete_one(
         self,

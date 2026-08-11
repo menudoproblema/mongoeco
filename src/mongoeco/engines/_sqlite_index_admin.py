@@ -4,6 +4,8 @@ from collections.abc import Callable, Iterable
 from copy import deepcopy
 import sqlite3
 
+from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.json_compat import json_dumps_compact
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.sqlite_query import index_expressions_sql
 from mongoeco.engines.virtual_indexes import document_in_virtual_index, normalize_partial_filter_expression
@@ -24,9 +26,6 @@ from mongoeco.types import (
     normalize_index_keys,
     special_index_directions,
 )
-from mongoeco.core.json_compat import json_dumps_compact
-
-
 def list_index_documents(indexes: Iterable[EngineIndexRecord]) -> list[IndexDocument]:
     result = [default_id_index_definition().to_list_document()]
     result.extend(index.to_definition().to_list_document() for index in indexes)
@@ -309,7 +308,13 @@ def create_index(
                     1 if sparse else 0,
                     1 if hidden else 0,
                     json_dumps_compact(collation) if collation is not None else None,
-                    json_dumps_compact(partial_filter_expression) if partial_filter_expression is not None else None,
+                    (
+                        json_dumps_compact(
+                            DocumentCodec.encode(partial_filter_expression)
+                        )
+                        if partial_filter_expression is not None
+                        else None
+                    ),
                     expire_after_seconds,
                     json_dumps_compact(definition.weights) if definition.weights is not None else None,
                     definition.default_language,

@@ -20,7 +20,7 @@ SUPPORTED_AGGREGATION_EXPRESSION_OPERATORS = frozenset(
     {
         "$literal", "$convert", "$eq", "$cmp", "$ne", "$gt", "$gte", "$lt", "$lte", "$and", "$or",
         "$in", "$nin", "$all", "$exists", "$elemMatch", "$ifNull", "$cond", "$switch", "$abs", "$add",
-        "$multiply", "$subtract", "$divide", "$mod", "$exp", "$ln", "$log", "$log10", "$pow", "$round",
+        "$multiply", "$subtract", "$divide", "$mod", "$sum", "$avg", "$min", "$max", "$exp", "$ln", "$log", "$log10", "$pow", "$round",
         "$sqrt", "$stdDevPop", "$stdDevSamp", "$median", "$percentile", "$floor", "$ceil", "$trunc",
         "$range", "$slice", "$firstN", "$lastN", "$maxN", "$minN", "$size", "$arrayElemAt",
         "$allElementsTrue", "$anyElementTrue", "$objectToArray", "$zip", "$isArray", "$bitAnd", "$bitNot",

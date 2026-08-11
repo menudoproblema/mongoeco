@@ -136,8 +136,17 @@ class Cursor:
         if self._started:
             raise InvalidOperation("cannot modify cursor after iteration has started")
 
-    def sort(self, sort: SortSpec) -> "Cursor":
+    def sort(
+        self,
+        key_or_list: SortSpec | str,
+        direction: int | None = None,
+    ) -> "Cursor":
         self._ensure_mutable()
+        sort = (
+            [(key_or_list, 1 if direction is None else direction)]
+            if isinstance(key_or_list, str)
+            else key_or_list
+        )
         self._sort = _normalize_sort_spec(sort)
         self._invalidate()
         return self
@@ -259,8 +268,54 @@ class Cursor:
 
         return _CursorIterator(self, async_iterable)
 
-    def to_list(self) -> list[Document]:
-        return list(self._load())
+    def to_list(self, length: int | None = None) -> list[Document]:
+        self._ensure_open()
+        if length is not None and length < 0:
+            raise ValueError("length must be non-negative or None")
+        if length == 0:
+            return []
+        if (
+            length is None
+            and not self._started
+            and self._active_async_iterable is None
+        ):
+            return list(self._load())
+
+        documents: list[Document] = []
+        while length is None or len(documents) < length:
+            document = self._next_for_to_list()
+            if document is None:
+                break
+            documents.append(document)
+        return documents
+
+    def _next_for_to_list(self) -> Document | None:
+        if self._exhausted:
+            return None
+        self._started = True
+        active = self._active_async_iterable
+        if active is None:
+            active = self._async_collection.find(
+                self._filter_spec,
+                self._projection,
+                collation=self._collation,
+                sort=self._sort,
+                skip=self._skip,
+                limit=self._limit,
+                hint=self._hint,
+                comment=self._comment,
+                max_time_ms=self._max_time_ms,
+                batch_size=self._batch_size,
+                let=self._let,
+                session=self._session,
+            ).__aiter__()
+            self._active_async_iterable = active
+        try:
+            return self._client._run(active.__anext__())
+        except StopAsyncIteration:
+            self._exhausted = True
+            self._close_active_iterator(active)
+            return None
 
     def first(self) -> Document | None:
         self._ensure_open()

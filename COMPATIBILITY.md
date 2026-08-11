@@ -78,11 +78,38 @@ interno de `$$REMOVE` tampoco puede escapar a `$ifNull` ni a acumuladores.
 `timestamp`; las fechas de tipo `date` se truncan a milisegundos para respetar
 la precisión BSON.
 
-`bulk_write` agrupa modelos en lotes lógicos clásicos `insert`/`update`/`delete`
+`bulk_write` acepta los seis modelos oficiales de PyMongo (`InsertOne`,
+`UpdateOne`, `UpdateMany`, `ReplaceOne`, `DeleteOne` y `DeleteMany`) ademas de
+los modelos equivalentes de `mongoeco`. Preserva `collation`, `array_filters`,
+`hint` y `sort`; esta ultima opcion sigue su gate por perfil PyMongo.
+
+La ejecucion agrupa los modelos en lotes lógicos clásicos
+`insert`/`update`/`delete`
 de hasta 100.000 modelos: runs contiguos en modo ordenado y grupos por familia
 en modo no ordenado. Cada lote comparte un `$$NOW`. No emula todavía límites de
 tamaño BSON/mensaje ni el comando `bulkWrite` introducido para clientes modernos
 de MongoDB 8.0.
+
+### Frontera BSON publica
+
+Las entradas de coleccion atraviesan una frontera BSON comun antes de llegar al
+motor. Esto convierte tipos oficiales de `bson`, normaliza recursivamente los
+`datetime` a UTC naive y trunca microsegundos a milisegundos. La misma regla se
+aplica a documentos, filtros, replacements, updates, `let`, pipelines y modelos
+bulk. Las proyecciones de lectura y los `partialFilterExpression` de indices
+usan la misma normalizacion; SQLite guarda estos ultimos con el codec
+reversible, no como JSON BSON-incompleto.
+
+Las lecturas y los IDs de resultados de escritura se materializan con tipos
+oficiales de PyMongo (`bson.ObjectId`, `bson.Binary`, `bson.Decimal128`,
+`bson.Regex`, `bson.Timestamp` y `bson.DBRef`). Las selecciones internas de una
+escritura no cruzan esa frontera publica, para conservar estable la identidad
+de almacenamiento. La misma materializacion recursiva se aplica a metadata de
+indices, eventos de change streams y detalles parciales de errores bulk.
+
+Los cursores de `aggregate()` capturan su contexto inmutable, incluido `$$NOW`,
+al crearse. Los cursores async de `find` y `aggregate` son de consumo unico y
+admiten `to_list(length=None)`, longitudes parciales y `close()`.
 
 ### Reloj inyectable para runtimes locales
 

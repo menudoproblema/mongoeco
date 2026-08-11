@@ -28,6 +28,7 @@ class UpdateOne:
     hint: str | SortSpec | None = None
     comment: Any | None = None
     let: dict[str, Any] | None = None
+    collation: Any | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,6 +40,7 @@ class UpdateMany:
     hint: str | SortSpec | None = None
     comment: Any | None = None
     let: dict[str, Any] | None = None
+    collation: Any | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,6 +52,7 @@ class ReplaceOne:
     hint: str | SortSpec | None = None
     comment: Any | None = None
     let: dict[str, Any] | None = None
+    collation: Any | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +61,7 @@ class DeleteOne:
     hint: str | SortSpec | None = None
     comment: Any | None = None
     let: dict[str, Any] | None = None
+    collation: Any | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +70,7 @@ class DeleteMany:
     hint: str | SortSpec | None = None
     comment: Any | None = None
     let: dict[str, Any] | None = None
+    collation: Any | None = None
 
 
 type WriteModel = InsertOne | UpdateOne | UpdateMany | ReplaceOne | DeleteOne | DeleteMany

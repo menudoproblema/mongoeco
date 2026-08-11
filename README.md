@@ -462,7 +462,7 @@ best treated as pre-release.
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
-* [docs/release-4.1.1.md](docs/release-4.1.1.md)
+* [docs/release-4.2.0.md](docs/release-4.2.0.md)
 * [TODO.md](TODO.md)
 * [MISSING_FEATURES.md](MISSING_FEATURES.md)
 

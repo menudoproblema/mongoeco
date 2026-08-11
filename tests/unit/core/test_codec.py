@@ -9,11 +9,13 @@ try:
     from bson.max_key import MaxKey as BsonMaxKey
     from bson.min_key import MinKey as BsonMinKey
     from bson.objectid import ObjectId as BsonObjectId
+    from bson.regex import Regex as BsonRegex
 except Exception:  # pragma: no cover - optional dependency
     BsonCode = None
     BsonMaxKey = None
     BsonMinKey = None
     BsonObjectId = None
+    BsonRegex = None
 
 from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
 from mongoeco.core.codec import DocumentCodec
@@ -283,6 +285,25 @@ class DocumentCodecTests(unittest.TestCase):
         self.assertEqual(decoded["code"].scope, original["code"].scope)
         self.assertEqual(decoded["min"], original["min"])
         self.assertEqual(decoded["max"], original["max"])
+
+    def test_document_codec_materializes_nested_code_scope_and_regex_flags(self):
+        if BsonCode is None or BsonObjectId is None or BsonRegex is None:
+            self.skipTest("bson is not installed")
+
+        object_id = BsonObjectId()
+        internal = DocumentCodec.to_internal(
+            {
+                "code": BsonCode("return owner", {"owner": object_id}),
+                "regex": BsonRegex("^owner", "ilu"),
+            }
+        )
+        public = DocumentCodec.to_pymongo(internal)
+
+        self.assertIs(type(public["code"]), BsonCode)
+        self.assertIs(type(public["code"].scope["owner"]), BsonObjectId)
+        self.assertEqual(public["code"].scope["owner"], object_id)
+        self.assertIs(type(public["regex"]), BsonRegex)
+        self.assertEqual(int(public["regex"].flags), int(BsonRegex("x", "ilu").flags))
 
     def test_document_codec_decode_reports_missing_optional_bson_support(self):
         with patch("mongoeco.core.codec.BsonMinKey", None):

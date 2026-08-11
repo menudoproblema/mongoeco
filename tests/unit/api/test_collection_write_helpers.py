@@ -912,6 +912,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                 (
                     'update_one',
                     {
+                        'collation': None,
                         'sort': None,
                         'array_filters': None,
                         'hint': 'req_hint',
@@ -923,6 +924,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                 (
                     'update_many',
                     {
+                        'collation': None,
                         'array_filters': None,
                         'hint': None,
                         'comment': 'bulk_comment',
@@ -933,6 +935,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                 (
                     'replace_one',
                     {
+                        'collation': None,
                         'sort': None,
                         'hint': None,
                         'comment': 'bulk_comment',
@@ -943,6 +946,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                 (
                     'delete_one',
                     {
+                        'collation': None,
                         'hint': None,
                         'comment': 'bulk_comment',
                         'let': {'scope': 'bulk'},
@@ -952,6 +956,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                 (
                     'delete_many',
                     {
+                        'collation': None,
                         'hint': None,
                         'comment': 'bulk_comment',
                         'let': {'scope': 'bulk'},

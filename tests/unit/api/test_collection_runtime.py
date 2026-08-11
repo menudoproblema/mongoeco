@@ -53,8 +53,15 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         collection = AsyncCollection(EngineStub(), "db", "coll")
         calls = []
 
-        def _build_cursor(operation, *, session=None):
-            calls.append((operation.filter_spec, session))
+        def _build_cursor(
+            operation,
+            *,
+            session=None,
+            apply_codec_options=True,
+        ):
+            calls.append(
+                (operation.filter_spec, session, apply_codec_options)
+            )
             return CursorStub()
 
         collection._build_cursor = _build_cursor  # type: ignore[method-assign]
@@ -68,7 +75,10 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         )
 
         self.assertEqual(result, {"_id": "selected"})
-        self.assertEqual(calls, [({"name": "Ada"}, "session-token")])
+        self.assertEqual(
+            calls,
+            [({"name": "Ada"}, "session-token", False)],
+        )
 
     def test_publish_change_event_is_noop_without_hub_and_delegates_with_hub(self):
         class EngineStub:

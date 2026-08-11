@@ -44,7 +44,17 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import get_document_value, set_document_value
 from mongoeco.core.search import TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Binary, DBRef, Decimal128, Document, ObjectId, Regex, Timestamp, UndefinedType
+from mongoeco.types import (
+    Binary,
+    DBRef,
+    Decimal128,
+    Document,
+    ObjectId,
+    Regex,
+    Timestamp,
+    UndefinedType,
+    is_object_id_like,
+)
 from mongoeco.core.aggregation.accumulators import _evaluate_pick_n_input
 from mongoeco.core.aggregation.planning import Pipeline
 from mongoeco.core.aggregation.spill import AggregationSpillPolicy
@@ -475,7 +485,7 @@ def _bson_value_size(value: Any) -> int:
         return 4 + 1 + len(value)
     if isinstance(value, uuid.UUID):
         return 4 + 1 + 16
-    if isinstance(value, ObjectId):
+    if is_object_id_like(value):
         return 12
     if isinstance(value, bool):
         return 1

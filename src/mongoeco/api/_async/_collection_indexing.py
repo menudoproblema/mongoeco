@@ -5,6 +5,7 @@ import time
 
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -44,6 +45,11 @@ async def create_index(
         raise TypeError("background must be a bool")
     if wildcard_projection is not None and not isinstance(wildcard_projection, dict):
         raise TypeError("wildcard_projection must be a dict or None")
+    normalized_partial_filter = (
+        None
+        if partial_filter_expression is None
+        else collection._normalize_filter(partial_filter_expression)
+    )
     expire_after_seconds = collection._normalize_expire_after_seconds(expire_after_seconds)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
     created_name = await collection._engine.create_index(
@@ -55,7 +61,7 @@ async def create_index(
         sparse=sparse,
         hidden=hidden,
         collation=collation,
-        partial_filter_expression=partial_filter_expression,
+        partial_filter_expression=normalized_partial_filter,
         expire_after_seconds=expire_after_seconds,
         weights=weights,
         default_language=default_language,
@@ -94,6 +100,13 @@ async def create_indexes(
     for index in models:
         try:
             enforce_deadline(deadline)
+            normalized_partial_filter = (
+                None
+                if index.partial_filter_expression is None
+                else collection._normalize_filter(
+                    index.partial_filter_expression
+                )
+            )
             name = await collection._engine.create_index(
                 collection._db_name,
                 collection._collection_name,
@@ -103,7 +116,7 @@ async def create_indexes(
                 sparse=index.sparse,
                 hidden=index.hidden,
                 collation=index.collation,
-                partial_filter_expression=index.partial_filter_expression,
+                partial_filter_expression=normalized_partial_filter,
                 expire_after_seconds=index.expire_after_seconds,
                 weights=index.weights,
                 default_language=index.default_language,
@@ -153,13 +166,18 @@ def list_indexes(
         comment=comment,
         session=session,
     )
-    return AsyncIndexCursor(
-        lambda: collection._engine.list_indexes(
+    async def _load_indexes() -> list[Document]:
+        documents = await collection._engine.list_indexes(
             collection._db_name,
             collection._collection_name,
             context=session,
         )
-    )
+        return [
+            collection._apply_codec_options_to_document(document)
+            for document in documents
+        ]
+
+    return AsyncIndexCursor(_load_indexes)
 
 
 async def index_information(
@@ -174,11 +192,12 @@ async def index_information(
         comment=comment,
         session=session,
     )
-    return await collection._engine.index_information(
+    information = await collection._engine.index_information(
         collection._db_name,
         collection._collection_name,
         context=session,
     )
+    return DocumentCodec.to_pymongo(information)
 
 
 async def drop_index(

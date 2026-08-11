@@ -7,6 +7,7 @@ import time
 import unittest
 import uuid
 from bson import decode_all
+from bson.objectid import ObjectId as BsonObjectId
 
 from mongoeco import (
     Binary,
@@ -3012,7 +3013,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     result = collection.insert_one({"name": "Ada"})
                     found = collection.find_one({"_id": result.inserted_id})
 
-                    self.assertIsInstance(result.inserted_id, ObjectId)
+                    self.assertIs(type(result.inserted_id), BsonObjectId)
                     self.assertEqual(found["name"], "Ada")
                     self.assertEqual(set(client.list_database_names()), {"test"})
                     self.assertEqual(client.test.list_collection_names(), ["users"])

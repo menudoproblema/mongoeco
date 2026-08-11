@@ -40,6 +40,8 @@ NUMERIC_EXPRESSION_OPERATORS = frozenset(
         "$subtract",
         "$divide",
         "$mod",
+        "$sum",
+        "$avg",
         "$bitAnd",
         "$bitOr",
         "$bitXor",
@@ -76,6 +78,21 @@ def evaluate_numeric_expression(
     require_expression_args: ExpressionArgValidator,
     missing_sentinel: object,
 ) -> Any:
+    if operator in {"$sum", "$avg"}:
+        values = _numeric_accumulator_expression_values(
+            document,
+            spec,
+            variables,
+            evaluate_expression_with_missing=evaluate_expression_with_missing,
+            missing_sentinel=missing_sentinel,
+        )
+        if not values:
+            return 0 if operator == "$sum" else None
+        total: object = 0
+        for value in values:
+            total = bson_add(total, value)
+        return total if operator == "$sum" else bson_divide(total, len(values))
+
     if operator in {"$add", "$multiply"}:
         args = require_expression_args(operator, spec, 2, None)
         raw_values = [evaluate_expression(document, item, variables) for item in args]
@@ -268,6 +285,33 @@ def _sum_accumulator_operand(value: Any) -> object | None:
     if is_bson_numeric(value) or isinstance(value, (int, float, decimal.Decimal)):
         return value
     return None
+
+
+def _numeric_accumulator_expression_values(
+    document: Document,
+    spec: object,
+    variables: dict[str, Any] | None,
+    *,
+    evaluate_expression_with_missing: ExpressionEvaluator,
+    missing_sentinel: object,
+) -> list[object]:
+    if isinstance(spec, list):
+        resolved_values = [
+            evaluate_expression_with_missing(document, item, variables)
+            for item in spec
+        ]
+    else:
+        resolved = evaluate_expression_with_missing(document, spec, variables)
+        resolved_values = resolved if isinstance(resolved, list) else [resolved]
+
+    values: list[object] = []
+    for value in resolved_values:
+        if value is missing_sentinel or value is None:
+            continue
+        operand = _sum_accumulator_operand(value)
+        if operand is not None:
+            values.append(operand)
+    return values
 
 
 def _stddev_accumulator_operand(value: Any) -> float | None:

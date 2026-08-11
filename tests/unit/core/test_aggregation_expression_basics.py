@@ -42,9 +42,91 @@ from mongoeco.errors import OperationFailure
 from mongoeco.types import Binary, Decimal128, ObjectId, Regex, Timestamp, UNDEFINED
 
 
-
-
 class AggregationExpressionBasicsTests(unittest.TestCase):
+    def test_evaluate_expression_supports_min_and_max_expression_lists(self):
+        document = {
+            "low": 3,
+            "high": 9,
+        }
+
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$max": ["$low", None, "$missing", "$high"]},
+            ),
+            9,
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$min": ["$high", None, "$missing", "$low"]},
+            ),
+            3,
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$max": [1, "text"]}),
+            "text",
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$max": [[1, 2], 3]}),
+            [1, 2],
+        )
+
+    def test_evaluate_expression_min_and_max_traverse_single_array_operand(self):
+        document = {
+            "scores": [3, "ignored", 9, 4],
+            "empty": [],
+        }
+
+        self.assertEqual(
+            evaluate_expression(document, {"$max": "$scores"}),
+            9,
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$min": "$scores"}),
+            3,
+        )
+        self.assertIsNone(
+            evaluate_expression(document, {"$max": "$empty"}),
+        )
+        self.assertIsNone(
+            evaluate_expression(document, {"$min": "$missing"}),
+        )
+
+    def test_sum_and_avg_distinguish_single_array_from_expression_list(self):
+        document = {
+            "scores": [3, "ignored", None, 9],
+            "low": 2,
+            "high": 8,
+        }
+
+        self.assertEqual(
+            evaluate_expression(document, {"$sum": "$scores"}),
+            12,
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$avg": "$scores"}),
+            6,
+        )
+        self.assertEqual(
+            evaluate_expression(
+                document,
+                {"$sum": ["$low", "$high", "$scores", "$missing"]},
+            ),
+            10,
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$avg": ["$low", "$high"]}),
+            5,
+        )
+        self.assertEqual(
+            evaluate_expression(document, {"$sum": "$missing"}),
+            0,
+        )
+        self.assertIsNone(
+            evaluate_expression(document, {"$avg": [None, "text"]}),
+        )
+
     def test_aggregation_spill_policy_skips_non_blocking_stages_and_invalid_thresholds(self):
         policy = AggregationSpillPolicy(threshold=10)
         documents = [{"_id": "1"}, {"_id": "2"}]

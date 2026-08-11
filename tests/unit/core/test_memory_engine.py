@@ -1501,7 +1501,21 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             {"key": [("expires_at", 1)], "expireAfterSeconds": 30},
         )
         self.assertIsNone(found)
-        self.assertEqual(remaining, [{"_id": "fresh", "expires_at": future, "name": "new"}])
+        self.assertEqual(
+            remaining,
+            [
+                {
+                    "_id": "fresh",
+                    "expires_at": future.astimezone(
+                        datetime.timezone.utc
+                    ).replace(
+                        tzinfo=None,
+                        microsecond=(future.microsecond // 1000) * 1000,
+                    ),
+                    "name": "new",
+                }
+            ],
+        )
 
     def test_ttl_helpers_cover_invalid_values_naive_datetimes_and_empty_collections(self):
         engine = MemoryEngine()

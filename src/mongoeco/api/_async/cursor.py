@@ -222,11 +222,14 @@ class AsyncCursor:
         self._apply_codec_options = apply_codec_options
         self._started = False
         self._exhausted = False
+        self._closed = False
         self._active_async_iterable: _AsyncCursorIterator | None = None
         self._operation_cache = None
         self._semantics_cache = None
 
     def _ensure_mutable(self) -> None:
+        if self._closed:
+            raise InvalidOperation("cannot modify cursor after it has been closed")
         if self._started:
             raise InvalidOperation("cannot modify cursor after iteration has started")
 
@@ -320,7 +323,9 @@ class AsyncCursor:
         return _AsyncCursorIterator(self, batch_size=batch_size, enforce_ownership=enforce_ownership)
 
     def __aiter__(self):
-        if self._exhausted and self._active_async_iterable is None:
+        if self._closed or (
+            self._exhausted and self._active_async_iterable is None
+        ):
             async def _empty():
                 if False:
                     yield None
@@ -330,8 +335,17 @@ class AsyncCursor:
             self._active_async_iterable = self._iter()
         return self._active_async_iterable
 
-    def sort(self, sort: SortSpec) -> "AsyncCursor":
+    def sort(
+        self,
+        key_or_list: SortSpec | str,
+        direction: int | None = None,
+    ) -> "AsyncCursor":
         self._ensure_mutable()
+        sort = (
+            [(key_or_list, 1 if direction is None else direction)]
+            if isinstance(key_or_list, str)
+            else key_or_list
+        )
         self._sort = _normalize_sort_spec(sort)
         self._invalidate_execution_cache()
         return self
@@ -379,16 +393,29 @@ class AsyncCursor:
         self._invalidate_execution_cache()
         return self
 
-    async def to_list(self) -> list[Document]:
+    async def to_list(
+        self,
+        length: int | None = None,
+    ) -> list[Document]:
+        if length is not None and length < 0:
+            raise ValueError("length must be non-negative or None")
+        if length == 0 or self._closed:
+            return []
         if self._limit == 0:
             return []
-        if self._limit == 1 and self._active_async_iterable is None and not self._started and not self._exhausted:
+        if length is None and self._limit == 1 and self._active_async_iterable is None and not self._started and not self._exhausted:
             first = await self.first()
             return [] if first is None else [first]
         operation = self._as_operation()
         started_at = time.perf_counter_ns()
         try:
-            documents = [document async for document in self]
+            documents: list[Document] = []
+            iterator = self.__aiter__()
+            while length is None or len(documents) < length:
+                try:
+                    documents.append(await iterator.__anext__())
+                except StopAsyncIteration:
+                    break
         except Exception as exc:
             profiler = getattr(self._collection, "_profile_operation", None)
             if callable(profiler):
@@ -409,6 +436,16 @@ class AsyncCursor:
                 operation=operation,
             )
         return documents
+
+    async def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        active = self._active_async_iterable
+        self._active_async_iterable = None
+        self._exhausted = True
+        if active is not None:
+            await active.close()
 
     async def first(self) -> Document | None:
         operation = self._as_operation()

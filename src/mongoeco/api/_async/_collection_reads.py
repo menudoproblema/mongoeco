@@ -1,18 +1,20 @@
 from __future__ import annotations
 
 import time
+
 from typing import TYPE_CHECKING
 
+from mongoeco.api._async._active_operations import track_active_operation
+from mongoeco.api.operations import compile_find_operation
 from mongoeco.api.public_api import (
     COLLECTION_COUNT_DOCUMENTS_SPEC,
     COLLECTION_DISTINCT_SPEC,
     COLLECTION_FIND_ONE_SPEC,
     normalize_public_operation_arguments,
 )
-from mongoeco.api._async._active_operations import track_active_operation
-from mongoeco.api.operations import compile_find_operation
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
+
 
 if TYPE_CHECKING:
     from mongoeco.api._async.collection import AsyncCollection
@@ -50,8 +52,8 @@ async def find_one(
         profile=collection._pymongo_profile,
     )
     operation = compile_find_operation(
-        options.get("filter_spec"),
-        projection=options.get("projection"),
+        collection._normalize_filter(options.get("filter_spec")),
+        projection=collection._normalize_projection(options.get("projection")),
         collation=options.get("collation"),
         sort=options.get("sort"),
         skip=options.get("skip", 0),
@@ -59,7 +61,7 @@ async def find_one(
         hint=options.get("hint"),
         comment=options.get("comment"),
         max_time_ms=options.get("max_time_ms"),
-        variables=options.get("let"),
+        variables=collection._normalize_let(options.get("let")),
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
@@ -156,7 +158,7 @@ async def count_documents(
         profile=collection._pymongo_profile,
     )
     operation = compile_find_operation(
-        options["filter_spec"],
+        collection._normalize_filter(options["filter_spec"]),
         projection={"_id": 1},
         collation=options.get("collation"),
         skip=options.get("skip", 0),
@@ -164,7 +166,7 @@ async def count_documents(
         hint=options.get("hint"),
         comment=options.get("comment"),
         max_time_ms=options.get("max_time_ms"),
-        variables=options.get("let"),
+        variables=collection._normalize_let(options.get("let")),
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )

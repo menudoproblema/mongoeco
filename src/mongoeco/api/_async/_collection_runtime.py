@@ -437,7 +437,11 @@ class CollectionRuntimeCoordinator:
             plan=plan,
             planning_mode=self._collection._planning_mode,
         )
-        return await self._collection._build_cursor(operation, session=session).first()
+        return await self._collection._build_cursor(
+            operation,
+            session=session,
+            apply_codec_options=False,
+        ).first()
 
     def build_cursor(
         self,

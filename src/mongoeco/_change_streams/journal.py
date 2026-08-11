@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ChangeEventSnapshot
 
@@ -20,10 +21,14 @@ def snapshot_to_document(snapshot: ChangeEventSnapshot) -> dict[str, object]:
         document["full_document"] = snapshot.full_document
     if snapshot.update_description is not None:
         document["update_description"] = snapshot.update_description
-    return document
+    encoded = DocumentCodec.encode(document)
+    if not isinstance(encoded, dict):
+        raise OperationFailure("change stream journal could not be encoded")
+    return encoded
 
 
 def snapshot_from_document(document: object) -> ChangeEventSnapshot:
+    document = DocumentCodec.decode(document)
     if not isinstance(document, dict):
         raise OperationFailure("change stream journal could not be loaded")
     token = document.get("token")

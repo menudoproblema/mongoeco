@@ -188,6 +188,21 @@ La regla vigente del proyecto es:
 - frontera arquitectonica ya extraida -> test estructural ligero que detecte
   reabsorcion de responsabilidades.
 
+Las fronteras BSON y temporal se validan ademas con una matriz transversal:
+
+- tipos oficiales `bson.*` como entrada y salida publica;
+- IDs generados y upserts en resultados de escritura;
+- precision de milisegundos en insert, replacement, update, filtros, `let`,
+  aggregate y bulk;
+- normalizacion de proyecciones, filtros parciales de indices y metadata
+  persistida por SQLite;
+- materializacion BSON de metadata de indices, change streams y errores bulk
+  parciales;
+- captura de `$$NOW` al crear el cursor, no al empezar a consumirlo;
+- modelos bulk oficiales y sus opciones por perfil PyMongo;
+- consumo incremental y cierre de cursores async y sync;
+- Memory y SQLite para todos los contratos compartidos.
+
 En la fase actual, eso incluye ya explicitamente:
 
 - parity async/sync y cross-engine para `$densify`, `$fill` y `$merge`;

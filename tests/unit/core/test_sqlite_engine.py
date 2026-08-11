@@ -2230,7 +2230,21 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             {"key": [("expires_at", 1)], "expireAfterSeconds": 30},
         )
         self.assertIsNone(found)
-        self.assertEqual(remaining, [{"_id": "fresh", "expires_at": future, "name": "new"}])
+        self.assertEqual(
+            remaining,
+            [
+                {
+                    "_id": "fresh",
+                    "expires_at": future.astimezone(
+                        datetime.timezone.utc
+                    ).replace(
+                        tzinfo=None,
+                        microsecond=(future.microsecond // 1000) * 1000,
+                    ),
+                    "name": "new",
+                }
+            ],
+        )
 
     async def test_virtual_unique_indexes_enforce_sparse_and_partial_semantics(self):
         engine = SQLiteEngine()

@@ -6,6 +6,7 @@ import json
 import time
 import weakref
 
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.errors import OperationFailure
 from mongoeco.types import ChangeEventDocument
 
@@ -39,7 +40,11 @@ class AsyncChangeStreamCursor:
             start_after=start_after,
             start_at_operation_time=start_at_operation_time,
         )
-        self._pipeline = compile_change_stream_pipeline(pipeline)
+        self._pipeline = compile_change_stream_pipeline(
+            DocumentCodec.to_internal(pipeline)
+            if pipeline is not None
+            else None
+        )
         self._max_await_time_ms = max_await_time_ms
         self._full_document = normalize_full_document_mode(full_document)
         self._closed = False
@@ -61,8 +66,8 @@ class AsyncChangeStreamCursor:
             transformed = apply_pipeline([document], self._pipeline)
             if not transformed:
                 return None
-            return transformed[0]
-        return document
+            return DocumentCodec.to_pymongo(transformed[0])
+        return DocumentCodec.to_pymongo(document)
 
     async def try_next(self) -> ChangeEventDocument | None:
         self._ensure_open()

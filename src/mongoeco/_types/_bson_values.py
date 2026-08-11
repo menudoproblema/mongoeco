@@ -61,11 +61,11 @@ class Regex:
     flags: str = ""
 
     def __post_init__(self) -> None:
-        invalid = sorted(set(self.flags) - {"i", "m", "s", "x"})
+        invalid = sorted(set(self.flags) - {"i", "l", "m", "s", "u", "x"})
         if invalid:
             joined = "".join(invalid)
             raise ValueError(f"unsupported regex flags: {joined}")
-        canonical = "".join(flag for flag in "imsx" if flag in self.flags)
+        canonical = "".join(flag for flag in "ilmsux" if flag in self.flags)
         object.__setattr__(self, "flags", canonical)
 
     def compile(self) -> re.Pattern[str]:

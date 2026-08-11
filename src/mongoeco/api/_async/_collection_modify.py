@@ -236,6 +236,7 @@ async def update_one(
                 limit=1,
             ),
             session=session,
+            apply_codec_options=False,
         ).first()
         if selected is not None and '_id' in selected:
             event_selected_id = selected['_id']
@@ -243,6 +244,7 @@ async def update_one(
         selected = await collection._build_cursor(
             compile_find_selection_from_update_operation(operation, limit=1),
             session=session,
+            apply_codec_options=False,
         ).first()
         if selected is None and not upsert:
             return UpdateResult(matched_count=0, modified_count=0)
@@ -302,6 +304,7 @@ async def update_one(
                 limit=1,
             ),
             session=session,
+            apply_codec_options=False,
         ).first()
         if selected is None:
             if upsert:
@@ -459,6 +462,7 @@ async def update_many(
             operation,
         ),
         session=session,
+        apply_codec_options=False,
     ).to_list()
     if not matched_documents:
         if upsert:
@@ -1084,6 +1088,7 @@ async def delete_one(
                 limit=1,
             ),
             session=session,
+            apply_codec_options=False,
         ).first()
         if selected_for_event is not None:
             if '_id' in selected_for_event:
@@ -1095,6 +1100,7 @@ async def delete_one(
                 limit=1,
             ),
             session=session,
+            apply_codec_options=False,
         ).first()
         if selected is None:
             return DeleteResult(deleted_count=0)
@@ -1186,6 +1192,7 @@ async def delete_many(
             operation,
         ),
         session=session,
+        apply_codec_options=False,
     ).to_list()
     deleted_count = 0
     for matched in matched_documents:

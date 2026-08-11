@@ -1,37 +1,56 @@
 import binascii
 import datetime
 import decimal
+import re
 import uuid
+
 from typing import Any
 
 from mongoeco._types.concerns import CodecOptions, UuidRepresentation
+
+
 try:
+    from bson.binary import Binary as BsonBinary
     from bson.code import Code as BsonCode
+    from bson.dbref import DBRef as BsonDBRef
+    from bson.decimal128 import Decimal128 as BsonDecimal128Public
     from bson.max_key import MaxKey as BsonMaxKey
     from bson.min_key import MinKey as BsonMinKey
+    from bson.objectid import ObjectId as BsonObjectId
+    from bson.regex import Regex as BsonRegex
+    from bson.son import SON as BsonSON
+    from bson.timestamp import Timestamp as BsonTimestamp
 except Exception:  # pragma: no cover - optional dependency
+    BsonBinary = None
     BsonCode = None
+    BsonDBRef = None
+    BsonDecimal128Public = None
     BsonMaxKey = None
     BsonMinKey = None
+    BsonObjectId = None
+    BsonRegex = None
+    BsonSON = None
+    BsonTimestamp = None
 
 from mongoeco.core.bson_scalars import (
     BsonDecimal128,
     BsonDouble,
     BsonInt32,
     BsonInt64,
+    normalize_utc_bson_datetime,
     unwrap_bson_numeric,
     validate_bson_value,
 )
 from mongoeco.types import (
+    SON,
+    UNDEFINED,
     Binary,
     DBRef,
     Decimal128,
     ObjectId,
     Regex,
-    SON,
     Timestamp,
     UndefinedType,
-    UNDEFINED,
     is_object_id_like,
     normalize_object_id,
 )
@@ -76,7 +95,18 @@ class DocumentCodec:
         )
 
     @staticmethod
+    def to_internal(data: Any) -> Any:
+        """Apply the BSON command boundary before engine evaluation."""
+        return DocumentCodec.decode(DocumentCodec.encode(data))
+
+    @staticmethod
     def encode(data: Any) -> Any:
+        if BsonSON is not None and isinstance(data, BsonSON):
+            validate_bson_value(data)
+            return DocumentCodec._tagged_value(
+                "son",
+                [[key, DocumentCodec.encode(value)] for key, value in data.items()],
+            )
         if isinstance(data, SON):
             validate_bson_value(data)
             return DocumentCodec._tagged_value(
@@ -99,6 +129,7 @@ class DocumentCodec:
         validate_bson_value(data)
 
         if isinstance(data, datetime.datetime):
+            data = normalize_utc_bson_datetime(data)
             return DocumentCodec._tagged_value("datetime", data.isoformat())
 
         if BsonMinKey is not None and isinstance(data, BsonMinKey):
@@ -119,12 +150,43 @@ class DocumentCodec:
                 str(normalize_object_id(data)),
             )
 
+        if BsonBinary is not None and isinstance(data, BsonBinary):
+            return DocumentCodec._tagged_value(
+                "binary",
+                {
+                    "hex": binascii.hexlify(bytes(data)).decode("ascii"),
+                    "subtype": data.subtype,
+                },
+            )
+
         if isinstance(data, Binary):
             return DocumentCodec._tagged_value(
                 "binary",
                 {
                     "hex": binascii.hexlify(bytes(data)).decode("ascii"),
                     "subtype": data.subtype,
+                },
+            )
+
+        if BsonRegex is not None and isinstance(data, BsonRegex):
+            flags = int(data.flags)
+            rendered_flags = "".join(
+                flag
+                for flag, mask in (
+                    ("i", re.IGNORECASE),
+                    ("l", re.LOCALE),
+                    ("m", re.MULTILINE),
+                    ("s", re.DOTALL),
+                    ("u", re.UNICODE),
+                    ("x", re.VERBOSE),
+                )
+                if flags & mask
+            )
+            return DocumentCodec._tagged_value(
+                "regex",
+                {
+                    "pattern": data.pattern,
+                    "flags": rendered_flags,
                 },
             )
 
@@ -141,6 +203,20 @@ class DocumentCodec:
             return DocumentCodec._tagged_value(
                 "timestamp",
                 {"time": data.time, "inc": data.inc},
+            )
+
+        if BsonTimestamp is not None and isinstance(data, BsonTimestamp):
+            return DocumentCodec._tagged_value(
+                "timestamp",
+                {"time": data.time, "inc": data.inc},
+            )
+
+        if BsonDecimal128Public is not None and isinstance(
+            data, BsonDecimal128Public
+        ):
+            return DocumentCodec._tagged_value(
+                "decimal128_public",
+                str(data),
             )
 
         if isinstance(data, Decimal128):
@@ -163,6 +239,23 @@ class DocumentCodec:
                     "id": DocumentCodec.encode(data.id),
                     "database": data.database,
                     "extras": DocumentCodec.encode(data.extras),
+                },
+            )
+
+        if BsonDBRef is not None and isinstance(data, BsonDBRef):
+            as_document = data.as_doc()
+            extras = {
+                key: value
+                for key, value in as_document.items()
+                if key not in {"$ref", "$id", "$db"}
+            }
+            return DocumentCodec._tagged_value(
+                "dbref",
+                {
+                    "collection": data.collection,
+                    "id": DocumentCodec.encode(data.id),
+                    "database": data.database,
+                    "extras": DocumentCodec.encode(extras),
                 },
             )
 
@@ -412,7 +505,60 @@ class DocumentCodec:
         return DocumentCodec._to_public_copy_on_write(data)
 
     @staticmethod
+    def to_pymongo(data: Any) -> Any:
+        """Materialize internal BSON values as the selected PyMongo surface."""
+        if BsonObjectId is None:
+            return data
+        if BsonCode is not None and isinstance(data, BsonCode):
+            scope = data.scope
+            return BsonCode(
+                str(data),
+                DocumentCodec.to_pymongo(scope) if scope is not None else None,
+            )
+        if type(data) is ObjectId:
+            return BsonObjectId(data.binary)
+        if type(data) is Binary:
+            return BsonBinary(bytes(data), subtype=data.subtype)
+        if type(data) is Decimal128:
+            return BsonDecimal128Public(str(data.value))
+        if type(data) is Regex:
+            return BsonRegex(data.pattern, data.flags)
+        if type(data) is Timestamp:
+            return BsonTimestamp(data.time, data.inc)
+        if type(data) is DBRef:
+            extras = DocumentCodec.to_pymongo(data.extras)
+            return BsonDBRef(
+                data.collection,
+                DocumentCodec.to_pymongo(data.id),
+                data.database,
+                **extras,
+            )
+        if type(data) is SON:
+            return BsonSON(
+                (key, DocumentCodec.to_pymongo(value))
+                for key, value in data.items()
+            )
+        if isinstance(data, dict):
+            return {
+                key: DocumentCodec.to_pymongo(value)
+                for key, value in data.items()
+            }
+        if isinstance(data, list):
+            return [DocumentCodec.to_pymongo(value) for value in data]
+        if isinstance(data, tuple):
+            return tuple(DocumentCodec.to_pymongo(value) for value in data)
+        return data
+
+    @staticmethod
     def _to_public_copy_on_write(data: Any) -> Any:
+        if type(data) is SON:
+            return SON(
+                (
+                    key,
+                    DocumentCodec._to_public_copy_on_write(value),
+                )
+                for key, value in data.items()
+            )
         if isinstance(data, dict):
             flat_changed = False
             flat_items: list[tuple[Any, Any]] = []

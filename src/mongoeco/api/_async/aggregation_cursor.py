@@ -112,24 +112,23 @@ class AsyncAggregationCursor:
         self._allow_disk_use = operation.allow_disk_use
         self._collation = normalize_collation(operation.collation)
         self._let = operation.let
-        self._execution_context: ExpressionExecutionContext | None = None
-        self._session = session
-
-    def _execution_variables(self) -> ExpressionExecutionContext:
-        if self._execution_context is None:
-            create_context = getattr(
-                self._collection, '_new_execution_context', None
-            )
+        create_context = getattr(
+            self._collection, '_new_execution_context', None
+        )
+        if isinstance(self._let, ExpressionExecutionContext):
+            self._execution_context = self._let
+        else:
             context = (
-                self._let
-                if isinstance(self._let, ExpressionExecutionContext)
-                else (
-                    create_context()
-                    if callable(create_context)
-                    else ExpressionExecutionContext(now=utc_bson_now())
-                )
+                create_context()
+                if callable(create_context)
+                else ExpressionExecutionContext(now=utc_bson_now())
             )
             self._execution_context = context.with_bindings(self._let)
+        self._session = session
+        self._active_async_iterator: AsyncIterator[Document] | None = None
+        self._closed = False
+
+    def _execution_variables(self) -> ExpressionExecutionContext:
         return self._execution_context
 
     def _ensure_session_can_use_engine(self) -> None:
@@ -1002,10 +1001,22 @@ class AsyncAggregationCursor:
                     DocumentCodec.to_public(strip_search_result_metadata(document))
                 )
 
-    async def to_list(self) -> list[Document]:
+    async def to_list(
+        self,
+        length: int | None = None,
+    ) -> list[Document]:
+        if length is not None and length < 0:
+            raise ValueError("length must be non-negative or None")
+        if length == 0 or self._closed:
+            return []
         started_at = time.perf_counter_ns()
         try:
-            documents = [document async for document in self]
+            documents: list[Document] = []
+            while length is None or len(documents) < length:
+                try:
+                    documents.append(await self.__anext__())
+                except StopAsyncIteration:
+                    break
         except Exception as exc:
             profiler = getattr(self._collection, "_profile_operation", None)
             if callable(profiler):
@@ -1024,6 +1035,17 @@ class AsyncAggregationCursor:
                 duration_ns=time.perf_counter_ns() - started_at,
             )
         return documents
+
+    async def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        active = self._active_async_iterator
+        self._active_async_iterator = None
+        if active is not None:
+            close = getattr(active, "aclose", None)
+            if callable(close):
+                await close()
 
     async def first(self) -> Document | None:
         started_at = time.perf_counter_ns()
@@ -1193,7 +1215,18 @@ class AsyncAggregationCursor:
         return explanation
 
     def __aiter__(self) -> AsyncIterator[Document]:
-        return self._stream_batches()
+        return self
+
+    async def __anext__(self) -> Document:
+        if self._closed:
+            raise StopAsyncIteration
+        if self._active_async_iterator is None:
+            self._active_async_iterator = self._stream_batches()
+        try:
+            return await self._active_async_iterator.__anext__()
+        except StopAsyncIteration:
+            await self.close()
+            raise
 
     def _spill_policy(self) -> AggregationSpillPolicy | None:
         if self._allow_disk_use is False:

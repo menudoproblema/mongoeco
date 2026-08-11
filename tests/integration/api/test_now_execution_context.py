@@ -1,13 +1,46 @@
 import unittest
 from datetime import UTC, datetime, timedelta
 
-from mongoeco import AsyncMongoClient, InsertOne, Timestamp, UpdateOne
+from bson.timestamp import Timestamp
+
+from mongoeco import AsyncMongoClient, InsertOne, UpdateOne
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import OperationFailure
 from tests.support import ENGINE_FACTORIES, open_client
 
 
 class NowExecutionContextIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_aggregate_captures_now_when_the_cursor_is_created(self):
+        initial = datetime(2026, 1, 2, 3, 4, 5, 987_654, tzinfo=UTC)
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                clock = [initial]
+                async with open_client(
+                    engine_name,
+                    now_factory=lambda: clock[0],
+                ) as client:
+                    collection = client.test.clock
+                    await collection.insert_one({'_id': 'value'})
+                    cursor = collection.aggregate(
+                        [
+                            {
+                                '$project': {
+                                    'now': '$$NOW',
+                                    'binding': '$$binding',
+                                }
+                            }
+                        ],
+                        let={'binding': 'captured'},
+                    )
+                    clock[0] += timedelta(seconds=1)
+
+                    document = (await cursor.to_list())[0]
+                    self.assertEqual(
+                        document['now'],
+                        datetime(2026, 1, 2, 3, 4, 5, 987_000),
+                    )
+                    self.assertEqual(document['binding'], 'captured')
+
     async def test_injected_clock_normalizes_and_survives_client_derivations(self):
         source = datetime(2026, 1, 2, 3, 4, 5, 987_654, tzinfo=UTC)
         clock = lambda: source

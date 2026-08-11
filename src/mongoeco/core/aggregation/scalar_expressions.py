@@ -7,6 +7,7 @@ import random
 import re
 import uuid
 from collections.abc import Callable
+from copy import deepcopy
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -53,6 +54,8 @@ SCALAR_EXPRESSION_OPERATORS = frozenset(
         "$toUUID",
         "$isArray",
         "$cmp",
+        "$min",
+        "$max",
     }
 )
 
@@ -210,7 +213,58 @@ def evaluate_scalar_expression(
             return 1
         return 0
 
+    if operator in {"$min", "$max"}:
+        return _evaluate_min_max_expression(
+            operator,
+            document,
+            spec,
+            variables,
+            dialect=dialect,
+            evaluate_expression_with_missing=evaluate_expression_with_missing,
+            missing_sentinel=missing_sentinel,
+        )
+
     raise OperationFailure(f"Unsupported scalar expression operator: {operator}")
+
+
+def _evaluate_min_max_expression(
+    operator: str,
+    document: Document,
+    spec: object,
+    variables: dict[str, Any] | None,
+    *,
+    dialect: MongoDialect,
+    evaluate_expression_with_missing: ExpressionEvaluator,
+    missing_sentinel: object,
+) -> Any:
+    if isinstance(spec, list):
+        candidates = [
+            evaluate_expression_with_missing(document, item, variables)
+            for item in spec
+        ]
+    else:
+        value = evaluate_expression_with_missing(document, spec, variables)
+        if isinstance(value, list):
+            candidates = [item for item in value if is_bson_numeric(item)]
+        else:
+            candidates = [value]
+
+    comparable = [
+        value
+        for value in candidates
+        if value is not missing_sentinel and value is not None
+    ]
+    if not comparable:
+        return None
+
+    selected = comparable[0]
+    for candidate in comparable[1:]:
+        comparison = dialect.policy.compare_values(candidate, selected)
+        if (operator == "$max" and comparison > 0) or (
+            operator == "$min" and comparison < 0
+        ):
+            selected = candidate
+    return deepcopy(selected)
 
 
 def _aggregation_type_name(value: Any, *, missing_sentinel: object) -> str:

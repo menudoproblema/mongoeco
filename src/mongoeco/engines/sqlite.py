@@ -2811,7 +2811,9 @@ class SQLiteEngine(AsyncStorageEngine):
             partial_filter_expression: Filter | None = None
             if partial_filter_json is not None:
                 try:
-                    partial_filter_expression = normalize_partial_filter_expression(json_loads(partial_filter_json))
+                    partial_filter_expression = normalize_partial_filter_expression(
+                        DocumentCodec.decode(json_loads(partial_filter_json))
+                    )
                 except (TypeError, ValueError, json.JSONDecodeError) as exc:
                     raise OperationFailure(
                         f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
