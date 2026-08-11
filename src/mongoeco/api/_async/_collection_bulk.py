@@ -184,8 +184,6 @@ class BulkWritePreparationContext:
                 normalize_collation(request.collation)
                 collection._require_update(request.update)
                 collection._normalize_hint(request.hint)
-                if request.array_filters is not None:
-                    collection._normalize_array_filters(request.array_filters)
                 if request.let is not None:
                     collection._normalize_let(request.let)
                 if isinstance(request, UpdateOne) and request.sort is not None:

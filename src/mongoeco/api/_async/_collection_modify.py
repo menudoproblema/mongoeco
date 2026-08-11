@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from mongoeco.api.argument_validation import HintSpec
 from mongoeco.api.operations import (
+    UpdateOperation,
     compile_find_selection_from_update_operation,
     compile_update_operation,
 )
@@ -23,9 +24,8 @@ from mongoeco.core.operators import UpdateEngine
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import compile_filter
-from mongoeco.core.identity import assert_document_matches_stored_lookup
 from mongoeco.core.upserts import seed_upsert_document
-from mongoeco.errors import OperationFailure, WriteError
+from mongoeco.errors import WriteError
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters,
@@ -55,64 +55,86 @@ def _bind_execution_context(operation, collection: AsyncCollection):
     )
 
 
-def _require_selected_document_id(document: Document) -> DocumentId:
-    if '_id' not in document:
-        raise OperationFailure('Cannot target a selected document without _id')
-    return document['_id']
-
-
-async def _require_stable_selected_storage_identity(
-    collection: AsyncCollection,
-    document: Document,
-    *,
-    session: ClientSession | None,
-) -> DocumentId:
-    document_id = document.get('_id')
-    stored = await collection._document_by_id(document_id, session=session)
-    assert_document_matches_stored_lookup(
-        document,
-        stored,
-        dialect=collection._mongodb_dialect,
-    )
-    return document_id
-
-
-async def _require_stable_selected_document_id(
-    collection: AsyncCollection,
-    document: Document,
-    *,
-    session: ClientSession | None,
-) -> DocumentId:
-    document_id = _require_selected_document_id(document)
-    await _require_stable_selected_storage_identity(
-        collection,
-        document,
-        session=session,
-    )
-    return document_id
+def _selected_document_id(document: Document) -> DocumentId:
+    # Legacy engine fixtures may contain documents persisted before automatic
+    # _id materialization. MongoDB lookup semantics target those with _id=None.
+    return document.get('_id')
 
 
 async def _delete_selected_document(
     collection: AsyncCollection,
     document: Document,
     *,
+    selector_operation: UpdateOperation,
     session: ClientSession | None,
 ) -> tuple[bool, Document | None]:
     document_key = (
         {'_id': deepcopy(document['_id'])} if '_id' in document else None
     )
-    document_id = await _require_stable_selected_storage_identity(
-        collection,
-        document,
+    document_id = _selected_document_id(document)
+    identity_filter = {'_id': document_id}
+    identity_operation = compile_update_operation(
+        identity_filter,
+        collation=selector_operation.collation,
+        let=selector_operation.let,
+        dialect=collection._mongodb_dialect,
+        plan=compile_filter(
+            identity_filter,
+            dialect=collection._mongodb_dialect,
+        ),
+        planning_mode=collection._planning_mode,
+    )
+    result = await collection._engine_delete_with_operation(
+        identity_operation,
+        selector_filter=selector_operation.filter_spec,
         session=session,
     )
-    deleted = await collection._engine.delete_document(
-        collection._db_name,
-        collection._collection_name,
-        document_id,
-        context=session,
+    return result.deleted_count == 1, document_key
+
+
+async def _replace_selected_document(
+    collection: AsyncCollection,
+    selected: Document,
+    replacement: Document,
+    *,
+    selector_operation: UpdateOperation,
+    session: ClientSession | None,
+    bypass_document_validation: bool,
+) -> tuple[UpdateResult[DocumentId], Document]:
+    selected_id = _selected_document_id(selected)
+    if '_id' in replacement and not collection._mongodb_dialect.values_equal(
+        replacement['_id'],
+        selected_id,
+    ):
+        raise WriteError(
+            'The _id field cannot be changed in a replacement document',
+            code=66,
+        )
+    document = collection._materialize_replacement_document(
+        selected,
+        replacement,
     )
-    return deleted, document_key
+    identity_filter = {'_id': selected_id}
+    operation = compile_update_operation(
+        identity_filter,
+        collation=selector_operation.collation,
+        let=selector_operation.let,
+        dialect=collection._mongodb_dialect,
+        plan=compile_filter(
+            identity_filter,
+            dialect=collection._mongodb_dialect,
+        ),
+        update_spec=[{'$replaceWith': {'$literal': deepcopy(document)}}],
+        planning_mode=collection._planning_mode,
+    )
+    result = await collection._engine_update_with_operation(
+        operation,
+        upsert=False,
+        selector_filter=selector_operation.filter_spec,
+        session=session,
+        bypass_document_validation=bypass_document_validation,
+    )
+    return result, document
 
 
 async def perform_upsert_update(
@@ -249,9 +271,7 @@ async def update_one(
         if selected is None and not upsert:
             return UpdateResult(matched_count=0, modified_count=0)
         if selected is not None:
-            selected_id = await _require_stable_selected_storage_identity(
-                collection, selected, session=session
-            )
+            selected_id = _selected_document_id(selected)
             identity_filter = {'_id': selected_id}
             identity_plan = compile_filter(
                 identity_filter, dialect=collection._mongodb_dialect
@@ -274,7 +294,7 @@ async def update_one(
                 hint=operation.hint,
                 session=session,
             )
-            if should_publish_change_events:
+            if should_publish_change_events and result.matched_count > 0:
                 updated = await collection._document_by_id(
                     selected_id, session=session
                 )
@@ -318,9 +338,7 @@ async def update_one(
                     bypass_document_validation=bypass_document_validation,
                 )
             return UpdateResult(matched_count=0, modified_count=0)
-        selected_id = await _require_stable_selected_storage_identity(
-            collection, selected, session=session
-        )
+        selected_id = _selected_document_id(selected)
         identity_filter = {'_id': selected_id}
         identity_plan = compile_filter(
             identity_filter, dialect=collection._mongodb_dialect
@@ -342,7 +360,7 @@ async def update_one(
             hint=operation.hint,
             session=session,
         )
-        if should_publish_change_events:
+        if should_publish_change_events and result.matched_count > 0:
             updated = await collection._document_by_id(
                 selected_id, session=session
             )
@@ -365,7 +383,6 @@ async def update_one(
         operation,
         upsert=upsert,
         upsert_seed=upsert_seed,
-        selector_filter=operation.filter_spec,
         session=session,
         bypass_document_validation=bypass_document_validation,
     )
@@ -389,7 +406,7 @@ async def update_one(
                 full_document=deepcopy(inserted),
                 session=session,
             )
-    elif event_selected_id is not None:
+    elif event_selected_id is not None and result.matched_count > 0:
         updated = await collection._document_by_id(
             event_selected_id, session=session
         )
@@ -485,11 +502,10 @@ async def update_many(
             )
         return UpdateResult(matched_count=0, modified_count=0)
 
+    matched_count = 0
     modified_count = 0
     for matched in matched_documents:
-        matched_id = await _require_stable_selected_storage_identity(
-            collection, matched, session=session
-        )
+        matched_id = _selected_document_id(matched)
         identity_filter = {'_id': matched_id}
         identity_plan = compile_filter(
             identity_filter, dialect=collection._mongodb_dialect
@@ -505,8 +521,13 @@ async def update_many(
             session=session,
             bypass_document_validation=bypass_document_validation,
         )
+        matched_count += result.matched_count
         modified_count += result.modified_count
-        updated = await collection._document_by_id(matched_id, session=session)
+        updated = (
+            await collection._document_by_id(matched_id, session=session)
+            if result.matched_count > 0
+            else None
+        )
         if updated is not None and '_id' in matched:
             collection._publish_change_event(
                 operation_type='update',
@@ -522,7 +543,7 @@ async def update_many(
         session=session,
     )
     return UpdateResult(
-        matched_count=len(matched_documents),
+        matched_count=matched_count,
         modified_count=modified_count,
     )
 
@@ -619,31 +640,11 @@ async def replace_one(
             upserted_id=document['_id'],
         )
 
-    if '_id' in replacement and (
-        '_id' not in selected
-        or not collection._mongodb_dialect.values_equal(
-            replacement['_id'], selected['_id']
-        )
-    ):
-        raise WriteError(
-            'The _id field cannot be changed in a replacement document',
-            code=66,
-        )
-    if '_id' in selected:
-        await _require_stable_selected_document_id(
-            collection, selected, session=session
-        )
-    document = collection._materialize_replacement_document(
-        selected, replacement
-    )
-    modified_count = (
-        0
-        if collection._mongodb_dialect.values_equal(selected, document)
-        else 1
-    )
-    await collection._put_replacement_document(
-        document,
-        overwrite=True,
+    result, document = await _replace_selected_document(
+        collection,
+        selected,
+        replacement,
+        selector_operation=operation,
         session=session,
         bypass_document_validation=bypass_document_validation,
     )
@@ -653,14 +654,14 @@ async def replace_one(
         hint=operation.hint,
         session=session,
     )
-    if '_id' in document:
+    if result.matched_count > 0 and '_id' in document:
         collection._publish_change_event(
             operation_type='replace',
             document_key={'_id': deepcopy(document['_id'])},
             full_document=deepcopy(document),
             session=session,
         )
-    return UpdateResult(matched_count=1, modified_count=modified_count)
+    return result
 
 
 async def find_one_and_update(
@@ -771,14 +772,12 @@ async def find_one_and_update(
             session=session,
         ).first()
 
-    before_id = await _require_stable_selected_storage_identity(
-        collection, before, session=session
-    )
+    before_id = _selected_document_id(before)
     identity_filter = {'_id': before_id}
     identity_plan = compile_filter(
         identity_filter, dialect=collection._mongodb_dialect
     )
-    await collection._engine_update_with_operation(
+    result = await collection._engine_update_with_operation(
         operation.with_overrides(
             filter_spec=identity_filter,
             plan=identity_plan,
@@ -790,6 +789,8 @@ async def find_one_and_update(
         session=session,
         bypass_document_validation=bypass_document_validation,
     )
+    if result.matched_count == 0:
+        return None
     after = await collection._document_by_id(before_id, session=session)
     if after is not None and '_id' in before:
         collection._publish_change_event(
@@ -918,25 +919,23 @@ async def find_one_and_replace(
             session=session,
         ).first()
 
-    before_id = await _require_stable_selected_storage_identity(
-        collection, before, session=session
-    )
-    identity_filter = {'_id': before_id}
-    await replace_one(
+    result, after = await _replace_selected_document(
         collection,
-        identity_filter,
+        before,
         replacement,
-        False,
-        filter=filter,
-        collation=operation.collation,
-        sort=None,
-        hint=None,
-        comment=operation.comment,
-        let=operation.let,
+        selector_operation=operation,
         bypass_document_validation=bypass_document_validation,
         session=session,
-        extra_kwargs={},
     )
+    if result.matched_count == 0:
+        return None
+    if '_id' in after:
+        collection._publish_change_event(
+            operation_type='replace',
+            document_key={'_id': deepcopy(after['_id'])},
+            full_document=deepcopy(after),
+            session=session,
+        )
     if return_document is ReturnDocument.BEFORE:
         return apply_projection(
             before,
@@ -944,9 +943,6 @@ async def find_one_and_replace(
             selector_filter=operation.filter_spec,
             dialect=collection._mongodb_dialect,
         )
-    after = await collection._document_by_id(before_id, session=session)
-    if after is None:
-        return None
     return apply_projection(
         after,
         projection,
@@ -1020,6 +1016,7 @@ async def find_one_and_delete(
     deleted, document_key = await _delete_selected_document(
         collection,
         before,
+        selector_operation=operation,
         session=session,
     )
     if not deleted:
@@ -1107,6 +1104,7 @@ async def delete_one(
         deleted, document_key = await _delete_selected_document(
             collection,
             selected,
+            selector_operation=operation,
             session=session,
         )
         collection._record_operation_metadata(
@@ -1199,6 +1197,7 @@ async def delete_many(
         deleted, document_key = await _delete_selected_document(
             collection,
             matched,
+            selector_operation=operation,
             session=session,
         )
         if deleted:

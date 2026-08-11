@@ -8,6 +8,24 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.2.1] - 2026-08-11
+
+### Fixed
+
+- `array_filters` atraviesa una unica vez la misma frontera BSON que los
+  documentos persistidos en `update_one`, `update_many`,
+  `find_one_and_update` y `bulk_write`, para superficies sync y async. Los
+  `datetime` anidados se convierten a UTC naive con precision de milisegundos
+  sin mutar el argumento del caller.
+- `find_one_and_update` revalida dentro del lock del engine tanto la identidad
+  preseleccionada como el filtro original completo. Un competidor que pierde
+  una condicion CAS devuelve no-match, no modifica el documento y no publica
+  un change event.
+- La misma revalidacion atomica cubre `update_one` con `sort` o `hint`,
+  `update_many`, `replace_one`, `find_one_and_replace`, `delete_one`,
+  `delete_many` y `find_one_and_delete` en Memory y SQLite, preservando los
+  documentos legacy sin `_id`.
+
 ## [4.2.0] - 2026-08-11
 
 ### Added

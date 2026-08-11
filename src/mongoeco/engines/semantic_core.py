@@ -72,6 +72,7 @@ class EngineReadExecutionPlan:
 class EngineUpdateSemantics:
     filter_spec: Filter
     query_plan: QueryNode
+    selector_plan: QueryNode | None
     compiled_update_plan: CompiledExecutableUpdatePlan
     compiled_upsert_plan: CompiledExecutableUpdatePlan
     selector_filter: Filter
@@ -225,12 +226,26 @@ def compile_update_semantics(
     effective_dialect = dialect or MONGODB_DIALECT_70
     if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
         raise ValueError("UpdateOperation must include compiled update plans")
+    effective_selector_filter = (
+        operation.filter_spec
+        if selector_filter is None
+        else selector_filter
+    )
     return EngineUpdateSemantics(
         filter_spec=operation.filter_spec,
         query_plan=ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect),
+        selector_plan=(
+            ensure_query_plan(
+                effective_selector_filter,
+                None,
+                dialect=effective_dialect,
+            )
+            if selector_filter is not None
+            else None
+        ),
         compiled_update_plan=operation.compiled_update_plan,
         compiled_upsert_plan=operation.compiled_upsert_plan,
-        selector_filter=selector_filter or operation.filter_spec,
+        selector_filter=effective_selector_filter,
         collation=normalize_collation(operation.collation),
         dialect=effective_dialect,
         variables=ensure_expression_context(

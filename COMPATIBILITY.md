@@ -83,6 +83,12 @@ la precisión BSON.
 los modelos equivalentes de `mongoeco`. Preserva `collation`, `array_filters`,
 `hint` y `sort`; esta ultima opcion sigue su gate por perfil PyMongo.
 
+Los `array_filters` de `update_one`, `update_many`, `find_one_and_update` y de
+los modelos equivalentes en `bulk_write` atraviesan exactamente una vez la
+frontera `DocumentCodec.to_internal()`. La normalizacion es recursiva, no muta
+la entrada y aplica a los `datetime` la misma conversion UTC y precision BSON
+que a los documentos persistidos, tanto en la API sync como en la async.
+
 La ejecucion agrupa los modelos en lotes lógicos clásicos
 `insert`/`update`/`delete`
 de hasta 100.000 modelos: runs contiguos en modo ordenado y grupos por familia
@@ -110,6 +116,21 @@ indices, eventos de change streams y detalles parciales de errores bulk.
 Los cursores de `aggregate()` capturan su contexto inmutable, incluido `$$NOW`,
 al crearse. Los cursores async de `find` y `aggregate` son de consumo unico y
 admiten `to_list(length=None)`, longitudes parciales y `close()`.
+
+### Escrituras seleccionadas y atomicidad local
+
+Las operaciones que preseleccionan un documento para resolver `sort`, `hint` o
+una imagen de retorno conservan su identidad, pero no convierten esa lectura en
+un permiso de escritura. Dentro del lock de Memory o SQLite, el engine vuelve a
+evaluar simultaneamente la identidad y el filtro original completo, usando el
+mismo dialecto, collation, variables `let` y contexto temporal de la operacion.
+
+Si el filtro original deja de coincidir, la operacion devuelve no-match, no
+modifica ni borra el documento y no publica un change event. Este contrato se
+aplica a `update_one`, `update_many`, `replace_one`, `find_one_and_update`,
+`find_one_and_replace`, `delete_one`, `delete_many` y
+`find_one_and_delete`. La garantia es atomica dentro de cada engine local; no
+pretende coordinar procesos distintos que usen instancias Memory independientes.
 
 ### Reloj inyectable para runtimes locales
 

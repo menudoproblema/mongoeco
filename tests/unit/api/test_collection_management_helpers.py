@@ -1256,9 +1256,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(
             prepared_replace.replacement_document, {'name': 'Ada'}
         )
-        self.assertIsInstance(
-            prepared_update_error.preparation_error, TypeError
-        )
+        self.assertIsNone(prepared_update_error.preparation_error)
         self.assertIsNone(prepared_delete.preparation_error)
         self.assertIsInstance(prepared_unknown.preparation_error, TypeError)
 
@@ -1559,7 +1557,6 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         async def _exercise_missing_after():
             collection = AsyncCollection(MemoryEngine(), 'db', 'coll')
             before = {'_id': '1', 'done': False}
-            lookup_results = [before, None]
             collection._select_first_document = lambda *args, **kwargs: (
                 asyncio.sleep(0, result=before)
             )  # type: ignore[method-assign]
@@ -1569,7 +1566,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 )
             )  # type: ignore[method-assign]
             collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(
-                0, result=lookup_results.pop(0)
+                0, result=None
             )  # type: ignore[method-assign]
             return await collection.find_one_and_update(
                 {'_id': '1'},

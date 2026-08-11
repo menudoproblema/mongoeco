@@ -786,7 +786,10 @@ def _normalize_array_filters(array_filters: object | None) -> ArrayFilters | Non
         raise TypeError("array_filters must be a list of dicts")
     if not all(is_filter(item) for item in array_filters):
         raise TypeError("array_filters must be a list of dicts")
-    return array_filters
+    normalized = DocumentCodec.to_internal(array_filters)
+    if not isinstance(normalized, list):
+        raise TypeError("array_filters must be a list of dicts")
+    return normalized
 
 
 def _normalize_let(let: object | None) -> Mapping[str, object] | None:

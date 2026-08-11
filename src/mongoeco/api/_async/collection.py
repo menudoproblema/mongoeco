@@ -705,10 +705,12 @@ class AsyncCollection:
         self,
         operation: UpdateOperation,
         *,
+        selector_filter: Filter | None = None,
         session: ClientSession | None = None,
     ) -> DeleteResult:
         return await self._runtime.engine_delete_with_operation(
             operation,
+            selector_filter=selector_filter,
             session=session,
         )
 

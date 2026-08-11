@@ -4128,6 +4128,7 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         collation: CollationDocument | None = None,
         variables: Mapping[str, object] | None = None,
+        selector_filter: Filter | None = None,
     ) -> DeleteResult:
         with self._lock:
             conn = self._require_connection(context)
@@ -4136,6 +4137,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     db_name=db_name,
                     coll_name=coll_name,
                     filter_spec=filter_spec,
+                    selector_filter=selector_filter,
                     plan=plan,
                     dialect=dialect or MONGODB_DIALECT_70,
                     collation=collation,
@@ -4946,6 +4948,7 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         operation: UpdateOperation,
         *,
+        selector_filter: Filter | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> DeleteResult:
@@ -4959,6 +4962,7 @@ class SQLiteEngine(AsyncStorageEngine):
             dialect,
             operation.collation,
             operation.let,
+            selector_filter,
         )
 
     @override

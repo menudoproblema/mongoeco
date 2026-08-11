@@ -356,6 +356,7 @@ class CollectionRuntimeCoordinator:
         self,
         operation: UpdateOperation,
         *,
+        selector_filter: Filter | None = None,
         session: ClientSession | None = None,
     ):
         self.ensure_operation_executable(operation)
@@ -365,6 +366,7 @@ class CollectionRuntimeCoordinator:
                 self._collection._db_name,
                 self._collection._collection_name,
                 operation,
+                selector_filter=selector_filter,
                 dialect=self._collection._mongodb_dialect,
                 context=session,
             )

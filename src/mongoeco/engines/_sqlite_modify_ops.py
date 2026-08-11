@@ -11,7 +11,7 @@ from mongoeco.core.identity import (
     assert_valid_root_document_id,
 )
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
-from mongoeco.errors import DuplicateKeyError, OperationFailure
+from mongoeco.errors import DuplicateKeyError
 from mongoeco.types import DeleteResult, Document, DocumentId, Filter, UpdateResult
 
 
@@ -20,6 +20,7 @@ def delete_matching_document(
     db_name: str,
     coll_name: str,
     filter_spec: Filter,
+    selector_filter: Filter | None = None,
     plan: object | None,
     dialect: MongoDialect | None,
     collation: dict[str, object] | None,
@@ -49,6 +50,16 @@ def delete_matching_document(
         dialect=effective_dialect,
         variables=variables,
     )
+    selector_semantics = (
+        compile_find_semantics(
+            selector_filter,
+            collation=collation,
+            dialect=effective_dialect,
+            variables=variables,
+        )
+        if selector_filter is not None
+        else None
+    )
     conn = require_connection()
     purge_expired_documents(conn, db_name, coll_name)
     try:
@@ -58,6 +69,14 @@ def delete_matching_document(
         if selected is None:
             return DeleteResult(deleted_count=0)
         storage_key, document = selected
+        if selector_semantics is not None and not match_plan(
+            document,
+            selector_semantics.query_plan,
+            selector_semantics.dialect,
+            selector_semantics.collation,
+            selector_semantics.variables,
+        ):
+            return DeleteResult(deleted_count=0)
         assert_document_matches_storage_key(
             document,
             storage_key,
@@ -93,6 +112,14 @@ def delete_matching_document(
             semantics.dialect,
             semantics.collation,
             semantics.variables,
+        ):
+            continue
+        if selector_semantics is not None and not match_plan(
+            document,
+            selector_semantics.query_plan,
+            selector_semantics.dialect,
+            selector_semantics.collation,
+            selector_semantics.variables,
         ):
             continue
         assert_document_matches_storage_key(
@@ -188,6 +215,18 @@ def update_with_operation(
                 continue
             selected = (storage_key, document)
             break
+
+    if selected is not None:
+        storage_key, original_document = selected
+        selector_plan = getattr(semantics, "selector_plan", None)
+        if selector_plan is not None and not match_plan(
+            original_document,
+            selector_plan,
+            semantics.dialect,
+            semantics.collation,
+            semantics.variables,
+        ):
+            selected = None
 
     if selected is not None:
         storage_key, original_document = selected

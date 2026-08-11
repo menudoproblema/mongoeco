@@ -2046,6 +2046,17 @@ class MemoryEngine(AsyncStorageEngine):
                     variables=semantics.variables,
                 ):
                     continue
+                if (
+                    semantics.selector_plan is not None
+                    and not QueryEngine.match_plan(
+                        borrowed_document,
+                        semantics.selector_plan,
+                        dialect=semantics.dialect,
+                        collation=semantics.collation,
+                        variables=semantics.variables,
+                    )
+                ):
+                    continue
 
                 document = deepcopy(borrowed_document)
                 original_document = deepcopy(borrowed_document)
@@ -2195,12 +2206,23 @@ class MemoryEngine(AsyncStorageEngine):
         coll_name: str,
         operation: UpdateOperation,
         *,
+        selector_filter: Filter | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> DeleteResult:
         effective_dialect = dialect or MONGODB_DIALECT_70
         variables = ensure_expression_context(operation.let)
         query_plan = ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect)
+        effective_selector_filter = (
+            operation.filter_spec
+            if selector_filter is None
+            else selector_filter
+        )
+        selector_plan = ensure_query_plan(
+            effective_selector_filter,
+            None,
+            dialect=effective_dialect,
+        )
         effective_collation = normalize_collation(operation.collation)
         async with self._get_lock(db_name, coll_name):
             storage_view = self._storage_view(context)
@@ -2228,6 +2250,14 @@ class MemoryEngine(AsyncStorageEngine):
                 if not QueryEngine.match_plan(
                     document,
                     query_plan,
+                    dialect=effective_dialect,
+                    collation=effective_collation,
+                    variables=variables,
+                ):
+                    continue
+                if not QueryEngine.match_plan(
+                    document,
+                    selector_plan,
                     dialect=effective_dialect,
                     collation=effective_collation,
                     variables=variables,
