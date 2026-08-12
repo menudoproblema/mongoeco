@@ -40,7 +40,7 @@ Esta lista prepara una release sin obligar a publicar nada.
 - ejecutar `python -m unittest discover -s tests -p 'test*.py'`;
 - ejecutar `pytest --cov=src/mongoeco --cov-fail-under=99 --cov-report=term -q`;
 - confirmar que la cobertura global sigue en `>=99%`.
-- ejecutar `python scripts/check_lint_ratchet.py --base-ref v4.2.1` y resolver
+- ejecutar `python scripts/check_lint_ratchet.py --base-ref v4.3.0` y resolver
   cualquier infraccion de Ruff introducida en lineas nuevas;
 - no ampliar `scripts/ruff_ratchet_baseline.json`; reducirla cuando se corrija
   deuda conocida y reiniciar su referencia despues de etiquetar la release;

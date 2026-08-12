@@ -8,6 +8,16 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- CI fija Ruff `0.16.2`, registra la version que genero el baseline y rechaza
+  de forma explicita entornos con otra version. El ratchet se reinicia contra
+  `v4.3.0` sin excepciones heredadas y el smoke de PyPI valida ya el artefacto
+  publicado `4.3.0`.
+- Las fronteras privadas SQLite con muchos parametros usan argumentos
+  keyword-only y la lectura directa recibe un unico `OperationContext`,
+  evitando los nuevos `PLR0917`/`RUF036` sin ocultarlos en el baseline.
+
 ## [4.3.0] - 2026-08-12
 
 ### Added

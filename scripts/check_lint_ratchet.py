@@ -31,6 +31,20 @@ def _run_git(*args: str) -> str:
     return result.stdout
 
 
+def _ruff_version() -> str:
+    result = subprocess.run(
+        [sys.executable, '-m', 'ruff', '--version'],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    version = result.stdout.strip().removeprefix('ruff ')
+    if not version:
+        message = 'could not determine the installed Ruff version'
+        raise RuntimeError(message)
+    return version
+
+
 def _changed_lines(base_ref: str) -> dict[Path, set[int]]:
     lines_by_path: dict[Path, set[int]] = defaultdict(set)
     diff = _run_git(
@@ -118,7 +132,22 @@ def _diagnostic_key(diagnostic: dict[str, object]) -> tuple[str, ...]:
 def _load_baseline(path: Path) -> Counter[tuple[str, ...]]:
     if not path.exists():
         return Counter()
-    entries = json.loads(path.read_text(encoding='utf-8'))
+    payload = json.loads(path.read_text(encoding='utf-8'))
+    if not isinstance(payload, dict):
+        message = 'lint baseline must include Ruff version metadata'
+        raise TypeError(message)
+    expected_version = payload.get('ruff_version')
+    installed_version = _ruff_version()
+    if expected_version != installed_version:
+        message = (
+            f'lint baseline requires Ruff {expected_version}, '
+            f'found {installed_version}'
+        )
+        raise RuntimeError(message)
+    entries = payload.get('diagnostics')
+    if not isinstance(entries, list):
+        message = 'lint baseline diagnostics must be a list'
+        raise TypeError(message)
     return Counter(
         {
             (
@@ -147,8 +176,12 @@ def _write_baseline(
         }
         for key, count in sorted(counts.items())
     ]
+    payload = {
+        'ruff_version': _ruff_version(),
+        'diagnostics': entries,
+    }
     path.write_text(
-        f'{json.dumps(entries, indent=2, ensure_ascii=True)}\n',
+        f'{json.dumps(payload, indent=2, ensure_ascii=True)}\n',
         encoding='utf-8',
     )
 
@@ -199,7 +232,11 @@ def main() -> int:
         )
         return 0
 
-    accepted = _load_baseline(args.baseline)
+    try:
+        accepted = _load_baseline(args.baseline)
+    except (RuntimeError, TypeError) as exc:
+        sys.stderr.write(f'{exc}\n')
+        return 2
     introduced = []
     for diagnostic in changed_diagnostics:
         key = _diagnostic_key(diagnostic)

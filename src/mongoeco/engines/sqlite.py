@@ -3901,6 +3901,7 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         document: Document,
+        *,
         when_matched: str,
         when_not_matched: str,
         context: ClientSession | None,
@@ -4119,8 +4120,8 @@ class SQLiteEngine(AsyncStorageEngine):
         documents: list[Document],
         prepared_documents: list[tuple[str, str, list[tuple[str, str, int, str]]]],
         snapshot_indexes: list[EngineIndexRecord],
-        context: ClientSession | None,
         *,
+        context: ClientSession | None,
         bypass_document_validation: bool = False,
         snapshot_options: dict[str, object] | None = None,
         operation_context: OperationContext | None = None,
@@ -4230,8 +4231,8 @@ class SQLiteEngine(AsyncStorageEngine):
         documents: list[Document],
         prepared_documents: list[tuple[str, str, list[tuple[str, str, int, str]]]],
         snapshot_indexes: list[EngineIndexRecord],
-        context: ClientSession | None,
         *,
+        context: ClientSession | None,
         bypass_document_validation: bool = False,
         snapshot_options: dict[str, object] | None = None,
     ) -> list[bool]:
@@ -4243,7 +4244,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 documents,
                 prepared_documents,
                 snapshot_indexes,
-                context,
+                context=context,
                 bypass_document_validation=bypass_document_validation,
                 snapshot_options=snapshot_options,
             )
@@ -4280,9 +4281,21 @@ class SQLiteEngine(AsyncStorageEngine):
             self._build_multikey_rows_for_document(storage_key, document, indexes),
         )
 
-    def _get_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, projection: Projection | None, dialect: MongoDialect | None = None, context: ClientSession | None = None, operation_context: OperationContext | None = None) -> Document | None:
+    def _get_document_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        doc_id: DocumentId,
+        projection: Projection | None,
+        *,
+        operation_context: OperationContext | None = None,
+    ) -> Document | None:
+        operation_context = operation_context or OperationContext.create(
+            dialect=MONGODB_DIALECT_70,
+        )
+        context = operation_context.session
         self._ensure_session_can_use_engine(context)
-        effective_dialect = dialect or MONGODB_DIALECT_70
+        effective_dialect = operation_context.dialect
         if self._is_profile_namespace(coll_name):
             profile_document = getattr(self._admin_runtime, "profile_namespace_document", None)
             if callable(profile_document):
@@ -4304,12 +4317,8 @@ class SQLiteEngine(AsyncStorageEngine):
                     db_name,
                     coll_name,
                     context=context,
-                    now=(
-                        self._ttl_now()
-                        if operation_context is None
-                        else operation_context.expressions.now.replace(
-                            tzinfo=datetime.timezone.utc
-                        )
+                    now=operation_context.expressions.now.replace(
+                        tzinfo=datetime.UTC,
                     ),
                 )
                 return _sqlite_get_document(
@@ -5338,11 +5347,11 @@ class SQLiteEngine(AsyncStorageEngine):
             db_name,
             coll_name,
             document,
-            when_matched,
-            when_not_matched,
-            context,
-            on_commit,
-            operation_context,
+            when_matched=when_matched,
+            when_not_matched=when_not_matched,
+            context=context,
+            on_commit=on_commit,
+            operation_context=operation_context,
         )
 
     async def put_documents_bulk(
@@ -5421,7 +5430,7 @@ class SQLiteEngine(AsyncStorageEngine):
             documents,
             list(prepared_documents),
             snapshot_indexes,
-            context,
+            context=context,
             bypass_document_validation=bypass_document_validation,
             snapshot_options=snapshot_options,
             operation_context=operation_context,
@@ -5429,17 +5438,17 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @override
     async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None, operation_context: OperationContext | None = None) -> Document | None:
-        if operation_context is not None:
-            context = operation_context.session
+        operation_context = operation_context or OperationContext.create(
+            dialect=dialect or MONGODB_DIALECT_70,
+            session=context,
+        )
         return await self._run_blocking(
             self._get_document_sync,
             db_name,
             coll_name,
             doc_id,
             projection,
-            dialect,
-            context,
-            operation_context,
+            operation_context=operation_context,
         )
 
     @override

@@ -34,7 +34,7 @@ jobs:
             tests.unit.test_public_exports
 
   released-artifact-contract:
-    name: Released artifact contract (mongoeco 4.2.1)
+    name: Released artifact contract (mongoeco 4.3.0)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -46,7 +46,7 @@ jobs:
           python-version: "3.14"
 
       - name: Validate published PyPI artifact contract
-        run: python scripts/smoke_pypi_contract.py --version 4.2.1
+        run: python scripts/smoke_pypi_contract.py --version 4.3.0
 
   test:
     name: Test (Python ${{ matrix.python-version }})
@@ -78,7 +78,7 @@ jobs:
         run: python -m unittest discover -s tests -p 'test*.py'
 
       - name: Enforce changed-line lint ratchet
-        run: python scripts/check_lint_ratchet.py --base-ref v4.2.1
+        run: python scripts/check_lint_ratchet.py --base-ref v4.3.0
 
       - name: Enforce source coverage floor
         if: matrix.python-version == '3.14'

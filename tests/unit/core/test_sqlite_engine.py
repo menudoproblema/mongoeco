@@ -989,7 +989,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     documents,
                     prepared_documents,
                     snapshot_indexes,
-                    None,
+                    context=None,
                     bypass_document_validation=True,
                     snapshot_options=None,
                 )
@@ -1024,7 +1024,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     documents,
                     prepared_documents,
                     snapshot_indexes,
-                    None,
+                    context=None,
                     bypass_document_validation=True,
                     snapshot_options=None,
                 )
@@ -1070,7 +1070,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 documents,
                 prepared_documents,
                 snapshot_indexes,
-                None,
+                context=None,
                 bypass_document_validation=True,
                 snapshot_options=snapshot_options,
             )
@@ -1114,7 +1114,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 documents,
                 prepared_documents,
                 snapshot_indexes,
-                None,
+                context=None,
                 bypass_document_validation=True,
                 snapshot_options=snapshot_options,
             )
@@ -3229,7 +3229,12 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 None,
                 None,
             )
-            found = engine._get_document_sync("db", "coll", "seeded", None, None)
+            found = engine._get_document_sync(
+                "db",
+                "coll",
+                "seeded",
+                None,
+            )
         finally:
             engine._disconnect_sync()
 

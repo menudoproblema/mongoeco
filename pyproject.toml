@@ -43,7 +43,7 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
-    "ruff",
+    "ruff==0.16.2",
     "twine",
 ]
 mongodb7 = [

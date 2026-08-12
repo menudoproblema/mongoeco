@@ -108,7 +108,7 @@ class OperationContext:
         bindings: Mapping[str, object] | None = None,
         collation: object = _UNSET,
         publication: ChangePublicationPolicy | None = None,
-        change_operation_type: ChangeOperationType | None | object = _UNSET,
+        change_operation_type: ChangeOperationType | object | None = _UNSET,
     ) -> OperationContext:
         next_collation = self.collation
         if collation is not _UNSET:
