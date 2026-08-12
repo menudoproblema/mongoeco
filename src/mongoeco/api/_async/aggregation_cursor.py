@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from copy import deepcopy
+from dataclasses import dataclass
 import datetime
 import math
 import time
@@ -20,6 +21,7 @@ from mongoeco.api.operations import (
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.cxp import build_mongodb_explain_projection
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.operation_context import ChangePublicationPolicy
 from mongoeco.core._search_contract import TEXT_SEARCH_OPERATOR_NAMES
 from mongoeco.core.aggregation import (
     AggregationCostPolicy,
@@ -39,7 +41,6 @@ from mongoeco.core.expression_context import (
     ExpressionExecutionContext,
 )
 from mongoeco.core.identity import (
-    assert_document_matches_stored_lookup,
     assert_valid_root_document_id,
 )
 from mongoeco.core.search import (
@@ -48,13 +49,43 @@ from mongoeco.core.search import (
     strip_search_result_metadata,
 )
 from mongoeco.errors import OperationFailure
+from mongoeco.engines.adapter import adapt_engine
 from mongoeco.session import ClientSession
 from mongoeco.session_guards import ensure_session_can_use_engine
 from mongoeco.types import AggregateExplanation, Document, ObjectId, QueryPlanExplanation
 
 
+@dataclass(frozen=True, slots=True)
+class _StreamWindow:
+    start: int = 0
+    end: int | None = None
+
+    def skip(self, count: int) -> "_StreamWindow":
+        next_start = self.start + count
+        if self.end is not None:
+            next_start = min(next_start, self.end)
+        return _StreamWindow(next_start, self.end)
+
+    def limit(self, count: int) -> "_StreamWindow":
+        next_end = self.start + count
+        if self.end is not None:
+            next_end = min(next_end, self.end)
+        return _StreamWindow(self.start, next_end)
+
+    def as_skip_limit(self) -> tuple[int, int | None]:
+        if self.end is None:
+            return self.start, None
+        return self.start, max(self.end - self.start, 0)
+
+
 class AsyncAggregationCursor:
     """Cursor async mínimo para resultados de aggregate()."""
+
+    def __await__(self):
+        async def _resolve():
+            return self
+
+        return _resolve().__await__()
 
     _SEARCH_TOPK_SAFE_STAGE_OPERATORS = frozenset(
         {
@@ -113,17 +144,33 @@ class AsyncAggregationCursor:
         self._collation = normalize_collation(operation.collation)
         self._let = operation.let
         create_context = getattr(
-            self._collection, '_new_execution_context', None
+            self._collection, '_new_operation_context', None
         )
-        if isinstance(self._let, ExpressionExecutionContext):
-            self._execution_context = self._let
+        if operation.context is not None:
+            self._operation_context = operation.context
+            self._execution_context = operation.context.expressions
         else:
             context = (
-                create_context()
+                create_context(
+                    session=session,
+                    collation=self._collation,
+                    bindings=self._let,
+                )
                 if callable(create_context)
-                else ExpressionExecutionContext(now=utc_bson_now())
+                else None
             )
-            self._execution_context = context.with_bindings(self._let)
+            if context is None:
+                self._execution_context = ExpressionExecutionContext(
+                    now=utc_bson_now()
+                ).with_bindings(self._let)
+                self._operation_context = None
+            else:
+                self._operation_context = context
+                self._execution_context = context.expressions
+                self._operation = operation.with_overrides(
+                    context=context,
+                    let=context.expressions,
+                )
         self._session = session
         self._active_async_iterator: AsyncIterator[Document] | None = None
         self._closed = False
@@ -282,6 +329,7 @@ class AsyncAggregationCursor:
             change_stream_journal_path=self._collection._change_stream_journal_path,
             change_stream_journal_fsync=self._collection._change_stream_journal_fsync,
             change_stream_journal_max_bytes=self._collection._change_stream_journal_max_bytes,
+            now_factory=self._collection._now_factory,
         )
 
     async def _apply_merge_stage(self, documents: list[Document], spec: object) -> None:
@@ -313,35 +361,40 @@ class AsyncAggregationCursor:
             raise OperationFailure("$merge whenNotMatched currently supports insert, discard or fail")
 
         target_collection = self._target_database(target_db_name).get_collection(target_coll_name)
+
         for source_document in documents:
             candidate = strip_search_result_metadata(deepcopy(source_document))
             if "_id" not in candidate:
                 candidate["_id"] = ObjectId()
             assert_valid_root_document_id(candidate["_id"])
-            existing = await target_collection.find_one({"_id": candidate["_id"]}, session=self._session)
-            if existing is None:
-                if when_not_matched == "insert":
-                    await target_collection.insert_one(candidate, session=self._session)
-                    continue
-                if when_not_matched == "discard":
-                    continue
-                raise OperationFailure(f"$merge whenNotMatched=fail found no target document for _id={candidate['_id']!r}")
-            stable_existing = await target_collection._document_by_id(candidate["_id"], session=self._session)
-            assert_document_matches_stored_lookup(
-                existing,
-                stable_existing,
-                dialect=target_collection._mongodb_dialect,
+            internal_candidate = DocumentCodec.to_internal(candidate)
+            operation_context = target_collection._new_operation_context(
+                session=self._session,
+                expressions=self._execution_context,
+                publication=(
+                    ChangePublicationPolicy.EMIT
+                    if target_collection._should_publish_change_events(
+                        session=self._session
+                    )
+                    else ChangePublicationPolicy.RECORD_GAP
+                ),
             )
-            if when_matched == "keepExisting":
-                continue
-            if when_matched == "fail":
-                raise OperationFailure(f"$merge whenMatched=fail found an existing target document for _id={candidate['_id']!r}")
-            if when_matched == "replace":
-                await target_collection.replace_one({"_id": candidate["_id"]}, candidate, session=self._session)
-                continue
-            merged = deepcopy(existing)
-            merged.update(candidate)
-            await target_collection.replace_one({"_id": candidate["_id"]}, merged, session=self._session)
+            outcome = await target_collection._runtime.engine_merge_document(
+                internal_candidate,
+                when_matched=when_matched,
+                when_not_matched=when_not_matched,
+                operation_context=operation_context,
+            )
+            if outcome.matched and when_matched == "fail":
+                raise OperationFailure(
+                    "$merge whenMatched=fail found an existing target document "
+                    f"for _id={candidate['_id']!r}"
+                )
+            if not outcome.matched and when_not_matched == "fail":
+                raise OperationFailure(
+                    "$merge whenNotMatched=fail found no target document "
+                    f"for _id={candidate['_id']!r}"
+                )
 
     async def _search_documents(self) -> list[Document]:
         leading_search = self._leading_search_stage()
@@ -459,8 +512,7 @@ class AsyncAggregationCursor:
         dialect=MONGODB_DIALECT_70,
     ) -> tuple[Pipeline, int, int | None] | None:
         streamable_pipeline: Pipeline = []
-        trailing_skip = 0
-        trailing_limit: int | None = None
+        trailing_window = _StreamWindow()
         seen_trailing_window = False
 
         for stage in pipeline:
@@ -468,10 +520,9 @@ class AsyncAggregationCursor:
             if operator in {"$skip", "$limit"}:
                 seen_trailing_window = True
                 if operator == "$skip":
-                    trailing_skip += int(spec)
+                    trailing_window = trailing_window.skip(int(spec))
                 else:
-                    value = int(spec)
-                    trailing_limit = value if trailing_limit is None else min(trailing_limit, value)
+                    trailing_window = trailing_window.limit(int(spec))
                 continue
             if seen_trailing_window:
                 return None
@@ -479,6 +530,7 @@ class AsyncAggregationCursor:
                 return None
             streamable_pipeline.append(stage)
 
+        trailing_skip, trailing_limit = trailing_window.as_skip_limit()
         return streamable_pipeline, trailing_skip, trailing_limit
 
     def _collect_collection_names(self, pipeline: Pipeline) -> set[str]:
@@ -692,11 +744,11 @@ class AsyncAggregationCursor:
             dialect=dialect,
             variables=self._execution_variables(),
         )
-        return engine.scan_find_semantics(
+        return adapt_engine(engine).open_read_snapshot(
             self._collection._db_name,
             collection_name,
             semantics,
-            context=self._session,
+            operation_context=self._operation_context,
         )
 
     async def _load_collection_documents(self, collection_name: str) -> list[Document]:
@@ -906,6 +958,9 @@ class AsyncAggregationCursor:
             batch_size=batch_size if batch_size is not None else self._batch_size,
             variables=self._let,
             dialect=dialect,
+        ).with_overrides(
+            context=self._operation_context,
+            let=self._execution_context,
         )
 
     def _materialize_document(self, document: Document) -> Document:
@@ -932,74 +987,83 @@ class AsyncAggregationCursor:
             return
 
         deadline = operation_deadline(self._max_time_ms)
-        dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
-        pushdown = split_pushdown_pipeline(
-            effective_pipeline,
-            dialect=dialect,
-        )
+        dialect = getattr(self._collection, 'mongodb_dialect', MONGODB_DIALECT_70)
+        pushdown = split_pushdown_pipeline(effective_pipeline, dialect=dialect)
         stream_plan = self._split_streamable_pipeline(
             pushdown.remaining_pipeline,
-            dialect=getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70),
+            dialect=dialect,
         )
         if stream_plan is None:
             for document in await self._materialize():
                 yield self._materialize_document(document)
             return
 
-        streamable_pipeline, trailing_skip, trailing_limit = stream_plan
-        enforce_deadline(deadline)
-        referenced_collections = await self._load_referenced_collections()
-        enforce_deadline(deadline)
-
-        source_offset = 0
-        remaining_limit = trailing_limit
-        while True:
-            if remaining_limit == 0:
-                return
-            page_limit = self._batch_size
-            if pushdown.limit is not None:
-                remaining_source = pushdown.limit - source_offset
-                if remaining_source <= 0:
-                    return
-                page_limit = min(page_limit, remaining_source)
-
-            page = await self._build_pushdown_cursor(
-                self._pushdown_find_operation().with_overrides(
-                    skip=pushdown.skip + source_offset,
-                    limit=page_limit,
-                )
-            ).to_list()
-            enforce_deadline(deadline)
-            if not page:
-                return
-
-            source_offset += len(page)
-            transformed = apply_pipeline(
-                page,
-                streamable_pipeline,
-                collection_resolver=referenced_collections.get,
-                variables=self._execution_variables(),
-                dialect=dialect,
-                collation=self._collation,
-                spill_policy=self._spill_policy(),
+        streamable_pipeline, trailing_skip, remaining_limit = stream_plan
+        if remaining_limit == 0:
+            return
+        source_cursor = None
+        source_iterator = None
+        try:
+            referenced_collections = await self._load_referenced_collections()
+            source_cursor = self._build_pushdown_cursor(
+                self._pushdown_find_operation(batch_size=self._batch_size)
             )
-            enforce_deadline(deadline)
-
-            if trailing_skip:
-                if len(transformed) <= trailing_skip:
-                    trailing_skip -= len(transformed)
-                    continue
-                transformed = transformed[trailing_skip:]
-                trailing_skip = 0
-
-            if remaining_limit is not None:
-                transformed = transformed[:remaining_limit]
-                remaining_limit -= len(transformed)
-
-            for document in transformed:
-                yield self._materialize_document(
-                    DocumentCodec.to_public(strip_search_result_metadata(document))
+            source_iterator_factory = getattr(source_cursor, '__aiter__', None)
+            source_iterator = (
+                source_iterator_factory()
+                if callable(source_iterator_factory)
+                else None
+            )
+            pull_chunk = getattr(source_iterator, 'pull_chunk', None)
+            materialized_source = (
+                None
+                if callable(pull_chunk)
+                else await source_cursor.to_list()
+            )
+            source_offset = 0
+            while remaining_limit != 0:
+                if callable(pull_chunk):
+                    page = await pull_chunk(self._batch_size)
+                else:
+                    page = materialized_source[
+                        source_offset : source_offset + self._batch_size
+                    ]
+                    source_offset += len(page)
+                if not page:
+                    return
+                enforce_deadline(deadline)
+                transformed = apply_pipeline(
+                    page,
+                    streamable_pipeline,
+                    collection_resolver=referenced_collections.get,
+                    variables=self._execution_variables(),
+                    dialect=dialect,
+                    collation=self._collation,
+                    spill_policy=self._spill_policy(),
                 )
+                if trailing_skip:
+                    if len(transformed) <= trailing_skip:
+                        trailing_skip -= len(transformed)
+                        continue
+                    transformed = transformed[trailing_skip:]
+                    trailing_skip = 0
+                if remaining_limit is not None:
+                    transformed = transformed[:remaining_limit]
+                    remaining_limit -= len(transformed)
+                for document in transformed:
+                    yield self._materialize_document(
+                        DocumentCodec.to_public(
+                            strip_search_result_metadata(document)
+                        )
+                    )
+        finally:
+            close_source = getattr(source_cursor, 'close', None)
+            if callable(close_source):
+                await close_source()
+            else:
+                close_iterator = getattr(source_iterator, 'aclose', None)
+                if callable(close_iterator):
+                    await close_iterator()
 
     async def to_list(
         self,

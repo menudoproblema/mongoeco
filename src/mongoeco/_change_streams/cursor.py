@@ -5,6 +5,7 @@ import base64
 import json
 import time
 import weakref
+from collections.abc import Callable
 
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.errors import OperationFailure
@@ -31,6 +32,7 @@ class AsyncChangeStreamCursor:
         start_after: dict[str, object] | None = None,
         start_at_operation_time: int | None = None,
         full_document: str = "default",
+        materialize_document: Callable[[dict[str, object]], dict[str, object]] | None = None,
     ) -> None:
         self._hub = hub
         self._scope = scope
@@ -47,6 +49,7 @@ class AsyncChangeStreamCursor:
         )
         self._max_await_time_ms = max_await_time_ms
         self._full_document = normalize_full_document_mode(full_document)
+        self._materialize_document = materialize_document or DocumentCodec.to_pymongo
         self._closed = False
         hub.register_watcher()
         self._watcher_finalizer = weakref.finalize(self, hub.unregister_watcher)
@@ -54,6 +57,12 @@ class AsyncChangeStreamCursor:
     def _ensure_open(self) -> None:
         if self._closed:
             raise OperationFailure("cannot use change stream after it has been closed")
+
+    def __await__(self):
+        async def _resolve():
+            return self
+
+        return _resolve().__await__()
 
     def _transform(self, event) -> ChangeEventDocument | None:
         if not self._scope.matches(event):
@@ -66,8 +75,8 @@ class AsyncChangeStreamCursor:
             transformed = apply_pipeline([document], self._pipeline)
             if not transformed:
                 return None
-            return DocumentCodec.to_pymongo(transformed[0])
-        return DocumentCodec.to_pymongo(document)
+            return self._materialize_document(transformed[0])
+        return self._materialize_document(document)
 
     async def try_next(self) -> ChangeEventDocument | None:
         self._ensure_open()

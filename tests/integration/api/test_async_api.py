@@ -2329,7 +2329,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     async def _write_boom(*_args, **_kwargs):
                         raise RuntimeError("write boom")
 
-                    client._engine.put_document = _write_boom  # type: ignore[method-assign]
+                    client._engine.insert_document = _write_boom  # type: ignore[method-assign]
                     with self.assertRaisesRegex(RuntimeError, "write boom"):
                         await collection.insert_one({"_id": "failed"})
 

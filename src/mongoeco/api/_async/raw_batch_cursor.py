@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Awaitable, Callable
 
 try:  # pragma: no cover - optional dependency
@@ -24,10 +25,24 @@ class AsyncRawBatchCursor:
         fetch_batch: Callable[[int], Awaitable[list[Document]]],
         *,
         batch_size: int | None = None,
+        close: Callable[[], Awaitable[None]] | None = None,
     ) -> None:
         self._fetch_batch = fetch_batch
         self._batch_size = batch_size or 101
+        self._close_callback = close
         self._closed = False
+
+    def __await__(self):
+        async def _resolve():
+            return self
+
+        return _resolve().__await__()
+
+    async def __aenter__(self) -> "AsyncRawBatchCursor":
+        return self
+
+    async def __aexit__(self, exc_type, exc, traceback) -> None:
+        await self.close()
 
     def __aiter__(self) -> "AsyncRawBatchCursor":
         return self
@@ -35,11 +50,25 @@ class AsyncRawBatchCursor:
     async def __anext__(self) -> bytes:
         if self._closed:
             raise StopAsyncIteration
-        documents = await self._fetch_batch(self._batch_size)
+        try:
+            documents = await self._fetch_batch(self._batch_size)
+        except BaseException:
+            try:
+                await asyncio.shield(self.close())
+            except BaseException:
+                pass
+            raise
         if not documents:
-            self._closed = True
+            await self.close()
             raise StopAsyncIteration
-        return _encode_batch(documents)
+        try:
+            return _encode_batch(documents)
+        except BaseException:
+            try:
+                await asyncio.shield(self.close())
+            except BaseException:
+                pass
+            raise
 
     async def to_list(self) -> list[bytes]:
         batches: list[bytes] = []
@@ -52,3 +81,17 @@ class AsyncRawBatchCursor:
             return await self.__anext__()
         except StopAsyncIteration:
             return None
+
+    async def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        if self._close_callback is not None:
+            await self._close_callback()
+
+    async def aclose(self) -> None:
+        await self.close()
+
+    @property
+    def alive(self) -> bool:
+        return not self._closed

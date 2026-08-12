@@ -23,6 +23,7 @@ from mongoeco.core.operators import (
 )
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.json_compat import json_dumps_compact
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.search import (
     TEXT_SCORE_FIELD,
@@ -54,6 +55,7 @@ class FindOperation:
     let: Mapping[str, object] | None = None
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
+    context: OperationContext | None = None
 
     def with_overrides(self, **changes: object) -> "FindOperation":
         return replace(self, **changes)
@@ -75,6 +77,7 @@ class UpdateOperation:
     let: Mapping[str, object] | None = None
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
+    context: OperationContext | None = None
 
     def with_overrides(self, **changes: object) -> "UpdateOperation":
         return replace(self, **changes)
@@ -92,6 +95,7 @@ class AggregateOperation:
     let: Mapping[str, object] | None = None
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
+    context: OperationContext | None = None
 
     def with_overrides(self, **changes: object) -> "AggregateOperation":
         return replace(self, **changes)
@@ -236,6 +240,7 @@ def compile_find_selection_from_update_operation(
         let=operation.let,
         planning_mode=operation.planning_mode,
         planning_issues=operation.planning_issues,
+        context=operation.context,
     )
 
 

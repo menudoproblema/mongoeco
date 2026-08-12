@@ -64,11 +64,14 @@ class ChangeStreamHub:
         self._journal_fsync = journal_fsync
         self._journal_max_log_bytes = journal_max_log_bytes
         self._journal_event_log_path = None if journal_path is None else f"{journal_path}.events"
+        self._journal_degraded_path = None if journal_path is None else f"{journal_path}.degraded"
         self._journal_log_entries_since_compaction = 0
         self._journal_log_bytes_since_compaction = 0
         self._journal_compaction_count = 0
         self._last_compaction_time_monotonic: float | None = None
+        self._publish_failure: Exception | None = None
         self._load_journal()
+        self._load_degraded_marker()
 
     @property
     def backend_info(self) -> ChangeStreamBackendInfo:
@@ -118,6 +121,12 @@ class ChangeStreamHub:
                 journal_log_bytes_since_compaction=self._journal_log_bytes_since_compaction,
                 journal_compaction_count=self._journal_compaction_count,
                 last_compaction_time_monotonic=self._last_compaction_time_monotonic,
+                degraded=self._publish_failure is not None,
+                last_publish_error=(
+                    None
+                    if self._publish_failure is None
+                    else str(self._publish_failure)
+                ),
             )
 
     def compact_journal(self) -> None:
@@ -149,13 +158,87 @@ class ChangeStreamHub:
     def mark_gap(self) -> None:
         with self._condition:
             token = self._next_token
-            if self._gaps and self._gaps[-1][1] == token - 1:
-                start, _end = self._gaps[-1]
-                self._gaps[-1] = (start, token)
-            else:
-                self._gaps.append((token, token))
+            self._record_gap_locked(token)
             self._next_token += 1
             self._condition.notify_all()
+
+    def align_commit_sequence(self, next_sequence: int) -> None:
+        if not isinstance(next_sequence, int) or isinstance(next_sequence, bool):
+            raise TypeError('next_sequence must be an integer')
+        if next_sequence < 1:
+            raise ValueError('next_sequence must be positive')
+        with self._condition:
+            if next_sequence <= self._next_token:
+                return
+            self._record_gap_range_locked(self._next_token, next_sequence - 1)
+            self._next_token = next_sequence
+            self._condition.notify_all()
+
+    def publish_committed(
+        self,
+        sequence: int,
+        payload: Document | None,
+    ) -> None:
+        if not isinstance(sequence, int) or isinstance(sequence, bool):
+            raise TypeError('sequence must be an integer')
+        if sequence < 1:
+            raise ValueError('sequence must be positive')
+        with self._condition:
+            self._raise_if_degraded_locked()
+            if sequence < self._next_token:
+                return
+            if sequence > self._next_token:
+                self._record_gap_range_locked(self._next_token, sequence - 1)
+            if payload is None:
+                self._record_gap_locked(sequence)
+                self._next_token = sequence + 1
+                self._condition.notify_all()
+                return
+            event = ChangeEventSnapshot(token=sequence, **payload)
+            self._append_committed_event_locked(event)
+
+    def _record_gap_locked(self, token: int) -> None:
+        self._record_gap_range_locked(token, token)
+
+    def _record_gap_range_locked(self, start: int, end: int) -> None:
+        if start > end:
+            return
+        if self._gaps and self._gaps[-1][1] == start - 1:
+            previous_start, _previous_end = self._gaps[-1]
+            self._gaps[-1] = (previous_start, end)
+        else:
+            self._gaps.append((start, end))
+
+    def _append_committed_event_locked(self, event: ChangeEventSnapshot) -> None:
+        self._append_journal_event_locked(event)
+        self._events.append(event)
+        self._next_token = event.token + 1
+        pruned = self._prune_locked()
+        if (
+            pruned
+            or self._journal_log_entries_since_compaction
+            >= self._compaction_threshold()
+            or (
+                self._journal_max_log_bytes is not None
+                and self._journal_log_bytes_since_compaction
+                >= self._journal_max_log_bytes
+            )
+        ):
+            self._compact_locked()
+        self._condition.notify_all()
+
+    def mark_publish_failure(self, error: Exception) -> None:
+        with self._condition:
+            if self._publish_failure is None:
+                self._publish_failure = error
+                self._persist_degraded_locked(error)
+            self._condition.notify_all()
+
+    def _raise_if_degraded_locked(self) -> None:
+        if self._publish_failure is not None:
+            raise OperationFailure(
+                "change stream history is unavailable after an event publication failure"
+            ) from self._publish_failure
 
     def offset_after_token(self, token: int) -> int:
         with self._condition:
@@ -196,6 +279,7 @@ class ChangeStreamHub:
         update_description: dict[str, object] | None = None,
     ) -> None:
         with self._condition:
+            self._raise_if_degraded_locked()
             event = ChangeEventSnapshot(
                 token=self._next_token,
                 operation_type=operation_type,
@@ -205,20 +289,7 @@ class ChangeStreamHub:
                 full_document=full_document,
                 update_description=update_description,
             )
-            self._events.append(event)
-            self._next_token += 1
-            pruned = self._prune_locked()
-            self._append_journal_event_locked(event)
-            if (
-                pruned
-                or self._journal_log_entries_since_compaction >= self._compaction_threshold()
-                or (
-                    self._journal_max_log_bytes is not None
-                    and self._journal_log_bytes_since_compaction >= self._journal_max_log_bytes
-                )
-            ):
-                self._compact_locked()
-            self._condition.notify_all()
+            self._append_committed_event_locked(event)
 
     def wait_for_event(
         self,
@@ -227,11 +298,13 @@ class ChangeStreamHub:
         timeout_seconds: float | None,
     ) -> tuple[int, ChangeEventSnapshot | None]:
         with self._condition:
+            self._raise_if_degraded_locked()
             if offset < self._base_offset:
                 raise OperationFailure("change stream history is no longer available")
             if timeout_seconds is None:
                 while self._end_offset_locked() <= offset:
                     self._condition.wait()
+                    self._raise_if_degraded_locked()
             else:
                 deadline = time.monotonic() + timeout_seconds
                 while self._end_offset_locked() <= offset:
@@ -239,6 +312,7 @@ class ChangeStreamHub:
                     if remaining <= 0:
                         return offset, None
                     self._condition.wait(remaining)
+                    self._raise_if_degraded_locked()
             if offset < self._base_offset:
                 raise OperationFailure("change stream history is no longer available")
             if self._end_offset_locked() <= offset:
@@ -288,6 +362,31 @@ class ChangeStreamHub:
         os.replace(temp_path, self._journal_path)
         if self._journal_fsync:
             fsync_parent_directory(self._journal_path)
+
+    def _persist_degraded_locked(self, error: Exception) -> None:
+        if self._journal_degraded_path is None:
+            return
+        journal_dir = os.path.dirname(self._journal_degraded_path)
+        if journal_dir:
+            os.makedirs(journal_dir, exist_ok=True)
+        temp_path = f"{self._journal_degraded_path}.tmp"
+        payload = json.dumps(
+            {
+                "version": 1,
+                "error": str(error),
+                "next_token": self._next_token,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        with open(temp_path, "w", encoding="utf-8") as handle:
+            handle.write(payload)
+            if self._journal_fsync:
+                handle.flush()
+                os.fsync(handle.fileno())
+        os.replace(temp_path, self._journal_degraded_path)
+        if self._journal_fsync:
+            fsync_parent_directory(self._journal_degraded_path)
 
     def _append_journal_event_locked(self, event: ChangeEventSnapshot) -> None:
         if self._journal_event_log_path is None:
@@ -379,3 +478,22 @@ class ChangeStreamHub:
         self._prune_locked()
         self._journal_log_entries_since_compaction = sum(1 for raw_line in lines if raw_line.strip())
         self._journal_log_bytes_since_compaction = os.path.getsize(self._journal_event_log_path)
+
+    def _load_degraded_marker(self) -> None:
+        if self._journal_degraded_path is None or not os.path.exists(
+            self._journal_degraded_path
+        ):
+            return
+        try:
+            with open(self._journal_degraded_path, "r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            if not isinstance(payload, dict) or payload.get("version") != 1:
+                raise ValueError("invalid degraded marker")
+            error = payload.get("error")
+            if not isinstance(error, str) or not error:
+                raise ValueError("invalid degraded marker")
+        except Exception as exc:  # noqa: BLE001
+            raise OperationFailure(
+                "change stream degraded marker could not be loaded"
+            ) from exc
+        self._publish_failure = OperationFailure(error)

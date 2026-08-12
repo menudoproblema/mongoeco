@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -19,8 +20,13 @@ def current_execution_now() -> datetime | None:
     return _CURRENT_EXECUTION_NOW.get()
 
 
-def set_execution_now(now: datetime) -> None:
-    _CURRENT_EXECUTION_NOW.set(now)
+@contextmanager
+def execution_now_scope(now: datetime):
+    token = _CURRENT_EXECUTION_NOW.set(now)
+    try:
+        yield
+    finally:
+        _CURRENT_EXECUTION_NOW.reset(token)
 
 
 @dataclass(frozen=True, slots=True)

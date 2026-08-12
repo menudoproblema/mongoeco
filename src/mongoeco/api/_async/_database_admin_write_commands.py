@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
 from mongoeco.core.expression_context import ExpressionExecutionContext
+from mongoeco.engines.results import FindAndModifyOutcome
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     BulkWriteErrorDetails,
@@ -415,65 +416,35 @@ class DatabaseAdminWriteCommandService:
         *,
         session: ClientSession | None = None,
     ) -> FindAndModifyCommandResult:
-        before_full = await self.find_and_modify_before_full(
-            options,
-            session=session,
-        )
         return_document = ReturnDocument.AFTER if options.return_new else ReturnDocument.BEFORE
-
-        if before_full is None and options.upsert:
-            result = await collection.update_one(
-                options.query,
-                options.update_spec,
-                upsert=True,
-                collation=options.collation,
-                sort=options.sort,
-                array_filters=options.array_filters,
-                hint=options.hint,
-                comment=options.comment,
-                let=options.let,
-                bypass_document_validation=options.bypass_document_validation,
-                session=session,
-            )
-            value = None
-            if options.return_new:
-                value = await self.find_and_modify_fetch_upserted_value(
-                    options.collection_name,
-                    result.upserted_id,
-                    options.fields,
-                    session=session,
-                )
-            return FindAndModifyCommandResult(
-                last_error_object=FindAndModifyLastErrorObject(
-                    count=1,
-                    updated_existing=False,
-                    upserted_id=result.upserted_id,
-                ),
-                value=value,
-            )
-
-        value = await collection.find_one_and_update(
-            options.query,
-            options.update_spec,
-            projection=options.fields,
-            collation=options.collation,
-            sort=options.sort,
-            upsert=options.upsert,
-            return_document=return_document,
-            array_filters=options.array_filters,
-            hint=options.hint,
-            comment=options.comment,
-            max_time_ms=options.max_time_ms,
-            let=options.let,
-            bypass_document_validation=options.bypass_document_validation,
-            session=session,
+        arguments = {
+            'projection': options.fields,
+            'collation': options.collation,
+            'sort': options.sort,
+            'upsert': options.upsert,
+            'return_document': return_document,
+            'array_filters': options.array_filters,
+            'hint': options.hint,
+            'comment': options.comment,
+            'max_time_ms': options.max_time_ms,
+            'let': options.let,
+            'bypass_document_validation': options.bypass_document_validation,
+            'session': session,
+        }
+        outcome = await collection._find_one_and_update_outcome(
+            options.query, options.update_spec, **arguments
         )
+        if not isinstance(outcome, FindAndModifyOutcome):
+            raise TypeError('find_one_and_update did not return an atomic outcome')
+        result = outcome.captured.result
+        applied = result.matched_count > 0 or result.upserted_id is not None
         return FindAndModifyCommandResult(
             last_error_object=FindAndModifyLastErrorObject(
-                count=0 if before_full is None and not options.upsert else 1,
-                updated_existing=before_full is not None,
+                count=1 if applied else 0,
+                updated_existing=result.matched_count > 0,
+                upserted_id=result.upserted_id,
             ),
-            value=value,
+            value=outcome.value,
         )
 
     async def execute_find_and_modify_replacement(
@@ -483,62 +454,34 @@ class DatabaseAdminWriteCommandService:
         *,
         session: ClientSession | None = None,
     ) -> FindAndModifyCommandResult:
-        before_full = await self.find_and_modify_before_full(
-            options,
-            session=session,
-        )
         return_document = ReturnDocument.AFTER if options.return_new else ReturnDocument.BEFORE
-
-        if before_full is None and options.upsert:
-            result = await collection.replace_one(
-                options.query,
-                options.update_spec,
-                upsert=True,
-                collation=options.collation,
-                sort=options.sort,
-                hint=options.hint,
-                comment=options.comment,
-                let=options.let,
-                bypass_document_validation=options.bypass_document_validation,
-                session=session,
-            )
-            value = None
-            if options.return_new:
-                value = await self.find_and_modify_fetch_upserted_value(
-                    options.collection_name,
-                    result.upserted_id,
-                    options.fields,
-                    session=session,
-                )
-            return FindAndModifyCommandResult(
-                last_error_object=FindAndModifyLastErrorObject(
-                    count=1,
-                    updated_existing=False,
-                    upserted_id=result.upserted_id,
-                ),
-                value=value,
-            )
-        value = await collection.find_one_and_replace(
-            options.query,
-            options.update_spec,
-            projection=options.fields,
-            collation=options.collation,
-            sort=options.sort,
-            upsert=options.upsert,
-            return_document=return_document,
-            hint=options.hint,
-            comment=options.comment,
-            max_time_ms=options.max_time_ms,
-            let=options.let,
-            bypass_document_validation=options.bypass_document_validation,
-            session=session,
+        arguments = {
+            'projection': options.fields,
+            'collation': options.collation,
+            'sort': options.sort,
+            'upsert': options.upsert,
+            'return_document': return_document,
+            'hint': options.hint,
+            'comment': options.comment,
+            'max_time_ms': options.max_time_ms,
+            'let': options.let,
+            'bypass_document_validation': options.bypass_document_validation,
+            'session': session,
+        }
+        outcome = await collection._find_one_and_replace_outcome(
+            options.query, options.update_spec, **arguments
         )
+        if not isinstance(outcome, FindAndModifyOutcome):
+            raise TypeError('find_one_and_replace did not return an atomic outcome')
+        result = outcome.captured.result
+        applied = result.matched_count > 0 or result.upserted_id is not None
         return FindAndModifyCommandResult(
             last_error_object=FindAndModifyLastErrorObject(
-                count=0 if before_full is None and not options.upsert else 1,
-                updated_existing=before_full is not None,
+                count=1 if applied else 0,
+                updated_existing=result.matched_count > 0,
+                upserted_id=result.upserted_id,
             ),
-            value=value,
+            value=outcome.value,
         )
 
     @staticmethod

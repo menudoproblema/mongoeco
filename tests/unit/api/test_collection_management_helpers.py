@@ -1,4 +1,5 @@
 from tests.unit.api._collection_test_support import *  # noqa: F403
+from mongoeco.engines.results import EngineDeleteResult, EngineUpdateResult
 
 
 class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
@@ -164,7 +165,12 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 self.update_dialect = kwargs['dialect']
                 from mongoeco.types import UpdateResult
 
-                return UpdateResult(matched_count=0, modified_count=0)
+                result = UpdateResult(matched_count=0, modified_count=0)
+                return (
+                    EngineUpdateResult(result=result)
+                    if kwargs.get('capture_documents')
+                    else result
+                )
 
             async def delete_with_operation(self, *args, **kwargs):
                 operation = args[2]
@@ -172,7 +178,12 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 self.delete_dialect = kwargs['dialect']
                 from mongoeco.types import DeleteResult
 
-                return DeleteResult(deleted_count=0)
+                result = DeleteResult(deleted_count=0)
+                return (
+                    EngineDeleteResult(result=result)
+                    if kwargs.get('capture_document')
+                    else result
+                )
 
             async def count_find_semantics(self, *args, **kwargs):
                 semantics = args[2]
@@ -1256,7 +1267,10 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(
             prepared_replace.replacement_document, {'name': 'Ada'}
         )
-        self.assertIsNone(prepared_update_error.preparation_error)
+        self.assertIsInstance(
+            prepared_update_error.preparation_error,
+            TypeError,
+        )
         self.assertIsNone(prepared_delete.preparation_error)
         self.assertIsInstance(prepared_unknown.preparation_error, TypeError)
 
@@ -1451,42 +1465,32 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             def publish(self, **payload):
                 self.events.append(payload)
 
-        class CursorStub:
-            def __init__(self, document):
-                self._document = document
-
-            async def first(self):
-                return self._document
-
         async def _exercise():
             hub = HubStub()
+            engine = MemoryEngine()
+            await engine.connect()
             collection = AsyncCollection(
-                MemoryEngine(), 'db', 'coll', change_hub=hub
+                engine, 'db', 'coll', change_hub=hub
             )
-
-            selected = {'_id': '1', 'done': False}
-            updated = {'_id': '1', 'done': True}
-            lookup_results = [selected, updated, updated]
-
-            collection._build_cursor = lambda *args, **kwargs: CursorStub(
-                selected
-            )  # type: ignore[method-assign]
-            collection._engine_update_with_operation = lambda *args, **kwargs: (
-                asyncio.sleep(
-                    0, result=UpdateResult(matched_count=1, modified_count=1)
+            try:
+                await collection.insert_many(
+                    [
+                        {'_id': 'hinted', 'done': False},
+                        {'_id': 'plain', 'done': False},
+                    ]
                 )
-            )  # type: ignore[method-assign]
-            collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(
-                0, result=lookup_results.pop(0)
-            )  # type: ignore[method-assign]
-
-            hinted = await collection.update_one(
-                {'_id': '1'}, {'$set': {'done': True}}, hint='idx'
-            )
-            plain = await collection.update_one(
-                {'_id': '1'}, {'$set': {'done': True}}
-            )
-            return hinted, plain, hub.events
+                hub.events.clear()
+                hinted = await collection.update_one(
+                    {'_id': 'hinted'},
+                    {'$set': {'done': True}},
+                    hint='_id_',
+                )
+                plain = await collection.update_one(
+                    {'_id': 'plain'}, {'$set': {'done': True}}
+                )
+                return hinted, plain, hub.events
+            finally:
+                await engine.disconnect()
 
         hinted, plain, events = asyncio.run(_exercise())
 
@@ -1515,7 +1519,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             return await collection.update_one(
                 {'_id': '1'},
                 {'$set': {'done': True}},
-                hint='idx',
+                hint='_id_',
                 upsert=True,
             )
 
@@ -1562,7 +1566,13 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             )  # type: ignore[method-assign]
             collection._engine_update_with_operation = lambda *args, **kwargs: (
                 asyncio.sleep(
-                    0, result=UpdateResult(matched_count=1, modified_count=1)
+                    0,
+                    result=EngineUpdateResult(
+                        result=UpdateResult(
+                            matched_count=1,
+                            modified_count=1,
+                        ),
+                    ),
                 )
             )  # type: ignore[method-assign]
             collection._document_by_id = lambda *args, **kwargs: asyncio.sleep(
@@ -1613,13 +1623,6 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             def publish(self, **payload):
                 self.events.append(payload)
 
-        class CursorStub:
-            def __init__(self, document):
-                self._document = document
-
-            async def first(self):
-                return self._document
-
         async def _exercise():
             hub = HubStub()
             engine = MemoryEngine()
@@ -1628,21 +1631,11 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 collection = AsyncCollection(
                     engine, 'db', 'coll', change_hub=hub
                 )
-                collection._build_cursor = lambda *args, **kwargs: CursorStub(
-                    {'_id': '1'}
-                )  # type: ignore[method-assign]
-                collection._engine_delete_with_operation = (
-                    lambda *args, **kwargs: asyncio.sleep(
-                        0, result=DeleteResult(deleted_count=1)
-                    )
-                )  # type: ignore[method-assign]
-                collection._document_by_id = lambda *args, **kwargs: (
-                    asyncio.sleep(0, result={'_id': '1'})
-                )  # type: ignore[method-assign]
-
+                await collection.insert_one({'_id': '1'})
+                hub.events.clear()
                 plain = await collection.delete_one({'_id': '1'})
                 hinted_none = await collection.delete_one(
-                    {'_id': 'missing'}, hint='idx'
+                    {'_id': 'missing'}, hint='_id_'
                 )
                 return plain, hinted_none, hub.events
             finally:
@@ -1651,7 +1644,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         plain, hinted_none, events = asyncio.run(_exercise())
 
         self.assertEqual(plain.deleted_count, 1)
-        self.assertIn(hinted_none.deleted_count, (0, 1))
+        self.assertEqual(hinted_none.deleted_count, 0)
         self.assertEqual(events[0]['operation_type'], 'delete')
 
     def test_delete_one_hint_returns_zero_when_selection_is_empty(self):
@@ -1662,7 +1655,9 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         async def _exercise():
             collection = AsyncCollection(MemoryEngine(), 'db', 'coll')
             collection._build_cursor = lambda *args, **kwargs: CursorStub()  # type: ignore[method-assign]
-            return await collection.delete_one({'_id': 'missing'}, hint='idx')
+            return await collection.delete_one(
+                {'_id': 'missing'}, hint='_id_'
+            )
 
         result = asyncio.run(_exercise())
 

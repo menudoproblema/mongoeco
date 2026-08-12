@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from mongoeco.api import AsyncMongoClient
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.core.expression_context import current_execution_now
 from mongoeco.errors import OperationFailure
 from mongoeco.wire._executor_handlers import WireSpecialCommandHandlers
 from mongoeco.wire._executor_passthrough import _materialize_passthrough_result, execute_passthrough_command
@@ -37,6 +38,30 @@ class _FakeClient:
 
 
 class WireExecutorHelperCoverageTests(unittest.IsolatedAsyncioTestCase):
+    async def test_wire_execution_scopes_and_restores_the_captured_clock(self):
+        fixed = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC)
+        client = AsyncMongoClient(MemoryEngine(), now_factory=lambda: fixed)
+        executor = WireCommandExecutor(
+            client,
+            WireCursorStore(),
+            WireSessionStore(),
+        )
+        observed: list[datetime | None] = []
+
+        async def dispatch(_context):
+            observed.append(current_execution_now())
+            return {'ok': 1.0}
+
+        executor._handlers.dispatch = dispatch
+        before = current_execution_now()
+        await executor.execute_command(
+            {'find': 'events', '$db': 'db'},
+            connection=WireConnectionContext(connection_id=4),
+        )
+
+        self.assertEqual(observed, [fixed.replace(tzinfo=None)])
+        self.assertEqual(current_execution_now(), before)
+
     async def test_wire_request_captures_the_injected_clock_once(self):
         fixed = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC)
         calls: list[datetime] = []

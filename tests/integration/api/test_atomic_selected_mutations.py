@@ -19,8 +19,7 @@ class _SelectedMutationBarrierMixin:
     async def update_with_operation(
         self, *args, selector_filter=None, **kwargs
     ):
-        if selector_filter is not None:
-            await self._wait_for_competitor()
+        await self._wait_for_competitor()
         return await super().update_with_operation(
             *args,
             selector_filter=selector_filter,
@@ -30,8 +29,7 @@ class _SelectedMutationBarrierMixin:
     async def delete_with_operation(
         self, *args, selector_filter=None, **kwargs
     ):
-        if selector_filter is not None:
-            await self._wait_for_competitor()
+        await self._wait_for_competitor()
         return await super().delete_with_operation(
             *args,
             selector_filter=selector_filter,

@@ -112,7 +112,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--version",
-        default="3.3.0",
+        required=True,
         help="Version exacta de mongoeco a instalar desde PyPI.",
     )
     parser.add_argument(

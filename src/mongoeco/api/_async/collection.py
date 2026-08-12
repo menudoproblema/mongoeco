@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import time
 
-from collections.abc import AsyncIterable, Callable, Iterable, Sequence
+from collections.abc import AsyncIterable, Callable, Iterable, Mapping, Sequence
 from copy import deepcopy
 from datetime import datetime
 
@@ -45,6 +45,7 @@ from mongoeco.api.operations import (
     compile_aggregate_operation,
     compile_find_operation,
 )
+from mongoeco.api.operations import _normalize_array_filters
 from mongoeco.api.public_api import (
     ARG_UNSET,
     COLLECTION_DELETE_MANY_SPEC,
@@ -78,11 +79,15 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
 from mongoeco.core.expression_context import (
     ExpressionExecutionContext,
-    set_execution_now,
 )
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.operation_context import (
+    ChangeOperationType,
+    ChangePublicationPolicy,
+    OperationContext,
+)
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.core.validation import (
@@ -92,6 +97,12 @@ from mongoeco.core.validation import (
     is_update,
 )
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.results import InsertOutcome
+from mongoeco.engines.results import (
+    EngineDeleteResult,
+    EngineUpdateResult,
+    FindAndModifyOutcome,
+)
 from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -138,7 +149,9 @@ from mongoeco.types import (
 
 _FILTER_UNSET = ARG_UNSET
 _UPDATE_UNSET = ARG_UNSET
-_LET_VARIABLE_RE = re.compile(r"^(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*$")
+_LET_VARIABLE_RE = re.compile(
+    r'^(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*$'
+)
 _resolve_distinct_candidates = _collection_reads.resolve_distinct_candidates
 
 
@@ -258,8 +271,35 @@ class AsyncCollection:
 
     def _new_execution_context(self) -> ExpressionExecutionContext:
         now = self._resolve_now()
-        set_execution_now(now)
         return ExpressionExecutionContext(now=now)
+
+    def _new_operation_context(
+        self,
+        *,
+        session: ClientSession | None = None,
+        collation: object | None = None,
+        bindings: Mapping[str, object] | None = None,
+        expressions: ExpressionExecutionContext | None = None,
+        publication: ChangePublicationPolicy = ChangePublicationPolicy.DISABLED,
+        change_operation_type: ChangeOperationType | None = None,
+    ) -> OperationContext:
+        if expressions is None and isinstance(
+            bindings, ExpressionExecutionContext
+        ):
+            expressions = bindings
+            bindings = None
+        execution_context = expressions or self._new_execution_context()
+        if bindings is not None:
+            execution_context = execution_context.with_bindings(bindings)
+        return OperationContext.create(
+            dialect=self._mongodb_dialect,
+            codec_options=self._codec_options,
+            session=session,
+            collation=collation,
+            expressions=execution_context,
+            publication=publication,
+            change_operation_type=change_operation_type,
+        )
 
     def __getattr__(self, name: str) -> 'AsyncCollection':
         if name.startswith('_'):
@@ -324,8 +364,7 @@ class AsyncCollection:
         if not raw_requests:
             raise ValueError('requests must not be empty')
         return [
-            normalize_bulk_write_request(request)
-            for request in raw_requests
+            normalize_bulk_write_request(request) for request in raw_requests
         ]
 
     @staticmethod
@@ -406,7 +445,9 @@ class AsyncCollection:
         return max_time_ms
 
     @staticmethod
-    def _normalize_let(let: object | None) -> dict[str, object] | ExpressionExecutionContext | None:
+    def _normalize_let(
+        let: object | None,
+    ) -> dict[str, object] | ExpressionExecutionContext | None:
         if let is None:
             return None
         if isinstance(let, ExpressionExecutionContext):
@@ -424,13 +465,7 @@ class AsyncCollection:
     def _normalize_array_filters(
         array_filters: object | None,
     ) -> ArrayFilters | None:
-        if array_filters is None:
-            return None
-        if not isinstance(array_filters, list):
-            raise TypeError('array_filters must be a list of dicts')
-        if not all(is_filter(item) for item in array_filters):
-            raise TypeError('array_filters must be a list of dicts')
-        return DocumentCodec.to_internal(array_filters)
+        return _normalize_array_filters(array_filters)
 
     def _apply_codec_options_to_document(self, document: Document) -> Document:
         materialized = DocumentCodec.apply_codec_options(
@@ -664,7 +699,7 @@ class AsyncCollection:
         *,
         session: ClientSession | None = None,
     ) -> bool:
-        if "_publish_change_event" in self.__dict__:
+        if '_publish_change_event' in self.__dict__:
             return True
         return self._runtime.should_publish_change_events(session=session)
 
@@ -680,7 +715,9 @@ class AsyncCollection:
         selector_filter: Filter | None = None,
         session: ClientSession | None = None,
         bypass_document_validation: bool = False,
-    ) -> UpdateResult[DocumentId]:
+        replacement_document: Document | None = None,
+        publish_operation_type: str | None = None,
+    ) -> EngineUpdateResult:
         return await self._runtime.engine_update_with_operation(
             operation,
             upsert=upsert,
@@ -688,6 +725,8 @@ class AsyncCollection:
             selector_filter=selector_filter,
             session=session,
             bypass_document_validation=bypass_document_validation,
+            replacement_document=replacement_document,
+            publish_operation_type=publish_operation_type,
         )
 
     def _engine_scan_with_operation(
@@ -707,11 +746,13 @@ class AsyncCollection:
         *,
         selector_filter: Filter | None = None,
         session: ClientSession | None = None,
-    ) -> DeleteResult:
+        publish_change_event: bool = False,
+    ) -> EngineDeleteResult:
         return await self._runtime.engine_delete_with_operation(
             operation,
             selector_filter=selector_filter,
             session=session,
+            publish_change_event=publish_change_event,
         )
 
     async def _engine_count_with_operation(
@@ -784,21 +825,6 @@ class AsyncCollection:
             execution_variables=execution_variables,
         )
 
-    async def _put_replacement_document(
-        self,
-        document: Document,
-        *,
-        overwrite: bool,
-        session: ClientSession | None = None,
-        bypass_document_validation: bool = False,
-    ) -> None:
-        await self._runtime.put_replacement_document(
-            document,
-            overwrite=overwrite,
-            session=session,
-            bypass_document_validation=bypass_document_validation,
-        )
-
     def _build_upsert_replacement_document(
         self,
         filter_spec: Filter,
@@ -840,8 +866,16 @@ class AsyncCollection:
         _execution_context: ExpressionExecutionContext | None = None,
     ) -> InsertOneResult[DocumentId]:
         self._ensure_session_active(session)
-        context = _execution_context or self._new_execution_context()
-        set_execution_now(context.now)
+        context = self._new_operation_context(
+            session=session,
+            expressions=_execution_context,
+            change_operation_type='insert',
+            publication=(
+                ChangePublicationPolicy.EMIT
+                if self._should_publish_change_events(session=session)
+                else ChangePublicationPolicy.RECORD_GAP
+            ),
+        )
         original = self._require_document(document)
         if '_id' not in original:
             original['_id'] = DocumentCodec.to_pymongo(ObjectId())
@@ -866,13 +900,16 @@ class AsyncCollection:
                 metadata={'kind': 'insert_one'},
                 killable=False,
             ):
-                success = await self._engine.put_document(
-                    self._db_name,
-                    self._collection_name,
+                outcome = await self._runtime.engine_insert_document(
                     doc,
                     overwrite=False,
-                    context=session,
+                    session=session,
                     bypass_document_validation=bypass_document_validation,
+                    operation_context=context,
+                    on_commit=lambda committed: self._publish_insert_outcome(
+                        committed,
+                        session=session,
+                    ),
                 )
         except Exception as exc:
             await self._profile_operation(
@@ -882,8 +919,9 @@ class AsyncCollection:
                 errmsg=str(exc),
             )
             raise
-        if not success:
+        if not outcome:
             raise DuplicateKeyError(f'Duplicate key: _id={doc["_id"]}')
+        self._notify_instrumented_insert_outcome(outcome, session=session)
         await self._profile_operation(
             op='insert',
             command_factory=_insert_one_profile_command,
@@ -891,18 +929,48 @@ class AsyncCollection:
         )
         if session is not None:
             session.observe_operation()
-        if self._should_publish_change_events(session=session):
-            self._publish_change_event(
-                operation_type='insert',
-                document_key={'_id': deepcopy(doc['_id'])},
-                full_document=deepcopy(doc),
-                session=session,
-            )
-        else:
-            self._mark_change_event_gap()
         return InsertOneResult(
             inserted_id=DocumentCodec.to_pymongo(doc['_id'])
         )
+
+    def _publish_insert_change_events(
+        self,
+        documents: Iterable[Document],
+        *,
+        session: ClientSession | None,
+    ) -> None:
+        for document in documents:
+            self._publish_change_event(
+                operation_type='insert',
+                document_key={'_id': deepcopy(document['_id'])},
+                full_document=document,
+                session=session,
+            )
+
+    def _publish_insert_outcome(
+        self,
+        outcome: InsertOutcome,
+        *,
+        session: ClientSession | None,
+    ) -> None:
+        if outcome.document is not None:
+            self._publish_insert_change_events(
+                [outcome.document],
+                session=session,
+            )
+
+    def _notify_instrumented_insert_outcome(
+        self,
+        outcome: InsertOutcome,
+        *,
+        session: ClientSession | None,
+    ) -> None:
+        if (
+            '_publish_change_event' in self.__dict__
+            and self._runtime._engine_spi.capabilities.change_delivery
+            in {'commit-sequence', 'transactional-outbox'}
+        ):
+            self._publish_insert_outcome(outcome, session=session)
 
     async def insert_many(
         self,
@@ -912,7 +980,15 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> InsertManyResult[DocumentId]:
         self._ensure_session_active(session)
-        self._new_execution_context()
+        execution_context = self._new_operation_context(
+            session=session,
+            change_operation_type='insert',
+            publication=(
+                ChangePublicationPolicy.EMIT
+                if self._should_publish_change_events(session=session)
+                else ChangePublicationPolicy.RECORD_GAP
+            ),
+        )
         inserted_ids: list[DocumentId] = []
         started_at = time.perf_counter_ns()
         normalized_documents: list[Document] = []
@@ -930,8 +1006,7 @@ class AsyncCollection:
                 'bypassDocumentValidation': bypass_document_validation,
             }
 
-        bulk_put = getattr(self._engine, 'put_documents_bulk', None)
-        if callable(bulk_put):
+        try:
             try:
                 with track_active_operation(
                     self._engine,
@@ -946,14 +1021,24 @@ class AsyncCollection:
                     killable=False,
                 ):
                     results = list(
-                        await bulk_put(
-                            self._db_name,
-                            self._collection_name,
+                        await self._runtime.engine_insert_documents(
                             normalized_documents,
-                            context=session,
+                            session=session,
                             bypass_document_validation=bypass_document_validation,
+                            operation_context=execution_context,
+                            on_commit=lambda committed: self._publish_insert_outcome(
+                                committed,
+                                session=session,
+                            ),
                         )
                     )
+                    for outcome in results:
+                        self._notify_instrumented_insert_outcome(
+                            outcome,
+                            session=session,
+                        )
+            except NotImplementedError:
+                raise
             except Exception as exc:
                 await self._profile_operation(
                     op='insert',
@@ -982,17 +1067,6 @@ class AsyncCollection:
                     )
                     if inserted_ids and session is not None:
                         session.observe_operation()
-                    if self._should_publish_change_events(session=session):
-                        for inserted in normalized_documents[: len(inserted_ids)]:
-                            self._publish_change_event(
-                                operation_type='insert',
-                                document_key={'_id': deepcopy(inserted['_id'])},
-                                full_document=deepcopy(inserted),
-                                session=session,
-                            )
-                    else:
-                        for _inserted_id in inserted_ids:
-                            self._mark_change_event_gap()
                     raise DuplicateKeyError(message)
                 inserted_ids.append(doc['_id'])
             await self._profile_operation(
@@ -1002,23 +1076,14 @@ class AsyncCollection:
             )
             if session is not None:
                 session.observe_operation()
-            if self._should_publish_change_events(session=session):
-                for inserted in normalized_documents[: len(inserted_ids)]:
-                    self._publish_change_event(
-                        operation_type='insert',
-                        document_key={'_id': deepcopy(inserted['_id'])},
-                        full_document=deepcopy(inserted),
-                        session=session,
-                    )
-            else:
-                for _inserted_id in inserted_ids:
-                    self._mark_change_event_gap()
             return InsertManyResult(
                 inserted_ids=[
                     DocumentCodec.to_pymongo(document_id)
                     for document_id in inserted_ids
                 ]
             )
+        except NotImplementedError:
+            pass
 
         for doc in normalized_documents:
             try:
@@ -1034,13 +1099,16 @@ class AsyncCollection:
                     },
                     killable=False,
                 ):
-                    success = await self._engine.put_document(
-                        self._db_name,
-                        self._collection_name,
+                    outcome = await self._runtime.engine_insert_document(
                         doc,
                         overwrite=False,
-                        context=session,
+                        session=session,
                         bypass_document_validation=bypass_document_validation,
+                        operation_context=execution_context,
+                        on_commit=lambda committed: self._publish_insert_outcome(
+                            committed,
+                            session=session,
+                        ),
                     )
             except Exception as exc:
                 await self._profile_operation(
@@ -1050,7 +1118,7 @@ class AsyncCollection:
                     errmsg=str(exc),
                 )
                 raise
-            if not success:
+            if not outcome:
                 message = f'Duplicate key: _id={doc["_id"]}'
                 await self._profile_operation(
                     op='insert',
@@ -1060,18 +1128,11 @@ class AsyncCollection:
                 )
                 if inserted_ids and session is not None:
                     session.observe_operation()
-                if self._should_publish_change_events(session=session):
-                    for inserted in normalized_documents[: len(inserted_ids)]:
-                        self._publish_change_event(
-                            operation_type='insert',
-                            document_key={'_id': deepcopy(inserted['_id'])},
-                            full_document=deepcopy(inserted),
-                            session=session,
-                        )
-                else:
-                    for _inserted_id in inserted_ids:
-                        self._mark_change_event_gap()
                 raise DuplicateKeyError(message)
+            self._notify_instrumented_insert_outcome(
+                outcome,
+                session=session,
+            )
             inserted_ids.append(doc['_id'])
 
         await self._profile_operation(
@@ -1081,17 +1142,6 @@ class AsyncCollection:
         )
         if session is not None:
             session.observe_operation()
-        if self._should_publish_change_events(session=session):
-            for inserted in normalized_documents:
-                self._publish_change_event(
-                    operation_type='insert',
-                    document_key={'_id': deepcopy(inserted['_id'])},
-                    full_document=deepcopy(inserted),
-                    session=session,
-                )
-        else:
-            for _inserted_id in inserted_ids:
-                self._mark_change_event_gap()
         return InsertManyResult(
             inserted_ids=[
                 DocumentCodec.to_pymongo(document_id)
@@ -1317,7 +1367,11 @@ class AsyncCollection:
             offset += len(page)
             return page
 
-        return AsyncRawBatchCursor(_fetch, batch_size=batch_size)
+        return AsyncRawBatchCursor(
+            _fetch,
+            batch_size=batch_size,
+            close=cursor.close,
+        )
 
     def aggregate_raw_batches(
         self,
@@ -1368,7 +1422,11 @@ class AsyncCollection:
                     break
             return documents
 
-        return AsyncRawBatchCursor(_fetch, batch_size=batch_size)
+        return AsyncRawBatchCursor(
+            _fetch,
+            batch_size=batch_size,
+            close=cursor.close,
+        )
 
     def _build_aggregation_cursor(
         self,
@@ -1418,26 +1476,6 @@ class AsyncCollection:
             extra_kwargs=kwargs,
         )
         return self._to_public_update_result(result)
-
-    async def _perform_upsert_update(
-        self,
-        filter_spec: Filter,
-        update_spec: Update,
-        *,
-        session: ClientSession | None = None,
-        array_filters: ArrayFilters | None = None,
-        let: dict[str, object] | None = None,
-        bypass_document_validation: bool = False,
-    ) -> UpdateResult[DocumentId]:
-        return await _collection_modify.perform_upsert_update(
-            self,
-            filter_spec,
-            update_spec,
-            session=session,
-            array_filters=array_filters,
-            let=let,
-            bypass_document_validation=bypass_document_validation,
-        )
 
     async def update_many(
         self,
@@ -1528,7 +1566,49 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> Document | None:
-        document = await _collection_modify.find_one_and_update(
+        outcome = await self._find_one_and_update_outcome(
+            filter_spec,
+            update_spec,
+            filter=filter,
+            update=update,
+            projection=projection,
+            collation=collation,
+            sort=sort,
+            upsert=upsert,
+            return_document=return_document,
+            array_filters=array_filters,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            let=let,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
+            **kwargs,
+        )
+        return outcome.value
+
+    async def _find_one_and_update_outcome(
+        self,
+        filter_spec: Filter | object = _FILTER_UNSET,
+        update_spec: Update | object = _UPDATE_UNSET,
+        *,
+        filter: Filter | object = _FILTER_UNSET,
+        update: Update | object = _UPDATE_UNSET,
+        projection: Projection | None = None,
+        collation: CollationDocument | None = None,
+        sort: SortSpec | None = None,
+        upsert: bool = False,
+        return_document: ReturnDocument | None = None,
+        array_filters: ArrayFilters | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
+        session: ClientSession | None = None,
+        **kwargs: object,
+    ) -> FindAndModifyOutcome:
+        result = await _collection_modify.find_one_and_update_outcome(
             self,
             filter_spec,
             update_spec,
@@ -1548,7 +1628,10 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
-        return self._apply_codec_options_to_optional_document(document)
+        return FindAndModifyOutcome(
+            captured=result.captured,
+            value=self._apply_codec_options_to_optional_document(result.value),
+        )
 
     async def find_one_and_replace(
         self,
@@ -1569,7 +1652,45 @@ class AsyncCollection:
         session: ClientSession | None = None,
         **kwargs: object,
     ) -> Document | None:
-        document = await _collection_modify.find_one_and_replace(
+        outcome = await self._find_one_and_replace_outcome(
+            filter_spec,
+            replacement,
+            filter=filter,
+            projection=projection,
+            collation=collation,
+            sort=sort,
+            upsert=upsert,
+            return_document=return_document,
+            hint=hint,
+            comment=comment,
+            max_time_ms=max_time_ms,
+            let=let,
+            bypass_document_validation=bypass_document_validation,
+            session=session,
+            **kwargs,
+        )
+        return outcome.value
+
+    async def _find_one_and_replace_outcome(
+        self,
+        filter_spec: Filter | object = _FILTER_UNSET,
+        replacement: Document | object = ARG_UNSET,
+        *,
+        filter: Filter | object = _FILTER_UNSET,
+        projection: Projection | None = None,
+        collation: CollationDocument | None = None,
+        sort: SortSpec | None = None,
+        upsert: bool = False,
+        return_document: ReturnDocument | None = None,
+        hint: HintSpec | None = None,
+        comment: object | None = None,
+        max_time_ms: int | None = None,
+        let: dict[str, object] | None = None,
+        bypass_document_validation: bool = False,
+        session: ClientSession | None = None,
+        **kwargs: object,
+    ) -> FindAndModifyOutcome:
+        result = await _collection_modify.find_one_and_replace_outcome(
             self,
             filter_spec,
             replacement,
@@ -1587,7 +1708,10 @@ class AsyncCollection:
             session=session,
             extra_kwargs=kwargs,
         )
-        return self._apply_codec_options_to_optional_document(document)
+        return FindAndModifyOutcome(
+            captured=result.captured,
+            value=self._apply_codec_options_to_optional_document(result.value),
+        )
 
     async def find_one_and_delete(
         self,

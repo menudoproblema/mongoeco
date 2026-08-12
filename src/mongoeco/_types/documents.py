@@ -612,6 +612,8 @@ class ServerStatusChangeStreamsDocument(TypedDict, total=False):
     retainedEvents: int
     currentOffset: int
     nextToken: int
+    degraded: bool
+    lastPublishError: str | None
 
 
 class ServerStatusCollationDocument(TypedDict, total=False):

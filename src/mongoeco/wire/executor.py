@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from mongoeco.api import AsyncMongoClient
+from mongoeco.core.expression_context import execution_now_scope
 from mongoeco.errors import OperationFailure
 from mongoeco.wire._executor_handlers import WireSpecialCommandHandlers
 from mongoeco.wire._executor_support import (
@@ -48,7 +49,8 @@ class WireCommandExecutor:
         db_name: str | None = None,
     ) -> dict[str, Any]:
         context = self._build_request_context(body, connection=connection, db_name=db_name)
-        return await self._handlers.dispatch(context)
+        with execution_now_scope(context.execution_context.now):
+            return await self._handlers.dispatch(context)
 
     async def execute_legacy_query(
         self,

@@ -41,6 +41,8 @@ from mongoeco.driver import (
 )
 from mongoeco.driver.monitoring import DriverMonitor
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.capabilities import resolve_engine_capabilities
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
@@ -66,6 +68,19 @@ if TYPE_CHECKING:
 
 
 type NowFactory = Callable[[], datetime]
+
+
+def _materialize_change_document(
+    document: dict[str, object],
+    codec_options: CodecOptions,
+) -> dict[str, object]:
+    materialized = DocumentCodec.apply_codec_options(
+        DocumentCodec.to_pymongo(document),
+        codec_options=codec_options,
+    )
+    if not isinstance(materialized, dict):
+        raise TypeError('codec_options.document_class must produce dict-compatible documents')
+    return materialized
 
 
 def _validate_now_factory(now_factory: NowFactory | None) -> None:
@@ -151,11 +166,9 @@ class AsyncDatabase:
         self._admin = AsyncDatabaseAdminService(self)
 
     def _new_execution_context(self):
-        from mongoeco.core.expression_context import ExpressionExecutionContext, set_execution_now
+        from mongoeco.core.expression_context import ExpressionExecutionContext
 
-        context = ExpressionExecutionContext(now=_resolve_now(self._now_factory))
-        set_execution_now(context.now)
-        return context
+        return ExpressionExecutionContext(now=_resolve_now(self._now_factory))
 
     @property
     def now_factory(self) -> NowFactory | None:
@@ -326,6 +339,9 @@ class AsyncDatabase:
             start_after=start_after,
             start_at_operation_time=start_at_operation_time,
             full_document=full_document,
+            materialize_document=lambda document: _materialize_change_document(
+                document, self._codec_options
+            ),
         )
 
     def change_stream_state(self) -> dict[str, object]:
@@ -412,8 +428,9 @@ class AsyncMongoClient:
     ):
         self._engine = engine or self._create_default_engine()
         _validate_now_factory(now_factory)
-        if now_factory is not None and not getattr(
-            self._engine, 'supports_injected_clock', False
+        if (
+            now_factory is not None
+            and not resolve_engine_capabilities(self._engine).injected_clock
         ):
             raise ValueError('now_factory requires an engine that supports injected clocks')
         self._now_factory = now_factory
@@ -762,6 +779,9 @@ class AsyncMongoClient:
             start_after=start_after,
             start_at_operation_time=start_at_operation_time,
             full_document=full_document,
+            materialize_document=lambda document: _materialize_change_document(
+                document, self._codec_options
+            ),
         )
 
     def change_stream_state(self) -> dict[str, object]:

@@ -4,6 +4,12 @@ from copy import deepcopy
 import re
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.collation import (
+    CollationSpec,
+    compare_with_collation,
+    normalize_collation,
+    values_equal_with_collation,
+)
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_plan import (
     AndCondition,
@@ -55,7 +61,12 @@ def document_in_virtual_index(
     partial_filter_expression = _index_partial_filter_expression(index)
     if partial_filter_expression is not None:
         partial_plan = compile_filter(partial_filter_expression, dialect=dialect)
-        if not QueryEngine.match_plan(document, partial_plan, dialect=dialect):
+        if not QueryEngine.match_plan(
+            document,
+            partial_plan,
+            dialect=dialect,
+            collation=_index_collation(index),
+        ):
             return False
     return True
 
@@ -65,6 +76,7 @@ def query_can_use_index(
     query_plan: QueryNode,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | Filter | None = None,
 ) -> bool:
     if _index_hidden(index):
         return False
@@ -79,8 +91,19 @@ def query_can_use_index(
     partial_filter_expression = _index_partial_filter_expression(index)
     if partial_filter_expression is None:
         return True
+    operation_collation = (
+        normalize_collation(collation) if isinstance(collation, dict) else collation
+    )
+    index_collation = _index_collation(index)
+    if operation_collation != index_collation:
+        return False
     partial_plan = compile_filter(partial_filter_expression, dialect=dialect)
-    return _plan_implies(query_plan, partial_plan, dialect=dialect)
+    return _plan_implies(
+        query_plan,
+        partial_plan,
+        dialect=dialect,
+        collation=index_collation,
+    )
 
 
 def collect_usable_virtual_index_names(
@@ -88,12 +111,18 @@ def collect_usable_virtual_index_names(
     query_plan: QueryNode,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | Filter | None = None,
 ) -> list[str]:
     names: list[str] = []
     for index in indexes:
         if not is_virtual_index(index):
             continue
-        if query_can_use_index(index, query_plan, dialect=dialect):
+        if query_can_use_index(
+            index,
+            query_plan,
+            dialect=dialect,
+            collation=collation,
+        ):
             name = _index_name(index)
             if name:
                 names.append(name)
@@ -106,8 +135,14 @@ def describe_virtual_index_usage(
     *,
     hinted_index_name: str | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | Filter | None = None,
 ) -> dict[str, object] | None:
-    usable = collect_usable_virtual_index_names(indexes, query_plan, dialect=dialect)
+    usable = collect_usable_virtual_index_names(
+        indexes,
+        query_plan,
+        dialect=dialect,
+        collation=collation,
+    )
     hinted_virtual: bool | None = None
     if hinted_index_name is not None:
         for index in indexes:
@@ -162,6 +197,16 @@ def _index_hidden(index: EngineIndexRecord | dict[str, object]) -> bool:
     return bool(index.get("hidden", False))
 
 
+def _index_collation(
+    index: EngineIndexRecord | dict[str, object],
+) -> CollationSpec | None:
+    if isinstance(index, EngineIndexRecord):
+        value = index.collation
+    else:
+        value = index.get("collation")
+    return normalize_collation(value) if isinstance(value, dict) else None
+
+
 def _index_partial_filter_expression(index: EngineIndexRecord | dict[str, object]) -> Filter | None:
     if isinstance(index, EngineIndexRecord):
         return index.partial_filter_expression
@@ -176,20 +221,24 @@ def _plan_implies(
     requirement: QueryNode,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> bool:
     if isinstance(requirement, MatchAll):
         return True
-    if query_plan == requirement:
-        return True
     if isinstance(query_plan, OrCondition):
-        return all(_plan_implies(clause, requirement, dialect=dialect) for clause in query_plan.clauses)
+        return all(_plan_implies(clause, requirement, dialect=dialect, collation=collation) for clause in query_plan.clauses)
     if isinstance(requirement, OrCondition):
-        return any(_plan_implies(query_plan, clause, dialect=dialect) for clause in requirement.clauses)
+        return any(_plan_implies(query_plan, clause, dialect=dialect, collation=collation) for clause in requirement.clauses)
     if isinstance(requirement, AndCondition):
-        return all(_plan_implies(query_plan, clause, dialect=dialect) for clause in requirement.clauses)
+        return all(_plan_implies(query_plan, clause, dialect=dialect, collation=collation) for clause in requirement.clauses)
     if isinstance(query_plan, AndCondition):
-        return any(_plan_implies(clause, requirement, dialect=dialect) for clause in query_plan.clauses)
-    if _implies_same_field_condition(query_plan, requirement, dialect=dialect):
+        return any(_plan_implies(clause, requirement, dialect=dialect, collation=collation) for clause in query_plan.clauses)
+    if _implies_same_field_condition(
+        query_plan,
+        requirement,
+        dialect=dialect,
+        collation=collation,
+    ):
         return True
     if isinstance(requirement, ExistsCondition) and requirement.value:
         return _plan_implies_exists_true(query_plan, requirement.field)
@@ -227,24 +276,47 @@ def _implies_same_field_condition(
     requirement: QueryNode,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> bool:
     if isinstance(requirement, ExistsCondition):
         return requirement.value and _plan_implies_exists_true(query_plan, requirement.field)
     if isinstance(requirement, EqualsCondition):
         if isinstance(query_plan, EqualsCondition):
-            return query_plan.field == requirement.field and query_plan.value == requirement.value
+            return (
+                query_plan.field == requirement.field
+                and values_equal_with_collation(
+                    query_plan.value,
+                    requirement.value,
+                    dialect=dialect,
+                    collation=collation,
+                )
+            )
         if isinstance(query_plan, InCondition):
             return (
                 query_plan.field == requirement.field
                 and len(query_plan.values) == 1
-                and query_plan.values[0] == requirement.value
+                and values_equal_with_collation(
+                    query_plan.values[0],
+                    requirement.value,
+                    dialect=dialect,
+                    collation=collation,
+                )
             )
         return False
     if isinstance(requirement, InCondition):
         if isinstance(query_plan, EqualsCondition):
-            return query_plan.field == requirement.field and query_plan.value in requirement.values
+            return query_plan.field == requirement.field and any(
+                values_equal_with_collation(query_plan.value, candidate, dialect=dialect, collation=collation)
+                for candidate in requirement.values
+            )
         if isinstance(query_plan, InCondition):
-            return query_plan.field == requirement.field and set(query_plan.values).issubset(set(requirement.values))
+            return query_plan.field == requirement.field and all(
+                any(
+                    values_equal_with_collation(query_value, required_value, dialect=dialect, collation=collation)
+                    for required_value in requirement.values
+                )
+                for query_value in query_plan.values
+            )
         return False
     if isinstance(requirement, TypeCondition):
         return _same_field_type_implies(query_plan, requirement.field, requirement.values)
@@ -257,6 +329,7 @@ def _implies_same_field_condition(
             minimum=requirement.value,
             inclusive=False,
             dialect=dialect,
+            collation=collation,
         )
     if isinstance(requirement, GreaterThanOrEqualCondition):
         return _same_field_ordering_implies(
@@ -265,6 +338,7 @@ def _implies_same_field_condition(
             minimum=requirement.value,
             inclusive=True,
             dialect=dialect,
+            collation=collation,
         )
     if isinstance(requirement, LessThanCondition):
         return _same_field_ordering_implies(
@@ -273,6 +347,7 @@ def _implies_same_field_condition(
             maximum=requirement.value,
             inclusive=False,
             dialect=dialect,
+            collation=collation,
         )
     if isinstance(requirement, LessThanOrEqualCondition):
         return _same_field_ordering_implies(
@@ -281,6 +356,7 @@ def _implies_same_field_condition(
             maximum=requirement.value,
             inclusive=True,
             dialect=dialect,
+            collation=collation,
         )
     return False
 
@@ -355,6 +431,7 @@ def _same_field_ordering_implies(
     maximum: object | None = None,
     inclusive: bool,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> bool:
     if isinstance(query_plan, EqualsCondition):
         if query_plan.field != field:
@@ -365,6 +442,7 @@ def _same_field_ordering_implies(
             maximum=maximum,
             inclusive=inclusive,
             dialect=dialect,
+            collation=collation,
         )
     if isinstance(query_plan, InCondition):
         if query_plan.field != field or not query_plan.values:
@@ -376,6 +454,7 @@ def _same_field_ordering_implies(
                 maximum=maximum,
                 inclusive=inclusive,
                 dialect=dialect,
+                collation=collation,
             )
             for value in query_plan.values
         )
@@ -396,6 +475,7 @@ def _same_field_ordering_implies(
                     query_inclusive,
                     inclusive,
                     dialect=dialect,
+                    collation=collation,
                 )
             if kind == "max" and maximum is not None:
                 return _compare_bounds(
@@ -405,6 +485,7 @@ def _same_field_ordering_implies(
                     inclusive,
                     reverse=True,
                     dialect=dialect,
+                    collation=collation,
                 )
     return False
 
@@ -417,8 +498,14 @@ def _compare_bounds(
     *,
     reverse: bool = False,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> bool:
-    comparison = dialect.policy.compare_values(left, right)
+    comparison = compare_with_collation(
+        left,
+        right,
+        dialect=dialect,
+        collation=collation,
+    )
     if reverse:
         if comparison < 0:
             return True
@@ -439,13 +526,24 @@ def _value_satisfies_bounds(
     maximum: object | None = None,
     inclusive: bool,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> bool:
     if minimum is not None:
-        minimum_comparison = dialect.policy.compare_values(value, minimum)
+        minimum_comparison = compare_with_collation(
+            value,
+            minimum,
+            dialect=dialect,
+            collation=collation,
+        )
         if minimum_comparison < 0 or (minimum_comparison == 0 and not inclusive):
             return False
     if maximum is not None:
-        maximum_comparison = dialect.policy.compare_values(value, maximum)
+        maximum_comparison = compare_with_collation(
+            value,
+            maximum,
+            dialect=dialect,
+            collation=collation,
+        )
         if maximum_comparison > 0 or (maximum_comparison == 0 and not inclusive):
             return False
     return True

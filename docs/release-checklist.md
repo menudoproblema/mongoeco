@@ -7,7 +7,7 @@ Esta lista prepara una release sin obligar a publicar nada.
 - revisar [README.md](../README.md) para que el
   alcance embebido/local y sus limites sean explicitos;
 - preparar o revisar la nota de release y la guía de migración de la versión
-  objetivo (para 4.0, [release-4.0.0.md](release-4.0.0.md)) para
+  objetivo (para 4.3, [release-4.3.0.md](release-4.3.0.md)) para
   confirmar que la narrativa y los cambios incompatibles son explícitos;
 - revisar [COMPATIBILITY.md](../COMPATIBILITY.md)
   y confirmar que runtime, compat catalog, docs y tests cuentan la misma
@@ -38,8 +38,12 @@ Esta lista prepara una release sin obligar a publicar nada.
 
 - ejecutar `pytest -q`;
 - ejecutar `python -m unittest discover -s tests -p 'test*.py'`;
-- ejecutar `pytest --cov=src/mongoeco --cov-report=term -q`;
+- ejecutar `pytest --cov=src/mongoeco --cov-fail-under=99 --cov-report=term -q`;
 - confirmar que la cobertura global sigue en `>=99%`.
+- ejecutar `python scripts/check_lint_ratchet.py --base-ref v4.2.1` y resolver
+  cualquier infraccion de Ruff introducida en lineas nuevas;
+- no ampliar `scripts/ruff_ratchet_baseline.json`; reducirla cuando se corrija
+  deuda conocida y reiniciar su referencia despues de etiquetar la release;
 - ejecutar `python scripts/run_pymongo_profile_matrix.py --versions 4.9.2
   4.11.3 4.13.2 4.17.0 --summary-output
   tests/fixtures/pymongo_profile_matrix.json` y revisar los deltas publicados.

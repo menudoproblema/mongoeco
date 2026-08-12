@@ -36,10 +36,11 @@ completa de verdad de la estructura interna.
 2. [api-surfaces.md](api-surfaces.md)
 3. [core-runtime.md](core-runtime.md)
 4. [storage-engines.md](storage-engines.md)
-5. [driver-and-wire.md](driver-and-wire.md)
-6. [change-streams-and-collation.md](change-streams-and-collation.md)
-7. [testing-and-compatibility.md](testing-and-compatibility.md)
-8. [decisions/index.md](decisions/index.md)
+5. [engine-spi-v2.md](engine-spi-v2.md)
+6. [driver-and-wire.md](driver-and-wire.md)
+7. [change-streams-and-collation.md](change-streams-and-collation.md)
+8. [testing-and-compatibility.md](testing-and-compatibility.md)
+9. [decisions/index.md](decisions/index.md)
 
 ## Patrones principales
 

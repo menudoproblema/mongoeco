@@ -8,6 +8,104 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-08-12
+
+### Added
+
+- `mongoeco.engines` exporta el contrato publico SPI v2: capabilities,
+  `OperationContext`, outcomes tipados y snapshots explicitos. Se anade una
+  guia de migracion para engines externos y un contrato ejecutable comun para
+  Memory y SQLite.
+- El commit log de Memory y la outbox SQLite aplican retencion configurable por
+  checkpoints. SQLite persiste consumidores durables y expone diagnosticos de
+  secuencia, suelo compactado y entradas pendientes.
+- CI incorpora cobertura minima del 99% y un ratchet Ruff que rechaza errores
+  introducidos en lineas nuevas sin bloquear por deuda historica ajena.
+
+### Deprecated
+
+- El SPI v1 de engines queda deprecado y emite `DeprecationWarning` una vez por
+  clase. `LegacyEngineAdapter` se conserva durante 4.x y se retirara en 5.0.0.
+
+### Changed
+
+- Los engines integrados declaran un SPI v2 mediante `EngineCapabilities` y
+  retornan outcomes estables (`MutationOutcome`, `DeleteOutcome`,
+  `InsertOutcome` y `MergeOutcome`). Los engines v1 quedan aislados en
+  `LegacyEngineAdapter` en vez de dispersar flags privados y `hasattr` por la
+  API.
+- Cada operacion compilada cruza una sola frontera inmutable
+  `OperationContext`, que conserva dialecto, collation, `let`/`$$NOW`, codec,
+  sesion y politica de change events. Las lecturas por cursor poseen un
+  `ReadSnapshot` explicito con politica y lifecycle cerrable.
+- `MemoryEngine` asigna una secuencia monotona al commit efectivo y
+  `SQLiteEngine` persiste escritura y change event/hueco en un outbox dentro de
+  la misma transaccion. El dispatcher entrega por secuencia, tolera replay y
+  usa el journal del hub como checkpoint durable tras reinicios.
+- `$merge` delega cada documento en una primitiva atomica del engine: la
+  comprobacion de identidad, la politica `whenMatched`/`whenNotMatched`, la
+  validacion, los indices y el change event pertenecen a una sola escritura.
+- La composicion streaming de `$skip` y `$limit` conserva el orden de los
+  stages y produce la misma ventana que la ejecucion materializada.
+- Las mutaciones seleccionadas resuelven seleccion, revalidacion, escritura e
+  imagenes `before`/`after` dentro de una unica frontera atomica del engine.
+  Memory usa el lock de coleccion y SQLite una transaccion de escritura.
+- Los cursores con batching mantienen una sola fuente estable hasta agotarla;
+  `rewind()` retira la fuente anterior y `close()` libera tambien fuentes
+  parciales. Los cursores async de agregacion, metadata y change streams son
+  awaitables sin perder su uso directo.
+- La publicacion de change events ocurre en el mismo orden que las mutaciones
+  confirmadas y antes del profiling. Un fallo posterior del journal no
+  reclasifica la escritura como fallida: degrada explicitamente el stream y
+  queda visible en `change_stream_state()`.
+
+### Fixed
+
+- `find_one` ya no omite el contexto/snapshot cuando degrada del lookup directo
+  al scan, y la normalizacion de collation acepta de forma idempotente un
+  `CollationSpec` ya normalizado.
+- Los abortos SQLite revierten conjuntamente documento y fila de outbox; las
+  transacciones Memory no consumen secuencia ni publican eventos hasta su
+  commit. Un replay repetido no duplica eventos ya presentes en el journal.
+- La secuencia confirmada sobrevive a la compactacion total de la outbox y los
+  inserts idempotentes no consumen huecos de autoincremento. Se rechazan tanto
+  consumidores por detras del suelo podado como checkpoints por delante del
+  ultimo commit, en vez de fabricar continuidad.
+- Los indices de Memory usan claves de igualdad BSON, por lo que numeros
+  equivalentes de distintos tipos numericos conservan el mismo resultado antes
+  y despues de crear un indice. SQLite degrada a evaluacion Python cuando un
+  decimal no puede representarse con seguridad en su pushdown numerico.
+- Los hints sobre indices parciales con collation solo son elegibles cuando la
+  operacion declara exactamente la misma collation; la inferencia de
+  implicacion usa ese mismo comparador.
+- Los fallos de fuentes async, raw batches y productores SQLite cierran la
+  fuente exactamente una vez y conservan la excepcion original, incluso tras
+  producir un lote parcial.
+- `bulk_write` valida y copia `array_filters` durante la preparacion, pero
+  delega su unica normalizacion BSON a la frontera comun de compilacion.
+- Los upserts de `find_one_and_update` y `find_one_and_replace` publican un
+  evento `insert` tambien con `ReturnDocument.BEFORE`; updates y replacements
+  sin cambios ya no generan change events.
+- Los raw batches dejan de reabrir desde el principio una fuente agotada y los
+  cursores con `limit` exacto cierran su fuente sin dejar productores activos.
+- La inferencia de indices parciales usa igualdad y orden BSON en vez de
+  igualdad Python, y admite valores no hashables en `$in` sin alterar
+  resultados por una seleccion de indice insegura. La pertenencia al indice
+  respeta tambien la collation declarada por el propio indice.
+- El reloj de ejecucion de TTL, creacion de indices y comandos wire queda
+  acotado al comando y se restaura al finalizar, sin filtrar estado temporal a
+  operaciones posteriores.
+- `count` administrativo cruza la misma frontera `OperationContext` que el
+  resto de lecturas, conservando dialecto, sesion, variables y reloj.
+- `insert_many` comparte el contexto temporal de toda la operacion;
+  `update_many(..., upsert=True)` no reentra por la API publica, y `$merge`
+  usa primitivas atomicas para reemplazar, fusionar o insertar el destino.
+- `findAndModify` construye valor y metadata desde un unico outcome atomico;
+  los cursores raw y de agregacion cierran sus fuentes, y el productor SQLite
+  aplica backpressure sin bloquear al cancelar o agotar parcialmente.
+- El adaptador de write models PyMongo concentra y valida su layout privado,
+  con un error de compatibilidad explicito si una version futura lo cambia.
+
 ## [4.2.1] - 2026-08-11
 
 ### Fixed

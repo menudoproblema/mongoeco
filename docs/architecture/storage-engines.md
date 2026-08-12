@@ -18,6 +18,29 @@ compone varios protocolos parciales:
 
 Esto hace que el contrato se describa por capacidades y no por herencia forzada.
 
+### SPI versionado y frontera de operacion
+
+La API no inspecciona ya cada engine con flags privados. `EngineCapabilities`
+declara la version del SPI, snapshots y estrategia de entrega de cambios. Los
+engines v2 retornan siempre `MutationOutcome`, `DeleteOutcome`, `InsertOutcome`
+o `MergeOutcome`; `LegacyEngineAdapter` concentra la compatibilidad con
+retornos union, callbacks y `put_document` del SPI v1.
+
+Toda operacion CRUD o lectura compilada del SPI v2 recibe un
+`OperationContext` inmutable creado en el borde publico. Ese objeto captura una
+sola vez dialecto, collation normalizada, bindings y `$$NOW`, codec, sesion y
+politica de publicacion. Los engines no deben volver a resolver estos valores
+ni consultar el reloj para completar una operacion que ya lleva contexto. Las
+operaciones administrativas conservan sus protocolos delgados especificos.
+
+### Snapshots de lectura
+
+Los scans v2 se abren como `ReadSnapshot`, no como iterables sin ownership. Su
+metadata declara una politica `STABLE`, `MATERIALIZED` o `LIVE`, y su lifecycle
+garantiza cierre tanto al agotar como al cancelar o fallar. Los cursores de
+coleccion consumen hoy snapshots `STABLE`; una nueva implementacion debe
+declarar explicitamente cualquier politica distinta.
+
 ## `MemoryEngine`
 
 `MemoryEngine` es el backend mas directo y actua como baseline semantico local.
@@ -267,6 +290,26 @@ La semantica de sesiones y transacciones locales se apoya en:
 No se pretende reproducir una infraestructura distribuida de transacciones. Se
 modela una semantica local suficientemente consistente para testing y uso
 embebido.
+
+## Commit sequence y outbox
+
+`MemoryEngine` asigna una secuencia monotona bajo su lock de metadata. Las
+mutaciones de una transaccion MVCC se mantienen pendientes y reciben secuencia
+solo cuando el snapshot se instala con exito; un abort no consume tokens.
+
+`SQLiteEngine` usa una tabla append-only `change_outbox`. La fila de evento o
+hueco se inserta dentro del mismo `sqlite_write_scope` que documentos e
+indices, por lo que commit y rollback son atomicos. El dispatcher consume en
+orden y solo avanza su checkpoint despues de que el hub acepte la fila.
+
+Memory y SQLite conservan por defecto hasta 10.000 entradas, configurable con
+`change_log_max_entries` y `change_outbox_max_entries`. La compactacion usa el
+checkpoint minimo registrado. SQLite persiste checkpoints y distingue
+consumidores efimeros de durables; el alta durable se deriva de un hub con
+`journal_path`. Si el limite obliga a podar por delante de un consumidor
+rezagado, su siguiente lectura falla explicitamente en vez de ocultar perdida
+de eventos. `changeDelivery` expone limites, secuencia y suelo podado en los
+diagnosticos del engine.
 
 ## Helpers compartidos entre engines
 

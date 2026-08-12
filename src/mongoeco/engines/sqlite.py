@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, nullcontext
 import datetime
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from functools import partial
 import hashlib
 import inspect
@@ -19,25 +19,28 @@ import time
 import uuid
 from copy import deepcopy
 from decimal import Decimal
-from typing import Any, AsyncIterable, override
+from typing import Any, AsyncIterable, Callable, override
 
 from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS, bson_engine_key, bson_numeric_index_key
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.collation import normalize_collation, values_equal_with_collation
-from mongoeco.core.expression_context import current_execution_now
+from mongoeco.core.expression_context import current_execution_now, ensure_expression_context
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import (
+    assert_document_kept_storage_key,
     assert_document_matches_storage_key,
     assert_valid_root_document_id,
     canonical_document_id,
+    document_matches_root_id_lookup,
 )
 from mongoeco.core.json_compat import json_dumps_compact, json_loads
 from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import (
@@ -76,6 +79,7 @@ from mongoeco.core.search import (
 )
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.capabilities import EngineCapabilities
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
 from mongoeco.engines._runtime_metrics import LocalRuntimeMetrics
 from mongoeco.engines._shared_ttl import coerce_ttl_datetime, document_expired_by_ttl
@@ -87,6 +91,17 @@ from mongoeco.engines._sqlite_explain_contract import (
 )
 from mongoeco.engines._sqlite_runtime import SQLiteCacheState, SQLiteRuntimeState
 from mongoeco.engines._sqlite_session_runtime import SQLiteSessionRuntime
+from mongoeco.engines._sqlite_outbox import (
+    append_change as _sqlite_append_change,
+    checkpoint_consumer as _sqlite_checkpoint_consumer,
+    compact_change_outbox as _sqlite_compact_change_outbox,
+    consumer_checkpoint as _sqlite_consumer_checkpoint,
+    ensure_change_outbox_schema,
+    outbox_info as _sqlite_outbox_info,
+    read_committed_changes as _sqlite_read_committed_changes,
+    register_consumer as _sqlite_register_consumer,
+    unregister_consumer as _sqlite_unregister_consumer,
+)
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines._sqlite_vector_backend import (
     SQLiteVectorBackendState,
@@ -183,6 +198,14 @@ from mongoeco.engines._sqlite_write_ops import (
     put_documents_bulk as _sqlite_put_documents_bulk,
 )
 from mongoeco.engines.profiling import EngineProfiler
+from mongoeco.engines.results import (
+    CommittedChange,
+    EngineDeleteResult,
+    EngineUpdateResult,
+    InsertOutcome,
+    MergeDocumentResult,
+)
+from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
     EngineReadExecutionPlan,
@@ -229,6 +252,7 @@ from mongoeco.types import (
     ArrayFilters,
     CollationDocument,
     DBRef,
+    Decimal128,
     DeleteResult,
     Document,
     DocumentId,
@@ -263,6 +287,11 @@ _SQLITE_SHARED_EXECUTORS: dict[int, ThreadPoolExecutor] = {}
 _ASYNC_SCAN_QUEUE_BATCH_SIZE = 64
 
 
+@dataclass(frozen=True, slots=True)
+class _ScanProducerError:
+    error: BaseException
+
+
 def _shutdown_sqlite_shared_executors() -> None:
     with _SQLITE_SHARED_EXECUTOR_LOCK:
         executors = list(_SQLITE_SHARED_EXECUTORS.values())
@@ -275,7 +304,11 @@ atexit.register(_shutdown_sqlite_shared_executors)
 
 
 class SQLiteEngine(AsyncStorageEngine):
-    supports_injected_clock = True
+    capabilities = EngineCapabilities(
+        injected_clock=True,
+        explicit_read_snapshots=True,
+        change_delivery='transactional-outbox',
+    )
     """Motor SQLite async-first usando la stdlib como backend persistente."""
 
     _PROFILE_COLLECTION_NAME = "system.profile"
@@ -287,6 +320,7 @@ class SQLiteEngine(AsyncStorageEngine):
         executor_workers: int | None = None,
         aggregation_materialization_limit: int | None = 50_000,
         simulate_search_index_latency: float = 0.0,
+        change_outbox_max_entries: int = 10_000,
     ):
         self._path = path
         self._codec = codec
@@ -295,6 +329,12 @@ class SQLiteEngine(AsyncStorageEngine):
         self._lock = threading.RLock()
         if executor_workers is not None and executor_workers < 1:
             raise ValueError("executor_workers must be positive")
+        if (
+            not isinstance(change_outbox_max_entries, int)
+            or isinstance(change_outbox_max_entries, bool)
+            or change_outbox_max_entries < 1
+        ):
+            raise ValueError('change_outbox_max_entries must be positive')
         self._executor_workers = executor_workers or (
             min(32, max(4, (os.cpu_count() or 1) + 4))
             if path != ":memory:"
@@ -306,6 +346,9 @@ class SQLiteEngine(AsyncStorageEngine):
         self._active_operations = LocalActiveOperationRegistry()
         self._admin_runtime = SQLiteAdminRuntime(self)
         self._session_runtime = SQLiteSessionRuntime(self)
+        self._change_outbox_checkpoints: dict[str, int] = {}
+        self._registered_change_consumers: dict[str, bool] = {}
+        self._change_outbox_max_entries = change_outbox_max_entries
         self._mvcc_version = 0
         self.aggregation_cost_policy = (
             None
@@ -453,7 +496,20 @@ class SQLiteEngine(AsyncStorageEngine):
         declared_vector_index_count = 0
         pending_vector_index_count = 0
         connection = self._connection
+        change_delivery_info: dict[str, object] = {
+            'maxEntries': self._change_outbox_max_entries,
+            'pendingEntries': 0,
+            'consumerCount': 0,
+            'prunedThrough': 0,
+        }
         if connection is not None:
+            try:
+                with self._lock:
+                    change_delivery_info.update(
+                        _sqlite_outbox_info(connection)
+                    )
+            except sqlite3.OperationalError:
+                pass
             try:
                 row = connection.execute(
                     """
@@ -535,6 +591,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 "ensuredMultikeyPhysicalIndexCount": len(self._ensured_multikey_physical_indexes),
                 "vectorSearchBackendCount": len(self._vector_search_backends),
             },
+            'changeDelivery': change_delivery_info,
         }
 
     def _ensure_executor(self) -> ThreadPoolExecutor:
@@ -1001,6 +1058,7 @@ class SQLiteEngine(AsyncStorageEngine):
         indexes: list[EngineIndexRecord] | None = None,
         plan: QueryNode | None = None,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationDocument | None = None,
     ) -> EngineIndexRecord | None:
         if hint is None:
             return None
@@ -1021,14 +1079,14 @@ class SQLiteEngine(AsyncStorageEngine):
                 if index["name"] == hint:
                     if index.get("hidden"):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
-                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
+                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect, collation=collation):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
             else:
                 if index["key"] == normalized_hint:
                     if index.get("hidden"):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
-                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
+                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect, collation=collation):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
 
@@ -2136,7 +2194,7 @@ class SQLiteEngine(AsyncStorageEngine):
         conn = self._require_connection()
         tagged_type_path = json_path_for_field(field) + f'."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
         row = conn.execute(
-            f"""
+            """
             SELECT 1
             FROM documents
             WHERE db_name = ? AND coll_name = ?
@@ -2172,6 +2230,60 @@ class SQLiteEngine(AsyncStorageEngine):
             comparison_fields=self._comparison_fields,
             field_contains_tagged_type_in_collection=self._field_contains_tagged_undefined_in_collection,
         )
+
+    @staticmethod
+    def _plan_contains_decimal_operand(plan: object) -> bool:
+        pending = [plan]
+        seen: set[int] = set()
+        while pending:
+            current = pending.pop()
+            if id(current) in seen:
+                continue
+            seen.add(id(current))
+            if isinstance(current, (Decimal, Decimal128)):
+                return True
+            if isinstance(current, dict):
+                pending.extend(current.values())
+                continue
+            if isinstance(current, (list, tuple, set, frozenset)):
+                pending.extend(current)
+                continue
+            for attribute in (
+                "value",
+                "values",
+                "clause",
+                "clauses",
+                "lower",
+                "upper",
+                "divisor",
+                "remainder",
+            ):
+                if hasattr(current, attribute):
+                    pending.append(getattr(current, attribute))
+        return False
+
+    def _plan_requires_python_for_decimal_numeric(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: QueryNode,
+    ) -> bool:
+        if self._plan_contains_decimal_operand(plan):
+            return True
+        try:
+            return any(
+                self._field_contains_tagged_value_type_in_collection(
+                    db_name,
+                    coll_name,
+                    field,
+                    value_type,
+                )
+                for field in self._plan_fields(plan)
+                for value_type in ("decimal", "decimal128", "decimal128_public")
+            )
+        except RuntimeError:
+            # Pure planner tests may compile against an unconnected empty engine.
+            return False
 
     def _field_is_top_level_array_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
         feature_key = (db_name, coll_name, f"top_level_array:{field}")
@@ -3252,6 +3364,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
                     """
                 )
+                ensure_change_outbox_schema(connection)
                 collection_columns = {
                     row[1]
                     for row in connection.execute("PRAGMA table_info(collections)").fetchall()
@@ -3498,6 +3611,83 @@ class SQLiteEngine(AsyncStorageEngine):
             connection.execute("PRAGMA synchronous=NORMAL")
         return connection
 
+    def register_change_consumer(
+        self,
+        consumer_id: str,
+        *,
+        initial_checkpoint: int | None = None,
+        durable: bool = False,
+    ) -> int:
+        with self._lock:
+            conn = self._connection
+            if conn is None:
+                raise RuntimeError('SQLiteEngine must be connected before registering a change consumer')
+            was_in_transaction = conn.in_transaction
+            checkpoint = _sqlite_register_consumer(
+                conn,
+                consumer_id,
+                initial_checkpoint=initial_checkpoint,
+                durable=durable,
+            )
+            if not was_in_transaction:
+                conn.commit()
+            self._change_outbox_checkpoints[consumer_id] = checkpoint
+            self._registered_change_consumers[consumer_id] = durable
+            return checkpoint
+
+    def dispatch_committed_changes(
+        self,
+        consumer_id: str,
+        consumer: Callable[[CommittedChange], None],
+    ) -> None:
+        with self._lock:
+            conn = self._connection
+            if conn is None:
+                raise RuntimeError('SQLiteEngine must be connected before dispatching changes')
+            checkpoint = _sqlite_consumer_checkpoint(conn, consumer_id)
+            changes = _sqlite_read_committed_changes(
+                conn,
+                after_sequence=checkpoint,
+                deserialize_document=self._deserialize_document,
+            )
+            for change in changes:
+                consumer(change)
+                _sqlite_checkpoint_consumer(
+                    conn,
+                    consumer_id,
+                    change.sequence,
+                )
+                conn.commit()
+                self._change_outbox_checkpoints[consumer_id] = change.sequence
+
+            _sqlite_compact_change_outbox(
+                conn,
+                max_entries=self._change_outbox_max_entries,
+            )
+            conn.commit()
+
+    def unregister_change_consumer(
+        self,
+        consumer_id: str,
+        *,
+        retire_durable: bool = False,
+    ) -> None:
+        with self._lock:
+            conn = self._connection
+            if conn is not None:
+                _sqlite_unregister_consumer(
+                    conn,
+                    consumer_id,
+                    include_durable=retire_durable,
+                )
+                _sqlite_compact_change_outbox(
+                    conn,
+                    max_entries=self._change_outbox_max_entries,
+                )
+                conn.commit()
+            self._change_outbox_checkpoints.pop(consumer_id, None)
+            self._registered_change_consumers.pop(consumer_id, None)
+
     def _can_use_dedicated_reader(self, context: ClientSession | None) -> bool:
         self._ensure_session_can_use_engine(context)
         return self._path != ":memory:" and not self._session_owns_transaction(context)
@@ -3570,6 +3760,23 @@ class SQLiteEngine(AsyncStorageEngine):
                 while self._active_scan_count > 0:
                     self._scan_condition.wait()
             connection = self._connection
+            if connection is not None:
+                for consumer_id, durable in tuple(
+                    self._registered_change_consumers.items()
+                ):
+                    if not durable:
+                        _sqlite_unregister_consumer(
+                            connection,
+                            consumer_id,
+                            include_durable=False,
+                        )
+                _sqlite_compact_change_outbox(
+                    connection,
+                    max_entries=self._change_outbox_max_entries,
+                )
+                connection.commit()
+            self._registered_change_consumers.clear()
+            self._change_outbox_checkpoints.clear()
             self._connection = None
             self._transaction_owner_session_id = None
             self._invalidate_index_cache()
@@ -3599,7 +3806,8 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
         *,
         bypass_document_validation: bool = False,
-    ) -> bool:
+        operation_context: OperationContext | None = None,
+    ) -> InsertOutcome:
         if "_id" in document:
             assert_valid_root_document_id(document["_id"])
         storage_key = self._storage_key(document.get("_id"))
@@ -3608,54 +3816,290 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                return _sqlite_put_document(
+                with sqlite_write_scope(
                     conn,
-                    db_name=db_name,
-                    coll_name=coll_name,
-                    document=document,
-                    overwrite=overwrite,
-                    bypass_document_validation=bypass_document_validation,
-                    storage_key=storage_key,
-                    serialized_document=serialized_document,
-                    purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
-                        current,
-                        current_db_name,
-                        current_coll_name,
-                        context=context,
-                        now=self._ttl_now(),
-                    ),
                     begin_write=lambda current: self._begin_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
                     commit_write=lambda current: self._commit_write(current, context),
-                    collection_options_or_empty=self._collection_options_or_empty_sync,
-                    load_existing_document_for_storage_key=self._load_existing_document_for_storage_key,
-                    ensure_collection_row=self._ensure_collection_row,
-                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: self._validate_document_against_unique_indexes(
-                        current_db_name,
-                        current_coll_name,
-                        current_document,
-                        exclude_storage_key=exclude_storage_key,
-                        skip_id_check=skip_id_check,
-                        scan_payload_id=scan_payload_id,
-                    ),
-                    load_indexes=self._load_indexes,
-                    rebuild_multikey_entries_for_document=self._rebuild_multikey_entries_for_document,
-                    supports_scalar_index=self._supports_scalar_index,
-                    rebuild_scalar_entries_for_document=self._rebuild_scalar_entries_for_document,
-                    load_search_index_rows=lambda current_db_name, current_coll_name: self._load_search_index_rows(
-                        current_db_name,
-                        current_coll_name,
-                    ),
-                    replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, current_storage_key, current_document, search_indexes: self._replace_search_entries_for_document(
-                        current,
-                        current_db_name,
-                        current_coll_name,
-                        current_storage_key,
-                        current_document,
-                        search_indexes=search_indexes,
-                    ),
-                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                ):
+                    applied = _sqlite_put_document(
+                        conn,
+                        db_name=db_name,
+                        coll_name=coll_name,
+                        document=document,
+                        overwrite=overwrite,
+                        bypass_document_validation=bypass_document_validation,
+                        storage_key=storage_key,
+                        serialized_document=serialized_document,
+                        purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
+                            current,
+                            current_db_name,
+                            current_coll_name,
+                            context=context,
+                            now=(
+                                self._ttl_now()
+                                if operation_context is None
+                                else operation_context.expressions.now.replace(
+                                    tzinfo=datetime.timezone.utc
+                                )
+                            ),
+                        ),
+                        begin_write=lambda current: None,
+                        rollback_write=lambda current: None,
+                        commit_write=lambda current: None,
+                        collection_options_or_empty=self._collection_options_or_empty_sync,
+                        load_existing_document_for_storage_key=self._load_existing_document_for_storage_key,
+                        ensure_collection_row=self._ensure_collection_row,
+                        validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: self._validate_document_against_unique_indexes(
+                            current_db_name,
+                            current_coll_name,
+                            current_document,
+                            exclude_storage_key=exclude_storage_key,
+                            skip_id_check=skip_id_check,
+                            scan_payload_id=scan_payload_id,
+                        ),
+                        load_indexes=self._load_indexes,
+                        rebuild_multikey_entries_for_document=self._rebuild_multikey_entries_for_document,
+                        supports_scalar_index=self._supports_scalar_index,
+                        rebuild_scalar_entries_for_document=self._rebuild_scalar_entries_for_document,
+                        load_search_index_rows=lambda current_db_name, current_coll_name: self._load_search_index_rows(
+                            current_db_name,
+                            current_coll_name,
+                        ),
+                        replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, current_storage_key, current_document, search_indexes: self._replace_search_entries_for_document(
+                            current,
+                            current_db_name,
+                            current_coll_name,
+                            current_storage_key,
+                            current_document,
+                            search_indexes=search_indexes,
+                        ),
+                        invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                    )
+                    commit_sequence = None
+                    if applied and '_id' in document:
+                        commit_sequence = _sqlite_append_change(
+                            conn,
+                            context=operation_context,
+                            event_index=0,
+                            operation_type='insert',
+                            db_name=db_name,
+                            coll_name=coll_name,
+                            document_key={'_id': deepcopy(document['_id'])},
+                            full_document=deepcopy(document),
+                            serialize_document=self._serialize_document,
+                            max_entries=self._change_outbox_max_entries,
+                        )
+                return InsertOutcome(
+                    applied=applied,
+                    document=deepcopy(document) if applied else None,
+                    commit_sequence=commit_sequence,
                 )
+
+    def _merge_document_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        when_matched: str,
+        when_not_matched: str,
+        context: ClientSession | None,
+        on_commit: Callable[[MergeDocumentResult], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> MergeDocumentResult:
+        if "_id" not in document:
+            raise ValueError("merge_document requires an _id")
+        assert_valid_root_document_id(document["_id"])
+        storage_key = self._storage_key(document["_id"])
+
+        with self._lock:
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                self._purge_expired_documents_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                    context=context,
+                    now=(
+                        self._ttl_now()
+                        if operation_context is None
+                        else operation_context.expressions.now.replace(
+                            tzinfo=datetime.timezone.utc
+                        )
+                    ),
+                )
+                with sqlite_write_scope(
+                    conn,
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                ):
+                    original_document = self._load_existing_document_for_storage_key(
+                        conn,
+                        db_name,
+                        coll_name,
+                        storage_key,
+                    )
+                    if original_document is None:
+                        for candidate_key, candidate_document in self._load_documents(
+                            db_name,
+                            coll_name,
+                        ):
+                            if document_matches_root_id_lookup(
+                                DocumentCodec.to_public(candidate_document),
+                                document["_id"],
+                                dialect=MONGODB_DIALECT_70,
+                            ):
+                                assert_document_matches_storage_key(
+                                    candidate_document,
+                                    candidate_key,
+                                    storage_key_for_id=self._storage_key,
+                                )
+                                original_document = candidate_document
+                                storage_key = candidate_key
+                                break
+                    if original_document is not None:
+                        assert_document_matches_storage_key(
+                            original_document,
+                            storage_key,
+                            storage_key_for_id=self._storage_key,
+                        )
+                        if when_matched in {"keepExisting", "fail"}:
+                            return MergeDocumentResult(
+                                matched=True,
+                                applied=False,
+                                before_document=deepcopy(original_document),
+                                after_document=deepcopy(original_document),
+                            )
+                        if when_matched == "replace":
+                            next_document = deepcopy(document)
+                            operation_type = "replace"
+                        else:
+                            next_document = deepcopy(original_document)
+                            next_document.update(deepcopy(document))
+                            operation_type = "update"
+                        assert_document_kept_storage_key(
+                            next_document,
+                            storage_key,
+                            storage_key_for_id=self._storage_key,
+                        )
+                        if MONGODB_DIALECT_70.values_equal(
+                            next_document,
+                            original_document,
+                        ):
+                            return MergeDocumentResult(
+                                matched=True,
+                                applied=False,
+                                operation_type=operation_type,
+                                before_document=deepcopy(original_document),
+                                after_document=deepcopy(original_document),
+                            )
+                    else:
+                        if when_not_matched != "insert":
+                            return MergeDocumentResult(
+                                matched=False,
+                                applied=False,
+                            )
+                        next_document = deepcopy(document)
+                        operation_type = "insert"
+
+                    collection_options = self._collection_options_or_empty_sync(
+                        conn,
+                        db_name,
+                        coll_name,
+                    )
+                    enforce_collection_document_validation(
+                        next_document,
+                        options=collection_options,
+                        original_document=original_document,
+                        dialect=MONGODB_DIALECT_70,
+                    )
+                    self._ensure_collection_row(
+                        conn,
+                        db_name,
+                        coll_name,
+                        options=collection_options,
+                    )
+                    self._validate_document_against_unique_indexes(
+                        db_name,
+                        coll_name,
+                        next_document,
+                        exclude_storage_key=(
+                            storage_key if original_document is not None else None
+                        ),
+                        skip_id_check=False,
+                        scan_payload_id=True,
+                    )
+                    conn.execute(
+                        """
+                        INSERT INTO documents (db_name, coll_name, storage_key, document)
+                        VALUES (?, ?, ?, ?)
+                        ON CONFLICT(db_name, coll_name, storage_key)
+                        DO UPDATE SET document = excluded.document
+                        """,
+                        (
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            self._serialize_document(next_document),
+                        ),
+                    )
+                    indexes = self._load_indexes(db_name, coll_name)
+                    if any(index.get("multikey") for index in indexes):
+                        self._rebuild_multikey_entries_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            next_document,
+                            indexes,
+                        )
+                    if any(self._supports_scalar_index(index) for index in indexes):
+                        self._rebuild_scalar_entries_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            next_document,
+                            indexes,
+                        )
+                    search_indexes = self._load_search_index_rows(db_name, coll_name)
+                    if search_indexes:
+                        self._replace_search_entries_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            storage_key,
+                            next_document,
+                            search_indexes=search_indexes,
+                        )
+                    self._invalidate_collection_features_cache(db_name, coll_name)
+
+                    outcome = MergeDocumentResult(
+                        matched=original_document is not None,
+                        applied=True,
+                        operation_type=operation_type,
+                        before_document=deepcopy(original_document),
+                        after_document=deepcopy(next_document),
+                    )
+                    commit_sequence = _sqlite_append_change(
+                        conn,
+                        context=operation_context,
+                        event_index=0,
+                        operation_type=operation_type,
+                        db_name=db_name,
+                        coll_name=coll_name,
+                        document_key={'_id': deepcopy(next_document['_id'])},
+                        full_document=deepcopy(next_document),
+                        serialize_document=self._serialize_document,
+                        max_entries=self._change_outbox_max_entries,
+                    )
+                    outcome = replace(
+                        outcome, commit_sequence=commit_sequence
+                    )
+                if on_commit is not None:
+                    on_commit(outcome)
+                return outcome
 
     def _snapshot_bulk_insert_validation_options_sync(
         self,
@@ -3668,7 +4112,7 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn):
                 return self._collection_options_or_empty_sync(conn, db_name, coll_name)
 
-    def _put_documents_bulk_sync(
+    def _insert_documents_sync(
         self,
         db_name: str,
         coll_name: str,
@@ -3679,12 +4123,19 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         bypass_document_validation: bool = False,
         snapshot_options: dict[str, object] | None = None,
-    ) -> list[bool]:
+        operation_context: OperationContext | None = None,
+    ) -> tuple[InsertOutcome, ...]:
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                return _sqlite_put_documents_bulk(
+                with sqlite_write_scope(
                     conn,
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                ):
+                    results = _sqlite_put_documents_bulk(
+                        conn,
                     db_name=db_name,
                     coll_name=coll_name,
                     documents=documents,
@@ -3697,7 +4148,13 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_db_name,
                         current_coll_name,
                         context=context,
-                        now=self._ttl_now(),
+                        now=(
+                            self._ttl_now()
+                            if operation_context is None
+                            else operation_context.expressions.now.replace(
+                                tzinfo=datetime.timezone.utc
+                            )
+                        ),
                     ),
                     collection_options_or_empty=self._collection_options_or_empty_sync,
                     load_indexes=self._load_indexes,
@@ -3705,7 +4162,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_db_name,
                         current_coll_name,
                     ),
-                    begin_write=lambda current: self._begin_write(current, context),
+                    begin_write=lambda current: None,
                     ensure_collection_row=self._ensure_collection_row,
                     lookup_collection_id=lambda current, current_db_name, current_coll_name, create: self._lookup_collection_id(
                         current,
@@ -3735,10 +4192,62 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_document,
                         search_indexes=search_indexes,
                     ),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
+                    commit_write=lambda current: None,
+                    rollback_write=lambda current: None,
                     invalidate_collection_features_cache=self._invalidate_collection_features_cache,
-                )
+                    )
+                    outcomes: list[InsertOutcome] = []
+                    for event_index, (document, applied) in enumerate(
+                        zip(documents, results, strict=False)
+                    ):
+                        commit_sequence = None
+                        if applied and '_id' in document:
+                            commit_sequence = _sqlite_append_change(
+                                conn,
+                                context=operation_context,
+                                event_index=event_index,
+                                operation_type='insert',
+                                db_name=db_name,
+                                coll_name=coll_name,
+                                document_key={'_id': deepcopy(document['_id'])},
+                                full_document=deepcopy(document),
+                                serialize_document=self._serialize_document,
+                                max_entries=self._change_outbox_max_entries,
+                            )
+                        outcomes.append(
+                            InsertOutcome(
+                                applied=applied,
+                                document=deepcopy(document) if applied else None,
+                                commit_sequence=commit_sequence,
+                            )
+                        )
+                return tuple(outcomes)
+
+    def _put_documents_bulk_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        documents: list[Document],
+        prepared_documents: list[tuple[str, str, list[tuple[str, str, int, str]]]],
+        snapshot_indexes: list[EngineIndexRecord],
+        context: ClientSession | None,
+        *,
+        bypass_document_validation: bool = False,
+        snapshot_options: dict[str, object] | None = None,
+    ) -> list[bool]:
+        return [
+            outcome.applied
+            for outcome in self._insert_documents_sync(
+                db_name,
+                coll_name,
+                documents,
+                prepared_documents,
+                snapshot_indexes,
+                context,
+                bypass_document_validation=bypass_document_validation,
+                snapshot_options=snapshot_options,
+            )
+        ]
 
     def _prepare_bulk_document_sync(self, document: Document) -> tuple[str, str]:
         if "_id" in document:
@@ -3771,7 +4280,7 @@ class SQLiteEngine(AsyncStorageEngine):
             self._build_multikey_rows_for_document(storage_key, document, indexes),
         )
 
-    def _get_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, projection: Projection | None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
+    def _get_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, projection: Projection | None, dialect: MongoDialect | None = None, context: ClientSession | None = None, operation_context: OperationContext | None = None) -> Document | None:
         self._ensure_session_can_use_engine(context)
         effective_dialect = dialect or MONGODB_DIALECT_70
         if self._is_profile_namespace(coll_name):
@@ -3791,7 +4300,17 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 self._purge_expired_documents_sync(
-                    conn, db_name, coll_name, context=context, now=self._ttl_now()
+                    conn,
+                    db_name,
+                    coll_name,
+                    context=context,
+                    now=(
+                        self._ttl_now()
+                        if operation_context is None
+                        else operation_context.expressions.now.replace(
+                            tzinfo=datetime.timezone.utc
+                        )
+                    ),
                 )
                 return _sqlite_get_document(
                     conn,
@@ -3950,7 +4469,9 @@ class SQLiteEngine(AsyncStorageEngine):
                         db_name,
                         coll_name,
                         context=context,
-                        now=self._ttl_now(),
+                        now=semantics.variables.now.replace(
+                            tzinfo=datetime.timezone.utc
+                        ),
                     )
         if (
             semantics.text_query is None
@@ -4116,7 +4637,7 @@ class SQLiteEngine(AsyncStorageEngine):
             context,
             effective_dialect,
             bypass_document_validation,
-        )
+        ).result
 
     def _delete_matching_document_sync(
         self,
@@ -4129,51 +4650,103 @@ class SQLiteEngine(AsyncStorageEngine):
         collation: CollationDocument | None = None,
         variables: Mapping[str, object] | None = None,
         selector_filter: Filter | None = None,
-    ) -> DeleteResult:
+        sort: SortSpec | None = None,
+        hint: str | IndexKeySpec | None = None,
+        on_commit: Callable[[EngineDeleteResult], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> EngineDeleteResult:
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                return _sqlite_delete_matching_document(
-                    db_name=db_name,
-                    coll_name=coll_name,
-                    filter_spec=filter_spec,
-                    selector_filter=selector_filter,
-                    plan=plan,
-                    dialect=dialect or MONGODB_DIALECT_70,
-                    collation=collation,
-                    variables=variables,
-                    compile_find_semantics=compile_find_semantics,
-                    ensure_query_plan=lambda current_filter, current_plan: ensure_query_plan(
-                        current_filter,
-                        current_plan,
-                        dialect=dialect or MONGODB_DIALECT_70,
-                    ),
-                    require_connection=lambda: conn,
-                    purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
-                        current,
-                        current_db_name,
-                        current_coll_name,
-                        context=context,
-                        now=self._ttl_now(),
-                    ),
-                    select_first_document_for_plan=self._select_first_document_for_plan,
-                    storage_key_for_id=self._storage_key,
+                with sqlite_write_scope(
+                    conn,
                     begin_write=lambda current: self._begin_write(current, context),
                     commit_write=lambda current: self._commit_write(current, context),
                     rollback_write=lambda current: self._rollback_write(current, context),
-                    delete_multikey_entries_for_storage_key=self._delete_multikey_entries_for_storage_key,
-                    delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
-                    delete_search_entries_for_storage_key=self._delete_search_entries_for_storage_key,
-                    load_documents=self._load_documents,
-                    match_plan=lambda document, query_plan, current_dialect, current_collation, variables: QueryEngine.match_plan(
-                        document,
-                        query_plan,
-                        dialect=current_dialect,
-                        collation=current_collation,
+                ):
+                    effective_dialect = dialect or MONGODB_DIALECT_70
+                    query_plan = ensure_query_plan(
+                        filter_spec,
+                        plan,
+                        dialect=effective_dialect,
+                    )
+                    self._resolve_hint_index(
+                        db_name,
+                        coll_name,
+                        hint,
+                        plan=query_plan,
+                        dialect=effective_dialect,
+                        collation=normalize_collation(collation),
+                    )
+                    result = _sqlite_delete_matching_document(
+                        db_name=db_name,
+                        coll_name=coll_name,
+                        filter_spec=filter_spec,
+                        selector_filter=selector_filter,
+                        plan=plan,
+                        dialect=dialect or MONGODB_DIALECT_70,
+                        collation=collation,
                         variables=variables,
-                    ),
-                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
-                )
+                        compile_find_semantics=compile_find_semantics,
+                        ensure_query_plan=lambda current_filter, current_plan: ensure_query_plan(
+                            current_filter,
+                            current_plan,
+                            dialect=dialect or MONGODB_DIALECT_70,
+                        ),
+                        require_connection=lambda: conn,
+                        purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
+                            current,
+                            current_db_name,
+                            current_coll_name,
+                            context=context,
+                            now=ensure_expression_context(variables).now.replace(
+                                tzinfo=datetime.timezone.utc
+                            ),
+                        ),
+                        select_first_document_for_plan=self._select_first_document_for_plan,
+                        storage_key_for_id=self._storage_key,
+                        begin_write=lambda current: None,
+                        commit_write=lambda current: None,
+                        rollback_write=lambda current: None,
+                        delete_multikey_entries_for_storage_key=self._delete_multikey_entries_for_storage_key,
+                        delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
+                        delete_search_entries_for_storage_key=self._delete_search_entries_for_storage_key,
+                        load_documents=self._load_documents,
+                        match_plan=lambda document, query_plan, current_dialect, current_collation, variables: QueryEngine.match_plan(
+                            document,
+                            query_plan,
+                            dialect=current_dialect,
+                            collation=current_collation,
+                            variables=variables,
+                        ),
+                        invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                        sort=sort,
+                    )
+                    if (
+                        result.result.deleted_count > 0
+                        and result.deleted_document is not None
+                        and '_id' in result.deleted_document
+                    ):
+                        commit_sequence = _sqlite_append_change(
+                            conn,
+                            context=operation_context,
+                            event_index=0,
+                            operation_type='delete',
+                            db_name=db_name,
+                            coll_name=coll_name,
+                            document_key={
+                                '_id': deepcopy(result.deleted_document['_id'])
+                            },
+                            full_document=None,
+                            serialize_document=self._serialize_document,
+                            max_entries=self._change_outbox_max_entries,
+                        )
+                        result = replace(
+                            result, commit_sequence=commit_sequence
+                        )
+                if result.result.deleted_count and on_commit is not None:
+                    on_commit(result)
+                return result
 
     def _count_matching_documents_sync(
         self,
@@ -4664,6 +5237,62 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     @override
+    async def insert_document(
+        self,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        overwrite: bool = True,
+        *,
+        context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
+        on_commit: Callable[[InsertOutcome], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> InsertOutcome:
+        if operation_context is not None:
+            context = operation_context.session
+        outcome = await self._run_blocking(
+            self._put_document_sync,
+            db_name,
+            coll_name,
+            document,
+            overwrite,
+            context,
+            bypass_document_validation=bypass_document_validation,
+            operation_context=operation_context,
+        )
+        if outcome and on_commit is not None:
+            on_commit(outcome)
+        return outcome
+
+    async def insert_documents(
+        self,
+        db_name: str,
+        coll_name: str,
+        documents: list[Document],
+        *,
+        context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
+        on_commit: Callable[[InsertOutcome], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> tuple[InsertOutcome, ...]:
+        if operation_context is not None:
+            context = operation_context.session
+        outcomes = await self._prepare_and_insert_documents(
+            db_name,
+            coll_name,
+            documents,
+            context=context,
+            bypass_document_validation=bypass_document_validation,
+            operation_context=operation_context,
+        )
+        if on_commit is not None:
+            for outcome in outcomes:
+                if outcome:
+                    on_commit(outcome)
+        return outcomes
+
+    @override
     async def put_document(
         self,
         db_name: str,
@@ -4673,8 +5302,9 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
+        on_commit: Callable[[Document], None] | None = None,
     ) -> bool:
-        return await self._run_blocking(
+        outcome = await self._run_blocking(
             self._put_document_sync,
             db_name,
             coll_name,
@@ -4682,6 +5312,37 @@ class SQLiteEngine(AsyncStorageEngine):
             overwrite,
             context,
             bypass_document_validation=bypass_document_validation,
+        )
+        if outcome and on_commit is not None and outcome.document is not None:
+            on_commit(outcome.document)
+        return outcome.applied
+
+    @override
+    async def merge_document(
+        self,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        *,
+        when_matched: str,
+        when_not_matched: str,
+        context: ClientSession | None = None,
+        on_commit: Callable[[MergeDocumentResult], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> MergeDocumentResult:
+        if operation_context is not None:
+            context = operation_context.session
+        self._ensure_session_can_use_engine(context)
+        return await self._run_blocking(
+            self._merge_document_sync,
+            db_name,
+            coll_name,
+            document,
+            when_matched,
+            when_not_matched,
+            context,
+            on_commit,
+            operation_context,
         )
 
     async def put_documents_bulk(
@@ -4692,7 +5353,31 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
+        on_commit: Callable[[Document], None] | None = None,
     ) -> list[bool]:
+        outcomes = await self._prepare_and_insert_documents(
+            db_name,
+            coll_name,
+            documents,
+            context=context,
+            bypass_document_validation=bypass_document_validation,
+        )
+        if on_commit is not None:
+            for outcome in outcomes:
+                if outcome.document is not None:
+                    on_commit(outcome.document)
+        return [outcome.applied for outcome in outcomes]
+
+    async def _prepare_and_insert_documents(
+        self,
+        db_name: str,
+        coll_name: str,
+        documents: list[Document],
+        *,
+        context: ClientSession | None,
+        bypass_document_validation: bool,
+        operation_context: OperationContext | None = None,
+    ) -> tuple[InsertOutcome, ...]:
         snapshot_options: dict[str, object] | None = None
         snapshot_indexes: list[EngineIndexRecord] = []
         loop = asyncio.get_running_loop()
@@ -4730,7 +5415,7 @@ class SQLiteEngine(AsyncStorageEngine):
             ]
         )
         return await self._run_blocking(
-            self._put_documents_bulk_sync,
+            self._insert_documents_sync,
             db_name,
             coll_name,
             documents,
@@ -4739,15 +5424,47 @@ class SQLiteEngine(AsyncStorageEngine):
             context,
             bypass_document_validation=bypass_document_validation,
             snapshot_options=snapshot_options,
+            operation_context=operation_context,
         )
 
     @override
-    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
-        return await self._run_blocking(self._get_document_sync, db_name, coll_name, doc_id, projection, dialect, context)
+    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None, operation_context: OperationContext | None = None) -> Document | None:
+        if operation_context is not None:
+            context = operation_context.session
+        return await self._run_blocking(
+            self._get_document_sync,
+            db_name,
+            coll_name,
+            doc_id,
+            projection,
+            dialect,
+            context,
+            operation_context,
+        )
 
     @override
     async def delete_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, context: ClientSession | None = None) -> bool:
         return await self._run_blocking(self._delete_document_sync, db_name, coll_name, doc_id, context)
+
+    @override
+    def open_read_snapshot(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        operation_context: OperationContext,
+    ) -> ReadSnapshot:
+        return ReadSnapshot(
+            self.scan_find_semantics(
+                db_name,
+                coll_name,
+                semantics,
+                context=operation_context.session,
+            ),
+            policy=SnapshotPolicy.STABLE,
+            operation_id=operation_context.operation_id,
+        )
 
     @override
     def scan_find_semantics(
@@ -4779,9 +5496,18 @@ class SQLiteEngine(AsyncStorageEngine):
                     yield document
                 return
 
-            items: queue.Queue[object] = queue.Queue()
+            items: queue.Queue[object] = queue.Queue(maxsize=2)
             sentinel = object()
             stop_event = threading.Event()
+
+            def _enqueue(item: object) -> bool:
+                while not stop_event.is_set():
+                    try:
+                        items.put(item, timeout=0.05)
+                        return True
+                    except queue.Full:
+                        continue
+                return False
 
             def _produce() -> None:
                 with self._scan_condition:
@@ -4800,28 +5526,39 @@ class SQLiteEngine(AsyncStorageEngine):
                             break
                         batch.append(document)
                         if len(batch) >= _ASYNC_SCAN_QUEUE_BATCH_SIZE:
-                            items.put(batch)
+                            if not _enqueue(batch):
+                                break
                             batch = []
                 except Exception as exc:
                     if batch:
-                        items.put(batch)
-                    items.put(exc)
+                        _enqueue(batch)
+                        batch = []
+                    _enqueue(_ScanProducerError(exc))
                 finally:
                     if batch:
-                        items.put(batch)
+                        _enqueue(batch)
                     with self._scan_condition:
                         self._active_scan_count -= 1
                         self._scan_condition.notify_all()
-                    items.put(sentinel)
+                    _enqueue(sentinel)
 
             producer = asyncio.create_task(self._run_blocking(_produce))
             try:
                 while True:
-                    item = await self._run_blocking(items.get)
+                    try:
+                        item = await self._run_blocking(
+                            items.get,
+                            True,
+                            0.05,
+                        )
+                    except queue.Empty:
+                        if producer.done():
+                            break
+                        continue
                     if item is sentinel:
                         break
-                    if isinstance(item, Exception):
-                        raise item
+                    if isinstance(item, _ScanProducerError):
+                        raise item.error
                     for document in item:
                         yield document
             finally:
@@ -4843,7 +5580,12 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
-    ) -> UpdateResult[DocumentId]:
+        replacement_document: Document | None = None,
+        on_commit: Callable[[EngineUpdateResult], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> EngineUpdateResult:
+        if operation_context is not None:
+            context = operation_context.session
         if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
             raise OperationFailure("update operation does not include a compiled update plan")
         return await self._run_blocking(
@@ -4857,6 +5599,9 @@ class SQLiteEngine(AsyncStorageEngine):
             context,
             dialect,
             bypass_document_validation,
+            replacement_document,
+            on_commit,
+            operation_context,
         )
 
     def _update_with_operation_sync(
@@ -4870,11 +5615,33 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
         dialect: MongoDialect | None = None,
         bypass_document_validation: bool = False,
-    ) -> UpdateResult[DocumentId]:
+        replacement_document: Document | None = None,
+        on_commit: Callable[[EngineUpdateResult], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> EngineUpdateResult:
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                return _sqlite_update_with_operation(
+                with sqlite_write_scope(
+                    conn,
+                    begin_write=lambda current: self._begin_write(current, context),
+                    commit_write=lambda current: self._commit_write(current, context),
+                    rollback_write=lambda current: self._rollback_write(current, context),
+                ):
+                    semantics = compile_update_semantics(
+                        operation,
+                        dialect=dialect,
+                        selector_filter=selector_filter,
+                    )
+                    self._resolve_hint_index(
+                        db_name,
+                        coll_name,
+                        semantics.hint,
+                        plan=semantics.query_plan,
+                        dialect=semantics.dialect,
+                        collation=semantics.collation,
+                    )
+                    result = _sqlite_update_with_operation(
                     db_name=db_name,
                     coll_name=coll_name,
                     operation=operation,
@@ -4890,7 +5657,9 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_db_name,
                         current_coll_name,
                         context=context,
-                        now=self._ttl_now(),
+                        now=ensure_expression_context(operation.let).now.replace(
+                            tzinfo=datetime.timezone.utc
+                        ),
                     ),
                     collection_options_or_empty=self._collection_options_or_empty_sync,
                     dialect_requires_python_fallback=self._dialect_requires_python_fallback,
@@ -4917,9 +5686,9 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_db_name,
                         current_coll_name,
                     ),
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
+                    begin_write=lambda current: None,
+                    commit_write=lambda current: None,
+                    rollback_write=lambda current: None,
                     translate_compiled_update_plan=lambda compiled_update_plan, current_document: translate_compiled_update_plan(
                         compiled_update_plan,
                         current_document=current_document,
@@ -4939,7 +5708,43 @@ class SQLiteEngine(AsyncStorageEngine):
                     storage_key_for_id=self._storage_key,
                     new_object_id=ObjectId,
                     invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                    replacement_document=replacement_document,
                 )
+                    if (
+                        result.after_document is not None
+                        and '_id' in result.after_document
+                        and (
+                            result.result.upserted_id is not None
+                            or result.result.modified_count > 0
+                        )
+                    ):
+                        commit_sequence = _sqlite_append_change(
+                            conn,
+                            context=operation_context,
+                            event_index=0,
+                            operation_type=(
+                                'insert'
+                                if result.result.upserted_id is not None
+                                else operation_context.change_operation_type
+                                if operation_context is not None
+                                and operation_context.change_operation_type is not None
+                                else 'update'
+                            ),
+                            db_name=db_name,
+                            coll_name=coll_name,
+                            document_key={
+                                '_id': deepcopy(result.after_document['_id'])
+                            },
+                            full_document=deepcopy(result.after_document),
+                            serialize_document=self._serialize_document,
+                            max_entries=self._change_outbox_max_entries,
+                        )
+                        result = replace(
+                            result, commit_sequence=commit_sequence
+                        )
+                if result.after_document is not None and on_commit is not None:
+                    on_commit(result)
+                return result
 
     @override
     async def delete_with_operation(
@@ -4951,7 +5756,11 @@ class SQLiteEngine(AsyncStorageEngine):
         selector_filter: Filter | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
-    ) -> DeleteResult:
+        on_commit: Callable[[EngineDeleteResult], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> EngineDeleteResult:
+        if operation_context is not None:
+            context = operation_context.session
         return await self._run_blocking(
             self._delete_matching_document_sync,
             db_name,
@@ -4963,6 +5772,10 @@ class SQLiteEngine(AsyncStorageEngine):
             operation.collation,
             operation.let,
             selector_filter,
+            operation.sort,
+            operation.hint,
+            on_commit,
+            operation_context,
         )
 
     @override
@@ -4973,7 +5786,10 @@ class SQLiteEngine(AsyncStorageEngine):
         semantics: EngineFindSemantics,
         *,
         context: ClientSession | None = None,
+        operation_context: OperationContext | None = None,
     ) -> int:
+        if operation_context is not None:
+            context = operation_context.session
         return await self._run_blocking(
             self._count_matching_documents_sync,
             db_name,
@@ -5252,6 +6068,7 @@ class SQLiteEngine(AsyncStorageEngine):
             semantics.query_plan,
             hinted_index_name=None if hinted_index is None else hinted_index["name"],
             dialect=semantics.dialect,
+            collation=semantics.collation,
         )
         if virtual_details is not None:
             if isinstance(details, dict):

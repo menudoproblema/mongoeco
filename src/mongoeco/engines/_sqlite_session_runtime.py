@@ -154,7 +154,7 @@ class SQLiteSessionRuntime:
             conn.execute(f"SAVEPOINT {savepoint_name}")
             self._write_savepoint_stack().append(savepoint_name)
         else:
-            conn.execute("BEGIN")
+            conn.execute("BEGIN IMMEDIATE")
 
     def commit_write(self, conn: sqlite3.Connection, context: ClientSession | None) -> None:
         self._ensure_transaction_session_can_use_engine(context)

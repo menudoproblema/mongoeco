@@ -110,6 +110,7 @@ def compile_read_execution_plan(
     plan_requires_python_for_array_comparisons: Callable[[str, str, object], bool],
     plan_requires_python_for_undefined: Callable[[str, str, object], bool],
     plan_requires_python_for_bytes: Callable[[str, str, object], bool],
+    plan_requires_python_for_decimal_numeric: Callable[[str, str, object], bool],
     sort_requires_python: Callable[[str, str, object, object | None], bool],
     build_select_sql: Callable[..., tuple[str, tuple[object, ...]]],
 ) -> SQLiteReadExecutionPlan:
@@ -125,6 +126,7 @@ def compile_read_execution_plan(
         plan_requires_python_for_array_comparisons=plan_requires_python_for_array_comparisons,
         plan_requires_python_for_undefined=plan_requires_python_for_undefined,
         plan_requires_python_for_bytes=plan_requires_python_for_bytes,
+        plan_requires_python_for_decimal_numeric=plan_requires_python_for_decimal_numeric,
         sort_requires_python=sort_requires_python,
         build_select_sql=build_select_sql,
     )

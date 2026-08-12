@@ -127,6 +127,35 @@ class VirtualIndexTests(unittest.TestCase):
         self.assertTrue(query_can_use_index(partial_index, InCondition("score", (10, 12, 15))))
         self.assertFalse(query_can_use_index(partial_index, compile_filter({"score": {"$lt": 20}})))
 
+    def test_partial_index_implication_uses_bson_equality_and_unhashable_values(self):
+        boolean_index = EngineIndexRecord(
+            name="boolean_partial",
+            fields=["value"],
+            key=[("value", 1)],
+            unique=False,
+            partial_filter_expression={"flag": True},
+        )
+        document_index = EngineIndexRecord(
+            name="document_partial",
+            fields=["value"],
+            key=[("value", 1)],
+            unique=False,
+            partial_filter_expression={"flag": {"$in": [{"a": 1}, {"a": 2}]}},
+        )
+
+        self.assertFalse(
+            query_can_use_index(boolean_index, compile_filter({"flag": 1}))
+        )
+        self.assertTrue(
+            query_can_use_index(boolean_index, compile_filter({"flag": True}))
+        )
+        self.assertTrue(
+            query_can_use_index(
+                document_index,
+                compile_filter({"flag": {"$in": [{"a": 1}]}}),
+            )
+        )
+
     def test_partial_index_implication_uses_bson_type_order_for_mixed_type_bounds(self):
         partial_index = EngineIndexRecord(
             name="score_gte_idx",

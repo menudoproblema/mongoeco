@@ -1,10 +1,38 @@
 from importlib import import_module
 
-__all__ = ["AsyncStorageEngine", "MemoryEngine", "SQLiteEngine"]
+__all__ = [
+    "AsyncStorageEngine",
+    "BulkOutcome",
+    "ChangePublicationPolicy",
+    "CommittedChange",
+    "DeleteOutcome",
+    "EngineCapabilities",
+    "InsertOutcome",
+    "MemoryEngine",
+    "MergeOutcome",
+    "MutationOutcome",
+    "OperationContext",
+    "ReadSnapshot",
+    "SnapshotMetadata",
+    "SnapshotPolicy",
+    "SQLiteEngine",
+]
 
 _EXPORT_MODULES = {
     "AsyncStorageEngine": "mongoeco.engines.base",
+    "BulkOutcome": "mongoeco.engines.results",
+    "ChangePublicationPolicy": "mongoeco.core.operation_context",
+    "CommittedChange": "mongoeco.engines.results",
+    "DeleteOutcome": "mongoeco.engines.results",
+    "EngineCapabilities": "mongoeco.engines.capabilities",
+    "InsertOutcome": "mongoeco.engines.results",
     "MemoryEngine": "mongoeco.engines.memory",
+    "MergeOutcome": "mongoeco.engines.results",
+    "MutationOutcome": "mongoeco.engines.results",
+    "OperationContext": "mongoeco.core.operation_context",
+    "ReadSnapshot": "mongoeco.engines.snapshots",
+    "SnapshotMetadata": "mongoeco.engines.snapshots",
+    "SnapshotPolicy": "mongoeco.engines.snapshots",
     "SQLiteEngine": "mongoeco.engines.sqlite",
 }
 

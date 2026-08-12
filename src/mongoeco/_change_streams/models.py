@@ -38,6 +38,8 @@ class ChangeStreamHubState:
     last_compaction_time_monotonic: float | None
     snapshot_exists: bool
     event_log_exists: bool
+    degraded: bool
+    last_publish_error: str | None
 
     def to_document(self) -> dict[str, object]:
         return {
@@ -58,6 +60,8 @@ class ChangeStreamHubState:
             "lastCompactionTimeMonotonic": self.last_compaction_time_monotonic,
             "snapshotExists": self.snapshot_exists,
             "eventLogExists": self.event_log_exists,
+            "degraded": self.degraded,
+            "lastPublishError": self.last_publish_error,
         }
 
 
@@ -110,6 +114,8 @@ def build_hub_state_document(
     journal_log_bytes_since_compaction: int,
     journal_compaction_count: int,
     last_compaction_time_monotonic: float | None,
+    degraded: bool,
+    last_publish_error: str | None,
 ) -> ChangeStreamHubState:
     return ChangeStreamHubState(
         retained_events=retained_events,
@@ -131,4 +137,6 @@ def build_hub_state_document(
         event_log_exists=(
             journal_event_log_path is not None and os.path.exists(journal_event_log_path)
         ),
+        degraded=degraded,
+        last_publish_error=last_publish_error,
     )

@@ -46,6 +46,17 @@ Eso se expone explicitamente con:
 - compaction de snapshot;
 - metadata observable de estado.
 
+Los engines locales entregan cambios por secuencia de commit. El hub alinea su
+token con esa secuencia y acepta replay idempotente: una fila anterior a
+`next_token` ya esta aplicada. En SQLite, el outbox es atomico con la escritura;
+en Memory, la secuencia se asigna al commit MVCC. Cuando hay journal, su ultimo
+token es el checkpoint durable desde el que un proceso reiniciado reanuda el
+outbox pendiente.
+
+Una operacion sin consumidor activo registra un hueco de secuencia en vez de
+inventar un evento recuperable. Los resume tokens no pueden atravesar esos
+huecos silenciosamente.
+
 La arquitectura persigue robustez local, no durabilidad de cluster. Por eso se
 admiten opciones como:
 

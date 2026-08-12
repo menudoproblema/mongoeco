@@ -1,8 +1,27 @@
 from tests.unit.api._collection_test_support import *  # noqa: F403
+import mongoeco.api._async._collection_bulk as collection_bulk_module
+import mongoeco.api.operations as operations_module
 from mongoeco.session import ClientSession
 
 
 class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
+    def test_pymongo_write_model_adapter_reports_unsupported_layout(self):
+        class FutureInsertOne:
+            pass
+
+        with patch.object(
+            collection_bulk_module,
+            'PyMongoInsertOne',
+            FutureInsertOne,
+        ):
+            with self.assertRaisesRegex(
+                TypeError,
+                r'unsupported PyMongo FutureInsertOne layout: missing _doc',
+            ):
+                collection_bulk_module.normalize_bulk_write_request(
+                    FutureInsertOne()
+                )
+
     def test_insert_many_requires_non_empty_document_list(self):
         with self.assertRaises(TypeError):
             asyncio.run(self.collection.insert_many({'name': 'Ada'}))  # type: ignore[arg-type]
@@ -234,34 +253,6 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         )
         self.assertIsNotNone(session.operation_time)
 
-    def test_perform_upsert_update_delegates_to_collection_modify_module(self):
-        async def _exercise():
-            collection = AsyncCollection(MemoryEngine(), 'db', 'coll')
-            expected = UpdateResult(
-                matched_count=0, modified_count=0, upserted_id='1'
-            )
-            with patch(
-                'mongoeco.api._async.collection._collection_modify.perform_upsert_update',
-                return_value=expected,
-            ) as modify:
-                result = await collection._perform_upsert_update(
-                    {'_id': '1'},
-                    {'$set': {'done': True}},
-                    session='session',  # type: ignore[arg-type]
-                    array_filters=[{'item.qty': {'$gt': 1}}],
-                    let={'tenant': 'eu'},
-                    bypass_document_validation=True,
-                )
-            return result, modify.call_args
-
-        result, call_args = asyncio.run(_exercise())
-        self.assertEqual(result.upserted_id, '1')
-        self.assertEqual(
-            call_args.args[1:], ({'_id': '1'}, {'$set': {'done': True}})
-        )
-        self.assertEqual(call_args.kwargs['let'], {'tenant': 'eu'})
-        self.assertTrue(call_args.kwargs['bypass_document_validation'])
-
     def test_find_one_profiles_direct_id_lookup_errors(self):
         class EngineStub:
             async def get_document(self, *args, **kwargs):
@@ -488,7 +479,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
 
         update_calls, stored = asyncio.run(_exercise())
 
-        self.assertEqual(update_calls, 0)
+        self.assertEqual(update_calls, 1)
         self.assertEqual(stored['kind'], 'missing')
         self.assertTrue(stored['done'])
 
@@ -539,7 +530,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(result.matched_count, 0)
         self.assertEqual(result.modified_count, 0)
 
-    def test_find_one_and_update_propagates_sort_to_update_one_on_upsert(self):
+    def test_find_one_and_update_propagates_sort_to_atomic_engine_upsert(self):
         async def _exercise():
             engine = MemoryEngine()
             await engine.connect()
@@ -548,13 +539,13 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                     engine, 'db', 'coll', pymongo_profile='4.11'
                 )
                 recorded: dict[str, object] = {}
-                original = collection.update_one
+                original = engine.update_with_operation
 
                 async def _wrapped(*args, **kwargs):
-                    recorded['sort'] = kwargs.get('sort')
+                    recorded['sort'] = args[2].sort
                     return await original(*args, **kwargs)
 
-                collection.update_one = _wrapped  # type: ignore[method-assign]
+                engine.update_with_operation = _wrapped  # type: ignore[method-assign]
                 await collection.find_one_and_update(
                     {'kind': 'missing'},
                     {'$set': {'done': True}},
@@ -965,6 +956,35 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                 ),
             ],
         )
+
+    def test_bulk_write_normalizes_array_filters_once_at_compilation_boundary(self):
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, 'db', 'coll')
+                await collection.insert_one(
+                    {'_id': 'one', 'items': [{'kind': 'target', 'value': 0}]}
+                )
+                original = operations_module._normalize_array_filters
+                with patch(
+                    'mongoeco.api.operations._normalize_array_filters',
+                    wraps=original,
+                ) as normalize:
+                    await collection.bulk_write(
+                        [
+                            UpdateOne(
+                                {'_id': 'one'},
+                                {'$set': {'items.$[item].value': 1}},
+                                array_filters=[{'item.kind': 'target'}],
+                            )
+                        ]
+                    )
+                return normalize.call_count
+            finally:
+                await engine.disconnect()
+
+        self.assertEqual(asyncio.run(_exercise()), 1)
 
     def test_bulk_write_propagates_bypass_document_validation_to_wrapped_calls(
         self,

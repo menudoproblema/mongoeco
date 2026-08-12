@@ -119,6 +119,51 @@ class ChangeStreamPipelineTests(unittest.TestCase):
 
 
 class ChangeStreamHubTests(unittest.TestCase):
+    def test_publication_failure_is_failure_atomic_and_survives_restart(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            journal_path = os.path.join(temp_dir, "changes.json")
+            hub = ChangeStreamHub(journal_path=journal_path)
+            failure = OSError("journal unavailable")
+
+            with patch.object(
+                hub,
+                "_append_journal_event_locked",
+                side_effect=failure,
+            ):
+                with self.assertRaises(OSError):
+                    hub.publish(
+                        operation_type="insert",
+                        db_name="alpha",
+                        coll_name="users",
+                        document_key={"_id": 1},
+                    )
+            self.assertEqual(hub.current_offset(), 0)
+            self.assertEqual(hub.state.next_token, 1)
+
+            hub.mark_publish_failure(failure)
+            reloaded = ChangeStreamHub(journal_path=journal_path)
+
+            self.assertTrue(reloaded.state.degraded)
+            with self.assertRaisesRegex(OperationFailure, "publication failure"):
+                reloaded.wait_for_event(0, timeout_seconds=0)
+
+    def test_hub_exposes_publication_failure_and_rejects_stream_reads(self):
+        hub = ChangeStreamHub()
+        hub.mark_publish_failure(OSError('journal unavailable'))
+
+        state = hub.state.to_document()
+        self.assertTrue(state['degraded'])
+        self.assertEqual(state['lastPublishError'], 'journal unavailable')
+        with self.assertRaisesRegex(OperationFailure, 'publication failure'):
+            hub.wait_for_event(0, timeout_seconds=0)
+        with self.assertRaisesRegex(OperationFailure, 'publication failure'):
+            hub.publish(
+                operation_type='insert',
+                db_name='alpha',
+                coll_name='users',
+                document_key={'_id': 1},
+            )
+
     def test_hub_constructor_and_properties_validate_inputs(self):
         with self.assertRaises(TypeError):
             ChangeStreamHub(max_retained_events=0)

@@ -21,6 +21,12 @@ class AsyncMaterializedCursor(Generic[T]):
         if self._closed:
             raise InvalidOperation("cannot use cursor after it has been closed")
 
+    def __await__(self):
+        async def _resolve():
+            return self
+
+        return _resolve().__await__()
+
     async def _materialize(self, *, exhaust: bool = True) -> list[T]:
         self._ensure_open()
         self._started = True

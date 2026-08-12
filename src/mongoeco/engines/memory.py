@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from contextlib import AsyncExitStack, contextmanager
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import heapq
 import inspect
 import math
@@ -12,16 +12,17 @@ import threading
 import time
 import uuid
 from copy import deepcopy
-from typing import Any, AsyncIterable, Iterable, Iterator, override
+from typing import Any, AsyncIterable, Callable, Iterable, Iterator, override
 
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.bson_ordering import bson_engine_key
+from mongoeco.core.bson_ordering import bson_engine_key, bson_equality_key
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.expression_context import current_execution_now
 from mongoeco.core.collation import normalize_collation, values_equal_with_collation
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
 from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.capabilities import EngineCapabilities
 from mongoeco.engines._shared_namespace_admin import (
     merge_profile_collection_names,
     merge_profile_database_names,
@@ -51,6 +52,14 @@ from mongoeco.engines._runtime_metrics import LocalRuntimeMetrics
 from mongoeco.engines._shared_ttl import coerce_ttl_datetime, document_expired_by_ttl
 from mongoeco.engines.mvcc import MemoryMvccState
 from mongoeco.engines.profiling import EngineProfiler
+from mongoeco.engines.results import (
+    CommittedChange,
+    EngineDeleteResult,
+    EngineUpdateResult,
+    InsertOutcome,
+    MergeDocumentResult,
+)
+from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
     EngineReadExecutionPlan,
@@ -77,9 +86,12 @@ from mongoeco.core.identity import (
     assert_document_matches_storage_key,
     assert_valid_root_document_id,
     document_matches_root_id_lookup,
+    materialize_replacement_document,
 )
 from mongoeco.core.operators import UpdateEngine
+from mongoeco.core.operation_context import ChangePublicationPolicy, OperationContext
 from mongoeco.core.projections import apply_projection
+from mongoeco.core.sorting import sort_documents
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.query_plan import AndCondition, EqualsCondition, QueryNode, ensure_query_plan
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
@@ -266,7 +278,11 @@ def _vector_scores_for_rows(
 
 
 class MemoryEngine(AsyncStorageEngine):
-    supports_injected_clock = True
+    capabilities = EngineCapabilities(
+        injected_clock=True,
+        explicit_read_snapshots=True,
+        change_delivery='commit-sequence',
+    )
     """Motor de almacenamiento en memoria ultra-rápido."""
 
     _PROFILE_COLLECTION_NAME = "system.profile"
@@ -292,6 +308,7 @@ class MemoryEngine(AsyncStorageEngine):
         aggregation_spill_threshold: int | None = None,
         aggregation_materialization_limit: int | None = 50_000,
         simulate_search_index_latency: float = 0.0,
+        change_log_max_entries: int = 10_000,
     ):
         self._storage: dict[str, dict[str, dict[Any, Any]]] = {}
         self._locks: dict[str, _AsyncLock] = {}
@@ -318,6 +335,17 @@ class MemoryEngine(AsyncStorageEngine):
         self._active_operations = LocalActiveOperationRegistry()
         self._mvcc_version = 0
         self._mvcc_states: dict[str, MemoryMvccState] = {}
+        self._commit_sequence = 0
+        self._committed_changes: list[CommittedChange] = []
+        self._change_checkpoints: dict[str, int] = {}
+        if (
+            not isinstance(change_log_max_entries, int)
+            or isinstance(change_log_max_entries, bool)
+            or change_log_max_entries < 1
+        ):
+            raise ValueError('change_log_max_entries must be positive')
+        self._change_log_max_entries = change_log_max_entries
+        self._change_pruned_through = 0
         self.aggregation_spill_policy = (
             None
             if aggregation_spill_threshold is None
@@ -467,6 +495,17 @@ class MemoryEngine(AsyncStorageEngine):
                 "trackedCollections": tracked_collection_count,
                 "collectionOptionNamespaces": collection_option_namespace_count,
                 "indexDataCollections": index_data_collection_count,
+            },
+            'changeDelivery': {
+                'maxEntries': self._change_log_max_entries,
+                'pendingEntries': len(self._committed_changes),
+                'consumerCount': len(self._change_checkpoints),
+                'newestSequence': self._commit_sequence,
+                'prunedThrough': self._change_pruned_through,
+                'minimumCheckpoint': min(
+                    self._change_checkpoints.values(),
+                    default=self._commit_sequence,
+                ),
             },
         }
 
@@ -739,6 +778,15 @@ class MemoryEngine(AsyncStorageEngine):
                 self._search_indexes = snapshot.search_indexes
                 self._collections = snapshot.collections
                 self._collection_options = snapshot.collection_options
+                for payload in snapshot.pending_changes:
+                    self._commit_sequence += 1
+                    self._committed_changes.append(
+                        CommittedChange(
+                            sequence=self._commit_sequence,
+                            payload=deepcopy(payload),
+                        )
+                    )
+                self._prune_committed_changes_locked()
                 self._mvcc_version += 1
                 self._clear_search_runtime_cache()
         self._sync_session_state(
@@ -746,6 +794,135 @@ class MemoryEngine(AsyncStorageEngine):
             transaction_active=False,
             snapshot_version=self._mvcc_version,
         )
+
+    def register_change_consumer(
+        self,
+        consumer_id: str,
+        *,
+        initial_checkpoint: int | None = None,
+        durable: bool = False,
+    ) -> int:
+        del durable
+        with self._meta_lock:
+            requested = (
+                self._commit_sequence
+                if initial_checkpoint is None
+                else initial_checkpoint
+            )
+            if requested > self._commit_sequence:
+                raise OperationFailure(
+                    'change consumer checkpoint is ahead of committed history'
+                )
+            if requested < self._change_pruned_through:
+                raise OperationFailure(
+                    'change consumer checkpoint is behind retained history'
+                )
+            checkpoint = self._change_checkpoints.setdefault(
+                consumer_id,
+                requested,
+            )
+            return checkpoint
+
+    def dispatch_committed_changes(
+        self,
+        consumer_id: str,
+        consumer: Callable[[CommittedChange], None],
+    ) -> None:
+        with self._meta_lock:
+            if consumer_id not in self._change_checkpoints:
+                raise RuntimeError('change consumer must be registered before writes')
+            checkpoint = self._change_checkpoints[consumer_id]
+            if checkpoint < self._change_pruned_through:
+                raise OperationFailure(
+                    'change consumer checkpoint is behind retained history'
+                )
+            changes = tuple(
+                change
+                for change in self._committed_changes
+                if change.sequence > checkpoint
+            )
+        for change in changes:
+            consumer(change)
+            with self._meta_lock:
+                self._change_checkpoints[consumer_id] = change.sequence
+                self._prune_committed_changes_locked()
+
+    def unregister_change_consumer(self, consumer_id: str) -> None:
+        with self._meta_lock:
+            self._change_checkpoints.pop(consumer_id, None)
+            self._prune_committed_changes_locked()
+
+    def _prune_committed_changes_locked(self) -> None:
+        acknowledged_floor = min(
+            self._change_checkpoints.values(),
+            default=self._commit_sequence,
+        )
+        capacity_floor = max(
+            0,
+            self._commit_sequence - self._change_log_max_entries,
+        )
+        target = max(
+            self._change_pruned_through,
+            acknowledged_floor,
+            capacity_floor,
+        )
+        if target <= self._change_pruned_through:
+            return
+        self._committed_changes = [
+            change
+            for change in self._committed_changes
+            if change.sequence > target
+        ]
+        self._change_pruned_through = target
+
+    def _record_committed_change(
+        self,
+        context: OperationContext | None,
+        payload: Document,
+    ) -> int | None:
+        if context is None or context.publication is ChangePublicationPolicy.DISABLED:
+            return None
+        committed_payload = (
+            None
+            if context.publication is ChangePublicationPolicy.RECORD_GAP
+            else deepcopy(payload)
+        )
+        with self._meta_lock:
+            if context.session is not None and context.session.in_transaction:
+                state = self._mvcc_states.get(context.session.session_id)
+                if state is None:
+                    raise InvalidOperation(
+                        'This session does not own an active MemoryEngine transaction'
+                    )
+                state.pending_changes.append(committed_payload)
+                return None
+            self._commit_sequence += 1
+            self._committed_changes.append(
+                CommittedChange(
+                    sequence=self._commit_sequence,
+                    payload=committed_payload,
+                )
+            )
+            self._prune_committed_changes_locked()
+            return self._commit_sequence
+
+    @staticmethod
+    def _change_payload(
+        *,
+        operation_type: str,
+        db_name: str,
+        coll_name: str,
+        document_key: Document,
+        full_document: Document | None = None,
+    ) -> Document:
+        return {
+            'operation_type': operation_type,
+            'db_name': db_name,
+            'coll_name': coll_name,
+            'document_key': deepcopy(document_key),
+            'full_document': deepcopy(full_document),
+            'update_description': None,
+        }
 
     def _abort_session_transaction(self, session: ClientSession) -> None:
         with self._meta_lock:
@@ -963,6 +1140,7 @@ class MemoryEngine(AsyncStorageEngine):
         indexes: list[EngineIndexRecord] | None = None,
         plan: QueryNode | None = None,
         dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationDocument | None = None,
     ) -> EngineIndexRecord | None:
         if hint is None:
             return None
@@ -995,14 +1173,14 @@ class MemoryEngine(AsyncStorageEngine):
                 if index["name"] == hint:
                     if index.get("hidden"):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
-                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
+                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect, collation=collation):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
             else:
                 if index["key"] == normalized_hint:
                     if index.get("hidden"):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
-                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect):
+                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect, collation=collation):
                         raise OperationFailure("hint does not correspond to a usable index for this query")
                     return deepcopy(index)
 
@@ -1266,13 +1444,17 @@ class MemoryEngine(AsyncStorageEngine):
     def _typed_engine_key(self, value: Any) -> Any:
         return bson_engine_key(value)
 
+    @staticmethod
+    def _index_equality_key(value: Any) -> Any:
+        return bson_equality_key(value)
+
     def _index_value(self, document: Document, field: str) -> Any:
         values = QueryEngine.extract_values(document, field)
         if not values:
             return None
 
         primary = values[0]
-        return self._typed_engine_key(primary)
+        return self._index_equality_key(primary)
 
     def _index_key(self, document: Document, fields: list[str]) -> tuple[Any, ...]:
         return tuple(self._index_value(document, field) for field in fields)
@@ -1284,7 +1466,7 @@ class MemoryEngine(AsyncStorageEngine):
         values = QueryEngine.extract_values(document, fields[0])
         if not values:
             return {(None,)}
-        return {(self._typed_engine_key(value),) for value in values}
+        return {(self._index_equality_key(value),) for value in values}
 
     @staticmethod
     def _array_paths_for_index_field(document: Document, field: str) -> set[str]:
@@ -1401,7 +1583,7 @@ class MemoryEngine(AsyncStorageEngine):
         if len(fields) == 1:
             return self._index_keys(document, fields)
         return {
-            tuple(self._typed_engine_key(value) for value in key)
+            tuple(self._index_equality_key(value) for value in key)
             for key in self._unique_index_values(document, fields)
         }
 
@@ -1577,12 +1759,12 @@ class MemoryEngine(AsyncStorageEngine):
                 for index in indexes:
                     if index["key"] != [(node.field, 1)]:
                         continue
-                    if not query_can_use_index(index, query_plan, dialect=dialect):
+                    if not query_can_use_index(index, query_plan, dialect=dialect, collation=collation):
                         continue
                     index_map = index_data.get(index["name"])
                     if index_map is None:
                         continue
-                    return index_map.get((self._typed_engine_key(node.value),), set())
+                    return index_map.get((self._index_equality_key(node.value),), set())
             elif isinstance(node, AndCondition):
                 for clause in node.clauses:
                     candidates = find_usable_index(clause)
@@ -1610,6 +1792,10 @@ class MemoryEngine(AsyncStorageEngine):
             self._collection_options.clear()
             self._locks.clear()
             self._mvcc_states.clear()
+            self._commit_sequence = 0
+            self._committed_changes.clear()
+            self._change_checkpoints.clear()
+            self._change_pruned_through = 0
 
     @override
     async def set_profiling_level(
@@ -1624,6 +1810,97 @@ class MemoryEngine(AsyncStorageEngine):
         return self._profiler.set_level(db_name, level, slow_ms=slow_ms)
 
     @override
+    async def insert_document(
+        self,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        overwrite: bool = True,
+        *,
+        context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
+        on_commit: Callable[[InsertOutcome], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> InsertOutcome:
+        if operation_context is not None:
+            context = operation_context.session
+        results = await self._put_documents_bulk_impl(
+            db_name,
+            coll_name,
+            [document],
+            overwrite=overwrite,
+            context=context,
+            bypass_document_validation=bypass_document_validation,
+            operation_context=operation_context,
+        )
+        applied = results[0]
+        commit_sequence = None
+        if applied and '_id' in document:
+            commit_sequence = self._record_committed_change(
+                operation_context,
+                self._change_payload(
+                    operation_type='insert',
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    document_key={'_id': document['_id']},
+                    full_document=document,
+                ),
+            )
+        outcome = InsertOutcome(
+            applied=applied,
+            document=deepcopy(document) if applied else None,
+            commit_sequence=commit_sequence,
+        )
+        if outcome and on_commit is not None:
+            on_commit(outcome)
+        return outcome
+
+    async def insert_documents(
+        self,
+        db_name: str,
+        coll_name: str,
+        documents: list[Document],
+        *,
+        context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
+        on_commit: Callable[[InsertOutcome], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> tuple[InsertOutcome, ...]:
+        if operation_context is not None:
+            context = operation_context.session
+        results = await self._put_documents_bulk_impl(
+            db_name,
+            coll_name,
+            documents,
+            context=context,
+            bypass_document_validation=bypass_document_validation,
+            operation_context=operation_context,
+        )
+        outcomes: list[InsertOutcome] = []
+        for document, applied in zip(documents, results, strict=False):
+            commit_sequence = None
+            if applied and '_id' in document:
+                commit_sequence = self._record_committed_change(
+                    operation_context,
+                    self._change_payload(
+                        operation_type='insert',
+                        db_name=db_name,
+                        coll_name=coll_name,
+                        document_key={'_id': document['_id']},
+                        full_document=document,
+                    ),
+                )
+            outcome = InsertOutcome(
+                applied=applied,
+                document=deepcopy(document) if applied else None,
+                commit_sequence=commit_sequence,
+            )
+            outcomes.append(outcome)
+            if outcome and on_commit is not None:
+                on_commit(outcome)
+        return tuple(outcomes)
+
+    @override
     async def put_document(
         self,
         db_name: str,
@@ -1633,6 +1910,8 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
+        on_commit: Callable[[Document], None] | None = None,
+        operation_context: OperationContext | None = None,
     ) -> bool:
         results = await self.put_documents_bulk(
             db_name,
@@ -1641,6 +1920,8 @@ class MemoryEngine(AsyncStorageEngine):
             overwrite=overwrite,
             context=context,
             bypass_document_validation=bypass_document_validation,
+            on_commit=on_commit,
+            operation_context=operation_context,
         )
         return results[0]
 
@@ -1653,6 +1934,31 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
+        on_commit: Callable[[Document], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> list[bool]:
+        return await self._put_documents_bulk_impl(
+            db_name,
+            coll_name,
+            documents,
+            overwrite=overwrite,
+            context=context,
+            bypass_document_validation=bypass_document_validation,
+            on_commit=on_commit,
+            operation_context=operation_context,
+        )
+
+    async def _put_documents_bulk_impl(
+        self,
+        db_name: str,
+        coll_name: str,
+        documents: list[Document],
+        overwrite: bool = False,
+        *,
+        context: ClientSession | None = None,
+        bypass_document_validation: bool = False,
+        on_commit: Callable[[Document], None] | None = None,
+        operation_context: OperationContext | None = None,
     ) -> list[bool]:
         async with self._get_lock(db_name, coll_name):
             storage = self._storage_view(context)
@@ -1668,7 +1974,13 @@ class MemoryEngine(AsyncStorageEngine):
                 indexes_view=indexes_view,
                 index_data_view=index_data_view,
                 storage_view=storage,
-                now=self._ttl_now(),
+                now=(
+                    self._ttl_now()
+                    if operation_context is None
+                    else operation_context.expressions.now.replace(
+                        tzinfo=datetime.timezone.utc
+                    )
+                ),
             )
             with self._collection_state_rollback_locked(
                 db_name,
@@ -1770,10 +2082,212 @@ class MemoryEngine(AsyncStorageEngine):
                     )
                     results.append(True)
                     modified_any = True
-                return results
+            if on_commit is not None:
+                for committed_document, success in zip(
+                    documents,
+                    results,
+                    strict=False,
+                ):
+                    if success:
+                        on_commit(deepcopy(committed_document))
+            return results
 
     @override
-    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None:
+    async def merge_document(
+        self,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        *,
+        when_matched: str,
+        when_not_matched: str,
+        context: ClientSession | None = None,
+        on_commit: Callable[[MergeDocumentResult], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> MergeDocumentResult:
+        if operation_context is not None:
+            context = operation_context.session
+        self._ensure_session_can_use_engine(context)
+        if "_id" not in document:
+            raise ValueError("merge_document requires an _id")
+        assert_valid_root_document_id(document["_id"])
+
+        async with self._get_lock(db_name, coll_name):
+            storage = self._storage_view(context)
+            collections = self._collections_view(context)
+            option_store = self._collection_options_view(context)
+            indexes_view = self._indexes_view(context)
+            index_data_view = self._index_data_view(context)
+            search_indexes_view = self._search_indexes_view(context)
+            self._purge_expired_documents_locked(
+                db_name,
+                coll_name,
+                context=context,
+                indexes_view=indexes_view,
+                index_data_view=index_data_view,
+                storage_view=storage,
+                now=(
+                    self._ttl_now()
+                    if operation_context is None
+                    else operation_context.expressions.now.replace(
+                        tzinfo=datetime.timezone.utc
+                    )
+                ),
+            )
+            with self._meta_lock:
+                coll = storage.setdefault(db_name, {}).setdefault(coll_name, {})
+                storage_key = self._storage_key(document["_id"])
+                stored = coll.get(storage_key)
+                collection_options = self._collection_options_snapshot_locked(
+                    db_name,
+                    coll_name,
+                    collection_options=option_store,
+                )
+
+            original_document = (
+                None if stored is None else deepcopy(self._borrow_storage_document(stored))
+            )
+            if original_document is None:
+                for candidate_key, candidate_data in coll.items():
+                    candidate_document = self._borrow_storage_document(candidate_data)
+                    if document_matches_root_id_lookup(
+                        DocumentCodec.to_public(candidate_document),
+                        document["_id"],
+                        dialect=MONGODB_DIALECT_70,
+                    ):
+                        assert_document_matches_storage_key(
+                            candidate_document,
+                            candidate_key,
+                            storage_key_for_id=self._storage_key,
+                        )
+                        original_document = deepcopy(candidate_document)
+                        storage_key = candidate_key
+                        break
+            if original_document is not None:
+                assert_document_matches_storage_key(
+                    original_document,
+                    storage_key,
+                    storage_key_for_id=self._storage_key,
+                )
+                if when_matched in {"keepExisting", "fail"}:
+                    return MergeDocumentResult(
+                        matched=True,
+                        applied=False,
+                        before_document=deepcopy(original_document),
+                        after_document=deepcopy(original_document),
+                    )
+                if when_matched == "replace":
+                    next_document = deepcopy(document)
+                    operation_type = "replace"
+                else:
+                    next_document = deepcopy(original_document)
+                    next_document.update(deepcopy(document))
+                    operation_type = "update"
+                assert_document_kept_storage_key(
+                    next_document,
+                    storage_key,
+                    storage_key_for_id=self._storage_key,
+                )
+                modified = not MONGODB_DIALECT_70.values_equal(
+                    next_document,
+                    original_document,
+                )
+                if not modified:
+                    return MergeDocumentResult(
+                        matched=True,
+                        applied=False,
+                        operation_type=operation_type,
+                        before_document=deepcopy(original_document),
+                        after_document=deepcopy(original_document),
+                    )
+            else:
+                if when_not_matched != "insert":
+                    return MergeDocumentResult(matched=False, applied=False)
+                next_document = deepcopy(document)
+                operation_type = "insert"
+
+            enforce_collection_document_validation(
+                next_document,
+                options=collection_options,
+                original_document=original_document,
+                dialect=MONGODB_DIALECT_70,
+            )
+            self._ensure_unique_indexes(
+                db_name,
+                coll_name,
+                next_document,
+                exclude_storage_key=storage_key if original_document is not None else None,
+                indexes_view=indexes_view,
+                storage_view=storage,
+                index_data_view=index_data_view,
+                check_id_storage=True,
+                scan_payload_id=True,
+            )
+
+            with self._collection_state_rollback_locked(
+                db_name,
+                coll_name,
+                storage=storage,
+                indexes=indexes_view,
+                index_data=index_data_view,
+                search_indexes=search_indexes_view,
+                collections=collections,
+                options=option_store,
+            ):
+                self._register_collection_locked(
+                    db_name,
+                    coll_name,
+                    collections=collections,
+                    collection_options=option_store,
+                )
+                self._invalidate_search_runtime_cache(db_name, coll_name)
+                if original_document is not None:
+                    self._update_indexes_locked(
+                        db_name,
+                        coll_name,
+                        storage_key,
+                        original_document,
+                        action="delete",
+                        index_data_view=index_data_view,
+                        indexes_view=indexes_view,
+                    )
+                coll[storage_key] = self._encode_storage_document(next_document)
+                self._update_indexes_locked(
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    next_document,
+                    action="insert",
+                    index_data_view=index_data_view,
+                    indexes_view=indexes_view,
+                )
+
+            outcome = MergeDocumentResult(
+                matched=original_document is not None,
+                applied=True,
+                operation_type=operation_type,
+                before_document=deepcopy(original_document),
+                after_document=deepcopy(next_document),
+            )
+            commit_sequence = self._record_committed_change(
+                operation_context,
+                self._change_payload(
+                    operation_type=operation_type,
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    document_key={'_id': next_document['_id']},
+                    full_document=next_document,
+                ),
+            )
+            outcome = replace(outcome, commit_sequence=commit_sequence)
+            if on_commit is not None:
+                on_commit(outcome)
+            return outcome
+
+    @override
+    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None, operation_context: OperationContext | None = None) -> Document | None:
+        if operation_context is not None:
+            context = operation_context.session
         self._ensure_session_can_use_engine(context)
         effective_dialect = dialect or MONGODB_DIALECT_70
         if self._is_profile_namespace(coll_name):
@@ -1783,7 +2297,16 @@ class MemoryEngine(AsyncStorageEngine):
             return apply_projection(document, projection, dialect=effective_dialect)
         async with self._get_lock(db_name, coll_name):
             self._purge_expired_documents_locked(
-                db_name, coll_name, context=context, now=self._ttl_now()
+                db_name,
+                coll_name,
+                context=context,
+                now=(
+                    self._ttl_now()
+                    if operation_context is None
+                    else operation_context.expressions.now.replace(
+                        tzinfo=datetime.timezone.utc
+                    )
+                ),
             )
             storage_key = self._storage_key(doc_id)
             data = self._storage_view(context).get(db_name, {}).get(coll_name, {}).get(storage_key)
@@ -1853,6 +2376,26 @@ class MemoryEngine(AsyncStorageEngine):
             return False
 
     @override
+    def open_read_snapshot(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        operation_context: OperationContext,
+    ) -> ReadSnapshot:
+        return ReadSnapshot(
+            self.scan_find_semantics(
+                db_name,
+                coll_name,
+                semantics,
+                context=operation_context.session,
+            ),
+            policy=SnapshotPolicy.STABLE,
+            operation_id=operation_context.operation_id,
+        )
+
+    @override
     def scan_find_semantics(
         self,
         db_name: str,
@@ -1908,6 +2451,7 @@ class MemoryEngine(AsyncStorageEngine):
                         indexes=indexes,
                         plan=semantics.query_plan,
                         dialect=semantics.dialect,
+                        collation=semantics.collation,
                     )
                 else:
                     resolve_classic_text_index_for_hint(indexes, semantics.hint)
@@ -1961,28 +2505,34 @@ class MemoryEngine(AsyncStorageEngine):
 
                 # Si no hay ordenación, podemos hacer streaming real y parar tras el limit.
                 if not semantics.sort:
-                    final_stream = stream_finalize_documents(
-                        (self._copy_document_containers(DocumentCodec.to_public(document)) for document in filtered),
-                        semantics,
-                        emit_public_documents=False,
+                    documents = list(
+                        stream_finalize_documents(
+                            (
+                                self._copy_document_containers(
+                                    DocumentCodec.to_public(document)
+                                )
+                                for document in filtered
+                            ),
+                            semantics,
+                            emit_public_documents=False,
+                        )
                     )
-                    for document in final_stream:
-                        enforce_deadline(deadline)
-                        yield document
-                    return
-
-                # Si hay sort, ordenamos/sliceamos sobre documentos prestados y
-                # solo publicamos/copamos el subconjunto final que se devuelve.
-                documents = finalize_documents(
-                    filtered,
-                    semantics,
-                    apply_sort_phase=True,
-                    emit_public_documents=False,
-                )
+                else:
+                    documents = [
+                        self._copy_document_containers(
+                            DocumentCodec.to_public(document)
+                        )
+                        for document in finalize_documents(
+                            filtered,
+                            semantics,
+                            apply_sort_phase=True,
+                            emit_public_documents=False,
+                        )
+                    ]
 
             for document in documents:
                 enforce_deadline(deadline)
-                yield self._copy_document_containers(DocumentCodec.to_public(document))
+                yield document
         return _scan()
 
     @override
@@ -1998,7 +2548,12 @@ class MemoryEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
-    ) -> UpdateResult[DocumentId]:
+        replacement_document: Document | None = None,
+        on_commit: Callable[[EngineUpdateResult], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> EngineUpdateResult:
+        if operation_context is not None:
+            context = operation_context.session
         semantics = compile_update_semantics(
             operation,
             dialect=dialect,
@@ -2029,14 +2584,62 @@ class MemoryEngine(AsyncStorageEngine):
                     tzinfo=datetime.timezone.utc
                 ),
             )
+            indexes = indexes_view.get(db_name, {}).get(coll_name, [])
+            self._resolve_hint_index(
+                db_name,
+                coll_name,
+                semantics.hint,
+                indexes=indexes,
+                plan=semantics.query_plan,
+                dialect=semantics.dialect,
+                collation=semantics.collation,
+            )
             if coll is None:
                 coll = {}
 
-            for storage_key, data in self._candidate_items_for_plan_locked(
-                coll,
-                semantics.query_plan,
-                dialect=semantics.dialect,
-            ):
+            candidate_items = list(
+                self._candidate_items_for_plan_locked(
+                    coll,
+                    semantics.query_plan,
+                    dialect=semantics.dialect,
+                )
+            )
+            if semantics.sort:
+                matching_items: list[tuple[str, object, Document]] = []
+                for storage_key, data in candidate_items:
+                    candidate = self._borrow_storage_document(data)
+                    if not QueryEngine.match_plan(
+                        candidate,
+                        semantics.query_plan,
+                        dialect=semantics.dialect,
+                        collation=semantics.collation,
+                        variables=semantics.variables,
+                    ):
+                        continue
+                    if semantics.selector_plan is not None and not QueryEngine.match_plan(
+                        candidate,
+                        semantics.selector_plan,
+                        dialect=semantics.dialect,
+                        collation=semantics.collation,
+                        variables=semantics.variables,
+                    ):
+                        continue
+                    matching_items.append((storage_key, data, candidate))
+                item_by_document_id = {
+                    id(document): (storage_key, data)
+                    for storage_key, data, document in matching_items
+                }
+                candidate_items = [
+                    item_by_document_id[id(document)]
+                    for document in sort_documents(
+                        [document for _, _, document in matching_items],
+                        semantics.sort,
+                        dialect=semantics.dialect,
+                        collation=semantics.collation,
+                    )
+                ]
+
+            for storage_key, data in candidate_items:
                 borrowed_document = self._borrow_storage_document(data)
                 if not QueryEngine.match_plan(
                     borrowed_document,
@@ -2058,16 +2661,27 @@ class MemoryEngine(AsyncStorageEngine):
                 ):
                     continue
 
-                document = deepcopy(borrowed_document)
                 original_document = deepcopy(borrowed_document)
+                document = (
+                    materialize_replacement_document(
+                        original_document,
+                        replacement_document,
+                    )
+                    if replacement_document is not None
+                    else deepcopy(borrowed_document)
+                )
                 assert_document_matches_storage_key(
                     original_document,
                     storage_key,
                     storage_key_for_id=self._storage_key,
                 )
-                modified = semantics.compiled_update_plan.apply(
-                    document,
-                    variables=semantics.variables,
+                modified = (
+                    not semantics.dialect.values_equal(document, original_document)
+                    if replacement_document is not None
+                    else semantics.compiled_update_plan.apply(
+                        document,
+                        variables=semantics.variables,
+                    )
                 )
                 if modified:
                     assert_document_kept_storage_key(
@@ -2123,19 +2737,56 @@ class MemoryEngine(AsyncStorageEngine):
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
-                return UpdateResult(
+                result = UpdateResult(
                     matched_count=1,
                     modified_count=1 if modified else 0,
                 )
+                captured = EngineUpdateResult(
+                    result=result,
+                    before_document=original_document,
+                    after_document=deepcopy(document),
+                )
+                if modified and '_id' in document:
+                    commit_sequence = self._record_committed_change(
+                        operation_context,
+                        self._change_payload(
+                            operation_type=(
+                                operation_context.change_operation_type
+                                if operation_context is not None
+                                and operation_context.change_operation_type is not None
+                                else 'update'
+                            ),
+                            db_name=db_name,
+                            coll_name=coll_name,
+                            document_key={'_id': document['_id']},
+                            full_document=document,
+                        ),
+                    )
+                    captured = replace(
+                        captured, commit_sequence=commit_sequence
+                    )
+                if on_commit is not None:
+                    on_commit(captured)
+                return captured
 
             if not upsert:
-                return UpdateResult(matched_count=0, modified_count=0)
+                result = UpdateResult(matched_count=0, modified_count=0)
+                return EngineUpdateResult(result=result)
 
-            new_doc = deepcopy(upsert_seed or {})
-            semantics.compiled_upsert_plan.apply(
-                new_doc,
-                variables=semantics.variables,
+            new_doc = deepcopy(
+                upsert_seed
+                if replacement_document is not None and upsert_seed is not None
+                else (
+                    replacement_document
+                    if replacement_document is not None
+                    else (upsert_seed or {})
+                )
             )
+            if replacement_document is None:
+                semantics.compiled_upsert_plan.apply(
+                    new_doc,
+                    variables=semantics.variables,
+                )
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
             assert_valid_root_document_id(new_doc["_id"])
@@ -2193,11 +2844,29 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=index_data_view,
                     indexes_view=indexes_view,
                 )
-            return UpdateResult(
+            result = UpdateResult(
                 matched_count=0,
                 modified_count=0,
                 upserted_id=new_doc["_id"],
             )
+            captured = EngineUpdateResult(
+                result=result,
+                after_document=deepcopy(new_doc),
+            )
+            commit_sequence = self._record_committed_change(
+                operation_context,
+                self._change_payload(
+                    operation_type='insert',
+                    db_name=db_name,
+                    coll_name=coll_name,
+                    document_key={'_id': new_doc['_id']},
+                    full_document=new_doc,
+                ),
+            )
+            captured = replace(captured, commit_sequence=commit_sequence)
+            if on_commit is not None:
+                on_commit(captured)
+            return captured
 
     @override
     async def delete_with_operation(
@@ -2209,7 +2878,11 @@ class MemoryEngine(AsyncStorageEngine):
         selector_filter: Filter | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
-    ) -> DeleteResult:
+        on_commit: Callable[[EngineDeleteResult], None] | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> EngineDeleteResult:
+        if operation_context is not None:
+            context = operation_context.session
         effective_dialect = dialect or MONGODB_DIALECT_70
         variables = ensure_expression_context(operation.let)
         query_plan = ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect)
@@ -2241,11 +2914,55 @@ class MemoryEngine(AsyncStorageEngine):
                 storage_view=storage_view,
                 now=variables.now.replace(tzinfo=datetime.timezone.utc),
             )
-            for storage_key, data in self._candidate_items_for_plan_locked(
-                coll,
-                query_plan,
+            indexes = indexes_view.get(db_name, {}).get(coll_name, [])
+            self._resolve_hint_index(
+                db_name,
+                coll_name,
+                operation.hint,
+                indexes=indexes,
+                plan=query_plan,
                 dialect=effective_dialect,
-            ):
+                collation=effective_collation,
+            )
+            candidate_items = list(
+                self._candidate_items_for_plan_locked(
+                    coll,
+                    query_plan,
+                    dialect=effective_dialect,
+                )
+            )
+            if operation.sort:
+                matching_items: list[tuple[str, object, Document]] = []
+                for storage_key, data in candidate_items:
+                    candidate = self._borrow_storage_document(data)
+                    if QueryEngine.match_plan(
+                        candidate,
+                        query_plan,
+                        dialect=effective_dialect,
+                        collation=effective_collation,
+                        variables=variables,
+                    ) and QueryEngine.match_plan(
+                        candidate,
+                        selector_plan,
+                        dialect=effective_dialect,
+                        collation=effective_collation,
+                        variables=variables,
+                    ):
+                        matching_items.append((storage_key, data, candidate))
+                item_by_document_id = {
+                    id(document): (storage_key, data)
+                    for storage_key, data, document in matching_items
+                }
+                candidate_items = [
+                    item_by_document_id[id(document)]
+                    for document in sort_documents(
+                        [document for _, _, document in matching_items],
+                        operation.sort,
+                        dialect=effective_dialect,
+                        collation=effective_collation,
+                    )
+                ]
+            for storage_key, data in candidate_items:
                 document = self._borrow_storage_document(data)
                 if not QueryEngine.match_plan(
                     document,
@@ -2289,8 +3006,29 @@ class MemoryEngine(AsyncStorageEngine):
                         indexes_view=indexes_view,
                     )
                     del coll[storage_key]
-                return DeleteResult(deleted_count=1)
-            return DeleteResult(deleted_count=0)
+                result = DeleteResult(deleted_count=1)
+                captured = EngineDeleteResult(
+                    result=result,
+                    deleted_document=deepcopy(document),
+                )
+                if '_id' in document:
+                    commit_sequence = self._record_committed_change(
+                        operation_context,
+                        self._change_payload(
+                            operation_type='delete',
+                            db_name=db_name,
+                            coll_name=coll_name,
+                            document_key={'_id': document['_id']},
+                        ),
+                    )
+                    captured = replace(
+                        captured, commit_sequence=commit_sequence
+                    )
+                if on_commit is not None:
+                    on_commit(captured)
+                return captured
+            result = DeleteResult(deleted_count=0)
+            return EngineDeleteResult(result=result)
 
     @override
     async def count_find_semantics(
@@ -2300,7 +3038,11 @@ class MemoryEngine(AsyncStorageEngine):
         semantics: EngineFindSemantics,
         *,
         context: ClientSession | None = None,
+        operation_context: OperationContext | None = None,
     ) -> int:
+        if operation_context is not None:
+            context = operation_context.session
+
         def _count_filtered(documents: Iterable[Document]) -> int:
             skipped = semantics.skip
             remaining = semantics.limit
@@ -2348,6 +3090,7 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes=indexes,
                     plan=semantics.query_plan,
                     dialect=semantics.dialect,
+                    collation=semantics.collation,
                 )
             else:
                 resolve_classic_text_index_for_hint(indexes, semantics.hint)
@@ -3098,6 +3841,7 @@ class MemoryEngine(AsyncStorageEngine):
                 indexes=indexes,
                 plan=semantics.query_plan,
                 dialect=semantics.dialect,
+                collation=semantics.collation,
             )
         else:
             text_index_resolution = resolve_classic_text_index_for_hint(indexes, semantics.hint)
@@ -3124,6 +3868,7 @@ class MemoryEngine(AsyncStorageEngine):
             semantics.query_plan,
             hinted_index_name=None if hinted_index is None else hinted_index["name"],
             dialect=semantics.dialect,
+            collation=semantics.collation,
         )
         if semantics.text_query is not None:
             assert text_index_resolution is not None

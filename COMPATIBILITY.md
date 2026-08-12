@@ -113,24 +113,61 @@ escritura no cruzan esa frontera publica, para conservar estable la identidad
 de almacenamiento. La misma materializacion recursiva se aplica a metadata de
 indices, eventos de change streams y detalles parciales de errores bulk.
 
-Los cursores de `aggregate()` capturan su contexto inmutable, incluido `$$NOW`,
-al crearse. Los cursores async de `find` y `aggregate` son de consumo unico y
-admiten `to_list(length=None)`, longitudes parciales y `close()`.
+Los cursores de `find()` y `aggregate()` capturan su contexto inmutable,
+incluido `$$NOW`, al crearse; `clone()` captura un contexto temporal nuevo. El
+batching consume una unica fuente estable hasta agotarla, de modo que una
+escritura concurrente no reordena ni duplica las paginas restantes. Los
+cursores async son de consumo unico, admiten `to_list(length=None)`, longitudes
+parciales y `close()`; las fachadas async de agregacion, metadata y change
+streams tambien pueden esperarse directamente.
+
+Los change events se publican en el orden de confirmacion de las mutaciones,
+antes de cualquier espera de profiling. Si el backend local del stream no
+puede registrar un evento despues de confirmar la escritura, la escritura
+conserva su resultado y el hub pasa a estado degradado: los consumidores fallan
+con `OperationFailure` y `change_stream_state()` expone `degraded` y
+`lastPublishError`. Esto evita tanto reintentos de escrituras ya aplicadas como
+una continuidad falsa del stream.
+
+En los engines integrados, ese orden se apoya en una secuencia de commit
+explicita. Memory la asigna al instalar el estado MVCC; SQLite escribe una fila
+de outbox en la misma transaccion que el documento y sus indices. El journal
+del change stream actua como checkpoint durable para reanudar filas confirmadas
+pero aun no publicadas. Memory y SQLite aplican retencion acotada por
+checkpoint, con 10.000 entradas por defecto. SQLite persiste los checkpoints
+durables; los consumidores sin journal se retiran al desconectar. Si un
+consumidor queda por detras del suelo compactado, falla explicitamente en vez
+de continuar con una secuencia incompleta. Tambien se rechaza un checkpoint
+por delante de la ultima secuencia confirmada; tras compactar todas las filas,
+el suelo persistido conserva esa secuencia y evita reiniciar la historia.
+
+Los cursores de coleccion consumen snapshots `STABLE` con ownership y cierre
+explicitos. `MATERIALIZED` y `LIVE` existen como politicas declarables del SPI,
+pero los engines integrados no las usan para scans ordinarios. Un engine
+externo v1 se adapta mediante `LegacyEngineAdapter`; el SPI v2 exige
+`EngineCapabilities`, outcomes tipados, `OperationContext` y snapshots
+explicitos. El adaptador v1 queda deprecado en 4.3.0, emite
+`DeprecationWarning` y se retirara en 5.0.0.
 
 ### Escrituras seleccionadas y atomicidad local
 
-Las operaciones que preseleccionan un documento para resolver `sort`, `hint` o
-una imagen de retorno conservan su identidad, pero no convierten esa lectura en
-un permiso de escritura. Dentro del lock de Memory o SQLite, el engine vuelve a
-evaluar simultaneamente la identidad y el filtro original completo, usando el
-mismo dialecto, collation, variables `let` y contexto temporal de la operacion.
+La seleccion para resolver `sort` o una imagen de retorno, la revalidacion del
+filtro completo, la modificacion y la captura de imagenes `before`/`after`
+pertenecen a una unica primitiva del engine. Esa primitiva usa el mismo
+dialecto, collation, variables `let` y contexto temporal de la operacion;
+`hint` se valida dentro de la misma frontera.
 
 Si el filtro original deja de coincidir, la operacion devuelve no-match, no
 modifica ni borra el documento y no publica un change event. Este contrato se
 aplica a `update_one`, `update_many`, `replace_one`, `find_one_and_update`,
 `find_one_and_replace`, `delete_one`, `delete_many` y
-`find_one_and_delete`. La garantia es atomica dentro de cada engine local; no
-pretende coordinar procesos distintos que usen instancias Memory independientes.
+`find_one_and_delete`. Memory garantiza atomicidad por instancia y coleccion;
+SQLite la extiende a instancias que comparten el mismo fichero mediante su
+transaccion de escritura. Instancias Memory independientes no comparten estado.
+
+Los upserts de `find_one_and_update` y `find_one_and_replace` publican
+`insert` incluso cuando solicitan `ReturnDocument.BEFORE`. Una coincidencia que
+no modifica el documento no publica eventos de update o replacement.
 
 ### Reloj inyectable para runtimes locales
 
@@ -263,6 +300,15 @@ Esto implica:
 * los indices `hidden` existen como opcion local honesta: se listan y se
   preservan en metadata, pero el planner no los usa ni acepta `hint` contra
   ellos.
+* la elegibilidad de indices parciales se decide de forma conservadora con
+  igualdad y orden BSON; valores Python parecidos pero BSON-distintos, como
+  `True` y `1`, no permiten inferir una implicacion insegura. Una collation en
+  el indice parcial exige la misma collation efectiva en la operacion, incluida
+  la seleccion explicita mediante `hint`;
+* los indices de igualdad de Memory canonizan la familia numerica con semantica
+  BSON, sin confundir booleanos con numeros. SQLite evita el pushdown cuando un
+  operando o valor decimal no puede conservar esa semantica en SQLite y evalua
+  el predicado con el comparador comun de Python.
 
 ## 2. Configuración explícita recomendada
 
@@ -708,6 +754,12 @@ la persistencia con:
 
 * `change_stream_journal_fsync=True`
 * `change_stream_journal_max_bytes=<limite>`
+
+Si una escritura ya confirmada no puede publicarse en ese journal, el hub
+persiste un marcador de degradacion junto al journal. El estado sobrevive a la
+recreacion del cliente y bloquea consumo y reanudacion hasta que el operador
+resuelva la causa y reconstruya una continuidad verificable; no se avanza el
+resume token en memoria ni se presenta una historia incompleta como reanudable.
 
 Cuando no existe ningun watcher activo y no hay journal persistente, las
 escrituras locales pueden omitir la materializacion del evento de change stream

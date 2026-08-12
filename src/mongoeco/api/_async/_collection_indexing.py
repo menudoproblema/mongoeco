@@ -5,7 +5,7 @@ import time
 
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
-from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.expression_context import execution_now_scope
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -52,7 +52,8 @@ async def create_index(
     )
     expire_after_seconds = collection._normalize_expire_after_seconds(expire_after_seconds)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
-    created_name = await collection._engine.create_index(
+    with execution_now_scope(collection._resolve_now()):
+        created_name = await collection._engine.create_index(
         collection._db_name,
         collection._collection_name,
         normalized_keys,
@@ -67,8 +68,8 @@ async def create_index(
         default_language=default_language,
         language_override=language_override,
         max_time_ms=max_time_ms,
-        context=session,
-    )
+            context=session,
+        )
     collection._record_operation_metadata(
         operation="create_index",
         comment=comment,
@@ -97,6 +98,7 @@ async def create_indexes(
     )
     names: list[str] = []
     created_names: list[str] = []
+    execution_now = collection._resolve_now()
     for index in models:
         try:
             enforce_deadline(deadline)
@@ -107,7 +109,8 @@ async def create_indexes(
                     index.partial_filter_expression
                 )
             )
-            name = await collection._engine.create_index(
+            with execution_now_scope(execution_now):
+                name = await collection._engine.create_index(
                 collection._db_name,
                 collection._collection_name,
                 index.keys,
@@ -128,8 +131,8 @@ async def create_indexes(
                     1,
                     int((deadline - time.monotonic()) * 1000),
                 ),
-                context=session,
-            )
+                    context=session,
+                )
         except Exception:
             for created_name in reversed(created_names):
                 try:
@@ -197,7 +200,10 @@ async def index_information(
         collection._collection_name,
         context=session,
     )
-    return DocumentCodec.to_pymongo(information)
+    return {
+        name: collection._apply_codec_options_to_document(document)
+        for name, document in information.items()
+    }
 
 
 async def drop_index(

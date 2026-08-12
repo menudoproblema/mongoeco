@@ -9,8 +9,11 @@ from mongoeco.core.identity import (
     assert_document_kept_storage_key,
     assert_document_matches_storage_key,
     assert_valid_root_document_id,
+    materialize_replacement_document,
 )
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
+from mongoeco.engines.results import EngineDeleteResult, EngineUpdateResult
+from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import DuplicateKeyError
 from mongoeco.types import DeleteResult, Document, DocumentId, Filter, UpdateResult
 
@@ -40,7 +43,8 @@ def delete_matching_document(
     load_documents: Callable[[str, str], Iterable[tuple[str, Document]]],
     match_plan: Callable[[Document, object, MongoDialect, object | None, object], bool],
     invalidate_collection_features_cache: Callable[[str, str], None],
-) -> DeleteResult:
+    sort: object | None = None,
+) -> EngineDeleteResult:
     effective_dialect = dialect
     plan = ensure_query_plan(filter_spec, plan)
     semantics = compile_find_semantics(
@@ -63,11 +67,12 @@ def delete_matching_document(
     conn = require_connection()
     purge_expired_documents(conn, db_name, coll_name)
     try:
-        if semantics.collation is not None:
+        if semantics.collation is not None or sort:
             raise NotImplementedError("Collation requires Python delete fallback")
         selected = select_first_document_for_plan(db_name, coll_name, semantics.query_plan)
         if selected is None:
-            return DeleteResult(deleted_count=0)
+            result = DeleteResult(deleted_count=0)
+            return EngineDeleteResult(result=result)
         storage_key, document = selected
         if selector_semantics is not None and not match_plan(
             document,
@@ -76,7 +81,8 @@ def delete_matching_document(
             selector_semantics.collation,
             selector_semantics.variables,
         ):
-            return DeleteResult(deleted_count=0)
+            result = DeleteResult(deleted_count=0)
+            return EngineDeleteResult(result=result)
         assert_document_matches_storage_key(
             document,
             storage_key,
@@ -99,12 +105,17 @@ def delete_matching_document(
             delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
             delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
             invalidate_collection_features_cache(db_name, coll_name)
-        return DeleteResult(deleted_count=1)
+        result = DeleteResult(deleted_count=1)
+        return EngineDeleteResult(
+            result=result,
+            deleted_document=deepcopy(document),
+        )
     except (NotImplementedError, TypeError):
         pass
     except Exception:
         raise
 
+    matching_documents: list[tuple[str, Document]] = []
     for storage_key, document in load_documents(db_name, coll_name):
         if not match_plan(
             document,
@@ -122,6 +133,24 @@ def delete_matching_document(
             selector_semantics.variables,
         ):
             continue
+        matching_documents.append((storage_key, document))
+
+    if sort:
+        item_by_document_id = {
+            id(document): (storage_key, document)
+            for storage_key, document in matching_documents
+        }
+        matching_documents = [
+            item_by_document_id[id(document)]
+            for document in sort_documents(
+                [document for _, document in matching_documents],
+                sort,
+                dialect=semantics.dialect,
+                collation=semantics.collation,
+            )
+        ]
+
+    for storage_key, document in matching_documents:
         assert_document_matches_storage_key(
             document,
             storage_key,
@@ -144,8 +173,13 @@ def delete_matching_document(
             delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
             delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
             invalidate_collection_features_cache(db_name, coll_name)
-        return DeleteResult(deleted_count=1)
-    return DeleteResult(deleted_count=0)
+        result = DeleteResult(deleted_count=1)
+        return EngineDeleteResult(
+            result=result,
+            deleted_document=deepcopy(document),
+        )
+    result = DeleteResult(deleted_count=0)
+    return EngineDeleteResult(result=result)
 
 
 def update_with_operation(
@@ -182,7 +216,8 @@ def update_with_operation(
     storage_key_for_id: Callable[[DocumentId], str],
     new_object_id: Callable[[], DocumentId],
     invalidate_collection_features_cache: Callable[[str, str], None],
-) -> UpdateResult[DocumentId]:
+    replacement_document: Document | None = None,
+) -> EngineUpdateResult:
     semantics = compile_update_semantics(
         operation,
         dialect=dialect,
@@ -196,7 +231,7 @@ def update_with_operation(
     try:
         if dialect_requires_python_fallback(semantics.dialect):
             raise NotImplementedError("Custom dialect requires Python fallback")
-        if semantics.collation is not None:
+        if semantics.collation is not None or getattr(semantics, 'sort', None):
             raise NotImplementedError("Collation requires Python update fallback")
         selected = select_first_document_for_plan(db_name, coll_name, semantics.query_plan)
         sql_selection_supported = True
@@ -204,6 +239,7 @@ def update_with_operation(
         pass
 
     if selected is None and not sql_selection_supported:
+        matching_documents: list[tuple[str, Document]] = []
         for storage_key, document in load_documents(db_name, coll_name):
             if not match_plan(
                 document,
@@ -213,8 +249,30 @@ def update_with_operation(
                 semantics.variables,
             ):
                 continue
-            selected = (storage_key, document)
-            break
+            if semantics.selector_plan is not None and not match_plan(
+                document,
+                semantics.selector_plan,
+                semantics.dialect,
+                semantics.collation,
+                semantics.variables,
+            ):
+                continue
+            matching_documents.append((storage_key, document))
+        if semantics.sort:
+            item_by_document_id = {
+                id(document): (storage_key, document)
+                for storage_key, document in matching_documents
+            }
+            matching_documents = [
+                item_by_document_id[id(document)]
+                for document in sort_documents(
+                    [document for _, document in matching_documents],
+                    semantics.sort,
+                    dialect=semantics.dialect,
+                    collation=semantics.collation,
+                )
+            ]
+        selected = matching_documents[0] if matching_documents else None
 
     if selected is not None:
         storage_key, original_document = selected
@@ -235,13 +293,29 @@ def update_with_operation(
             storage_key,
             storage_key_for_id=storage_key_for_id,
         )
-        document = deepcopy(original_document)
-        modified = semantics.compiled_update_plan.apply(
-            document,
-            variables=semantics.variables,
+        document = (
+            materialize_replacement_document(
+                original_document,
+                replacement_document,
+            )
+            if replacement_document is not None
+            else deepcopy(original_document)
+        )
+        modified = (
+            not semantics.dialect.values_equal(document, original_document)
+            if replacement_document is not None
+            else semantics.compiled_update_plan.apply(
+                document,
+                variables=semantics.variables,
+            )
         )
         if not modified:
-            return UpdateResult(matched_count=1, modified_count=0)
+            result = UpdateResult(matched_count=1, modified_count=0)
+            return EngineUpdateResult(
+                result=result,
+                before_document=deepcopy(original_document),
+                after_document=deepcopy(document),
+            )
         assert_document_kept_storage_key(
             document,
             storage_key,
@@ -268,6 +342,8 @@ def update_with_operation(
                 raise NotImplementedError("Custom dialect requires Python fallback")
             if operation.array_filters is not None:
                 raise NotImplementedError("array_filters require Python update fallback")
+            if replacement_document is not None:
+                raise NotImplementedError("replacement updates require Python update fallback")
             if not isinstance(semantics.compiled_update_plan, compiled_update_plan_type):
                 raise NotImplementedError("Aggregation pipeline updates require Python update fallback")
             update_sql, update_params = translate_compiled_update_plan(
@@ -313,7 +389,12 @@ def update_with_operation(
                     search_indexes,
                 )
                 invalidate_collection_features_cache(db_name, coll_name)
-            return UpdateResult(matched_count=1, modified_count=1)
+            result = UpdateResult(matched_count=1, modified_count=1)
+            return EngineUpdateResult(
+                result=result,
+                before_document=deepcopy(original_document),
+                after_document=deepcopy(document),
+            )
         except (NotImplementedError, TypeError):
             pass
         except sqlite3.IntegrityError as exc:
@@ -361,17 +442,32 @@ def update_with_operation(
                     search_indexes,
                 )
                 invalidate_collection_features_cache(db_name, coll_name)
-            return UpdateResult(matched_count=1, modified_count=1)
+            result = UpdateResult(matched_count=1, modified_count=1)
+            return EngineUpdateResult(
+                result=result,
+                before_document=deepcopy(original_document),
+                after_document=deepcopy(document),
+            )
         except sqlite3.IntegrityError as exc:
             raise DuplicateKeyError(str(exc)) from exc
         except Exception:
             raise
 
     if not upsert:
-        return UpdateResult(matched_count=0, modified_count=0)
+        result = UpdateResult(matched_count=0, modified_count=0)
+        return EngineUpdateResult(result=result)
 
-    new_doc = deepcopy(upsert_seed or {})
-    semantics.compiled_upsert_plan.apply(new_doc, variables=semantics.variables)
+    new_doc = deepcopy(
+        upsert_seed
+        if replacement_document is not None and upsert_seed is not None
+        else (
+            replacement_document
+            if replacement_document is not None
+            else (upsert_seed or {})
+        )
+    )
+    if replacement_document is None:
+        semantics.compiled_upsert_plan.apply(new_doc, variables=semantics.variables)
     if "_id" not in new_doc:
         new_doc["_id"] = new_object_id()
     assert_valid_root_document_id(new_doc["_id"])
@@ -432,8 +528,12 @@ def update_with_operation(
     except Exception:
         raise
 
-    return UpdateResult(
+    result = UpdateResult(
         matched_count=0,
         modified_count=0,
         upserted_id=new_doc["_id"],
+    )
+    return EngineUpdateResult(
+        result=result,
+        after_document=deepcopy(new_doc),
     )

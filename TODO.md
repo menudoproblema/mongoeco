@@ -73,15 +73,17 @@ Pendientes:
 * seguir apurando fidelidad BSON rara y semántica fina de comparación solo cuando haya casos reales o diferenciales que lo justifiquen;
 * reforzar contraste diferencial con MongoDB real si se quiere aumentar confianza observable más allá de la paridad práctica actual.
 
-## 4. Publicación y producto
+## 4. Publicacion y producto
 
-Objetivo: dejar el proyecto preparado para una primera release pública, si se decide publicar.
+Objetivo: mantener releases publicas reproducibles y una politica de evolucion
+coherente despues de `4.2.1`.
 
 Pendientes:
 
-* revisar packaging y metadatos de distribución;
-* seguir endureciendo documentación pública de uso, alcance y posicionamiento;
-* decidir política de compatibilidad y de versiones;
+* seguir revisando packaging y metadatos en cada release;
+* mantener documentacion publica de uso, alcance y posicionamiento;
+* aplicar la politica de compatibilidad y versiones documentada, incluida la
+  retirada del SPI v1 en `5.0.0`;
 * decidir si compensa publicar un adaptador CXP live opcional para `mongoeco`
   ahora que:
   * capabilities, operations y profiles ya salen del catálogo canónico

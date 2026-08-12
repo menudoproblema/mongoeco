@@ -87,6 +87,8 @@ class CollationCapabilitiesInfo:
 def normalize_collation(collation: object | None) -> CollationSpec | None:
     if collation is None:
         return None
+    if isinstance(collation, CollationSpec):
+        return collation
     if not isinstance(collation, dict):
         raise TypeError("collation must be a document")
     locale = collation.get("locale", "simple")

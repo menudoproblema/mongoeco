@@ -83,6 +83,32 @@ def assert_document_kept_storage_key(
         raise WriteError(UPDATED_DOCUMENT_STORAGE_MISMATCH_MESSAGE, code=66)
 
 
+def materialize_replacement_document(
+    original_document: dict[str, Any],
+    replacement: dict[str, Any],
+) -> dict[str, Any]:
+    """Preserve the stored _id and its BSON field position in replacements."""
+    if '_id' in replacement or '_id' not in original_document:
+        return deepcopy(replacement)
+
+    replacement_items = [
+        (key, deepcopy(value)) for key, value in replacement.items()
+    ]
+    materialized: dict[str, Any] = {}
+    id_position = list(original_document).index('_id')
+    inserted_id = False
+    for index in range(len(replacement_items) + 1):
+        if index == id_position:
+            materialized['_id'] = deepcopy(original_document['_id'])
+            inserted_id = True
+        if index < len(replacement_items):
+            key, value = replacement_items[index]
+            materialized[key] = value
+    if not inserted_id:
+        materialized['_id'] = deepcopy(original_document['_id'])
+    return materialized
+
+
 def document_matches_root_id_lookup(
     document: dict[str, Any],
     document_id: Any,

@@ -8,10 +8,12 @@ from unittest.mock import patch
 from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async._database_admin_command_compiler import DatabaseAdminCommandCompiler
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.engines.results import EngineUpdateResult, FindAndModifyOutcome
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, CollectionInvalid, InvalidOperation, OperationFailure, WriteError
 from mongoeco.session import ClientSession
+from mongoeco.types import UpdateResult
 
 
 class _AsyncCursor:
@@ -95,9 +97,49 @@ class _FakeCollection:
         self.find_one_and_update_calls.append((query, update, kwargs))
         return {"_id": 1, "updated": True}
 
+    async def _find_one_and_update_outcome(self, query, update, **kwargs):
+        self.find_one_and_update_calls.append((query, update, kwargs))
+        value = {"_id": 1, "updated": True}
+        if kwargs.get('upsert'):
+            value = {'_id': 'upserted-1'}
+            result = UpdateResult(
+                matched_count=0,
+                modified_count=0,
+                upserted_id='upserted-1',
+            )
+        else:
+            result = UpdateResult(matched_count=1, modified_count=1)
+        return FindAndModifyOutcome(
+            captured=EngineUpdateResult(
+                result=result,
+                after_document=value,
+            ),
+            value=value,
+        )
+
     async def find_one_and_replace(self, query, replacement, **kwargs):
         self.find_one_and_replace_calls.append((query, replacement, kwargs))
         return {"_id": 1, "replaced": True}
+
+    async def _find_one_and_replace_outcome(self, query, replacement, **kwargs):
+        self.find_one_and_replace_calls.append((query, replacement, kwargs))
+        value = {"_id": 1, "replaced": True}
+        if kwargs.get('upsert'):
+            value = {'_id': 'upserted-1'}
+            result = UpdateResult(
+                matched_count=0,
+                modified_count=0,
+                upserted_id='upserted-1',
+            )
+        else:
+            result = UpdateResult(matched_count=1, modified_count=1)
+        return FindAndModifyOutcome(
+            captured=EngineUpdateResult(
+                result=result,
+                after_document=value,
+            ),
+            value=value,
+        )
 
     def list_indexes(self, **kwargs):
         self.list_indexes_calls.append(kwargs)

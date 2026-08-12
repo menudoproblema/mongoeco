@@ -37,45 +37,47 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
     def test_replace_one_returns_zero_when_nothing_matches_and_upsert_is_false(
         self,
     ):
-        class EngineStub(_SemanticsScanMixin):
-            _stub_documents = []
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, 'db', 'coll')
+                return await collection.replace_one(
+                    {'name': 'Ada'}, {'name': 'Grace'}
+                )
+            finally:
+                await engine.disconnect()
 
-        collection = AsyncCollection(EngineStub(), 'db', 'coll')
-
-        result = asyncio.run(
-            collection.replace_one({'name': 'Ada'}, {'name': 'Grace'})
-        )
+        result = asyncio.run(_exercise())
 
         self.assertEqual(result.matched_count, 0)
         self.assertEqual(result.modified_count, 0)
 
     def test_replace_one_upsert_builds_seeded_document(self):
-        class EngineStub(_SemanticsScanMixin):
-            _stub_documents = []
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, 'db', 'coll')
+                result = await collection.replace_one(
+                    {'kind': 'missing', 'tenant': 'a'},
+                    {'done': True},
+                    upsert=True,
+                )
+                document = await collection.find_one(
+                    {'_id': result.upserted_id}
+                )
+                return result, document
+            finally:
+                await engine.disconnect()
 
-            def __init__(self):
-                self.document = None
-
-            async def put_document(self, _db, _coll, document, **kwargs):
-                self.document = document
-                return True
-
-        engine = EngineStub()
-        collection = AsyncCollection(engine, 'db', 'coll')
-
-        result = asyncio.run(
-            collection.replace_one(
-                {'kind': 'missing', 'tenant': 'a'},
-                {'done': True},
-                upsert=True,
-            )
-        )
+        result, document = asyncio.run(_exercise())
 
         self.assertEqual(result.matched_count, 0)
         self.assertEqual(result.modified_count, 0)
         self.assertTrue(result.upserted_id)
         self.assertEqual(
-            engine.document,
+            document,
             {
                 '_id': result.upserted_id,
                 'kind': 'missing',
@@ -1104,7 +1106,6 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
                             '_id': '1',
                             'id': 1,
                             'kind': 'view',
-                            'raced': True,
                             'done': True,
                         },
                         {'_id': '2', 'id': 1, 'kind': 'view', 'done': True},
@@ -1204,10 +1205,6 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
                                 '_id': 'task-1',
                                 'kind': 'task',
                                 'rank': 1,
-                                'planning_status': 'pending',
-                                'reviews': [],
-                                'unlock_content': [],
-                                'started_at': None,
                             },
                         )
                         self.assertEqual(stored_after, [])
@@ -1307,11 +1304,9 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
     def test_replace_one_upsert_duplicate_key_error_when_engine_rejects_document(
         self,
     ):
-        class EngineStub(_SemanticsScanMixin):
-            _stub_documents = []
-
-            async def put_document(self, *args, **kwargs):
-                return False
+        class EngineStub(MemoryEngine):
+            async def update_with_operation(self, *args, **kwargs):
+                raise DuplicateKeyError('duplicate replacement')
 
         collection = AsyncCollection(EngineStub(), 'db', 'coll')
 
@@ -1439,17 +1434,19 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
     def test_find_one_and_update_returns_none_when_nothing_matches_without_upsert(
         self,
     ):
-        class EngineStub(_SemanticsScanMixin):
-            _stub_documents = []
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, 'db', 'coll')
+                return await collection.find_one_and_update(
+                    {'name': 'Ada'},
+                    {'$set': {'name': 'Grace'}},
+                )
+            finally:
+                await engine.disconnect()
 
-        collection = AsyncCollection(EngineStub(), 'db', 'coll')
-
-        result = asyncio.run(
-            collection.find_one_and_update(
-                {'name': 'Ada'},
-                {'$set': {'name': 'Grace'}},
-            )
-        )
+        result = asyncio.run(_exercise())
 
         self.assertIsNone(result)
 
@@ -1576,14 +1573,18 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
         self.assertEqual(before_existing, {'done': False})
 
     def test_find_one_and_delete_returns_none_when_nothing_matches(self):
-        class EngineStub(_SemanticsScanMixin):
-            _stub_documents = []
+        async def _exercise():
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                collection = AsyncCollection(engine, 'db', 'coll')
+                return await collection.find_one_and_delete(
+                    {'name': 'missing'}
+                )
+            finally:
+                await engine.disconnect()
 
-        collection = AsyncCollection(EngineStub(), 'db', 'coll')
-
-        result = asyncio.run(
-            collection.find_one_and_delete({'name': 'missing'})
-        )
+        result = asyncio.run(_exercise())
 
         self.assertIsNone(result)
 
@@ -1754,19 +1755,11 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
         self.assertEqual(
             recorded_find,
             [
-                {'hint': 'kind_rank_idx', 'comment': 'trace-update-one'},
                 {'hint': 'kind_idx', 'comment': 'trace-update-many'},
-                {'hint': 'kind_idx', 'comment': 'trace-replace'},
-                {'hint': '_id_', 'comment': 'trace-delete-one'},
                 {'hint': 'kind_idx', 'comment': 'trace-delete-many'},
             ],
         )
-        self.assertEqual(
-            recorded_select,
-            [
-                {'hint': 'kind_idx', 'comment': 'trace-replace'},
-            ],
-        )
+        self.assertEqual(recorded_select, [])
 
     def test_find_rejects_missing_hint_index(self):
         async def _exercise():

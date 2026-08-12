@@ -11,6 +11,7 @@ from mongoeco.core.operators import CompiledExecutableUpdatePlan
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.expression_context import ExpressionExecutionContext, ensure_expression_context
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
 from mongoeco.core.search import ClassicTextQuery, strip_search_result_metadata
@@ -53,10 +54,24 @@ class EngineFindSemantics:
         default_factory=ExpressionExecutionContext
     )
     compiled_query: CompiledQuery | None = field(default=None, compare=False, hash=False)
+    operation_context: OperationContext | None = field(
+        default=None,
+        compare=False,
+        hash=False,
+    )
+    _deadline: float | None = field(default=None, compare=False, hash=False)
+
+    def __post_init__(self) -> None:
+        if self._deadline is None and self.max_time_ms is not None:
+            object.__setattr__(
+                self,
+                '_deadline',
+                operation_deadline(self.max_time_ms),
+            )
 
     @property
     def deadline(self) -> float | None:
-        return operation_deadline(self.max_time_ms)
+        return self._deadline
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,9 +92,16 @@ class EngineUpdateSemantics:
     compiled_upsert_plan: CompiledExecutableUpdatePlan
     selector_filter: Filter
     collation: CollationSpec | None
+    sort: SortSpec | None
+    hint: str | object | None
     dialect: MongoDialect
     variables: ExpressionExecutionContext = field(
         default_factory=ExpressionExecutionContext
+    )
+    operation_context: OperationContext | None = field(
+        default=None,
+        compare=False,
+        hash=False,
     )
 
 
@@ -155,13 +177,22 @@ def compile_find_semantics(
     dialect: MongoDialect | None = None,
     compiled_query: CompiledQuery | None = None,
     variables: Mapping[str, object] | None = None,
+    operation_context: OperationContext | None = None,
 ) -> EngineFindSemantics:
-    effective_dialect = dialect or MONGODB_DIALECT_70
+    effective_dialect = (
+        operation_context.dialect
+        if operation_context is not None
+        else (dialect or MONGODB_DIALECT_70)
+    )
     if skip < 0:
         raise ValueError("skip must be >= 0")
     if limit is not None and limit < 0:
         raise ValueError("limit must be >= 0")
-    effective_collation = normalize_collation(collation)
+    effective_collation = normalize_collation(
+        operation_context.collation
+        if operation_context is not None
+        else collation
+    )
     effective_selector_filter = filter_spec if selector_filter is None else selector_filter
     query_plan = ensure_query_plan(effective_selector_filter, plan, dialect=effective_dialect)
 
@@ -179,7 +210,11 @@ def compile_find_semantics(
         comment=comment,
         max_time_ms=max_time_ms,
         dialect=effective_dialect,
-        variables=ensure_expression_context(variables),
+        variables=(
+            operation_context.expressions
+            if operation_context is not None
+            else ensure_expression_context(variables)
+        ),
         compiled_query=compiled_query
         if compiled_query is not None
         else CompiledQuery(
@@ -187,6 +222,8 @@ def compile_find_semantics(
             dialect=effective_dialect,
             collation=effective_collation,
         ),
+        operation_context=operation_context,
+        _deadline=operation_deadline(max_time_ms),
     )
 
 
@@ -213,6 +250,7 @@ def compile_find_semantics_from_operation(
         dialect=dialect,
         compiled_query=compiled_query,
         variables=operation.let if variables is None else variables,
+        operation_context=operation.context,
     )
 
 
@@ -223,7 +261,11 @@ def compile_update_semantics(
     selector_filter: Filter | None = None,
     variables: Mapping[str, object] | None = None,
 ) -> EngineUpdateSemantics:
-    effective_dialect = dialect or MONGODB_DIALECT_70
+    effective_dialect = (
+        operation.context.dialect
+        if operation.context is not None
+        else (dialect or MONGODB_DIALECT_70)
+    )
     if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
         raise ValueError("UpdateOperation must include compiled update plans")
     effective_selector_filter = (
@@ -246,11 +288,22 @@ def compile_update_semantics(
         compiled_update_plan=operation.compiled_update_plan,
         compiled_upsert_plan=operation.compiled_upsert_plan,
         selector_filter=effective_selector_filter,
-        collation=normalize_collation(operation.collation),
-        dialect=effective_dialect,
-        variables=ensure_expression_context(
-            operation.let if variables is None else variables
+        collation=normalize_collation(
+            operation.context.collation
+            if operation.context is not None
+            else operation.collation
         ),
+        sort=operation.sort,
+        hint=operation.hint,
+        dialect=effective_dialect,
+        variables=(
+            operation.context.expressions
+            if operation.context is not None
+            else ensure_expression_context(
+                operation.let if variables is None else variables
+            )
+        ),
+        operation_context=operation.context,
     )
 
 

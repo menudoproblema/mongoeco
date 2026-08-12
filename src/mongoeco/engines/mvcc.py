@@ -16,6 +16,7 @@ class MemoryMvccState:
     search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]]
     collections: dict[str, set[str]]
     collection_options: dict[str, dict[str, Document]]
+    pending_changes: list[Document | None] = field(default_factory=list)
 
     @classmethod
     def capture(

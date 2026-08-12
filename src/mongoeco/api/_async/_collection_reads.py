@@ -65,8 +65,15 @@ async def find_one(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
+    expressions = collection._new_execution_context().with_bindings(operation.let)
+    operation_context = collection._new_operation_context(
+        session=options.get('session'),
+        collation=operation.collation,
+        expressions=expressions,
+    )
     operation = operation.with_overrides(
-        let=collection._new_execution_context().with_bindings(operation.let)
+        let=operation_context.expressions,
+        context=operation_context,
     )
     document = None
     started_at = time.perf_counter_ns()
@@ -93,13 +100,10 @@ async def find_one(
                 and operation.max_time_ms is None
                 and collection._can_use_direct_id_lookup(operation.filter_spec)
             ):
-                document = await collection._engine.get_document(
-                    collection._db_name,
-                    collection._collection_name,
+                document = await collection._runtime.engine_get_document(
                     operation.filter_spec["_id"],
                     projection=operation.projection,
-                    dialect=collection._mongodb_dialect,
-                    context=options.get("session"),
+                    operation_context=operation.context,
                 )
             if document is None:
                 async for candidate in collection._engine_scan_with_operation(
@@ -170,8 +174,14 @@ async def count_documents(
         dialect=collection._mongodb_dialect,
         planning_mode=collection._planning_mode,
     )
+    operation_context = collection._new_operation_context(
+        session=options.get('session'),
+        collation=operation.collation,
+        bindings=operation.let,
+    )
     operation = operation.with_overrides(
-        let=collection._new_execution_context().with_bindings(operation.let)
+        let=operation_context.expressions,
+        context=operation_context,
     )
     with track_active_operation(
         collection._engine,

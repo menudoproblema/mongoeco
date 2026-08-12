@@ -8,6 +8,7 @@ from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api.operations import compile_aggregate_operation
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
+from mongoeco.api._sync.aggregation_cursor import _AggregationCursorIterator
 from mongoeco.core.aggregation import (
     AggregationCostPolicy,
     AggregationSpillPolicy,
@@ -959,6 +960,47 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ([{'$match': {'x': 1}}], 2, 3),
         )
 
+    async def test_split_streamable_pipeline_preserves_window_stage_order(self):
+        cases = [
+            ([{'$limit': 5}, {'$skip': 3}], ([], 3, 2)),
+            (
+                [{'$skip': 3}, {'$limit': 5}, {'$skip': 3}],
+                ([], 6, 2),
+            ),
+            ([{'$limit': 5}, {'$skip': 8}], ([], 5, 0)),
+        ]
+
+        for pipeline, expected in cases:
+            with self.subTest(pipeline=pipeline):
+                self.assertEqual(
+                    AsyncAggregationCursor._split_streamable_pipeline(pipeline),
+                    expected,
+                )
+
+    async def test_streaming_window_matches_materialized_execution(self):
+        documents = [{'_id': str(index), 'value': index} for index in range(10)]
+        windows = [
+            [{'$limit': 5}, {'$skip': 3}],
+            [{'$skip': 3}, {'$limit': 5}, {'$skip': 3}],
+            [{'$limit': 5}, {'$skip': 8}],
+        ]
+
+        for window in windows:
+            with self.subTest(window=window):
+                streaming = AsyncAggregationCursor(
+                    _FakeCollection(documents),
+                    [{'$addFields': {'seen': True}}, *window],
+                    batch_size=2,
+                )
+                materialized = AsyncAggregationCursor(
+                    _FakeCollection(documents),
+                    [{'$addFields': {'seen': True}}, *window],
+                )
+                self.assertEqual(
+                    await streaming.to_list(),
+                    await materialized.to_list(),
+                )
+
     async def test_materialize_pushes_safe_prefix_to_find(self):
         collection = _FakeCollection(
             [
@@ -1103,7 +1145,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection.calls[0]['max_time_ms'], 5)
         self.assertEqual(collection.calls[0]['batch_size'], 10)
 
-    async def test_streaming_batch_execution_splits_find_calls_for_streamable_pipeline(
+    async def test_streaming_batch_execution_uses_one_stable_find_for_streamable_pipeline(
         self,
     ):
         collection = _FakeCollection(
@@ -1124,11 +1166,11 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(documents, collection._documents)
         self.assertEqual(
             [call['skip'] for call in collection.calls],
-            [0, 2, 3],
+            [0],
         )
         self.assertEqual(
             [call['limit'] for call in collection.calls],
-            [2, 2, 2],
+            [None],
         )
 
     async def test_streaming_batch_execution_handles_trailing_skip_and_limit_globally(
@@ -1365,9 +1407,9 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         documents = await cursor.to_list()
 
         self.assertEqual(len(documents), 3)
-        self.assertGreaterEqual(len(collection.built_operations), 2)
-        self.assertEqual(collection.built_operations[0][0].limit, 2)
-        self.assertEqual(collection.built_operations[1][0].skip, 2)
+        self.assertEqual(len(collection.built_operations), 1)
+        self.assertIsNone(collection.built_operations[0][0].limit)
+        self.assertEqual(collection.built_operations[0][0].skip, 0)
 
     async def test_materialize_enforces_max_time_deadline(self):
         collection = _FakeCollection([{'_id': '1', 'kind': 'view'}])
@@ -2004,6 +2046,71 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
 
 class SyncAggregationCursorTests(unittest.TestCase):
+    def test_internal_buffer_and_exhausted_load_paths_are_stable(self):
+        async_cursor = _AsyncAggregationCursorStub([])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+        cursor._sync_buffer = [{'_id': 'buffered'}]
+
+        self.assertEqual(cursor.to_list(1), [{'_id': 'buffered'}])
+        cursor._exhausted = True
+        cursor._started = False
+        self.assertEqual(cursor._load(), [])
+
+    def test_active_first_closes_when_source_is_already_exhausted(self):
+        async_cursor = _AsyncAggregationCursorStub([])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+        cursor._active_async_iterable = async_cursor.__aiter__()
+
+        self.assertIsNone(cursor.first())
+        self.assertTrue(cursor._exhausted)
+        self.assertIsNone(cursor._active_async_iterable)
+
+    def test_empty_internal_chunk_closes_iterator(self):
+        async_cursor = _AsyncAggregationCursorStub([])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+        active = async_cursor.__aiter__()
+        cursor._active_async_iterable = active
+        iterator = _AggregationCursorIterator(cursor, active)
+
+        with self.assertRaises(StopIteration):
+            next(iterator)
+
+        self.assertTrue(iterator._closed)
+        self.assertTrue(cursor._exhausted)
+
+    def test_to_list_validates_length_and_consumes_buffered_batches(self):
+        async_cursor = _AsyncAggregationCursorStub(
+            [{'_id': '1'}, {'_id': '2'}, {'_id': '3'}]
+        )
+        async_cursor._batch_size = 2
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+
+        self.assertEqual(cursor.to_list(0), [])
+        with self.assertRaisesRegex(ValueError, 'non-negative'):
+            cursor.to_list(-1)
+        self.assertEqual(cursor.to_list(1), [{'_id': '1'}])
+        self.assertEqual(cursor.to_list(2), [{'_id': '2'}, {'_id': '3'}])
+        self.assertEqual(cursor.to_list(), [])
+
+    def test_first_closes_active_iterator_when_read_fails(self):
+        async_cursor = _FailingAsyncAggregationCursorStub([{'_id': '1'}])
+        cursor = AggregationCursor(_SyncClientStub(), async_cursor)
+        cursor._active_async_iterable = async_cursor.__aiter__()
+
+        with self.assertRaisesRegex(InvalidOperation, 'foreign session'):
+            cursor.first()
+
+        self.assertIsNone(cursor._active_async_iterable)
+        self.assertEqual(async_cursor.close_calls, 1)
+
+    def test_first_preserves_read_error_when_cleanup_also_fails(self):
+        async_cursor = _FailingAsyncAggregationCursorStub([{'_id': '1'}])
+        cursor = AggregationCursor(_BrokenSyncClientStub(), async_cursor)
+        cursor._active_async_iterable = async_cursor.__aiter__()
+
+        with self.assertRaisesRegex(RuntimeError, 'boom'):
+            cursor.first()
+
     def test_collection_aggregate_accepts_pymongo_allow_disk_use_alias(self):
         with MongoClient(MemoryEngine()) as client:
             collection = client.db.events

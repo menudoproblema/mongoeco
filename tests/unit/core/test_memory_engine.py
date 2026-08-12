@@ -1880,7 +1880,7 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(
             engine._index_value({"tags": ["python", {"level": 1}]}, "tags"),
-            engine._typed_engine_key(["python", {"level": 1}]),
+            engine._index_equality_key(["python", {"level": 1}]),
         )
 
     async def test_delete_matching_document_returns_zero_when_no_match(self):

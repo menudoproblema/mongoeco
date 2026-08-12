@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import datetime
 from decimal import Decimal
+import math
 import uuid
 from typing import Any
 
+from mongoeco.core.bson_scalars import is_bson_numeric, wrap_bson_numeric
 from mongoeco.types import Binary, Regex, Timestamp, is_object_id_like, normalize_object_id
 
 
@@ -65,6 +67,45 @@ def bson_engine_key(value: Any) -> Any:
         return (value.__class__, value)
     except TypeError:
         return ("repr", repr(value))
+
+
+def bson_equality_key(value: Any) -> Any:
+    """Clave hashable que conserva la igualdad semantica BSON.
+
+    Esta clave es deliberadamente distinta de ``bson_engine_key``: la segunda
+    conserva la identidad fisica de tipos numericos para almacenamiento, mientras
+    que los indices deben considerar equivalentes las representaciones numericas
+    que MongoDB compara como iguales.
+    """
+
+    if isinstance(value, bool):
+        return ("bool", value)
+    if is_bson_numeric(value):
+        wrapped = wrap_bson_numeric(value)
+        assert wrapped is not None
+        numeric = wrapped.value
+        if isinstance(numeric, float):
+            if math.isnan(numeric):
+                return ("number", "nan")
+            if math.isinf(numeric):
+                return ("number", "-inf" if numeric < 0 else "+inf")
+            numeric = Decimal(str(numeric))
+        elif isinstance(numeric, Decimal):
+            if numeric.is_nan():
+                return ("number", "nan")
+            if numeric.is_infinite():
+                return ("number", "-inf" if numeric < 0 else "+inf")
+        else:
+            numeric = Decimal(numeric)
+        return ("number", numeric.normalize())
+    if isinstance(value, dict):
+        return (
+            "dict",
+            tuple((key, bson_equality_key(item)) for key, item in value.items()),
+        )
+    if isinstance(value, list):
+        return ("list", tuple(bson_equality_key(item) for item in value))
+    return bson_engine_key(value)
 
 
 def bson_numeric_index_key(value: int | float | Decimal) -> str:

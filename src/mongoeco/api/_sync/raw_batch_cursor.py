@@ -18,3 +18,15 @@ class RawBatchCursor:
     def first(self) -> bytes | None:
         return self._client._run(self._async_cursor.first())
 
+    def close(self) -> None:
+        self._client._run(self._async_cursor.close())
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback) -> None:
+        self.close()
+
+    @property
+    def alive(self) -> bool:
+        return self._async_cursor.alive

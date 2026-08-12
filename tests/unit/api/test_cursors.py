@@ -569,6 +569,90 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection._engine.created_scans[0].yield_count, 2)
         self.assertEqual(await cursor.to_list(), [{"_id": "2"}, {"_id": "3"}])
 
+    async def test_async_cursor_does_not_reopen_an_exhausted_batch_source(self):
+        collection = _BatchTrackingCollectionStub(
+            [{"_id": "1"}, {"_id": "2"}, {"_id": "3"}]
+        )
+        cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=2)
+
+        self.assertEqual(
+            await cursor._fetch_batch(0, 2),
+            [{"_id": "1"}, {"_id": "2"}],
+        )
+        self.assertEqual(await cursor._fetch_batch(2, 2), [{"_id": "3"}])
+        self.assertEqual(await cursor._fetch_batch(3, 2), [])
+        self.assertEqual(len(collection._engine.created_scans), 1)
+
+    async def test_async_cursor_close_closes_active_batch_source(self):
+        collection = _BatchTrackingCollectionStub(
+            [{"_id": "1"}, {"_id": "2"}]
+        )
+        cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=1)
+
+        self.assertEqual(await cursor.__aiter__().__anext__(), {"_id": "1"})
+        await cursor.close()
+
+        self.assertEqual(collection._engine.created_scans[0].close_calls, 1)
+
+    async def test_async_cursor_closes_source_after_iteration_failure(self):
+        class _FailingScan(_BatchTrackingScanStub):
+            async def __anext__(self):
+                if self.yield_count:
+                    raise RuntimeError("boom")
+                return await super().__anext__()
+
+        collection = _BatchTrackingCollectionStub([{"_id": "1"}])
+
+        def create_scan(*args, **kwargs):
+            del args, kwargs
+            scan = _FailingScan([{"_id": "1"}])
+            collection._engine.created_scans.append(scan)
+            return scan
+
+        collection._engine.scan_find_semantics = create_scan
+        cursor = AsyncCursor(collection, {}, MatchAll(), None)
+        iterator = cursor.__aiter__()
+
+        self.assertEqual(await iterator.__anext__(), {"_id": "1"})
+        with self.assertRaisesRegex(RuntimeError, "boom"):
+            await iterator.__anext__()
+        self.assertEqual(collection._engine.created_scans[0].close_calls, 1)
+
+    async def test_async_cursor_closes_batch_source_at_exact_limit(self):
+        collection = _BatchTrackingCollectionStub(
+            [{"_id": "1"}, {"_id": "2"}, {"_id": "3"}]
+        )
+        cursor = AsyncCursor(
+            collection,
+            {},
+            MatchAll(),
+            None,
+            batch_size=2,
+            limit=2,
+        )
+
+        self.assertEqual(
+            await cursor._fetch_batch(0, 2),
+            [{"_id": "1"}, {"_id": "2"}],
+        )
+        self.assertEqual(collection._engine.created_scans[0].close_calls, 1)
+        self.assertEqual(await cursor._fetch_batch(2, 2), [])
+
+    async def test_async_cursor_rewind_retires_source_before_next_iteration(self):
+        collection = _BatchTrackingCollectionStub(
+            [{"_id": "1"}, {"_id": "2"}]
+        )
+        cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=1)
+
+        self.assertEqual(await cursor.__aiter__().__anext__(), {"_id": "1"})
+        first_scan = collection._engine.created_scans[0]
+        cursor.rewind()
+        self.assertEqual(first_scan.close_calls, 0)
+
+        self.assertEqual(await cursor.__aiter__().__anext__(), {"_id": "1"})
+        self.assertEqual(first_scan.close_calls, 1)
+        self.assertEqual(len(collection._engine.created_scans), 2)
+
     async def test_async_cursor_batch_iterator_stops_when_ownership_is_lost(self):
         collection = _BatchTrackingCollectionStub([{"_id": "1"}])
         cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=1)
@@ -607,8 +691,11 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=0)
 
         self.assertEqual(await cursor.to_list(), documents)
-        self.assertEqual(len(collection._engine.created_scans), 2)
-        self.assertEqual(collection._engine.created_scans[0].yield_count, _DEFAULT_LOCAL_PREFETCH_SIZE)
+        self.assertEqual(len(collection._engine.created_scans), 1)
+        self.assertEqual(
+            collection._engine.created_scans[0].yield_count,
+            len(documents),
+        )
 
     async def test_async_cursor_reuses_compiled_semantics_across_local_batches(self):
         documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]

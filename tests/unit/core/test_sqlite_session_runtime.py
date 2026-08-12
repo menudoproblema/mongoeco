@@ -153,7 +153,10 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
             runtime.commit_write(conn, None)
             runtime.rollback_write(conn, None)
 
-            self.assertEqual(conn.execute.call_args_list[-1].args[0], "BEGIN")
+            self.assertEqual(
+                conn.execute.call_args_list[-1].args[0],
+                "BEGIN IMMEDIATE",
+            )
             conn.commit.assert_called_once_with()
             conn.rollback.assert_called_once_with()
         finally:

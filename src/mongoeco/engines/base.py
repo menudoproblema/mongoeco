@@ -1,8 +1,18 @@
-from typing import AsyncIterable, Protocol, runtime_checkable
+from collections.abc import Callable
+from typing import Protocol, runtime_checkable
 
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MongoDialect
+from mongoeco.engines.capabilities import EngineCapabilities
 from mongoeco.engines.semantic_core import EngineFindSemantics, EngineReadExecutionPlan
+from mongoeco.core.operation_context import OperationContext
+from mongoeco.engines.results import (
+    DeleteOutcome,
+    InsertOutcome,
+    MergeOutcome,
+    MutationOutcome,
+)
+from mongoeco.engines.snapshots import ReadSnapshot
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     DeleteResult,
@@ -23,7 +33,7 @@ from mongoeco.types import (
 
 @runtime_checkable
 class AsyncSessionEngine(Protocol):
-    supports_injected_clock: bool
+    capabilities: EngineCapabilities
 
     def create_session_state(self, session: ClientSession) -> None: ...
 
@@ -36,17 +46,18 @@ class AsyncLifecycleEngine(Protocol):
 
 @runtime_checkable
 class AsyncReadSemanticsEngine(Protocol):
-    def scan_find_semantics(self, db_name: str, coll_name: str, semantics: EngineFindSemantics, *, context: ClientSession | None = None) -> AsyncIterable[Document]: ...
-    async def count_find_semantics(self, db_name: str, coll_name: str, semantics: EngineFindSemantics, *, context: ClientSession | None = None) -> int: ...
+    def open_read_snapshot(self, db_name: str, coll_name: str, semantics: EngineFindSemantics, *, operation_context: OperationContext) -> ReadSnapshot: ...
+    async def count_find_semantics(self, db_name: str, coll_name: str, semantics: EngineFindSemantics, *, operation_context: OperationContext) -> int: ...
 
 
 @runtime_checkable
 class AsyncCrudEngine(AsyncReadSemanticsEngine, Protocol):
-    async def put_document(self, db_name: str, coll_name: str, document: Document, overwrite: bool = True, *, context: ClientSession | None = None, bypass_document_validation: bool = False) -> bool: ...
-    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> Document | None: ...
-    async def delete_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, context: ClientSession | None = None) -> bool: ...
-    async def update_with_operation(self, db_name: str, coll_name: str, operation: UpdateOperation, upsert: bool = False, upsert_seed: Document | None = None, *, selector_filter: Filter | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None, bypass_document_validation: bool = False) -> UpdateResult[DocumentId]: ...
-    async def delete_with_operation(self, db_name: str, coll_name: str, operation: UpdateOperation, *, selector_filter: Filter | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None) -> DeleteResult: ...
+    async def insert_document(self, db_name: str, coll_name: str, document: Document, overwrite: bool = True, *, operation_context: OperationContext, bypass_document_validation: bool = False, on_commit: Callable[[InsertOutcome], None] | None = None) -> InsertOutcome: ...
+    async def insert_documents(self, db_name: str, coll_name: str, documents: list[Document], *, operation_context: OperationContext, bypass_document_validation: bool = False, on_commit: Callable[[InsertOutcome], None] | None = None) -> tuple[InsertOutcome, ...]: ...
+    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, operation_context: OperationContext) -> Document | None: ...
+    async def update_with_operation(self, db_name: str, coll_name: str, operation: UpdateOperation, upsert: bool = False, upsert_seed: Document | None = None, *, operation_context: OperationContext, selector_filter: Filter | None = None, bypass_document_validation: bool = False, replacement_document: Document | None = None, on_commit: Callable[[MutationOutcome], None] | None = None) -> MutationOutcome: ...
+    async def delete_with_operation(self, db_name: str, coll_name: str, operation: UpdateOperation, *, operation_context: OperationContext, selector_filter: Filter | None = None, on_commit: Callable[[DeleteOutcome], None] | None = None) -> DeleteOutcome: ...
+    async def merge_document(self, db_name: str, coll_name: str, document: Document, *, when_matched: str, when_not_matched: str, operation_context: OperationContext, on_commit: Callable[[MergeOutcome], None] | None = None) -> MergeOutcome: ...
 
 
 @runtime_checkable
@@ -177,4 +188,4 @@ class AsyncStorageEngine(
     AsyncProfilingEngine,
     Protocol,
 ):
-    """Protocolo Delgado (Thin Protocol) de Almacenamiento."""
+    """Versioned storage engine protocol."""

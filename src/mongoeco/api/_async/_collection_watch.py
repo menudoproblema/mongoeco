@@ -61,4 +61,5 @@ def open_collection_change_stream(
         start_after=start_after,
         start_at_operation_time=start_at_operation_time,
         full_document=full_document,
+        materialize_document=collection._apply_codec_options_to_document,
     )

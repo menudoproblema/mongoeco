@@ -146,9 +146,15 @@ Import guidance by layer:
 * use `mongoeco.driver`, `mongoeco.engines` and `mongoeco.wire` only when you
   intentionally need lower-level runtime surfaces
 
-## Public Surface Stability (3.x)
+Custom storage engines should implement the versioned SPI v2 contract. The
+public capability, outcome, operation-context and snapshot types are exported
+from `mongoeco.engines`; see the
+[SPI v2 migration guide](docs/architecture/engine-spi-v2.md). SPI v1 remains a
+deprecated compatibility path until 5.0.0 and emits `DeprecationWarning`.
 
-The 3.x contract is intentionally explicit:
+## Public Surface Stability (4.x)
+
+The 4.x contract is intentionally explicit:
 
 * stable import roots are `mongoeco`, `mongoeco.compat` and `mongoeco.cxp`
 * each root surface is curated through its `__all__`
@@ -462,7 +468,7 @@ best treated as pre-release.
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
-* [docs/release-4.2.1.md](docs/release-4.2.1.md)
+* [docs/release-4.3.0.md](docs/release-4.3.0.md)
 * [TODO.md](TODO.md)
 * [MISSING_FEATURES.md](MISSING_FEATURES.md)
 
