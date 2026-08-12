@@ -1,6 +1,8 @@
 # Release 4.3.0
 
-Status: gates locales superados; pendiente de commit, etiqueta y publicacion.
+Status: release cerrada y publicada en PyPI.
+
+Distribucion: <https://pypi.org/project/mongoeco/4.3.0/>
 
 ## Resumen
 
@@ -50,7 +52,7 @@ de 4.2.1 no se modifican.
 
 ## Gates de publicacion
 
-Antes de commit y etiqueta deben quedar verdes:
+Antes del commit y la etiqueta quedaron verdes:
 
 - suite pytest y unittest;
 - cobertura de `src/mongoeco` igual o superior al 99%;
@@ -61,10 +63,11 @@ Antes de commit y etiqueta deben quedar verdes:
 - benchmarks cortos sin regresion bloqueante;
 - diferenciales MongoDB 7.0/8.0 cuando existan servicios configurados.
 
-La publicacion, el commit y la etiqueta quedan fuera de esta preparacion hasta
-que todos los gates aplicables hayan sido revisados.
+La etiqueta anotada `v4.3.0` apunta al commit de preparacion `c95ff74`. PyPI
+expone los dos artefactos construidos desde ese estado y el smoke desde el
+indice publico confirma la version y el contrato CXP esperado.
 
-## Evidencia local
+## Evidencia de cierre
 
 Validacion ejecutada el 12 de agosto de 2026:
 
@@ -81,7 +84,7 @@ Validacion ejecutada el 12 de agosto de 2026:
 - benchmarks generales y diagnosticos `search`/`vectorSearch`: completados
   en Memory y SQLite, sync y async, sin errores de ejecucion.
 
-Artefactos locales revisados:
+Artefactos publicados y verificados contra la API JSON de PyPI:
 
 - wheel `mongoeco-4.3.0-py3-none-any.whl`:
   `62da619bd63fadb2a516f8f7c12ae02ea4ed3fc0409d152e1e50aaa982fea575`;
