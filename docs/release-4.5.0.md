@@ -1,6 +1,7 @@
 # Release 4.5.0
 
-Status: candidata; no etiquetada ni publicada.
+Status: publicada el 15 de agosto de 2026 con la etiqueta `v4.5.0` sobre el
+commit `b20d4d150807a04c4f641fe0b1bd31149a3f1808`.
 
 ## Resumen
 
@@ -28,8 +29,9 @@ como aliases deprecated durante 4.x. No deben usarse para integraciones nuevas.
 
 ## Evidencia
 
-- Diferencial real MongoDB 8.0.24: 14/14 escenarios verdes.
-- Python 3.13 y 3.14: suite completa obligatoria en CI sobre el wheel inmutable.
+- Diferenciales reales MongoDB 7.0 y 8.0: verdes en el workflow de la etiqueta;
+  MongoDB 8.0.24 mantiene ademas los 14/14 escenarios de la ejecucion local.
+- Python 3.13 y 3.14: suite completa verde en CI sobre el wheel inmutable.
 - Python 3.14: `3256` tests pytest, `15` skipped y `2356` subtests; cobertura
   `99.01%`, cumpliendo el gate estricto del 99%.
 - Runner `unittest`: `3380 tests`, `2` skipped; ratchet Ruff verde sin ampliar
@@ -48,11 +50,16 @@ como aliases deprecated durante 4.x. No deben usarse para integraciones nuevas.
 - Wheel y sdist pasan `twine check`, smoke desde `site-packages` y conformidad
   SPI v2 sobre Memory/SQLite. Dos builds con el mismo epoch producen bytes
   identicos.
-- Los SHA-256 finales de wheel y sdist se generan en `SHA256SUMS` por el job de
-  build despues del commit/tag final. No se consideran validos hashes de
-  artefactos locales construidos sobre un worktree mutable.
+- SHA-256 publicados en PyPI: wheel
+  `f168ab9f4172abbf1a7e35f8996c3e01463a26557b213028c83ef64d102a2fd3` y sdist
+  `2c3f62a19d9c83370f5997b2175b1e39711569e1591a0e47594594e2b466375e`.
 
-MongoDB 7 no esta disponible en el entorno local y sigue siendo un gate externo
-obligatorio del workflow diferencial antes de publicar. La configuracion del
-Trusted Publisher en PyPI tambien debe verificarse externamente; no se atribuye
-ninguna de esas dos evidencias mientras permanezcan pendientes.
+El workflow de la etiqueta supero build, imports minimos, Python 3.13/3.14,
+cobertura, snapshots, benchmarks, smokes y diferenciales MongoDB 7/8. El
+intercambio OIDC de publicacion fallo con `invalid-publisher` porque PyPI no
+tenia registrado el Trusted Publisher para `menudoproblema/mongoeco`,
+`.github/workflows/ci.yml` y el environment `pypi`. Wheel y sdist se
+reconstruyeron dos veces desde el tag limpio con las constraints de CI y el
+mismo `SOURCE_DATE_EPOCH`, se compararon byte a byte, pasaron `twine check` y
+smokes independientes y se publicaron con la credencial local existente. El
+smoke posterior instalo `mongoeco==4.5.0` desde `https://pypi.org/simple`.
