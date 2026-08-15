@@ -1,4 +1,9 @@
+import asyncio
+import threading
+import time
 import unittest
+
+import pytest
 
 # Commit sequence values are the contract exercised by this module.
 # ruff: noqa: PLR2004
@@ -8,6 +13,7 @@ from mongoeco.core.operation_context import (
     ChangePublicationPolicy,
     OperationContext,
 )
+from mongoeco.engines._change_dispatch import ConsumerDispatchCoordinator
 from mongoeco.engines.adapter import adapt_engine
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import OperationFailure
@@ -152,6 +158,117 @@ class MemoryCommitSequenceTests(unittest.IsolatedAsyncioTestCase):
                 'future',
                 initial_checkpoint=1,
             )
+
+    async def test_concurrent_dispatch_is_serialized_per_consumer(self):
+        for index in (1, 2):
+            await self.engine.insert_document(
+                'db',
+                'items',
+                {'_id': index},
+                overwrite=False,
+                operation_context=self._context(),
+            )
+        entered = threading.Event()
+        release = threading.Event()
+        delivered = []
+
+        def slow(change):
+            delivered.append(('slow', change.sequence))
+            if change.sequence == 1:
+                entered.set()
+                release.wait(1)
+
+        def fast(change):
+            delivered.append(('fast', change.sequence))
+
+        first = threading.Thread(
+            target=self.engine.dispatch_committed_changes,
+            args=(self.adapter._change_consumer_id(self.hub), slow),
+        )
+        second = threading.Thread(
+            target=self.engine.dispatch_committed_changes,
+            args=(self.adapter._change_consumer_id(self.hub), fast),
+        )
+        first.start()
+        assert entered.wait(1)
+        second.start()
+        release.set()
+        first.join()
+        second.join()
+
+        assert delivered == [('slow', 1), ('slow', 2)]
+        assert self.engine._change_checkpoints[
+            self.adapter._change_consumer_id(self.hub)
+        ] == 2
+
+    async def test_dispatch_coordinator_rejects_reentry_and_retires_idle_gate(
+        self,
+    ):
+        coordinator = ConsumerDispatchCoordinator()
+
+        with (
+            coordinator.hold('consumer'),
+            pytest.raises(RuntimeError, match='re-entered'),
+            coordinator.hold('consumer'),
+        ):
+            pass
+        with coordinator.hold('consumer'):
+            coordinator.retire('consumer')
+            assert 'consumer' in coordinator._gates
+
+        coordinator.retire('consumer')
+        coordinator.retire('missing')
+        assert 'consumer' not in coordinator._gates
+        with coordinator.hold('idle'):
+            pass
+        coordinator.retire('idle')
+        assert 'idle' not in coordinator._gates
+
+    async def test_retirement_waits_for_the_current_owner_and_waiters(self):
+        coordinator = ConsumerDispatchCoordinator()
+        owner_entered = threading.Event()
+        release_owner = threading.Event()
+        waiter_entered = threading.Event()
+        release_waiter = threading.Event()
+
+        def own_gate():
+            with coordinator.hold('consumer'):
+                owner_entered.set()
+                release_owner.wait(timeout=2)
+
+        def wait_for_gate():
+            with coordinator.hold('consumer'):
+                waiter_entered.set()
+                release_waiter.wait(timeout=2)
+
+        owner = threading.Thread(target=own_gate)
+        waiter = threading.Thread(target=wait_for_gate)
+        owner.start()
+        assert owner_entered.wait(timeout=2)
+        waiter.start()
+
+        def waiter_is_registered():
+            deadline = time.monotonic() + 2
+            while time.monotonic() < deadline:
+                if coordinator._gates['consumer'].users == 2:
+                    return True
+                time.sleep(0.001)
+            return False
+
+        assert await asyncio.to_thread(waiter_is_registered)
+
+        coordinator.retire('consumer')
+        assert 'consumer' in coordinator._gates
+        release_owner.set()
+        assert waiter_entered.wait(timeout=2)
+        owner.join(timeout=2)
+        assert 'consumer' in coordinator._gates
+        release_waiter.set()
+        waiter.join(timeout=2)
+
+        assert not owner.is_alive()
+        assert not waiter.is_alive()
+        assert 'consumer' not in coordinator._gates
 
 
 if __name__ == '__main__':

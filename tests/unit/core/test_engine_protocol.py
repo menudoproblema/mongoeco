@@ -5,7 +5,9 @@ import sys
 import textwrap
 import unittest
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / 'src'))
+if os.environ.get('MONGOECO_TEST_INSTALLED_ARTIFACT') != '1':
+    source_root = pathlib.Path(__file__).resolve().parents[3] / 'src'
+    sys.path.insert(0, str(source_root))
 
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.memory import MemoryEngine

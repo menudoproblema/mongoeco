@@ -462,12 +462,14 @@ numbers into docs.
 
 ## Project Status
 
-The repository is in active development and the public package surface is still
-best treated as pre-release.
+MongoEco 4.x is a stable package line governed by Semantic Versioning. The
+public API and engine SPI v2 are supported contracts; the legacy engine SPI v1
+remains available but deprecated until its planned removal in 5.0.0.
 
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
+* [docs/release-4.4.0.md](docs/release-4.4.0.md)
 * [docs/release-4.3.0.md](docs/release-4.3.0.md)
 * [TODO.md](TODO.md)
 * [MISSING_FEATURES.md](MISSING_FEATURES.md)

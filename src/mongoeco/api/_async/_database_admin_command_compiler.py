@@ -26,10 +26,9 @@ from mongoeco.api.operations import (
     compile_find_selection_from_update_operation,
     compile_update_operation,
 )
-from mongoeco.types import Document, Filter, IndexModel, Projection
-
 if TYPE_CHECKING:
     from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
+    from mongoeco.types import Document, Filter, IndexModel, Projection
 
 
 class DatabaseAdminCommandCompiler:
@@ -166,6 +165,7 @@ class DatabaseAdminCommandCompiler:
                 batch_size=self.normalize_batch_size(cursor_spec.get(batch_size_field)),
                 allow_disk_use=spec.get(allow_disk_use_field),
                 let=spec.get(let_field),
+                dialect=self._admin._mongodb_dialect,
             ),
         )
 
@@ -176,6 +176,7 @@ class DatabaseAdminCommandCompiler:
         comment: object | None,
         max_time_ms: object | None,
         limit: int | None,
+        command_let: object | None = None,
     ) -> FindOperation:
         return compile_find_selection_from_update_operation(
             compile_update_operation(
@@ -184,7 +185,7 @@ class DatabaseAdminCommandCompiler:
                 hint=self.normalize_hint(update_spec.get("hint")),
                 comment=comment,
                 max_time_ms=self.normalize_max_time_ms(max_time_ms),
-                let=update_spec.get("let"),
+                let=update_spec.get("let", command_let),
                 dialect=self._admin._mongodb_dialect,
             ),
             projection={"_id": 1},
@@ -198,6 +199,7 @@ class DatabaseAdminCommandCompiler:
         comment: object | None,
         max_time_ms: object | None,
         limit: int | None,
+        command_let: object | None = None,
     ) -> FindOperation:
         return compile_find_selection_from_update_operation(
             compile_update_operation(
@@ -206,7 +208,7 @@ class DatabaseAdminCommandCompiler:
                 hint=self.normalize_hint(delete_spec.get("hint")),
                 comment=comment,
                 max_time_ms=self.normalize_max_time_ms(max_time_ms),
-                let=delete_spec.get("let"),
+                let=delete_spec.get("let", command_let),
                 dialect=self._admin._mongodb_dialect,
             ),
             projection={"_id": 1},
@@ -249,11 +251,13 @@ class DatabaseAdminCommandCompiler:
         return compile_find_operation(
             options.query,
             projection=projection,
+            collation=options.collation,
             sort=options.sort,
             limit=limit,
             hint=options.hint,
             comment=options.comment,
             max_time_ms=options.max_time_ms,
+            variables=options.let,
             dialect=self._admin._mongodb_dialect,
         )
 

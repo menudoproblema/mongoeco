@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import time
+
 from copy import deepcopy
-from typing import TYPE_CHECKING, AsyncIterable, Callable
+from typing import TYPE_CHECKING
 
 from mongoeco.api._async.cursor import AsyncCursor, _operation_issue_message
 from mongoeco.api.operations import (
@@ -11,33 +12,34 @@ from mongoeco.api.operations import (
     UpdateOperation,
     compile_find_operation,
 )
-from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.identity import materialize_replacement_document
+from mongoeco.core.operation_context import resolve_operation_session
 from mongoeco.engines.adapter import adapt_engine
-from mongoeco.engines.results import (
-    EngineDeleteResult,
-    EngineUpdateResult,
-    InsertOutcome,
-    MergeOutcome,
-)
-from mongoeco.engines.snapshots import ReadSnapshot
 from mongoeco.errors import OperationFailure, WriteError
 from mongoeco.session import ClientSession, EngineTransactionContext
 from mongoeco.types import (
     CollationDocument,
-    DeleteResult,
     Document,
     DocumentId,
     Filter,
     HintSpec,
     ObjectId,
     SortSpec,
-    UpdateResult,
 )
 
+
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from mongoeco.api._async.collection import AsyncCollection
     from mongoeco.core.query_plan import QueryNode
+    from mongoeco.engines.results import (
+        DeleteOutcome,
+        InsertOutcome,
+        MergeOutcome,
+        MutationOutcome,
+    )
+    from mongoeco.engines.snapshots import ReadSnapshot
 
 
 _CHANGE_STREAM_TRANSACTION_PREFIX = 'change_stream_hub:'
@@ -233,7 +235,6 @@ class CollectionRuntimeCoordinator:
             self._collection._db_name,
             self._collection._collection_name,
             document_id,
-            dialect=self._collection._mongodb_dialect,
             operation_context=operation_context,
         )
 
@@ -375,7 +376,7 @@ class CollectionRuntimeCoordinator:
 
     def _publish_captured_update_event(
         self,
-        captured: EngineUpdateResult,
+        captured: MutationOutcome,
         *,
         matched_operation_type: str,
         session: ClientSession | None,
@@ -401,7 +402,7 @@ class CollectionRuntimeCoordinator:
 
     def _publish_captured_delete_event(
         self,
-        captured: EngineDeleteResult,
+        captured: DeleteOutcome,
         *,
         session: ClientSession | None,
     ) -> None:
@@ -415,6 +416,27 @@ class CollectionRuntimeCoordinator:
         self.publish_change_event(
             operation_type='delete',
             document_key={'_id': deepcopy(document['_id'])},
+            session=session,
+        )
+
+    def _publish_merge_event(
+        self,
+        outcome: MergeOutcome,
+        *,
+        session: ClientSession | None,
+    ) -> None:
+        document = outcome.after_document
+        if (
+            not outcome.applied
+            or outcome.operation_type is None
+            or document is None
+            or '_id' not in document
+        ):
+            return
+        self.publish_change_event(
+            operation_type=outcome.operation_type,
+            document_key={'_id': deepcopy(document['_id'])},
+            full_document=document,
             session=session,
         )
 
@@ -435,7 +457,7 @@ class CollectionRuntimeCoordinator:
         bypass_document_validation: bool = False,
         replacement_document: Document | None = None,
         publish_operation_type: str | None = None,
-    ) -> EngineUpdateResult:
+    ) -> MutationOutcome:
         self.ensure_operation_executable(operation)
         self._prepare_engine_change_delivery(operation.context)
         started_at = time.perf_counter_ns()
@@ -552,6 +574,10 @@ class CollectionRuntimeCoordinator:
             when_matched=when_matched,
             when_not_matched=when_not_matched,
             operation_context=operation_context,
+            on_commit=lambda committed: self._publish_merge_event(
+                committed,
+                session=operation_context.session,
+            ),
         )
         self._dispatch_engine_changes(operation_context)
         return outcome
@@ -592,7 +618,6 @@ class CollectionRuntimeCoordinator:
             self._collection._collection_name,
             document_id,
             projection=projection,
-            dialect=self._collection._mongodb_dialect,
             operation_context=operation_context,
         )
 
@@ -603,7 +628,7 @@ class CollectionRuntimeCoordinator:
         selector_filter: Filter | None = None,
         session: ClientSession | None = None,
         publish_change_event: bool = False,
-    ) -> EngineDeleteResult:
+    ) -> DeleteOutcome:
         self.ensure_operation_executable(operation)
         self._prepare_engine_change_delivery(operation.context)
         started_at = time.perf_counter_ns()
@@ -658,16 +683,17 @@ class CollectionRuntimeCoordinator:
             compile_find_semantics_from_operation,
         )
 
+        resolved_session = resolve_operation_session(
+            operation.context,
+            session,
+        )
         if operation.context is None:
             operation_context = self._collection._new_operation_context(
-                session=session,
+                session=resolved_session,
                 collation=operation.collation,
                 bindings=operation.let,
             )
-            operation = operation.with_overrides(
-                context=operation_context,
-                let=operation_context.expressions,
-            )
+            operation = operation.bind(operation_context)
         semantics = compile_find_semantics_from_operation(
             operation,
             dialect=self._collection._mongodb_dialect,
@@ -730,16 +756,17 @@ class CollectionRuntimeCoordinator:
         execution_variables=None,
     ) -> AsyncCursor:
         operation_context = operation.context
+        resolved_session = resolve_operation_session(
+            operation_context,
+            session,
+        )
         if operation_context is None:
             operation_context = self._collection._new_operation_context(
-                session=session,
+                session=resolved_session,
                 collation=operation.collation,
                 bindings=operation.let,
             )
-            operation = operation.with_overrides(
-                context=operation_context,
-                let=operation_context.expressions,
-            )
+            operation = operation.bind(operation_context)
         if execution_variables is None:
             execution_variables = operation_context.expressions
         return AsyncCursor(
@@ -758,7 +785,7 @@ class CollectionRuntimeCoordinator:
             let=operation.let,
             execution_variables=execution_variables,
             operation_context=operation_context,
-            session=session,
+            session=resolved_session,
             apply_codec_options=apply_codec_options,
         )
 

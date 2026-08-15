@@ -1,12 +1,7 @@
 import asyncio
-import contextvars
 import atexit
-from collections.abc import Mapping
-from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager, nullcontext
+import contextvars
 import datetime
-from dataclasses import dataclass, replace
-from functools import partial
 import hashlib
 import inspect
 import json
@@ -17,18 +12,44 @@ import sqlite3
 import threading
 import time
 import uuid
+
+from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager, nullcontext
 from copy import deepcopy
+from dataclasses import dataclass, replace
 from decimal import Decimal
+from functools import partial
+from pathlib import Path
 from typing import Any, AsyncIterable, Callable, override
 
-from mongoeco.api.operations import FindOperation, UpdateOperation, compile_update_operation
-from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect, MongoDialect70, MongoDialect80
-from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS, bson_engine_key, bson_numeric_index_key
-from mongoeco.core.bson_scalars import utc_bson_now
-from mongoeco.core.collation import normalize_collation, values_equal_with_collation
-from mongoeco.core.expression_context import current_execution_now, ensure_expression_context
-from mongoeco.core.codec import DocumentCodec
+from mongoeco.api.operations import (
+    FindOperation,
+    UpdateOperation,
+    compile_update_operation,
+)
+from mongoeco.compat import (
+    MONGODB_DIALECT_70,
+    MongoDialect,
+    MongoDialect70,
+    MongoDialect80,
+)
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
+from mongoeco.core.bson_ordering import (
+    SQLITE_SORT_BUCKET_WEIGHTS,
+    bson_engine_key,
+    bson_numeric_index_key,
+)
+from mongoeco.core.bson_scalars import utc_bson_now
+from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.collation import (
+    normalize_collation,
+    values_equal_with_collation,
+)
+from mongoeco.core.expression_context import (
+    current_execution_now,
+    ensure_expression_context,
+)
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import (
     assert_document_kept_storage_key,
@@ -38,74 +59,120 @@ from mongoeco.core.identity import (
     document_matches_root_id_lookup,
 )
 from mongoeco.core.json_compat import json_dumps_compact, json_loads
-from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
-from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.operation_context import OperationContext
+from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.operators import CompiledUpdatePlan
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
-    BitwiseCondition,
     ElemMatchCondition,
     EqualsCondition,
-    ExprCondition,
-    GeoIntersectsCondition,
-    GeoWithinCondition,
     GreaterThanCondition,
     GreaterThanOrEqualCondition,
     InCondition,
-    JsonSchemaCondition,
     LessThanCondition,
     LessThanOrEqualCondition,
     MatchAll,
-    ModCondition,
-    NearCondition,
     NotCondition,
     OrCondition,
     QueryNode,
-    RegexCondition,
-    SizeCondition,
-    TypeCondition,
     ensure_query_plan,
 )
 from mongoeco.core.search import (
     SearchQuery,
+    SearchVectorQuery,
     attach_text_score,
     classic_text_score,
-    resolve_classic_text_index,
     resolve_classic_text_index_for_hint,
-    SearchVectorQuery,
 )
 from mongoeco.core.sorting import sort_documents
-from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.engines.capabilities import EngineCapabilities
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
+from mongoeco.engines._change_dispatch import ConsumerDispatchCoordinator
 from mongoeco.engines._runtime_metrics import LocalRuntimeMetrics
-from mongoeco.engines._shared_ttl import coerce_ttl_datetime, document_expired_by_ttl
+from mongoeco.engines._shared_ttl import (
+    coerce_ttl_datetime,
+    document_expired_by_ttl,
+)
 from mongoeco.engines._sqlite_admin_runtime import SQLiteAdminRuntime
 from mongoeco.engines._sqlite_explain_contract import (
     sqlite_planning_issues,
     sqlite_pushdown_details,
     sqlite_pushdown_followup_hints,
 )
-from mongoeco.engines._sqlite_runtime import SQLiteCacheState, SQLiteRuntimeState
-from mongoeco.engines._sqlite_session_runtime import SQLiteSessionRuntime
+from mongoeco.engines._sqlite_fast_paths import (
+    build_scalar_sort_select_sql as _sqlite_build_scalar_sort_select_sql,
+    build_select_sql as _sqlite_build_select_sql,
+)
+from mongoeco.engines._sqlite_index_admin import (
+    build_index_information as _sqlite_build_index_information,
+    create_index as _sqlite_create_index,
+    drop_all_indexes as _sqlite_drop_all_indexes,
+    drop_index as _sqlite_drop_index,
+    list_index_documents as _sqlite_list_index_documents,
+)
+from mongoeco.engines._sqlite_index_runtime import (
+    backfill_scalar_indexes_sync as _sqlite_runtime_backfill_scalar_indexes_sync,
+    ensure_multikey_physical_indexes_sync as _sqlite_runtime_ensure_multikey_physical_indexes_sync,
+    ensure_scalar_physical_indexes_sync as _sqlite_runtime_ensure_scalar_physical_indexes_sync,
+    rebuild_multikey_entries_for_document as _sqlite_runtime_rebuild_multikey_entries_for_document,
+    rebuild_scalar_entries_for_document as _sqlite_runtime_rebuild_scalar_entries_for_document,
+    replace_multikey_entries_for_index_for_document as _sqlite_runtime_replace_multikey_entries_for_index_for_document,
+    replace_scalar_entries_for_index_for_document as _sqlite_runtime_replace_scalar_entries_for_index_for_document,
+)
+from mongoeco.engines._sqlite_modify_ops import (
+    delete_matching_document as _sqlite_delete_matching_document,
+    update_with_operation as _sqlite_update_with_operation,
+)
+from mongoeco.engines._sqlite_namespace_admin import (
+    create_collection as _sqlite_create_collection,
+    drop_collection as _sqlite_drop_collection,
+    rename_collection as _sqlite_rename_collection,
+)
 from mongoeco.engines._sqlite_outbox import (
+    acquire_consumer_lease as _sqlite_acquire_consumer_lease,
     append_change as _sqlite_append_change,
     checkpoint_consumer as _sqlite_checkpoint_consumer,
     compact_change_outbox as _sqlite_compact_change_outbox,
     consumer_checkpoint as _sqlite_consumer_checkpoint,
     ensure_change_outbox_schema,
+    expire_ephemeral_consumers as _sqlite_expire_ephemeral_consumers,
     outbox_info as _sqlite_outbox_info,
     read_committed_changes as _sqlite_read_committed_changes,
     register_consumer as _sqlite_register_consumer,
+    release_consumer_lease as _sqlite_release_consumer_lease,
+    renew_ephemeral_consumers as _sqlite_renew_ephemeral_consumers,
+    renew_consumer_lease as _sqlite_renew_consumer_lease,
     unregister_consumer as _sqlite_unregister_consumer,
 )
-from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
-from mongoeco.engines._sqlite_vector_backend import (
-    SQLiteVectorBackendState,
-    vector_backend_stats_document,
+from mongoeco.engines._sqlite_plan_heuristics import (
+    plan_has_array_traversing_paths as _sqlite_plan_has_array_traversing_paths,
+    plan_requires_python_for_dbref_paths as _sqlite_plan_requires_python_for_dbref_paths,
+    plan_requires_python_for_tagged_type as _sqlite_plan_requires_python_for_tagged_type,
+    sort_requires_python as _sqlite_sort_requires_python,
+)
+from mongoeco.engines._sqlite_read_fast_path_runtime import (
+    build_scalar_indexed_top_level_equals_sql as _sqlite_runtime_build_scalar_indexed_top_level_equals_sql,
+    build_scalar_indexed_top_level_range_sql as _sqlite_runtime_build_scalar_indexed_top_level_range_sql,
+    can_use_scalar_range_fast_path as _sqlite_runtime_can_use_scalar_range_fast_path,
+    find_scalar_fast_path_index as _sqlite_runtime_find_scalar_fast_path_index,
+    select_first_document_for_plan as _sqlite_runtime_select_first_document_for_plan,
+    select_first_document_for_scalar_index as _sqlite_runtime_select_first_document_for_scalar_index,
+    select_first_document_for_scalar_range as _sqlite_runtime_select_first_document_for_scalar_range,
+)
+from mongoeco.engines._sqlite_read_ops import (
+    get_document as _sqlite_get_document,
+    require_sql_execution_plan as _sqlite_require_sql_execution_plan,
+)
+from mongoeco.engines._sqlite_read_runtime import (
+    compile_read_execution_plan as _sqlite_runtime_compile_read_execution_plan,
+    explain_query_plan_sync as _sqlite_runtime_explain_query_plan_sync,
+    plan_find_semantics_sync as _sqlite_runtime_plan_find_semantics_sync,
+)
+from mongoeco.engines._sqlite_runtime import (
+    SQLiteCacheState,
+    SQLiteRuntimeState,
 )
 from mongoeco.engines._sqlite_search_runtime import (
     create_search_index_sync as _sqlite_create_search_index_sync,
@@ -126,86 +193,27 @@ from mongoeco.engines._sqlite_search_runtime import (
     search_index_is_ready_sync as _sqlite_search_index_is_ready_sync,
     update_search_index_sync as _sqlite_update_search_index_sync,
 )
-from mongoeco.engines._sqlite_catalog import (
-    list_collection_names as _sqlite_list_collection_names,
-    list_database_names as _sqlite_list_database_names,
-    load_collection_options as _sqlite_load_collection_options,
-)
-from mongoeco.engines._sqlite_namespace_admin import (
-    collection_options as _sqlite_collection_options,
-    create_collection as _sqlite_create_collection,
-    drop_collection as _sqlite_drop_collection,
-    drop_database as _sqlite_drop_database,
-    list_collections as _sqlite_list_collections,
-    list_databases as _sqlite_list_databases,
-    rename_collection as _sqlite_rename_collection,
-)
-from mongoeco.engines._sqlite_index_admin import (
-    build_index_information as _sqlite_build_index_information,
-    create_index as _sqlite_create_index,
-    drop_all_indexes as _sqlite_drop_all_indexes,
-    drop_index as _sqlite_drop_index,
-    list_index_documents as _sqlite_list_index_documents,
-)
-from mongoeco.engines._sqlite_read_ops import (
-    get_document as _sqlite_get_document,
-    require_sql_execution_plan as _sqlite_require_sql_execution_plan,
-    search_documents as _sqlite_search_documents,
-)
-from mongoeco.engines._sqlite_read_runtime import (
-    compile_read_execution_plan as _sqlite_runtime_compile_read_execution_plan,
-    explain_query_plan_sync as _sqlite_runtime_explain_query_plan_sync,
-    plan_find_semantics_sync as _sqlite_runtime_plan_find_semantics_sync,
-)
-from mongoeco.engines._sqlite_read_fast_path_runtime import (
-    build_scalar_indexed_top_level_equals_sql as _sqlite_runtime_build_scalar_indexed_top_level_equals_sql,
-    build_scalar_indexed_top_level_range_sql as _sqlite_runtime_build_scalar_indexed_top_level_range_sql,
-    can_use_scalar_range_fast_path as _sqlite_runtime_can_use_scalar_range_fast_path,
-    find_scalar_fast_path_index as _sqlite_runtime_find_scalar_fast_path_index,
-    select_first_document_for_plan as _sqlite_runtime_select_first_document_for_plan,
-    select_first_document_for_scalar_index as _sqlite_runtime_select_first_document_for_scalar_index,
-    select_first_document_for_scalar_range as _sqlite_runtime_select_first_document_for_scalar_range,
-)
-from mongoeco.engines._sqlite_index_runtime import (
-    backfill_scalar_indexes_sync as _sqlite_runtime_backfill_scalar_indexes_sync,
-    ensure_multikey_physical_indexes_sync as _sqlite_runtime_ensure_multikey_physical_indexes_sync,
-    ensure_scalar_physical_indexes_sync as _sqlite_runtime_ensure_scalar_physical_indexes_sync,
-    rebuild_multikey_entries_for_document as _sqlite_runtime_rebuild_multikey_entries_for_document,
-    rebuild_scalar_entries_for_document as _sqlite_runtime_rebuild_scalar_entries_for_document,
-    replace_multikey_entries_for_index_for_document as _sqlite_runtime_replace_multikey_entries_for_index_for_document,
-    replace_scalar_entries_for_index_for_document as _sqlite_runtime_replace_scalar_entries_for_index_for_document,
-)
-from mongoeco.engines._sqlite_modify_ops import (
-    delete_matching_document as _sqlite_delete_matching_document,
-    update_with_operation as _sqlite_update_with_operation,
-)
-from mongoeco.engines._sqlite_fast_paths import (
-    build_select_sql as _sqlite_build_select_sql,
-    build_scalar_sort_select_sql as _sqlite_build_scalar_sort_select_sql,
-    build_select_statement_with_custom_order as _sqlite_build_select_statement_with_custom_order,
-    comparison_fields as _sqlite_comparison_fields,
-    plan_fields as _sqlite_plan_fields,
-)
-from mongoeco.engines._sqlite_plan_heuristics import (
-    plan_has_array_traversing_paths as _sqlite_plan_has_array_traversing_paths,
-    plan_requires_python_for_dbref_paths as _sqlite_plan_requires_python_for_dbref_paths,
-    plan_requires_python_for_tagged_type as _sqlite_plan_requires_python_for_tagged_type,
-    sort_requires_python as _sqlite_sort_requires_python,
+from mongoeco.engines._sqlite_session_runtime import SQLiteSessionRuntime
+from mongoeco.engines._sqlite_vector_backend import (
+    SQLiteVectorBackendState,
+    vector_backend_stats_document,
 )
 from mongoeco.engines._sqlite_write_ops import (
     delete_document as _sqlite_delete_document,
     put_document as _sqlite_put_document,
     put_documents_bulk as _sqlite_put_documents_bulk,
 )
+from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
+from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.capabilities import EngineCapabilities
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.results import (
     CommittedChange,
-    EngineDeleteResult,
-    EngineUpdateResult,
+    DeleteOutcome,
     InsertOutcome,
-    MergeDocumentResult,
+    MergeOutcome,
+    MutationOutcome,
 )
-from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
     EngineReadExecutionPlan,
@@ -219,9 +227,25 @@ from mongoeco.engines.semantic_core import (
     iter_filtered_documents,
     stream_finalize_documents,
 )
+from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
 from mongoeco.engines.sqlite_planner import (
     SQLiteReadExecutionPlan,
-    compile_sqlite_read_execution_plan,
+)
+from mongoeco.engines.sqlite_query import (
+    SQLiteQueryTranslator,
+    _normalize_comparable_value,
+    _translate_all_condition,
+    _translate_elem_match_condition,
+    _translate_equals_scalar_only,
+    _translate_same_type_comparison,
+    _translate_scalar_equals,
+    _translate_scalar_or_array_same_type_comparison,
+    json_path_for_field,
+    path_array_prefixes,
+    translate_compiled_update_plan,
+    translate_query_plan,
+    type_expression_sql,
+    value_expression_sql,
 )
 from mongoeco.engines.virtual_indexes import (
     describe_virtual_index_usage,
@@ -229,41 +253,26 @@ from mongoeco.engines.virtual_indexes import (
     normalize_partial_filter_expression,
     query_can_use_index,
 )
-from mongoeco.engines.sqlite_query import (
-    _normalize_comparable_value,
-    _translate_all_condition,
-    _translate_elem_match_condition,
-    _translate_equals_scalar_only,
-    _translate_scalar_or_array_same_type_comparison,
-    _translate_same_type_comparison,
-    _translate_scalar_equals,
-    index_expressions_sql,
-    json_path_for_field,
-    path_array_prefixes,
-    type_expression_sql,
-    value_expression_sql,
-    translate_query_plan,
-    translate_compiled_update_plan,
-    SQLiteQueryTranslator,
+from mongoeco.errors import (
+    DuplicateKeyError,
+    InvalidOperation,
+    OperationFailure,
 )
-from mongoeco.errors import CollectionInvalid, DuplicateKeyError, InvalidOperation, OperationFailure, WriteError
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters,
     CollationDocument,
     DBRef,
     Decimal128,
-    DeleteResult,
     Document,
     DocumentId,
-    ExecutionLineageStep,
     EngineIndexRecord,
+    ExecutionLineageStep,
     Filter,
     IndexDocument,
     IndexInformation,
     IndexKeySpec,
     ObjectId,
-    PhysicalPlanStep,
     ProfilingCommandResult,
     Projection,
     QueryPlanExplanation,
@@ -272,24 +281,69 @@ from mongoeco.types import (
     SortSpec,
     Update,
     UpdateResult,
-    default_id_index_definition,
-    default_id_index_document,
-    default_id_index_information,
-    default_index_name,
-    index_fields,
     is_ordered_index_spec,
     normalize_index_keys,
-    special_index_directions,
 )
+
 
 _SQLITE_SHARED_EXECUTOR_LOCK = threading.Lock()
 _SQLITE_SHARED_EXECUTORS: dict[int, ThreadPoolExecutor] = {}
+_SQLITE_CHANGE_DISPATCH = ConsumerDispatchCoordinator()
 _ASYNC_SCAN_QUEUE_BATCH_SIZE = 64
+_CHANGE_DISPATCH_LEASE_TTL_SECONDS = 30.0
+_CHANGE_DISPATCH_HEARTBEAT_SECONDS = 10.0
+_CHANGE_DISPATCH_RETRY_SECONDS = 0.01
+_EPHEMERAL_CHANGE_CONSUMER_TTL_SECONDS = 3_600.0
+_EPHEMERAL_CHANGE_CONSUMER_HEARTBEAT_SECONDS = 60.0
+_EPHEMERAL_CHANGE_CONSUMER_STOP_TIMEOUT_SECONDS = 6.0
 
 
 @dataclass(frozen=True, slots=True)
 class _ScanProducerError:
     error: BaseException
+
+
+class _ChangeDispatchHeartbeat:
+    """Supervised state shared with the lease heartbeat thread."""
+
+    def __init__(self) -> None:
+        self.stop = threading.Event()
+        self.lost = threading.Event()
+        self._lock = threading.Lock()
+        self._error: BaseException | None = None
+
+    def fail(self, error: BaseException) -> None:
+        with self._lock:
+            if self._error is None:
+                self._error = error
+        self.lost.set()
+
+    def raise_if_failed(self) -> None:
+        with self._lock:
+            error = self._error
+        if error is not None:
+            raise error
+        if self.lost.is_set():
+            message = 'change consumer dispatch lease was lost'
+            raise OperationFailure(message)
+
+
+class _EphemeralRegistrationHeartbeat:
+    """Lifecycle state for the engine-owned registration heartbeat."""
+
+    def __init__(self) -> None:
+        self.stop = threading.Event()
+        self._lock = threading.Lock()
+        self._error: BaseException | None = None
+
+    def fail(self, error: BaseException) -> None:
+        with self._lock:
+            if self._error is None:
+                self._error = error
+
+    def error(self) -> BaseException | None:
+        with self._lock:
+            return self._error
 
 
 def _shutdown_sqlite_shared_executors() -> None:
@@ -348,6 +402,19 @@ class SQLiteEngine(AsyncStorageEngine):
         self._session_runtime = SQLiteSessionRuntime(self)
         self._change_outbox_checkpoints: dict[str, int] = {}
         self._registered_change_consumers: dict[str, bool] = {}
+        self._change_delivery_connection: sqlite3.Connection | None = None
+        self._change_delivery_lock = threading.RLock()
+        self._change_dispatch_owner = uuid.uuid4().hex
+        self._registration_heartbeat_guard = threading.Lock()
+        self._registration_heartbeat_state: (
+            _EphemeralRegistrationHeartbeat | None
+        ) = None
+        self._registration_heartbeat_thread: threading.Thread | None = None
+        self._change_dispatch_scope = (
+            self._change_dispatch_owner
+            if path == ':memory:'
+            else str(Path(path).expanduser().resolve())
+        )
         self._change_outbox_max_entries = change_outbox_max_entries
         self._mvcc_version = 0
         self.aggregation_cost_policy = (
@@ -496,17 +563,38 @@ class SQLiteEngine(AsyncStorageEngine):
         declared_vector_index_count = 0
         pending_vector_index_count = 0
         connection = self._connection
+        change_delivery_connection = self._change_delivery_connection
         change_delivery_info: dict[str, object] = {
             'maxEntries': self._change_outbox_max_entries,
             'pendingEntries': 0,
             'consumerCount': 0,
             'prunedThrough': 0,
+            'registrationHeartbeatActive': False,
+            'registrationHeartbeatHealthy': True,
         }
-        if connection is not None:
+        with self._registration_heartbeat_guard:
+            heartbeat_thread = self._registration_heartbeat_thread
+            heartbeat_state = self._registration_heartbeat_state
+            change_delivery_info['registrationHeartbeatActive'] = bool(
+                heartbeat_thread is not None
+                and heartbeat_thread.is_alive(),
+            )
+            change_delivery_info['registrationHeartbeatHealthy'] = bool(
+                heartbeat_state is None
+                or heartbeat_state.error() is None,
+            )
+        if change_delivery_connection is not None or connection is not None:
             try:
-                with self._lock:
+                change_lock = (
+                    self._change_delivery_lock
+                    if change_delivery_connection is not None
+                    else self._lock
+                )
+                with change_lock:
                     change_delivery_info.update(
-                        _sqlite_outbox_info(connection)
+                        _sqlite_outbox_info(
+                            change_delivery_connection or connection,
+                        ),
                     )
             except sqlite3.OperationalError:
                 pass
@@ -3274,7 +3362,7 @@ class SQLiteEngine(AsyncStorageEngine):
     def _backfill_scalar_indexes_sync(self, conn: sqlite3.Connection) -> None:
         _sqlite_runtime_backfill_scalar_indexes_sync(self, conn)
 
-    def _connect_sync(self) -> None:
+    def _connect_sync(self) -> None:  # noqa: PLR0912, PLR0915
         with self._lock:
             if self._connection_count == 0:
                 connection = self._create_sqlite_connection()
@@ -3365,6 +3453,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     """
                 )
                 ensure_change_outbox_schema(connection)
+                _sqlite_expire_ephemeral_consumers(connection)
                 collection_columns = {
                     row[1]
                     for row in connection.execute("PRAGMA table_info(collections)").fetchall()
@@ -3592,6 +3681,26 @@ class SQLiteEngine(AsyncStorageEngine):
                 with self._bind_connection(connection):
                     self._backfill_scalar_indexes_sync(connection)
                 connection.commit()
+                if self._path != ':memory:':
+                    change_delivery_connection = (
+                        self._create_sqlite_connection()
+                    )
+                    try:
+                        ensure_change_outbox_schema(
+                            change_delivery_connection,
+                        )
+                        _sqlite_expire_ephemeral_consumers(
+                            change_delivery_connection,
+                        )
+                        change_delivery_connection.commit()
+                    except BaseException:
+                        change_delivery_connection.close()
+                        connection.close()
+                        self._connection = None
+                        raise
+                    self._change_delivery_connection = (
+                        change_delivery_connection
+                    )
                 self._ensured_multikey_physical_indexes.clear()
                 self._ensured_search_backends.clear()
                 self._vector_search_backends.clear()
@@ -3611,6 +3720,35 @@ class SQLiteEngine(AsyncStorageEngine):
             connection.execute("PRAGMA synchronous=NORMAL")
         return connection
 
+    @contextmanager
+    def _change_delivery_storage(
+        self,
+        *,
+        allow_transactional_registration: bool = False,
+    ):
+        dedicated = self._change_delivery_connection
+        lock = (
+            self._change_delivery_lock
+            if dedicated is not None
+            else self._lock
+        )
+        with lock:
+            conn = dedicated or self._connection
+            if conn is None:
+                message = 'SQLiteEngine must be connected for change delivery'
+                raise RuntimeError(message)
+            if (
+                dedicated is None
+                and conn.in_transaction
+                and not allow_transactional_registration
+            ):
+                message = (
+                    'change delivery control plane cannot share an active '
+                    'SQLite data transaction'
+                )
+                raise InvalidOperation(message)
+            yield conn
+
     def register_change_consumer(
         self,
         consumer_id: str,
@@ -3618,48 +3756,262 @@ class SQLiteEngine(AsyncStorageEngine):
         initial_checkpoint: int | None = None,
         durable: bool = False,
     ) -> int:
-        with self._lock:
-            conn = self._connection
-            if conn is None:
-                raise RuntimeError('SQLiteEngine must be connected before registering a change consumer')
+        if not durable:
+            self._ensure_ephemeral_registration_heartbeat()
+        with self._change_delivery_storage(
+            allow_transactional_registration=True,
+        ) as conn:
             was_in_transaction = conn.in_transaction
             checkpoint = _sqlite_register_consumer(
                 conn,
                 consumer_id,
                 initial_checkpoint=initial_checkpoint,
                 durable=durable,
+                owner_instance=(
+                    None if durable else self._change_dispatch_owner
+                ),
+                ephemeral_ttl_seconds=(
+                    None
+                    if durable
+                    else _EPHEMERAL_CHANGE_CONSUMER_TTL_SECONDS
+                ),
             )
             if not was_in_transaction:
                 conn.commit()
+        with self._lock:
             self._change_outbox_checkpoints[consumer_id] = checkpoint
             self._registered_change_consumers[consumer_id] = durable
-            return checkpoint
+        return checkpoint
+
+    def _ensure_ephemeral_registration_heartbeat(self) -> None:
+        if self._path == ':memory:':
+            return
+        with self._registration_heartbeat_guard:
+            thread = self._registration_heartbeat_thread
+            state = self._registration_heartbeat_state
+            if thread is not None and thread.is_alive():
+                if state is not None and state.error() is not None:
+                    raise state.error()
+                return
+            if state is not None and state.error() is not None:
+                raise state.error()
+            state = _EphemeralRegistrationHeartbeat()
+            thread = threading.Thread(
+                target=self._maintain_ephemeral_registrations,
+                args=(state,),
+                daemon=True,
+                name='mongoeco-outbox-registration',
+            )
+            self._registration_heartbeat_state = state
+            self._registration_heartbeat_thread = thread
+            thread.start()
+
+    def _maintain_ephemeral_registrations(
+        self,
+        state: _EphemeralRegistrationHeartbeat,
+    ) -> None:
+        connection: sqlite3.Connection | None = None
+        try:
+            connection = self._create_sqlite_connection()
+            while not state.stop.wait(
+                _EPHEMERAL_CHANGE_CONSUMER_HEARTBEAT_SECONDS,
+            ):
+                _sqlite_renew_ephemeral_consumers(
+                    connection,
+                    owner_instance=self._change_dispatch_owner,
+                    now_epoch=time.time(),
+                    ttl_seconds=_EPHEMERAL_CHANGE_CONSUMER_TTL_SECONDS,
+                )
+                connection.commit()
+        except BaseException as exc:
+            state.fail(exc)
+        finally:
+            if connection is not None:
+                connection.close()
+
+    def _stop_ephemeral_registration_heartbeat(
+        self,
+    ) -> BaseException | None:
+        with self._registration_heartbeat_guard:
+            state = self._registration_heartbeat_state
+            thread = self._registration_heartbeat_thread
+            if state is None or thread is None:
+                return None
+            state.stop.set()
+        thread.join(
+            timeout=_EPHEMERAL_CHANGE_CONSUMER_STOP_TIMEOUT_SECONDS,
+        )
+        if thread.is_alive():
+            error: BaseException | None = OperationFailure(
+                'ephemeral registration heartbeat did not terminate',
+            )
+        else:
+            error = state.error()
+        with self._registration_heartbeat_guard:
+            if self._registration_heartbeat_thread is thread:
+                self._registration_heartbeat_thread = None
+                self._registration_heartbeat_state = None
+        return error
 
     def dispatch_committed_changes(
         self,
         consumer_id: str,
         consumer: Callable[[CommittedChange], None],
     ) -> None:
-        with self._lock:
-            conn = self._connection
-            if conn is None:
-                raise RuntimeError('SQLiteEngine must be connected before dispatching changes')
-            checkpoint = _sqlite_consumer_checkpoint(conn, consumer_id)
-            changes = _sqlite_read_committed_changes(
-                conn,
-                after_sequence=checkpoint,
-                deserialize_document=self._deserialize_document,
+        dispatch_key = f'{self._change_dispatch_scope}\0{consumer_id}'
+        with _SQLITE_CHANGE_DISPATCH.hold(dispatch_key):
+            generation = self._acquire_change_dispatch_lease(consumer_id)
+            heartbeat_state = _ChangeDispatchHeartbeat()
+            heartbeat = threading.Thread(
+                target=self._maintain_change_dispatch_lease,
+                args=(
+                    consumer_id,
+                    generation,
+                    heartbeat_state,
+                ),
+                daemon=True,
+                name=f'mongoeco-outbox-{consumer_id}',
             )
-            for change in changes:
-                consumer(change)
-                _sqlite_checkpoint_consumer(
+            heartbeat.start()
+            dispatch_error: BaseException | None = None
+            try:
+                self._dispatch_committed_changes_serial(
+                    consumer_id,
+                    consumer,
+                    generation=generation,
+                    heartbeat=heartbeat_state,
+                )
+            except BaseException as exc:
+                dispatch_error = exc
+            finally:
+                heartbeat_state.stop.set()
+                heartbeat.join(timeout=_CHANGE_DISPATCH_HEARTBEAT_SECONDS + 1)
+                if heartbeat.is_alive():
+                    heartbeat_state.fail(
+                        OperationFailure(
+                            'change dispatch heartbeat did not terminate',
+                        ),
+                    )
+                else:
+                    try:
+                        self._release_change_dispatch_lease(
+                            consumer_id,
+                            generation,
+                        )
+                    except BaseException as exc:
+                        if dispatch_error is None:
+                            dispatch_error = exc
+            if dispatch_error is not None:
+                raise dispatch_error
+            heartbeat_state.raise_if_failed()
+
+    def _acquire_change_dispatch_lease(
+        self,
+        consumer_id: str,
+    ) -> int:
+        while True:
+            with self._change_delivery_storage() as conn:
+                generation = _sqlite_acquire_consumer_lease(
                     conn,
                     consumer_id,
-                    change.sequence,
+                    owner=self._change_dispatch_owner,
+                    now_epoch=time.time(),
+                    ttl_seconds=_CHANGE_DISPATCH_LEASE_TTL_SECONDS,
                 )
                 conn.commit()
-                self._change_outbox_checkpoints[consumer_id] = change.sequence
+                if generation is not None:
+                    return generation
+                # Distinguish lease contention from a retired consumer.
+                _sqlite_consumer_checkpoint(conn, consumer_id)
+            time.sleep(_CHANGE_DISPATCH_RETRY_SECONDS)
 
+    def _maintain_change_dispatch_lease(
+        self,
+        consumer_id: str,
+        generation: int,
+        heartbeat: _ChangeDispatchHeartbeat,
+    ) -> None:
+        try:
+            while not heartbeat.stop.wait(
+                _CHANGE_DISPATCH_HEARTBEAT_SECONDS,
+            ):
+                with self._change_delivery_storage() as conn:
+                    renewed = _sqlite_renew_consumer_lease(
+                        conn,
+                        consumer_id,
+                        (self._change_dispatch_owner, generation),
+                        now_epoch=time.time(),
+                        ttl_seconds=_CHANGE_DISPATCH_LEASE_TTL_SECONDS,
+                    )
+                    conn.commit()
+                if not renewed:
+                    message = 'change consumer dispatch lease was lost'
+                    heartbeat.fail(OperationFailure(message))
+                    return
+        except BaseException as exc:
+            heartbeat.fail(exc)
+
+    def _release_change_dispatch_lease(
+        self,
+        consumer_id: str,
+        generation: int,
+    ) -> None:
+        try:
+            with self._change_delivery_storage() as conn:
+                _sqlite_release_consumer_lease(
+                    conn,
+                    consumer_id,
+                    owner=self._change_dispatch_owner,
+                    generation=generation,
+                )
+                conn.commit()
+        except RuntimeError:
+            return
+
+    def _dispatch_committed_changes_serial(
+        self,
+        consumer_id: str,
+        consumer: Callable[[CommittedChange], None],
+        *,
+        generation: int,
+        heartbeat: _ChangeDispatchHeartbeat,
+    ) -> None:
+        with self._change_delivery_storage() as conn:
+            checkpoint = _sqlite_consumer_checkpoint(conn, consumer_id)
+            through_sequence = _sqlite_outbox_info(conn)['newestSequence']
+
+        while checkpoint < through_sequence:
+            with self._change_delivery_storage() as conn:
+                checkpoint = _sqlite_consumer_checkpoint(conn, consumer_id)
+                changes = _sqlite_read_committed_changes(
+                    conn,
+                    after_sequence=checkpoint,
+                    through_sequence=through_sequence,
+                    deserialize_document=self._deserialize_document,
+                )
+            if not changes:
+                break
+            for change in changes:
+                heartbeat.raise_if_failed()
+                consumer(change)
+                heartbeat.raise_if_failed()
+                with self._change_delivery_storage() as conn:
+                    _sqlite_checkpoint_consumer(
+                        conn,
+                        consumer_id,
+                        change.sequence,
+                        lease_owner=self._change_dispatch_owner,
+                        lease_generation=generation,
+                    )
+                    conn.commit()
+                with self._lock:
+                    self._change_outbox_checkpoints[
+                        consumer_id
+                    ] = change.sequence
+                    checkpoint = change.sequence
+
+        heartbeat.raise_if_failed()
+        with self._change_delivery_storage() as conn:
             _sqlite_compact_change_outbox(
                 conn,
                 max_entries=self._change_outbox_max_entries,
@@ -3672,9 +4024,8 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         retire_durable: bool = False,
     ) -> None:
-        with self._lock:
-            conn = self._connection
-            if conn is not None:
+        try:
+            with self._change_delivery_storage() as conn:
                 _sqlite_unregister_consumer(
                     conn,
                     consumer_id,
@@ -3685,8 +4036,13 @@ class SQLiteEngine(AsyncStorageEngine):
                     max_entries=self._change_outbox_max_entries,
                 )
                 conn.commit()
+        except RuntimeError:
+            pass
+        with self._lock:
             self._change_outbox_checkpoints.pop(consumer_id, None)
             self._registered_change_consumers.pop(consumer_id, None)
+        dispatch_key = f'{self._change_dispatch_scope}\0{consumer_id}'
+        _SQLITE_CHANGE_DISPATCH.retire(dispatch_key)
 
     def _can_use_dedicated_reader(self, context: ClientSession | None) -> bool:
         self._ensure_session_can_use_engine(context)
@@ -3750,34 +4106,48 @@ class SQLiteEngine(AsyncStorageEngine):
 
     def _disconnect_sync(self) -> None:
         connection: sqlite3.Connection | None = None
+        change_delivery_connection: sqlite3.Connection | None = None
+        heartbeat_error: BaseException | None = None
         with self._lock:
             if self._connection_count == 0:
                 return
             self._connection_count -= 1
             if self._connection_count != 0:
                 return
+            heartbeat_error = (
+                self._stop_ephemeral_registration_heartbeat()
+            )
             with self._scan_condition:
                 while self._active_scan_count > 0:
                     self._scan_condition.wait()
             connection = self._connection
-            if connection is not None:
-                for consumer_id, durable in tuple(
-                    self._registered_change_consumers.items()
-                ):
-                    if not durable:
-                        _sqlite_unregister_consumer(
-                            connection,
-                            consumer_id,
-                            include_durable=False,
-                        )
-                _sqlite_compact_change_outbox(
-                    connection,
-                    max_entries=self._change_outbox_max_entries,
+            change_delivery_connection = self._change_delivery_connection
+            control_connection = change_delivery_connection or connection
+            if control_connection is not None:
+                control_lock = (
+                    self._change_delivery_lock
+                    if change_delivery_connection is not None
+                    else nullcontext()
                 )
-                connection.commit()
+                with control_lock:
+                    for consumer_id, durable in tuple(
+                        self._registered_change_consumers.items()
+                    ):
+                        if not durable:
+                            _sqlite_unregister_consumer(
+                                control_connection,
+                                consumer_id,
+                                include_durable=False,
+                            )
+                    _sqlite_compact_change_outbox(
+                        control_connection,
+                        max_entries=self._change_outbox_max_entries,
+                    )
+                    control_connection.commit()
             self._registered_change_consumers.clear()
             self._change_outbox_checkpoints.clear()
             self._connection = None
+            self._change_delivery_connection = None
             self._transaction_owner_session_id = None
             self._invalidate_index_cache()
             self._invalidate_collection_id_cache()
@@ -3790,6 +4160,10 @@ class SQLiteEngine(AsyncStorageEngine):
             self._fts5_available = None
         if connection is not None:
             connection.close()
+        if change_delivery_connection is not None:
+            change_delivery_connection.close()
+        if heartbeat_error is not None:
+            raise heartbeat_error
 
     def _profile_documents(self, db_name: str) -> list[Document]:
         profile_documents = getattr(self._admin_runtime, "profile_namespace_documents", None)
@@ -3808,6 +4182,11 @@ class SQLiteEngine(AsyncStorageEngine):
         bypass_document_validation: bool = False,
         operation_context: OperationContext | None = None,
     ) -> InsertOutcome:
+        effective_dialect = (
+            operation_context.dialect
+            if operation_context is not None
+            else MONGODB_DIALECT_70
+        )
         if "_id" in document:
             assert_valid_root_document_id(document["_id"])
         storage_key = self._storage_key(document.get("_id"))
@@ -3829,6 +4208,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         document=document,
                         overwrite=overwrite,
                         bypass_document_validation=bypass_document_validation,
+                        dialect=effective_dialect,
                         storage_key=storage_key,
                         serialized_document=serialized_document,
                         purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
@@ -3881,7 +4261,6 @@ class SQLiteEngine(AsyncStorageEngine):
                         commit_sequence = _sqlite_append_change(
                             conn,
                             context=operation_context,
-                            event_index=0,
                             operation_type='insert',
                             db_name=db_name,
                             coll_name=coll_name,
@@ -3896,7 +4275,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     commit_sequence=commit_sequence,
                 )
 
-    def _merge_document_sync(
+    def _merge_document_sync(  # noqa: PLR0912, PLR0913, PLR0915
         self,
         db_name: str,
         coll_name: str,
@@ -3905,13 +4284,18 @@ class SQLiteEngine(AsyncStorageEngine):
         when_matched: str,
         when_not_matched: str,
         context: ClientSession | None,
-        on_commit: Callable[[MergeDocumentResult], None] | None = None,
+        on_commit: Callable[[MergeOutcome], None] | None = None,
         operation_context: OperationContext | None = None,
-    ) -> MergeDocumentResult:
+    ) -> MergeOutcome:
         if "_id" not in document:
             raise ValueError("merge_document requires an _id")
         assert_valid_root_document_id(document["_id"])
         storage_key = self._storage_key(document["_id"])
+        effective_dialect = (
+            operation_context.dialect
+            if operation_context is not None
+            else MONGODB_DIALECT_70
+        )
 
         with self._lock:
             conn = self._require_connection(context)
@@ -3949,7 +4333,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             if document_matches_root_id_lookup(
                                 DocumentCodec.to_public(candidate_document),
                                 document["_id"],
-                                dialect=MONGODB_DIALECT_70,
+                                dialect=effective_dialect,
                             ):
                                 assert_document_matches_storage_key(
                                     candidate_document,
@@ -3966,7 +4350,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             storage_key_for_id=self._storage_key,
                         )
                         if when_matched in {"keepExisting", "fail"}:
-                            return MergeDocumentResult(
+                            return MergeOutcome(
                                 matched=True,
                                 applied=False,
                                 before_document=deepcopy(original_document),
@@ -3984,11 +4368,11 @@ class SQLiteEngine(AsyncStorageEngine):
                             storage_key,
                             storage_key_for_id=self._storage_key,
                         )
-                        if MONGODB_DIALECT_70.values_equal(
+                        if effective_dialect.values_equal(
                             next_document,
                             original_document,
                         ):
-                            return MergeDocumentResult(
+                            return MergeOutcome(
                                 matched=True,
                                 applied=False,
                                 operation_type=operation_type,
@@ -3997,7 +4381,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             )
                     else:
                         if when_not_matched != "insert":
-                            return MergeDocumentResult(
+                            return MergeOutcome(
                                 matched=False,
                                 applied=False,
                             )
@@ -4013,7 +4397,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         next_document,
                         options=collection_options,
                         original_document=original_document,
-                        dialect=MONGODB_DIALECT_70,
+                        dialect=effective_dialect,
                     )
                     self._ensure_collection_row(
                         conn,
@@ -4076,7 +4460,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         )
                     self._invalidate_collection_features_cache(db_name, coll_name)
 
-                    outcome = MergeDocumentResult(
+                    outcome = MergeOutcome(
                         matched=original_document is not None,
                         applied=True,
                         operation_type=operation_type,
@@ -4086,7 +4470,6 @@ class SQLiteEngine(AsyncStorageEngine):
                     commit_sequence = _sqlite_append_change(
                         conn,
                         context=operation_context,
-                        event_index=0,
                         operation_type=operation_type,
                         db_name=db_name,
                         coll_name=coll_name,
@@ -4126,6 +4509,11 @@ class SQLiteEngine(AsyncStorageEngine):
         snapshot_options: dict[str, object] | None = None,
         operation_context: OperationContext | None = None,
     ) -> tuple[InsertOutcome, ...]:
+        effective_dialect = (
+            operation_context.dialect
+            if operation_context is not None
+            else MONGODB_DIALECT_70
+        )
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -4143,6 +4531,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     prepared_documents=prepared_documents,
                     snapshot_indexes=snapshot_indexes,
                     bypass_document_validation=bypass_document_validation,
+                    dialect=effective_dialect,
                     snapshot_options=snapshot_options,
                     purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
                         current,
@@ -4661,9 +5050,9 @@ class SQLiteEngine(AsyncStorageEngine):
         selector_filter: Filter | None = None,
         sort: SortSpec | None = None,
         hint: str | IndexKeySpec | None = None,
-        on_commit: Callable[[EngineDeleteResult], None] | None = None,
+        on_commit: Callable[[DeleteOutcome], None] | None = None,
         operation_context: OperationContext | None = None,
-    ) -> EngineDeleteResult:
+    ) -> DeleteOutcome:
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -4673,7 +5062,21 @@ class SQLiteEngine(AsyncStorageEngine):
                     commit_write=lambda current: self._commit_write(current, context),
                     rollback_write=lambda current: self._rollback_write(current, context),
                 ):
-                    effective_dialect = dialect or MONGODB_DIALECT_70
+                    effective_dialect = (
+                        operation_context.dialect
+                        if operation_context is not None
+                        else (dialect or MONGODB_DIALECT_70)
+                    )
+                    effective_collation = (
+                        operation_context.collation
+                        if operation_context is not None
+                        else collation
+                    )
+                    effective_variables = (
+                        operation_context.expressions
+                        if operation_context is not None
+                        else variables
+                    )
                     query_plan = ensure_query_plan(
                         filter_spec,
                         plan,
@@ -4685,7 +5088,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         hint,
                         plan=query_plan,
                         dialect=effective_dialect,
-                        collation=normalize_collation(collation),
+                        collation=normalize_collation(effective_collation),
                     )
                     result = _sqlite_delete_matching_document(
                         db_name=db_name,
@@ -4693,14 +5096,14 @@ class SQLiteEngine(AsyncStorageEngine):
                         filter_spec=filter_spec,
                         selector_filter=selector_filter,
                         plan=plan,
-                        dialect=dialect or MONGODB_DIALECT_70,
-                        collation=collation,
-                        variables=variables,
+                        dialect=effective_dialect,
+                        collation=effective_collation,
+                        variables=effective_variables,
                         compile_find_semantics=compile_find_semantics,
                         ensure_query_plan=lambda current_filter, current_plan: ensure_query_plan(
                             current_filter,
                             current_plan,
-                            dialect=dialect or MONGODB_DIALECT_70,
+                            dialect=effective_dialect,
                         ),
                         require_connection=lambda: conn,
                         purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
@@ -4708,7 +5111,9 @@ class SQLiteEngine(AsyncStorageEngine):
                             current_db_name,
                             current_coll_name,
                             context=context,
-                            now=ensure_expression_context(variables).now.replace(
+                            now=ensure_expression_context(
+                                effective_variables,
+                            ).now.replace(
                                 tzinfo=datetime.timezone.utc
                             ),
                         ),
@@ -4734,18 +5139,30 @@ class SQLiteEngine(AsyncStorageEngine):
                     if (
                         result.result.deleted_count > 0
                         and result.deleted_document is not None
-                        and '_id' in result.deleted_document
                     ):
+                        change_context = operation_context
+                        if (
+                            change_context is not None
+                            and '_id' not in result.deleted_document
+                        ):
+                            change_context = (
+                                change_context.for_unpublishable_change()
+                            )
                         commit_sequence = _sqlite_append_change(
                             conn,
-                            context=operation_context,
-                            event_index=0,
+                            context=change_context,
                             operation_type='delete',
                             db_name=db_name,
                             coll_name=coll_name,
-                            document_key={
-                                '_id': deepcopy(result.deleted_document['_id'])
-                            },
+                            document_key=(
+                                {
+                                    '_id': deepcopy(
+                                        result.deleted_document['_id'],
+                                    ),
+                                }
+                                if '_id' in result.deleted_document
+                                else {}
+                            ),
                             full_document=None,
                             serialize_document=self._serialize_document,
                             max_entries=self._change_outbox_max_entries,
@@ -5336,9 +5753,9 @@ class SQLiteEngine(AsyncStorageEngine):
         when_matched: str,
         when_not_matched: str,
         context: ClientSession | None = None,
-        on_commit: Callable[[MergeDocumentResult], None] | None = None,
+        on_commit: Callable[[MergeOutcome], None] | None = None,
         operation_context: OperationContext | None = None,
-    ) -> MergeDocumentResult:
+    ) -> MergeOutcome:
         if operation_context is not None:
             context = operation_context.session
         self._ensure_session_can_use_engine(context)
@@ -5389,6 +5806,11 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> tuple[InsertOutcome, ...]:
         snapshot_options: dict[str, object] | None = None
         snapshot_indexes: list[EngineIndexRecord] = []
+        effective_dialect = (
+            operation_context.dialect
+            if operation_context is not None
+            else MONGODB_DIALECT_70
+        )
         loop = asyncio.get_running_loop()
         if not bypass_document_validation or documents:
             snapshot_options, snapshot_indexes = await self._run_blocking(
@@ -5407,7 +5829,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         document,
                         options=snapshot_options,
                         original_document=None,
-                        dialect=MONGODB_DIALECT_70,
+                        dialect=effective_dialect,
                     ),
                 )
                 for document in documents
@@ -5590,9 +6012,9 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
         replacement_document: Document | None = None,
-        on_commit: Callable[[EngineUpdateResult], None] | None = None,
+        on_commit: Callable[[MutationOutcome], None] | None = None,
         operation_context: OperationContext | None = None,
-    ) -> EngineUpdateResult:
+    ) -> MutationOutcome:
         if operation_context is not None:
             context = operation_context.session
         if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
@@ -5625,9 +6047,11 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         bypass_document_validation: bool = False,
         replacement_document: Document | None = None,
-        on_commit: Callable[[EngineUpdateResult], None] | None = None,
+        on_commit: Callable[[MutationOutcome], None] | None = None,
         operation_context: OperationContext | None = None,
-    ) -> EngineUpdateResult:
+    ) -> MutationOutcome:
+        if operation_context is not None:
+            operation = operation.bind(operation_context)
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -5666,7 +6090,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         current_db_name,
                         current_coll_name,
                         context=context,
-                        now=ensure_expression_context(operation.let).now.replace(
+                        now=semantics.variables.now.replace(
                             tzinfo=datetime.timezone.utc
                         ),
                     ),
@@ -5721,16 +6145,22 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
                     if (
                         result.after_document is not None
-                        and '_id' in result.after_document
                         and (
                             result.result.upserted_id is not None
                             or result.result.modified_count > 0
                         )
                     ):
+                        change_context = operation_context
+                        if (
+                            change_context is not None
+                            and '_id' not in result.after_document
+                        ):
+                            change_context = (
+                                change_context.for_unpublishable_change()
+                            )
                         commit_sequence = _sqlite_append_change(
                             conn,
-                            context=operation_context,
-                            event_index=0,
+                            context=change_context,
                             operation_type=(
                                 'insert'
                                 if result.result.upserted_id is not None
@@ -5741,9 +6171,15 @@ class SQLiteEngine(AsyncStorageEngine):
                             ),
                             db_name=db_name,
                             coll_name=coll_name,
-                            document_key={
-                                '_id': deepcopy(result.after_document['_id'])
-                            },
+                            document_key=(
+                                {
+                                    '_id': deepcopy(
+                                        result.after_document['_id'],
+                                    ),
+                                }
+                                if '_id' in result.after_document
+                                else {}
+                            ),
                             full_document=deepcopy(result.after_document),
                             serialize_document=self._serialize_document,
                             max_entries=self._change_outbox_max_entries,
@@ -5765,9 +6201,9 @@ class SQLiteEngine(AsyncStorageEngine):
         selector_filter: Filter | None = None,
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
-        on_commit: Callable[[EngineDeleteResult], None] | None = None,
+        on_commit: Callable[[DeleteOutcome], None] | None = None,
         operation_context: OperationContext | None = None,
-    ) -> EngineDeleteResult:
+    ) -> DeleteOutcome:
         if operation_context is not None:
             context = operation_context.session
         return await self._run_blocking(

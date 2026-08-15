@@ -55,10 +55,49 @@ class FindOperation:
     let: Mapping[str, object] | None = None
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
+    dialect: MongoDialect = MONGODB_DIALECT_70
     context: OperationContext | None = None
+
+    def __post_init__(self) -> None:
+        _validate_bound_context(
+            self.context,
+            self.dialect,
+            self.collation,
+            self.let,
+        )
 
     def with_overrides(self, **changes: object) -> "FindOperation":
         return replace(self, **changes)
+
+    def bind(self, context: OperationContext) -> "FindOperation":
+        if self.context is context:
+            return self
+        if self.context is not None:
+            message = 'find operation is already bound to another context'
+            raise RuntimeError(message)
+        if not _context_changes_compilation(
+            context,
+            self.dialect,
+            self.collation,
+            self.let,
+        ):
+            return replace(self, context=context, let=context.expressions)
+        compiled = compile_find_operation(
+            self.filter_spec,
+            projection=self.projection,
+            collation=context.collation,
+            sort=self.sort,
+            skip=self.skip,
+            limit=self.limit,
+            hint=self.hint,
+            comment=self.comment,
+            max_time_ms=self.max_time_ms,
+            batch_size=self.batch_size,
+            dialect=context.dialect,
+            variables=context.expressions,
+            planning_mode=self.planning_mode,
+        )
+        return replace(compiled, context=context)
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,10 +116,47 @@ class UpdateOperation:
     let: Mapping[str, object] | None = None
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
+    dialect: MongoDialect = MONGODB_DIALECT_70
     context: OperationContext | None = None
+
+    def __post_init__(self) -> None:
+        _validate_bound_context(
+            self.context,
+            self.dialect,
+            self.collation,
+            self.let,
+        )
 
     def with_overrides(self, **changes: object) -> "UpdateOperation":
         return replace(self, **changes)
+
+    def bind(self, context: OperationContext) -> "UpdateOperation":
+        if self.context is context:
+            return self
+        if self.context is not None:
+            message = 'update operation is already bound to another context'
+            raise RuntimeError(message)
+        if not _context_changes_compilation(
+            context,
+            self.dialect,
+            self.collation,
+            self.let,
+        ):
+            return replace(self, context=context, let=context.expressions)
+        compiled = compile_update_operation(
+            self.filter_spec,
+            collation=context.collation,
+            sort=self.sort,
+            array_filters=self.array_filters,
+            hint=self.hint,
+            comment=self.comment,
+            max_time_ms=self.max_time_ms,
+            let=context.expressions,
+            dialect=context.dialect,
+            update_spec=self.update_spec,
+            planning_mode=self.planning_mode,
+        )
+        return replace(compiled, context=context)
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,10 +171,101 @@ class AggregateOperation:
     let: Mapping[str, object] | None = None
     planning_mode: PlanningMode = PlanningMode.STRICT
     planning_issues: tuple[PlanningIssue, ...] = ()
+    dialect: MongoDialect = MONGODB_DIALECT_70
     context: OperationContext | None = None
+
+    def __post_init__(self) -> None:
+        _validate_bound_context(
+            self.context,
+            self.dialect,
+            self.collation,
+            self.let,
+        )
 
     def with_overrides(self, **changes: object) -> "AggregateOperation":
         return replace(self, **changes)
+
+    def bind(self, context: OperationContext) -> "AggregateOperation":
+        if self.context is context:
+            return self
+        if self.context is not None:
+            message = 'aggregate operation is already bound to another context'
+            raise RuntimeError(message)
+        if not _context_changes_compilation(
+            context,
+            self.dialect,
+            self.collation,
+            self.let,
+        ):
+            return replace(self, context=context, let=context.expressions)
+        compiled = compile_aggregate_operation(
+            self.pipeline,
+            collation=context.collation,
+            hint=self.hint,
+            comment=self.comment,
+            max_time_ms=self.max_time_ms,
+            batch_size=self.batch_size,
+            allow_disk_use=self.allow_disk_use,
+            let=context.expressions,
+            dialect=context.dialect,
+            planning_mode=self.planning_mode,
+        )
+        return replace(compiled, context=context)
+
+
+def _validate_bound_context(
+    context: OperationContext | None,
+    dialect: MongoDialect,
+    collation: CollationDocument | None,
+    variables: Mapping[str, object] | None,
+) -> None:
+    if context is None:
+        return
+    if dialect is not context.dialect:
+        message = 'bound operation dialect diverges from OperationContext'
+        raise ValueError(message)
+    if (
+        collation is not None
+        and normalize_collation(collation) != context.collation
+    ):
+        message = 'bound operation collation diverges from OperationContext'
+        raise ValueError(message)
+    if variables is None:
+        return
+    normalized_variables = (
+        variables.bindings
+        if isinstance(variables, ExpressionExecutionContext)
+        else (
+            variables
+            if DocumentCodec.is_internal(variables)
+            else DocumentCodec.to_internal(dict(variables))
+        )
+    )
+    if normalized_variables != context.expressions.bindings:
+        message = 'bound operation variables diverge from OperationContext'
+        raise ValueError(message)
+
+
+def _context_changes_compilation(
+    context: OperationContext,
+    dialect: MongoDialect,
+    collation: CollationDocument | None,
+    variables: Mapping[str, object] | None,
+) -> bool:
+    if dialect is not context.dialect:
+        return True
+    if normalize_collation(collation) != context.collation:
+        return True
+    normalized_variables = (
+        variables.bindings
+        if isinstance(variables, ExpressionExecutionContext)
+        else (
+            variables
+            if DocumentCodec.is_internal(variables)
+            else DocumentCodec.to_internal(dict(variables or {}))
+        )
+    )
+    return normalized_variables != context.expressions.bindings
 
 
 _CACHEABLE_UPDATE_OPERATORS = frozenset(
@@ -240,6 +407,7 @@ def compile_find_selection_from_update_operation(
         let=operation.let,
         planning_mode=operation.planning_mode,
         planning_issues=operation.planning_issues,
+        dialect=operation.dialect,
         context=operation.context,
     )
 
@@ -305,6 +473,7 @@ def compile_find_operation(
             variables=normalized_let,
             planning_mode=planning_mode,
         ),
+        dialect=dialect,
     )
 
 
@@ -324,6 +493,9 @@ def compile_update_operation(
     planning_mode: PlanningMode = PlanningMode.STRICT,
 ) -> UpdateOperation:
     normalized_filter = _normalize_filter(filter_spec)
+    normalized_update_spec = (
+        None if update_spec is None else DocumentCodec.to_internal(update_spec)
+    )
     normalized_sort = _normalize_sort(sort)
     normalized_collation = _normalize_collation(collation)
     normalized_array_filters = _normalize_array_filters(array_filters)
@@ -331,7 +503,7 @@ def compile_update_operation(
     normalized_max_time_ms = _normalize_max_time_ms(max_time_ms)
     normalized_let = _normalize_let(let)
     compiled_update_plan, compiled_upsert_plan = _compile_update_plans(
-        update_spec,
+        normalized_update_spec,
         dialect=dialect,
         selector_filter=normalized_filter,
         collation=normalized_collation,
@@ -348,7 +520,7 @@ def compile_update_operation(
         )
         if plan is None
         else plan,
-        update_spec=update_spec,
+        update_spec=normalized_update_spec,
         compiled_update_plan=compiled_update_plan,
         compiled_upsert_plan=compiled_upsert_plan,
         collation=normalized_collation,
@@ -366,8 +538,13 @@ def compile_update_operation(
                 variables=normalized_let,
                 planning_mode=planning_mode,
             ),
-            *_collect_update_planning_issues(update_spec, dialect=dialect, planning_mode=planning_mode),
+            *_collect_update_planning_issues(
+                normalized_update_spec,
+                dialect=dialect,
+                planning_mode=planning_mode,
+            ),
         ),
+        dialect=dialect,
     )
 
 
@@ -386,9 +563,10 @@ def compile_aggregate_operation(
 ) -> AggregateOperation:
     if not isinstance(pipeline, list):
         raise TypeError("pipeline must be a list")
-    validate_search_stage_pipeline(pipeline)
+    normalized_pipeline = DocumentCodec.to_internal(pipeline)
+    validate_search_stage_pipeline(normalized_pipeline)
     return AggregateOperation(
-        pipeline=pipeline,
+        pipeline=normalized_pipeline,
         collation=_normalize_collation(collation),
         hint=_normalize_hint(hint),
         comment=comment,
@@ -397,7 +575,12 @@ def compile_aggregate_operation(
         allow_disk_use=_normalize_allow_disk_use(allow_disk_use),
         let=_normalize_let(let),
         planning_mode=planning_mode,
-        planning_issues=_collect_aggregate_planning_issues(pipeline, dialect=dialect, planning_mode=planning_mode),
+        planning_issues=_collect_aggregate_planning_issues(
+            normalized_pipeline,
+            dialect=dialect,
+            planning_mode=planning_mode,
+        ),
+        dialect=dialect,
     )
 
 
@@ -737,7 +920,7 @@ def _normalize_filter(filter_spec: object | None) -> Filter:
         return {}
     if not is_filter(filter_spec):
         raise TypeError("filter_spec must be a dict")
-    return filter_spec
+    return DocumentCodec.to_internal(filter_spec)
 
 
 def _normalize_collation(collation: object | None) -> CollationDocument | None:
@@ -752,7 +935,7 @@ def _normalize_projection(projection: object | None) -> Projection | None:
         return None
     if not is_projection(projection):
         raise TypeError("projection must be a dict")
-    return projection
+    return DocumentCodec.to_internal(projection)
 
 
 def _normalize_sort(sort: object | None) -> SortSpec | None:
@@ -809,7 +992,7 @@ def _normalize_let(let: object | None) -> Mapping[str, object] | None:
             raise OperationFailure(
                 "$lookup let variable names must begin with a lowercase letter or non-ascii character"
             )
-    return let
+    return DocumentCodec.to_internal(let)
 
 
 def _normalize_batch_size(batch_size: object | None) -> int | None:

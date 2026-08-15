@@ -114,10 +114,14 @@ class ModuleImportSmokeTests(unittest.TestCase):
     def test_every_source_module_imports_in_a_clean_interpreter(self):
         repo_root = self._repo_root()
         source_root = repo_root / "src"
-        pythonpath_entries = [str(source_root)]
-        if existing_pythonpath := os.environ.get("PYTHONPATH"):
-            pythonpath_entries.append(existing_pythonpath)
-        env = os.environ | {"PYTHONPATH": os.pathsep.join(pythonpath_entries)}
+        env = dict(os.environ)
+        if env.get('MONGOECO_TEST_INSTALLED_ARTIFACT') == '1':
+            env.pop('PYTHONPATH', None)
+        else:
+            pythonpath_entries = [str(source_root)]
+            if existing_pythonpath := os.environ.get("PYTHONPATH"):
+                pythonpath_entries.append(existing_pythonpath)
+            env['PYTHONPATH'] = os.pathsep.join(pythonpath_entries)
         module_names = self._source_modules()
 
         def _import_module(module_name: str) -> subprocess.CompletedProcess[str]:

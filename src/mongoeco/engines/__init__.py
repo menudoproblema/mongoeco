@@ -14,6 +14,7 @@ __all__ = [
     "OperationContext",
     "ReadSnapshot",
     "SnapshotMetadata",
+    "SnapshotLifecycle",
     "SnapshotPolicy",
     "SQLiteEngine",
 ]
@@ -32,6 +33,7 @@ _EXPORT_MODULES = {
     "OperationContext": "mongoeco.core.operation_context",
     "ReadSnapshot": "mongoeco.engines.snapshots",
     "SnapshotMetadata": "mongoeco.engines.snapshots",
+    "SnapshotLifecycle": "mongoeco.engines.snapshots",
     "SnapshotPolicy": "mongoeco.engines.snapshots",
     "SQLiteEngine": "mongoeco.engines.sqlite",
 }

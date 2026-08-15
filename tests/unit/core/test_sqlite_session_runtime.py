@@ -294,6 +294,7 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
                     document={"_id": "1"},
                     overwrite=False,
                     bypass_document_validation=True,
+                    dialect=MONGODB_DIALECT_70,
                     storage_key="1",
                     serialized_document="{'_id': '1'}",
                     purge_expired_documents=lambda *_args: None,

@@ -29,17 +29,28 @@ retornos union, callbacks y `put_document` del SPI v1.
 Toda operacion CRUD o lectura compilada del SPI v2 recibe un
 `OperationContext` inmutable creado en el borde publico. Ese objeto captura una
 sola vez dialecto, collation normalizada, bindings y `$$NOW`, codec, sesion y
-politica de publicacion. Los engines no deben volver a resolver estos valores
-ni consultar el reloj para completar una operacion que ya lleva contexto. Las
-operaciones administrativas conservan sus protocolos delgados especificos.
+politica de publicacion. Filtros, proyecciones, updates, pipelines y `let`
+atraviesan la misma conversion BSON recursiva antes de compilarse, incluidas
+las rutas de comandos administrativos. Los engines no deben volver a resolver
+estos valores ni consultar el reloj para completar una operacion que ya lleva
+contexto. Las operaciones administrativas conservan sus protocolos delgados
+especificos, no una semantica BSON paralela.
+El binding forma parte de la compilacion: un cambio efectivo de dialecto,
+collation o bindings recompila el plan; un contexto semanticamente identico
+reutiliza el artefacto ya normalizado.
 
 ### Snapshots de lectura
 
-Los scans v2 se abren como `ReadSnapshot`, no como iterables sin ownership. Su
+Los scans v2 se consumen como `ReadSnapshot`, no como iterables sin ownership.
+Un engine puede abrirlo de forma nativa o declarar el fallback compatible
+`scan_find_semantics`, que el adaptador envuelve en el mismo contrato. Su
 metadata declara una politica `STABLE`, `MATERIALIZED` o `LIVE`, y su lifecycle
 garantiza cierre tanto al agotar como al cancelar o fallar. Los cursores de
 coleccion consumen hoy snapshots `STABLE`; una nueva implementacion debe
 declarar explicitamente cualquier politica distinta.
+El ownership incluye un plazo finito de cleanup. Una fuente externa que no
+responde no puede bloquear indefinidamente la cancelacion del consumidor.
+El estado observable diferencia cierre pendiente, completado y fallido.
 
 ## `MemoryEngine`
 
@@ -74,6 +85,7 @@ como una fachada sobre piezas internas:
 - read execution;
 - fast paths;
 - planner heuristics.
+- outbox transaccional y migraciones versionadas de su esquema.
 
 La intencion de esta modularizacion es bajar el coste de cambio y evitar que el
 engine siga siendo una fuente unica de verdad dispersa.
@@ -301,6 +313,18 @@ solo cuando el snapshot se instala con exito; un abort no consume tokens.
 hueco se inserta dentro del mismo `sqlite_write_scope` que documentos e
 indices, por lo que commit y rollback son atomicos. El dispatcher consume en
 orden y solo avanza su checkpoint despues de que el hub acepte la fila.
+Lease, heartbeat, checkpoint y compactacion usan una conexion de control
+dedicada en bases de fichero; nunca confirman la conexion de datos. En
+`:memory:`, donde SQLite no permite compartir ese estado entre conexiones, el
+alta inicial puede participar en la transaccion sin confirmarla; dispatch,
+lease y checkpoint rechazan una transaccion de datos activa.
+La entrega se serializa por consumidor. SQLite coordina tambien instancias
+distintas del mismo proceso mediante un gate por ruta, con deteccion de
+reentrada, y procesos distintos mediante un lease durable con generacion y
+heartbeat.
+La garantia de entrega es at-least-once, no exactly-once: si el callback
+termina pero se pierde el lease antes del checkpoint, la fila se vuelve a
+entregar. Los consumidores deben ser idempotentes respecto a la secuencia.
 
 Memory y SQLite conservan por defecto hasta 10.000 entradas, configurable con
 `change_log_max_entries` y `change_outbox_max_entries`. La compactacion usa el
@@ -310,6 +334,13 @@ consumidores efimeros de durables; el alta durable se deriva de un hub con
 rezagado, su siguiente lectura falla explicitamente en vez de ocultar perdida
 de eventos. `changeDelivery` expone limites, secuencia y suelo podado en los
 diagnosticos del engine.
+Los consumidores efimeros incluyen owner de proceso y caducidad renovada por
+un heartbeat durante toda la conexion, para que ni una ejecucion larga ni un
+crash dejen metadata incorrecta. La expiracion respeta los leases de dispatch
+activos. Los consumidores durables no tienen TTL y solo se retiran de forma
+explicita.
+El esquema del outbox usa pasos versionados dentro de una transaccion o
+savepoint. Versiones futuras se rechazan antes de mutar la base.
 
 ## Helpers compartidos entre engines
 

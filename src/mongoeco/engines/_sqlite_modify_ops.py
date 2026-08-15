@@ -1,21 +1,31 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping
-from copy import deepcopy
 import sqlite3
 
-from mongoeco.compat import MongoDialect
+from collections.abc import Callable, Iterable, Mapping
+from copy import deepcopy
+
 from mongoeco.core.identity import (
     assert_document_kept_storage_key,
     assert_document_matches_storage_key,
     assert_valid_root_document_id,
     materialize_replacement_document,
 )
-from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
-from mongoeco.engines.results import EngineDeleteResult, EngineUpdateResult
 from mongoeco.core.sorting import sort_documents
+from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
+from mongoeco.engines.results import DeleteOutcome, MutationOutcome
 from mongoeco.errors import DuplicateKeyError
-from mongoeco.types import DeleteResult, Document, DocumentId, Filter, UpdateResult
+from mongoeco.types import (
+    DeleteResult,
+    Document,
+    DocumentId,
+    Filter,
+    UpdateResult,
+)
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from mongoeco.compat import MongoDialect
 
 
 def delete_matching_document(
@@ -44,7 +54,7 @@ def delete_matching_document(
     match_plan: Callable[[Document, object, MongoDialect, object | None, object], bool],
     invalidate_collection_features_cache: Callable[[str, str], None],
     sort: object | None = None,
-) -> EngineDeleteResult:
+) -> DeleteOutcome:
     effective_dialect = dialect
     plan = ensure_query_plan(filter_spec, plan)
     semantics = compile_find_semantics(
@@ -72,7 +82,7 @@ def delete_matching_document(
         selected = select_first_document_for_plan(db_name, coll_name, semantics.query_plan)
         if selected is None:
             result = DeleteResult(deleted_count=0)
-            return EngineDeleteResult(result=result)
+            return DeleteOutcome(result=result)
         storage_key, document = selected
         if selector_semantics is not None and not match_plan(
             document,
@@ -82,7 +92,7 @@ def delete_matching_document(
             selector_semantics.variables,
         ):
             result = DeleteResult(deleted_count=0)
-            return EngineDeleteResult(result=result)
+            return DeleteOutcome(result=result)
         assert_document_matches_storage_key(
             document,
             storage_key,
@@ -106,7 +116,7 @@ def delete_matching_document(
             delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
             invalidate_collection_features_cache(db_name, coll_name)
         result = DeleteResult(deleted_count=1)
-        return EngineDeleteResult(
+        return DeleteOutcome(
             result=result,
             deleted_document=deepcopy(document),
         )
@@ -174,12 +184,12 @@ def delete_matching_document(
             delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
             invalidate_collection_features_cache(db_name, coll_name)
         result = DeleteResult(deleted_count=1)
-        return EngineDeleteResult(
+        return DeleteOutcome(
             result=result,
             deleted_document=deepcopy(document),
         )
     result = DeleteResult(deleted_count=0)
-    return EngineDeleteResult(result=result)
+    return DeleteOutcome(result=result)
 
 
 def update_with_operation(
@@ -217,7 +227,7 @@ def update_with_operation(
     new_object_id: Callable[[], DocumentId],
     invalidate_collection_features_cache: Callable[[str, str], None],
     replacement_document: Document | None = None,
-) -> EngineUpdateResult:
+) -> MutationOutcome:
     semantics = compile_update_semantics(
         operation,
         dialect=dialect,
@@ -311,7 +321,7 @@ def update_with_operation(
         )
         if not modified:
             result = UpdateResult(matched_count=1, modified_count=0)
-            return EngineUpdateResult(
+            return MutationOutcome(
                 result=result,
                 before_document=deepcopy(original_document),
                 after_document=deepcopy(document),
@@ -390,7 +400,7 @@ def update_with_operation(
                 )
                 invalidate_collection_features_cache(db_name, coll_name)
             result = UpdateResult(matched_count=1, modified_count=1)
-            return EngineUpdateResult(
+            return MutationOutcome(
                 result=result,
                 before_document=deepcopy(original_document),
                 after_document=deepcopy(document),
@@ -443,7 +453,7 @@ def update_with_operation(
                 )
                 invalidate_collection_features_cache(db_name, coll_name)
             result = UpdateResult(matched_count=1, modified_count=1)
-            return EngineUpdateResult(
+            return MutationOutcome(
                 result=result,
                 before_document=deepcopy(original_document),
                 after_document=deepcopy(document),
@@ -455,7 +465,7 @@ def update_with_operation(
 
     if not upsert:
         result = UpdateResult(matched_count=0, modified_count=0)
-        return EngineUpdateResult(result=result)
+        return MutationOutcome(result=result)
 
     new_doc = deepcopy(
         upsert_seed
@@ -533,7 +543,7 @@ def update_with_operation(
         modified_count=0,
         upserted_id=new_doc["_id"],
     )
-    return EngineUpdateResult(
+    return MutationOutcome(
         result=result,
         after_document=deepcopy(new_doc),
     )

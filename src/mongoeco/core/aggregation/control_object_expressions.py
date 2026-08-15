@@ -6,6 +6,9 @@ from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation.evaluation_environment import (
+    scoped_environment,
+)
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.query_operators import is_non_empty_document_clause_list
 from mongoeco.errors import OperationFailure
@@ -314,7 +317,7 @@ def evaluate_control_object_expression(
             or not isinstance(spec['vars'], dict)
         ):
             raise OperationFailure('$let requires vars and in')
-        scoped = dict(variables or {})
+        scoped = scoped_environment(variables)
         for name, value_expression in spec['vars'].items():
             scoped[name] = evaluate_expression(
                 document, value_expression, variables

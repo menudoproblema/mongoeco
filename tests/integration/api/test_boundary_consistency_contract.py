@@ -4,12 +4,16 @@ from datetime import UTC, datetime, timedelta, timezone
 import unittest
 
 from mongoeco import AsyncMongoClient, CodecOptions, InsertOne, UpdateOne
+from mongoeco.api.operations import compile_update_operation
+from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, OperationFailure
 
 
 ENGINE_FACTORIES = {'memory': MemoryEngine, 'sqlite': SQLiteEngine}
+_MULTI_DOCUMENT_COUNT = 3
 
 
 class _DelayedReturnMixin:
@@ -35,6 +39,56 @@ class _DelayedReturnSQLiteEngine(_DelayedReturnMixin, SQLiteEngine):
 
 
 class BoundaryConsistencyContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_direct_engine_binding_recompiles_context_sensitive_plans(
+        self,
+    ):
+        for engine_name, engine_factory in ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                engine = engine_factory()
+                await engine.connect()
+                try:
+                    await engine.insert_document(
+                        'db',
+                        'items',
+                        {
+                            '_id': 1,
+                            'items': [{'name': 'A', 'hit': False}],
+                        },
+                        overwrite=False,
+                        operation_context=OperationContext.create(
+                            dialect=MONGODB_DIALECT_70,
+                        ),
+                    )
+                    context = OperationContext.create(
+                        dialect=MONGODB_DIALECT_70,
+                        collation={'locale': 'en', 'strength': 2},
+                    )
+                    operation = compile_update_operation(
+                        {'_id': 1},
+                        update_spec={
+                            '$set': {'items.$[item].hit': True},
+                        },
+                        array_filters=[{'item.name': 'a'}],
+                    )
+
+                    outcome = await engine.update_with_operation(
+                        'db',
+                        'items',
+                        operation,
+                        operation_context=context,
+                    )
+
+                    assert outcome.modified_count == 1
+                    assert await engine.get_document(
+                        'db',
+                        'items',
+                        1,
+                    ) == {
+                        '_id': 1,
+                        'items': [{'name': 'A', 'hit': True}],
+                    }
+                finally:
+                    await engine.disconnect()
     async def test_change_events_follow_commit_order_not_coroutine_return_order(
         self,
     ):
@@ -204,6 +258,140 @@ class BoundaryConsistencyContractTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(direct.modified_count, 1)
                     self.assertEqual(bulk.modified_count, 1)
                     self.assertEqual(bindings, snapshot)
+
+    async def test_admin_commands_share_the_collection_bson_boundary(self):
+        source = datetime(
+            2026,
+            1,
+            2,
+            10,
+            4,
+            5,
+            987_654,
+            tzinfo=timezone(timedelta(hours=2)),
+        )
+        expected = source.astimezone(UTC).replace(
+            microsecond=987_000,
+            tzinfo=None,
+        )
+        for engine_name, engine_factory in ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                async with AsyncMongoClient(engine_factory()) as client:
+                    collection = client.test.command_bson_boundary
+                    await collection.insert_many(
+                        [
+                            {'_id': 'find', 'at': source},
+                            {'_id': 'update', 'at': source},
+                            {'_id': 'find-and-modify', 'at': source},
+                        ],
+                    )
+                    bindings = {'expected': source}
+                    snapshot = copy.deepcopy(bindings)
+
+                    found = await client.test.command(
+                        {
+                            'find': 'command_bson_boundary',
+                            'filter': {'_id': 'find', 'at': source},
+                        },
+                    )
+                    aggregated = await client.test.command(
+                        {
+                            'aggregate': 'command_bson_boundary',
+                            'pipeline': [
+                                {
+                                    '$match': {
+                                        '_id': 'find',
+                                        '$expr': {
+                                            '$eq': ['$at', '$$expected'],
+                                        },
+                                    },
+                                },
+                                {
+                                    '$project': {
+                                        '_id': 0,
+                                        'literal': {'$literal': source},
+                                    },
+                                },
+                            ],
+                            'let': bindings,
+                            'cursor': {},
+                        },
+                    )
+                    updated = await client.test.command(
+                        {
+                            'update': 'command_bson_boundary',
+                            'let': bindings,
+                            'updates': [
+                                {
+                                    'q': {
+                                        '_id': 'update',
+                                        '$expr': {
+                                            '$eq': ['$at', '$$expected'],
+                                        },
+                                    },
+                                    'u': {'$set': {'matched': True}},
+                                },
+                            ],
+                        },
+                    )
+                    modified = await client.test.command(
+                        {
+                            'findAndModify': 'command_bson_boundary',
+                            'query': {
+                                '_id': 'find-and-modify',
+                                '$expr': {'$eq': ['$at', '$$expected']},
+                            },
+                            'update': {'$set': {'matched': True}},
+                            'let': bindings,
+                            'new': True,
+                        },
+                    )
+
+                    assert len(found['cursor']['firstBatch']) == 1
+                    assert aggregated['cursor']['firstBatch'] == [
+                        {'literal': expected},
+                    ]
+                    assert updated['nModified'] == 1
+                    assert modified['value']['matched']
+                    assert bindings == snapshot
+
+    async def test_multi_document_writes_publish_one_event_per_document(self):
+        for engine_name, engine_factory in ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                async with AsyncMongoClient(engine_factory()) as client:
+                    collection = client.test.multi_event_identity
+                    await collection.insert_many(
+                        [
+                            {'_id': index, 'group': 'selected'}
+                            for index in range(_MULTI_DOCUMENT_COUNT)
+                        ],
+                    )
+                    stream = collection.watch(max_await_time_ms=5)
+
+                    updated = await collection.update_many(
+                        {'group': 'selected'},
+                        {'$set': {'updated': True}},
+                    )
+                    update_events = [
+                        await stream.try_next()
+                        for _index in range(_MULTI_DOCUMENT_COUNT)
+                    ]
+                    deleted = await collection.delete_many(
+                        {'group': 'selected'},
+                    )
+                    delete_events = [
+                        await stream.try_next()
+                        for _index in range(_MULTI_DOCUMENT_COUNT)
+                    ]
+
+                    assert updated.modified_count == _MULTI_DOCUMENT_COUNT
+                    assert deleted.deleted_count == _MULTI_DOCUMENT_COUNT
+                    assert [
+                        event['operationType'] for event in update_events
+                    ] == ['update', 'update', 'update']
+                    assert [
+                        event['operationType'] for event in delete_events
+                    ] == ['delete', 'delete', 'delete']
 
     async def test_bulk_insert_aliases_are_prepared_deterministically(self):
         for engine_name, engine_factory in ENGINE_FACTORIES.items():

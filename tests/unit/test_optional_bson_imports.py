@@ -1,4 +1,5 @@
 import subprocess
+import os
 import sys
 import textwrap
 import unittest
@@ -44,7 +45,7 @@ class OptionalBsonImportTests(unittest.TestCase):
         process = subprocess.run(
             [sys.executable, "-c", script],
             cwd=ROOT,
-            env={"PYTHONPATH": str(ROOT / "src")},
+            env=_clean_import_environment(),
             capture_output=True,
             text=True,
             check=False,
@@ -54,3 +55,12 @@ class OptionalBsonImportTests(unittest.TestCase):
             0,
             msg=f"stdout:\n{process.stdout}\n\nstderr:\n{process.stderr}",
         )
+
+
+def _clean_import_environment() -> dict[str, str]:
+    env = dict(os.environ)
+    if env.get('MONGOECO_TEST_INSTALLED_ARTIFACT') == '1':
+        env.pop('PYTHONPATH', None)
+    else:
+        env['PYTHONPATH'] = str(ROOT / 'src')
+    return env

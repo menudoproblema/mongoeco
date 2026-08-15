@@ -9,11 +9,66 @@ from types import MappingProxyType
 from typing import Any
 
 from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
+from mongoeco.core.codec import DocumentCodec
 
 
 _CURRENT_EXECUTION_NOW: ContextVar[datetime | None] = ContextVar(
     'mongoeco_execution_now', default=None
 )
+
+
+class _FrozenDocument(dict[str, Any]):
+    def _immutable(self, *_args: object, **_kwargs: object) -> None:
+        message = 'expression bindings are immutable'
+        raise TypeError(message)
+
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    __ior__ = _immutable
+    clear = _immutable
+    pop = _immutable
+    popitem = _immutable
+    setdefault = _immutable
+    update = _immutable
+
+    def __deepcopy__(self, _memo: dict[int, object]) -> _FrozenDocument:
+        return self
+
+
+class _FrozenList(list[Any]):
+    def _immutable(self, *_args: object, **_kwargs: object) -> None:
+        message = 'expression bindings are immutable'
+        raise TypeError(message)
+
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    __iadd__ = _immutable
+    __imul__ = _immutable
+    append = _immutable
+    clear = _immutable
+    extend = _immutable
+    insert = _immutable
+    pop = _immutable
+    remove = _immutable
+    reverse = _immutable
+    sort = _immutable
+
+    def __deepcopy__(self, _memo: dict[int, object]) -> _FrozenList:
+        return self
+
+
+def _freeze_bson(value: Any) -> Any:
+    if isinstance(value, dict):
+        frozen = _FrozenDocument()
+        for key, item in value.items():
+            dict.__setitem__(frozen, key, _freeze_bson(item))
+        return frozen
+    if isinstance(value, list):
+        frozen_list = _FrozenList()
+        for item in value:
+            list.append(frozen_list, _freeze_bson(item))
+        return frozen_list
+    return value
 
 
 def current_execution_now() -> datetime | None:
@@ -37,8 +92,15 @@ class ExpressionExecutionContext(Mapping[str, Any]):
     now: datetime = field(default_factory=utc_bson_now)
 
     def __post_init__(self) -> None:
-        immutable_bindings = MappingProxyType(dict(self.bindings))
+        source = self.bindings
+        normalized = _freeze_bson(
+            source
+            if DocumentCodec.is_internal(source)
+            else DocumentCodec.to_internal(dict(source)),
+        )
+        immutable_bindings = MappingProxyType(normalized)
         object.__setattr__(self, "bindings", immutable_bindings)
+        object.__setattr__(self, 'now', normalize_utc_bson_datetime(self.now))
 
     def __getitem__(self, key: str) -> Any:
         if key == "NOW":
@@ -64,7 +126,14 @@ class ExpressionExecutionContext(Mapping[str, Any]):
             if isinstance(bindings, ExpressionExecutionContext)
             else bindings
         )
-        combined_bindings = {**self.bindings, **inherited}
+        normalized_inherited = (
+            inherited
+            if DocumentCodec.is_internal(inherited)
+            else DocumentCodec.to_internal(dict(inherited))
+        )
+        combined_bindings = DocumentCodec.mark_internal(
+            {**self.bindings, **normalized_inherited},
+        )
         return ExpressionExecutionContext(combined_bindings, now=self.now)
 
 

@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import binascii
 import datetime
 import decimal
 import re
 import uuid
 
-from typing import Any
+from typing import Any, Self
 
 from mongoeco._types.concerns import CodecOptions, UuidRepresentation
 
@@ -56,6 +58,108 @@ from mongoeco.types import (
 )
 
 
+class _ImmutableInternalBson:
+    """Reject mutation after a BSON value crosses the command boundary."""
+
+    @staticmethod
+    def _immutable(*_args: Any, **_kwargs: Any) -> None:
+        message = 'internal BSON values are immutable'
+        raise TypeError(message)
+
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    clear = _immutable
+    pop = _immutable
+    popitem = _immutable
+    setdefault = _immutable
+    update = _immutable
+
+
+class _InternalBsonDocument(_ImmutableInternalBson, dict[str, Any]):
+    """Detached immutable BSON document owned by MongoEco."""
+
+    __ior__ = _ImmutableInternalBson._immutable
+
+    def __deepcopy__(self, _memo: dict[int, Any]) -> _InternalBsonDocument:
+        return self
+
+
+class _InternalBsonArray(_ImmutableInternalBson, list[Any]):
+    """Detached immutable BSON array owned by MongoEco."""
+
+    append = _ImmutableInternalBson._immutable
+    extend = _ImmutableInternalBson._immutable
+    insert = _ImmutableInternalBson._immutable
+    remove = _ImmutableInternalBson._immutable
+    reverse = _ImmutableInternalBson._immutable
+    sort = _ImmutableInternalBson._immutable
+    __iadd__ = _ImmutableInternalBson._immutable
+    __imul__ = _ImmutableInternalBson._immutable
+
+    def __deepcopy__(self, _memo: dict[int, Any]) -> _InternalBsonArray:
+        return self
+
+
+_MAX_BINARY_SUBTYPE = 255
+
+
+class _InternalBsonBinary(Binary):
+    """Binary scalar whose subtype cannot change after normalization."""
+
+    def __new__(
+        cls,
+        data: bytes | bytearray | memoryview,
+        subtype: int = 0,
+    ) -> Self:
+        if not 0 <= subtype <= _MAX_BINARY_SUBTYPE:
+            message = 'binary subtype must be between 0 and 255'
+            raise ValueError(message)
+        instance = bytes.__new__(cls, bytes(data))
+        object.__setattr__(instance, 'subtype', subtype)
+        return instance
+
+    def __setattr__(self, _name: str, _value: object) -> None:
+        message = 'internal BSON values are immutable'
+        raise TypeError(message)
+
+    def __deepcopy__(self, _memo: dict[int, Any]) -> _InternalBsonBinary:
+        return self
+
+
+def _own_internal_bson(data: Any) -> Any:
+    if isinstance(data, (_InternalBsonDocument, _InternalBsonArray)):
+        return data
+    if isinstance(data, dict):
+        return _InternalBsonDocument(
+            {key: _own_internal_bson(value) for key, value in data.items()},
+        )
+    if isinstance(data, list):
+        return _InternalBsonArray(_own_internal_bson(value) for value in data)
+    return _own_internal_bson_scalar(data)
+
+
+def _own_internal_bson_scalar(data: Any) -> Any:
+    if isinstance(data, DBRef):
+        return DBRef(
+            collection=data.collection,
+            id=_own_internal_bson(data.id),
+            database=data.database,
+            extras=_own_internal_bson(data.extras),
+        )
+    if BsonCode is not None and isinstance(data, BsonCode):
+        return BsonCode(
+            str(data),
+            (
+                None
+                if data.scope is None
+                else _own_internal_bson(data.scope)
+            ),
+        )
+    if isinstance(data, Binary):
+        return _InternalBsonBinary(bytes(data), subtype=data.subtype)
+    return data
+
+
 class DocumentCodec:
     """
     Normaliza documentos usando un formato interno reversible (Extended JSON style).
@@ -97,7 +201,18 @@ class DocumentCodec:
     @staticmethod
     def to_internal(data: Any) -> Any:
         """Apply the BSON command boundary before engine evaluation."""
-        return DocumentCodec.decode(DocumentCodec.encode(data))
+        if isinstance(data, (_InternalBsonDocument, _InternalBsonArray)):
+            return data
+        normalized = DocumentCodec.decode(DocumentCodec.encode(data))
+        return _own_internal_bson(normalized)
+
+    @staticmethod
+    def is_internal(data: Any) -> bool:
+        return isinstance(data, (_InternalBsonDocument, _InternalBsonArray))
+
+    @staticmethod
+    def mark_internal(data: Any) -> Any:
+        return _own_internal_bson(data)
 
     @staticmethod
     def encode(data: Any) -> Any:
@@ -517,7 +632,7 @@ class DocumentCodec:
             )
         if type(data) is ObjectId:
             return BsonObjectId(data.binary)
-        if type(data) is Binary:
+        if isinstance(data, Binary):
             return BsonBinary(bytes(data), subtype=data.subtype)
         if type(data) is Decimal128:
             return BsonDecimal128Public(str(data.value))
@@ -550,7 +665,37 @@ class DocumentCodec:
         return data
 
     @staticmethod
-    def _to_public_copy_on_write(data: Any) -> Any:
+    def _to_public_copy_on_write(  # noqa: PLR0911, PLR0912
+        data: Any,
+    ) -> Any:
+        if isinstance(data, _InternalBsonDocument):
+            return {
+                key: DocumentCodec._to_public_copy_on_write(value)
+                for key, value in data.items()
+            }
+        if isinstance(data, _InternalBsonArray):
+            return [
+                DocumentCodec._to_public_copy_on_write(value)
+                for value in data
+            ]
+        if isinstance(data, _InternalBsonBinary):
+            return Binary(bytes(data), subtype=data.subtype)
+        if isinstance(data, DBRef):
+            return DBRef(
+                collection=data.collection,
+                id=DocumentCodec._to_public_copy_on_write(data.id),
+                database=data.database,
+                extras=DocumentCodec._to_public_copy_on_write(data.extras),
+            )
+        if BsonCode is not None and isinstance(data, BsonCode):
+            return BsonCode(
+                str(data),
+                (
+                    None
+                    if data.scope is None
+                    else DocumentCodec._to_public_copy_on_write(data.scope)
+                ),
+            )
         if type(data) is SON:
             return SON(
                 (
@@ -560,7 +705,7 @@ class DocumentCodec:
                 for key, value in data.items()
             )
         if isinstance(data, dict):
-            flat_changed = False
+            flat_changed = isinstance(data, _InternalBsonDocument)
             flat_items: list[tuple[Any, Any]] = []
             for key, value in data.items():
                 if isinstance(value, DocumentCodec._BSON_WRAPPER_TYPES):
@@ -586,7 +731,7 @@ class DocumentCodec:
                 return {key: value for key, value in flat_items}
 
             converted_items: list[tuple[Any, Any]] = []
-            changed = False
+            changed = isinstance(data, _InternalBsonDocument)
             for key, value in data.items():
                 public_value = DocumentCodec._to_public_copy_on_write(value)
                 if public_value is not value:
@@ -598,11 +743,15 @@ class DocumentCodec:
 
         if isinstance(data, list):
             flat_items, flat_changed, contains_nested = DocumentCodec._to_public_flat_list(data)
+            flat_changed = flat_changed or isinstance(
+                data,
+                _InternalBsonArray,
+            )
             if not contains_nested:
                 return flat_items if flat_changed else data
 
             converted_items: list[Any] = []
-            changed = False
+            changed = isinstance(data, _InternalBsonArray)
             for value in data:
                 public_value = DocumentCodec._to_public_copy_on_write(value)
                 if public_value is not value:

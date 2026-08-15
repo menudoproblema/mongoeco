@@ -71,10 +71,7 @@ async def find_one(
         collation=operation.collation,
         expressions=expressions,
     )
-    operation = operation.with_overrides(
-        let=operation_context.expressions,
-        context=operation_context,
-    )
+    operation = operation.bind(operation_context)
     document = None
     started_at = time.perf_counter_ns()
     record_runtime_opcounter = getattr(collection._engine, "_record_runtime_opcounter", None)
@@ -179,10 +176,7 @@ async def count_documents(
         collation=operation.collation,
         bindings=operation.let,
     )
-    operation = operation.with_overrides(
-        let=operation_context.expressions,
-        context=operation_context,
-    )
+    operation = operation.bind(operation_context)
     with track_active_operation(
         collection._engine,
         command_name="count",

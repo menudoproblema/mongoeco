@@ -1,15 +1,21 @@
-import unittest
 import asyncio
 import threading
 import time
+import unittest
+
 from datetime import UTC, datetime
 from unittest.mock import patch
 
-from mongoeco.compat import MongoDialect80, PyMongoProfile417
+from mongoeco.api._sync._finalization import finalize_best_effort
 from mongoeco.api._sync.client import MongoClient, _SyncRunner
+from mongoeco.compat import MongoDialect80, PyMongoProfile417
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import ExecutionTimeout, InvalidOperation, ServerSelectionTimeoutError
+from mongoeco.errors import (
+    ExecutionTimeout,
+    InvalidOperation,
+    ServerSelectionTimeoutError,
+)
 
 
 async def _noop() -> None:
@@ -21,6 +27,48 @@ async def _value() -> str:
 
 
 class SyncClientUnitTests(unittest.TestCase):
+    def test_best_effort_finalizer_covers_deferred_and_local_cleanup(self):
+        calls: list[str] = []
+
+        class Owner:
+            def __init__(self, outcome):
+                self.outcome = outcome
+
+            def _defer_cleanup(self, cleanup):
+                calls.append("defer")
+                if isinstance(self.outcome, Exception):
+                    raise self.outcome
+                return self.outcome == "accept"
+
+        deferred = finalize_best_effort(
+            Owner("accept"),
+            lambda: calls.append("deferred-cleanup"),
+        )
+        fallback = finalize_best_effort(
+            Owner("reject"),
+            lambda: calls.append("fallback-cleanup"),
+        )
+        recovered = finalize_best_effort(
+            Owner(RuntimeError("boom")),
+            lambda: calls.append("failed-defer-cleanup"),
+        )
+        failed = finalize_best_effort(
+            object(),
+            lambda: (_ for _ in ()).throw(RuntimeError("ignored")),
+        )
+
+        assert deferred is True
+        assert fallback is True
+        assert recovered is True
+        assert failed is False
+        assert calls == [
+            "defer",
+            "defer",
+            "fallback-cleanup",
+            "defer",
+            "failed-defer-cleanup",
+        ]
+
     def test_sync_client_exposes_and_propagates_injected_clock(self):
         fixed = datetime(2026, 1, 2, 3, 4, 5, 123_456, tzinfo=UTC)
         factory = lambda: fixed
@@ -365,6 +413,23 @@ class SyncClientUnitTests(unittest.TestCase):
         asyncio.run(_exercise())
         self.assertTrue(runner._closed)
         self.assertIsNone(runner._helper_thread)
+
+    def test_cursor_finalizer_defers_cleanup_outside_the_active_runner(self):
+        client = MongoClient(MemoryEngine())
+        cursor = client.database.items.find({})
+
+        async def finalize_cursor() -> None:
+            cursor.__del__()
+
+        try:
+            client._runner.run(finalize_cursor())
+            deadline = time.monotonic() + 1
+            while not cursor._closed and time.monotonic() < deadline:
+                time.sleep(0.001)
+
+            assert cursor._closed
+        finally:
+            client.close()
 
     def test_sync_runner_marks_itself_closed_even_if_runner_close_fails(self):
         runner = _SyncRunner()

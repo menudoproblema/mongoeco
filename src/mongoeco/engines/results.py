@@ -21,6 +21,37 @@ class MutationOutcome:
     after_document: Document | None = None
     commit_sequence: int | None = None
 
+    def __post_init__(self) -> None:
+        matched = self.result.matched_count
+        modified = self.result.modified_count
+        if (
+            matched not in {0, 1}
+            or modified not in {0, 1}
+            or modified > matched
+        ):
+            message = 'mutation counts are inconsistent'
+            raise ValueError(message)
+        upserted = self.result.upserted_id is not None
+        if upserted and matched != 0:
+            message = 'an upsert cannot also match an existing document'
+            raise ValueError(message)
+        if matched == 0 and not upserted and (
+            self.before_document is not None
+            or self.after_document is not None
+        ):
+            message = 'a non-matching mutation cannot expose images'
+            raise ValueError(message)
+        if upserted and (
+            self.before_document is not None
+            or self.after_document is None
+        ):
+            message = 'an upsert must expose only its after image'
+            raise ValueError(message)
+        _validate_commit_sequence(self.commit_sequence)
+        if self.commit_sequence is not None and modified == 0 and not upserted:
+            message = 'an unapplied mutation cannot have a commit sequence'
+            raise ValueError(message)
+
     @property
     def matched_count(self) -> int:
         return self.result.matched_count
@@ -40,6 +71,21 @@ class DeleteOutcome:
     deleted_document: Document | None = None
     commit_sequence: int | None = None
 
+    def __post_init__(self) -> None:
+        deleted = self.result.deleted_count
+        if deleted not in {0, 1}:
+            message = (
+                'a single delete outcome must delete zero or one document'
+            )
+            raise ValueError(message)
+        if deleted == 0 and self.deleted_document is not None:
+            message = 'an unapplied delete cannot expose an image'
+            raise ValueError(message)
+        _validate_commit_sequence(self.commit_sequence)
+        if deleted == 0 and self.commit_sequence is not None:
+            message = 'an unapplied delete cannot have a commit sequence'
+            raise ValueError(message)
+
     @property
     def deleted_count(self) -> int:
         return self.result.deleted_count
@@ -50,6 +96,18 @@ class InsertOutcome:
     applied: bool
     document: Document | None = None
     commit_sequence: int | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.applied, bool):
+            message = 'applied must be a bool'
+            raise TypeError(message)
+        if not self.applied and self.document is not None:
+            message = 'an unapplied insert cannot expose a document'
+            raise ValueError(message)
+        _validate_commit_sequence(self.commit_sequence)
+        if not self.applied and self.commit_sequence is not None:
+            message = 'an unapplied insert cannot have a commit sequence'
+            raise ValueError(message)
 
     def __bool__(self) -> bool:
         return self.applied
@@ -76,15 +134,76 @@ class MergeOutcome:
     after_document: Document | None = None
     commit_sequence: int | None = None
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.matched, bool) or not isinstance(
+            self.applied,
+            bool,
+        ):
+            message = 'matched and applied must be bools'
+            raise TypeError(message)
+        if self.applied and (
+            self.operation_type is None or self.after_document is None
+        ):
+            message = (
+                'an applied merge requires an operation and after image'
+            )
+            raise ValueError(message)
+        if not self.matched and self.before_document is not None:
+            message = 'an unmatched merge cannot expose a before image'
+            raise ValueError(message)
+        if self.applied and self.matched and self.operation_type == 'insert':
+            message = 'a matched merge cannot apply an insert'
+            raise ValueError(message)
+        if (
+            self.applied
+            and not self.matched
+            and self.operation_type != 'insert'
+        ):
+            message = 'an unmatched merge can only apply an insert'
+            raise ValueError(message)
+        if self.applied and self.matched and self.before_document is None:
+            message = 'an applied matched merge requires a before image'
+            raise ValueError(message)
+        if not self.applied and not self.matched and (
+            self.operation_type is not None or self.after_document is not None
+        ):
+            message = 'an unapplied unmatched merge cannot expose an effect'
+            raise ValueError(message)
+        _validate_commit_sequence(self.commit_sequence)
+        if not self.applied and self.commit_sequence is not None:
+            message = 'an unapplied merge cannot have a commit sequence'
+            raise ValueError(message)
+
 
 @dataclass(frozen=True, slots=True)
 class CommittedChange:
     sequence: int
     payload: Document | None
 
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.sequence, int)
+            or isinstance(self.sequence, bool)
+            or self.sequence < 1
+        ):
+            message = 'committed change sequence must be positive'
+            raise ValueError(message)
+
     @property
     def is_gap(self) -> bool:
         return self.payload is None
+
+
+def _validate_commit_sequence(sequence: int | None) -> None:
+    if sequence is None:
+        return
+    if (
+        not isinstance(sequence, int)
+        or isinstance(sequence, bool)
+        or sequence < 1
+    ):
+        message = 'commit_sequence must be a positive integer'
+        raise ValueError(message)
 
 
 # Compatibility aliases for the provisional outcome names introduced in 4.2.

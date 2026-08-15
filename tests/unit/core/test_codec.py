@@ -2,7 +2,11 @@ import datetime
 import decimal
 import unittest
 import uuid
+
 from unittest.mock import patch
+
+import pytest
+
 
 try:
     from bson.code import Code as BsonCode
@@ -17,23 +21,40 @@ except Exception:  # pragma: no cover - optional dependency
     BsonObjectId = None
     BsonRegex = None
 
-from mongoeco.core.bson_scalars import BsonDecimal128, BsonDouble, BsonInt32, BsonInt64
+from mongoeco.core.bson_scalars import (
+    BsonDecimal128,
+    BsonDouble,
+    BsonInt32,
+    BsonInt64,
+)
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.types import (
+    SON,
+    UNDEFINED,
     Binary,
     CodecOptions,
     DBRef,
     Decimal128,
     ObjectId,
     Regex,
-    SON,
     Timestamp,
-    UNDEFINED,
     UuidRepresentation,
 )
 
 
 class DocumentCodecTests(unittest.TestCase):
+    def test_to_public_removes_internal_markers_from_nested_containers(self):
+        internal_document = DocumentCodec.to_internal({'nested': {'value': 1}})
+        internal_array = DocumentCodec.to_internal([{'value': 1}])
+
+        public_document = DocumentCodec.to_public(internal_document)
+        public_array = DocumentCodec.to_public(internal_array)
+
+        assert type(public_document) is dict
+        assert type(public_array) is list
+        assert type(public_document['nested']) is dict
+        assert type(public_array[0]) is dict
+
     def test_document_codec_round_trip_restores_nested_special_types(self):
         original = {
             "created_at": datetime.datetime(2026, 3, 23, 12, 34, 56),
@@ -304,6 +325,89 @@ class DocumentCodecTests(unittest.TestCase):
         self.assertEqual(public["code"].scope["owner"], object_id)
         self.assertIs(type(public["regex"]), BsonRegex)
         self.assertEqual(int(public["regex"].flags), int(BsonRegex("x", "ilu").flags))
+
+    def test_to_pymongo_is_identity_without_optional_bson_support(self):
+        payload = {'value': 1}
+
+        with patch('mongoeco.core.codec.BsonObjectId', None):
+            assert DocumentCodec.to_pymongo(payload) is payload
+
+    def test_internal_boundary_marker_is_idempotent_and_never_public(self):
+        document = DocumentCodec.to_internal({'value': 1})
+        array = DocumentCodec.to_internal([1, 2])
+        marked_document = DocumentCodec.mark_internal({'value': 2})
+        marked_array = DocumentCodec.mark_internal([3, 4])
+
+        assert DocumentCodec.to_internal(document) is document
+        assert DocumentCodec.to_internal(array) is array
+        assert DocumentCodec.is_internal(marked_document)
+        assert DocumentCodec.is_internal(marked_array)
+        assert DocumentCodec.mark_internal(marked_document) is marked_document
+        assert DocumentCodec.mark_internal(marked_array) is marked_array
+        assert DocumentCodec.mark_internal(1) == 1
+        assert type(DocumentCodec.to_public(document)) is dict
+        assert type(DocumentCodec.to_public(array)) is list
+
+    def test_internal_boundary_is_deeply_immutable(self):
+        internal = DocumentCodec.to_internal(
+            {'nested': {'items': [{'value': 1}]}},
+        )
+
+        with pytest.raises(TypeError, match='immutable'):
+            internal['nested']['items'][0]['value'] = 2
+        with pytest.raises(TypeError, match='immutable'):
+            internal['nested']['items'].append({'value': 3})
+        with pytest.raises(TypeError, match='immutable'):
+            internal['nested'] |= {'other': 4}
+
+        assert DocumentCodec.to_internal(internal) is internal
+        assert DocumentCodec.to_public(internal) == {
+            'nested': {'items': [{'value': 1}]},
+        }
+
+    def test_internal_boundary_owns_compound_bson_scalars(self):
+        original = {
+            'binary': Binary(b'payload', subtype=4),
+            'reference': DBRef(
+                'items',
+                {'parts': [1]},
+                extras={'metadata': [{'active': True}]},
+            ),
+        }
+        if BsonCode is not None:
+            original['code'] = BsonCode(
+                'return owner',
+                {'owner': {'parts': [2]}},
+            )
+
+        internal = DocumentCodec.to_internal(original)
+
+        with pytest.raises(TypeError, match='immutable'):
+            internal['binary'].subtype = 5
+        with pytest.raises(TypeError, match='immutable'):
+            internal['reference'].id['parts'].append(3)
+        with pytest.raises(TypeError, match='immutable'):
+            internal['reference'].extras['metadata'][0]['active'] = False
+        if BsonCode is not None:
+            with pytest.raises(TypeError, match='immutable'):
+                internal['code'].scope['owner']['parts'].append(4)
+
+        public = DocumentCodec.to_public(internal)
+        public['binary'].subtype = 5
+        public['reference'].id['parts'].append(3)
+        public['reference'].extras['metadata'][0]['active'] = False
+        if BsonCode is not None:
+            public['code'].scope['owner']['parts'].append(4)
+
+        assert internal['binary'].subtype == original['binary'].subtype
+        assert internal['reference'].id == {'parts': [1]}
+        assert internal['reference'].extras == {
+            'metadata': [{'active': True}],
+        }
+        assert original['reference'].id == {'parts': [1]}
+        assert original['reference'].extras == {
+            'metadata': [{'active': True}],
+        }
 
     def test_document_codec_decode_reports_missing_optional_bson_support(self):
         with patch("mongoeco.core.codec.BsonMinKey", None):

@@ -1,8 +1,16 @@
 import unittest
+
+# unittest is the established contract harness for this module.
+# ruff: noqa: PT027
+
+from dataclasses import replace
 from unittest.mock import patch
 
 from mongoeco.api.operations import compile_update_operation
-from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
+from mongoeco.core.collation import normalize_collation
+from mongoeco.core.expression_context import ExpressionExecutionContext
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.engines import semantic_core
 from mongoeco.engines.semantic_core import (
@@ -17,7 +25,7 @@ from mongoeco.engines.semantic_core import (
     validate_collection_document,
 )
 from mongoeco.errors import DocumentValidationFailure
-from mongoeco.types import Document
+from mongoeco.types import Document  # noqa: TC001
 
 
 class _RenderedIssue:
@@ -47,6 +55,38 @@ class _ValidatorStub:
 
 
 class SemanticCoreUnitTests(unittest.TestCase):
+    def test_bound_read_semantics_reject_every_duplicate_authority(self):
+        context = OperationContext.create(dialect=MONGODB_DIALECT_70)
+        semantics = compile_find_semantics({}, operation_context=context)
+
+        with self.assertRaisesRegex(ValueError, 'dialect diverges'):
+            replace(semantics, dialect=MONGODB_DIALECT_80)
+        with self.assertRaisesRegex(ValueError, 'collation diverges'):
+            replace(
+                semantics,
+                collation=normalize_collation({'locale': 'simple'}),
+            )
+        with self.assertRaisesRegex(ValueError, 'variables diverge'):
+            replace(semantics, variables=ExpressionExecutionContext())
+
+    def test_bound_update_semantics_reject_every_duplicate_authority(self):
+        context = OperationContext.create(dialect=MONGODB_DIALECT_70)
+        operation = compile_update_operation(
+            {},
+            update_spec={'$set': {'value': 1}},
+        ).with_overrides(context=context)
+        semantics = compile_update_semantics(operation)
+
+        with self.assertRaisesRegex(ValueError, 'dialect diverges'):
+            replace(semantics, dialect=MONGODB_DIALECT_80)
+        with self.assertRaisesRegex(ValueError, 'collation diverges'):
+            replace(
+                semantics,
+                collation=normalize_collation({'locale': 'simple'}),
+            )
+        with self.assertRaisesRegex(ValueError, 'variables diverge'):
+            replace(semantics, variables=ExpressionExecutionContext())
+
     def test_validate_collection_document_returns_valid_result_when_no_validator_exists(self):
         with patch.object(semantic_core, "compile_collection_validation_semantics", return_value=None):
             result = validate_collection_document({"_id": "1"}, options=None)

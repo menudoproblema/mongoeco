@@ -1,17 +1,18 @@
-from collections.abc import AsyncIterator
-from copy import deepcopy
-from dataclasses import dataclass
 import datetime
 import math
 import time
 
+from collections.abc import AsyncIterator
+from copy import deepcopy
+from dataclasses import dataclass
+
+from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async.cursor import (
     HintSpec,
     _ensure_operation_executable,
     _operation_issue_message,
     _resolve_planning_mode,
 )
-from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
@@ -19,40 +20,48 @@ from mongoeco.api.operations import (
     compile_find_operation,
 )
 from mongoeco.compat import MONGODB_DIALECT_70
-from mongoeco.cxp import build_mongodb_explain_projection
-from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
-from mongoeco.core.operation_context import ChangePublicationPolicy
 from mongoeco.core._search_contract import TEXT_SEARCH_OPERATOR_NAMES
 from mongoeco.core.aggregation import (
-    AggregationCostPolicy,
-    Pipeline,
     _CURRENT_COLLECTION_RESOLVER_KEY,
+    AggregationCostPolicy,
     AggregationSpillPolicy,
+    Pipeline,
     apply_pipeline,
     has_materializing_aggregation_stage,
     is_streamable_aggregation_stage,
     split_pushdown_pipeline,
 )
 from mongoeco.core.aggregation.planning import _match_spec_contains_expr
+from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
-from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.expression_context import (
     ExpressionExecutionContext,
 )
 from mongoeco.core.identity import (
     assert_valid_root_document_id,
 )
+from mongoeco.core.operation_context import (
+    ChangePublicationPolicy,
+    resolve_operation_session,
+)
+from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.search import (
     build_search_meta_document,
     compile_search_stage,
     strip_search_result_metadata,
 )
-from mongoeco.errors import OperationFailure
+from mongoeco.cxp import build_mongodb_explain_projection
 from mongoeco.engines.adapter import adapt_engine
+from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.session_guards import ensure_session_can_use_engine
-from mongoeco.types import AggregateExplanation, Document, ObjectId, QueryPlanExplanation
+from mongoeco.types import (
+    AggregateExplanation,
+    Document,
+    ObjectId,
+    QueryPlanExplanation,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -167,11 +176,11 @@ class AsyncAggregationCursor:
             else:
                 self._operation_context = context
                 self._execution_context = context.expressions
-                self._operation = operation.with_overrides(
-                    context=context,
-                    let=context.expressions,
-                )
-        self._session = session
+                self._operation = operation.bind(context)
+        self._session = resolve_operation_session(
+            self._operation_context,
+            session,
+        )
         self._active_async_iterator: AsyncIterator[Document] | None = None
         self._closed = False
 
@@ -737,10 +746,17 @@ class AsyncAggregationCursor:
     ):
         engine = self._collection._engine
         dialect = getattr(self._collection, "mongodb_dialect", MONGODB_DIALECT_70)
-        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+        from mongoeco.engines.semantic_core import (  # noqa: PLC0415
+            compile_find_semantics_from_operation,
+        )
 
+        bound_operation = (
+            operation
+            if self._operation_context is None
+            else operation.bind(self._operation_context)
+        )
         semantics = compile_find_semantics_from_operation(
-            operation,
+            bound_operation,
             dialect=dialect,
             variables=self._execution_variables(),
         )
@@ -1244,7 +1260,9 @@ class AsyncAggregationCursor:
                 "remainingStages": len(remaining_pipeline),
             }
             operation = self._pushdown_find_operation()
-            from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+            from mongoeco.engines.semantic_core import (  # noqa: PLC0415
+                compile_find_semantics_from_operation,
+            )
 
             semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
             engine_plan = await self._collection._engine.explain_find_semantics(

@@ -1,17 +1,20 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
 import sqlite3
+from typing import TYPE_CHECKING
 
-from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.errors import DuplicateKeyError
 from mongoeco.engines.semantic_core import enforce_collection_document_validation
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
-from mongoeco.types import Document, EngineIndexRecord
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from mongoeco.compat import MongoDialect
+    from mongoeco.types import Document, EngineIndexRecord
 
 
-def put_document(
+def put_document(  # noqa: PLR0913 - SQLite write transaction boundary
     conn: sqlite3.Connection,
     *,
     db_name: str,
@@ -19,6 +22,7 @@ def put_document(
     document: Document,
     overwrite: bool,
     bypass_document_validation: bool,
+    dialect: MongoDialect,
     storage_key: str,
     serialized_document: str,
     purge_expired_documents: Callable[[sqlite3.Connection, str, str], None],
@@ -60,7 +64,7 @@ def put_document(
                 document,
                 options=collection_options,
                 original_document=original_document,
-                dialect=MONGODB_DIALECT_70,
+                dialect=dialect,
             )
 
         ensure_collection_row(conn, db_name, coll_name, options=collection_options)
@@ -116,7 +120,7 @@ def put_document(
         return True
 
 
-def put_documents_bulk(
+def put_documents_bulk(  # noqa: PLR0913 - SQLite batch transaction boundary
     conn: sqlite3.Connection,
     *,
     db_name: str,
@@ -125,6 +129,7 @@ def put_documents_bulk(
     prepared_documents: list[tuple[str, str, list[tuple[str, str, int, str]]]],
     snapshot_indexes: list[EngineIndexRecord],
     bypass_document_validation: bool,
+    dialect: MongoDialect,
     snapshot_options: dict[str, object] | None,
     purge_expired_documents: Callable[[sqlite3.Connection, str, str], None],
     collection_options_or_empty: Callable[[sqlite3.Connection, str, str], dict[str, object]],
@@ -157,7 +162,7 @@ def put_documents_bulk(
                 document,
                 options=collection_options,
                 original_document=None,
-                dialect=MONGODB_DIALECT_70,
+                dialect=dialect,
             )
     indexes = load_indexes(db_name, coll_name)
     search_indexes = load_search_index_rows(db_name, coll_name)

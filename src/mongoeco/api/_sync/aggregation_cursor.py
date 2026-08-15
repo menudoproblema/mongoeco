@@ -1,3 +1,4 @@
+from mongoeco.api._sync._finalization import finalize_best_effort
 from mongoeco.errors import InvalidOperation
 from mongoeco.types import Document
 
@@ -70,9 +71,10 @@ class _AggregationCursorIterator:
         self._cursor._close_active_iterator(self._async_iterable)
 
     def __del__(self):
-        try:
-            self.close()
-        except Exception:
+        if not finalize_best_effort(
+            getattr(self._cursor, "_client", None),
+            self.close,
+        ):
             self._closed = True
 
 
@@ -226,7 +228,9 @@ class AggregationCursor:
             self._closed = True
 
     def __del__(self):
-        try:
-            self.close()
-        except Exception:
+        finalized = finalize_best_effort(
+            getattr(self, "_client", None),
+            self.close,
+        )
+        if not finalized:
             self._closed = True

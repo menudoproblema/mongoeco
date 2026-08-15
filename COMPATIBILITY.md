@@ -140,14 +140,58 @@ consumidor queda por detras del suelo compactado, falla explicitamente en vez
 de continuar con una secuencia incompleta. Tambien se rechaza un checkpoint
 por delante de la ultima secuencia confirmada; tras compactar todas las filas,
 el suelo persistido conserva esa secuencia y evita reiniciar la historia.
+La identidad idempotente de cada fila es `(operation_id, event_index)` y se
+conserva tambien despues de podar el payload. Las operaciones multi-documento
+comparten identidad de operacion, pero asignan un ordinal distinto a cada
+mutacion aplicada. Las identidades se retienen durante la ventana
+`maxEntries`; replays mas antiguos quedan fuera del contrato idempotente para
+evitar un ledger sin limite.
+La identidad conserva el tipo de fila y un SHA-256 del efecto semantico
+serializado, incluido namespace, operacion, clave e imagen. El payload puede
+ser nulo para un hueco sin perder esa identidad. Un replay solo recupera su
+secuencia cuando ambos coinciden; reutilizar
+`(operation_id, event_index)` para un evento o hueco distinto falla de forma
+explicita, tambien tras compactar el payload.
+Un mismo consumidor nunca se entrega en paralelo. Memory aplica exclusion
+local por consumidor; SQLite persiste un lease renovable con owner y
+generacion, de forma que dos instancias no publican simultaneamente ni pueden
+confirmar un checkpoint con ownership obsoleto. Una instancia que encuentra el
+lease ocupado espera y vuelve a drenar desde el checkpoint confirmado, por lo
+que una solicitud concurrente no deja eventos pendientes sin disparador. El
+gate process-local se comparte por ruta canonica y rechaza reentrada por otra
+instancia antes de esperar el lease. El
+esquema de outbox avanza mediante migraciones atomicas y rechaza versiones
+futuras sin intentar un downgrade.
+La entrega es at-least-once: el callback precede al checkpoint, por lo que un
+fallo de heartbeat o de proceso despues del callback puede repetir esa fila.
+En bases de fichero, el control plane usa una conexion independiente y nunca
+confirma una transaccion de datos del caller. Los consumidores locales usan
+owner de proceso y una registration TTL renovable; los journals durables no
+caducan.
 
 Los cursores de coleccion consumen snapshots `STABLE` con ownership y cierre
 explicitos. `MATERIALIZED` y `LIVE` existen como politicas declarables del SPI,
 pero los engines integrados no las usan para scans ordinarios. Un engine
 externo v1 se adapta mediante `LegacyEngineAdapter`; el SPI v2 exige
-`EngineCapabilities`, outcomes tipados, `OperationContext` y snapshots
-explicitos. El adaptador v1 queda deprecado en 4.3.0, emite
+`EngineCapabilities`, outcomes tipados y `OperationContext`. Un engine v2
+puede declarar `explicit_read_snapshots=True` e implementar
+`open_read_snapshot`, o conservar el fallback compatible de 4.3.0 mediante
+`scan_find_semantics`; el adaptador envuelve este ultimo en un snapshot estable
+con la identidad de la operacion. Los flags heredados del SPI v1 no
+sobrescriben capabilities v2 declaradas. El adaptador v1 queda deprecado en
+4.3.0, emite
 `DeprecationWarning` y se retirara en 5.0.0.
+Los engines v2 pueden declarar `batch_inserts=False`; en ese caso MongoEco
+degrada a inserciones individuales sin exigir una primitiva batch inexistente.
+Las lecturas ordinarias rechazan snapshots que no sean `STABLE` o cuyo
+`operation_id` no coincida con el contexto de apertura.
+El cierre de un snapshot tiene un plazo finito configurable; si una fuente
+externa no termina su cleanup, la cancelacion o el shutdown recuperan el
+control y la tarea restante queda supervisada en un registro acotado.
+`SnapshotLifecycle` distingue
+`OPEN`, `CLOSING`, `CLOSED` y `FAILED`; `cleanup_pending` y `close_error`
+permiten observar el resultado tardio sin perder excepciones de background.
+`closed` solo es verdadero en `CLOSED` o `FAILED`.
 
 ### Escrituras seleccionadas y atomicidad local
 

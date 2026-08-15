@@ -8,12 +8,93 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-08-15
+
 ### Fixed
 
-- CI fija Ruff `0.16.2`, registra la version que genero el baseline y rechaza
-  de forma explicita entornos con otra version. El ratchet se reinicia contra
-  `v4.3.0` sin excepciones heredadas y el smoke de PyPI valida ya el artefacto
-  publicado `4.3.0`.
+- Los cursores `find` sync poseen desde su creacion el mismo cursor async y
+  `OperationContext` canonicos. `$$NOW`, filtros, proyecciones, `let` y sesion
+  quedan capturados una vez, y `clone`, `rewind`, `explain` y cierre ya no
+  recompilan una operacion divergente al consumirla. Sus finalizadores delegan
+  el cleanup sin bloquear el lock del runner, evitando el deadlock entre el
+  recolector y el helper sync cuando se abandona un cursor parcialmente
+  consumido.
+- Los documentos BSON internos son profundamente inmutables. Planes, comandos
+  y snapshots no pueden cambiar por aliasing despues de cruzar la frontera del
+  codec, pero la materializacion publica sigue devolviendo `dict` y `list`
+  ordinarios e independientes. La propiedad alcanza tambien `DBRef.id`,
+  `DBRef.extras`, scopes de `bson.Code` y el subtipo de `Binary`.
+- SQLite separa lease, heartbeat, checkpoints y compactacion de la conexion de
+  datos cuando usa un fichero. Un fallo del heartbeat se propaga y evita
+  confirmar el checkpoint; la entrega queda formalizada como at-least-once.
+  Los consumidores locales incorporan identidad de proceso, owner y TTL para
+  evitar colisiones por reutilizacion de `id()` y recuperar registros
+  efimeros tras cierres abruptos. El TTL se renueva mientras vive el engine,
+  no elimina registros con un lease activo y la serializacion/reanudacion se
+  prueba entre procesos, incluido el replay posterior a un crash.
+- El supervisor de cleanup de snapshots mantiene un registro acotado. Un
+  snapshot cuyo cierre supera el timeout permanece `CLOSING`, no `CLOSED`,
+  hasta que el cleanup termina o falla de forma observable. El mismo plazo se
+  aplica al agotamiento natural sin romper el fast path sync no suspendente.
+- Filtros, proyecciones, updates, pipelines y bindings `let`, tambien desde
+  comandos administrativos, cruzan una unica frontera BSON recursiva. Los
+  datetimes aware se convierten a UTC y precision de milisegundos sin mutar la
+  entrada; `findAndModify` y los explains conservan ademas collation y `let`.
+- `update_many` y `delete_many` derivan un ordinal de evento por documento.
+  SQLite conserva la identidad `(operation_id, event_index)` despues de
+  compactar la outbox dentro de la ventana `maxEntries`, evitando perder
+  eventos hermanos, duplicar replays recientes o mantener un ledger sin
+  limite.
+- SPI v2 exige `OperationContext`, una estrategia de lectura declarada e
+  imagenes atomicas en outcomes aplicados. Los engines pueden conservar el
+  fallback `scan_find_semantics` publicado en 4.3.0 o declarar snapshots
+  explicitos. Las capabilities son la unica fuente de verdad, solo se aceptan
+  versiones SPI conocidas y no se sobrescriben mediante flags heredados de
+  SPI v1. Engines sin batch nativo degradan a inserciones individuales con
+  identidad de evento estable.
+- `$merge` publica su outcome para engines externos con
+  `change_delivery='none'`; los estados imposibles de outcomes y secuencias de
+  commit se rechazan en la frontera comun.
+- `ReadSnapshot` cierra fuentes que fallan al crear o avanzar el iterador,
+  preserva la excepcion original, verifica politica e identidad y protege el
+  cleanup ante cancelaciones repetidas sin introducir suspensiones
+  artificiales en la fachada sync.
+- `OperationContext` valida sus tipos, congela bindings anidados y es la unica
+  autoridad de dialecto, collation, `let` y reloj. MongoEco rechaza planes con
+  un contexto divergente y evita renormalizar BSON ya interno.
+- La outbox SQLite verifica tipo y hash del payload en replays idempotentes,
+  incluso despues de compactar la fila viva. Los outcomes de una transaccion
+  abierta pueden diferir la secuencia hasta el commit efectivo.
+- El dispatcher SQLite drena todos los lotes confirmados al iniciar la entrega
+  y nunca invoca consumidores externos bajo el lock del engine. La identidad
+  idempotente usa un hash del efecto completo, tambien para huecos sin payload,
+  y el esquema de outbox se migra de forma versionada, atomica y serializada.
+  Los leases persistentes serializan cada consumidor entre instancias, esperan
+  contencion sin perder solicitudes y protegen checkpoints con una generacion;
+  un gate compartido por ruta rechaza ademas la reentrada entre engines del
+  mismo proceso y no se retira mientras queden owners o waiters activos.
+- La materializacion publica elimina siempre los marcadores privados del codec,
+  incluso en documentos y arrays anidados. Los bindings bloquean tambien
+  operadores in-place como `|=` y los snapshots aplican un plazo de cleanup
+  finito sin dejar excepciones de tareas sin observar.
+- Las operaciones y semanticas ligadas rechazan dialecto, collation o variables
+  que contradigan su `OperationContext`; el adapter valida igualmente llamadas
+  SPI realizadas mediante keywords, sin depender de indices posicionales. El
+  binding reutiliza planes equivalentes y recompila cuando cambia una entrada
+  semantica, sin volver a normalizar valores BSON ya internos.
+- La evaluacion de aggregation usa frames explicitos para `ROOT`, `CURRENT` y
+  bindings lexicos, evitando que etapas recursivas como `$redact` pierdan la
+  raiz al descender. Los snapshots exponen lifecycle y errores de cleanup
+  supervisado incluso cuando el cierre supera su timeout.
+- CI deriva el artefacto publicado y la base del ratchet desde las etiquetas,
+  fija acciones por SHA y usa constraints reproducibles solo durante la
+  instalacion controlada. Wheel y sdist se construyen una vez; una etiqueta
+  `v*` publica exactamente esos artifacts mediante Trusted Publishing despues
+  de superar ambas versiones de Python y verificar etiqueta y version.
+- La suite completa de CI se ejecuta contra el wheel inmutable descargado, con
+  verificacion SHA-256 y de import desde `site-packages`. El ratchet compara
+  diagnosticos Ruff completos entre la etiqueta base y HEAD, por lo que detecta
+  tambien regresiones estructurales reportadas fuera de la linea editada.
 - Las fronteras privadas SQLite con muchos parametros usan argumentos
   keyword-only y la lectura directa recibe un unico `OperationContext`,
   evitando los nuevos `PLR0917`/`RUF036` sin ocultarlos en el baseline.

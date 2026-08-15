@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Literal
 
 
@@ -48,9 +48,9 @@ class EngineCapabilities:
         if (
             not isinstance(self.spi_version, int)
             or isinstance(self.spi_version, bool)
-            or self.spi_version < 1
+            or self.spi_version not in {_SPI_V1, _SPI_V2}
         ):
-            message = 'spi_version must be a positive integer'
+            message = 'spi_version must be one of the supported versions: 1, 2'
             raise ValueError(message)
         if self.change_delivery not in {
             'none',
@@ -109,15 +109,6 @@ def resolve_engine_capabilities(engine: object) -> EngineCapabilities:
     if callable(declared):
         declared = declared()
     if isinstance(declared, EngineCapabilities):
-        namespace = vars(type(engine))
-        if (
-            'capabilities' not in namespace
-            and 'supports_injected_clock' in namespace
-        ):
-            return replace(
-                declared,
-                injected_clock=bool(namespace['supports_injected_clock']),
-            )
         return declared
     return EngineCapabilities(
         spi_version=_SPI_V1,
@@ -145,6 +136,8 @@ def validate_engine_contract(
         required.add('insert_documents')
     if capabilities.explicit_read_snapshots:
         required.add('open_read_snapshot')
+    else:
+        required.add('scan_find_semantics')
     if capabilities.monotonic_commit_sequence:
         required.update(_SEQUENCED_DELIVERY_METHODS)
     missing = sorted(

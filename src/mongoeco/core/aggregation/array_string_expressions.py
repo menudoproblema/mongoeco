@@ -8,6 +8,9 @@ from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation.evaluation_environment import (
+    scoped_environment,
+)
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.sorting import sort_documents
 from mongoeco.errors import OperationFailure
@@ -381,7 +384,7 @@ def evaluate_array_string_expression(
             raise OperationFailure("$map as must be a string")
         result = []
         for item in source:
-            scoped = dict(variables or {})
+            scoped = scoped_environment(variables)
             scoped_item = _copy_if_mutable(item)
             scoped[alias] = scoped_item
             if alias == "this":
@@ -403,7 +406,7 @@ def evaluate_array_string_expression(
             raise OperationFailure("$filter as must be a string")
         result = []
         for item in source:
-            scoped = dict(variables or {})
+            scoped = scoped_environment(variables)
             scoped[alias] = item
             scoped["this"] = item
             if dialect.policy.expression_truthy(evaluate_expression(document, spec["cond"], scoped)):
@@ -419,7 +422,7 @@ def evaluate_array_string_expression(
         source = _require_array(operator, source)
         accumulated = evaluate_expression(document, spec["initialValue"], variables)
         for item in source:
-            scoped = dict(variables or {})
+            scoped = scoped_environment(variables)
             scoped["value"] = accumulated
             scoped["this"] = item
             accumulated = evaluate_expression(document, spec["in"], scoped)

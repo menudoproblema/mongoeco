@@ -4,10 +4,14 @@ from collections.abc import Callable, Iterable
 from copy import deepcopy
 from dataclasses import dataclass
 import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.collation import CollationSpec
+from mongoeco.core.aggregation.evaluation_environment import (
+    EvaluationEnvironment,
+    environment_for_document,
+    scoped_environment,
+)
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.geo import parse_geo_geometry, parse_geo_point, planar_distance_to_geometry
 from mongoeco.core.sorting import sort_documents, sort_documents_window
@@ -39,7 +43,6 @@ from mongoeco.core.aggregation.planning import (
     _require_sort,
     _require_stage,
 )
-from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.aggregation.runtime import (
     AggregationStageContext,
     _apply_unwind,
@@ -55,6 +58,10 @@ from mongoeco.core.aggregation.transform_stages import (
     _apply_sample,
     _apply_unset,
 )
+
+if TYPE_CHECKING:
+    from mongoeco.core.aggregation.spill import AggregationSpillPolicy
+    from mongoeco.core.collation import CollationSpec
 
 
 type AggregationStageHandler = Callable[[list[Document], object, AggregationStageContext], list[Document]]
@@ -606,11 +613,11 @@ def _stage_list_sessions(
 def _evaluate_redact_action(
     document: Document,
     spec: object,
-    variables: dict[str, Any] | None,
+    variables: EvaluationEnvironment,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> str:
-    redact_variables = dict(variables or {})
+    redact_variables = scoped_environment(variables)
     redact_variables.update(_REDACT_SYSTEM_VARIABLES)
     action = evaluate_expression(document, spec, redact_variables, dialect=dialect)
     if action in {_REDACT_KEEP, _REDACT_PRUNE, _REDACT_DESCEND}:
@@ -621,14 +628,19 @@ def _evaluate_redact_action(
 def _redact_document(
     document: Document,
     spec: object,
-    variables: dict[str, Any] | None,
+    variables: dict[str, Any] | EvaluationEnvironment | None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> Document | object:
+    environment = (
+        variables
+        if isinstance(variables, EvaluationEnvironment) and variables.is_bound
+        else environment_for_document(document, variables)
+    )
     action = _evaluate_redact_action(
         document,
         spec,
-        variables,
+        environment,
         dialect=dialect,
     )
     if action == _REDACT_KEEP:
@@ -640,7 +652,7 @@ def _redact_document(
         redacted_value = _redact_descended_value(
             value,
             spec,
-            variables,
+            environment,
             dialect=dialect,
         )
         if redacted_value is _REDACT_PRUNED:
@@ -652,7 +664,7 @@ def _redact_document(
 def _redact_descended_value(
     value: object,
     spec: object,
-    variables: dict[str, Any] | None,
+    variables: EvaluationEnvironment,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> object:
@@ -660,7 +672,7 @@ def _redact_descended_value(
         return _redact_document(
             value,
             spec,
-            variables,
+            variables.with_current(value),
             dialect=dialect,
         )
     if isinstance(value, list):

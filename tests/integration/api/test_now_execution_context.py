@@ -5,6 +5,7 @@ from bson.timestamp import Timestamp
 
 from mongoeco import AsyncMongoClient, InsertOne, UpdateOne
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.capabilities import EngineCapabilities
 from mongoeco.errors import OperationFailure
 from tests.support import ENGINE_FACTORIES, open_client
 
@@ -83,7 +84,10 @@ class NowExecutionContextIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_injected_clock_rejects_engines_without_the_capability(self):
         class ExternalEngine(MemoryEngine):
-            supports_injected_clock = False
+            capabilities = EngineCapabilities(
+                injected_clock=False,
+                change_delivery='commit-sequence',
+            )
 
         with self.assertRaisesRegex(ValueError, 'supports injected clocks'):
             AsyncMongoClient(ExternalEngine(), now_factory=lambda: datetime.now(UTC))

@@ -4,12 +4,47 @@ import unittest
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async._collection_runtime import CollectionRuntimeCoordinator
-from mongoeco.engines.results import DeleteOutcome, MutationOutcome
+from mongoeco.engines.capabilities import EngineCapabilities
+from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.results import (
+    DeleteOutcome,
+    MergeOutcome,
+    MutationOutcome,
+)
+from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
 from mongoeco.session import ClientSession
 from mongoeco.types import DeleteResult, UpdateResult
 
 
 class CollectionRuntimeCoordinatorTests(unittest.TestCase):
+    def test_v2_document_lookup_does_not_leak_legacy_dialect_keyword(self):
+        class StrictGetEngine(MemoryEngine):
+            async def get_document(
+                self,
+                db_name,
+                coll_name,
+                doc_id,
+                *,
+                projection=None,
+                operation_context,
+            ):
+                self.lookup = (
+                    db_name,
+                    coll_name,
+                    doc_id,
+                    projection,
+                    operation_context,
+                )
+                return {'_id': doc_id}
+
+        engine = StrictGetEngine()
+        collection = AsyncCollection(engine, 'db', 'coll')
+
+        result = asyncio.run(collection._runtime.document_by_id('value'))
+
+        assert result == {'_id': 'value'}
+        assert engine.lookup[:4] == ('db', 'coll', 'value', None)
+
     def test_document_by_id_crosses_adapter_with_operation_context(self):
         class EngineStub:
             async def get_document(self, *args, **kwargs):
@@ -304,3 +339,72 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         self.assertEqual(events[0], 'gap')
         self.assertEqual(events[1]['operation_type'], 'insert')
         self.assertEqual(events[2]['operation_type'], 'delete')
+
+    def test_merge_publishes_outcome_for_v2_engine_without_native_delivery(
+        self,
+    ):
+        class EmptySource:
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                raise StopAsyncIteration
+
+        class Engine:
+            capabilities = EngineCapabilities(
+                batch_inserts=False,
+                explicit_read_snapshots=True,
+                change_delivery='none',
+            )
+
+            async def insert_document(self, *_args, **_kwargs):
+                message = 'not used'
+                raise AssertionError(message)
+
+            async def get_document(self, *_args, **_kwargs):
+                return None
+
+            async def count_find_semantics(self, *_args, **_kwargs):
+                return 0
+
+            async def update_with_operation(self, *_args, **_kwargs):
+                return MutationOutcome(UpdateResult(0, 0))
+
+            async def delete_with_operation(self, *_args, **_kwargs):
+                return DeleteOutcome(DeleteResult(0))
+
+            async def merge_document(self, *_args, **_kwargs):
+                return MergeOutcome(
+                    matched=False,
+                    applied=True,
+                    operation_type='insert',
+                    after_document={'_id': 'merged', 'value': 1},
+                )
+
+            def open_read_snapshot(self, *_args, **_kwargs):
+                return ReadSnapshot(
+                    EmptySource(),
+                    policy=SnapshotPolicy.STABLE,
+                )
+
+        events = []
+        hub = SimpleNamespace(
+            should_publish_events=lambda: True,
+            publish=lambda **payload: events.append(payload),
+        )
+        collection = AsyncCollection(Engine(), 'db', 'coll', change_hub=hub)
+        operation_context = collection._new_operation_context()
+
+        outcome = asyncio.run(
+            collection._runtime.engine_merge_document(
+                {'_id': 'merged', 'value': 1},
+                when_matched='merge',
+                when_not_matched='insert',
+                operation_context=operation_context,
+            ),
+        )
+
+        assert outcome.applied
+        assert len(events) == 1
+        assert events[0]['operation_type'] == 'insert'
+        assert events[0]['document_key'] == {'_id': 'merged'}

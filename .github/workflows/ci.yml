@@ -4,27 +4,41 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
   pull_request:
 
 jobs:
   minimal-imports:
     name: Minimal imports (Python 3.13)
     runs-on: ubuntu-latest
+    env:
+      MONGOECO_TEST_INSTALLED_ARTIFACT: "1"
+    needs:
+      - build
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
 
-      - name: Install minimal test dependencies
+      - name: Download release distributions
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: release-distributions
+          path: dist
+
+      - name: Install wheel without optional wire dependencies
+        env:
+          PIP_CONSTRAINT: ${{ github.workspace }}/requirements/ci-constraints.txt
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e .[dev]
+          WHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"
+          python -m pip install "$WHEEL"
 
       - name: Run clean-import smoke tests without wire extras
         run: |
@@ -34,23 +48,75 @@ jobs:
             tests.unit.test_public_exports
 
   released-artifact-contract:
-    name: Released artifact contract (mongoeco 4.3.0)
+    name: Latest released artifact contract
+    if: github.ref_type != 'tag'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.14"
 
       - name: Validate published PyPI artifact contract
-        run: python scripts/smoke_pypi_contract.py --version 4.3.0
+        run: |
+          VERSION="$(git describe --tags --abbrev=0 --match 'v[0-9]*')"
+          python scripts/smoke_pypi_contract.py --version "${VERSION#v}"
+
+  build:
+    name: Build release artifacts once
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+
+      - name: Install release tooling
+        env:
+          PIP_CONSTRAINT: ${{ github.workspace }}/requirements/ci-constraints.txt
+        run: |
+          python -m pip install build setuptools twine wheel
+
+      - name: Build and verify distributions
+        env:
+          PIP_CONSTRAINT: ${{ github.workspace }}/requirements/ci-constraints.txt
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
+          python -m build --no-isolation --sdist --wheel
+          python -m twine check dist/*
+          sha256sum dist/* > SHA256SUMS
+
+      - name: Upload immutable distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-distributions
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload distribution manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-distribution-manifest
+          path: SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7
 
   test:
     name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    env:
+      MONGOECO_TEST_INSTALLED_ARTIFACT: "1"
+    needs:
+      - build
     strategy:
       fail-fast: false
       matrix:
@@ -59,36 +125,59 @@ jobs:
           - "3.14"
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install project
+      - name: Download release distributions
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: release-distributions
+          path: dist
+
+      - name: Download distribution manifest
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: release-distribution-manifest
+          path: artifact-manifest
+
+      - name: Install tested wheel and test tooling
+        env:
+          PIP_CONSTRAINT: ${{ github.workspace }}/requirements/ci-constraints.txt
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e .[dev,wire]
+          sha256sum -c artifact-manifest/SHA256SUMS
+          WHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"
+          python -m pip install coverage pytest pytest-cov ruff
+          python -m pip install "${WHEEL}[wire]"
           python -m pip install -r benchmarks/requirements.txt
+
+      - name: Verify tests import the immutable wheel
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import mongoeco
+
+          module_path = Path(mongoeco.__file__).resolve()
+          assert 'site-packages' in module_path.parts, module_path
+          print(module_path)
+          PY
 
       - name: Run unit and integration tests
         run: python -m unittest discover -s tests -p 'test*.py'
 
       - name: Enforce changed-line lint ratchet
-        run: python scripts/check_lint_ratchet.py --base-ref v4.3.0
+        run: |
+          BASE_REF="$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^)"
+          python scripts/check_lint_ratchet.py --base-ref "$BASE_REF"
 
       - name: Enforce source coverage floor
         if: matrix.python-version == '3.14'
-        run: python -m pytest --cov=src/mongoeco --cov-fail-under=99 --cov-report=term -q
-
-      - name: Build distributions
-        run: python -m build --sdist --wheel
-
-      - name: Verify distribution metadata
-        run: python -m twine check dist/*
+        run: python -m pytest --cov=mongoeco --cov-fail-under=99 --cov-report=term -q
 
       - name: Regenerate compat snapshots
         run: python scripts/update_compat_snapshots.py
@@ -125,3 +214,40 @@ jobs:
 
       - name: Smoke installed sdist
         run: python scripts/smoke_installed_wheel.py --sdist
+
+  publish:
+    name: Publish tagged release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - build
+      - minimal-imports
+      - test
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/mongoeco/
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+
+      - name: Verify tag matches package version
+        run: |
+          VERSION="$(python -c 'import runpy; print(runpy.run_path("src/mongoeco/_version.py")["__version__"])')"
+          test "$GITHUB_REF_NAME" = "v$VERSION"
+
+      - name: Download tested distributions
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: release-distributions
+          path: dist
+
+      - name: Publish distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1

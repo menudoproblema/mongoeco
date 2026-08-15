@@ -1,22 +1,22 @@
-from mongoeco.api.argument_validation import (
-    HintSpec,
-    normalize_sort_spec as _normalize_sort_spec,
-    validate_batch_size as _validate_batch_size,
-    validate_hint_spec as _validate_hint_spec,
-    validate_max_time_ms as _validate_max_time_ms,
-)
 from mongoeco.api._async.cursor import (
-    MONGODB_DIALECT_70,
     _DEFAULT_LOCAL_PREFETCH_SIZE,
-    _find_explain_cxp_projection,
-    _operation_issue_message,
     _resolve_planning_mode,
-    _serialize_explanation,
 )
-from mongoeco.api.operations import FindOperation, compile_find_operation
+from mongoeco.api._sync._finalization import finalize_best_effort
+from mongoeco.api.argument_validation import HintSpec
+from mongoeco.api.operations import FindOperation
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
-from mongoeco.types import CollationDocument, Document, Filter, Projection, QueryPlanExplanation, SortSpec
+from mongoeco.types import (
+    CollationDocument,
+    Document,
+    Filter,
+    Projection,
+    SortSpec,
+)
+
+
+_CURSOR_UNSET = object()
 
 
 class _CursorIterator:
@@ -72,9 +72,10 @@ class _CursorIterator:
         self._cursor._close_active_iterator(self._async_iterable)
 
     def __del__(self):
-        try:
-            self.close()
-        except Exception:
+        if not finalize_best_effort(
+            getattr(self._cursor, "_client", None),
+            self.close,
+        ):
             self._closed = True
 
 
@@ -84,9 +85,9 @@ class Cursor:
     def __init__(
         self,
         client,
-        async_collection,
-        filter_spec: Filter,
-        projection: Projection | None,
+        async_cursor_or_collection,
+        filter_spec: Filter | object = _CURSOR_UNSET,
+        projection: Projection | None = None,
         *,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
@@ -100,19 +101,39 @@ class Cursor:
         session: ClientSession | None = None,
     ):
         self._client = client
-        self._async_collection = async_collection
-        self._filter_spec = filter_spec
-        self._projection = projection
-        self._collation = collation
-        self._sort = sort
-        self._skip = skip
-        self._limit = limit
-        self._hint = hint
-        self._comment = comment
-        self._max_time_ms = max_time_ms
-        self._batch_size = batch_size
-        self._let = let
-        self._session = session
+        if filter_spec is _CURSOR_UNSET:
+            self._async_cursor = async_cursor_or_collection
+            self._async_collection = self._async_cursor.collection
+            self._sync_state_from_async_cursor()
+        else:
+            self._async_collection = async_cursor_or_collection
+            self._filter_spec = filter_spec
+            self._projection = projection
+            self._collation = collation
+            self._sort = sort
+            self._skip = skip
+            self._limit = limit
+            self._hint = hint
+            self._comment = comment
+            self._max_time_ms = max_time_ms
+            self._batch_size = batch_size
+            self._let = let
+            self._session = session
+            self._async_cursor = self._async_collection.find(
+                filter_spec,
+                projection,
+                collation=collation,
+                sort=sort,
+                skip=skip,
+                limit=limit,
+                hint=hint,
+                comment=comment,
+                max_time_ms=max_time_ms,
+                batch_size=batch_size,
+                let=let,
+                session=session,
+            )
+            self._sync_state_from_async_cursor(use_existing_defaults=True)
         self._cache: list[Document] | None = None
         self._started = False
         self._closed = False
@@ -120,6 +141,36 @@ class Cursor:
         self._exhausted = False
         self._sync_buffer: list[Document] = []
         self._sync_buffer_index = 0
+
+    def _sync_state_from_async_cursor(
+        self,
+        *,
+        use_existing_defaults: bool = False,
+    ) -> None:
+        for name in (
+            'filter_spec',
+            'projection',
+            'collation',
+            'sort',
+            'skip',
+            'limit',
+            'hint',
+            'comment',
+            'max_time_ms',
+            'batch_size',
+            'let',
+            'session',
+        ):
+            attribute = f'_{name}'
+            if hasattr(self._async_cursor, attribute):
+                value = getattr(self._async_cursor, attribute)
+                setattr(self, attribute, value)
+            elif not use_existing_defaults:
+                message = (
+                    'async cursor is missing required state: '
+                    f'{attribute}'
+                )
+                raise TypeError(message)
 
     def _ensure_open(self) -> None:
         if self._closed:
@@ -142,55 +193,50 @@ class Cursor:
         direction: int | None = None,
     ) -> "Cursor":
         self._ensure_mutable()
-        sort = (
-            [(key_or_list, 1 if direction is None else direction)]
-            if isinstance(key_or_list, str)
-            else key_or_list
-        )
-        self._sort = _normalize_sort_spec(sort)
+        self._async_cursor.sort(key_or_list, direction)
+        self._sync_state_from_async_cursor()
         self._invalidate()
         return self
 
     def hint(self, hint: HintSpec) -> "Cursor":
         self._ensure_mutable()
-        _validate_hint_spec(hint)
-        self._hint = hint if isinstance(hint, str) else _normalize_sort_spec(hint)
+        self._async_cursor.hint(hint)
+        self._sync_state_from_async_cursor()
         self._invalidate()
         return self
 
     def comment(self, comment: object) -> "Cursor":
         self._ensure_mutable()
-        self._comment = comment
+        self._async_cursor.comment(comment)
+        self._sync_state_from_async_cursor()
         self._invalidate()
         return self
 
     def max_time_ms(self, max_time_ms: int) -> "Cursor":
         self._ensure_mutable()
-        _validate_max_time_ms(max_time_ms)
-        self._max_time_ms = max_time_ms
+        self._async_cursor.max_time_ms(max_time_ms)
+        self._sync_state_from_async_cursor()
         self._invalidate()
         return self
 
     def batch_size(self, batch_size: int) -> "Cursor":
         self._ensure_mutable()
-        _validate_batch_size(batch_size)
-        self._batch_size = batch_size
+        self._async_cursor.batch_size(batch_size)
+        self._sync_state_from_async_cursor()
         self._invalidate()
         return self
 
     def skip(self, skip: int) -> "Cursor":
         self._ensure_mutable()
-        if skip < 0:
-            raise ValueError("skip must be >= 0")
-        self._skip = skip
+        self._async_cursor.skip(skip)
+        self._sync_state_from_async_cursor()
         self._invalidate()
         return self
 
     def limit(self, limit: int | None) -> "Cursor":
         self._ensure_mutable()
-        if limit is not None and limit < 0:
-            raise ValueError("limit must be >= 0")
-        self._limit = limit
+        self._async_cursor.limit(limit)
+        self._sync_state_from_async_cursor()
         self._invalidate()
         return self
 
@@ -205,22 +251,7 @@ class Cursor:
                 self._cache = [] if first is None else [first]
                 self._exhausted = True
                 return self._cache
-            self._cache = self._client._run(
-                self._async_collection.find(
-                    self._filter_spec,
-                    self._projection,
-                    collation=self._collation,
-                    sort=self._sort,
-                    skip=self._skip,
-                    limit=self._limit,
-                    hint=self._hint,
-                    comment=self._comment,
-                    max_time_ms=self._max_time_ms,
-                    batch_size=self._batch_size,
-                    let=self._let,
-                    session=self._session,
-                ).to_list()
-            )
+            self._cache = self._client._run(self._async_cursor.to_list())
             self._exhausted = True
         return self._cache
 
@@ -249,21 +280,7 @@ class Cursor:
         self._started = True
         async_iterable = self._active_async_iterable
         if async_iterable is None:
-            async_cursor = self._async_collection.find(
-                self._filter_spec,
-                self._projection,
-                collation=self._collation,
-                sort=self._sort,
-                skip=self._skip,
-                limit=self._limit,
-                hint=self._hint,
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
-                batch_size=self._batch_size,
-                let=self._let,
-                session=self._session,
-            )
-            async_iterable = async_cursor.__aiter__()
+            async_iterable = self._async_cursor.__aiter__()
             self._active_async_iterable = async_iterable
 
         return _CursorIterator(self, async_iterable)
@@ -295,20 +312,7 @@ class Cursor:
         self._started = True
         active = self._active_async_iterable
         if active is None:
-            active = self._async_collection.find(
-                self._filter_spec,
-                self._projection,
-                collation=self._collation,
-                sort=self._sort,
-                skip=self._skip,
-                limit=self._limit,
-                hint=self._hint,
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
-                batch_size=self._batch_size,
-                let=self._let,
-                session=self._session,
-            ).__aiter__()
+            active = self._async_cursor.__aiter__()
             self._active_async_iterable = active
         try:
             return self._client._run(active.__anext__())
@@ -338,49 +342,23 @@ class Cursor:
                     pass
                 raise
         self._started = True
-        return self._client._run(
-            self._async_collection.find(
-                self._filter_spec,
-                self._projection,
-                collation=self._collation,
-                sort=self._sort,
-                skip=self._skip,
-                limit=self._limit,
-                hint=self._hint,
-                comment=self._comment,
-                max_time_ms=self._max_time_ms,
-                batch_size=self._batch_size,
-                session=self._session,
-            ).first()
-        )
+        return self._client._run(self._async_cursor.first())
 
     def rewind(self) -> "Cursor":
         self._ensure_open()
         active = self._active_async_iterable
         if active is not None:
             self._close_active_iterator(active)
+        rewind = getattr(self._async_cursor, 'rewind', None)
+        if callable(rewind):
+            rewind()
         self._started = False
         self._exhausted = False
         self._cache = None
         return self
 
     def clone(self) -> "Cursor":
-        return type(self)(
-            self._client,
-            self._async_collection,
-            self._filter_spec,
-            self._projection,
-            collation=self._collation,
-            sort=self._sort,
-            skip=self._skip,
-            limit=self._limit,
-            hint=self._hint,
-            comment=self._comment,
-            max_time_ms=self._max_time_ms,
-            batch_size=self._batch_size,
-            let=self._let,
-            session=self._session,
-        )
+        return type(self)(self._client, self._async_cursor.clone())
 
     @property
     def alive(self) -> bool:
@@ -402,59 +380,11 @@ class Cursor:
         )
 
     def _as_operation(self) -> FindOperation:
-        return compile_find_operation(
-            self._filter_spec,
-            projection=self._projection,
-            collation=self._collation,
-            sort=self._sort,
-            skip=self._skip,
-            limit=self._limit,
-            hint=self._hint,
-            comment=self._comment,
-            max_time_ms=self._max_time_ms,
-            batch_size=self._batch_size,
-            variables=self._let,
-            dialect=getattr(self._async_collection, "mongodb_dialect", MONGODB_DIALECT_70),
-            planning_mode=_resolve_planning_mode(self._async_collection),
-        )
+        return self._async_cursor._as_operation()
 
     def explain(self) -> dict[str, object]:
         self._ensure_open()
-        operation = self._as_operation()
-        if operation.planning_issues:
-            explanation = QueryPlanExplanation(
-                engine="planner",
-                strategy="deferred",
-                plan="planning-issues",
-                sort=operation.sort,
-                skip=operation.skip,
-                limit=operation.limit,
-                hint=operation.hint,
-                hinted_index=None,
-                comment=operation.comment,
-                max_time_ms=operation.max_time_ms,
-                details={"reason": _operation_issue_message(operation)},
-                planning_mode=operation.planning_mode,
-                planning_issues=operation.planning_issues,
-            ).to_document()
-            explanation['cxp'] = _find_explain_cxp_projection(self._filter_spec)
-            return explanation
-        dialect = getattr(self._async_collection, "mongodb_dialect", None)
-        from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
-
-        semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
-        explanation = _serialize_explanation(
-            self._client._run(
-                self._async_collection._engine.explain_find_semantics(
-                    self._async_collection._db_name,
-                    self._async_collection._collection_name,
-                    semantics,
-                    context=self._session,
-                )
-            )
-        )
-        explanation['cxp'] = _find_explain_cxp_projection(self._filter_spec)
-        return explanation
+        return self._client._run(self._async_cursor.explain())
 
     def close(self) -> None:
         if self._closed:
@@ -465,13 +395,25 @@ class Cursor:
                 close = getattr(active, "aclose", None)
                 if callable(close):
                     self._client._run(close())
+            close_cursor = getattr(self._async_cursor, 'close', None)
+            if callable(close_cursor):
+                awaitable = close_cursor()
+                try:
+                    self._client._run(awaitable)
+                except BaseException:
+                    close_awaitable = getattr(awaitable, 'close', None)
+                    if callable(close_awaitable):
+                        close_awaitable()
+                    raise
         finally:
             self._active_async_iterable = None
             self._cache = None
             self._closed = True
 
     def __del__(self):
-        try:
-            self.close()
-        except Exception:
+        finalized = finalize_best_effort(
+            getattr(self, "_client", None),
+            self.close,
+        )
+        if not finalized:
             self._closed = True

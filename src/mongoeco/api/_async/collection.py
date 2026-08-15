@@ -3,10 +3,14 @@ from __future__ import annotations
 import re
 import time
 
-from collections.abc import AsyncIterable, Callable, Iterable, Mapping, Sequence
+from collections.abc import (
+    AsyncIterable,
+    Callable,
+    Iterable,
+    Mapping,
+)
 from copy import deepcopy
 from datetime import datetime
-
 from mongoeco.api._async import (
     _collection_indexing,
     _collection_modify,
@@ -14,8 +18,8 @@ from mongoeco.api._async import (
 )
 from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async._collection_bulk import (
-    BulkWritePreparationContext as _BulkWriteContext,
-    PreparedBulkWriteRequest as _PreparedBulkWriteRequest,
+    BulkWritePreparationContext as _BulkWriteContext,  # noqa: F401
+    PreparedBulkWriteRequest as _PreparedBulkWriteRequest,  # noqa: F401
     execute_bulk_write,
     normalize_bulk_write_request,
 )
@@ -28,9 +32,9 @@ from mongoeco.api._async._collection_watch import (
     open_collection_change_stream,
 )
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
-from mongoeco.api._async.cursor import AsyncCursor
+from mongoeco.api._async.cursor import AsyncCursor  # noqa: TC001
 from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
-from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
+from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor  # noqa: TC001
 from mongoeco.api.argument_validation import (
     HintSpec,
     normalize_sort_spec as _normalize_sort_spec,
@@ -42,26 +46,21 @@ from mongoeco.api.operations import (
     AggregateOperation,
     FindOperation,
     UpdateOperation,
+    _normalize_array_filters,
     compile_aggregate_operation,
     compile_find_operation,
 )
-from mongoeco.api.operations import _normalize_array_filters
 from mongoeco.api.public_api import (
     ARG_UNSET,
-    COLLECTION_DELETE_MANY_SPEC,
-    COLLECTION_DELETE_ONE_SPEC,
-    COLLECTION_FIND_ONE_AND_DELETE_SPEC,
-    COLLECTION_FIND_ONE_AND_REPLACE_SPEC,
-    COLLECTION_FIND_ONE_AND_UPDATE_SPEC,
     COLLECTION_FIND_RAW_BATCHES_SPEC,
     COLLECTION_FIND_SPEC,
-    COLLECTION_REPLACE_ONE_SPEC,
-    COLLECTION_UPDATE_MANY_SPEC,
-    COLLECTION_UPDATE_ONE_SPEC,
     normalize_aggregate_operation_arguments,
     normalize_public_operation_arguments,
 )
-from mongoeco.change_streams import AsyncChangeStreamCursor, ChangeStreamHub
+from mongoeco.change_streams import (  # noqa: TC001
+    AsyncChangeStreamCursor,
+    ChangeStreamHub,
+)
 from mongoeco.compat import (
     MongoDialect,
     MongoDialectResolution,
@@ -82,14 +81,13 @@ from mongoeco.core.expression_context import (
 )
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import assert_valid_root_document_id
-from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.operation_context import (
     ChangeOperationType,
     ChangePublicationPolicy,
     OperationContext,
 )
 from mongoeco.core.projections import apply_projection
-from mongoeco.core.query_plan import QueryNode
+from mongoeco.core.query_plan import QueryNode  # noqa: TC001
 from mongoeco.core.validation import (
     is_document,
     is_filter,
@@ -97,21 +95,19 @@ from mongoeco.core.validation import (
     is_update,
 )
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.engines.results import InsertOutcome
 from mongoeco.engines.results import (
-    EngineDeleteResult,
-    EngineUpdateResult,
+    DeleteOutcome,
     FindAndModifyOutcome,
+    InsertOutcome,
+    MutationOutcome,
 )
 from mongoeco.errors import DuplicateKeyError, OperationFailure
-from mongoeco.session import ClientSession
+from mongoeco.session import ClientSession  # noqa: TC001
 from mongoeco.types import (
     ArrayFilters,
     BulkWriteResult,
     CodecOptions,
     CollationDocument,
-    DeleteMany,
-    DeleteOne,
     DeleteResult,
     Document,
     DocumentId,
@@ -120,7 +116,6 @@ from mongoeco.types import (
     IndexKeySpec,
     IndexModel,
     InsertManyResult,
-    InsertOne,
     InsertOneResult,
     ObjectId,
     PlanningMode,
@@ -129,12 +124,9 @@ from mongoeco.types import (
     ReadPreference,
     ReplaceOne,
     ReturnDocument,
-    SearchIndexDefinition,
-    SearchIndexDocument,
     SearchIndexModel,
     SortSpec,
     Update,
-    UpdateMany,
     UpdateOne,
     UpdateResult,
     WriteConcern,
@@ -717,7 +709,7 @@ class AsyncCollection:
         bypass_document_validation: bool = False,
         replacement_document: Document | None = None,
         publish_operation_type: str | None = None,
-    ) -> EngineUpdateResult:
+    ) -> MutationOutcome:
         return await self._runtime.engine_update_with_operation(
             operation,
             upsert=upsert,
@@ -747,7 +739,7 @@ class AsyncCollection:
         selector_filter: Filter | None = None,
         session: ClientSession | None = None,
         publish_change_event: bool = False,
-    ) -> EngineDeleteResult:
+    ) -> DeleteOutcome:
         return await self._runtime.engine_delete_with_operation(
             operation,
             selector_filter=selector_filter,

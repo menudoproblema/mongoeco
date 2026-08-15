@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from mongoeco.api.argument_validation import HintSpec
 from mongoeco.api.operations import (
     UpdateOperation,
     compile_find_selection_from_update_operation,
@@ -20,16 +19,18 @@ from mongoeco.api.public_api import (
     normalize_public_operation_arguments,
 )
 from mongoeco.core.expression_context import ExpressionExecutionContext
-from mongoeco.core.operation_context import ChangeOperationType, ChangePublicationPolicy
+from mongoeco.core.operation_context import (
+    ChangeOperationType,
+    ChangePublicationPolicy,
+)
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.upserts import seed_upsert_document
 from mongoeco.engines.results import (
-    EngineDeleteResult,
-    EngineUpdateResult,
+    DeleteOutcome,
     FindAndModifyOutcome,
+    MutationOutcome,
 )
-from mongoeco.session import ClientSession
 from mongoeco.types import (
     ArrayFilters,
     CollationDocument,
@@ -44,8 +45,11 @@ from mongoeco.types import (
     UpdateResult,
 )
 
+
 if TYPE_CHECKING:
     from mongoeco.api._async.collection import AsyncCollection
+    from mongoeco.api.argument_validation import HintSpec
+    from mongoeco.session import ClientSession
 
 
 def _bind_execution_context(
@@ -78,10 +82,7 @@ def _bind_execution_context(
         ),
         change_operation_type=change_operation_type,
     )
-    return operation.with_overrides(
-        let=context.expressions,
-        context=context,
-    )
+    return operation.bind(context)
 
 
 def _selected_document_id(document: Document) -> DocumentId:
@@ -95,10 +96,18 @@ async def _delete_selected_document(
     document: Document,
     *,
     selector_operation: UpdateOperation,
+    change_event_index: int,
     session: ClientSession | None,
 ) -> bool:
     document_id = _selected_document_id(document)
     identity_filter = {'_id': document_id}
+    operation_context = selector_operation.context
+    if operation_context is None:
+        message = 'delete operation is missing OperationContext'
+        raise TypeError(message)
+    item_context = operation_context.derive(
+        change_event_index=change_event_index,
+    )
     identity_operation = compile_update_operation(
         identity_filter,
         collation=selector_operation.collation,
@@ -109,14 +118,14 @@ async def _delete_selected_document(
             dialect=collection._mongodb_dialect,
         ),
         planning_mode=collection._planning_mode,
-    ).with_overrides(context=selector_operation.context)
+    ).bind(item_context)
     result = await collection._engine_delete_with_operation(
         identity_operation,
         selector_filter=selector_operation.filter_spec,
         session=session,
         publish_change_event=True,
     )
-    if not isinstance(result, EngineDeleteResult):
+    if not isinstance(result, DeleteOutcome):
         raise TypeError('engine did not return the deleted document')
     return result.result.deleted_count == 1
 
@@ -193,7 +202,7 @@ async def update_one(
         bypass_document_validation=bypass_document_validation,
         publish_operation_type='update',
     )
-    if not isinstance(captured, EngineUpdateResult):
+    if not isinstance(captured, MutationOutcome):
         raise TypeError('engine did not return captured update documents')
     result = captured.result
     collection._record_operation_metadata(
@@ -280,7 +289,7 @@ async def update_many(
                 bypass_document_validation=bypass_document_validation,
                 publish_operation_type='update',
             )
-            if not isinstance(captured, EngineUpdateResult):
+            if not isinstance(captured, MutationOutcome):
                 raise TypeError(
                     'engine did not return captured update documents'
                 )
@@ -295,17 +304,26 @@ async def update_many(
 
     matched_count = 0
     modified_count = 0
-    for matched in matched_documents:
+    for event_index, matched in enumerate(matched_documents):
         matched_id = _selected_document_id(matched)
         identity_filter = {'_id': matched_id}
         identity_plan = compile_filter(
             identity_filter, dialect=collection._mongodb_dialect
+        )
+        operation_context = operation.context
+        if operation_context is None:
+            message = 'update operation is missing OperationContext'
+            raise TypeError(message)
+        item_context = operation_context.derive(
+            change_event_index=event_index,
         )
         captured = await collection._engine_update_with_operation(
             operation.with_overrides(
                 filter_spec=identity_filter,
                 plan=identity_plan,
                 hint=None,
+                context=item_context,
+                let=item_context.expressions,
             ),
             upsert=False,
             selector_filter=operation.filter_spec,
@@ -313,7 +331,7 @@ async def update_many(
             bypass_document_validation=bypass_document_validation,
             publish_operation_type='update',
         )
-        if not isinstance(captured, EngineUpdateResult):
+        if not isinstance(captured, MutationOutcome):
             raise TypeError('engine did not return captured update documents')
         result = captured.result
         matched_count += result.matched_count
@@ -402,7 +420,7 @@ async def replace_one(
         replacement_document=replacement,
         publish_operation_type='replace',
     )
-    if not isinstance(captured, EngineUpdateResult):
+    if not isinstance(captured, MutationOutcome):
         raise TypeError('engine did not return captured replacement documents')
     result = captured.result
     collection._record_operation_metadata(
@@ -496,7 +514,7 @@ async def find_one_and_update_outcome(
         bypass_document_validation=bypass_document_validation,
         publish_operation_type='update',
     )
-    if not isinstance(captured, EngineUpdateResult):
+    if not isinstance(captured, MutationOutcome):
         raise TypeError('engine did not return captured update documents')
     selected = (
         captured.before_document
@@ -600,7 +618,7 @@ async def find_one_and_replace_outcome(
         replacement_document=replacement,
         publish_operation_type='replace',
     )
-    if not isinstance(captured, EngineUpdateResult):
+    if not isinstance(captured, MutationOutcome):
         raise TypeError('engine did not return captured replacement documents')
     selected = (
         captured.before_document
@@ -676,7 +694,7 @@ async def find_one_and_delete(
         session=session,
         publish_change_event=True,
     )
-    if not isinstance(captured, EngineDeleteResult):
+    if not isinstance(captured, DeleteOutcome):
         raise TypeError('engine did not return the deleted document')
     if captured.result.deleted_count == 0 or captured.deleted_document is None:
         return None
@@ -734,7 +752,7 @@ async def delete_one(
         session=session,
         publish_change_event=True,
     )
-    if not isinstance(captured, EngineDeleteResult):
+    if not isinstance(captured, DeleteOutcome):
         raise TypeError('engine did not return the deleted document')
     result = captured.result
     collection._record_operation_metadata(
@@ -794,11 +812,12 @@ async def delete_many(
         apply_codec_options=False,
     ).to_list()
     deleted_count = 0
-    for matched in matched_documents:
+    for event_index, matched in enumerate(matched_documents):
         deleted = await _delete_selected_document(
             collection,
             matched,
             selector_operation=operation,
+            change_event_index=event_index,
             session=session,
         )
         if deleted:

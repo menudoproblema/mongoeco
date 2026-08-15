@@ -62,6 +62,16 @@ class EngineFindSemantics:
     _deadline: float | None = field(default=None, compare=False, hash=False)
 
     def __post_init__(self) -> None:
+        if self.operation_context is not None:
+            if self.dialect is not self.operation_context.dialect:
+                message = 'read dialect diverges from OperationContext'
+                raise ValueError(message)
+            if self.collation != self.operation_context.collation:
+                message = 'read collation diverges from OperationContext'
+                raise ValueError(message)
+            if self.variables is not self.operation_context.expressions:
+                message = 'read variables diverge from OperationContext'
+                raise ValueError(message)
         if self._deadline is None and self.max_time_ms is not None:
             object.__setattr__(
                 self,
@@ -103,6 +113,19 @@ class EngineUpdateSemantics:
         compare=False,
         hash=False,
     )
+
+    def __post_init__(self) -> None:
+        if self.operation_context is None:
+            return
+        if self.dialect is not self.operation_context.dialect:
+            message = 'update dialect diverges from OperationContext'
+            raise ValueError(message)
+        if self.collation != self.operation_context.collation:
+            message = 'update collation diverges from OperationContext'
+            raise ValueError(message)
+        if self.variables is not self.operation_context.expressions:
+            message = 'update variables diverge from OperationContext'
+            raise ValueError(message)
 
 
 def compile_collection_validation_semantics(

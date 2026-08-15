@@ -1,8 +1,9 @@
 import asyncio
 import time
-from dataclasses import replace
+
 from collections import deque
 from collections.abc import Mapping
+from dataclasses import replace
 
 from mongoeco.api.argument_validation import (
     HintSpec,
@@ -13,14 +14,26 @@ from mongoeco.api.argument_validation import (
     validate_sort_spec as _validate_sort_spec,
 )
 from mongoeco.compat import MONGODB_DIALECT_70
-from mongoeco.cxp import build_mongodb_explain_projection
-from mongoeco.core.query_plan import QueryNode
-from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.core.expression_context import ExpressionExecutionContext
-from mongoeco.core.operation_context import OperationContext
+from mongoeco.core.operation_context import (
+    OperationContext,
+    resolve_operation_session,
+)
+from mongoeco.core.query_plan import QueryNode
+from mongoeco.cxp import build_mongodb_explain_projection
 from mongoeco.engines.adapter import adapt_engine
+from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
-from mongoeco.types import CollationDocument, Document, Filter, PlanningMode, Projection, QueryPlanExplanation, SortSpec
+from mongoeco.types import (
+    CollationDocument,
+    Document,
+    Filter,
+    PlanningMode,
+    Projection,
+    QueryPlanExplanation,
+    SortSpec,
+)
+
 
 _DEFAULT_LOCAL_PREFETCH_SIZE = 101
 
@@ -252,7 +265,7 @@ class AsyncCursor:
         self._let = let
         self._execution_variables = execution_variables
         self._operation_context = operation_context
-        self._session = session
+        self._session = resolve_operation_session(operation_context, session)
         self._apply_codec_options = apply_codec_options
         self._started = False
         self._exhausted = False
@@ -308,7 +321,9 @@ class AsyncCursor:
 
     def _base_semantics(self):
         if self._semantics_cache is None:
-            from mongoeco.engines.semantic_core import compile_find_semantics_from_operation
+            from mongoeco.engines.semantic_core import (  # noqa: PLC0415
+                compile_find_semantics_from_operation,
+            )
 
             self._semantics_cache = compile_find_semantics_from_operation(
                 self._base_operation(),
@@ -699,7 +714,11 @@ class AsyncCursor:
                 dialect=self._current_dialect(),
                 planning_mode=_resolve_planning_mode(self._collection),
                 plan=self._plan,
-            ).with_overrides(context=self._operation_context)
+            )
+            if self._operation_context is not None:
+                self._operation_cache = self._operation_cache.bind(
+                    self._operation_context,
+                )
         return self._operation_cache
 
     @property

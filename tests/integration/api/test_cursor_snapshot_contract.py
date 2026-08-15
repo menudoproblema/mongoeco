@@ -1,13 +1,51 @@
-from datetime import UTC, datetime, timedelta
 import inspect
 import unittest
 
-from mongoeco import AsyncMongoClient
+from datetime import UTC, datetime, timedelta
+
+from mongoeco import AsyncMongoClient, MongoClient
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 
 
 ENGINE_FACTORIES = {'memory': MemoryEngine, 'sqlite': SQLiteEngine}
+
+
+def _read_clock(clock: list[datetime]):
+    return lambda: clock[0]
+
+
+class SyncCursorOperationBoundaryTests(unittest.TestCase):
+    def test_find_captures_time_and_detaches_arguments_at_creation(self):
+        for engine_name, engine_factory in ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name):
+                clock = [datetime(2026, 1, 1, tzinfo=UTC)]
+                filter_spec = {'$expr': {'$lte': ['$ready', '$$NOW']}}
+                projection = {'_id': 1}
+                with MongoClient(
+                    engine_factory(),
+                    now_factory=_read_clock(clock),
+                ) as client:
+                    collection = client.test.sync_creation_boundary
+                    collection.insert_many(
+                        [
+                            {'_id': 'early', 'ready': clock[0]},
+                            {
+                                '_id': 'late',
+                                'ready': clock[0] + timedelta(seconds=1),
+                            },
+                        ],
+                    )
+                    cursor = collection.find(
+                        filter_spec,
+                        projection,
+                        sort=[('_id', 1)],
+                    )
+                    filter_spec.clear()
+                    projection.clear()
+                    clock[0] += timedelta(seconds=1)
+
+                    assert cursor.to_list() == [{'_id': 'early'}]
 
 
 class CursorSnapshotContractTests(unittest.IsolatedAsyncioTestCase):

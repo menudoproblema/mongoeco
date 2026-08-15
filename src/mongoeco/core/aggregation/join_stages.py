@@ -3,6 +3,9 @@ import re
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation.evaluation_environment import (
+    scoped_environment,
+)
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.errors import OperationFailure
@@ -52,7 +55,7 @@ def _apply_lookup(
                 )
             ]
         if "pipeline" in lookup:
-            scoped = dict(variables or {})
+            scoped = scoped_environment(variables)
             for name, expression in lookup["let"].items():
                 if not _LOOKUP_LET_VARIABLE_RE.match(name):
                     raise OperationFailure("$lookup let variable names must begin with a lowercase letter or non-ascii character")

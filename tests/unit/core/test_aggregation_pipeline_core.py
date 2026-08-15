@@ -1392,6 +1392,36 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             ],
         )
 
+    def test_pipeline_redact_preserves_root_while_descending(self):
+        result = apply_pipeline(
+            [
+                {
+                    '_id': '1',
+                    'allow': True,
+                    'nested': {'secret': 'visible'},
+                },
+            ],
+            [
+                {
+                    '$redact': {
+                        '$cond': [
+                            {'$eq': ['$$ROOT.allow', True]},
+                            '$$DESCEND',
+                            '$$PRUNE',
+                        ],
+                    },
+                },
+            ],
+        )
+
+        assert result == [
+            {
+                '_id': '1',
+                'allow': True,
+                'nested': {'secret': 'visible'},
+            },
+        ]
+
     def test_pipeline_redact_rejects_non_system_actions(self):
         with self.assertRaisesRegex(
             OperationFailure,

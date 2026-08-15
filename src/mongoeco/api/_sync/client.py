@@ -4,10 +4,18 @@ import asyncio
 import inspect
 import queue
 import threading
+
 from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from mongoeco.api._async.client import AsyncMongoClient
+from mongoeco.api._sync._finalization import finalize_best_effort
+from mongoeco.api._sync.collection import Collection
+from mongoeco.api._sync.database_admin import DatabaseAdminService
+from mongoeco.api._sync.listing_cursor import (  # noqa: TC001 - runtime get_type_hints contract
+    ListingCursor,
+)
 from mongoeco.api.public_api import (
     ARG_UNSET,
     DATABASE_LIST_COLLECTION_NAMES_SPEC,
@@ -15,31 +23,40 @@ from mongoeco.api.public_api import (
     normalize_public_operation_arguments,
 )
 from mongoeco.change_streams import ChangeStreamCursor
-from mongoeco.api._sync.database_admin import DatabaseAdminService
-from mongoeco.compat import (
+from mongoeco.compat import (  # noqa: TC001 - public annotations are introspectable
     MongoDialect,
     MongoDialectResolution,
     PyMongoProfile,
     PyMongoProfileResolution,
 )
-from mongoeco.driver import AsyncCommandTransport, RequestExecutionResult, TopologyDescription
-from mongoeco.driver.monitoring import DriverMonitor
+from mongoeco.driver import (  # noqa: TC001 - public annotations are introspectable
+    AsyncCommandTransport,
+    RequestExecutionResult,
+    TopologyDescription,
+)
+from mongoeco.driver.monitoring import (  # noqa: TC001 - public annotations are introspectable
+    DriverMonitor,
+)
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.errors import ExecutionTimeout, InvalidOperation, ServerSelectionTimeoutError
-from mongoeco.session import ClientSession
-from mongoeco.api._async.client import AsyncMongoClient
-from mongoeco.api._sync.collection import Collection
-from mongoeco.api._sync.listing_cursor import ListingCursor
-from mongoeco.types import (
+from mongoeco.errors import (
+    ExecutionTimeout,
+    InvalidOperation,
+    ServerSelectionTimeoutError,
+)
+from mongoeco.session import (
+    ClientSession,  # noqa: TC001 - runtime get_type_hints contract
+)
+from mongoeco.types import (  # noqa: TC001 - public annotations are introspectable
     BuildInfoDocument,
-    CollectionValidationDocument,
     CodecOptions,
+    CollectionValidationDocument,
     Filter,
     ReadConcern,
     ReadPreference,
     TransactionOptions,
     WriteConcern,
 )
+
 
 if TYPE_CHECKING:
     from mongoeco.driver.transports import WireProtocolCommandTransport
@@ -133,11 +150,24 @@ class _SyncRunner:
                 return
             operation, outcome, done = item
             try:
-                outcome["result"] = operation()
+                result = operation()
+                if outcome is not None:
+                    outcome["result"] = result
             except BaseException as exc:  # pragma: no cover - rethrown synchronously below
-                outcome["error"] = exc
+                if outcome is not None:
+                    outcome["error"] = exc
             finally:
-                done.set()
+                if done is not None:
+                    done.set()
+
+    def defer(self, operation: Callable[[], object]) -> bool:
+        """Queue best-effort cleanup without blocking a GC finalizer."""
+        with self._state_condition:
+            if self._closed or self._closing:
+                return False
+        self._ensure_helper_thread()
+        self._helper_queue.put((operation, None, None))
+        return True
 
     def _stop_helper_thread(self) -> None:
         helper_thread = self._helper_thread
@@ -254,9 +284,18 @@ class _SyncRunner:
                     self._state_condition.notify_all()
 
     def __del__(self):
+        def finalize() -> None:
+            try:
+                self.close()
+            except Exception:
+                self._closed = True
+
         try:
-            self.close()
-        except Exception:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            finalize()
+            return
+        if not self.defer(finalize):
             self._closed = True
 
 
@@ -567,6 +606,9 @@ class MongoClient:
         self._run(awaitable)
         return factory()
 
+    def _defer_cleanup(self, operation: Callable[[], object]) -> bool:
+        return self._runner.defer(operation)
+
     def _ensure_connected(self) -> None:
         if self._closed:
             raise InvalidOperation("El cliente sincronico ya esta cerrado")
@@ -607,10 +649,7 @@ class MongoClient:
         return False
 
     def __del__(self):
-        try:
-            self.close()
-        except Exception:
-            pass
+        finalize_best_effort(self, self.close)
 
     def __getattr__(self, name: str) -> Database:
         return self.get_database(name)

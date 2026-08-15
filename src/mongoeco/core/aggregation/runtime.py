@@ -11,10 +11,12 @@ from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec
-from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.aggregation.array_string_expressions import (
     ARRAY_STRING_EXPRESSION_OPERATORS,
     evaluate_array_string_expression,
+)
+from mongoeco.core.aggregation.evaluation_environment import (
+    environment_for_document,
 )
 from mongoeco.core.aggregation.extensions import (
     AggregationExpressionExtensionContext,
@@ -360,8 +362,7 @@ def _variables_for_document(
     document: Document,
     variables: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
-    context = ensure_expression_context(variables)
-    return {**context, "ROOT": document, "CURRENT": document}
+    return environment_for_document(document, variables)
 
 
 _MISSING = object()

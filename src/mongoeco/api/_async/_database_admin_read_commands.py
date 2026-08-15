@@ -15,7 +15,6 @@ from mongoeco.core.collation import normalize_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.json_compat import json_dumps_compact
 from mongoeco.errors import OperationFailure
-from mongoeco.session import ClientSession
 from mongoeco.types import (
     CommandCursorResult,
     CountCommandResult,
@@ -27,6 +26,7 @@ from mongoeco.types import (
 if TYPE_CHECKING:
     from mongoeco.api.operations import AggregateOperation, FindOperation
     from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
+    from mongoeco.session import ClientSession
 
 
 class DatabaseAdminReadCommandService:
@@ -402,6 +402,7 @@ class DatabaseAdminReadCommandService:
                 comment=explain_spec.get("comment"),
                 max_time_ms=explain_spec.get("maxTimeMS"),
                 limit=None if multi else 1,
+                command_let=explain_spec.get("let"),
             )
             explanation = await self._admin._database.get_collection(collection_name)._build_cursor(
                 operation,
@@ -427,6 +428,7 @@ class DatabaseAdminReadCommandService:
                 comment=explain_spec.get("comment"),
                 max_time_ms=explain_spec.get("maxTimeMS"),
                 limit=1 if limit == 1 else None,
+                command_let=explain_spec.get("let"),
             )
             explanation = await self._admin._database.get_collection(collection_name)._build_cursor(
                 operation,

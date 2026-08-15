@@ -1,12 +1,12 @@
 from collections.abc import Callable
 from datetime import datetime
 
-from mongoeco.api.argument_validation import HintSpec
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.raw_batch_cursor import RawBatchCursor
 from mongoeco.api._sync.search_index_cursor import SearchIndexCursor
+from mongoeco.api.argument_validation import HintSpec
 from mongoeco.api.public_api import (
     ARG_UNSET,
     COLLECTION_COUNT_DOCUMENTS_SPEC,
@@ -43,15 +43,15 @@ from mongoeco.types import (
     Document,
     DocumentId,
     Filter,
-    InsertManyResult,
     IndexInformation,
-    IndexModel,
     IndexKeySpec,
+    IndexModel,
+    InsertManyResult,
     InsertOneResult,
+    PlanningMode,
     Projection,
     ReadConcern,
     ReadPreference,
-    PlanningMode,
     ReturnDocument,
     SearchIndexModel,
     SortSpec,
@@ -60,6 +60,7 @@ from mongoeco.types import (
     WriteConcern,
     WriteModel,
 )
+
 
 _FILTER_UNSET = ARG_UNSET
 _UPDATE_UNSET = ARG_UNSET
@@ -311,21 +312,22 @@ class Collection:
         async_collection = self._async_collection()
         return Cursor(
             self._client,
-            async_collection,
-            {}
-            if options.get('filter_spec') is None
-            else options.get('filter_spec'),
-            options.get('projection'),
-            collation=options.get('collation'),
-            sort=options.get('sort'),
-            skip=options.get('skip', 0),
-            limit=options.get('limit'),
-            hint=options.get('hint'),
-            comment=options.get('comment'),
-            max_time_ms=options.get('max_time_ms'),
-            batch_size=options.get('batch_size'),
-            let=options.get('let'),
-            session=options.get('session'),
+            async_collection.find(
+                {}
+                if options.get('filter_spec') is None
+                else options.get('filter_spec'),
+                options.get('projection'),
+                collation=options.get('collation'),
+                sort=options.get('sort'),
+                skip=options.get('skip', 0),
+                limit=options.get('limit'),
+                hint=options.get('hint'),
+                comment=options.get('comment'),
+                max_time_ms=options.get('max_time_ms'),
+                batch_size=options.get('batch_size'),
+                let=options.get('let'),
+                session=options.get('session'),
+            ),
         )
 
     def aggregate(

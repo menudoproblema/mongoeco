@@ -1,16 +1,18 @@
-from collections.abc import Callable
 from typing import Protocol, runtime_checkable
 
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MongoDialect
-from mongoeco.engines.capabilities import EngineCapabilities
-from mongoeco.engines.semantic_core import EngineFindSemantics, EngineReadExecutionPlan
 from mongoeco.core.operation_context import OperationContext
+from mongoeco.engines.capabilities import EngineCapabilities
 from mongoeco.engines.results import (
     DeleteOutcome,
     InsertOutcome,
     MergeOutcome,
     MutationOutcome,
+)
+from mongoeco.engines.semantic_core import (
+    EngineFindSemantics,
+    EngineReadExecutionPlan,
 )
 from mongoeco.engines.snapshots import ReadSnapshot
 from mongoeco.session import ClientSession
@@ -19,8 +21,8 @@ from mongoeco.types import (
     Document,
     DocumentId,
     Filter,
-    IndexInformation,
     IndexDocument,
+    IndexInformation,
     IndexKeySpec,
     ProfilingCommandResult,
     Projection,
@@ -52,12 +54,74 @@ class AsyncReadSemanticsEngine(Protocol):
 
 @runtime_checkable
 class AsyncCrudEngine(AsyncReadSemanticsEngine, Protocol):
-    async def insert_document(self, db_name: str, coll_name: str, document: Document, overwrite: bool = True, *, operation_context: OperationContext, bypass_document_validation: bool = False, on_commit: Callable[[InsertOutcome], None] | None = None) -> InsertOutcome: ...
-    async def insert_documents(self, db_name: str, coll_name: str, documents: list[Document], *, operation_context: OperationContext, bypass_document_validation: bool = False, on_commit: Callable[[InsertOutcome], None] | None = None) -> tuple[InsertOutcome, ...]: ...
-    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, operation_context: OperationContext) -> Document | None: ...
-    async def update_with_operation(self, db_name: str, coll_name: str, operation: UpdateOperation, upsert: bool = False, upsert_seed: Document | None = None, *, operation_context: OperationContext, selector_filter: Filter | None = None, bypass_document_validation: bool = False, replacement_document: Document | None = None, on_commit: Callable[[MutationOutcome], None] | None = None) -> MutationOutcome: ...
-    async def delete_with_operation(self, db_name: str, coll_name: str, operation: UpdateOperation, *, operation_context: OperationContext, selector_filter: Filter | None = None, on_commit: Callable[[DeleteOutcome], None] | None = None) -> DeleteOutcome: ...
-    async def merge_document(self, db_name: str, coll_name: str, document: Document, *, when_matched: str, when_not_matched: str, operation_context: OperationContext, on_commit: Callable[[MergeOutcome], None] | None = None) -> MergeOutcome: ...
+    async def insert_document(  # noqa: PLR0913
+        self,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        overwrite: bool = True,  # noqa: FBT001, FBT002
+        *,
+        operation_context: OperationContext,
+        bypass_document_validation: bool = False,
+    ) -> InsertOutcome: ...
+
+    async def get_document(
+        self,
+        db_name: str,
+        coll_name: str,
+        doc_id: DocumentId,
+        *,
+        projection: Projection | None = None,
+        operation_context: OperationContext,
+    ) -> Document | None: ...
+
+    async def update_with_operation(  # noqa: PLR0913
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: UpdateOperation,
+        upsert: bool = False,  # noqa: FBT001, FBT002
+        upsert_seed: Document | None = None,
+        *,
+        operation_context: OperationContext,
+        selector_filter: Filter | None = None,
+        bypass_document_validation: bool = False,
+        replacement_document: Document | None = None,
+    ) -> MutationOutcome: ...
+
+    async def delete_with_operation(
+        self,
+        db_name: str,
+        coll_name: str,
+        operation: UpdateOperation,
+        *,
+        operation_context: OperationContext,
+        selector_filter: Filter | None = None,
+    ) -> DeleteOutcome: ...
+
+    async def merge_document(  # noqa: PLR0913
+        self,
+        db_name: str,
+        coll_name: str,
+        document: Document,
+        *,
+        when_matched: str,
+        when_not_matched: str,
+        operation_context: OperationContext,
+    ) -> MergeOutcome: ...
+
+
+@runtime_checkable
+class AsyncBatchInsertEngine(Protocol):
+    async def insert_documents(
+        self,
+        db_name: str,
+        coll_name: str,
+        documents: list[Document],
+        *,
+        operation_context: OperationContext,
+        bypass_document_validation: bool = False,
+    ) -> tuple[InsertOutcome, ...]: ...
 
 
 @runtime_checkable

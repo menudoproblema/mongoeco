@@ -25,10 +25,7 @@ class PublicExportsTests(unittest.TestCase):
             'mongoeco.engines',
             'mongoeco.wire',
         ]
-        pythonpath_entries = [str(self._repo_root() / 'src')]
-        if existing_pythonpath := os.environ.get('PYTHONPATH'):
-            pythonpath_entries.append(existing_pythonpath)
-        env = os.environ | {'PYTHONPATH': os.pathsep.join(pythonpath_entries)}
+        env = self._clean_import_environment()
 
         def _check_package(package_name: str) -> subprocess.CompletedProcess[str]:
             return subprocess.run(
@@ -80,10 +77,7 @@ class PublicExportsTests(unittest.TestCase):
         exported_names = sorted(
             name for name in mongoeco.__all__ if not name.startswith('_')
         )
-        pythonpath_entries = [str(self._repo_root() / 'src')]
-        if existing_pythonpath := os.environ.get('PYTHONPATH'):
-            pythonpath_entries.append(existing_pythonpath)
-        env = os.environ | {'PYTHONPATH': os.pathsep.join(pythonpath_entries)}
+        env = self._clean_import_environment()
 
         def _check_export(exported_name: str) -> subprocess.CompletedProcess[str]:
             return subprocess.run(
@@ -122,6 +116,17 @@ class PublicExportsTests(unittest.TestCase):
         self.assertEqual(sync_api.ListingCursor.__name__, "ListingCursor")
         self.assertEqual(sync_api.SearchIndexCursor.__name__, "SearchIndexCursor")
         self.assertEqual(sync_api.RawBatchCursor.__name__, "RawBatchCursor")
+
+    def _clean_import_environment(self) -> dict[str, str]:
+        env = dict(os.environ)
+        if env.get('MONGOECO_TEST_INSTALLED_ARTIFACT') == '1':
+            env.pop('PYTHONPATH', None)
+            return env
+        pythonpath_entries = [str(self._repo_root() / 'src')]
+        if existing_pythonpath := os.environ.get('PYTHONPATH'):
+            pythonpath_entries.append(existing_pythonpath)
+        env['PYTHONPATH'] = os.pathsep.join(pythonpath_entries)
+        return env
 
     def test_compat_package_keeps_a_curated_public_surface(self):
         import mongoeco.compat as compat_module

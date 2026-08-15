@@ -3,32 +3,35 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
-import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
-from collections import Counter, defaultdict
+from collections import Counter
+from functools import cache
 from pathlib import Path
 
 
-_HUNK_HEADER = re.compile(r'^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@')
 _LINT_ROOTS = ('src', 'tests', 'scripts')
 
 
-def _run_git(*args: str) -> str:
+def _run_git(
+    *args: str,
+    check: bool = True,
+) -> subprocess.CompletedProcess[str]:
     git = shutil.which('git')
     if git is None:
         message = 'git executable is required'
         raise RuntimeError(message)
-    result = subprocess.run(  # noqa: S603 - explicit git arguments
+    return subprocess.run(  # noqa: S603 - explicit git arguments
         [git, *args],
-        check=True,
+        check=check,
         capture_output=True,
         text=True,
     )
-    return result.stdout
 
 
 def _ruff_version() -> str:
@@ -45,27 +48,27 @@ def _ruff_version() -> str:
     return version
 
 
-def _changed_lines(base_ref: str) -> dict[Path, set[int]]:
-    lines_by_path: dict[Path, set[int]] = defaultdict(set)
-    diff = _run_git(
+def _changed_path_map(base_ref: str) -> dict[Path, Path | None]:
+    result = _run_git(
         'diff',
-        '--unified=0',
+        '--name-status',
+        '--find-renames',
         '--diff-filter=ACMR',
         base_ref,
         '--',
         *_LINT_ROOTS,
     )
-    current_path: Path | None = None
-    for line in diff.splitlines():
-        if line.startswith('+++ b/'):
-            current_path = Path(line[6:]).resolve()
-            continue
-        match = _HUNK_HEADER.match(line)
-        if match is None or current_path is None:
-            continue
-        start = int(match.group(1))
-        count = int(match.group(2) or '1')
-        lines_by_path[current_path].update(range(start, start + count))
+    paths: dict[Path, Path | None] = {}
+    for line in result.stdout.splitlines():
+        fields = line.split('\t')
+        status = fields[0]
+        if status.startswith('R'):
+            base_path, current_path = map(Path, fields[1:3])
+        else:
+            current_path = Path(fields[1])
+            base_path = None if status == 'A' else current_path
+        if current_path.suffix == '.py':
+            paths[current_path] = base_path
 
     untracked = _run_git(
         'ls-files',
@@ -74,18 +77,43 @@ def _changed_lines(base_ref: str) -> dict[Path, set[int]]:
         '--',
         *_LINT_ROOTS,
     )
-    for raw_path in untracked.splitlines():
+    for raw_path in untracked.stdout.splitlines():
         path = Path(raw_path)
-        if path.suffix != '.py':
+        if path.suffix == '.py':
+            paths[path] = None
+    return paths
+
+
+def _materialize_base(
+    root: Path,
+    base_ref: str,
+    paths: dict[Path, Path | None],
+) -> list[Path]:
+    config = _run_git('show', f'{base_ref}:pyproject.toml')
+    (root / 'pyproject.toml').write_text(config.stdout, encoding='utf-8')
+    materialized = []
+    for current_path, base_path in paths.items():
+        if base_path is None:
             continue
-        resolved = path.resolve()
-        lines_by_path[resolved].update(
-            range(1, len(path.read_text(encoding='utf-8').splitlines()) + 1),
+        content = _run_git(
+            'show',
+            f'{base_ref}:{base_path.as_posix()}',
+            check=False,
         )
-    return lines_by_path
+        if content.returncode != 0:
+            continue
+        target = root / current_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content.stdout, encoding='utf-8')
+        materialized.append(current_path)
+    return materialized
 
 
-def _ruff_diagnostics(paths: list[Path]) -> list[dict[str, object]]:
+def _ruff_diagnostics(
+    paths: list[Path],
+    *,
+    cwd: Path,
+) -> list[dict[str, object]]:
     if not paths:
         return []
     result = subprocess.run(  # noqa: S603 - current Python executable
@@ -98,6 +126,7 @@ def _ruff_diagnostics(paths: list[Path]) -> list[dict[str, object]]:
             'json',
             *[str(path) for path in paths],
         ],
+        cwd=cwd,
         check=False,
         capture_output=True,
         text=True,
@@ -108,25 +137,89 @@ def _ruff_diagnostics(paths: list[Path]) -> list[dict[str, object]]:
     return json.loads(result.stdout)
 
 
-def _diagnostic_key(diagnostic: dict[str, object]) -> tuple[str, ...]:
-    filename = Path(str(diagnostic['filename'])).resolve()
+def _diagnostic_key(
+    diagnostic: dict[str, object],
+    *,
+    root: Path,
+) -> tuple[str, ...]:
+    filename = Path(str(diagnostic['filename']))
+    if not filename.is_absolute():
+        filename = root / filename
+    filename = filename.resolve()
     try:
-        path = str(filename.relative_to(Path.cwd().resolve()))
+        path = str(filename.relative_to(root.resolve()))
     except ValueError:
         path = str(filename)
-    location = diagnostic.get('location')
-    row = location.get('row') if isinstance(location, dict) else None
-    source = ''
-    if isinstance(row, int) and filename.exists():
-        source_lines = filename.read_text(encoding='utf-8').splitlines()
-        if 0 < row <= len(source_lines):
-            source = source_lines[row - 1].strip()
     return (
         path,
         str(diagnostic.get('code', '')),
         str(diagnostic.get('message', '')),
-        source,
+        _diagnostic_anchor(diagnostic, filename),
     )
+
+
+def _diagnostic_anchor(
+    diagnostic: dict[str, object],
+    filename: Path,
+) -> str:
+    location = diagnostic.get('location')
+    row = (
+        int(location.get('row', 0))
+        if isinstance(location, dict)
+        else 0
+    )
+    source = _read_source(filename)
+    if source is None:
+        return ''
+    symbol = _enclosing_symbol(source, row)
+    code = str(diagnostic.get('code', ''))
+    if code.startswith(('PLR09', 'C90')):
+        return symbol
+    lines = source.splitlines()
+    source_line = lines[row - 1].strip() if 0 < row <= len(lines) else ''
+    return f'{symbol}\0{" ".join(source_line.split())}'
+
+
+@cache
+def _read_source(filename: Path) -> str | None:
+    try:
+        return filename.read_text(encoding='utf-8')
+    except OSError:
+        return None
+
+
+def _enclosing_symbol(source: str, row: int) -> str:
+    candidates = [
+        (end_row - start_row, qualified)
+        for start_row, end_row, qualified in _symbol_ranges(source)
+        if start_row <= row <= end_row
+    ]
+    return min(candidates, default=(0, '<module>'))[1]
+
+
+@cache
+def _symbol_ranges(source: str) -> tuple[tuple[int, int, str], ...]:
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return ()
+    ranges: list[tuple[int, int, str]] = []
+
+    def visit(node: ast.AST, parents: tuple[str, ...] = ()) -> None:
+        next_parents = parents
+        if isinstance(
+            node,
+            (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef),
+        ):
+            end_row = getattr(node, 'end_lineno', node.lineno)
+            qualified = '.'.join((*parents, node.name))
+            ranges.append((node.lineno, end_row, qualified))
+            next_parents = (*parents, node.name)
+        for child in ast.iter_child_nodes(node):
+            visit(child, next_parents)
+
+    visit(tree)
+    return tuple(ranges)
 
 
 def _load_baseline(path: Path) -> Counter[tuple[str, ...]]:
@@ -164,8 +257,12 @@ def _load_baseline(path: Path) -> Counter[tuple[str, ...]]:
 def _write_baseline(
     path: Path,
     diagnostics: list[dict[str, object]],
+    *,
+    root: Path,
 ) -> None:
-    counts = Counter(_diagnostic_key(item) for item in diagnostics)
+    counts = Counter(
+        _diagnostic_key(item, root=root) for item in diagnostics
+    )
     entries = [
         {
             'path': key[0],
@@ -188,7 +285,7 @@ def _write_baseline(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description='Reject Ruff violations introduced on changed lines.',
+        description='Reject Ruff diagnostics added in changed Python files.',
     )
     parser.add_argument(
         '--base-ref',
@@ -199,35 +296,53 @@ def main() -> int:
         '--baseline',
         type=Path,
         default=Path('scripts/ruff_ratchet_baseline.json'),
-        help='Known changed-line diagnostics accepted as migration debt.',
+        help='Known diagnostic deltas accepted as migration debt.',
     )
     parser.add_argument(
         '--update-baseline',
         action='store_true',
-        help='Replace the baseline with the current changed-line diagnostics.',
+        help='Accept the diagnostics added relative to the base ref.',
     )
     args = parser.parse_args()
 
-    changed_lines = _changed_lines(args.base_ref)
-    python_paths = sorted(
-        path
-        for path in changed_lines
-        if path.suffix == '.py' and path.exists()
+    project_root = Path.cwd().resolve()
+    changed_paths = _changed_path_map(args.base_ref)
+    current_paths = sorted(
+        path for path in changed_paths if (project_root / path).exists()
     )
-    changed_diagnostics = []
-    for diagnostic in _ruff_diagnostics(python_paths):
-        filename = Path(str(diagnostic['filename'])).resolve()
-        location = diagnostic.get('location')
-        if not isinstance(location, dict):
-            continue
-        row = location.get('row')
-        if isinstance(row, int) and row in changed_lines.get(filename, set()):
-            changed_diagnostics.append(diagnostic)
+    current_diagnostics = _ruff_diagnostics(
+        current_paths,
+        cwd=project_root,
+    )
+    with tempfile.TemporaryDirectory(prefix='mongoeco-ruff-base-') as temp:
+        base_root = Path(temp)
+        base_paths = _materialize_base(
+            base_root,
+            args.base_ref,
+            changed_paths,
+        )
+        base_diagnostics = _ruff_diagnostics(base_paths, cwd=base_root)
+        base_counts = Counter(
+            _diagnostic_key(item, root=base_root)
+            for item in base_diagnostics
+        )
+
+    introduced = []
+    for diagnostic in current_diagnostics:
+        key = _diagnostic_key(diagnostic, root=project_root)
+        if base_counts[key] > 0:
+            base_counts[key] -= 1
+        else:
+            introduced.append(diagnostic)
 
     if args.update_baseline:
-        _write_baseline(args.baseline, changed_diagnostics)
+        _write_baseline(
+            args.baseline,
+            introduced,
+            root=project_root,
+        )
         sys.stdout.write(
-            f'wrote {len(changed_diagnostics)} diagnostics to '
+            f'wrote {len(introduced)} diagnostic deltas to '
             f'{args.baseline}\n',
         )
         return 0
@@ -237,22 +352,22 @@ def main() -> int:
     except (RuntimeError, TypeError) as exc:
         sys.stderr.write(f'{exc}\n')
         return 2
-    introduced = []
-    for diagnostic in changed_diagnostics:
-        key = _diagnostic_key(diagnostic)
+    rejected = []
+    for diagnostic in introduced:
+        key = _diagnostic_key(diagnostic, root=project_root)
         if accepted[key] > 0:
             accepted[key] -= 1
         else:
-            introduced.append(diagnostic)
+            rejected.append(diagnostic)
 
-    if not introduced:
+    if not rejected:
         sys.stdout.write(
-            f'lint ratchet passed for {len(python_paths)} changed Python '
+            f'lint ratchet passed for {len(current_paths)} changed Python '
             'files\n',
         )
         return 0
 
-    for diagnostic in introduced:
+    for diagnostic in rejected:
         location = diagnostic['location']
         sys.stdout.write(
             f"{diagnostic['filename']}:"
@@ -260,7 +375,7 @@ def main() -> int:
             f"{diagnostic['code']} {diagnostic['message']}\n",
         )
     sys.stdout.write(
-        f'{len(introduced)} Ruff violation(s) introduced on changed lines\n',
+        f'{len(rejected)} Ruff violation(s) introduced in changed files\n',
     )
     return 1
 

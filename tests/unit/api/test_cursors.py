@@ -1,8 +1,13 @@
 import unittest
+
 from unittest.mock import patch
 
 import mongoeco.api._async.cursor as async_cursor_module
-from mongoeco.api._async.cursor import AsyncCursor, _DEFAULT_LOCAL_PREFETCH_SIZE
+
+from mongoeco.api._async.cursor import (
+    _DEFAULT_LOCAL_PREFETCH_SIZE,
+    AsyncCursor,
+)
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.listing_cursor import AsyncListingCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
@@ -10,7 +15,7 @@ from mongoeco.api._sync.cursor import Cursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.api._sync.search_index_cursor import SearchIndexCursor
-from mongoeco.core.query_plan import MatchAll
+from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.types import PlanningIssue, PlanningMode
 
@@ -42,7 +47,22 @@ class _AsyncCollectionStub:
         self._collection_name = "coll"
 
     def find(self, *args, **kwargs):
-        return AsyncCursor(self, {}, MatchAll(), None)
+        filter_spec = args[0] if args else {}
+        projection = args[1] if len(args) > 1 else None
+        return AsyncCursor(
+            self,
+            filter_spec,
+            compile_filter(
+                filter_spec,
+                planning_mode=getattr(
+                    self,
+                    'planning_mode',
+                    PlanningMode.STRICT,
+                ),
+            ),
+            projection,
+            **kwargs,
+        )
 
 
 class _ProfiledAsyncCollectionStub(_AsyncCollectionStub):
@@ -188,6 +208,7 @@ class _BrokenSyncClientStub:
 
 class _StreamingAsyncCursorStub:
     def __init__(self, documents):
+        self._source_documents = documents
         self._documents = iter(documents)
         self.close_calls = 0
 
@@ -202,6 +223,9 @@ class _StreamingAsyncCursorStub:
 
     async def aclose(self):
         self.close_calls += 1
+
+    def rewind(self):
+        self._documents = iter(self._source_documents)
 
 
 class _FailingStreamingAsyncCursorStub(_StreamingAsyncCursorStub):
@@ -1271,12 +1295,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(clone._hint, "name_1")
         self.assertTrue(cursor.alive)
 
-        self.assertEqual(cursor.to_list(), [{"_id": "1"}, {"_id": "2"}])
+        assert cursor.to_list() == [{"_id": "2"}]
         self.assertFalse(cursor.alive)
 
         cursor.rewind()
         self.assertTrue(cursor.alive)
-        self.assertEqual(cursor.first(), {"_id": "1"})
+        assert cursor.first() == {"_id": "2"}
         explanation = cursor.explain()
         self.assertEqual(explanation["engine"], "stub")
         self.assertEqual(explanation["details"], ["IXSCAN"])
