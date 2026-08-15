@@ -39,6 +39,10 @@ Esta lista prepara una release sin obligar a publicar nada.
 - en CI, construir una sola vez y descargar ese mismo artifact inmutable para
   la suite completa, los smokes y Trusted Publishing; verificar SHA-256 e
   import desde `site-packages` y no reconstruir en `publish`.
+- antes de crear una etiqueta, comprobar en PyPI que el Trusted Publisher del
+  proyecto coincide exactamente con owner, repositorio, workflow y environment
+  declarados por el job de publicacion. El environment de GitHub no registra
+  por si mismo el publisher en PyPI.
 - aplicar `requirements/ci-constraints.txt` solo a la instalacion del repo y
   del tooling. Los smokes de wheel/sdist deben resolver dependencias en un
   entorno limpio sin heredar constraints internas de CI.

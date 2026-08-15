@@ -1,6 +1,8 @@
 # Release 4.4.0
 
-Status: lista para commit, etiqueta y publicacion.
+Status: release cerrada y publicada en PyPI.
+
+Distribucion: <https://pypi.org/project/mongoeco/4.4.0/>
 
 ## Resumen
 
@@ -76,6 +78,29 @@ Validacion ejecutada el 14 de agosto de 2026 sobre el estado candidato:
   importando 4.4.0 desde `site-packages`.
 
 `MONGOECO_REAL_MONGODB_URI` no estaba disponible, por lo que no se atribuye
-evidencia diferencial contra MongoDB real. Los artefactos locales se usaron
-solo como validacion: deben reconstruirse desde el commit definitivo y entonces
-registrar sus SHA-256 antes de publicar.
+evidencia diferencial contra MongoDB real.
+
+## Publicacion
+
+La etiqueta anotada `v4.4.0` apunta al commit de preparacion `fbb2c52`. El
+workflow de etiqueta supero build, imports minimos, Python 3.13/3.14, cobertura,
+ratchet, snapshots, benchmarks y smokes. El intercambio OIDC de Trusted
+Publishing fue rechazado con `invalid-publisher` porque PyPI no tenia registrado
+el publisher correspondiente a `menudoproblema/mongoeco`, `ci.yml` y el
+environment `pypi`.
+
+Para completar este corte, wheel y sdist se reconstruyeron desde la misma
+etiqueta con `SOURCE_DATE_EPOCH` fijado, pasaron `twine check` y ambos smokes, y
+se publicaron con la credencial local existente. El smoke posterior instalo
+`mongoeco==4.4.0` desde PyPI y lo importo desde `site-packages`.
+
+Artefactos publicados:
+
+- wheel `mongoeco-4.4.0-py3-none-any.whl`:
+  `f467a1abb69fea41eb06f5b61a8c158209f97c3291b8c4600067c4df239785ae`;
+- sdist `mongoeco-4.4.0.tar.gz`:
+  `7af9bc005650181b213c04f1fcec56a725367a5053bdac1bd4fe625cd6d022ea`.
+
+Antes de la proxima etiqueta debe configurarse el Trusted Publisher en PyPI
+con esos claims; no debe asumirse que declarar el environment de GitHub crea
+automaticamente la vinculacion en PyPI.
