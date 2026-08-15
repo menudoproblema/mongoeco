@@ -37,10 +37,12 @@ completa de verdad de la estructura interna.
 3. [core-runtime.md](core-runtime.md)
 4. [storage-engines.md](storage-engines.md)
 5. [engine-spi-v2.md](engine-spi-v2.md)
-6. [driver-and-wire.md](driver-and-wire.md)
-7. [change-streams-and-collation.md](change-streams-and-collation.md)
-8. [testing-and-compatibility.md](testing-and-compatibility.md)
-9. [decisions/index.md](decisions/index.md)
+6. [search-contract-v1.md](search-contract-v1.md)
+7. [Public engine conformance](../engine-conformance.md)
+8. [driver-and-wire.md](driver-and-wire.md)
+9. [change-streams-and-collation.md](change-streams-and-collation.md)
+10. [testing-and-compatibility.md](testing-and-compatibility.md)
+11. [decisions/index.md](decisions/index.md)
 
 ## Patrones principales
 
@@ -77,6 +79,7 @@ Los patrones de diseno que aparecen de forma sistematica en el codigo son:
 | [ADR-007](decisions/ADR-007-sdam-parcial-y-explicito.md) | Driver | Se soporta un subconjunto honesto de SDAM, no una emulacion completa de cluster |
 | [ADR-008](decisions/ADR-008-pyicu-opcional-y-pyuca-como-fallback.md) | Collation | `PyICU` es opcional y `pyuca` cubre el subset Unicode basico |
 | [ADR-009](decisions/ADR-009-parity-tests-como-politica-de-aceptacion.md) | Testing | Toda feature publica compartida entra con parity tests async/sync y cross-engine |
+| [ADR-010](decisions/ADR-010-search-v1-como-contrato-local-estable.md) | Search | La sintaxis Atlas-like soportada se ejecuta mediante un contrato local tipado, estable y honesto |
 
 ## Limites conscientes del producto
 

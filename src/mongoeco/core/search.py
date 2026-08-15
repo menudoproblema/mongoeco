@@ -1,22 +1,35 @@
 from __future__ import annotations
 
-from collections import Counter
-from copy import deepcopy
-from dataclasses import dataclass, field, replace
 import datetime
 import fnmatch
 import math
 import re
-from typing import Any, Callable
 import unicodedata
 import uuid
+
+from collections import Counter
+from collections.abc import Callable
+from copy import deepcopy
+from dataclasses import dataclass, field, replace
+from typing import Any, cast
 
 from mongoeco.core._search_contract import (
     SEARCH_STAGE_OPERATORS,
     TEXT_SEARCH_INDEX_CAPABILITIES,
     TEXT_SEARCH_OPERATOR_NAMES,
 )
+from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.paths import get_document_value
+from mongoeco.core.search_models import (
+    SearchCountResult,
+    SearchFacetBucket,
+    SearchFacetDefinition,
+    SearchFacetResult,
+    SearchHighlightPassage,
+    SearchHighlightSegment,
+    SearchHighlightSpan,
+    SearchMetadata,
+)
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
     Document,
@@ -31,9 +44,12 @@ from mongoeco.types import (
 
 SUPPORTED_SEARCH_INDEX_TYPES = {"search", "vectorSearch"}
 TEXTUAL_SEARCH_INDEX_TYPES = {"search"}
-TEXT_SCORE_FIELD = "__mongoeco_textScore__"
-VECTOR_SEARCH_SCORE_FIELD = "__mongoeco_vectorSearchScore__"
-SEARCH_RESULT_METADATA_FIELDS = frozenset({TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD})
+# BSON cstrings cannot contain NUL, so persisted user documents can never
+# collide with this internal sidecar namespace.
+SEARCH_RESULT_METADATA_FIELD = "\x00mongoeco_search_metadata"
+TEXT_SCORE_FIELD = f"{SEARCH_RESULT_METADATA_FIELD}.textScore"
+VECTOR_SEARCH_SCORE_FIELD = f"{SEARCH_RESULT_METADATA_FIELD}.vectorSearchScore"
+SEARCH_HIGHLIGHTS_METADATA_FIELD = f"{SEARCH_RESULT_METADATA_FIELD}.highlights"
 _TEXT_TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 _TEXT_QUERY_CHUNK_RE = re.compile(r'-?"[^"]+"|-?\S+')
 _SUPPORTED_REGEX_FLAGS = {
@@ -46,9 +62,11 @@ _SUPPORTED_REGEX_FLAGS = {
 }
 _SUPPORTED_REGEX_FLAGS_LABEL = ", ".join(sorted(_SUPPORTED_REGEX_FLAGS))
 _SUPPORTED_SEARCH_FACET_TYPES = frozenset(
-    {"string", "token", "number", "date", "boolean", "objectId", "uuid"}
+    {"string", "token", "number", "date", "boolean", "objectId", "uuid"},
 )
-TEXTUAL_SEARCH_FIELD_MAPPING_TYPES = frozenset({"string", "autocomplete", "token"})
+TEXTUAL_SEARCH_FIELD_MAPPING_TYPES = frozenset(
+    {"string", "autocomplete", "token"},
+)
 EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES = frozenset(
     {
         "number",
@@ -56,10 +74,10 @@ EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES = frozenset(
         "boolean",
         "objectId",
         "uuid",
-    }
+    },
 )
 STRUCTURED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
-    {"document", "embeddedDocuments"}
+    {"document", "embeddedDocuments"},
 )
 STRUCTURED_SEARCH_FIELD_MAPPING_TYPE_ALIASES: dict[str, str] = {
     "object": "document",
@@ -68,7 +86,7 @@ STRUCTURED_SEARCH_FIELD_MAPPING_TYPE_ALIASES: dict[str, str] = {
 SUPPORTED_SEARCH_FIELD_MAPPING_TYPES = frozenset(
     TEXTUAL_SEARCH_FIELD_MAPPING_TYPES
     | EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES
-    | STRUCTURED_SEARCH_FIELD_MAPPING_TYPES
+    | STRUCTURED_SEARCH_FIELD_MAPPING_TYPES,
 )
 SEARCH_HIGHLIGHTS_FIELD = "searchHighlights"
 
@@ -88,12 +106,8 @@ class SearchHighlightSpec:
 
 @dataclass(frozen=True, slots=True)
 class SearchFacetSpec:
-    path: str = ""
-    num_buckets: int = 10
-    facet_type: str = "string"
-    include_meta: bool = False
-    facets: tuple[tuple[str, str, str, int], ...] = ()
-    facet_include_meta: tuple[tuple[str, bool], ...] = ()
+    definitions: tuple[SearchFacetDefinition, ...]
+    named: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,7 +135,9 @@ class SearchTextQuery:
     raw_query: str
     terms: tuple[str, ...]
     paths: tuple[str, ...] | None = None
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,7 +146,9 @@ class SearchPhraseQuery:
     raw_query: str
     paths: tuple[str, ...] | None = None
     slop: int = 0
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,7 +162,9 @@ class SearchAutocompleteQuery:
     fuzzy_max_edits: int = 0
     fuzzy_prefix_length: int = 0
     fuzzy_max_expansions: int = 0
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -154,7 +174,9 @@ class SearchWildcardQuery:
     normalized_pattern: str
     paths: tuple[str, ...] | None = None
     allow_analyzed_field: bool = False
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,14 +186,18 @@ class SearchRegexQuery:
     paths: tuple[str, ...] | None = None
     flags: str = ""
     allow_analyzed_field: bool = False
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
 class SearchExistsQuery:
     index_name: str
     paths: tuple[str, ...] | None = None
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -180,7 +206,9 @@ class SearchInQuery:
     path: str
     values: tuple[object, ...]
     normalized_values: frozenset[tuple[str, object]]
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -189,7 +217,9 @@ class SearchEqualsQuery:
     path: str
     value: object
     value_kind: str
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -201,7 +231,9 @@ class SearchRangeQuery:
     lt: object | None = None
     lte: object | None = None
     bound_kind: str = "number"
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -211,18 +243,74 @@ class SearchNearQuery:
     origin: float | datetime.date | datetime.datetime
     pivot: float
     origin_kind: str
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
 class SearchCompoundQuery:
     index_name: str
-    must: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
-    should: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
-    filter: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
-    must_not: tuple[SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery | SearchExistsQuery | SearchInQuery | SearchEqualsQuery | SearchRangeQuery | SearchNearQuery | "SearchCompoundQuery", ...] = ()
+    must: tuple[
+        SearchTextQuery
+        | SearchPhraseQuery
+        | SearchAutocompleteQuery
+        | SearchWildcardQuery
+        | SearchRegexQuery
+        | SearchExistsQuery
+        | SearchInQuery
+        | SearchEqualsQuery
+        | SearchRangeQuery
+        | SearchNearQuery
+        | SearchCompoundQuery,
+        ...,
+    ] = ()
+    should: tuple[
+        SearchTextQuery
+        | SearchPhraseQuery
+        | SearchAutocompleteQuery
+        | SearchWildcardQuery
+        | SearchRegexQuery
+        | SearchExistsQuery
+        | SearchInQuery
+        | SearchEqualsQuery
+        | SearchRangeQuery
+        | SearchNearQuery
+        | SearchCompoundQuery,
+        ...,
+    ] = ()
+    filter: tuple[
+        SearchTextQuery
+        | SearchPhraseQuery
+        | SearchAutocompleteQuery
+        | SearchWildcardQuery
+        | SearchRegexQuery
+        | SearchExistsQuery
+        | SearchInQuery
+        | SearchEqualsQuery
+        | SearchRangeQuery
+        | SearchNearQuery
+        | SearchCompoundQuery,
+        ...,
+    ] = ()
+    must_not: tuple[
+        SearchTextQuery
+        | SearchPhraseQuery
+        | SearchAutocompleteQuery
+        | SearchWildcardQuery
+        | SearchRegexQuery
+        | SearchExistsQuery
+        | SearchInQuery
+        | SearchEqualsQuery
+        | SearchRangeQuery
+        | SearchNearQuery
+        | SearchCompoundQuery,
+        ...,
+    ] = ()
     minimum_should_match: int = 0
-    stage_options: SearchStageOptions = field(default_factory=SearchStageOptions)
+    stage_options: SearchStageOptions = field(
+        default_factory=SearchStageOptions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -265,7 +353,12 @@ type SearchTextLikeQuery = (
 type SearchQuery = SearchTextLikeQuery | SearchVectorQuery
 type _SearchClauseCompiler = Callable[[str, object], SearchTextLikeQuery]
 type _SearchMatcher = Callable[
-    [Document, SearchIndexDefinition, SearchTextLikeQuery, MaterializedSearchDocument | None],
+    [
+        Document,
+        SearchIndexDefinition,
+        SearchTextLikeQuery,
+        MaterializedSearchDocument | None,
+    ],
     bool,
 ]
 type _SearchExplainBuilder = Callable[[SearchQuery], dict[str, object | None]]
@@ -275,12 +368,12 @@ def compile_classic_text_query(spec: object) -> ClassicTextQuery:
     if not isinstance(spec, dict):
         raise OperationFailure("$text requires a document specification")
     unsupported = sorted(
-        set(spec) - {"$search", "$caseSensitive", "$diacriticSensitive", "$language"}
+        set(spec) - {"$search", "$caseSensitive", "$diacriticSensitive", "$language"},
     )
     if unsupported:
         raise OperationFailure(
             "$text local runtime supports only $search, $caseSensitive, $diacriticSensitive and $language; unsupported keys: "
-            + ", ".join(unsupported)
+            + ", ".join(unsupported),
         )
     raw_query = spec.get("$search")
     if not isinstance(raw_query, str) or not raw_query.strip():
@@ -294,13 +387,17 @@ def compile_classic_text_query(spec: object) -> ClassicTextQuery:
     language = spec.get("$language")
     if language is not None and not isinstance(language, str):
         raise OperationFailure("$text.$language must be a string")
-    terms, excluded_terms, required_phrases, excluded_phrases = _parse_classic_text_terms(
-        raw_query,
-        case_sensitive=case_sensitive,
-        diacritic_sensitive=diacritic_sensitive,
+    terms, excluded_terms, required_phrases, excluded_phrases = (
+        _parse_classic_text_terms(
+            raw_query,
+            case_sensitive=case_sensitive,
+            diacritic_sensitive=diacritic_sensitive,
+        )
     )
     if not terms and not required_phrases:
-        raise OperationFailure("$text.$search must contain at least one searchable token")
+        raise OperationFailure(
+            "$text.$search must contain at least one searchable token",
+        )
     return ClassicTextQuery(
         raw_query=raw_query,
         terms=terms,
@@ -313,7 +410,9 @@ def compile_classic_text_query(spec: object) -> ClassicTextQuery:
     )
 
 
-def split_classic_text_filter(filter_spec: Document) -> tuple[Document, ClassicTextQuery | None]:
+def split_classic_text_filter(
+    filter_spec: Document,
+) -> tuple[Document, ClassicTextQuery | None]:
     if "$text" not in filter_spec:
         return filter_spec, None
     raw_text_spec = filter_spec.get("$text")
@@ -348,7 +447,12 @@ def _parse_classic_text_terms(
     *,
     case_sensitive: bool,
     diacritic_sensitive: bool,
-) -> tuple[tuple[str, ...], tuple[str, ...], tuple[tuple[str, ...], ...], tuple[tuple[str, ...], ...]]:
+) -> tuple[
+    tuple[str, ...],
+    tuple[str, ...],
+    tuple[tuple[str, ...], ...],
+    tuple[tuple[str, ...], ...],
+]:
     include_terms: list[str] = []
     exclude_terms: list[str] = []
     include_phrases: list[tuple[str, ...]] = []
@@ -403,23 +507,33 @@ def resolve_classic_text_index(
             continue
         directions = tuple(direction for _field, direction in index.key)
         has_text = "text" in directions
-        unsupported_directions = [direction for direction in directions if direction not in (1, -1, "text")]
+        unsupported_directions = [
+            direction for direction in directions if direction not in (1, -1, "text")
+        ]
         if has_text and not unsupported_directions:
             candidates.append(index)
     if hinted_name is not None:
         candidates = [index for index in candidates if index.name == hinted_name]
     if not candidates:
         if hinted_name is not None:
-            raise OperationFailure(f"text index not found with name [{hinted_name}]")
-        raise OperationFailure("classic $text requires a local text index on the collection")
+            raise OperationFailure(
+                f"text index not found with name [{hinted_name}]",
+            )
+        raise OperationFailure(
+            "classic $text requires a local text index on the collection",
+        )
     if len(candidates) > 1:
         if hinted_name is not None:
-            raise OperationFailure(f"text index not found with name [{hinted_name}]")
+            raise OperationFailure(
+                f"text index not found with name [{hinted_name}]",
+            )
         raise OperationFailure(
-            "classic $text is ambiguous with multiple text indexes; use a single local text index per collection"
+            "classic $text is ambiguous with multiple text indexes; use a single local text index per collection",
         )
     index = candidates[0]
-    return index.name, tuple(field for field, direction in index.key if direction == "text")
+    return index.name, tuple(
+        field for field, direction in index.key if direction == "text"
+    )
 
 
 def resolve_classic_text_index_for_hint(
@@ -429,10 +543,18 @@ def resolve_classic_text_index_for_hint(
     if hint is None:
         return resolve_classic_text_index(indexes)
     if isinstance(hint, str):
-        index_name, fields = resolve_classic_text_index(indexes, hinted_name=hint)
-        matched_index = next((index for index in indexes if index.name == index_name), None)
+        index_name, fields = resolve_classic_text_index(
+            indexes,
+            hinted_name=hint,
+        )
+        matched_index = next(
+            (index for index in indexes if index.name == index_name),
+            None,
+        )
         if matched_index is not None and matched_index.hidden:
-            raise OperationFailure("hint does not correspond to a usable index for this query")
+            raise OperationFailure(
+                "hint does not correspond to a usable index for this query",
+            )
         return index_name, fields
 
     normalized_hint = normalize_index_keys(hint)
@@ -441,23 +563,31 @@ def resolve_classic_text_index_for_hint(
         raise OperationFailure("hint does not correspond to an existing index")
     usable_indexes = [index for index in matching_indexes if not index.hidden]
     if not usable_indexes:
-        raise OperationFailure("hint does not correspond to a usable index for this query")
+        raise OperationFailure(
+            "hint does not correspond to a usable index for this query",
+        )
 
     text_indexes = []
     for index in usable_indexes:
         directions = tuple(direction for _field, direction in index.key)
         has_text = "text" in directions
-        unsupported_directions = [direction for direction in directions if direction not in (1, -1, "text")]
+        unsupported_directions = [
+            direction for direction in directions if direction not in (1, -1, "text")
+        ]
         if has_text and not unsupported_directions:
             text_indexes.append(index)
     if not text_indexes:
-        raise OperationFailure("hint does not correspond to a text index for classic $text query")
+        raise OperationFailure(
+            "hint does not correspond to a text index for classic $text query",
+        )
     if len(text_indexes) > 1:
         raise OperationFailure(
-            f"multiple text indexes found with key pattern {normalized_hint!r}; hint by name instead"
+            f"multiple text indexes found with key pattern {normalized_hint!r}; hint by name instead",
         )
     index = text_indexes[0]
-    return index.name, tuple(field for field, direction in index.key if direction == "text")
+    return index.name, tuple(
+        field for field, direction in index.key if direction == "text"
+    )
 
 
 def classic_text_score(
@@ -497,14 +627,22 @@ def classic_text_score(
         if any(term in present_tokens for term in query.excluded_terms):
             return None
     if query.required_phrases:
-        all_sequences = tuple(tokens for sequences in field_tokens.values() for tokens in sequences)
+        all_sequences = tuple(
+            tokens for sequences in field_tokens.values() for tokens in sequences
+        )
         for phrase in query.required_phrases:
-            if not any(_token_sequence_contains(sequence, phrase) for sequence in all_sequences):
+            if not any(
+                _token_sequence_contains(sequence, phrase) for sequence in all_sequences
+            ):
                 return None
     if query.excluded_phrases:
-        all_sequences = tuple(tokens for sequences in field_tokens.values() for tokens in sequences)
+        all_sequences = tuple(
+            tokens for sequences in field_tokens.values() for tokens in sequences
+        )
         for phrase in query.excluded_phrases:
-            if any(_token_sequence_contains(sequence, phrase) for sequence in all_sequences):
+            if any(
+                _token_sequence_contains(sequence, phrase) for sequence in all_sequences
+            ):
                 return None
     for current_field in fields:
         token_counter = field_counters.get(current_field)
@@ -528,38 +666,47 @@ def classic_text_score(
     return float(score)
 
 
-def _token_sequence_contains(tokens: tuple[str, ...], phrase: tuple[str, ...]) -> bool:
+def _token_sequence_contains(
+    tokens: tuple[str, ...],
+    phrase: tuple[str, ...],
+) -> bool:
     phrase_length = len(phrase)
     if phrase_length <= 0 or len(tokens) < phrase_length:
         return False
-    for start in range(0, len(tokens) - phrase_length + 1):
+    for start in range(len(tokens) - phrase_length + 1):
         if tokens[start : start + phrase_length] == phrase:
             return True
     return False
 
 
 def attach_text_score(document: Document, score: float) -> Document:
-    enriched = dict(document)
-    enriched[TEXT_SCORE_FIELD] = float(score)
+    enriched = deepcopy(document)
+    metadata = dict(enriched.get(SEARCH_RESULT_METADATA_FIELD, {}))
+    metadata["textScore"] = float(score)
+    enriched[SEARCH_RESULT_METADATA_FIELD] = metadata
     return enriched
 
 
 def attach_vector_search_score(document: Document, score: float) -> Document:
-    enriched = dict(document)
-    enriched[VECTOR_SEARCH_SCORE_FIELD] = float(score)
+    enriched = deepcopy(document)
+    metadata = dict(enriched.get(SEARCH_RESULT_METADATA_FIELD, {}))
+    metadata["vectorSearchScore"] = float(score)
+    enriched[SEARCH_RESULT_METADATA_FIELD] = metadata
     return enriched
 
 
 def strip_search_result_metadata(document: Document) -> Document:
-    if not any(field in document for field in SEARCH_RESULT_METADATA_FIELDS):
+    if SEARCH_RESULT_METADATA_FIELD not in document:
         return document
     cleaned = dict(document)
-    for field in SEARCH_RESULT_METADATA_FIELDS:
-        cleaned.pop(field, None)
+    cleaned.pop(SEARCH_RESULT_METADATA_FIELD, None)
     return cleaned
 
 
-def iter_classic_text_values(document: Document, field: str) -> tuple[str, ...]:
+def iter_classic_text_values(
+    document: Document,
+    field: str,
+) -> tuple[str, ...]:
     found, value = get_document_value(document, field)
     if not found:
         return ()
@@ -610,8 +757,16 @@ def build_search_index_document(
         capabilities = TEXT_SEARCH_INDEX_CAPABILITIES
         query_mode = "text"
         experimental = False
-    status = "READY" if queryable and ready else "PENDING" if queryable else "UNSUPPORTED"
-    status_detail = "ready" if status == "READY" else "pending-build" if status == "PENDING" else "unsupported-definition"
+    status = (
+        "READY" if queryable and ready else "PENDING" if queryable else "UNSUPPORTED"
+    )
+    status_detail = (
+        "ready"
+        if status == "READY"
+        else "pending-build"
+        if status == "PENDING"
+        else "unsupported-definition"
+    )
     return {
         "name": definition.name,
         "type": definition.index_type,
@@ -637,7 +792,9 @@ def validate_search_stage_pipeline(pipeline: object) -> None:
         if operator not in SEARCH_STAGE_OPERATORS:
             continue
         if index != 0:
-            raise OperationFailure(f"{operator} must be the first stage in the pipeline")
+            raise OperationFailure(
+                f"{operator} must be the first stage in the pipeline",
+            )
 
 
 def compile_search_stage(operator: str, spec: object) -> SearchQuery:
@@ -651,7 +808,14 @@ def compile_search_text_like_query(spec: object) -> SearchTextLikeQuery:
     if not isinstance(spec, dict):
         raise OperationFailure("$search requires a document specification")
     unsupported_operators = sorted(
-        set(spec) - {"index", "count", "highlight", "facet", *TEXT_SEARCH_OPERATOR_NAMES}
+        set(spec)
+        - {
+            "index",
+            "count",
+            "highlight",
+            "facet",
+            *TEXT_SEARCH_OPERATOR_NAMES,
+        },
     )
     if unsupported_operators:
         raise OperationFailure(
@@ -660,7 +824,7 @@ def compile_search_text_like_query(spec: object) -> SearchTextLikeQuery:
             + " and "
             + TEXT_SEARCH_OPERATOR_NAMES[-1]
             + "; unsupported keys: "
-            + ", ".join(unsupported_operators)
+            + ", ".join(unsupported_operators),
         )
     index_name = spec.get("index", "default")
     if not isinstance(index_name, str) or not index_name:
@@ -671,13 +835,15 @@ def compile_search_text_like_query(spec: object) -> SearchTextLikeQuery:
             "$search requires exactly one of "
             + ", ".join(TEXT_SEARCH_OPERATOR_NAMES[:-1])
             + " or "
-            + TEXT_SEARCH_OPERATOR_NAMES[-1]
+            + TEXT_SEARCH_OPERATOR_NAMES[-1],
         )
     clause_name = clause_names[0]
     clause_spec = spec.get(clause_name)
     compiler = _SEARCH_CLAUSE_COMPILERS.get(clause_name)
     if compiler is None:
-        raise OperationFailure(f"unsupported local $search operator: {clause_name}")
+        raise OperationFailure(
+            f"unsupported local $search operator: {clause_name}",
+        )
     query = compiler(index_name, clause_spec)
     stage_options = SearchStageOptions(
         count=_compile_search_count_spec(spec.get("count")),
@@ -691,31 +857,36 @@ def compile_search_meta_text_like_query(spec: object) -> SearchTextLikeQuery:
     if not isinstance(spec, dict):
         raise OperationFailure("$searchMeta requires a document specification")
     facet_spec = spec.get("facet")
-    if (
-        isinstance(facet_spec, dict)
-        and "operator" in facet_spec
-    ):
+    if isinstance(facet_spec, dict) and "operator" in facet_spec:
         operator_spec = facet_spec.get("operator")
         if not isinstance(operator_spec, dict):
-            raise OperationFailure("$searchMeta.facet.operator must be a document specification")
-        top_level_clause_names = [name for name in TEXT_SEARCH_OPERATOR_NAMES if name in spec]
+            raise OperationFailure(
+                "$searchMeta.facet.operator must be a document specification",
+            )
+        top_level_clause_names = [
+            name for name in TEXT_SEARCH_OPERATOR_NAMES if name in spec
+        ]
         if top_level_clause_names:
             raise OperationFailure(
-                "$searchMeta.facet.operator cannot be combined with top-level search operators"
+                "$searchMeta.facet.operator cannot be combined with top-level search operators",
             )
-        clause_names = [name for name in TEXT_SEARCH_OPERATOR_NAMES if name in operator_spec]
+        clause_names = [
+            name for name in TEXT_SEARCH_OPERATOR_NAMES if name in operator_spec
+        ]
         if len(clause_names) != 1:
             raise OperationFailure(
                 "$searchMeta.facet.operator requires exactly one of "
                 + ", ".join(TEXT_SEARCH_OPERATOR_NAMES[:-1])
                 + " or "
-                + TEXT_SEARCH_OPERATOR_NAMES[-1]
+                + TEXT_SEARCH_OPERATOR_NAMES[-1],
             )
-        unsupported_operator_keys = sorted(set(operator_spec) - set(TEXT_SEARCH_OPERATOR_NAMES))
+        unsupported_operator_keys = sorted(
+            set(operator_spec) - set(TEXT_SEARCH_OPERATOR_NAMES),
+        )
         if unsupported_operator_keys:
             raise OperationFailure(
                 "$searchMeta.facet.operator supports only search operators; unsupported keys: "
-                + ", ".join(unsupported_operator_keys)
+                + ", ".join(unsupported_operator_keys),
             )
         clause_name = clause_names[0]
         normalized_spec = dict(spec)
@@ -723,36 +894,57 @@ def compile_search_meta_text_like_query(spec: object) -> SearchTextLikeQuery:
         normalized_facet_spec.pop("operator", None)
         normalized_spec["facet"] = normalized_facet_spec
         normalized_spec[clause_name] = operator_spec[clause_name]
-        return compile_search_text_like_query(normalized_spec)
-    return compile_search_text_like_query(spec)
+        return _validated_search_meta_query(
+            compile_search_text_like_query(normalized_spec),
+        )
+    return _validated_search_meta_query(compile_search_text_like_query(spec))
+
+
+def _validated_search_meta_query(
+    query: SearchTextLikeQuery,
+) -> SearchTextLikeQuery:
+    options = _search_stage_options(query)
+    if options.highlight is not None:
+        message = "$searchMeta does not support highlight"
+        raise OperationFailure(message)
+    if options.count is None and options.facet is None:
+        message = "$searchMeta requires at least one of count or facet"
+        raise OperationFailure(message)
+    return query
 
 
 def _compile_search_count_spec(spec: object) -> SearchCountSpec | None:
     if spec is None:
         return None
     if not isinstance(spec, dict):
-        raise OperationFailure("$search.count requires a document specification")
+        raise OperationFailure(
+            "$search.count requires a document specification",
+        )
     unsupported_options = sorted(set(spec) - {"type", "threshold"})
     if unsupported_options:
         raise OperationFailure(
             "$search.count only supports type and threshold; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     mode = spec.get("type", "total")
     if mode not in {"total", "lowerBound"}:
-        raise OperationFailure("$search.count.type must be 'total' or 'lowerBound'")
+        raise OperationFailure(
+            "$search.count.type must be 'total' or 'lowerBound'",
+        )
     threshold = spec.get("threshold")
     if threshold is not None:
         if mode != "lowerBound":
             raise OperationFailure(
-                "$search.count.threshold is only supported when count.type is 'lowerBound'"
+                "$search.count.threshold is only supported when count.type is 'lowerBound'",
             )
         if (
             not isinstance(threshold, int)
             or isinstance(threshold, bool)
             or threshold <= 0
         ):
-            raise OperationFailure("$search.count.threshold must be a positive integer")
+            raise OperationFailure(
+                "$search.count.threshold must be a positive integer",
+            )
     return SearchCountSpec(mode=mode, threshold=threshold)
 
 
@@ -760,12 +952,16 @@ def _compile_search_highlight_spec(spec: object) -> SearchHighlightSpec | None:
     if spec is None:
         return None
     if not isinstance(spec, dict):
-        raise OperationFailure("$search.highlight requires a document specification")
-    unsupported_options = sorted(set(spec) - {"path", "maxChars", "maxNumPassages"})
+        raise OperationFailure(
+            "$search.highlight requires a document specification",
+        )
+    unsupported_options = sorted(
+        set(spec) - {"path", "maxChars", "maxNumPassages"},
+    )
     if unsupported_options:
         raise OperationFailure(
             "$search.highlight only supports path, maxChars and maxNumPassages; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     raw_path = spec.get("path")
     if isinstance(raw_path, dict) and raw_path == {"wildcard": "*"}:
@@ -773,21 +969,23 @@ def _compile_search_highlight_spec(spec: object) -> SearchHighlightSpec | None:
     else:
         paths = _normalize_search_paths(raw_path)
         if paths is None:
-            raise OperationFailure("$search.highlight.path must be a string or list of strings")
+            raise OperationFailure(
+                "$search.highlight.path must be a string or list of strings",
+            )
     max_chars = spec.get("maxChars", 120)
-    if (
-        not isinstance(max_chars, int)
-        or isinstance(max_chars, bool)
-        or max_chars <= 0
-    ):
-        raise OperationFailure("$search.highlight.maxChars must be a positive integer")
+    if not isinstance(max_chars, int) or isinstance(max_chars, bool) or max_chars <= 0:
+        raise OperationFailure(
+            "$search.highlight.maxChars must be a positive integer",
+        )
     max_num_passages = spec.get("maxNumPassages")
     if max_num_passages is not None and (
         not isinstance(max_num_passages, int)
         or isinstance(max_num_passages, bool)
         or max_num_passages <= 0
     ):
-        raise OperationFailure("$search.highlight.maxNumPassages must be a positive integer")
+        raise OperationFailure(
+            "$search.highlight.maxNumPassages must be a positive integer",
+        )
     return SearchHighlightSpec(
         paths=paths,
         max_chars=max_chars,
@@ -799,67 +997,84 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
     if spec is None:
         return None
     if not isinstance(spec, dict):
-        raise OperationFailure("$search.facet requires a document specification")
+        raise OperationFailure(
+            "$search.facet requires a document specification",
+        )
     if "facets" in spec:
         unsupported_options = sorted(set(spec) - {"facets"})
         if unsupported_options:
             raise OperationFailure(
                 "$search.facet only supports facets in collector mode; unsupported keys: "
-                + ", ".join(unsupported_options)
+                + ", ".join(unsupported_options),
             )
         raw_facets = spec.get("facets")
         if not isinstance(raw_facets, dict) or not raw_facets:
-            raise OperationFailure("$search.facet.facets must be a non-empty document")
-        resolved_facets: list[tuple[str, str, str, int]] = []
-        resolved_facet_include_meta: list[tuple[str, bool]] = []
+            raise OperationFailure(
+                "$search.facet.facets must be a non-empty document",
+            )
+        resolved_facets: list[SearchFacetDefinition] = []
         for facet_name, facet_spec in raw_facets.items():
             if not isinstance(facet_name, str) or not facet_name:
-                raise OperationFailure("$search.facet facet names must be non-empty strings")
+                raise OperationFailure(
+                    "$search.facet facet names must be non-empty strings",
+                )
             if not isinstance(facet_spec, dict):
                 raise OperationFailure(
-                    f"$search.facet facet '{facet_name}' must be a document specification"
+                    f"$search.facet facet '{facet_name}' must be a document specification",
                 )
             facet_unsupported_options = sorted(
-                set(facet_spec) - {"type", "path", "numBuckets", "includeMeta"}
+                set(facet_spec) - {"type", "path", "numBuckets", "includeMeta"},
             )
             if facet_unsupported_options:
                 raise OperationFailure(
                     "$search.facet facets only support type, path, numBuckets and includeMeta; unsupported keys: "
-                    + ", ".join(facet_unsupported_options)
+                    + ", ".join(facet_unsupported_options),
                 )
             facet_type = facet_spec.get("type", "string")
             if facet_type not in _SUPPORTED_SEARCH_FACET_TYPES:
                 raise OperationFailure(
                     "$search.facet facet type must be one of: "
-                    + ", ".join(sorted(_SUPPORTED_SEARCH_FACET_TYPES))
+                    + ", ".join(sorted(_SUPPORTED_SEARCH_FACET_TYPES)),
                 )
             facet_path = facet_spec.get("path")
             if not isinstance(facet_path, str) or not facet_path:
-                raise OperationFailure("$search.facet facet path must be a non-empty string")
+                raise OperationFailure(
+                    "$search.facet facet path must be a non-empty string",
+                )
             facet_num_buckets = facet_spec.get("numBuckets", 10)
             if (
                 not isinstance(facet_num_buckets, int)
                 or isinstance(facet_num_buckets, bool)
                 or facet_num_buckets <= 0
             ):
-                raise OperationFailure("$search.facet facet numBuckets must be a positive integer")
+                raise OperationFailure(
+                    "$search.facet facet numBuckets must be a positive integer",
+                )
             include_meta = facet_spec.get("includeMeta", False)
             if not isinstance(include_meta, bool):
                 raise OperationFailure(
-                    f"$search.facet facet '{facet_name}' includeMeta must be a boolean"
+                    f"$search.facet facet '{facet_name}' includeMeta must be a boolean",
                 )
-            resolved_facets.append((facet_name, facet_path, facet_type, facet_num_buckets))
-            if include_meta:
-                resolved_facet_include_meta.append((facet_name, True))
+            resolved_facets.append(
+                SearchFacetDefinition(
+                    name=facet_name,
+                    path=facet_path,
+                    facet_type=facet_type,
+                    num_buckets=facet_num_buckets,
+                    include_meta=include_meta,
+                ),
+            )
         return SearchFacetSpec(
-            facets=tuple(resolved_facets),
-            facet_include_meta=tuple(resolved_facet_include_meta),
+            definitions=tuple(resolved_facets),
+            named=True,
         )
-    unsupported_options = sorted(set(spec) - {"type", "path", "numBuckets", "includeMeta"})
+    unsupported_options = sorted(
+        set(spec) - {"type", "path", "numBuckets", "includeMeta"},
+    )
     if unsupported_options:
         raise OperationFailure(
             "$search.facet only supports type, path, numBuckets and includeMeta; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     path = spec.get("path")
     if not isinstance(path, str) or not path:
@@ -868,7 +1083,7 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
     if facet_type not in _SUPPORTED_SEARCH_FACET_TYPES:
         raise OperationFailure(
             "$search.facet.type must be one of: "
-            + ", ".join(sorted(_SUPPORTED_SEARCH_FACET_TYPES))
+            + ", ".join(sorted(_SUPPORTED_SEARCH_FACET_TYPES)),
         )
     num_buckets = spec.get("numBuckets", 10)
     if (
@@ -876,15 +1091,22 @@ def _compile_search_facet_spec(spec: object) -> SearchFacetSpec | None:
         or isinstance(num_buckets, bool)
         or num_buckets <= 0
     ):
-        raise OperationFailure("$search.facet.numBuckets must be a positive integer")
+        raise OperationFailure(
+            "$search.facet.numBuckets must be a positive integer",
+        )
     include_meta = spec.get("includeMeta", False)
     if not isinstance(include_meta, bool):
         raise OperationFailure("$search.facet.includeMeta must be a boolean")
     return SearchFacetSpec(
-        path=path,
-        num_buckets=num_buckets,
-        facet_type=facet_type,
-        include_meta=include_meta,
+        definitions=(
+            SearchFacetDefinition(
+                name=None,
+                path=path,
+                num_buckets=num_buckets,
+                facet_type=facet_type,
+                include_meta=include_meta,
+            ),
+        ),
     )
 
 
@@ -905,7 +1127,9 @@ def compile_search_phrase_query(spec: object) -> SearchPhraseQuery:
 def compile_search_autocomplete_query(spec: object) -> SearchAutocompleteQuery:
     query = compile_search_text_like_query(spec)
     if not isinstance(query, SearchAutocompleteQuery):
-        raise OperationFailure("$search.autocomplete specification is required")
+        raise OperationFailure(
+            "$search.autocomplete specification is required",
+        )
     return query
 
 
@@ -967,37 +1191,73 @@ def compile_search_compound_query(spec: object) -> SearchCompoundQuery:
 
 def compile_vector_search_query(spec: object) -> SearchVectorQuery:
     if not isinstance(spec, dict):
-        raise OperationFailure("$vectorSearch requires a document specification")
-    unsupported = sorted(set(spec) - {"index", "path", "queryVector", "limit", "numCandidates", "filter", "minScore"})
+        raise OperationFailure(
+            "$vectorSearch requires a document specification",
+        )
+    unsupported = sorted(
+        set(spec)
+        - {
+            "index",
+            "path",
+            "queryVector",
+            "limit",
+            "numCandidates",
+            "filter",
+            "minScore",
+        },
+    )
     if unsupported:
         raise OperationFailure(
             "$vectorSearch local runtime supports only index, path, queryVector, limit, numCandidates, filter and minScore; "
-            "unsupported keys: " + ", ".join(unsupported)
+            "unsupported keys: " + ", ".join(unsupported),
         )
     index_name = spec.get("index", "default")
     if not isinstance(index_name, str) or not index_name:
-        raise OperationFailure("$vectorSearch index must be a non-empty string")
+        raise OperationFailure(
+            "$vectorSearch index must be a non-empty string",
+        )
     path = spec.get("path")
     if not isinstance(path, str) or not path:
         raise OperationFailure("$vectorSearch.path must be a non-empty string")
     raw_query_vector = spec.get("queryVector")
     if not isinstance(raw_query_vector, list) or not raw_query_vector:
-        raise OperationFailure("$vectorSearch.queryVector must be a non-empty array")
-    if not all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in raw_query_vector):
-        raise OperationFailure("$vectorSearch.queryVector must contain only numeric values")
+        raise OperationFailure(
+            "$vectorSearch.queryVector must be a non-empty array",
+        )
+    if not all(
+        isinstance(value, (int, float)) and not isinstance(value, bool)
+        for value in raw_query_vector
+    ):
+        raise OperationFailure(
+            "$vectorSearch.queryVector must contain only numeric values",
+        )
     limit = spec.get("limit")
     if not isinstance(limit, int) or isinstance(limit, bool) or limit <= 0:
-        raise OperationFailure("$vectorSearch.limit must be a positive integer")
+        raise OperationFailure(
+            "$vectorSearch.limit must be a positive integer",
+        )
     num_candidates = spec.get("numCandidates", limit)
-    if not isinstance(num_candidates, int) or isinstance(num_candidates, bool) or num_candidates < limit:
-        raise OperationFailure("$vectorSearch.numCandidates must be an integer >= limit")
+    if (
+        not isinstance(num_candidates, int)
+        or isinstance(num_candidates, bool)
+        or num_candidates < limit
+    ):
+        raise OperationFailure(
+            "$vectorSearch.numCandidates must be an integer >= limit",
+        )
     filter_spec = spec.get("filter")
     if filter_spec is not None and not isinstance(filter_spec, dict):
         raise OperationFailure("$vectorSearch.filter must be a document")
     min_score = spec.get("minScore")
     if min_score is not None:
-        if not isinstance(min_score, (int, float)) or isinstance(min_score, bool) or not math.isfinite(float(min_score)):
-            raise OperationFailure("$vectorSearch.minScore must be a finite numeric value")
+        if (
+            not isinstance(min_score, (int, float))
+            or isinstance(min_score, bool)
+            or not math.isfinite(float(min_score))
+        ):
+            raise OperationFailure(
+                "$vectorSearch.minScore must be a finite numeric value",
+            )
         min_score = float(min_score)
     return SearchVectorQuery(
         index_name=index_name,
@@ -1017,8 +1277,14 @@ def matches_search_text_query(
     query: SearchTextQuery,
     materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    prepared = materialized or materialize_search_document(document, definition)
-    return all(term.lower() in _materialized_token_set(prepared, query.paths) for term in query.terms)
+    prepared = materialized or materialize_search_document(
+        document,
+        definition,
+    )
+    return any(
+        term.lower() in _materialized_token_set(prepared, query.paths)
+        for term in query.terms
+    )
 
 
 def matches_search_phrase_query(
@@ -1028,7 +1294,10 @@ def matches_search_phrase_query(
     query: SearchPhraseQuery,
     materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    prepared = materialized or materialize_search_document(document, definition)
+    prepared = materialized or materialize_search_document(
+        document,
+        definition,
+    )
     return _phrase_query_score(prepared, query) > 0.0
 
 
@@ -1039,7 +1308,10 @@ def matches_search_autocomplete_query(
     query: SearchAutocompleteQuery,
     materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    prepared = materialized or materialize_search_document(document, definition)
+    prepared = materialized or materialize_search_document(
+        document,
+        definition,
+    )
     query_terms = tuple(term.lower() for term in query.terms)
     token_counters = _materialized_token_counters(prepared, query.paths)
     if not token_counters:
@@ -1055,7 +1327,7 @@ def matches_search_autocomplete_query(
                         ordered_tokens,
                         term,
                         query=query,
-                    )
+                    ),
                 )
                 for term in query_terms
             }
@@ -1074,7 +1346,7 @@ def matches_search_autocomplete_query(
                     ordered_tokens,
                     term,
                     query=query,
-                )
+                ),
             )
             for term in query_terms
         ):
@@ -1090,7 +1362,10 @@ def matches_search_wildcard_query(
     materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
     pattern = query.normalized_pattern
-    prepared = materialized or materialize_search_document(document, definition)
+    prepared = materialized or materialize_search_document(
+        document,
+        definition,
+    )
     return any(
         _wildcard_matches_value(
             value,
@@ -1108,13 +1383,21 @@ def matches_search_regex_query(
     query: SearchRegexQuery,
     materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    prepared = materialized or materialize_search_document(document, definition)
+    prepared = materialized or materialize_search_document(
+        document,
+        definition,
+    )
     try:
-        compiled = re.compile(query.raw_query, _regex_compile_flags(query.flags))
+        compiled = re.compile(
+            query.raw_query,
+            _regex_compile_flags(query.flags),
+        )
     except re.error:
         return False
-    allowed_paths = None if query.paths is None else frozenset(
-        _resolved_materialized_paths(prepared, query.paths)
+    allowed_paths = (
+        None
+        if query.paths is None
+        else frozenset(_resolved_materialized_paths(prepared, query.paths))
     )
     return any(
         _regex_matches_value(
@@ -1138,7 +1421,10 @@ def _token_sequence_matches(
     term_matcher = matcher or (lambda token, term: token.startswith(term))
     position = 0
     for term in query_terms:
-        while position < len(tokens) and not term_matcher(tokens[position], term):
+        while position < len(tokens) and not term_matcher(
+            tokens[position],
+            term,
+        ):
             position += 1
         if position >= len(tokens):
             return False
@@ -1173,8 +1459,7 @@ def _regex_matches_value(
     if not allow_analyzed_field:
         return False
     return any(
-        compiled.search(token) is not None
-        for token in _regex_token_values(value)
+        compiled.search(token) is not None for token in _regex_token_values(value)
     )
 
 
@@ -1202,7 +1487,11 @@ def _autocomplete_token_matches(
     prefix_candidate = token[: max(len(term), prefix_length)]
     distance = min(
         _bounded_levenshtein_distance(term, token, max_distance=max_edits),
-        _bounded_levenshtein_distance(term, prefix_candidate, max_distance=max_edits),
+        _bounded_levenshtein_distance(
+            term,
+            prefix_candidate,
+            max_distance=max_edits,
+        ),
     )
     return distance <= max_edits
 
@@ -1262,14 +1551,14 @@ def _regex_compile_flags(flags: str) -> int:
 def _normalize_regex_flags(raw_flags: str, *, field_name: str) -> str:
     normalized_flags = raw_flags.lower()
     unsupported_flags = sorted(
-        {flag for flag in normalized_flags if flag not in _SUPPORTED_REGEX_FLAGS}
+        {flag for flag in normalized_flags if flag not in _SUPPORTED_REGEX_FLAGS},
     )
     if unsupported_flags:
         raise OperationFailure(
             f"$search.regex.{field_name} only supports "
             + _SUPPORTED_REGEX_FLAGS_LABEL
             + "; unsupported: "
-            + ", ".join(unsupported_flags)
+            + ", ".join(unsupported_flags),
         )
     return "".join(sorted(set(normalized_flags)))
 
@@ -1281,7 +1570,10 @@ def matches_search_exists_query(
     query: SearchExistsQuery,
     materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    prepared = materialized or materialize_search_document(document, definition)
+    prepared = materialized or materialize_search_document(
+        document,
+        definition,
+    )
     if query.paths is None:
         mapped_paths = _mapped_search_paths(definition)
         if mapped_paths:
@@ -1301,7 +1593,10 @@ def matches_search_in_query(
     del materialized
     return any(
         (candidate_kind, candidate_value) in query.normalized_values
-        for candidate_kind, candidate_value in _search_path_scalar_values(document, query.path)
+        for candidate_kind, candidate_value in _search_path_scalar_values(
+            document,
+            query.path,
+        )
     )
 
 
@@ -1316,7 +1611,10 @@ def matches_search_equals_query(
     del materialized
     return any(
         candidate_kind == query.value_kind and candidate_value == query.value
-        for candidate_kind, candidate_value in _search_path_scalar_values(document, query.path)
+        for candidate_kind, candidate_value in _search_path_scalar_values(
+            document,
+            query.path,
+        )
     )
 
 
@@ -1335,7 +1633,10 @@ def matches_search_range_query(
             candidate_value=candidate_value,
             query=query,
         )
-        for candidate_kind, candidate_value in _search_path_scalar_values(document, query.path)
+        for candidate_kind, candidate_value in _search_path_scalar_values(
+            document,
+            query.path,
+        )
     )
 
 
@@ -1358,22 +1659,45 @@ def matches_search_compound_query(
     query: SearchCompoundQuery,
     materialized: MaterializedSearchDocument | None = None,
 ) -> bool:
-    prepared = materialized or materialize_search_document(document, definition)
+    prepared = materialized or materialize_search_document(
+        document,
+        definition,
+    )
     for clause in query.must:
-        if not matches_search_query(document, definition=definition, query=clause, materialized=prepared):
+        if not matches_search_query(
+            document,
+            definition=definition,
+            query=clause,
+            materialized=prepared,
+        ):
             return False
     for clause in query.filter:
-        if not matches_search_query(document, definition=definition, query=clause, materialized=prepared):
+        if not matches_search_query(
+            document,
+            definition=definition,
+            query=clause,
+            materialized=prepared,
+        ):
             return False
     for clause in query.must_not:
-        if matches_search_query(document, definition=definition, query=clause, materialized=prepared):
+        if matches_search_query(
+            document,
+            definition=definition,
+            query=clause,
+            materialized=prepared,
+        ):
             return False
     if not query.should:
         return True
     matched_should = sum(
         1
         for clause in query.should
-        if matches_search_query(document, definition=definition, query=clause, materialized=prepared)
+        if matches_search_query(
+            document,
+            definition=definition,
+            query=clause,
+            materialized=prepared,
+        )
     )
     return matched_should >= query.minimum_should_match
 
@@ -1387,7 +1711,9 @@ def matches_search_query(
 ) -> bool:
     matcher = _SEARCH_QUERY_MATCHERS.get(type(query))
     if matcher is None:
-        raise OperationFailure(f"unsupported local search query type: {type(query).__name__}")
+        raise OperationFailure(
+            f"unsupported local search query type: {type(query).__name__}",
+        )
     return matcher(document, definition, query, materialized)
 
 
@@ -1407,6 +1733,7 @@ def search_query_explain_details(
     definition: SearchIndexDefinition | None = None,
 ) -> dict[str, object | None]:
     details = _SEARCH_QUERY_EXPLAINERS[type(query)](query)
+    details["contractVersion"] = "search-v1"
     if definition is not None:
         _enrich_search_explain_details(
             details,
@@ -1417,7 +1744,30 @@ def search_query_explain_details(
     stage_options = _serialized_search_stage_options(query)
     if stage_options:
         details["stageOptions"] = stage_options
+    details["collectorPlan"] = _search_collector_plan(query)
+    details["highlightPlan"] = _search_highlight_plan(query)
     return details
+
+
+def _search_collector_plan(query: SearchQuery) -> dict[str, object]:
+    options = _search_stage_options(query)
+    return {
+        "count": options.count is not None,
+        "facetCount": (
+            len(options.facet.definitions) if options.facet is not None else 0
+        ),
+        "execution": "semantic-core",
+    }
+
+
+def _search_highlight_plan(query: SearchQuery) -> dict[str, object]:
+    options = _search_stage_options(query)
+    return {
+        "enabled": options.highlight is not None,
+        "extractor": "shared-span-extractor",
+        "storage": "sidecar",
+        "offsetUnit": "python-code-point",
+    }
 
 
 def _search_stage_options(query: SearchQuery) -> SearchStageOptions:
@@ -1426,7 +1776,9 @@ def _search_stage_options(query: SearchQuery) -> SearchStageOptions:
     return getattr(query, "stage_options", SearchStageOptions())
 
 
-def _serialized_search_stage_options(query: SearchQuery) -> dict[str, object] | None:
+def _serialized_search_stage_options(
+    query: SearchQuery,
+) -> dict[str, object] | None:
     options = _search_stage_options(query)
     serialized: dict[str, object] = {}
     if options.count is not None:
@@ -1436,7 +1788,11 @@ def _serialized_search_stage_options(query: SearchQuery) -> dict[str, object] | 
         serialized["count"] = serialized_count
     if options.highlight is not None:
         serialized_highlight: dict[str, object] = {
-            "paths": list(options.highlight.paths) if options.highlight.paths is not None else None,
+            "paths": (
+                list(options.highlight.paths)
+                if options.highlight.paths is not None
+                else None
+            ),
             "maxChars": options.highlight.max_chars,
             "resultField": SEARCH_HIGHLIGHTS_FIELD,
         }
@@ -1444,30 +1800,31 @@ def _serialized_search_stage_options(query: SearchQuery) -> dict[str, object] | 
             serialized_highlight["maxNumPassages"] = options.highlight.max_num_passages
         serialized["highlight"] = serialized_highlight
     if options.facet is not None:
-        if options.facet.facets:
-            facet_include_meta = dict(options.facet.facet_include_meta)
+        if options.facet.named:
             facets: dict[str, dict[str, object]] = {}
-            for name, path, facet_type, num_buckets in options.facet.facets:
+            for definition in options.facet.definitions:
+                facet_name = cast("str", definition.name)
                 facet_definition: dict[str, object] = {
-                    "type": facet_type,
-                    "path": path,
-                    "numBuckets": num_buckets,
+                    "type": definition.facet_type,
+                    "path": definition.path,
+                    "numBuckets": definition.num_buckets,
                 }
-                if facet_include_meta.get(name, False):
+                if definition.include_meta:
                     facet_definition["includeMeta"] = True
-                facets[name] = facet_definition
+                facets[facet_name] = facet_definition
             serialized["facet"] = {
                 "facets": facets,
                 "previewOnly": True,
             }
         else:
+            definition = options.facet.definitions[0]
             serialized_facet: dict[str, object] = {
-                "type": options.facet.facet_type,
-                "path": options.facet.path,
-                "numBuckets": options.facet.num_buckets,
+                "type": definition.facet_type,
+                "path": definition.path,
+                "numBuckets": definition.num_buckets,
                 "previewOnly": True,
             }
-            if options.facet.include_meta:
+            if definition.include_meta:
                 serialized_facet["includeMeta"] = True
             serialized["facet"] = serialized_facet
     return serialized or None
@@ -1480,7 +1837,10 @@ def search_clause_ranking(
     query: SearchTextLikeQuery,
     materialized: MaterializedSearchDocument | None = None,
 ) -> tuple[bool, float, float | None]:
-    prepared = materialized or materialize_search_document(document, definition)
+    prepared = materialized or materialize_search_document(
+        document,
+        definition,
+    )
     if isinstance(query, SearchNearQuery):
         distance = search_near_distance(document, query=query)
         if distance is None:
@@ -1488,14 +1848,19 @@ def search_clause_ranking(
         return True, 1.0 + (1.0 / (1.0 + (distance / query.pivot))), distance
     if isinstance(query, SearchTextQuery):
         token_counter = _materialized_token_counter(prepared, query.paths)
-        score = float(sum(token_counter.get(term.lower(), 0) for term in query.terms))
+        score = float(
+            sum(token_counter.get(term.lower(), 0) for term in query.terms),
+        )
         return score > 0.0, score, None
     if isinstance(query, SearchPhraseQuery):
         score = _phrase_query_score(prepared, query)
         return score > 0.0, score, None
     if isinstance(query, SearchAutocompleteQuery):
         score = 0.0
-        for token_counter in _materialized_token_counters(prepared, query.paths):
+        for token_counter in _materialized_token_counters(
+            prepared,
+            query.paths,
+        ):
             ordered_tokens = tuple(token_counter)
             if not ordered_tokens:
                 continue
@@ -1506,7 +1871,7 @@ def search_clause_ranking(
                             ordered_tokens,
                             term.lower(),
                             query=query,
-                        )
+                        ),
                     )
                     for term in query.terms
                 }
@@ -1535,7 +1900,9 @@ def search_clause_ranking(
                     local = 0.0
                     break
                 if query.score_mode == "frequency":
-                    local += float(sum(token_counter[token] for token in matches))
+                    local += float(
+                        sum(token_counter[token] for token in matches),
+                    )
                 else:
                     local += 1.0
             score = max(score, local)
@@ -1544,19 +1911,27 @@ def search_clause_ranking(
         score = float(
             sum(
                 1
-                for value in _materialized_lowered_values(prepared, query.paths)
+                for value in _materialized_lowered_values(
+                    prepared,
+                    query.paths,
+                )
                 if _wildcard_matches_value(
                     value,
                     pattern=query.normalized_pattern,
                     allow_analyzed_field=query.allow_analyzed_field,
                 )
-            )
+            ),
         )
         return score > 0.0, score, None
     if isinstance(query, SearchRegexQuery):
-        compiled = re.compile(query.raw_query, _regex_compile_flags(query.flags))
-        allowed_paths = None if query.paths is None else frozenset(
-            _resolved_materialized_paths(prepared, query.paths)
+        compiled = re.compile(
+            query.raw_query,
+            _regex_compile_flags(query.flags),
+        )
+        allowed_paths = (
+            None
+            if query.paths is None
+            else frozenset(_resolved_materialized_paths(prepared, query.paths))
         )
         score = float(
             sum(
@@ -1568,48 +1943,65 @@ def search_clause_ranking(
                     compiled=compiled,
                     allow_analyzed_field=query.allow_analyzed_field,
                 )
-            )
+            ),
         )
         return score > 0.0, score, None
     if isinstance(query, SearchExistsQuery):
         if query.paths is None:
             mapped_paths = _mapped_search_paths(definition)
             if mapped_paths:
-                score = float(sum(1 for path in mapped_paths if _search_path_exists(document, path)))
+                score = float(
+                    sum(
+                        1
+                        for path in mapped_paths
+                        if _search_path_exists(document, path)
+                    ),
+                )
             else:
                 score = float(len(prepared.searchable_paths))
         else:
-            score = float(sum(1 for path in query.paths if _search_path_exists(document, path)))
+            score = float(
+                sum(1 for path in query.paths if _search_path_exists(document, path)),
+            )
         return score > 0.0, score, None
     if isinstance(query, SearchInQuery):
         score = float(
             sum(
                 1
-                for candidate_kind, candidate_value in _search_path_scalar_values(document, query.path)
+                for candidate_kind, candidate_value in _search_path_scalar_values(
+                    document,
+                    query.path,
+                )
                 if (candidate_kind, candidate_value) in query.normalized_values
-            )
+            ),
         )
         return score > 0.0, score, None
     if isinstance(query, SearchEqualsQuery):
         score = float(
             sum(
                 1
-                for candidate_kind, candidate_value in _search_path_scalar_values(document, query.path)
+                for candidate_kind, candidate_value in _search_path_scalar_values(
+                    document,
+                    query.path,
+                )
                 if candidate_kind == query.value_kind and candidate_value == query.value
-            )
+            ),
         )
         return score > 0.0, score, None
     if isinstance(query, SearchRangeQuery):
         score = float(
             sum(
                 1
-                for candidate_kind, candidate_value in _search_path_scalar_values(document, query.path)
+                for candidate_kind, candidate_value in _search_path_scalar_values(
+                    document,
+                    query.path,
+                )
                 if _search_range_matches_value(
                     candidate_kind=candidate_kind,
                     candidate_value=candidate_value,
                     query=query,
                 )
-            )
+            ),
         )
         return score > 0.0, score, None
     if isinstance(query, SearchCompoundQuery):
@@ -1626,7 +2018,11 @@ def search_clause_ranking(
             query=query,
             materialized=prepared,
         )
-        return True, 1.0 + should_score + float(matched_should), best_near_distance
+        return (
+            True,
+            1.0 + should_score + float(matched_should),
+            best_near_distance,
+        )
     if matches_search_query(
         document,
         definition=definition,
@@ -1644,7 +2040,10 @@ def search_compound_ranking(
     query: SearchCompoundQuery,
     materialized: MaterializedSearchDocument | None = None,
 ) -> tuple[int, float, float]:
-    prepared = materialized or materialize_search_document(document, definition)
+    prepared = materialized or materialize_search_document(
+        document,
+        definition,
+    )
     matched_should = 0
     total_score = 0.0
     best_near_distance = float("inf")
@@ -1679,10 +2078,14 @@ def score_vector_document(
         return None
     if not isinstance(value, list) or not value:
         return None
-    if not all(isinstance(item, (int, float)) and not isinstance(item, bool) for item in value):
+    if not all(
+        isinstance(item, (int, float)) and not isinstance(item, bool) for item in value
+    ):
         return None
     candidate = tuple(float(item) for item in value)
-    if len(candidate) != field_spec["numDimensions"] or len(candidate) != len(query.query_vector):
+    if len(candidate) != field_spec["numDimensions"] or len(candidate) != len(
+        query.query_vector,
+    ):
         return None
     similarity = str(field_spec.get("similarity", query.similarity))
     return score_vector_values(
@@ -1713,7 +2116,9 @@ def materialize_search_document(
         tokens_counter = Counter(tokenize_classic_text(value))
         tokens = set(tokens_counter)
         token_counter.update(tokens_counter)
-        token_counter_by_path.setdefault(field_path, Counter()).update(tokens_counter)
+        token_counter_by_path.setdefault(field_path, Counter()).update(
+            tokens_counter,
+        )
         token_set.update(tokens)
         token_sets_by_path.setdefault(field_path, set()).update(tokens)
 
@@ -1819,7 +2224,9 @@ def vector_field_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
     return tuple(_vector_field_specs(definition))
 
 
-def vector_field_specs(definition: SearchIndexDefinition) -> dict[str, dict[str, object]]:
+def vector_field_specs(
+    definition: SearchIndexDefinition,
+) -> dict[str, dict[str, object]]:
     return deepcopy(_vector_field_specs(definition))
 
 
@@ -1848,14 +2255,18 @@ def iter_searchable_text_entries(
     return _collect_entries_from_mapping(document, mappings)
 
 
-def sqlite_fts5_query(query: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery) -> str:
+def sqlite_fts5_query(
+    query: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery,
+) -> str:
     if isinstance(query, SearchPhraseQuery):
         if query.slop > 0:
-            return " AND ".join(_quote_fts_term(term) for term in tokenize_classic_text(query.raw_query))
+            return " AND ".join(
+                _quote_fts_term(term) for term in tokenize_classic_text(query.raw_query)
+            )
         return _quote_fts_term(query.raw_query.strip())
     if isinstance(query, SearchAutocompleteQuery):
         return " AND ".join(f"{_quote_fts_term(term)}*" for term in query.terms)
-    return " AND ".join(_quote_fts_term(term) for term in query.terms)
+    return " OR ".join(_quote_fts_term(term) for term in query.terms)
 
 
 def _quote_fts_term(term: str) -> str:
@@ -1868,13 +2279,21 @@ def _normalize_search_paths(value: object) -> tuple[str, ...] | None:
         return None
     if isinstance(value, str):
         if not value:
-            raise OperationFailure("$search.text.path must be a non-empty string")
+            raise OperationFailure(
+                "$search.text.path must be a non-empty string",
+            )
         return (value,)
-    if isinstance(value, list) and value and all(isinstance(item, str) and item for item in value):
+    if (
+        isinstance(value, list)
+        and value
+        and all(isinstance(item, str) and item for item in value)
+    ):
         return tuple(value)
     if isinstance(value, dict) and value == {"wildcard": "*"}:
         return None
-    raise OperationFailure("$search.text.path must be a string, a list of strings or {'wildcard': '*'}")
+    raise OperationFailure(
+        "$search.text.path must be a string, a list of strings or {'wildcard': '*'}",
+    )
 
 
 def _compile_search_clause(
@@ -1885,25 +2304,34 @@ def _compile_search_clause(
 ) -> SearchTextLikeQuery:
     compiler = _SEARCH_CLAUSE_COMPILERS.get(clause_name)
     if compiler is None:
-        raise OperationFailure(f"unsupported local $search operator: {clause_name}")
+        raise OperationFailure(
+            f"unsupported local $search operator: {clause_name}",
+        )
     return compiler(index_name, clause_spec)
 
 
-def _compile_search_text_clause(index_name: str, clause_spec: object) -> SearchTextQuery:
+def _compile_search_text_clause(
+    index_name: str,
+    clause_spec: object,
+) -> SearchTextQuery:
     if not isinstance(clause_spec, dict):
-        raise OperationFailure("$search.text requires a document specification")
+        raise OperationFailure(
+            "$search.text requires a document specification",
+        )
     unsupported_options = sorted(set(clause_spec) - {"query", "path"})
     if unsupported_options:
         raise OperationFailure(
             "$search.text only supports query and path; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
         raise OperationFailure("$search.text.query must be a non-empty string")
     terms = tokenize_classic_text(raw_query)
     if not terms:
-        raise OperationFailure("$search.text.query must contain at least one searchable token")
+        raise OperationFailure(
+            "$search.text.query must contain at least one searchable token",
+        )
     paths = _normalize_search_paths(clause_spec.get("path"))
     return SearchTextQuery(
         index_name=index_name,
@@ -1913,23 +2341,34 @@ def _compile_search_text_clause(index_name: str, clause_spec: object) -> SearchT
     )
 
 
-def _compile_search_phrase_clause(index_name: str, clause_spec: object) -> SearchPhraseQuery:
+def _compile_search_phrase_clause(
+    index_name: str,
+    clause_spec: object,
+) -> SearchPhraseQuery:
     if not isinstance(clause_spec, dict):
-        raise OperationFailure("$search.phrase requires a document specification")
+        raise OperationFailure(
+            "$search.phrase requires a document specification",
+        )
     unsupported_options = sorted(set(clause_spec) - {"query", "path", "slop"})
     if unsupported_options:
         raise OperationFailure(
             "$search.phrase only supports query, path and slop; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
-        raise OperationFailure("$search.phrase.query must be a non-empty string")
+        raise OperationFailure(
+            "$search.phrase.query must be a non-empty string",
+        )
     if not tokenize_classic_text(raw_query):
-        raise OperationFailure("$search.phrase.query must contain at least one searchable token")
+        raise OperationFailure(
+            "$search.phrase.query must contain at least one searchable token",
+        )
     slop = clause_spec.get("slop", 0)
     if not isinstance(slop, int) or isinstance(slop, bool) or slop < 0:
-        raise OperationFailure("$search.phrase.slop must be a non-negative integer")
+        raise OperationFailure(
+            "$search.phrase.slop must be a non-negative integer",
+        )
     return SearchPhraseQuery(
         index_name=index_name,
         raw_query=raw_query,
@@ -1938,29 +2377,44 @@ def _compile_search_phrase_clause(index_name: str, clause_spec: object) -> Searc
     )
 
 
-def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) -> SearchAutocompleteQuery:
+def _compile_search_autocomplete_clause(
+    index_name: str,
+    clause_spec: object,
+) -> SearchAutocompleteQuery:
     if not isinstance(clause_spec, dict):
-        raise OperationFailure("$search.autocomplete requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"query", "path", "tokenOrder", "scoreMode", "fuzzy"})
+        raise OperationFailure(
+            "$search.autocomplete requires a document specification",
+        )
+    unsupported_options = sorted(
+        set(clause_spec) - {"query", "path", "tokenOrder", "scoreMode", "fuzzy"},
+    )
     if unsupported_options:
         raise OperationFailure(
             "$search.autocomplete only supports query, path, tokenOrder, scoreMode and fuzzy; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
-        raise OperationFailure("$search.autocomplete.query must be a non-empty string")
+        raise OperationFailure(
+            "$search.autocomplete.query must be a non-empty string",
+        )
     terms = tokenize_classic_text(raw_query)
     if not terms:
-        raise OperationFailure("$search.autocomplete.query must contain at least one searchable token")
+        raise OperationFailure(
+            "$search.autocomplete.query must contain at least one searchable token",
+        )
     token_order = clause_spec.get("tokenOrder", "any")
     if token_order not in {"any", "sequential"}:
-        raise OperationFailure("$search.autocomplete.tokenOrder must be 'any' or 'sequential'")
+        raise OperationFailure(
+            "$search.autocomplete.tokenOrder must be 'any' or 'sequential'",
+        )
     score_mode = clause_spec.get("scoreMode", "frequency")
     if score_mode not in {"frequency", "binary"}:
-        raise OperationFailure("$search.autocomplete.scoreMode must be 'frequency' or 'binary'")
-    fuzzy_max_edits, fuzzy_prefix_length, fuzzy_max_expansions = _compile_search_autocomplete_fuzzy_spec(
-        clause_spec.get("fuzzy")
+        raise OperationFailure(
+            "$search.autocomplete.scoreMode must be 'frequency' or 'binary'",
+        )
+    fuzzy_max_edits, fuzzy_prefix_length, fuzzy_max_expansions = (
+        _compile_search_autocomplete_fuzzy_spec(clause_spec.get("fuzzy"))
     )
     return SearchAutocompleteQuery(
         index_name=index_name,
@@ -1975,16 +2429,22 @@ def _compile_search_autocomplete_clause(index_name: str, clause_spec: object) ->
     )
 
 
-def _compile_search_autocomplete_fuzzy_spec(spec: object) -> tuple[int, int, int]:
+def _compile_search_autocomplete_fuzzy_spec(
+    spec: object,
+) -> tuple[int, int, int]:
     if spec is None:
         return 0, 0, 0
     if not isinstance(spec, dict):
-        raise OperationFailure("$search.autocomplete.fuzzy must be a document specification")
-    unsupported_options = sorted(set(spec) - {"maxEdits", "prefixLength", "maxExpansions"})
+        raise OperationFailure(
+            "$search.autocomplete.fuzzy must be a document specification",
+        )
+    unsupported_options = sorted(
+        set(spec) - {"maxEdits", "prefixLength", "maxExpansions"},
+    )
     if unsupported_options:
         raise OperationFailure(
             "$search.autocomplete.fuzzy only supports maxEdits, prefixLength and maxExpansions; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     max_edits = spec.get("maxEdits", 1)
     if (
@@ -1992,14 +2452,18 @@ def _compile_search_autocomplete_fuzzy_spec(spec: object) -> tuple[int, int, int
         or isinstance(max_edits, bool)
         or max_edits not in (1, 2)
     ):
-        raise OperationFailure("$search.autocomplete.fuzzy.maxEdits must be 1 or 2")
+        raise OperationFailure(
+            "$search.autocomplete.fuzzy.maxEdits must be 1 or 2",
+        )
     prefix_length = spec.get("prefixLength", 0)
     if (
         not isinstance(prefix_length, int)
         or isinstance(prefix_length, bool)
         or prefix_length < 0
     ):
-        raise OperationFailure("$search.autocomplete.fuzzy.prefixLength must be a non-negative integer")
+        raise OperationFailure(
+            "$search.autocomplete.fuzzy.prefixLength must be a non-negative integer",
+        )
     max_expansions = spec.get("maxExpansions", 50)
     if (
         not isinstance(max_expansions, int)
@@ -2007,26 +2471,37 @@ def _compile_search_autocomplete_fuzzy_spec(spec: object) -> tuple[int, int, int
         or max_expansions <= 0
     ):
         raise OperationFailure(
-            "$search.autocomplete.fuzzy.maxExpansions must be a positive integer"
+            "$search.autocomplete.fuzzy.maxExpansions must be a positive integer",
         )
     return max_edits, prefix_length, max_expansions
 
 
-def _compile_search_wildcard_clause(index_name: str, clause_spec: object) -> SearchWildcardQuery:
+def _compile_search_wildcard_clause(
+    index_name: str,
+    clause_spec: object,
+) -> SearchWildcardQuery:
     if not isinstance(clause_spec, dict):
-        raise OperationFailure("$search.wildcard requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"query", "path", "allowAnalyzedField"})
+        raise OperationFailure(
+            "$search.wildcard requires a document specification",
+        )
+    unsupported_options = sorted(
+        set(clause_spec) - {"query", "path", "allowAnalyzedField"},
+    )
     if unsupported_options:
         raise OperationFailure(
             "$search.wildcard only supports query, path and allowAnalyzedField; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
-        raise OperationFailure("$search.wildcard.query must be a non-empty string")
+        raise OperationFailure(
+            "$search.wildcard.query must be a non-empty string",
+        )
     allow_analyzed_field = clause_spec.get("allowAnalyzedField", False)
     if not isinstance(allow_analyzed_field, bool):
-        raise OperationFailure("$search.wildcard.allowAnalyzedField must be a boolean")
+        raise OperationFailure(
+            "$search.wildcard.allowAnalyzedField must be a boolean",
+        )
     return SearchWildcardQuery(
         index_name=index_name,
         raw_query=raw_query,
@@ -2036,20 +2511,27 @@ def _compile_search_wildcard_clause(index_name: str, clause_spec: object) -> Sea
     )
 
 
-def _compile_search_regex_clause(index_name: str, clause_spec: object) -> SearchRegexQuery:
+def _compile_search_regex_clause(
+    index_name: str,
+    clause_spec: object,
+) -> SearchRegexQuery:
     if not isinstance(clause_spec, dict):
-        raise OperationFailure("$search.regex requires a document specification")
+        raise OperationFailure(
+            "$search.regex requires a document specification",
+        )
     unsupported_options = sorted(
-        set(clause_spec) - {"query", "path", "flags", "options", "allowAnalyzedField"}
+        set(clause_spec) - {"query", "path", "flags", "options", "allowAnalyzedField"},
     )
     if unsupported_options:
         raise OperationFailure(
             "$search.regex only supports query, path, flags, options and allowAnalyzedField; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     raw_query = clause_spec.get("query")
     if not isinstance(raw_query, str) or not raw_query.strip():
-        raise OperationFailure("$search.regex.query must be a non-empty string")
+        raise OperationFailure(
+            "$search.regex.query must be a non-empty string",
+        )
     raw_flags = clause_spec.get("flags")
     raw_options = clause_spec.get("options")
     if raw_flags is not None and not isinstance(raw_flags, str):
@@ -2079,15 +2561,19 @@ def _compile_search_regex_clause(index_name: str, clause_spec: object) -> Search
         and normalized_flags != normalized_options
     ):
         raise OperationFailure(
-            "$search.regex.flags and $search.regex.options must represent the same flag set when both are provided"
+            "$search.regex.flags and $search.regex.options must represent the same flag set when both are provided",
         )
     allow_analyzed_field = clause_spec.get("allowAnalyzedField", False)
     if not isinstance(allow_analyzed_field, bool):
-        raise OperationFailure("$search.regex.allowAnalyzedField must be a boolean")
+        raise OperationFailure(
+            "$search.regex.allowAnalyzedField must be a boolean",
+        )
     try:
         re.compile(raw_query, _regex_compile_flags(flags))
     except (re.error, ValueError) as exc:
-        raise OperationFailure(f"$search.regex.query must be a valid regular expression: {exc}") from exc
+        raise OperationFailure(
+            f"$search.regex.query must be a valid regular expression: {exc}",
+        ) from exc
     return SearchRegexQuery(
         index_name=index_name,
         raw_query=raw_query,
@@ -2097,14 +2583,19 @@ def _compile_search_regex_clause(index_name: str, clause_spec: object) -> Search
     )
 
 
-def _compile_search_exists_clause(index_name: str, clause_spec: object) -> SearchExistsQuery:
+def _compile_search_exists_clause(
+    index_name: str,
+    clause_spec: object,
+) -> SearchExistsQuery:
     if not isinstance(clause_spec, dict):
-        raise OperationFailure("$search.exists requires a document specification")
+        raise OperationFailure(
+            "$search.exists requires a document specification",
+        )
     unsupported_options = sorted(set(clause_spec) - {"path"})
     if unsupported_options:
         raise OperationFailure(
             "$search.exists only supports path; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     return SearchExistsQuery(
         index_name=index_name,
@@ -2112,14 +2603,17 @@ def _compile_search_exists_clause(index_name: str, clause_spec: object) -> Searc
     )
 
 
-def _compile_search_in_clause(index_name: str, clause_spec: object) -> SearchInQuery:
+def _compile_search_in_clause(
+    index_name: str,
+    clause_spec: object,
+) -> SearchInQuery:
     if not isinstance(clause_spec, dict):
         raise OperationFailure("$search.in requires a document specification")
     unsupported_options = sorted(set(clause_spec) - {"path", "value"})
     if unsupported_options:
         raise OperationFailure(
             "$search.in only supports path and value; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     path = clause_spec.get("path")
     if not isinstance(path, str) or not path:
@@ -2134,7 +2628,7 @@ def _compile_search_in_clause(index_name: str, clause_spec: object) -> SearchInQ
         normalized_value = _normalize_search_scalar_value(item)
         if normalized_value is None:
             raise OperationFailure(
-                "$search.in.value entries must be null, bool, finite number, string, date, datetime, objectId or uuid"
+                "$search.in.value entries must be null, bool, finite number, string, date, datetime, objectId or uuid",
             )
         if normalized_value in seen:
             continue
@@ -2149,22 +2643,29 @@ def _compile_search_in_clause(index_name: str, clause_spec: object) -> SearchInQ
     )
 
 
-def _compile_search_equals_clause(index_name: str, clause_spec: object) -> SearchEqualsQuery:
+def _compile_search_equals_clause(
+    index_name: str,
+    clause_spec: object,
+) -> SearchEqualsQuery:
     if not isinstance(clause_spec, dict):
-        raise OperationFailure("$search.equals requires a document specification")
+        raise OperationFailure(
+            "$search.equals requires a document specification",
+        )
     unsupported_options = sorted(set(clause_spec) - {"path", "value"})
     if unsupported_options:
         raise OperationFailure(
             "$search.equals only supports path and value; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     path = clause_spec.get("path")
     if not isinstance(path, str) or not path:
-        raise OperationFailure("$search.equals.path must be a non-empty string")
+        raise OperationFailure(
+            "$search.equals.path must be a non-empty string",
+        )
     normalized_value = _normalize_search_scalar_value(clause_spec.get("value"))
     if normalized_value is None:
         raise OperationFailure(
-            "$search.equals.value must be null, bool, finite number, string, date, datetime, objectId or uuid"
+            "$search.equals.value must be null, bool, finite number, string, date, datetime, objectId or uuid",
         )
     value_kind, value = normalized_value
     return SearchEqualsQuery(
@@ -2175,14 +2676,21 @@ def _compile_search_equals_clause(index_name: str, clause_spec: object) -> Searc
     )
 
 
-def _compile_search_range_clause(index_name: str, clause_spec: object) -> SearchRangeQuery:
+def _compile_search_range_clause(
+    index_name: str,
+    clause_spec: object,
+) -> SearchRangeQuery:
     if not isinstance(clause_spec, dict):
-        raise OperationFailure("$search.range requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"path", "gt", "gte", "lt", "lte"})
+        raise OperationFailure(
+            "$search.range requires a document specification",
+        )
+    unsupported_options = sorted(
+        set(clause_spec) - {"path", "gt", "gte", "lt", "lte"},
+    )
     if unsupported_options:
         raise OperationFailure(
             "$search.range only supports path, gt, gte, lt and lte; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     path = clause_spec.get("path")
     if not isinstance(path, str) or not path:
@@ -2191,22 +2699,28 @@ def _compile_search_range_clause(index_name: str, clause_spec: object) -> Search
     for option_name in ("gt", "gte", "lt", "lte"):
         if option_name not in clause_spec:
             continue
-        normalized_value = _normalize_search_scalar_value(clause_spec.get(option_name))
+        normalized_value = _normalize_search_scalar_value(
+            clause_spec.get(option_name),
+        )
         if normalized_value is None:
             raise OperationFailure(
-                f"$search.range.{option_name} must be a finite number, date or datetime"
+                f"$search.range.{option_name} must be a finite number, date or datetime",
             )
         bound_kind, bound_value = normalized_value
         if bound_kind not in {"number", "date", "datetime"}:
             raise OperationFailure(
-                f"$search.range.{option_name} must be a finite number, date or datetime"
+                f"$search.range.{option_name} must be a finite number, date or datetime",
             )
         normalized_bounds[option_name] = (bound_kind, bound_value)
     if not normalized_bounds:
-        raise OperationFailure("$search.range requires at least one of gt, gte, lt or lte")
+        raise OperationFailure(
+            "$search.range requires at least one of gt, gte, lt or lte",
+        )
     bound_kinds = {kind for kind, _value in normalized_bounds.values()}
     if len(bound_kinds) != 1:
-        raise OperationFailure("$search.range bounds must use the same value family")
+        raise OperationFailure(
+            "$search.range bounds must use the same value family",
+        )
     bound_kind = next(iter(bound_kinds))
     return SearchRangeQuery(
         index_name=index_name,
@@ -2219,14 +2733,21 @@ def _compile_search_range_clause(index_name: str, clause_spec: object) -> Search
     )
 
 
-def _compile_search_near_clause(index_name: str, clause_spec: object) -> SearchNearQuery:
+def _compile_search_near_clause(
+    index_name: str,
+    clause_spec: object,
+) -> SearchNearQuery:
     if not isinstance(clause_spec, dict):
-        raise OperationFailure("$search.near requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"path", "origin", "pivot"})
+        raise OperationFailure(
+            "$search.near requires a document specification",
+        )
+    unsupported_options = sorted(
+        set(clause_spec) - {"path", "origin", "pivot"},
+    )
     if unsupported_options:
         raise OperationFailure(
             "$search.near only supports path, origin and pivot; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
     path = clause_spec.get("path")
     if not isinstance(path, str) or not path:
@@ -2238,10 +2759,19 @@ def _compile_search_near_clause(index_name: str, clause_spec: object) -> SearchN
     origin = clause_spec.get("origin")
     origin_kind = _search_near_origin_kind(origin)
     if origin_kind is None:
-        raise OperationFailure("$search.near.origin must be a finite number or a date/datetime value")
+        raise OperationFailure(
+            "$search.near.origin must be a finite number or a date/datetime value",
+        )
     pivot = clause_spec.get("pivot")
-    if not isinstance(pivot, (int, float)) or isinstance(pivot, bool) or not math.isfinite(float(pivot)) or float(pivot) <= 0:
-        raise OperationFailure("$search.near.pivot must be a positive finite number")
+    if (
+        not isinstance(pivot, (int, float))
+        or isinstance(pivot, bool)
+        or not math.isfinite(float(pivot))
+        or float(pivot) <= 0
+    ):
+        raise OperationFailure(
+            "$search.near.pivot must be a positive finite number",
+        )
     return SearchNearQuery(
         index_name=index_name,
         path=path,
@@ -2256,34 +2786,47 @@ def _compile_search_compound_clause(
     clause_spec: object,
 ) -> SearchCompoundQuery:
     if not isinstance(clause_spec, dict):
-        raise OperationFailure("$search.compound requires a document specification")
-    unsupported_options = sorted(set(clause_spec) - {"must", "should", "filter", "mustNot", "minimumShouldMatch"})
+        raise OperationFailure(
+            "$search.compound requires a document specification",
+        )
+    unsupported_options = sorted(
+        set(clause_spec)
+        - {"must", "should", "filter", "mustNot", "minimumShouldMatch"},
+    )
     if unsupported_options:
         raise OperationFailure(
             "$search.compound only supports must, should, filter, mustNot and minimumShouldMatch; unsupported keys: "
-            + ", ".join(unsupported_options)
+            + ", ".join(unsupported_options),
         )
 
-    def _compile_clause_list(field_name: str) -> tuple[SearchTextLikeQuery, ...]:
+    def _compile_clause_list(
+        field_name: str,
+    ) -> tuple[SearchTextLikeQuery, ...]:
         raw_value = clause_spec.get(field_name, [])
         if raw_value in (None, []):
             return ()
         if not isinstance(raw_value, list) or not raw_value:
-            raise OperationFailure(f"$search.compound.{field_name} must be a non-empty array")
+            raise OperationFailure(
+                f"$search.compound.{field_name} must be a non-empty array",
+            )
         compiled: list[SearchTextLikeQuery] = []
         for entry in raw_value:
             if not isinstance(entry, dict):
-                raise OperationFailure(f"$search.compound.{field_name} entries must be documents")
-            entry_clause_names = [name for name in TEXT_SEARCH_OPERATOR_NAMES if name in entry]
+                raise OperationFailure(
+                    f"$search.compound.{field_name} entries must be documents",
+                )
+            entry_clause_names = [
+                name for name in TEXT_SEARCH_OPERATOR_NAMES if name in entry
+            ]
             if len(entry_clause_names) != 1:
                 raise OperationFailure(
-                    f"$search.compound.{field_name} entries require exactly one operator"
+                    f"$search.compound.{field_name} entries require exactly one operator",
                 )
             entry_clause_name = entry_clause_names[0]
             compiler = _SEARCH_CLAUSE_COMPILERS.get(entry_clause_name)
             if compiler is None:
                 raise OperationFailure(
-                    f"$search.compound.{field_name} uses unsupported operator {entry_clause_name}"
+                    f"$search.compound.{field_name} uses unsupported operator {entry_clause_name}",
                 )
             compiled.append(compiler(index_name, entry.get(entry_clause_name)))
         return tuple(compiled)
@@ -2302,9 +2845,13 @@ def _compile_search_compound_clause(
         or isinstance(minimum_should_match, bool)
         or minimum_should_match < 0
     ):
-        raise OperationFailure("$search.compound.minimumShouldMatch must be a non-negative integer")
+        raise OperationFailure(
+            "$search.compound.minimumShouldMatch must be a non-negative integer",
+        )
     if minimum_should_match and not should:
-        raise OperationFailure("$search.compound.minimumShouldMatch requires should clauses")
+        raise OperationFailure(
+            "$search.compound.minimumShouldMatch requires should clauses",
+        )
     return SearchCompoundQuery(
         index_name=index_name,
         must=must,
@@ -2320,7 +2867,7 @@ def _validate_text_search_definition(definition: Document) -> None:
     unsupported = set(definition) - allowed_top_level
     if unsupported:
         raise OperationFailure(
-            "unsupported local search index options: " + ", ".join(sorted(unsupported))
+            "unsupported local search index options: " + ", ".join(sorted(unsupported)),
         )
     mappings = definition.get("mappings", {"dynamic": True})
     if not isinstance(mappings, dict):
@@ -2330,35 +2877,68 @@ def _validate_text_search_definition(definition: Document) -> None:
 
 def _validate_vector_search_definition(definition: Document) -> None:
     if set(definition) != {"fields"}:
-        raise OperationFailure("local vectorSearch definitions require a top-level fields array")
+        raise OperationFailure(
+            "local vectorSearch definitions require a top-level fields array",
+        )
     fields = definition.get("fields")
     if not isinstance(fields, list) or not fields:
-        raise OperationFailure("local vectorSearch definitions require a non-empty fields array")
+        raise OperationFailure(
+            "local vectorSearch definitions require a non-empty fields array",
+        )
     for field in fields:
         if not isinstance(field, dict):
-            raise OperationFailure("vectorSearch field definitions must be documents")
-        unsupported = set(field) - {"type", "path", "numDimensions", "similarity", "connectivity", "expansionAdd", "expansionSearch"}
+            raise OperationFailure(
+                "vectorSearch field definitions must be documents",
+            )
+        unsupported = set(field) - {
+            "type",
+            "path",
+            "numDimensions",
+            "similarity",
+            "connectivity",
+            "expansionAdd",
+            "expansionSearch",
+        }
         if unsupported:
             raise OperationFailure(
-                "unsupported local vectorSearch field options: " + ", ".join(sorted(unsupported))
+                "unsupported local vectorSearch field options: "
+                + ", ".join(sorted(unsupported)),
             )
         if field.get("type") != "vector":
-            raise OperationFailure("local vectorSearch fields must use type 'vector'")
+            raise OperationFailure(
+                "local vectorSearch fields must use type 'vector'",
+            )
         path = field.get("path")
         if not isinstance(path, str) or not path:
-            raise OperationFailure("local vectorSearch field path must be a non-empty string")
+            raise OperationFailure(
+                "local vectorSearch field path must be a non-empty string",
+            )
         num_dimensions = field.get("numDimensions")
-        if not isinstance(num_dimensions, int) or isinstance(num_dimensions, bool) or num_dimensions <= 0:
-            raise OperationFailure("local vectorSearch numDimensions must be a positive integer")
+        if (
+            not isinstance(num_dimensions, int)
+            or isinstance(num_dimensions, bool)
+            or num_dimensions <= 0
+        ):
+            raise OperationFailure(
+                "local vectorSearch numDimensions must be a positive integer",
+            )
         similarity = field.get("similarity", "cosine")
         if similarity not in {"cosine", "dotProduct", "euclidean"}:
-            raise OperationFailure("local vectorSearch currently supports cosine, dotProduct and euclidean similarity")
+            raise OperationFailure(
+                "local vectorSearch currently supports cosine, dotProduct and euclidean similarity",
+            )
         for option_name in ("connectivity", "expansionAdd", "expansionSearch"):
             option_value = field.get(option_name)
             if option_value is None:
                 continue
-            if not isinstance(option_value, int) or isinstance(option_value, bool) or option_value <= 0:
-                raise OperationFailure(f"local vectorSearch {option_name} must be a positive integer")
+            if (
+                not isinstance(option_value, int)
+                or isinstance(option_value, bool)
+                or option_value <= 0
+            ):
+                raise OperationFailure(
+                    f"local vectorSearch {option_name} must be a positive integer",
+                )
 
 
 def _validate_mappings_document(mappings: Document) -> None:
@@ -2366,24 +2946,35 @@ def _validate_mappings_document(mappings: Document) -> None:
     unsupported = set(mappings) - allowed
     if unsupported:
         raise OperationFailure(
-            "unsupported local search mappings options: " + ", ".join(sorted(unsupported))
+            "unsupported local search mappings options: "
+            + ", ".join(sorted(unsupported)),
         )
     dynamic = mappings.get("dynamic", False)
     if not isinstance(dynamic, bool):
-        raise OperationFailure("search index mappings.dynamic must be a boolean")
+        raise OperationFailure(
+            "search index mappings.dynamic must be a boolean",
+        )
     fields = mappings.get("fields", {})
     if not isinstance(fields, dict):
-        raise OperationFailure("search index mappings.fields must be a document")
+        raise OperationFailure(
+            "search index mappings.fields must be a document",
+        )
     for field_name, field_spec in fields.items():
         if not isinstance(field_name, str) or not field_name:
-            raise OperationFailure("search index field names must be non-empty strings")
+            raise OperationFailure(
+                "search index field names must be non-empty strings",
+            )
         if not isinstance(field_spec, dict):
-            raise OperationFailure("search index field mappings must be documents")
+            raise OperationFailure(
+                "search index field mappings must be documents",
+            )
         _validate_field_mapping(field_spec)
 
 
 def _validate_field_mapping(field_spec: Document) -> None:
-    mapping_type = _normalize_search_field_mapping_type(field_spec.get("type", "document"))
+    mapping_type = _normalize_search_field_mapping_type(
+        field_spec.get("type", "document"),
+    )
     if mapping_type in STRUCTURED_SEARCH_FIELD_MAPPING_TYPES:
         nested_mapping = {
             key: value for key, value in field_spec.items() if key != "type"
@@ -2391,15 +2982,25 @@ def _validate_field_mapping(field_spec: Document) -> None:
         _validate_mappings_document(nested_mapping)
         return
     if mapping_type not in SUPPORTED_SEARCH_FIELD_MAPPING_TYPES:
-        raise OperationFailure(f"unsupported local search field mapping type: {mapping_type}")
+        raise OperationFailure(
+            f"unsupported local search field mapping type: {mapping_type}",
+        )
     unsupported = set(field_spec) - {"type", "analyzer", "searchAnalyzer"}
     if unsupported:
         raise OperationFailure(
-            "unsupported local search field options: " + ", ".join(sorted(unsupported))
+            "unsupported local search field options: " + ", ".join(sorted(unsupported)),
         )
 
 
-def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery) -> dict[str, object | None]:
+def _explain_text_like_query(
+    query: (
+        SearchTextQuery
+        | SearchPhraseQuery
+        | SearchAutocompleteQuery
+        | SearchWildcardQuery
+        | SearchRegexQuery
+    ),
+) -> dict[str, object | None]:
     paths = list(query.paths) if query.paths is not None else None
     query_semantics: dict[str, object]
     if isinstance(query, SearchPhraseQuery):
@@ -2418,9 +3019,11 @@ def _explain_text_like_query(query: SearchTextQuery | SearchPhraseQuery | Search
             "scoringMode": (
                 "matched-token-frequency"
                 if query.score_mode == "frequency" and query.token_order == "any"
-                else "matched-term-count"
-                if query.score_mode == "frequency"
-                else "binary-term-coverage"
+                else (
+                    "matched-term-count"
+                    if query.score_mode == "frequency"
+                    else "binary-term-coverage"
+                )
             ),
             "supportsFuzzy": True,
             "fuzzyEnabled": query.fuzzy_max_edits > 0,
@@ -2504,7 +3107,12 @@ def _phrase_value_score(
     for start_index, token in enumerate(tokens):
         if token != terms[0]:
             continue
-        gap_sum = _phrase_match_gap_sum(tokens, terms=terms, slop=slop, start_index=start_index)
+        gap_sum = _phrase_match_gap_sum(
+            tokens,
+            terms=terms,
+            slop=slop,
+            start_index=start_index,
+        )
         if gap_sum is None:
             continue
         score += 1.0 / (1.0 + float(gap_sum))
@@ -2547,7 +3155,9 @@ def _find_phrase_term_index(
     return None
 
 
-def _explain_exists_query(query: SearchExistsQuery) -> dict[str, object | None]:
+def _explain_exists_query(
+    query: SearchExistsQuery,
+) -> dict[str, object | None]:
     paths = list(query.paths) if query.paths is not None else None
     return {
         "query": None,
@@ -2592,11 +3202,16 @@ def _explain_in_query(query: SearchInQuery) -> dict[str, object | None]:
         "numCandidates": None,
         "filter": None,
         "similarity": None,
-        "pathSummary": _scalar_search_path_summary(query.path, section_name="in"),
+        "pathSummary": _scalar_search_path_summary(
+            query.path,
+            section_name="in",
+        ),
     }
 
 
-def _explain_equals_query(query: SearchEqualsQuery) -> dict[str, object | None]:
+def _explain_equals_query(
+    query: SearchEqualsQuery,
+) -> dict[str, object | None]:
     return {
         "query": None,
         "paths": None,
@@ -2616,7 +3231,10 @@ def _explain_equals_query(query: SearchEqualsQuery) -> dict[str, object | None]:
         "numCandidates": None,
         "filter": None,
         "similarity": None,
-        "pathSummary": _scalar_search_path_summary(query.path, section_name="equals"),
+        "pathSummary": _scalar_search_path_summary(
+            query.path,
+            section_name="equals",
+        ),
     }
 
 
@@ -2646,7 +3264,10 @@ def _explain_range_query(query: SearchRangeQuery) -> dict[str, object | None]:
         "numCandidates": None,
         "filter": None,
         "similarity": None,
-        "pathSummary": _scalar_search_path_summary(query.path, section_name="range"),
+        "pathSummary": _scalar_search_path_summary(
+            query.path,
+            section_name="range",
+        ),
     }
 
 
@@ -2675,7 +3296,10 @@ def _explain_near_query(query: SearchNearQuery) -> dict[str, object | None]:
         "numCandidates": None,
         "filter": None,
         "similarity": None,
-        "pathSummary": _scalar_search_path_summary(query.path, section_name="near"),
+        "pathSummary": _scalar_search_path_summary(
+            query.path,
+            section_name="near",
+        ),
         "supportedOriginKinds": ["number", "date", "datetime"],
         "pivotDecay": {
             "baselineScore": 1.0,
@@ -2685,12 +3309,17 @@ def _explain_near_query(query: SearchNearQuery) -> dict[str, object | None]:
     }
 
 
-def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | None]:
+def _explain_compound_query(
+    query: SearchCompoundQuery,
+) -> dict[str, object | None]:
     def _clause_operator_names(
         clauses: tuple[SearchTextLikeQuery, ...],
     ) -> list[str]:
         return [
-            _SEARCH_QUERY_OPERATOR_NAMES.get(type(clause), type(clause).__name__)
+            _SEARCH_QUERY_OPERATOR_NAMES.get(
+                type(clause),
+                type(clause).__name__,
+            )
             for clause in clauses
         ]
 
@@ -2722,7 +3351,7 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
                         _typed_clause_paths(
                             nested_clauses,
                             query_type=query_type,
-                        )
+                        ),
                     )
         return sorted(collected)
 
@@ -2757,13 +3386,13 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
         set(_typed_clause_paths(query.must, query_type=textual_types))
         | set(_typed_clause_paths(query.should, query_type=textual_types))
         | set(_typed_clause_paths(query.filter, query_type=textual_types))
-        | set(_typed_clause_paths(query.must_not, query_type=textual_types))
+        | set(_typed_clause_paths(query.must_not, query_type=textual_types)),
     )
     scalar_paths = sorted(
         set(_typed_clause_paths(query.must, query_type=scalar_types))
         | set(_typed_clause_paths(query.should, query_type=scalar_types))
         | set(_typed_clause_paths(query.filter, query_type=scalar_types))
-        | set(_typed_clause_paths(query.must_not, query_type=scalar_types))
+        | set(_typed_clause_paths(query.must_not, query_type=scalar_types)),
     )
     embedded_path_sections = [
         section
@@ -2814,7 +3443,9 @@ def _explain_compound_query(query: SearchCompoundQuery) -> dict[str, object | No
         },
         "ranking": {
             "usesShouldRanking": bool(query.should),
-            "nearAware": any(isinstance(clause, SearchNearQuery) for clause in query.should),
+            "nearAware": any(
+                isinstance(clause, SearchNearQuery) for clause in query.should
+            ),
             "nearAwareShouldCount": sum(
                 1 for clause in query.should if isinstance(clause, SearchNearQuery)
             ),
@@ -2859,7 +3490,12 @@ def _query_paths(query: SearchTextLikeQuery) -> tuple[str, ...]:
         return (query.path,)
     if isinstance(query, SearchCompoundQuery):
         collected: list[str] = []
-        for clauses in (query.must, query.should, query.filter, query.must_not):
+        for clauses in (
+            query.must,
+            query.should,
+            query.filter,
+            query.must_not,
+        ):
             for clause in clauses:
                 collected.extend(_query_paths(clause))
         return tuple(dict.fromkeys(collected))
@@ -2884,7 +3520,11 @@ def attach_search_highlights(
     if not highlights:
         return document
     highlighted = deepcopy(document)
-    highlighted[SEARCH_HIGHLIGHTS_FIELD] = highlights
+    metadata = dict(highlighted.get(SEARCH_RESULT_METADATA_FIELD, {}))
+    metadata["highlights"] = deepcopy(highlights)
+    highlighted[SEARCH_RESULT_METADATA_FIELD] = metadata
+    if SEARCH_HIGHLIGHTS_FIELD not in highlighted:
+        highlighted[SEARCH_HIGHLIGHTS_FIELD] = highlights
     return highlighted
 
 
@@ -2917,7 +3557,11 @@ def build_search_stage_option_previews(
                 break
         highlight_preview: dict[str, object] = {
             "resultField": SEARCH_HIGHLIGHTS_FIELD,
-            "requestedPaths": ["*"] if options.highlight.paths is None else list(options.highlight.paths),
+            "requestedPaths": (
+                ["*"]
+                if options.highlight.paths is None
+                else list(options.highlight.paths)
+            ),
             "fragmentCount": sum(
                 len(document.get(SEARCH_HIGHLIGHTS_FIELD, ()))
                 for document in documents
@@ -2929,7 +3573,10 @@ def build_search_stage_option_previews(
             highlight_preview["maxNumPassages"] = options.highlight.max_num_passages
         previews["highlightPreview"] = highlight_preview
     if options.facet is not None:
-        previews["facetPreview"] = _facet_preview_payload(documents, options.facet)
+        previews["facetPreview"] = _facet_preview_payload(
+            documents,
+            options.facet,
+        )
     return previews
 
 
@@ -2938,36 +3585,90 @@ def build_search_meta_document(
     *,
     query: SearchTextLikeQuery,
 ) -> Document:
+    return serialize_search_metadata(
+        collect_search_metadata(documents, query=query),
+    )
+
+
+def collect_search_metadata(
+    documents: list[Document],
+    *,
+    query: SearchTextLikeQuery,
+) -> SearchMetadata:
     options = _search_stage_options(query)
     if options.highlight is not None:
-        raise OperationFailure("$searchMeta does not support highlight")
+        message = "$searchMeta does not support highlight"
+        raise OperationFailure(message)
     if options.count is None and options.facet is None:
-        raise OperationFailure("$searchMeta requires at least one of count or facet")
-    result: Document = {}
+        message = "$searchMeta requires at least one of count or facet"
+        raise OperationFailure(message)
+    count_result: SearchCountResult | None = None
     if options.count is not None:
-        count_value = len(documents)
-        if options.count.mode == "lowerBound":
-            lower_bound = (
-                min(count_value, options.count.threshold)
-                if options.count.threshold is not None
-                else count_value
-            )
+        count_result = build_search_count_result(
+            len(documents),
+            options.count,
+        )
+    facets = (
+        tuple(
+            _collect_facet_result(documents, definition)
+            for definition in options.facet.definitions
+        )
+        if options.facet is not None
+        else ()
+    )
+    return SearchMetadata(count=count_result, facets=facets)
+
+
+def build_search_count_result(
+    matched_count: int,
+    specification: SearchCountSpec,
+) -> SearchCountResult:
+    """Build collector output through the shared count semantic boundary."""
+    if specification.mode == "total":
+        return SearchCountResult(
+            mode="total",
+            value=matched_count,
+            exact=True,
+        )
+    threshold = specification.threshold
+    capped = threshold is not None and matched_count > threshold
+    return SearchCountResult(
+        mode="lowerBound",
+        value=min(matched_count, threshold) if threshold is not None else matched_count,
+        exact=not capped,
+        threshold=threshold,
+        capped_by_threshold=capped,
+    )
+
+
+def serialize_search_metadata(metadata: SearchMetadata) -> Document:
+    result: Document = {}
+    if metadata.count is not None:
+        count_result = metadata.count
+        if count_result.mode == "lowerBound":
             count_payload: dict[str, object] = {
-                "lowerBound": lower_bound,
-                "exact": (
-                    True
-                    if options.count.threshold is None
-                    else count_value <= options.count.threshold
-                ),
+                "lowerBound": count_result.value,
+                "exact": count_result.exact,
             }
-            if options.count.threshold is not None:
-                count_payload["threshold"] = options.count.threshold
-                count_payload["cappedByThreshold"] = count_value > options.count.threshold
+            if count_result.threshold is not None:
+                count_payload["threshold"] = count_result.threshold
+                count_payload["cappedByThreshold"] = count_result.capped_by_threshold
             result["count"] = count_payload
         else:
-            result["count"] = {"total": count_value, "exact": True}
-    if options.facet is not None:
-        result["facet"] = _facet_preview_payload(documents, options.facet)
+            result["count"] = {
+                "total": count_result.value,
+                "exact": count_result.exact,
+            }
+    if metadata.facets:
+        if all(facet.definition.name is not None for facet in metadata.facets):
+            result["facet"] = {
+                "facets": {
+                    facet.definition.name: _serialize_facet_result(facet)
+                    for facet in metadata.facets
+                },
+            }
+        else:
+            result["facet"] = _serialize_facet_result(metadata.facets[0])
     return result
 
 
@@ -2975,23 +3676,17 @@ def _facet_preview_payload(
     documents: list[Document],
     spec: SearchFacetSpec,
 ) -> dict[str, object]:
-    if spec.facets:
-        facet_include_meta = dict(spec.facet_include_meta)
+    if spec.named:
         return {
             "facets": {
-                name: _facet_preview(
+                definition.name: _facet_preview(
                     documents,
-                    SearchFacetSpec(
-                        path=path,
-                        num_buckets=num_buckets,
-                        facet_type=facet_type,
-                        include_meta=facet_include_meta.get(name, False),
-                    ),
+                    definition,
                 )
-                for name, path, facet_type, num_buckets in spec.facets
-            }
+                for definition in spec.definitions
+            },
         }
-    return _facet_preview(documents, spec)
+    return _facet_preview(documents, spec.definitions[0])
 
 
 def build_search_highlights(
@@ -3037,6 +3732,8 @@ def build_search_highlights(
                     clause=clause,
                     max_chars=spec.max_chars,
                 )
+                if payload is None:
+                    continue
                 marker = (
                     str(payload["path"]),
                     str(payload["operator"]),
@@ -3057,7 +3754,11 @@ def build_search_highlights(
 def _highlightable_textual_clauses(
     query: SearchTextLikeQuery,
 ) -> tuple[
-    SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery,
+    SearchTextQuery
+    | SearchPhraseQuery
+    | SearchAutocompleteQuery
+    | SearchWildcardQuery
+    | SearchRegexQuery,
     ...,
 ]:
     if isinstance(
@@ -3074,16 +3775,26 @@ def _highlightable_textual_clauses(
     if not isinstance(query, SearchCompoundQuery):
         return ()
     clauses: list[
-        SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery
+        SearchTextQuery
+        | SearchPhraseQuery
+        | SearchAutocompleteQuery
+        | SearchWildcardQuery
+        | SearchRegexQuery
     ] = []
-    for group in (query.must, query.should, query.filter, query.must_not):
+    for group in (query.must, query.should):
         for clause in group:
             clauses.extend(_highlightable_textual_clauses(clause))
     return tuple(clauses)
 
 
 def _resolved_highlight_clause_paths(
-    clause: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery,
+    clause: (
+        SearchTextQuery
+        | SearchPhraseQuery
+        | SearchAutocompleteQuery
+        | SearchWildcardQuery
+        | SearchRegexQuery
+    ),
     *,
     available_leaf_paths: tuple[str, ...],
 ) -> set[str] | None:
@@ -3093,24 +3804,33 @@ def _resolved_highlight_clause_paths(
         _resolve_requested_leaf_paths(
             list(clause.paths),
             available_leaf_paths=available_leaf_paths,
-        )
+        ),
     )
 
 
 def _text_value_matches_clause(
     value: str,
-    clause: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery,
+    clause: (
+        SearchTextQuery
+        | SearchPhraseQuery
+        | SearchAutocompleteQuery
+        | SearchWildcardQuery
+        | SearchRegexQuery
+    ),
 ) -> bool:
     lowered = value.lower()
     if isinstance(clause, SearchTextQuery):
         token_set = set(tokenize_classic_text(value))
-        return all(term.lower() in token_set for term in clause.terms)
+        return any(term.lower() in token_set for term in clause.terms)
     if isinstance(clause, SearchPhraseQuery):
-        return _phrase_value_score(
-            value,
-            terms=tokenize_classic_text(clause.raw_query),
-            slop=clause.slop,
-        ) > 0.0
+        return (
+            _phrase_value_score(
+                value,
+                terms=tokenize_classic_text(clause.raw_query),
+                slop=clause.slop,
+            )
+            > 0.0
+        )
     if isinstance(clause, SearchAutocompleteQuery):
         tokens = tokenize_classic_text(value)
         if clause.token_order == "sequential":
@@ -3124,7 +3844,10 @@ def _text_value_matches_clause(
                 ),
             )
         return all(
-            any(_autocomplete_token_matches(token, term.lower(), query=clause) for token in tokens)
+            any(
+                _autocomplete_token_matches(token, term.lower(), query=clause)
+                for token in tokens
+            )
             for term in clause.terms
         )
     if isinstance(clause, SearchWildcardQuery):
@@ -3145,17 +3868,55 @@ def _highlight_payload_for_clause(
     path: str,
     value: str,
     *,
-    clause: SearchTextQuery | SearchPhraseQuery | SearchAutocompleteQuery | SearchWildcardQuery | SearchRegexQuery,
+    clause: (
+        SearchTextQuery
+        | SearchPhraseQuery
+        | SearchAutocompleteQuery
+        | SearchWildcardQuery
+        | SearchRegexQuery
+    ),
     max_chars: int,
-) -> dict[str, object]:
+) -> dict[str, object] | None:
     operator = _SEARCH_QUERY_OPERATOR_NAMES[type(clause)]
+    spans = _highlight_spans_for_clause(value, clause)
+    if not spans:
+        return None
+    passage = _build_highlight_passage(
+        value,
+        spans=spans,
+        max_chars=max_chars,
+    )
     payload: dict[str, object] = {
         "path": path,
         "operator": operator,
-        "text": _truncate_highlight_value(value, max_chars=max_chars),
+        "text": passage.text,
+        "start": passage.start,
+        "end": passage.end,
+        "segments": [
+            {
+                "type": segment.segment_type,
+                "value": segment.value,
+                "start": segment.start,
+                "end": segment.end,
+            }
+            for segment in passage.segments
+        ],
     }
-    if isinstance(clause, (SearchTextQuery, SearchAutocompleteQuery)):
-        payload["matchedTerms"] = list(clause.terms)
+    if isinstance(clause, SearchTextQuery):
+        token_set = set(tokenize_classic_text(value))
+        payload["matchedTerms"] = [
+            term for term in clause.terms if term.lower() in token_set
+        ]
+    elif isinstance(clause, SearchAutocompleteQuery):
+        tokens = tokenize_classic_text(value)
+        payload["matchedTerms"] = [
+            term
+            for term in clause.terms
+            if any(
+                _autocomplete_token_matches(token, term.lower(), query=clause)
+                for token in tokens
+            )
+        ]
     elif isinstance(clause, SearchPhraseQuery):
         payload["matchedPhrase"] = clause.raw_query
     elif isinstance(clause, SearchWildcardQuery):
@@ -3166,69 +3927,305 @@ def _highlight_payload_for_clause(
     return payload
 
 
-def _truncate_highlight_value(value: str, *, max_chars: int) -> str:
-    if len(value) <= max_chars:
-        return value
-    return value[: max_chars - 1] + "…"
+def _highlight_spans_for_clause(
+    value: str,
+    clause: (
+        SearchTextQuery
+        | SearchPhraseQuery
+        | SearchAutocompleteQuery
+        | SearchWildcardQuery
+        | SearchRegexQuery
+    ),
+) -> tuple[SearchHighlightSpan, ...]:
+    tokens = _highlight_token_spans(value)
+    if isinstance(clause, SearchTextQuery):
+        terms = {term.lower() for term in clause.terms}
+        return _merge_highlight_spans(
+            tuple(
+                SearchHighlightSpan(start=start, end=end)
+                for token, start, end in tokens
+                if token in terms
+            ),
+        )
+    if isinstance(clause, SearchPhraseQuery):
+        return _phrase_highlight_spans(tokens, clause)
+    if isinstance(clause, SearchAutocompleteQuery):
+        return _autocomplete_highlight_spans(tokens, clause)
+    if isinstance(clause, SearchWildcardQuery):
+        if fnmatch.fnmatchcase(value.lower(), clause.normalized_pattern):
+            return (SearchHighlightSpan(start=0, end=len(value)),)
+        return _merge_highlight_spans(
+            tuple(
+                SearchHighlightSpan(start=start, end=end)
+                for token, start, end in tokens
+                if fnmatch.fnmatchcase(token, clause.normalized_pattern)
+            ),
+        )
+    return _regex_highlight_spans(value, tokens, clause)
+
+
+def _phrase_highlight_spans(
+    tokens: tuple[tuple[str, int, int], ...],
+    clause: SearchPhraseQuery,
+) -> tuple[SearchHighlightSpan, ...]:
+    terms = tokenize_classic_text(clause.raw_query)
+    spans: list[SearchHighlightSpan] = []
+    token_values = tuple(token for token, _start, _end in tokens)
+    for start_index, token in enumerate(token_values):
+        if not terms or token != terms[0]:
+            continue
+        current_index = start_index
+        matched_indexes = [start_index]
+        for term in terms[1:]:
+            next_index = _find_phrase_term_index(
+                token_values,
+                term=term,
+                start=current_index + 1,
+                stop=min(
+                    len(token_values),
+                    current_index + clause.slop + 2,
+                ),
+            )
+            if next_index is None:
+                break
+            matched_indexes.append(next_index)
+            current_index = next_index
+        if len(matched_indexes) == len(terms):
+            spans.append(
+                SearchHighlightSpan(
+                    start=tokens[matched_indexes[0]][1],
+                    end=tokens[matched_indexes[-1]][2],
+                ),
+            )
+    return _merge_highlight_spans(tuple(spans))
+
+
+def _autocomplete_highlight_spans(
+    tokens: tuple[tuple[str, int, int], ...],
+    clause: SearchAutocompleteQuery,
+) -> tuple[SearchHighlightSpan, ...]:
+    spans: list[SearchHighlightSpan] = []
+    for token, start, end in tokens:
+        for term in clause.terms:
+            normalized_term = term.lower()
+            if not _autocomplete_token_matches(
+                token,
+                normalized_term,
+                query=clause,
+            ):
+                continue
+            matched_end = (
+                min(start + len(normalized_term), end)
+                if token.startswith(normalized_term)
+                else end
+            )
+            spans.append(SearchHighlightSpan(start=start, end=matched_end))
+    return _merge_highlight_spans(tuple(spans))
+
+
+def _regex_highlight_spans(
+    value: str,
+    tokens: tuple[tuple[str, int, int], ...],
+    clause: SearchRegexQuery,
+) -> tuple[SearchHighlightSpan, ...]:
+    compiled = re.compile(clause.raw_query, _regex_compile_flags(clause.flags))
+    direct_spans = tuple(
+        SearchHighlightSpan(start=match.start(), end=match.end())
+        for match in compiled.finditer(value)
+        if match.end() > match.start()
+    )
+    if direct_spans:
+        return _merge_highlight_spans(direct_spans)
+    token_spans: list[SearchHighlightSpan] = []
+    for _token, start, end in tokens:
+        token_value = value[start:end]
+        token_spans.extend(
+            SearchHighlightSpan(
+                start=start + match.start(),
+                end=start + match.end(),
+            )
+            for match in compiled.finditer(token_value)
+            if match.end() > match.start()
+        )
+    return _merge_highlight_spans(tuple(token_spans))
+
+
+def _highlight_token_spans(
+    value: str,
+) -> tuple[tuple[str, int, int], ...]:
+    spans: list[tuple[str, int, int]] = []
+    for match in _TEXT_TOKEN_RE.finditer(value):
+        normalized = tokenize_classic_text(match.group(0))
+        if normalized:
+            spans.append((normalized[0], match.start(), match.end()))
+    return tuple(spans)
+
+
+def _merge_highlight_spans(
+    spans: tuple[SearchHighlightSpan, ...],
+) -> tuple[SearchHighlightSpan, ...]:
+    merged: list[SearchHighlightSpan] = []
+    for span in sorted(spans):
+        if not merged or span.start > merged[-1].end:
+            merged.append(span)
+            continue
+        previous = merged[-1]
+        merged[-1] = SearchHighlightSpan(
+            start=previous.start,
+            end=max(previous.end, span.end),
+        )
+    return tuple(merged)
+
+
+def _build_highlight_passage(
+    value: str,
+    *,
+    spans: tuple[SearchHighlightSpan, ...],
+    max_chars: int,
+) -> SearchHighlightPassage:
+    if not spans:
+        message = "highlight passage requires at least one matched span"
+        raise ValueError(message)
+    focus = spans[0]
+    passage_length = min(max_chars, len(value))
+    focus_length = min(focus.end - focus.start, passage_length)
+    start = max(0, focus.start - (passage_length - focus_length) // 2)
+    end = min(len(value), start + passage_length)
+    start = max(0, end - passage_length)
+    clipped_spans = tuple(
+        SearchHighlightSpan(
+            start=max(span.start, start),
+            end=min(span.end, end),
+        )
+        for span in spans
+        if span.start < end and span.end > start
+    )
+    segments: list[SearchHighlightSegment] = []
+    cursor = start
+    for span in clipped_spans:
+        if cursor < span.start:
+            segments.append(
+                SearchHighlightSegment(
+                    segment_type="text",
+                    value=value[cursor : span.start],
+                    start=cursor,
+                    end=span.start,
+                ),
+            )
+        segments.append(
+            SearchHighlightSegment(
+                segment_type="hit",
+                value=value[span.start : span.end],
+                start=span.start,
+                end=span.end,
+            ),
+        )
+        cursor = span.end
+    if cursor < end:
+        segments.append(
+            SearchHighlightSegment(
+                segment_type="text",
+                value=value[cursor:end],
+                start=cursor,
+                end=end,
+            ),
+        )
+    return SearchHighlightPassage(
+        text=value[start:end],
+        start=start,
+        end=end,
+        segments=tuple(segments),
+    )
 
 
 def _facet_preview(
     documents: list[Document],
-    spec: SearchFacetSpec,
+    definition: SearchFacetDefinition,
 ) -> dict[str, object]:
+    return _serialize_facet_result(
+        _collect_facet_result(documents, definition),
+    )
+
+
+def _collect_facet_result(
+    documents: list[Document],
+    definition: SearchFacetDefinition,
+) -> SearchFacetResult:
     counts: dict[tuple[str, object], int] = {}
     labels: dict[tuple[str, object], object] = {}
     for document in documents:
         seen_in_document: set[tuple[str, object]] = set()
-        for value in _search_path_values(document, spec.path):
+        for value in _search_path_values(document, definition.path):
             normalized = _normalize_search_scalar_value(value)
             if normalized is None:
                 continue
             normalized_kind = normalized[0]
-            if spec.facet_type == "date":
+            if definition.facet_type == "date":
                 if normalized_kind not in {"date", "datetime"}:
                     continue
-            elif spec.facet_type in {"string", "token"}:
+            elif definition.facet_type in {"string", "token"}:
                 if normalized_kind != "string":
                     continue
-            elif spec.facet_type == "boolean":
+            elif definition.facet_type == "boolean":
                 if normalized_kind != "bool":
                     continue
-            elif normalized_kind != spec.facet_type:
+            elif normalized_kind != definition.facet_type:
                 continue
             if normalized in seen_in_document:
                 continue
             seen_in_document.add(normalized)
             counts[normalized] = counts.get(normalized, 0) + 1
             labels[normalized] = normalized[1]
-    buckets = [
-        {"value": labels[key], "count": count}
+    buckets = tuple(
+        SearchFacetBucket(value=labels[key], count=count)
         for key, count in sorted(
             counts.items(),
-            key=lambda item: (-item[1], str(labels[item[0]])),
-        )[: spec.num_buckets]
+            key=lambda item: (
+                -item[1],
+                item[0][0],
+                bson_engine_key(labels[item[0]]),
+            ),
+        )[: definition.num_buckets]
+    )
+    return SearchFacetResult(
+        definition=definition,
+        buckets=buckets,
+        distinct_value_count=len(counts),
+        counted_value_count=sum(counts.values()),
+    )
+
+
+def _serialize_facet_result(
+    result: SearchFacetResult,
+) -> dict[str, object]:
+    definition = result.definition
+    buckets = [
+        {"value": bucket.value, "count": bucket.count} for bucket in result.buckets
     ]
     preview: dict[str, object] = {
-        "type": spec.facet_type,
-        "path": spec.path,
-        "numBuckets": spec.num_buckets,
+        "type": definition.facet_type,
+        "path": definition.path,
+        "numBuckets": definition.num_buckets,
         "buckets": buckets,
     }
-    if spec.include_meta:
-        distinct_value_count = len(counts)
+    if definition.include_meta:
+        distinct_value_count = result.distinct_value_count or 0
         returned_bucket_count = len(buckets)
-        counted_value_count = sum(counts.values())
-        returned_value_count = sum(
-            int(bucket["count"])
-            for bucket in buckets
-        )
+        counted_value_count = result.counted_value_count or 0
+        returned_value_count = sum(int(bucket["count"]) for bucket in buckets)
         preview["meta"] = {
             "distinctValueCount": distinct_value_count,
             "returnedBucketCount": returned_bucket_count,
-            "otherBucketCount": max(distinct_value_count - returned_bucket_count, 0),
+            "otherBucketCount": max(
+                distinct_value_count - returned_bucket_count,
+                0,
+            ),
             "countedValueCount": counted_value_count,
             "returnedValueCount": returned_value_count,
-            "omittedValueCount": max(counted_value_count - returned_value_count, 0),
+            "omittedValueCount": max(
+                counted_value_count - returned_value_count,
+                0,
+            ),
             "returnedValueRatio": (
                 float(returned_value_count) / float(counted_value_count)
                 if counted_value_count > 0
@@ -3260,7 +4257,11 @@ def _search_path_summary(paths: list[str] | None) -> dict[str, object] | None:
     }
 
 
-def _scalar_search_path_summary(path: str, *, section_name: str) -> dict[str, object]:
+def _scalar_search_path_summary(
+    path: str,
+    *,
+    section_name: str,
+) -> dict[str, object]:
     path_summary = _search_path_summary([path]) or {}
     path_summary["sections"] = [section_name]
     return path_summary
@@ -3315,7 +4316,10 @@ def _enrich_search_explain_details(
                 available_leaf_paths=vector_field_paths(definition),
             )
         return
-    if isinstance(query, (SearchInQuery, SearchEqualsQuery, SearchRangeQuery, SearchNearQuery)):
+    if isinstance(
+        query,
+        (SearchInQuery, SearchEqualsQuery, SearchRangeQuery, SearchNearQuery),
+    ):
         path_value = details.get("path")
         if isinstance(path_value, str) and path_value:
             _attach_resolved_leaf_paths(
@@ -3330,16 +4334,24 @@ def _enrich_search_explain_details(
         scalar_paths = path_summary.get("scalarPaths")
         all_available_leaf_paths = _mapped_leaf_search_paths(definition)
         if isinstance(all_paths, list):
-            _attach_resolved_leaf_paths(path_summary, paths=all_paths, available_leaf_paths=all_available_leaf_paths)
+            _attach_resolved_leaf_paths(
+                path_summary,
+                paths=all_paths,
+                available_leaf_paths=all_available_leaf_paths,
+            )
         if isinstance(textual_paths, list):
             path_summary["resolvedTextualLeafPaths"] = _resolve_requested_leaf_paths(
                 textual_paths,
-                available_leaf_paths=_mapped_textual_search_paths(definition),
+                available_leaf_paths=_mapped_textual_search_paths(
+                    definition,
+                ),
             )
         if isinstance(scalar_paths, list):
             path_summary["resolvedScalarLeafPaths"] = _resolve_requested_leaf_paths(
                 scalar_paths,
-                available_leaf_paths=_mapped_scalar_search_paths(definition),
+                available_leaf_paths=_mapped_scalar_search_paths(
+                    definition,
+                ),
             )
 
 
@@ -3380,7 +4392,9 @@ def _compound_max_depth(query: SearchCompoundQuery) -> int:
     return max_depth
 
 
-def _explain_vector_query(query: SearchVectorQuery) -> dict[str, object | None]:
+def _explain_vector_query(
+    query: SearchVectorQuery,
+) -> dict[str, object | None]:
     similarity = query.similarity
     return {
         "query": None,
@@ -3414,10 +4428,15 @@ def _explain_vector_query(query: SearchVectorQuery) -> dict[str, object | None]:
         "queryVector": list(query.query_vector),
         "limit": query.limit,
         "numCandidates": query.num_candidates,
-        "filter": deepcopy(query.filter_spec) if query.filter_spec is not None else None,
+        "filter": (
+            deepcopy(query.filter_spec) if query.filter_spec is not None else None
+        ),
         "similarity": similarity,
         "minScore": query.min_score,
-        "pathSummary": _scalar_search_path_summary(query.path, section_name="vectorSearch"),
+        "pathSummary": _scalar_search_path_summary(
+            query.path,
+            section_name="vectorSearch",
+        ),
     }
 
 
@@ -3456,17 +4475,94 @@ _SEARCH_QUERY_OPERATOR_NAMES: dict[type[Any], str] = {
 }
 
 _SEARCH_QUERY_MATCHERS: dict[type[Any], _SearchMatcher] = {
-    SearchTextQuery: lambda document, definition, query, materialized=None: matches_search_text_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
-    SearchPhraseQuery: lambda document, definition, query, materialized=None: matches_search_phrase_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
-    SearchAutocompleteQuery: lambda document, definition, query, materialized=None: matches_search_autocomplete_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
-    SearchWildcardQuery: lambda document, definition, query, materialized=None: matches_search_wildcard_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
-    SearchRegexQuery: lambda document, definition, query, materialized=None: matches_search_regex_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
-    SearchExistsQuery: lambda document, definition, query, materialized=None: matches_search_exists_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
-    SearchInQuery: lambda document, definition, query, materialized=None: matches_search_in_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
-    SearchEqualsQuery: lambda document, definition, query, materialized=None: matches_search_equals_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
-    SearchRangeQuery: lambda document, definition, query, materialized=None: matches_search_range_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
-    SearchNearQuery: lambda document, definition, query, materialized=None: matches_search_near_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
-    SearchCompoundQuery: lambda document, definition, query, materialized=None: matches_search_compound_query(document, definition=definition, query=query, materialized=materialized),  # type: ignore[arg-type]
+    SearchTextQuery: lambda document, definition, query, materialized=None: (
+        matches_search_text_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
+    SearchPhraseQuery: lambda document, definition, query, materialized=None: (
+        matches_search_phrase_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
+    SearchAutocompleteQuery: lambda document, definition, query, materialized=None: (
+        matches_search_autocomplete_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
+    SearchWildcardQuery: lambda document, definition, query, materialized=None: (
+        matches_search_wildcard_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
+    SearchRegexQuery: lambda document, definition, query, materialized=None: (
+        matches_search_regex_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
+    SearchExistsQuery: lambda document, definition, query, materialized=None: (
+        matches_search_exists_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
+    SearchInQuery: lambda document, definition, query, materialized=None: (
+        matches_search_in_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
+    SearchEqualsQuery: lambda document, definition, query, materialized=None: (
+        matches_search_equals_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
+    SearchRangeQuery: lambda document, definition, query, materialized=None: (
+        matches_search_range_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
+    SearchNearQuery: lambda document, definition, query, materialized=None: (
+        matches_search_near_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
+    SearchCompoundQuery: lambda document, definition, query, materialized=None: (
+        matches_search_compound_query(
+            document,
+            definition=definition,
+            query=query,
+            materialized=materialized,
+        )
+    ),  # type: ignore[arg-type]
 }
 
 _SEARCH_QUERY_EXPLAINERS: dict[type[Any], _SearchExplainBuilder] = {
@@ -3491,7 +4587,11 @@ def _normalize_search_field_mapping_type(value: object) -> str:
     return STRUCTURED_SEARCH_FIELD_MAPPING_TYPE_ALIASES.get(value, value)
 
 
-def _collect_entries_from_mapping(document: object, mappings: Document, prefix: str = "") -> list[tuple[str, str]]:
+def _collect_entries_from_mapping(
+    document: object,
+    mappings: Document,
+    prefix: str = "",
+) -> list[tuple[str, str]]:
     entries: list[tuple[str, str]] = []
     if mappings.get("dynamic", False):
         entries.extend(_collect_dynamic_text_entries(document, prefix=prefix))
@@ -3503,9 +4603,13 @@ def _collect_entries_from_mapping(document: object, mappings: Document, prefix: 
             continue
         path = f"{prefix}.{field_name}" if prefix else field_name
         value = document[field_name]
-        mapping_type = _normalize_search_field_mapping_type(field_spec.get("type", "document"))
+        mapping_type = _normalize_search_field_mapping_type(
+            field_spec.get("type", "document"),
+        )
         if mapping_type == "document":
-            entries.extend(_collect_entries_from_mapping(value, field_spec, prefix=path))
+            entries.extend(
+                _collect_entries_from_mapping(value, field_spec, prefix=path),
+            )
             continue
         if mapping_type == "embeddedDocuments":
             if isinstance(value, list):
@@ -3516,7 +4620,7 @@ def _collect_entries_from_mapping(document: object, mappings: Document, prefix: 
                                 item,
                                 field_spec,
                                 prefix=path,
-                            )
+                            ),
                         )
             continue
         if mapping_type not in TEXTUAL_SEARCH_FIELD_MAPPING_TYPES:
@@ -3525,14 +4629,20 @@ def _collect_entries_from_mapping(document: object, mappings: Document, prefix: 
     return entries
 
 
-def _collect_dynamic_text_entries(value: object, *, prefix: str = "") -> list[tuple[str, str]]:
+def _collect_dynamic_text_entries(
+    value: object,
+    *,
+    prefix: str = "",
+) -> list[tuple[str, str]]:
     if isinstance(value, dict):
         entries: list[tuple[str, str]] = []
         for field_name, field_value in value.items():
             if not isinstance(field_name, str):
                 continue
             path = f"{prefix}.{field_name}" if prefix else field_name
-            entries.extend(_collect_dynamic_text_entries(field_value, prefix=path))
+            entries.extend(
+                _collect_dynamic_text_entries(field_value, prefix=path),
+            )
         return entries
     if isinstance(value, list):
         entries: list[tuple[str, str]] = []
@@ -3542,7 +4652,10 @@ def _collect_dynamic_text_entries(value: object, *, prefix: str = "") -> list[tu
     return _collect_text_leaf_entries(value, prefix)
 
 
-def _collect_text_leaf_entries(value: object, path: str) -> list[tuple[str, str]]:
+def _collect_text_leaf_entries(
+    value: object,
+    path: str,
+) -> list[tuple[str, str]]:
     if not path:
         return []
     if isinstance(value, str):
@@ -3565,7 +4678,9 @@ def _mapped_search_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
     return tuple(_iter_mapped_search_paths(mappings))
 
 
-def _mapped_leaf_search_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
+def _mapped_leaf_search_paths(
+    definition: SearchIndexDefinition,
+) -> tuple[str, ...]:
     if definition.index_type not in TEXTUAL_SEARCH_INDEX_TYPES:
         return ()
     mappings = definition.definition.get("mappings")
@@ -3574,7 +4689,9 @@ def _mapped_leaf_search_paths(definition: SearchIndexDefinition) -> tuple[str, .
     return tuple(_iter_mapped_leaf_search_paths(mappings))
 
 
-def _mapped_textual_search_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
+def _mapped_textual_search_paths(
+    definition: SearchIndexDefinition,
+) -> tuple[str, ...]:
     if definition.index_type not in TEXTUAL_SEARCH_INDEX_TYPES:
         return ()
     mappings = definition.definition.get("mappings")
@@ -3584,11 +4701,13 @@ def _mapped_textual_search_paths(definition: SearchIndexDefinition) -> tuple[str
         _iter_mapped_leaf_search_paths(
             mappings,
             allowed_mapping_types=TEXTUAL_SEARCH_FIELD_MAPPING_TYPES,
-        )
+        ),
     )
 
 
-def _mapped_scalar_search_paths(definition: SearchIndexDefinition) -> tuple[str, ...]:
+def _mapped_scalar_search_paths(
+    definition: SearchIndexDefinition,
+) -> tuple[str, ...]:
     if definition.index_type not in TEXTUAL_SEARCH_INDEX_TYPES:
         return ()
     mappings = definition.definition.get("mappings")
@@ -3598,24 +4717,37 @@ def _mapped_scalar_search_paths(definition: SearchIndexDefinition) -> tuple[str,
         _iter_mapped_leaf_search_paths(
             mappings,
             allowed_mapping_types=EXACT_FILTER_SEARCH_FIELD_MAPPING_TYPES,
-        )
+        ),
     )
 
 
-def _iter_mapped_search_paths(mappings: Document, prefix: str = "") -> tuple[str, ...]:
+def _iter_mapped_search_paths(
+    mappings: Document,
+    prefix: str = "",
+) -> tuple[str, ...]:
     fields = mappings.get("fields", {})
     if not isinstance(fields, dict):
         return ()
     collected: list[str] = []
     for field_name, field_spec in fields.items():
-        if not isinstance(field_name, str) or not field_name or not isinstance(field_spec, dict):
+        if (
+            not isinstance(field_name, str)
+            or not field_name
+            or not isinstance(field_spec, dict)
+        ):
             continue
         path = f"{prefix}.{field_name}" if prefix else field_name
-        mapping_type = _normalize_search_field_mapping_type(field_spec.get("type", "document"))
+        mapping_type = _normalize_search_field_mapping_type(
+            field_spec.get("type", "document"),
+        )
         collected.append(path)
         if mapping_type in STRUCTURED_SEARCH_FIELD_MAPPING_TYPES:
-            nested_mapping = {key: value for key, value in field_spec.items() if key != "type"}
-            collected.extend(_iter_mapped_search_paths(nested_mapping, prefix=path))
+            nested_mapping = {
+                key: value for key, value in field_spec.items() if key != "type"
+            }
+            collected.extend(
+                _iter_mapped_search_paths(nested_mapping, prefix=path),
+            )
     return tuple(dict.fromkeys(collected))
 
 
@@ -3630,21 +4762,32 @@ def _iter_mapped_leaf_search_paths(
         return ()
     collected: list[str] = []
     for field_name, field_spec in fields.items():
-        if not isinstance(field_name, str) or not field_name or not isinstance(field_spec, dict):
+        if (
+            not isinstance(field_name, str)
+            or not field_name
+            or not isinstance(field_spec, dict)
+        ):
             continue
         path = f"{prefix}.{field_name}" if prefix else field_name
-        mapping_type = _normalize_search_field_mapping_type(field_spec.get("type", "document"))
+        mapping_type = _normalize_search_field_mapping_type(
+            field_spec.get("type", "document"),
+        )
         if mapping_type in STRUCTURED_SEARCH_FIELD_MAPPING_TYPES:
-            nested_mapping = {key: value for key, value in field_spec.items() if key != "type"}
+            nested_mapping = {
+                key: value for key, value in field_spec.items() if key != "type"
+            }
             collected.extend(
                 _iter_mapped_leaf_search_paths(
                     nested_mapping,
                     prefix=path,
                     allowed_mapping_types=allowed_mapping_types,
-                )
+                ),
             )
             continue
-        if allowed_mapping_types is not None and mapping_type not in allowed_mapping_types:
+        if (
+            allowed_mapping_types is not None
+            and mapping_type not in allowed_mapping_types
+        ):
             continue
         collected.append(path)
     return tuple(dict.fromkeys(collected))
@@ -3659,7 +4802,9 @@ def _resolve_requested_leaf_paths(
     seen: set[str] = set()
     for requested_path in requested_paths:
         for candidate_path in available_leaf_paths:
-            if candidate_path != requested_path and not candidate_path.startswith(f"{requested_path}."):
+            if candidate_path != requested_path and not candidate_path.startswith(
+                f"{requested_path}.",
+            ):
                 continue
             if candidate_path in seen:
                 continue
@@ -3810,7 +4955,9 @@ def _search_range_matches_value(
     return True
 
 
-def _datetime_to_sortable_number(value: datetime.date | datetime.datetime) -> float:
+def _datetime_to_sortable_number(
+    value: datetime.date | datetime.datetime,
+) -> float:
     if isinstance(value, datetime.datetime):
         return (
             value.toordinal() * 86400.0
@@ -3829,7 +4976,10 @@ def _search_near_scalar_distance(
     origin_kind: str,
 ) -> float | None:
     if origin_kind == "number":
-        if not isinstance(candidate, (int, float)) or isinstance(candidate, bool):
+        if not isinstance(candidate, (int, float)) or isinstance(
+            candidate,
+            bool,
+        ):
             return None
         if not math.isfinite(float(candidate)):
             return None
@@ -3837,7 +4987,10 @@ def _search_near_scalar_distance(
     if origin_kind == "date":
         if not isinstance(candidate, (datetime.date, datetime.datetime)):
             return None
-        return abs(_datetime_to_sortable_number(candidate) - _datetime_to_sortable_number(origin))
+        return abs(
+            _datetime_to_sortable_number(candidate)
+            - _datetime_to_sortable_number(origin),
+        )
     return None
 
 
@@ -3864,7 +5017,9 @@ def search_near_distance(
     return best if best <= query.pivot else None
 
 
-def _vector_field_specs(definition: SearchIndexDefinition) -> dict[str, dict[str, object]]:
+def _vector_field_specs(
+    definition: SearchIndexDefinition,
+) -> dict[str, dict[str, object]]:
     if definition.index_type != "vectorSearch":
         return {}
     raw_fields = definition.definition.get("fields")
@@ -3891,7 +5046,10 @@ def _vector_field_specs(definition: SearchIndexDefinition) -> dict[str, dict[str
     return field_specs
 
 
-def _cosine_similarity(left: tuple[float, ...], right: tuple[float, ...]) -> float | None:
+def _cosine_similarity(
+    left: tuple[float, ...],
+    right: tuple[float, ...],
+) -> float | None:
     dot = sum(a * b for a, b in zip(left, right, strict=True))
     left_norm = math.sqrt(sum(a * a for a in left))
     right_norm = math.sqrt(sum(b * b for b in right))
@@ -3904,5 +5062,10 @@ def _dot_product(left: tuple[float, ...], right: tuple[float, ...]) -> float:
     return sum(a * b for a, b in zip(left, right, strict=True))
 
 
-def _negative_euclidean_distance(left: tuple[float, ...], right: tuple[float, ...]) -> float:
-    return -math.sqrt(sum((a - b) ** 2 for a, b in zip(left, right, strict=True)))
+def _negative_euclidean_distance(
+    left: tuple[float, ...],
+    right: tuple[float, ...],
+) -> float:
+    return -math.sqrt(
+        sum((a - b) ** 2 for a, b in zip(left, right, strict=True)),
+    )

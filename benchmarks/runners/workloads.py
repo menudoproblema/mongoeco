@@ -1,5 +1,6 @@
 import datetime
 import random
+
 from collections.abc import Callable
 from typing import Any
 
@@ -64,9 +65,14 @@ def _summarize_aggregate_explain(explain: dict[str, Any]) -> dict[str, Any]:
         "summary": _operation_summary(plan),
         "engine": plan.get("engine"),
         "strategy": plan.get("strategy"),
-        "planning_mode": explain.get("planning_mode", plan.get("planning_mode")),
+        "planning_mode": explain.get(
+            "planning_mode",
+            plan.get("planning_mode"),
+        ),
         "streaming_batch_execution": explain.get("streaming_batch_execution"),
-        "remaining_stage_count": len(remaining_pipeline) if isinstance(remaining_pipeline, list) else None,
+        "remaining_stage_count": (
+            len(remaining_pipeline) if isinstance(remaining_pipeline, list) else None
+        ),
         "physical_plan": plan.get("physical_plan"),
     }
 
@@ -88,22 +94,34 @@ def _summarize_search_explain(explain: dict[str, Any]) -> dict[str, Any]:
     summary["candidates_evaluated"] = details.get("candidatesEvaluated")
     summary["candidates_requested"] = details.get("candidatesRequested")
     summary["documents_filtered"] = details.get("documentsFiltered")
-    summary["documents_filtered_by_min_score"] = details.get("documentsFilteredByMinScore")
+    summary["documents_filtered_by_min_score"] = details.get(
+        "documentsFilteredByMinScore",
+    )
     summary["candidate_count"] = details.get("candidateCount")
-    summary["candidate_count_before_topk"] = details.get("candidateCountBeforeTopK")
+    summary["candidate_count_before_topk"] = details.get(
+        "candidateCountBeforeTopK",
+    )
     summary["topk_limit_hint"] = details.get("topKLimitHint")
     summary["topk_prefilter"] = details.get("topKPrefilter")
     summary["ranking_source"] = details.get("rankingSource")
     summary["compound_prefilter"] = details.get("compoundPrefilter")
-    summary["downstream_filter_prefilter"] = details.get("downstreamFilterPrefilter")
+    summary["downstream_filter_prefilter"] = details.get(
+        "downstreamFilterPrefilter",
+    )
     summary["vector_filter_prefilter"] = details.get("vectorFilterPrefilter")
     summary["vector_filter_residual"] = details.get("vectorFilterResidual")
-    summary["candidate_expansion_strategy"] = details.get("candidateExpansionStrategy")
+    summary["candidate_expansion_strategy"] = details.get(
+        "candidateExpansionStrategy",
+    )
     summary["documents_scanned"] = details.get("documentsScanned")
-    summary["documents_scanned_after_prefilter"] = details.get("documentsScannedAfterPrefilter")
+    summary["documents_scanned_after_prefilter"] = details.get(
+        "documentsScannedAfterPrefilter",
+    )
     if isinstance(pushdown, dict):
         summary["search_topk_strategy"] = pushdown.get("searchTopKStrategy")
-        summary["search_topk_growth_strategy"] = pushdown.get("searchTopKGrowthStrategy")
+        summary["search_topk_growth_strategy"] = pushdown.get(
+            "searchTopKGrowthStrategy",
+        )
     return summary
 
 
@@ -149,19 +167,32 @@ def _augment_search_documents(docs: list[dict[str, Any]]) -> None:
         topic = topics[index % len(topics)]
         summary = summaries[index % len(summaries)]
         cluster = embeddings[index % len(embeddings)]
+        jitter = (index + 1) * 1e-7
         document["title"] = f"{person} {topic}"
         document["body"] = (
             f"{person} wrote about {topic}. "
             f"{summary}. "
-            f"{document['city']} field report {index % 7}."
+            f'{document["city"]} field report {index % 7}.'
         )
         document["kind"] = "reference" if index % 3 == 0 else "note"
-        document["embedding"] = [float(value) for value in cluster]
+        # Avoid ANN tie instability while preserving the four semantic clusters.
+        document["embedding"] = [
+            float(cluster[0]),
+            float(cluster[1] + jitter),
+            float(cluster[2] + (jitter / 2)),
+        ]
         document["score"] = float((index % 11) + 1)
-        document["publishedAt"] = datetime.datetime(2024, 1, 1) + datetime.timedelta(days=index % 30)
+        document["publishedAt"] = datetime.datetime(
+            2024,
+            1,
+            1,
+        ) + datetime.timedelta(days=index % 30)
 
 
-def secondary_lookup_indexed(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+def secondary_lookup_indexed(
+    engine: BenchmarkEngine,
+    count: int,
+) -> dict[str, Any]:
     """Lookup por campo secundario con indice explicito."""
     lookup_metrics: list[Metrics] = []
     db_name, coll_name, docs = _load_users(engine, count)
@@ -185,7 +216,12 @@ def secondary_lookup_indexed(engine: BenchmarkEngine, count: int) -> dict[str, A
             "secondary_lookup_indexed_1k": _measure_single_task(
                 lookup_metrics,
                 callback=lambda: [
-                    engine.find(db_name, coll_name, {"username": username}, limit=1)
+                    engine.find(
+                        db_name,
+                        coll_name,
+                        {"username": username},
+                        limit=1,
+                    )
                     for username in target_usernames
                 ],
                 metadata=metadata,
@@ -195,7 +231,10 @@ def secondary_lookup_indexed(engine: BenchmarkEngine, count: int) -> dict[str, A
         engine.teardown()
 
 
-def secondary_lookup_unindexed(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+def secondary_lookup_unindexed(
+    engine: BenchmarkEngine,
+    count: int,
+) -> dict[str, Any]:
     """Lookup por campo secundario sin indice."""
     lookup_metrics: list[Metrics] = []
     db_name, coll_name, docs = _load_users(engine, count)
@@ -218,7 +257,12 @@ def secondary_lookup_unindexed(engine: BenchmarkEngine, count: int) -> dict[str,
             "secondary_lookup_unindexed_1k": _measure_single_task(
                 lookup_metrics,
                 callback=lambda: [
-                    engine.find(db_name, coll_name, {"username": username}, limit=1)
+                    engine.find(
+                        db_name,
+                        coll_name,
+                        {"username": username},
+                        limit=1,
+                    )
                     for username in target_usernames
                 ],
                 metadata=metadata,
@@ -228,7 +272,10 @@ def secondary_lookup_unindexed(engine: BenchmarkEngine, count: int) -> dict[str,
         engine.teardown()
 
 
-def secondary_lookup_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+def secondary_lookup_diagnostics(
+    engine: BenchmarkEngine,
+    count: int,
+) -> dict[str, Any]:
     """Aisla lookup primario y lookups secundarios repetidos sobre el mismo valor."""
     id_metrics: list[Metrics] = []
     indexed_hot_metrics: list[Metrics] = []
@@ -241,14 +288,28 @@ def secondary_lookup_diagnostics(engine: BenchmarkEngine, count: int) -> dict[st
         target_username = target_doc["username"]
 
         id_metadata = {
-            **_summarize_find_explain(engine.explain_find(db_name, coll_name, {"_id": target_id}, limit=1)),
+            **_summarize_find_explain(
+                engine.explain_find(
+                    db_name,
+                    coll_name,
+                    {"_id": target_id},
+                    limit=1,
+                ),
+            ),
             "query_shape": "_id equality",
             "index_expected": True,
             "lookup_pattern": "random-like stable",
         }
         engine.create_index(db_name, coll_name, [("username", 1)])
         indexed_hot_metadata = {
-            **_summarize_find_explain(engine.explain_find(db_name, coll_name, {"username": target_username}, limit=1)),
+            **_summarize_find_explain(
+                engine.explain_find(
+                    db_name,
+                    coll_name,
+                    {"username": target_username},
+                    limit=1,
+                ),
+            ),
             "query_shape": "username equality",
             "index_expected": True,
             "lookup_pattern": "same value repeated",
@@ -256,7 +317,12 @@ def secondary_lookup_diagnostics(engine: BenchmarkEngine, count: int) -> dict[st
         indexed_hot_result = _measure_single_task(
             indexed_hot_metrics,
             callback=lambda: [
-                engine.find(db_name, coll_name, {"username": target_username}, limit=1)
+                engine.find(
+                    db_name,
+                    coll_name,
+                    {"username": target_username},
+                    limit=1,
+                )
                 for _ in range(min(1000, count))
             ],
             metadata=indexed_hot_metadata,
@@ -277,7 +343,14 @@ def secondary_lookup_diagnostics(engine: BenchmarkEngine, count: int) -> dict[st
         target_doc = docs[min(3, len(docs) - 1)]
         target_username = target_doc["username"]
         unindexed_hot_metadata = {
-            **_summarize_find_explain(engine.explain_find(db_name, coll_name, {"username": target_username}, limit=1)),
+            **_summarize_find_explain(
+                engine.explain_find(
+                    db_name,
+                    coll_name,
+                    {"username": target_username},
+                    limit=1,
+                ),
+            ),
             "query_shape": "username equality",
             "index_expected": False,
             "lookup_pattern": "same value repeated",
@@ -285,7 +358,12 @@ def secondary_lookup_diagnostics(engine: BenchmarkEngine, count: int) -> dict[st
         unindexed_hot_result = _measure_single_task(
             unindexed_hot_metrics,
             callback=lambda: [
-                engine.find(db_name, coll_name, {"username": target_username}, limit=1)
+                engine.find(
+                    db_name,
+                    coll_name,
+                    {"username": target_username},
+                    limit=1,
+                )
                 for _ in range(min(1000, count))
             ],
             metadata=unindexed_hot_metadata,
@@ -312,7 +390,12 @@ def simple_aggregation(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             {"$project": {"_id": 1, "username": 1, "score": 1, "city": 1}},
         ]
         metadata = _summarize_aggregate_explain(
-            engine.explain_aggregate(db_name, coll_name, pipeline, allow_disk_use=True)
+            engine.explain_aggregate(
+                db_name,
+                coll_name,
+                pipeline,
+                allow_disk_use=True,
+            ),
         )
         metadata["pipeline_shape"] = "match-sort-limit-project"
         return {
@@ -331,7 +414,10 @@ def simple_aggregation(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
         engine.teardown()
 
 
-def materializing_aggregation(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+def materializing_aggregation(
+    engine: BenchmarkEngine,
+    count: int,
+) -> dict[str, Any]:
     """Agregacion con group y sort posteriores."""
     agg_metrics: list[Metrics] = []
     db_name, coll_name, _docs = _load_users(engine, count)
@@ -344,13 +430,18 @@ def materializing_aggregation(engine: BenchmarkEngine, count: int) -> dict[str, 
                     "avg_score": {"$avg": "$score"},
                     "total_users": {"$sum": 1},
                     "roles": {"$addToSet": "$role"},
-                }
+                },
             },
             {"$sort": {"avg_score": -1}},
             {"$limit": 10},
         ]
         metadata = _summarize_aggregate_explain(
-            engine.explain_aggregate(db_name, coll_name, pipeline, allow_disk_use=True)
+            engine.explain_aggregate(
+                db_name,
+                coll_name,
+                pipeline,
+                allow_disk_use=True,
+            ),
         )
         metadata["pipeline_shape"] = "match-group-sort-limit"
         return {
@@ -378,7 +469,13 @@ def sort_limit(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
         sort_spec = [("score", -1)]
         indexed_metadata = {
             **_summarize_find_explain(
-                engine.explain_find(db_name, coll_name, {}, sort=sort_spec, limit=10)
+                engine.explain_find(
+                    db_name,
+                    coll_name,
+                    {},
+                    sort=sort_spec,
+                    limit=10,
+                ),
             ),
             "query_shape": "sort score desc + limit 10",
             "index_expected": True,
@@ -404,7 +501,13 @@ def sort_limit(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
         sort_spec = [("score", -1)]
         unindexed_metadata = {
             **_summarize_find_explain(
-                engine.explain_find(db_name, coll_name, {}, sort=sort_spec, limit=10)
+                engine.explain_find(
+                    db_name,
+                    coll_name,
+                    {},
+                    sort=sort_spec,
+                    limit=10,
+                ),
             ),
             "query_shape": "sort score desc + limit 10",
             "index_expected": False,
@@ -435,23 +538,23 @@ def cursor_consumption(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
         engine.create_index(db_name, coll_name, [("city", 1)])
         filter_spec = {"city": "Madrid"}
         metadata = {
-            **_summarize_find_explain(engine.explain_find(db_name, coll_name, filter_spec)),
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, filter_spec),
+            ),
             "query_shape": "city equality",
             "index_expected": True,
         }
         first_result = _measure_single_task(
             first_metrics,
             callback=lambda: [
-                engine.find_first(db_name, coll_name, filter_spec)
-                for _ in range(200)
+                engine.find_first(db_name, coll_name, filter_spec) for _ in range(200)
             ],
             metadata={**metadata, "consumption_mode": "first"},
         )
         materialized_result = _measure_single_task(
             materialized_metrics,
             callback=lambda: [
-                engine.find(db_name, coll_name, filter_spec)
-                for _ in range(200)
+                engine.find(db_name, coll_name, filter_spec) for _ in range(200)
             ],
             metadata={**metadata, "consumption_mode": "materialized"},
         )
@@ -474,17 +577,23 @@ def filter_selectivity(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
         medium_filter = {"city": "Madrid"}
         high_filter = {"active": True}
         low_metadata = {
-            **_summarize_find_explain(engine.explain_find(db_name, coll_name, low_filter)),
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, low_filter),
+            ),
             "query_shape": "username equality",
             "selectivity": "low",
         }
         medium_metadata = {
-            **_summarize_find_explain(engine.explain_find(db_name, coll_name, medium_filter)),
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, medium_filter),
+            ),
             "query_shape": "city equality",
             "selectivity": "medium",
         }
         high_metadata = {
-            **_summarize_find_explain(engine.explain_find(db_name, coll_name, high_filter)),
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, high_filter),
+            ),
             "query_shape": "active equality",
             "selectivity": "high",
         }
@@ -492,24 +601,21 @@ def filter_selectivity(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             "filter_selectivity_low_100": _measure_single_task(
                 low_metrics,
                 callback=lambda: [
-                    engine.find(db_name, coll_name, low_filter)
-                    for _ in range(100)
+                    engine.find(db_name, coll_name, low_filter) for _ in range(100)
                 ],
                 metadata=low_metadata,
             ),
             "filter_selectivity_medium_100": _measure_single_task(
                 medium_metrics,
                 callback=lambda: [
-                    engine.find(db_name, coll_name, medium_filter)
-                    for _ in range(100)
+                    engine.find(db_name, coll_name, medium_filter) for _ in range(100)
                 ],
                 metadata=medium_metadata,
             ),
             "filter_selectivity_high_100": _measure_single_task(
                 high_metrics,
                 callback=lambda: [
-                    engine.find(db_name, coll_name, high_filter)
-                    for _ in range(100)
+                    engine.find(db_name, coll_name, high_filter) for _ in range(100)
                 ],
                 metadata=high_metadata,
             ),
@@ -518,7 +624,10 @@ def filter_selectivity(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
         engine.teardown()
 
 
-def predicate_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+def predicate_diagnostics(
+    engine: BenchmarkEngine,
+    count: int,
+) -> dict[str, Any]:
     """Aisla predicados frecuentes para detectar mejoras en igualdad y comparación."""
     eq_bool_metrics: list[Metrics] = []
     eq_string_metrics: list[Metrics] = []
@@ -530,21 +639,27 @@ def predicate_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]
         cmp_int_filter = {"age": {"$gte": 40}}
 
         eq_bool_metadata = {
-            **_summarize_find_explain(engine.explain_find(db_name, coll_name, eq_bool_filter)),
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, eq_bool_filter),
+            ),
             "query_shape": "top-level bool equality",
             "operator_shape": "$eq",
             "field_shape": "top-level scalar",
             "selectivity": "high",
         }
         eq_string_metadata = {
-            **_summarize_find_explain(engine.explain_find(db_name, coll_name, eq_string_filter)),
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, eq_string_filter),
+            ),
             "query_shape": "top-level string equality",
             "operator_shape": "$eq",
             "field_shape": "top-level scalar",
             "selectivity": "medium",
         }
         cmp_int_metadata = {
-            **_summarize_find_explain(engine.explain_find(db_name, coll_name, cmp_int_filter)),
+            **_summarize_find_explain(
+                engine.explain_find(db_name, coll_name, cmp_int_filter),
+            ),
             "query_shape": "top-level int comparison",
             "operator_shape": "$gte",
             "field_shape": "top-level scalar",
@@ -555,8 +670,7 @@ def predicate_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]
             "predicate_eq_bool_high_100": _measure_single_task(
                 eq_bool_metrics,
                 callback=lambda: [
-                    engine.find(db_name, coll_name, eq_bool_filter)
-                    for _ in range(100)
+                    engine.find(db_name, coll_name, eq_bool_filter) for _ in range(100)
                 ],
                 metadata=eq_bool_metadata,
             ),
@@ -571,8 +685,7 @@ def predicate_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]
             "predicate_cmp_int_medium_100": _measure_single_task(
                 cmp_int_metrics,
                 callback=lambda: [
-                    engine.find(db_name, coll_name, cmp_int_filter)
-                    for _ in range(100)
+                    engine.find(db_name, coll_name, cmp_int_filter) for _ in range(100)
                 ],
                 metadata=cmp_int_metadata,
             ),
@@ -581,7 +694,10 @@ def predicate_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]
         engine.teardown()
 
 
-def sort_shape_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+def sort_shape_diagnostics(
+    engine: BenchmarkEngine,
+    count: int,
+) -> dict[str, Any]:
     """Compara sort por campo top-level frente a path anidado equivalente."""
     top_level_metrics: list[Metrics] = []
     nested_metrics: list[Metrics] = []
@@ -595,35 +711,56 @@ def sort_shape_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any
                 "city": doc["city"],
             }
 
-    db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_add_nested_sort_fields)
+    db_name, coll_name, _docs = _load_users(
+        engine,
+        count,
+        mutate_docs=_add_nested_sort_fields,
+    )
     try:
         top_level_sort = [("score", -1)]
         nested_sort = [("profile.score", -1)]
 
         top_level_metadata = {
             **_summarize_find_explain(
-                engine.explain_find(db_name, coll_name, {}, sort=top_level_sort, limit=10)
+                engine.explain_find(
+                    db_name,
+                    coll_name,
+                    {},
+                    sort=top_level_sort,
+                    limit=10,
+                ),
             ),
             "query_shape": "sort top-level score desc + limit 10",
             "field_shape": "top-level scalar",
         }
         nested_metadata = {
             **_summarize_find_explain(
-                engine.explain_find(db_name, coll_name, {}, sort=nested_sort, limit=10)
+                engine.explain_find(
+                    db_name,
+                    coll_name,
+                    {},
+                    sort=nested_sort,
+                    limit=10,
+                ),
             ),
             "query_shape": "sort nested profile.score desc + limit 10",
             "field_shape": "nested scalar path",
         }
         top_level_full_metadata = {
             **_summarize_find_explain(
-                engine.explain_find(db_name, coll_name, {}, sort=top_level_sort)
+                engine.explain_find(
+                    db_name,
+                    coll_name,
+                    {},
+                    sort=top_level_sort,
+                ),
             ),
             "query_shape": "sort top-level score desc",
             "field_shape": "top-level scalar",
         }
         nested_full_metadata = {
             **_summarize_find_explain(
-                engine.explain_find(db_name, coll_name, {}, sort=nested_sort)
+                engine.explain_find(db_name, coll_name, {}, sort=nested_sort),
             ),
             "query_shape": "sort nested profile.score desc",
             "field_shape": "nested scalar path",
@@ -633,7 +770,13 @@ def sort_shape_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any
             "sort_shape_top_level_limit_200": _measure_single_task(
                 top_level_metrics,
                 callback=lambda: [
-                    engine.find(db_name, coll_name, {}, sort=top_level_sort, limit=10)
+                    engine.find(
+                        db_name,
+                        coll_name,
+                        {},
+                        sort=top_level_sort,
+                        limit=10,
+                    )
                     for _ in range(200)
                 ],
                 metadata=top_level_metadata,
@@ -641,7 +784,13 @@ def sort_shape_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any
             "sort_shape_nested_limit_200": _measure_single_task(
                 nested_metrics,
                 callback=lambda: [
-                    engine.find(db_name, coll_name, {}, sort=nested_sort, limit=10)
+                    engine.find(
+                        db_name,
+                        coll_name,
+                        {},
+                        sort=nested_sort,
+                        limit=10,
+                    )
                     for _ in range(200)
                 ],
                 metadata=nested_metadata,
@@ -681,7 +830,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     compound_candidateable_should_msm2_metrics: list[Metrics] = []
     compound_candidateable_should_tie_heavy_metrics: list[Metrics] = []
 
-    db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
+    db_name, coll_name, _docs = _load_users(
+        engine,
+        count,
+        mutate_docs=_augment_search_documents,
+    )
     try:
         engine.create_search_index(
             db_name,
@@ -696,30 +849,48 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                         "score": {"type": "number"},
                         "publishedAt": {"type": "date"},
                     },
-                }
+                },
             },
             name="by_text",
         )
 
         text_pipeline = [
-            {"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}},
+            {
+                "$search": {
+                    "index": "by_text",
+                    "text": {"query": "ada", "path": ["title", "body"]},
+                },
+            },
             {"$limit": 10},
         ]
         autocomplete_pipeline = [
             {
                 "$search": {
                     "index": "by_text",
-                    "autocomplete": {"query": "alg", "path": ["title", "body"]},
-                }
+                    "autocomplete": {
+                        "query": "alg",
+                        "path": ["title", "body"],
+                    },
+                },
             },
             {"$limit": 10},
         ]
         wildcard_pipeline = [
-            {"$search": {"index": "by_text", "wildcard": {"query": "*vector*", "path": "body"}}},
+            {
+                "$search": {
+                    "index": "by_text",
+                    "wildcard": {"query": "*vector*", "path": "body"},
+                },
+            },
             {"$limit": 10},
         ]
         regex_pipeline = [
-            {"$search": {"index": "by_text", "regex": {"query": "Ada.*algorithms", "path": "title"}}},
+            {
+                "$search": {
+                    "index": "by_text",
+                    "regex": {"query": "Ada.*algorithms", "path": "title"},
+                },
+            },
             {"$limit": 10},
         ]
         compound_pipeline = [
@@ -727,13 +898,25 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 "$search": {
                     "index": "by_text",
                     "compound": {
-                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
+                        "must": [
+                            {
+                                "text": {
+                                    "query": "report 0",
+                                    "path": ["title", "body"],
+                                },
+                            },
+                        ],
                         "filter": [
                             {"exists": {"path": "title"}},
-                            {"wildcard": {"query": "*vector*", "path": "body"}},
+                            {
+                                "wildcard": {
+                                    "query": "*vector*",
+                                    "path": "body",
+                                },
+                            },
                         ],
                     },
-                }
+                },
             },
             {"$limit": 10},
         ]
@@ -742,15 +925,35 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 "$search": {
                     "index": "by_text",
                     "compound": {
-                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
-                        "filter": [{"wildcard": {"query": "*vector*", "path": "body"}}],
+                        "must": [
+                            {
+                                "text": {
+                                    "query": "report 0",
+                                    "path": ["title", "body"],
+                                },
+                            },
+                        ],
+                        "filter": [
+                            {
+                                "wildcard": {
+                                    "query": "*vector*",
+                                    "path": "body",
+                                },
+                            },
+                        ],
                         "should": [
                             {"exists": {"path": "title"}},
-                            {"near": {"path": "score", "origin": 7, "pivot": 2}},
+                            {
+                                "near": {
+                                    "path": "score",
+                                    "origin": 7,
+                                    "pivot": 2,
+                                },
+                            },
                         ],
                         "minimumShouldMatch": 2,
                     },
-                }
+                },
             },
             {"$limit": 10},
         ]
@@ -759,15 +962,32 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 "$search": {
                     "index": "by_text",
                     "compound": {
-                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
+                        "must": [
+                            {
+                                "text": {
+                                    "query": "report 0",
+                                    "path": ["title", "body"],
+                                },
+                            },
+                        ],
                         "should": [
                             {"exists": {"path": "title"}},
-                            {"wildcard": {"query": "*vector*", "path": "body"}},
-                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                            {
+                                "wildcard": {
+                                    "query": "*vector*",
+                                    "path": "body",
+                                },
+                            },
+                            {
+                                "autocomplete": {
+                                    "query": "alg",
+                                    "path": ["title", "body"],
+                                },
+                            },
                         ],
                         "minimumShouldMatch": 1,
                     },
-                }
+                },
             },
             {"$limit": 10},
         ]
@@ -776,15 +996,32 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 "$search": {
                     "index": "by_text",
                     "compound": {
-                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
+                        "must": [
+                            {
+                                "text": {
+                                    "query": "report 0",
+                                    "path": ["title", "body"],
+                                },
+                            },
+                        ],
                         "should": [
                             {"exists": {"path": "title"}},
-                            {"wildcard": {"query": "*vector*", "path": "body"}},
-                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                            {
+                                "wildcard": {
+                                    "query": "*vector*",
+                                    "path": "body",
+                                },
+                            },
+                            {
+                                "autocomplete": {
+                                    "query": "alg",
+                                    "path": ["title", "body"],
+                                },
+                            },
                         ],
                         "minimumShouldMatch": 1,
                     },
-                }
+                },
             },
             {"$match": {"kind": "note"}},
             {"$limit": 10},
@@ -794,15 +1031,32 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 "$search": {
                     "index": "by_text",
                     "compound": {
-                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
+                        "must": [
+                            {
+                                "text": {
+                                    "query": "report 0",
+                                    "path": ["title", "body"],
+                                },
+                            },
+                        ],
                         "should": [
                             {"exists": {"path": "title"}},
-                            {"wildcard": {"query": "*vector*", "path": "body"}},
-                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                            {
+                                "wildcard": {
+                                    "query": "*vector*",
+                                    "path": "body",
+                                },
+                            },
+                            {
+                                "autocomplete": {
+                                    "query": "alg",
+                                    "path": ["title", "body"],
+                                },
+                            },
                         ],
                         "minimumShouldMatch": 1,
                     },
-                }
+                },
             },
             {"$match": {"title": "Ada algorithms"}},
             {"$limit": 10},
@@ -812,15 +1066,32 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 "$search": {
                     "index": "by_text",
                     "compound": {
-                        "must": [{"text": {"query": "report 0", "path": ["title", "body"]}}],
+                        "must": [
+                            {
+                                "text": {
+                                    "query": "report 0",
+                                    "path": ["title", "body"],
+                                },
+                            },
+                        ],
                         "should": [
                             {"exists": {"path": "title"}},
-                            {"wildcard": {"query": "*vector*", "path": "body"}},
-                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                            {
+                                "wildcard": {
+                                    "query": "*vector*",
+                                    "path": "body",
+                                },
+                            },
+                            {
+                                "autocomplete": {
+                                    "query": "alg",
+                                    "path": ["title", "body"],
+                                },
+                            },
                         ],
                         "minimumShouldMatch": 2,
                     },
-                }
+                },
             },
             {"$limit": 10},
         ]
@@ -829,15 +1100,27 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 "$search": {
                     "index": "by_text",
                     "compound": {
-                        "must": [{"text": {"query": "vector", "path": ["title", "body"]}}],
+                        "must": [
+                            {
+                                "text": {
+                                    "query": "vector",
+                                    "path": ["title", "body"],
+                                },
+                            },
+                        ],
                         "should": [
                             {"exists": {"path": "title"}},
                             {"exists": {"path": "body"}},
-                            {"wildcard": {"query": "*vector*", "path": "body"}},
+                            {
+                                "wildcard": {
+                                    "query": "*vector*",
+                                    "path": "body",
+                                },
+                            },
                         ],
                         "minimumShouldMatch": 1,
                     },
-                }
+                },
             },
             {"$limit": 10},
         ]
@@ -851,7 +1134,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, text_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            text_pipeline,
+                        ),
                     ),
                     "query_shape": "$search.text title/body ada",
                 },
@@ -864,7 +1151,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, autocomplete_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            autocomplete_pipeline,
+                        ),
                     ),
                     "query_shape": "$search.autocomplete title/body alg",
                 },
@@ -877,7 +1168,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, wildcard_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            wildcard_pipeline,
+                        ),
                     ),
                     "query_shape": "$search.wildcard body *vector*",
                 },
@@ -890,7 +1185,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, regex_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            regex_pipeline,
+                        ),
                     ),
                     "query_shape": "$search.regex title Ada.*algorithms",
                 },
@@ -903,7 +1202,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, compound_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            compound_pipeline,
+                        ),
                     ),
                     "query_shape": "$search.compound must(text=report 0)+filter(exists,wildcard)",
                 },
@@ -911,12 +1214,20 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             "search_compound_should_near_topk_100": _measure_single_task(
                 compound_near_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, compound_near_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        compound_near_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, compound_near_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            compound_near_pipeline,
+                        ),
                     ),
                     "query_shape": "$search.compound must(text=report 0)+filter(wildcard)+should(exists,near)",
                 },
@@ -924,7 +1235,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             "search_compound_candidateable_should_topk_100": _measure_single_task(
                 compound_candidateable_should_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, compound_candidateable_should_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        compound_candidateable_should_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
@@ -933,7 +1248,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                             db_name,
                             coll_name,
                             compound_candidateable_should_pipeline,
-                        )
+                        ),
                     ),
                     "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)",
                 },
@@ -941,7 +1256,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             "search_compound_candidateable_should_matched_topk_100": _measure_single_task(
                 compound_candidateable_should_matched_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, compound_candidateable_should_matched_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        compound_candidateable_should_matched_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
@@ -950,7 +1269,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                             db_name,
                             coll_name,
                             compound_candidateable_should_matched_pipeline,
-                        )
+                        ),
                     ),
                     "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+match(kind=note)",
                 },
@@ -958,7 +1277,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             "search_compound_candidateable_should_title_topk_100": _measure_single_task(
                 compound_candidateable_should_title_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, compound_candidateable_should_title_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        compound_candidateable_should_title_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
@@ -967,7 +1290,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                             db_name,
                             coll_name,
                             compound_candidateable_should_title_pipeline,
-                        )
+                        ),
                     ),
                     "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+match(title=Ada algorithms)",
                 },
@@ -975,7 +1298,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             "search_compound_candidateable_should_msm2_topk_100": _measure_single_task(
                 compound_candidateable_should_msm2_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, compound_candidateable_should_msm2_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        compound_candidateable_should_msm2_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
@@ -984,7 +1311,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                             db_name,
                             coll_name,
                             compound_candidateable_should_msm2_pipeline,
-                        )
+                        ),
                     ),
                     "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+minimumShouldMatch(2)",
                 },
@@ -992,7 +1319,11 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
             "search_compound_candidateable_should_tie_heavy_topk_100": _measure_single_task(
                 compound_candidateable_should_tie_heavy_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, compound_candidateable_should_tie_heavy_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        compound_candidateable_should_tie_heavy_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
@@ -1001,7 +1332,7 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
                             db_name,
                             coll_name,
                             compound_candidateable_should_tie_heavy_pipeline,
-                        )
+                        ),
                     ),
                     "query_shape": "$search.compound must(text=vector)+should(exists(title),exists(body),wildcard(body=*vector*))",
                 },
@@ -1011,7 +1342,151 @@ def search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
         engine.teardown()
 
 
-def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
+def search_meta_diagnostics(
+    engine: BenchmarkEngine,
+    count: int,
+) -> dict[str, Any]:
+    """Mide collectors Search sin materializar hits públicos."""
+    total_metrics: list[Metrics] = []
+    fallback_total_metrics: list[Metrics] = []
+    lower_bound_metrics: list[Metrics] = []
+    facet_metrics: list[Metrics] = []
+    db_name, coll_name, _docs = _load_users(
+        engine,
+        count,
+        mutate_docs=_augment_search_documents,
+    )
+    try:
+        engine.create_search_index(
+            db_name,
+            coll_name,
+            {
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": {"type": "string"},
+                        "body": {"type": "string"},
+                        "kind": {"type": "token"},
+                    },
+                },
+            },
+            name="by_text",
+        )
+        engine.create_search_index(
+            db_name,
+            coll_name,
+            {"mappings": {"dynamic": True}},
+            name="by_dynamic_text",
+        )
+        operator = {
+            "index": "by_text",
+            "text": {
+                "query": "ada",
+                "path": ["title", "body"],
+            },
+        }
+        total_pipeline = [
+            {"$searchMeta": {**operator, "count": {"type": "total"}}},
+        ]
+        fallback_total_pipeline = [
+            {
+                "$searchMeta": {
+                    **operator,
+                    "index": "by_dynamic_text",
+                    "count": {"type": "total"},
+                },
+            },
+        ]
+        lower_bound_pipeline = [
+            {
+                "$searchMeta": {
+                    **operator,
+                    "count": {"type": "lowerBound", "threshold": 100},
+                },
+            },
+        ]
+        facet_pipeline = [
+            {
+                "$searchMeta": {
+                    **operator,
+                    "count": {"type": "total"},
+                    "facet": {
+                        "facets": {
+                            "kind": {
+                                "type": "token",
+                                "path": "kind",
+                                "numBuckets": 10,
+                                "includeMeta": True,
+                            },
+                            "title": {
+                                "type": "string",
+                                "path": "title",
+                                "numBuckets": 10,
+                            },
+                        },
+                    },
+                },
+            },
+        ]
+
+        def metadata(pipeline: list[dict[str, Any]]) -> dict[str, Any]:
+            explanation = engine.explain_aggregate(
+                db_name,
+                coll_name,
+                pipeline,
+            )
+            summarized = _summarize_search_explain(explanation)
+            details = explanation.get("engine_plan", {}).get("details", {})
+            summarized["collector_pushdown"] = details.get("collectorPushdown")
+            summarized["document_count"] = count
+            return summarized
+
+        return {
+            "search_meta_total_50": _measure_single_task(
+                total_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, total_pipeline)
+                    for _ in range(50)
+                ],
+                metadata=metadata(total_pipeline),
+            ),
+            "search_meta_semantic_fallback_total_50": _measure_single_task(
+                fallback_total_metrics,
+                callback=lambda: [
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        fallback_total_pipeline,
+                    )
+                    for _ in range(50)
+                ],
+                metadata=metadata(fallback_total_pipeline),
+            ),
+            "search_meta_lower_bound_100": _measure_single_task(
+                lower_bound_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, lower_bound_pipeline)
+                    for _ in range(100)
+                ],
+                metadata=metadata(lower_bound_pipeline),
+            ),
+            "search_meta_facets_20": _measure_single_task(
+                facet_metrics,
+                callback=lambda: [
+                    engine.aggregate(db_name, coll_name, facet_pipeline)
+                    for _ in range(20)
+                ],
+                metadata=metadata(facet_pipeline),
+            ),
+        }
+    finally:
+        engine.teardown()
+
+
+def vector_search_diagnostics(
+    engine: BenchmarkEngine,
+    count: int,
+) -> dict[str, Any]:
     """Mide ANN local y el coste adicional del filtro post-candidato."""
     ann_metrics: list[Metrics] = []
     ann_low_candidates_metrics: list[Metrics] = []
@@ -1023,7 +1498,11 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
     filtered_underflow_metrics: list[Metrics] = []
     filtered_min_score_metrics: list[Metrics] = []
 
-    db_name, coll_name, _docs = _load_users(engine, count, mutate_docs=_augment_search_documents)
+    db_name, coll_name, _docs = _load_users(
+        engine,
+        count,
+        mutate_docs=_augment_search_documents,
+    )
     try:
         engine.create_search_index(
             db_name,
@@ -1038,8 +1517,8 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                         "connectivity": 8,
                         "expansionAdd": 16,
                         "expansionSearch": 24,
-                    }
-                ]
+                    },
+                ],
             },
             name="by_vector_cosine",
             index_type="vectorSearch",
@@ -1057,8 +1536,8 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                         "connectivity": 8,
                         "expansionAdd": 16,
                         "expansionSearch": 24,
-                    }
-                ]
+                    },
+                ],
             },
             name="by_vector_dot",
             index_type="vectorSearch",
@@ -1076,8 +1555,8 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                         "connectivity": 8,
                         "expansionAdd": 16,
                         "expansionSearch": 24,
-                    }
-                ]
+                    },
+                ],
             },
             name="by_vector_euclidean",
             index_type="vectorSearch",
@@ -1091,8 +1570,8 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                     "queryVector": [1.0, 0.0, 0.0],
                     "numCandidates": 24,
                     "limit": 10,
-                }
-            }
+                },
+            },
         ]
         ann_low_candidates_pipeline = [
             {
@@ -1102,8 +1581,8 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                     "queryVector": [1.0, 0.0, 0.0],
                     "numCandidates": 10,
                     "limit": 10,
-                }
-            }
+                },
+            },
         ]
         ann_high_candidates_pipeline = [
             {
@@ -1113,8 +1592,8 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                     "queryVector": [1.0, 0.0, 0.0],
                     "numCandidates": 48,
                     "limit": 10,
-                }
-            }
+                },
+            },
         ]
         dot_pipeline = [
             {
@@ -1124,8 +1603,8 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                     "queryVector": [1.0, 0.0, 0.0],
                     "numCandidates": 24,
                     "limit": 10,
-                }
-            }
+                },
+            },
         ]
         euclidean_pipeline = [
             {
@@ -1135,8 +1614,8 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                     "queryVector": [1.0, 0.0, 0.0],
                     "numCandidates": 24,
                     "limit": 10,
-                }
-            }
+                },
+            },
         ]
         filtered_pipeline = [
             {
@@ -1147,8 +1626,8 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                     "numCandidates": 24,
                     "limit": 10,
                     "filter": {"kind": "reference"},
-                }
-            }
+                },
+            },
         ]
         filtered_boolean_pipeline = [
             {
@@ -1162,10 +1641,10 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                         "$or": [
                             {"kind": "reference"},
                             {"score": {"$gte": 10}},
-                        ]
+                        ],
                     },
-                }
-            }
+                },
+            },
         ]
         filtered_underflow_pipeline = [
             {
@@ -1179,10 +1658,10 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                         "$and": [
                             {"kind": "reference"},
                             {"score": {"$gte": 10}},
-                        ]
+                        ],
                     },
-                }
-            }
+                },
+            },
         ]
         filtered_min_score_pipeline = [
             {
@@ -1194,8 +1673,8 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                     "limit": 10,
                     "filter": {"kind": "note"},
                     "minScore": 0.999,
-                }
-            }
+                },
+            },
         ]
 
         return {
@@ -1207,7 +1686,11 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, ann_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            ann_pipeline,
+                        ),
                     ),
                     "query_shape": "$vectorSearch cosine topk",
                 },
@@ -1215,12 +1698,20 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
             "vector_search_cosine_low_candidates_topk_100": _measure_single_task(
                 ann_low_candidates_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, ann_low_candidates_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        ann_low_candidates_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, ann_low_candidates_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            ann_low_candidates_pipeline,
+                        ),
                     ),
                     "query_shape": "$vectorSearch cosine topk + numCandidates(10)",
                 },
@@ -1228,12 +1719,20 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
             "vector_search_cosine_high_candidates_topk_100": _measure_single_task(
                 ann_high_candidates_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, ann_high_candidates_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        ann_high_candidates_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, ann_high_candidates_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            ann_high_candidates_pipeline,
+                        ),
                     ),
                     "query_shape": "$vectorSearch cosine topk + numCandidates(48)",
                 },
@@ -1246,7 +1745,11 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, dot_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            dot_pipeline,
+                        ),
                     ),
                     "query_shape": "$vectorSearch dotProduct topk",
                 },
@@ -1259,7 +1762,11 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, euclidean_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            euclidean_pipeline,
+                        ),
                     ),
                     "query_shape": "$vectorSearch euclidean topk",
                 },
@@ -1272,7 +1779,11 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, filtered_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            filtered_pipeline,
+                        ),
                     ),
                     "query_shape": "$vectorSearch cosine topk + post-filter",
                 },
@@ -1280,12 +1791,20 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
             "vector_search_filtered_boolean_topk_100": _measure_single_task(
                 filtered_boolean_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, filtered_boolean_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        filtered_boolean_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, filtered_boolean_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            filtered_boolean_pipeline,
+                        ),
                     ),
                     "query_shape": "$vectorSearch cosine topk + boolean candidate filter",
                 },
@@ -1293,12 +1812,20 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
             "vector_search_filtered_underflow_topk_100": _measure_single_task(
                 filtered_underflow_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, filtered_underflow_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        filtered_underflow_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, filtered_underflow_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            filtered_underflow_pipeline,
+                        ),
                     ),
                     "query_shape": "$vectorSearch cosine topk + rare boolean candidate filter",
                 },
@@ -1306,12 +1833,20 @@ def vector_search_diagnostics(engine: BenchmarkEngine, count: int) -> dict[str, 
             "vector_search_filtered_min_score_topk_100": _measure_single_task(
                 filtered_min_score_metrics,
                 callback=lambda: [
-                    engine.aggregate(db_name, coll_name, filtered_min_score_pipeline)
+                    engine.aggregate(
+                        db_name,
+                        coll_name,
+                        filtered_min_score_pipeline,
+                    )
                     for _ in range(100)
                 ],
                 metadata={
                     **_summarize_search_explain(
-                        engine.explain_aggregate(db_name, coll_name, filtered_min_score_pipeline)
+                        engine.explain_aggregate(
+                            db_name,
+                            coll_name,
+                            filtered_min_score_pipeline,
+                        ),
                     ),
                     "query_shape": "$vectorSearch cosine topk + filter(kind=note) + minScore(0.999)",
                 },

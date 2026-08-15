@@ -24,43 +24,47 @@ class IdentityTests(unittest.TestCase):
         self,
     ):
         self.assertEqual(
-            canonical_document_id({'tenant': [1, 2]}),
-            ('dict', (('tenant', ('list', ((int, 1), (int, 2)))),)),
+            canonical_document_id({"tenant": [1, 2]}),
+            ("dict", (("tenant", ("list", ((int, 1), (int, 2)))),)),
         )
 
         class UnhashableValue:
             __hash__ = None
 
             def __repr__(self) -> str:
-                return 'unhashable'
+                return "unhashable"
 
         self.assertEqual(
-            canonical_document_id(UnhashableValue()), ('repr', 'unhashable')
+            canonical_document_id(UnhashableValue()),
+            ("repr", "unhashable"),
         )
 
     def test_canonical_document_id_distinguishes_bool_and_int_inside_compound_values(
         self,
     ):
         self.assertNotEqual(
-            canonical_document_id(True), canonical_document_id(1)
+            canonical_document_id(True),
+            canonical_document_id(1),
         )
         self.assertNotEqual(
-            canonical_document_id({'a': True}), canonical_document_id({'a': 1})
+            canonical_document_id({"a": True}),
+            canonical_document_id({"a": 1}),
         )
         self.assertNotEqual(
-            canonical_document_id([True]), canonical_document_id([1])
+            canonical_document_id([True]),
+            canonical_document_id([1]),
         )
 
     def test_document_matches_storage_key_accepts_stable_selected_documents(
         self,
     ):
         assert_document_matches_storage_key(
-            {'_id': {'tenant': [1]}, 'name': 'Ada'},
-            _storage_key_for_id({'tenant': [1]}),
+            {"_id": {"tenant": [1]}, "name": "Ada"},
+            _storage_key_for_id({"tenant": [1]}),
             storage_key_for_id=_storage_key_for_id,
         )
         assert_document_matches_storage_key(
-            {'name': 'legacy'},
+            {"name": "legacy"},
             _storage_key_for_id(None),
             storage_key_for_id=_storage_key_for_id,
         )
@@ -70,8 +74,8 @@ class IdentityTests(unittest.TestCase):
     ):
         with self.assertRaises(WriteError) as context:
             assert_document_matches_storage_key(
-                {'_id': [1]},
-                _storage_key_for_id('other'),
+                {"_id": [1]},
+                _storage_key_for_id("other"),
                 storage_key_for_id=_storage_key_for_id,
             )
 
@@ -80,42 +84,42 @@ class IdentityTests(unittest.TestCase):
     def test_document_matches_storage_key_rejects_mismatched_storage_key(self):
         with self.assertRaises(WriteError) as context:
             assert_document_matches_storage_key(
-                {'_id': 'new'},
-                _storage_key_for_id('old'),
+                {"_id": "new"},
+                _storage_key_for_id("old"),
                 storage_key_for_id=_storage_key_for_id,
             )
 
         self.assertEqual(context.exception.code, 66)
-        self.assertIn('does not match its storage key', str(context.exception))
+        self.assertIn("does not match its storage key", str(context.exception))
 
     def test_document_matches_stored_lookup_uses_same_selected_document_errors(
         self,
     ):
         assert_document_matches_stored_lookup(
-            {'_id': 'same', 'name': 'Ada'},
-            {'_id': 'same', 'name': 'Ada'},
+            {"_id": "same", "name": "Ada"},
+            {"_id": "same", "name": "Ada"},
             dialect=_Dialect(),
         )
         assert_document_matches_stored_lookup(
-            {'_id': 'same', 'name': 'Ada'},
-            {'_id': 'same', 'name': 'Grace', 'updated': True},
+            {"_id": "same", "name": "Ada"},
+            {"_id": "same", "name": "Grace", "updated": True},
             dialect=_Dialect(),
         )
         assert_document_matches_stored_lookup(
             {
-                '_id': 'task-1',
-                'planning_status': 'pending',
-                'reviews': [],
-                'unlock_content': [],
-                'started_at': None,
+                "_id": "task-1",
+                "planning_status": "pending",
+                "reviews": [],
+                "unlock_content": [],
+                "started_at": None,
             },
-            {'_id': 'task-1'},
+            {"_id": "task-1"},
             dialect=_Dialect(),
         )
 
         with self.assertRaises(WriteError) as missing_context:
             assert_document_matches_stored_lookup(
-                {'_id': 'same', 'name': 'Ada'},
+                {"_id": "same", "name": "Ada"},
                 None,
                 dialect=_Dialect(),
             )
@@ -123,41 +127,49 @@ class IdentityTests(unittest.TestCase):
 
         with self.assertRaises(WriteError) as array_context:
             assert_document_matches_stored_lookup(
-                {'_id': [1], 'name': 'Ada'},
-                {'_id': [1], 'name': 'Ada'},
+                {"_id": [1], "name": "Ada"},
+                {"_id": [1], "name": "Ada"},
                 dialect=_Dialect(),
             )
         self.assertEqual(array_context.exception.code, 53)
 
         with self.assertRaises(WriteError) as changed_id_context:
             assert_document_matches_stored_lookup(
-                {'_id': 'same', 'name': 'Ada'},
-                {'_id': 'other', 'name': 'Ada'},
+                {"_id": "same", "name": "Ada"},
+                {"_id": "other", "name": "Ada"},
                 dialect=_Dialect(),
             )
         self.assertEqual(changed_id_context.exception.code, 66)
 
         with self.assertRaises(WriteError) as missing_stored_id_context:
             assert_document_matches_stored_lookup(
-                {'_id': 'same', 'name': 'Ada'},
-                {'name': 'Ada'},
+                {"_id": "same", "name": "Ada"},
+                {"name": "Ada"},
                 dialect=_Dialect(),
             )
         self.assertEqual(missing_stored_id_context.exception.code, 66)
 
+        with self.assertRaises(WriteError) as implicit_id_context:
+            assert_document_matches_stored_lookup(
+                {"name": "legacy"},
+                {"_id": "stored", "name": "legacy"},
+                dialect=_Dialect(),
+            )
+        self.assertEqual(implicit_id_context.exception.code, 66)
+
     def test_document_kept_storage_key_rejects_update_retarget(self):
         assert_document_kept_storage_key(
-            {'_id': 'same', 'name': 'Ada'},
-            _storage_key_for_id('same'),
+            {"_id": "same", "name": "Ada"},
+            _storage_key_for_id("same"),
             storage_key_for_id=_storage_key_for_id,
         )
 
         with self.assertRaises(WriteError) as context:
             assert_document_kept_storage_key(
-                {'_id': 'new', 'name': 'Ada'},
-                _storage_key_for_id('old'),
+                {"_id": "new", "name": "Ada"},
+                _storage_key_for_id("old"),
                 storage_key_for_id=_storage_key_for_id,
             )
 
         self.assertEqual(context.exception.code, 66)
-        self.assertIn('immutable', str(context.exception))
+        self.assertIn("immutable", str(context.exception))

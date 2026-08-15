@@ -7,7 +7,7 @@ Esta lista prepara una release sin obligar a publicar nada.
 - revisar [README.md](../README.md) para que el
   alcance embebido/local y sus limites sean explicitos;
 - preparar o revisar la nota de release y la guía de migración de la versión
-  objetivo (para 4.4, [release-4.4.0.md](release-4.4.0.md)) para
+  objetivo (para 4.5, [release-4.5.0.md](release-4.5.0.md)) para
   confirmar que la narrativa y los cambios incompatibles son explícitos;
 - revisar [COMPATIBILITY.md](../COMPATIBILITY.md)
   y confirmar que runtime, compat catalog, docs y tests cuentan la misma
@@ -24,6 +24,8 @@ Esta lista prepara una release sin obligar a publicar nada.
 - fijar `SOURCE_DATE_EPOCH` al timestamp del commit y ejecutar
   `python -m build --no-isolation --sdist --wheel` dentro del entorno de build
   constrained;
+- normalizar el sdist con `python scripts/normalize_sdist.py
+  dist/mongoeco-*.tar.gz` y verificar que dos builds producen los mismos bytes;
 - ejecutar `python -m twine check dist/*`;
 - calcular y conservar el SHA-256 de wheel y sdist;
 - ejecutar:

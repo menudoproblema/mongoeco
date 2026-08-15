@@ -8,6 +8,83 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.5.0] - 2026-08-15
+
+### Added
+
+- Se formaliza `search-v1` como contrato local estable para `$search`,
+  `$searchMeta`, highlight y explain. La decision fija semantica de collectors,
+  metadata sin colisiones, niveles de explain y la transicion compatible de
+  las previews experimentales durante 4.x.
+- Search cruza una frontera inmutable `SearchRequest` /
+  `SearchExecutionOutcome`, declarada mediante capabilities tipadas. Memory y
+  SQLite devuelven hits, metadata, planes de collectors y trazas estables; los
+  engines 4.x antiguos quedan aislados en el adapter legacy.
+- `$searchMeta` publica count total/lower-bound y facetas simples o nombradas
+  con buckets tipados, deduplicacion por documento, traversal de arrays/rutas,
+  orden BSON determinista y salida sin hits publicos.
+- Highlight usa spans compartidos sobre el valor original, pasajes centrados,
+  offsets Unicode en code points y sidecar interno proyectable mediante
+  `$meta: "searchHighlights"`, sin sobrescribir campos del usuario.
+- `explain()` de Search acepta `queryPlanner` sin ejecucion y
+  `executionStats` con una unica ejecucion, incluyendo contrato, collectors,
+  highlight, residuals y backend. El default 4.x sigue siendo
+  `executionStats`; las previews anteriores permanecen deprecadas.
+- SQLite ejecuta count y facets textuales exactos en SQL cuando puede probar
+  candidate set y filtros sin residual. `lowerBound` corta en
+  `threshold + 1`; mappings dinamicos, tipos/traversal no representables y
+  queries no exactas degradan al acumulador semantico compartido.
+- Se publica `mongoeco.conformance`, un kit framework-neutral para SPI v2 con
+  perfiles de CRUD, outcomes, `OperationContext`, atomicidad compare-and-set,
+  reloj inyectado, snapshots, change delivery y Search. El extra
+  `engine-testing` aporta el helper pytest opcional.
+- Un workflow diferencial semanal, manual o activado por label ejecuta
+  escenarios reproducibles contra MongoDB 7.0 y 8.0, siempre con servicio
+  versionado y artefactos JSON, JUnit, log y seed.
+- El harness incorpora `search_meta_diagnostics` para comparar pushdown y
+  fallback en 100, 1.000 y 10.000 documentos.
+- Los adapters del harness declaran capabilities por workload. Las matrices
+  mixtas registran `SKIPPED` para operaciones no soportadas, en vez de convertir
+  una ausencia conocida como Search en mongomock en un falso error de engine.
+
+### Fixed
+
+- La metadata Search usa un sidecar no persistible en vez de nombres de campo
+  legales. Lecturas, proyecciones y `$merge` conservan campos `__mongoeco_*` y
+  `searchHighlights` existentes; el highlight generado sigue disponible
+  mediante `$meta` cuando colisiona el campo publico legacy.
+- Matching textual, ranking, highlight y SQLite FTS5 comparten semantica
+  any-term para queries con varios terminos. Highlight informa solo los
+  terminos presentes en cada valor, sin exigir que todo el query aparezca en
+  un unico escalar.
+- `$searchMeta` deja de recibir pushdown de `$limit` o `$match` del dominio de
+  hits, y los filtros dependientes de highlight no se adelantan a la generacion
+  de metadata. Los filtros Search conservan dialecto, collation, `let` y reloj
+  de operacion en Memory y SQLite.
+- Las capabilities Search nacen desactivadas y el adapter las aplica; los
+  engines incluidos declaran explicitamente collectors, highlight y explain.
+  Los DTO publicos rechazan counts, facetas, pasajes, planes y trazas imposibles
+  y conservan propiedad defensiva de documentos anidados.
+- `executionStats` expone una traza normalizada sin descartar diagnosticos
+  nativos del engine. `$searchMeta` informa el plan de collectors realmente
+  ejecutado y `queryPlanner` sigue sin ejecutar la consulta.
+- El pushdown de facetas SQLite posee ahora un savepoint y conserva el estado
+  transaccional circundante, evitando que un collector de lectura rompa la
+  siguiente escritura o limpieza.
+- La conformidad de engines limpia cada namespace aislado, prueba todas las
+  capabilities Search declaradas, refuerza CAS concurrente, snapshots y
+  change delivery, e informa por separado los fallos de cleanup.
+- Los filtros diferenciales sin casos y los fallos de engine en benchmarks
+  devuelven ahora un codigo no cero. La publicacion etiquetada queda bloqueada
+  por diferenciales MongoDB 7/8 con evidencia exacta del servidor.
+- Los updates pipeline que eliminan `_id` temporalmente lo restauran en su
+  posicion BSON original, igualando el comportamiento diferencial de MongoDB
+  sin alterar la semantica de `modified_count` del pipeline ejecutado.
+- El sdist se normaliza de forma atomica antes de publicar para fijar timestamps,
+  propietarios, modos, orden y cabecera gzip. Rechaza paths, links, duplicados y
+  tipos de miembro no seguros; wheel y sdist son reproducibles byte a byte con
+  un mismo `SOURCE_DATE_EPOCH`.
+
 ## [4.4.0] - 2026-08-15
 
 ### Fixed

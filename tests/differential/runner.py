@@ -6,8 +6,8 @@ from tests.differential.cases import REAL_PARITY_CASES
 
 
 TARGET_MODULES = {
-    "7.0": "tests.differential.mongodb7_real_parity",
-    "8.0": "tests.differential.mongodb8_real_parity",
+    "7.0": ("tests.differential.mongodb7_real_parity.MongoDB7RealParityTests"),
+    "8.0": ("tests.differential.mongodb8_real_parity.MongoDB8RealParityTests"),
 }
 
 
@@ -19,7 +19,9 @@ def resolve_target(argv: list[str]) -> str:
 
     if target not in TARGET_MODULES:
         supported = ", ".join(sorted(TARGET_MODULES))
-        raise SystemExit(f"unsupported MongoDB target {target!r}; expected one of: {supported}")
+        raise SystemExit(
+            f"unsupported MongoDB target {target!r}; expected one of: {supported}",
+        )
     return target
 
 
@@ -29,7 +31,9 @@ def resolve_case_filter(argv: list[str]) -> str | None:
     return os.getenv("MONGOECO_REAL_MONGODB_CASE")
 
 
-def available_case_names(target_version: tuple[int, int] | None = None) -> list[str]:
+def available_case_names(
+    target_version: tuple[int, int] | None = None,
+) -> list[str]:
     selected = [
         case.name
         for case in REAL_PARITY_CASES
@@ -38,18 +42,30 @@ def available_case_names(target_version: tuple[int, int] | None = None) -> list[
     return sorted(selected)
 
 
-def build_suite(target: str, case_filter: str | None = None) -> unittest.TestSuite:
-    suite = unittest.defaultTestLoader.loadTestsFromName(TARGET_MODULES[target])
+def build_suite(
+    target: str,
+    case_filter: str | None = None,
+) -> unittest.TestSuite:
+    suite = unittest.defaultTestLoader.loadTestsFromName(
+        TARGET_MODULES[target],
+    )
     if not case_filter:
         return suite
 
     filtered = unittest.TestSuite()
-    patterns = [fragment.strip() for fragment in case_filter.split(",") if fragment.strip()]
+    patterns = [
+        fragment.strip() for fragment in case_filter.split(",") if fragment.strip()
+    ]
     for test in _iter_cases(suite):
         method_name = getattr(test, "_testMethodName", "")
-        case_name = method_name.removeprefix("test_").removesuffix("_matches_real_mongodb")
+        case_name = method_name.removeprefix("test_").removesuffix(
+            "_matches_real_mongodb",
+        )
         if any(fnmatch.fnmatch(case_name, pattern) for pattern in patterns):
             filtered.addTest(test)
+    if filtered.countTestCases() == 0:
+        message = f"case filter matched no differential cases: {case_filter}"
+        raise ValueError(message)
     return filtered
 
 

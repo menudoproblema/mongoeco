@@ -13,7 +13,7 @@ import threading
 import time
 import uuid
 
-from collections.abc import Mapping
+from collections.abc import AsyncIterable, Callable, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, nullcontext
 from copy import deepcopy
@@ -21,7 +21,7 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 from functools import partial
 from pathlib import Path
-from typing import Any, AsyncIterable, Callable, override
+from typing import Any, override
 
 from mongoeco.api.operations import (
     FindOperation,
@@ -85,7 +85,16 @@ from mongoeco.core.search import (
     SearchVectorQuery,
     attach_text_score,
     classic_text_score,
+    collect_search_metadata,
     resolve_classic_text_index_for_hint,
+)
+from mongoeco.core.search_execution import SearchRequest
+from mongoeco.core.search_models import (
+    SearchCollectorPlan,
+    SearchExecutionMode,
+    SearchExecutionOutcome,
+    SearchExecutionTrace,
+    SearchExplainVerbosity,
 )
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
@@ -142,8 +151,8 @@ from mongoeco.engines._sqlite_outbox import (
     read_committed_changes as _sqlite_read_committed_changes,
     register_consumer as _sqlite_register_consumer,
     release_consumer_lease as _sqlite_release_consumer_lease,
-    renew_ephemeral_consumers as _sqlite_renew_ephemeral_consumers,
     renew_consumer_lease as _sqlite_renew_consumer_lease,
+    renew_ephemeral_consumers as _sqlite_renew_ephemeral_consumers,
     unregister_consumer as _sqlite_unregister_consumer,
 )
 from mongoeco.engines._sqlite_plan_heuristics import (
@@ -175,6 +184,7 @@ from mongoeco.engines._sqlite_runtime import (
     SQLiteRuntimeState,
 )
 from mongoeco.engines._sqlite_search_runtime import (
+    collect_search_metadata_pushdown_sync as _sqlite_collect_search_metadata_pushdown_sync,
     create_search_index_sync as _sqlite_create_search_index_sync,
     delete_search_entries_for_storage_key as _sqlite_delete_search_entries_for_storage_key,
     drop_search_backend_sync as _sqlite_drop_search_backend_sync,
@@ -188,6 +198,7 @@ from mongoeco.engines._sqlite_search_runtime import (
     load_search_index_rows as _sqlite_runtime_load_search_index_rows,
     load_search_indexes as _sqlite_runtime_load_search_indexes,
     pending_search_index_ready_at as _sqlite_pending_search_index_ready_at,
+    plan_search_documents_sync as _sqlite_plan_search_documents_sync,
     replace_search_entries_for_document as _sqlite_replace_search_entries_for_document,
     search_documents_sync as _sqlite_search_documents_sync,
     search_index_is_ready_sync as _sqlite_search_index_is_ready_sync,
@@ -205,7 +216,10 @@ from mongoeco.engines._sqlite_write_ops import (
 )
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.base import AsyncStorageEngine
-from mongoeco.engines.capabilities import EngineCapabilities
+from mongoeco.engines.capabilities import (
+    EngineCapabilities,
+    SearchEngineCapabilities,
+)
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.results import (
     CommittedChange,
@@ -324,7 +338,7 @@ class _ChangeDispatchHeartbeat:
         if error is not None:
             raise error
         if self.lost.is_set():
-            message = 'change consumer dispatch lease was lost'
+            message = "change consumer dispatch lease was lost"
             raise OperationFailure(message)
 
 
@@ -361,7 +375,12 @@ class SQLiteEngine(AsyncStorageEngine):
     capabilities = EngineCapabilities(
         injected_clock=True,
         explicit_read_snapshots=True,
-        change_delivery='transactional-outbox',
+        change_delivery="transactional-outbox",
+        search=SearchEngineCapabilities(
+            metadata_collectors=True,
+            highlight=True,
+            explain_verbosity=True,
+        ),
     )
     """Motor SQLite async-first usando la stdlib como backend persistente."""
 
@@ -388,11 +407,9 @@ class SQLiteEngine(AsyncStorageEngine):
             or isinstance(change_outbox_max_entries, bool)
             or change_outbox_max_entries < 1
         ):
-            raise ValueError('change_outbox_max_entries must be positive')
+            raise ValueError("change_outbox_max_entries must be positive")
         self._executor_workers = executor_workers or (
-            min(32, max(4, (os.cpu_count() or 1) + 4))
-            if path != ":memory:"
-            else 1
+            min(32, max(4, (os.cpu_count() or 1) + 4)) if path != ":memory:" else 1
         )
         self._use_shared_executor = executor_workers is None
         self._profiler = EngineProfiler("sqlite")
@@ -406,13 +423,13 @@ class SQLiteEngine(AsyncStorageEngine):
         self._change_delivery_lock = threading.RLock()
         self._change_dispatch_owner = uuid.uuid4().hex
         self._registration_heartbeat_guard = threading.Lock()
-        self._registration_heartbeat_state: (
-            _EphemeralRegistrationHeartbeat | None
-        ) = None
+        self._registration_heartbeat_state: _EphemeralRegistrationHeartbeat | None = (
+            None
+        )
         self._registration_heartbeat_thread: threading.Thread | None = None
         self._change_dispatch_scope = (
             self._change_dispatch_owner
-            if path == ':memory:'
+            if path == ":memory:"
             else str(Path(path).expanduser().resolve())
         )
         self._change_outbox_max_entries = change_outbox_max_entries
@@ -425,7 +442,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 require_spill_for_blocking_stages=True,
             )
         )
-        self._simulate_search_index_latency = max(0.0, float(simulate_search_index_latency))
+        self._simulate_search_index_latency = max(
+            0.0,
+            float(simulate_search_index_latency),
+        )
         self._sql_translator = SQLiteQueryTranslator()
 
     @property
@@ -493,7 +513,9 @@ class SQLiteEngine(AsyncStorageEngine):
         self._runtime_state.fts5_available = value
 
     @property
-    def _index_cache(self) -> dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]]:
+    def _index_cache(
+        self,
+    ) -> dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]]:
         return self._cache_state.index_cache
 
     @property
@@ -505,7 +527,9 @@ class SQLiteEngine(AsyncStorageEngine):
         return self._cache_state.collection_id_cache
 
     @property
-    def _collection_features_cache(self) -> dict[tuple[str, str, str], bool | str]:
+    def _collection_features_cache(
+        self,
+    ) -> dict[tuple[str, str, str], bool | str]:
         return self._cache_state.collection_features_cache
 
     @property
@@ -517,7 +541,9 @@ class SQLiteEngine(AsyncStorageEngine):
         return self._cache_state.ensured_search_backends
 
     @property
-    def _vector_search_backends(self) -> dict[tuple[str, str], SQLiteVectorBackendState]:
+    def _vector_search_backends(
+        self,
+    ) -> dict[tuple[str, str], SQLiteVectorBackendState]:
         return self._cache_state.vector_search_backends
 
     @property
@@ -565,23 +591,21 @@ class SQLiteEngine(AsyncStorageEngine):
         connection = self._connection
         change_delivery_connection = self._change_delivery_connection
         change_delivery_info: dict[str, object] = {
-            'maxEntries': self._change_outbox_max_entries,
-            'pendingEntries': 0,
-            'consumerCount': 0,
-            'prunedThrough': 0,
-            'registrationHeartbeatActive': False,
-            'registrationHeartbeatHealthy': True,
+            "maxEntries": self._change_outbox_max_entries,
+            "pendingEntries": 0,
+            "consumerCount": 0,
+            "prunedThrough": 0,
+            "registrationHeartbeatActive": False,
+            "registrationHeartbeatHealthy": True,
         }
         with self._registration_heartbeat_guard:
             heartbeat_thread = self._registration_heartbeat_thread
             heartbeat_state = self._registration_heartbeat_state
-            change_delivery_info['registrationHeartbeatActive'] = bool(
-                heartbeat_thread is not None
-                and heartbeat_thread.is_alive(),
+            change_delivery_info["registrationHeartbeatActive"] = bool(
+                heartbeat_thread is not None and heartbeat_thread.is_alive(),
             )
-            change_delivery_info['registrationHeartbeatHealthy'] = bool(
-                heartbeat_state is None
-                or heartbeat_state.error() is None,
+            change_delivery_info["registrationHeartbeatHealthy"] = bool(
+                heartbeat_state is None or heartbeat_state.error() is None,
             )
         if change_delivery_connection is not None or connection is not None:
             try:
@@ -614,8 +638,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             0
                         ) AS pending_count
                     FROM search_indexes
-                    """
-                    ,
+                    """,
                     (time.time(),),
                 ).fetchone()
             except sqlite3.OperationalError:
@@ -666,20 +689,30 @@ class SQLiteEngine(AsyncStorageEngine):
                 "vectorBackend": "usearch",
                 "declaredVectorIndexCount": declared_vector_index_count,
                 "pendingVectorIndexCount": pending_vector_index_count,
-                "materializedVectorBackendCount": len(materialized_vector_backends),
-                "materializedVectorBackends": list(materialized_vector_backends),
+                "materializedVectorBackendCount": len(
+                    materialized_vector_backends,
+                ),
+                "materializedVectorBackends": list(
+                    materialized_vector_backends,
+                ),
                 "ensuredBackendCount": len(self._ensured_search_backends),
                 "simulatedIndexLatencySeconds": self._simulate_search_index_latency,
             },
             "caches": {
                 "indexCacheEntries": len(self._index_cache),
                 "collectionIdCacheEntries": len(self._collection_id_cache),
-                "collectionFeatureCacheEntries": len(self._collection_features_cache),
-                "indexMetadataVersionEntries": len(self._index_metadata_versions),
-                "ensuredMultikeyPhysicalIndexCount": len(self._ensured_multikey_physical_indexes),
+                "collectionFeatureCacheEntries": len(
+                    self._collection_features_cache,
+                ),
+                "indexMetadataVersionEntries": len(
+                    self._index_metadata_versions,
+                ),
+                "ensuredMultikeyPhysicalIndexCount": len(
+                    self._ensured_multikey_physical_indexes,
+                ),
                 "vectorSearchBackendCount": len(self._vector_search_backends),
             },
-            'changeDelivery': change_delivery_info,
+            "changeDelivery": change_delivery_info,
         }
 
     def _ensure_executor(self) -> ThreadPoolExecutor:
@@ -687,7 +720,9 @@ class SQLiteEngine(AsyncStorageEngine):
         if executor is None:
             if self._use_shared_executor:
                 with _SQLITE_SHARED_EXECUTOR_LOCK:
-                    executor = _SQLITE_SHARED_EXECUTORS.get(self._executor_workers)
+                    executor = _SQLITE_SHARED_EXECUTORS.get(
+                        self._executor_workers,
+                    )
                     if executor is None:
                         executor = ThreadPoolExecutor(
                             max_workers=self._executor_workers,
@@ -719,19 +754,29 @@ class SQLiteEngine(AsyncStorageEngine):
         # (notably the injected clock) for each submitted job.
         context = contextvars.copy_context()
         return await loop.run_in_executor(
-            self._ensure_executor(), context.run, partial(func, *args, **kwargs)
+            self._ensure_executor(),
+            context.run,
+            partial(func, *args, **kwargs),
         )
 
     def _engine_key(self) -> str:
         return f"sqlite:{id(self)}"
 
-    def _invalidate_index_cache(self, db_name: str | None = None, coll_name: str | None = None) -> None:
+    def _invalidate_index_cache(
+        self,
+        db_name: str | None = None,
+        coll_name: str | None = None,
+    ) -> None:
         if db_name is None or coll_name is None:
             self._index_cache.clear()
             return
         self._index_cache.pop((db_name, coll_name), None)
 
-    def _invalidate_collection_id_cache(self, db_name: str | None = None, coll_name: str | None = None) -> None:
+    def _invalidate_collection_id_cache(
+        self,
+        db_name: str | None = None,
+        coll_name: str | None = None,
+    ) -> None:
         if db_name is None or coll_name is None:
             self._collection_id_cache.clear()
             return
@@ -747,9 +792,7 @@ class SQLiteEngine(AsyncStorageEngine):
             return
         prefix = (db_name, coll_name)
         stale_keys = [
-            key
-            for key in self._collection_features_cache
-            if key[:2] == prefix
+            key for key in self._collection_features_cache if key[:2] == prefix
         ]
         for key in stale_keys:
             self._collection_features_cache.pop(key, None)
@@ -757,9 +800,15 @@ class SQLiteEngine(AsyncStorageEngine):
     def _index_cache_version(self, db_name: str, coll_name: str) -> int:
         return self._index_metadata_versions.get((db_name, coll_name), 0)
 
-    def _mark_index_metadata_changed(self, db_name: str, coll_name: str) -> None:
+    def _mark_index_metadata_changed(
+        self,
+        db_name: str,
+        coll_name: str,
+    ) -> None:
         cache_key = (db_name, coll_name)
-        self._index_metadata_versions[cache_key] = self._index_metadata_versions.get(cache_key, 0) + 1
+        self._index_metadata_versions[cache_key] = (
+            self._index_metadata_versions.get(cache_key, 0) + 1
+        )
         self._invalidate_index_cache(db_name, coll_name)
 
     def _ensure_multikey_physical_indexes_sync(
@@ -767,20 +816,31 @@ class SQLiteEngine(AsyncStorageEngine):
         conn: sqlite3.Connection,
         indexes: list[EngineIndexRecord],
     ) -> None:
-        _sqlite_runtime_ensure_multikey_physical_indexes_sync(self, conn, indexes)
+        _sqlite_runtime_ensure_multikey_physical_indexes_sync(
+            self,
+            conn,
+            indexes,
+        )
 
     def _ensure_scalar_physical_indexes_sync(
         self,
         conn: sqlite3.Connection,
         indexes: list[EngineIndexRecord],
     ) -> None:
-        _sqlite_runtime_ensure_scalar_physical_indexes_sync(self, conn, indexes)
+        _sqlite_runtime_ensure_scalar_physical_indexes_sync(
+            self,
+            conn,
+            indexes,
+        )
 
     @staticmethod
     def _multikey_type_score(element_type: str) -> int:
         if element_type == "undefined":
             return 0
-        return SQLITE_SORT_BUCKET_WEIGHTS.get(element_type, SQLITE_SORT_BUCKET_WEIGHTS["fallback"])
+        return SQLITE_SORT_BUCKET_WEIGHTS.get(
+            element_type,
+            SQLITE_SORT_BUCKET_WEIGHTS["fallback"],
+        )
 
     def _record_operation_metadata(
         self,
@@ -917,19 +977,37 @@ class SQLiteEngine(AsyncStorageEngine):
     def _session_owns_transaction(self, context: ClientSession | None) -> bool:
         return self._session_runtime.session_owns_transaction(context)
 
-    def _ensure_session_can_use_engine(self, context: ClientSession | None) -> None:
+    def _ensure_session_can_use_engine(
+        self,
+        context: ClientSession | None,
+    ) -> None:
         self._session_runtime.ensure_session_can_use_engine(context)
 
-    def _require_connection(self, context: ClientSession | None = None) -> sqlite3.Connection:
+    def _require_connection(
+        self,
+        context: ClientSession | None = None,
+    ) -> sqlite3.Connection:
         return self._session_runtime.require_connection(context)
 
-    def _begin_write(self, conn: sqlite3.Connection, context: ClientSession | None) -> None:
+    def _begin_write(
+        self,
+        conn: sqlite3.Connection,
+        context: ClientSession | None,
+    ) -> None:
         self._session_runtime.begin_write(conn, context)
 
-    def _commit_write(self, conn: sqlite3.Connection, context: ClientSession | None) -> None:
+    def _commit_write(
+        self,
+        conn: sqlite3.Connection,
+        context: ClientSession | None,
+    ) -> None:
         self._session_runtime.commit_write(conn, context)
 
-    def _rollback_write(self, conn: sqlite3.Connection, context: ClientSession | None) -> None:
+    def _rollback_write(
+        self,
+        conn: sqlite3.Connection,
+        context: ClientSession | None,
+    ) -> None:
         self._session_runtime.rollback_write(conn, context)
 
     def _dialect_requires_python_fallback(self, dialect: MongoDialect) -> bool:
@@ -956,7 +1034,7 @@ class SQLiteEngine(AsyncStorageEngine):
     @staticmethod
     def _ttl_now() -> datetime.datetime:
         return (current_execution_now() or utc_bson_now()).replace(
-            tzinfo=datetime.timezone.utc
+            tzinfo=datetime.UTC,
         )
 
     def _purge_expired_documents_sync(
@@ -997,7 +1075,10 @@ class SQLiteEngine(AsyncStorageEngine):
             conn,
             begin_write=lambda current: self._begin_write(current, context),
             commit_write=lambda current: self._commit_write(current, context),
-            rollback_write=lambda current: self._rollback_write(current, context),
+            rollback_write=lambda current: self._rollback_write(
+                current,
+                context,
+            ),
         ):
             for storage_key, _document in expired:
                 conn.execute(
@@ -1007,9 +1088,24 @@ class SQLiteEngine(AsyncStorageEngine):
                     """,
                     (db_name, coll_name, storage_key),
                 )
-                self._delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                self._delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                self._delete_search_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+                self._delete_multikey_entries_for_storage_key(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                )
+                self._delete_scalar_entries_for_storage_key(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                )
+                self._delete_search_entries_for_storage_key(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                )
         self._invalidate_collection_features_cache(db_name, coll_name)
         return len(expired)
 
@@ -1044,25 +1140,59 @@ class SQLiteEngine(AsyncStorageEngine):
     def _quote_identifier(identifier: str) -> str:
         return '"' + identifier.replace('"', '""') + '"'
 
-    def _physical_index_name(self, db_name: str, coll_name: str, index_name: str) -> str:
-        digest = hashlib.sha1(f"{db_name}:{coll_name}:{index_name}".encode("utf-8")).hexdigest()[:16]
+    def _physical_index_name(
+        self,
+        db_name: str,
+        coll_name: str,
+        index_name: str,
+    ) -> str:
+        digest = hashlib.sha1(
+            f"{db_name}:{coll_name}:{index_name}".encode(),
+        ).hexdigest()[:16]
         return f"idx_{digest}"
 
-    def _physical_multikey_index_name(self, db_name: str, coll_name: str, index_name: str) -> str:
-        digest = hashlib.sha1(f"{db_name}:{coll_name}:{index_name}:multikey".encode("utf-8")).hexdigest()[:16]
+    def _physical_multikey_index_name(
+        self,
+        db_name: str,
+        coll_name: str,
+        index_name: str,
+    ) -> str:
+        digest = hashlib.sha1(
+            f"{db_name}:{coll_name}:{index_name}:multikey".encode(),
+        ).hexdigest()[:16]
         return f"mkidx_{digest}"
 
-    def _physical_scalar_index_name(self, db_name: str, coll_name: str, index_name: str) -> str:
-        digest = hashlib.sha1(f"{db_name}:{coll_name}:{index_name}:scalar".encode("utf-8")).hexdigest()[:16]
+    def _physical_scalar_index_name(
+        self,
+        db_name: str,
+        coll_name: str,
+        index_name: str,
+    ) -> str:
+        digest = hashlib.sha1(
+            f"{db_name}:{coll_name}:{index_name}:scalar".encode(),
+        ).hexdigest()[:16]
         return f"scidx_{digest}"
 
-    def _physical_search_index_name(self, db_name: str, coll_name: str, index_name: str) -> str:
-        digest = hashlib.sha1(f"{db_name}:{coll_name}:{index_name}:search".encode("utf-8")).hexdigest()[:16]
+    def _physical_search_index_name(
+        self,
+        db_name: str,
+        coll_name: str,
+        index_name: str,
+    ) -> str:
+        digest = hashlib.sha1(
+            f"{db_name}:{coll_name}:{index_name}:search".encode(),
+        ).hexdigest()[:16]
         return f"fts_{digest}"
 
-    def _mark_search_backend_changed(self, db_name: str, coll_name: str) -> None:
+    def _mark_search_backend_changed(
+        self,
+        db_name: str,
+        coll_name: str,
+    ) -> None:
         cache_key = (db_name, coll_name)
-        self._search_backend_versions[cache_key] = self._search_backend_versions.get(cache_key, 0) + 1
+        self._search_backend_versions[cache_key] = (
+            self._search_backend_versions.get(cache_key, 0) + 1
+        )
         self._clear_compound_search_caches(db_name, coll_name)
         stale_keys = [
             key
@@ -1084,7 +1214,9 @@ class SQLiteEngine(AsyncStorageEngine):
 
     def _clear_search_backend_state_for_database(self, db_name: str) -> None:
         self._clear_compound_search_caches(db_name)
-        stale_version_keys = [key for key in self._search_backend_versions if key[0] == db_name]
+        stale_version_keys = [
+            key for key in self._search_backend_versions if key[0] == db_name
+        ]
         for key in stale_version_keys:
             self._search_backend_versions.pop(key, None)
         stale_backend_keys = [
@@ -1094,11 +1226,17 @@ class SQLiteEngine(AsyncStorageEngine):
         ]
         for key in stale_backend_keys:
             self._vector_search_backends.pop(key, None)
-        stale_entry_keys = [key for key in self._materialized_search_entry_cache if key[0] == db_name]
+        stale_entry_keys = [
+            key for key in self._materialized_search_entry_cache if key[0] == db_name
+        ]
         for key in stale_entry_keys:
             self._materialized_search_entry_cache.pop(key, None)
 
-    def _sqlite_table_exists(self, conn: sqlite3.Connection, table_name: str) -> bool:
+    def _sqlite_table_exists(
+        self,
+        conn: sqlite3.Connection,
+        table_name: str,
+    ) -> bool:
         row = conn.execute(
             """
             SELECT 1
@@ -1114,8 +1252,7 @@ class SQLiteEngine(AsyncStorageEngine):
             return self._fts5_available
         try:
             compile_options = {
-                row[0]
-                for row in conn.execute("PRAGMA compile_options").fetchall()
+                row[0] for row in conn.execute("PRAGMA compile_options").fetchall()
             }
         except sqlite3.DatabaseError:
             compile_options = set()
@@ -1166,22 +1303,42 @@ class SQLiteEngine(AsyncStorageEngine):
             if isinstance(hint, str):
                 if index["name"] == hint:
                     if index.get("hidden"):
-                        raise OperationFailure("hint does not correspond to a usable index for this query")
-                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect, collation=collation):
-                        raise OperationFailure("hint does not correspond to a usable index for this query")
+                        raise OperationFailure(
+                            "hint does not correspond to a usable index for this query",
+                        )
+                    if plan is not None and not query_can_use_index(
+                        index,
+                        plan,
+                        dialect=dialect,
+                        collation=collation,
+                    ):
+                        raise OperationFailure(
+                            "hint does not correspond to a usable index for this query",
+                        )
                     return deepcopy(index)
-            else:
-                if index["key"] == normalized_hint:
-                    if index.get("hidden"):
-                        raise OperationFailure("hint does not correspond to a usable index for this query")
-                    if plan is not None and not query_can_use_index(index, plan, dialect=dialect, collation=collation):
-                        raise OperationFailure("hint does not correspond to a usable index for this query")
-                    return deepcopy(index)
+            elif index["key"] == normalized_hint:
+                if index.get("hidden"):
+                    raise OperationFailure(
+                        "hint does not correspond to a usable index for this query",
+                    )
+                if plan is not None and not query_can_use_index(
+                    index,
+                    plan,
+                    dialect=dialect,
+                    collation=collation,
+                ):
+                    raise OperationFailure(
+                        "hint does not correspond to a usable index for this query",
+                    )
+                return deepcopy(index)
 
         raise OperationFailure("hint does not correspond to an existing index")
 
     def _serialize_document(self, document: Document) -> str:
-        return json_dumps_compact(self._codec.encode(document), sort_keys=False)
+        return json_dumps_compact(
+            self._codec.encode(document),
+            sort_keys=False,
+        )
 
     def _deserialize_document(
         self,
@@ -1192,7 +1349,10 @@ class SQLiteEngine(AsyncStorageEngine):
         parsed = json_loads(payload)
         if DocumentCodec._MARKER not in payload:
             return parsed
-        return self._decode_codec_payload(parsed, preserve_bson_wrappers=preserve_bson_wrappers)
+        return self._decode_codec_payload(
+            parsed,
+            preserve_bson_wrappers=preserve_bson_wrappers,
+        )
 
     def _decode_codec_payload(
         self,
@@ -1279,12 +1439,14 @@ class SQLiteEngine(AsyncStorageEngine):
             limit=limit,
             hint=hint,
             build_scalar_sort_select_sql_fn=self._build_scalar_sort_select_sql,
-            resolve_hint_index=lambda current_db_name, current_coll_name, current_hint: self._resolve_hint_index(
-                current_db_name,
-                current_coll_name,
-                current_hint,
-                plan=plan,
-                dialect=dialect,
+            resolve_hint_index=lambda current_db_name, current_coll_name, current_hint: (
+                self._resolve_hint_index(
+                    current_db_name,
+                    current_coll_name,
+                    current_hint,
+                    plan=plan,
+                    dialect=dialect,
+                )
             ),
             translate_query_plan_with_multikey=self._translate_query_plan_with_multikey,
             build_select_statement=self._sql_translator.build_select_statement,
@@ -1319,7 +1481,9 @@ class SQLiteEngine(AsyncStorageEngine):
         if row is None:
             self._collection_features_cache[feature_key] = False
             return None
-        total_count, numeric_count, string_count, bool_count = (int(value or 0) for value in row)
+        total_count, numeric_count, string_count, bool_count = (
+            int(value or 0) for value in row
+        )
         if total_count == 0:
             self._collection_features_cache[feature_key] = False
             return None
@@ -1351,7 +1515,10 @@ class SQLiteEngine(AsyncStorageEngine):
             return index
         return None
 
-    def _resolve_select_clause_for_scalar_sort(self, select_clause: str) -> str:
+    def _resolve_select_clause_for_scalar_sort(
+        self,
+        select_clause: str,
+    ) -> str:
         if select_clause == "document":
             return "documents.document"
         if select_clause == "storage_key, document":
@@ -1415,19 +1582,23 @@ class SQLiteEngine(AsyncStorageEngine):
             field_has_uniform_scalar_sort_type_in_collection=self._field_has_uniform_scalar_sort_type_in_collection,
             translate_query_plan_with_multikey=self._translate_query_plan_with_multikey,
             find_scalar_sort_index=self._find_scalar_sort_index,
-            lookup_collection_id=lambda current_db_name, current_coll_name: self._lookup_collection_id(
-                self._require_connection(),
-                current_db_name,
-                current_coll_name,
+            lookup_collection_id=lambda current_db_name, current_coll_name: (
+                self._lookup_collection_id(
+                    self._require_connection(),
+                    current_db_name,
+                    current_coll_name,
+                )
             ),
             quote_identifier=self._quote_identifier,
             value_expression_sql=value_expression_sql,
         )
 
     @staticmethod
-    def _normalize_multikey_number(value: int | float) -> str:
+    def _normalize_multikey_number(value: float) -> str:
         if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
-            raise NotImplementedError("NaN and infinity are not supported in SQLite multikey indexes")
+            raise NotImplementedError(
+                "NaN and infinity are not supported in SQLite multikey indexes",
+            )
         return bson_numeric_index_key(value)
 
     @staticmethod
@@ -1470,7 +1641,11 @@ class SQLiteEngine(AsyncStorageEngine):
         return (signature,)
 
     @classmethod
-    def _extract_multikey_entries(cls, document: Document, field: str) -> set[tuple[str, str]]:
+    def _extract_multikey_entries(
+        cls,
+        document: Document,
+        field: str,
+    ) -> set[tuple[str, str]]:
         found, value = get_document_value(document, field)
         if not found or not isinstance(value, list):
             return set()
@@ -1481,18 +1656,29 @@ class SQLiteEngine(AsyncStorageEngine):
                 entries.add(signature)
         return entries
 
-    def _unique_index_keys(self, document: Document, fields: list[str]) -> set[tuple[object, ...]]:
+    def _unique_index_keys(
+        self,
+        document: Document,
+        fields: list[str],
+    ) -> set[tuple[object, ...]]:
         return {
             tuple(self._typed_engine_key(value) for value in key)
             for key in self._unique_index_values(document, fields)
         }
 
-    def _unique_index_values(self, document: Document, fields: list[str]) -> list[tuple[Any, ...]]:
+    def _unique_index_values(
+        self,
+        document: Document,
+        fields: list[str],
+    ) -> list[tuple[Any, ...]]:
         if len(fields) == 1:
             values = QueryEngine.extract_values(document, fields[0])
             return [(value,) for value in values or [None]]
 
-        array_source_paths = self._compound_multikey_array_paths(document, fields)
+        array_source_paths = self._compound_multikey_array_paths(
+            document,
+            fields,
+        )
         if len(array_source_paths) == 1:
             array_path = next(iter(array_source_paths))
             array_values = [
@@ -1510,9 +1696,15 @@ class SQLiteEngine(AsyncStorageEngine):
                                 candidates_per_field.append([element])
                             elif field.startswith(f"{array_path}."):
                                 suffix = field.removeprefix(f"{array_path}.")
-                                candidates_per_field.append(QueryEngine.extract_values(element, suffix) or [None])
+                                candidates_per_field.append(
+                                    QueryEngine.extract_values(element, suffix)
+                                    or [None],
+                                )
                             else:
-                                candidates_per_field.append(QueryEngine.extract_values(document, field) or [None])
+                                candidates_per_field.append(
+                                    QueryEngine.extract_values(document, field)
+                                    or [None],
+                                )
                         element_keys: list[tuple[Any, ...]] = [()]
                         for candidates in candidates_per_field:
                             element_keys = [
@@ -1540,9 +1732,10 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> tuple[object, ...] | None:
         fields = index["fields"]
         if index.get("collation") is None:
-            duplicate_keys = self._unique_index_keys(candidate, fields).intersection(
-                self._unique_index_keys(existing, fields)
-            )
+            duplicate_keys = self._unique_index_keys(
+                candidate,
+                fields,
+            ).intersection(self._unique_index_keys(existing, fields))
             return next(iter(duplicate_keys)) if duplicate_keys else None
 
         collation = normalize_collation(index["collation"])
@@ -1555,7 +1748,11 @@ class SQLiteEngine(AsyncStorageEngine):
                         dialect=MONGODB_DIALECT_70,
                         collation=collation,
                     )
-                    for candidate_value, existing_value in zip(candidate_key, existing_key, strict=True)
+                    for candidate_value, existing_value in zip(
+                        candidate_key,
+                        existing_key,
+                        strict=True,
+                    )
                 ):
                     return candidate_key
         return None
@@ -1570,14 +1767,25 @@ class SQLiteEngine(AsyncStorageEngine):
         for field in index["fields"]:
             if self._array_paths_for_index_field(document, field):
                 return True
-            if self._field_traverses_array_in_collection(db_name, coll_name, field):
+            if self._field_traverses_array_in_collection(
+                db_name,
+                coll_name,
+                field,
+            ):
                 return True
-            if self._field_is_top_level_array_in_collection(db_name, coll_name, field):
+            if self._field_is_top_level_array_in_collection(
+                db_name,
+                coll_name,
+                field,
+            ):
                 return True
         return False
 
     @staticmethod
-    def _array_paths_for_index_field(document: Document, field: str) -> set[str]:
+    def _array_paths_for_index_field(
+        document: Document,
+        field: str,
+    ) -> set[str]:
         array_paths: set[str] = set()
         parts = field.split(".")
 
@@ -1610,12 +1818,18 @@ class SQLiteEngine(AsyncStorageEngine):
         collect(document, 0, "")
         return array_paths
 
-    def _compound_multikey_array_paths(self, document: Document, fields: list[str]) -> set[str]:
+    def _compound_multikey_array_paths(
+        self,
+        document: Document,
+        fields: list[str],
+    ) -> set[str]:
         source_paths: set[str] = set()
         for field in fields:
             array_paths = self._array_paths_for_index_field(document, field)
             if array_paths:
-                source_paths.add(min(array_paths, key=lambda path: len(path.split("."))))
+                source_paths.add(
+                    min(array_paths, key=lambda path: len(path.split("."))),
+                )
         return source_paths
 
     @staticmethod
@@ -1652,7 +1866,9 @@ class SQLiteEngine(AsyncStorageEngine):
             return
 
         if len(self._compound_multikey_array_paths(document, fields)) > 1:
-            raise OperationFailure("compound indexes do not support more than one array field")
+            raise OperationFailure(
+                "compound indexes do not support more than one array field",
+            )
 
     @staticmethod
     def _supports_multikey_index(fields: list[str], unique: bool) -> bool:
@@ -1660,9 +1876,16 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @staticmethod
     def _supports_scalar_index(index: EngineIndexRecord) -> bool:
-        return len(index["fields"]) == 1 and is_ordered_index_spec(index["key"])
+        return len(index["fields"]) == 1 and is_ordered_index_spec(
+            index["key"],
+        )
 
-    def _find_multikey_index(self, db_name: str, coll_name: str, field: str) -> EngineIndexRecord | None:
+    def _find_multikey_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> EngineIndexRecord | None:
         for index in self._load_indexes(db_name, coll_name):
             if not index.get("multikey"):
                 continue
@@ -1670,7 +1893,12 @@ class SQLiteEngine(AsyncStorageEngine):
                 return index
         return None
 
-    def _find_scalar_index(self, db_name: str, coll_name: str, field: str) -> EngineIndexRecord | None:
+    def _find_scalar_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> EngineIndexRecord | None:
         for index in self._load_indexes(db_name, coll_name):
             if not self._supports_scalar_index(index):
                 continue
@@ -1686,7 +1914,11 @@ class SQLiteEngine(AsyncStorageEngine):
         element_type, element_key = signature
         if element_type not in {"number", "string", "bool"}:
             return None
-        return element_type, SQLiteEngine._multikey_type_score(element_type), element_key
+        return (
+            element_type,
+            SQLiteEngine._multikey_type_score(element_type),
+            element_key,
+        )
 
     def _find_scalar_fast_path_index(
         self,
@@ -1694,7 +1926,12 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         field: str,
     ) -> EngineIndexRecord | None:
-        return _sqlite_runtime_find_scalar_fast_path_index(self, db_name, coll_name, field)
+        return _sqlite_runtime_find_scalar_fast_path_index(
+            self,
+            db_name,
+            coll_name,
+            field,
+        )
 
     def _can_use_scalar_range_fast_path(
         self,
@@ -1770,7 +2007,9 @@ class SQLiteEngine(AsyncStorageEngine):
         index: EngineIndexRecord,
         signatures: tuple[tuple[str, str], ...],
     ) -> tuple[str, list[object]]:
-        physical_name = self._quote_identifier(str(index["multikey_physical_name"]))
+        physical_name = self._quote_identifier(
+            str(index["multikey_physical_name"]),
+        )
         clauses: list[str] = []
         params: list[object] = []
         for element_type, element_key in signatures:
@@ -1779,9 +2018,11 @@ class SQLiteEngine(AsyncStorageEngine):
                 f"SELECT 1 FROM multikey_entries INDEXED BY {physical_name} "
                 "WHERE collection_id = ? AND index_name = ? "
                 "AND storage_key = documents.storage_key "
-                "AND element_type = ? AND element_key = ?)"
+                "AND element_type = ? AND element_key = ?)",
             )
-            params.extend([collection_id, index["name"], element_type, element_key])
+            params.extend(
+                [collection_id, index["name"], element_type, element_key],
+            )
         return "(" + " OR ".join(clauses) + ")", params
 
     def _translate_multikey_ordered_exists_clause(
@@ -1795,18 +2036,18 @@ class SQLiteEngine(AsyncStorageEngine):
         element_key: str,
         operator: str,
     ) -> tuple[str, list[object]]:
-        physical_name = self._quote_identifier(str(index["multikey_physical_name"]))
+        physical_name = self._quote_identifier(
+            str(index["multikey_physical_name"]),
+        )
         type_score = self._multikey_type_score(element_type)
         if operator in (">", ">="):
             comparison_sql = (
-                "(type_score > ? OR (type_score = ? AND element_key "
-                f"{operator} ?))"
+                f"(type_score > ? OR (type_score = ? AND element_key {operator} ?))"
             )
             params_tail = [type_score, type_score, element_key]
         else:
             comparison_sql = (
-                "(type_score < ? OR (type_score = ? AND element_key "
-                f"{operator} ?))"
+                f"(type_score < ? OR (type_score = ? AND element_key {operator} ?))"
             )
             params_tail = [type_score, type_score, element_key]
         return (
@@ -1843,7 +2084,10 @@ class SQLiteEngine(AsyncStorageEngine):
             index,
             array_signatures,
         )
-        return f"(({scalar_sql}) OR {array_sql})", [*scalar_params, *array_params]
+        return f"(({scalar_sql}) OR {array_sql})", [
+            *scalar_params,
+            *array_params,
+        ]
 
     def _field_has_comparison_type_mismatch_in_collection(
         self,
@@ -1852,7 +2096,11 @@ class SQLiteEngine(AsyncStorageEngine):
         field: str,
         expected_type: str,
     ) -> bool:
-        feature_key = (db_name, coll_name, f"comparison_mismatch:{field}:{expected_type}")
+        feature_key = (
+            db_name,
+            coll_name,
+            f"comparison_mismatch:{field}:{expected_type}",
+        )
         if feature_key in self._collection_features_cache:
             return self._collection_features_cache[feature_key]
         if expected_type == "number":
@@ -1888,7 +2136,11 @@ class SQLiteEngine(AsyncStorageEngine):
         field: str,
         expected_type: str,
     ) -> bool:
-        feature_key = (db_name, coll_name, f"scalar_or_array_comparison_mismatch:{field}:{expected_type}")
+        feature_key = (
+            db_name,
+            coll_name,
+            f"scalar_or_array_comparison_mismatch:{field}:{expected_type}",
+        )
         if feature_key in self._collection_features_cache:
             return self._collection_features_cache[feature_key]
         if expected_type == "number":
@@ -1959,7 +2211,12 @@ class SQLiteEngine(AsyncStorageEngine):
         collection_id: int,
         db_name: str,
         coll_name: str,
-        plan: GreaterThanCondition | GreaterThanOrEqualCondition | LessThanCondition | LessThanOrEqualCondition,
+        plan: (
+            GreaterThanCondition
+            | GreaterThanOrEqualCondition
+            | LessThanCondition
+            | LessThanOrEqualCondition
+        ),
         index: EngineIndexRecord,
         *,
         operator: str,
@@ -1967,7 +2224,11 @@ class SQLiteEngine(AsyncStorageEngine):
         signature = self._multikey_value_signature(plan.value)
         if signature is None or signature[0] != "number":
             return translate_query_plan(plan)
-        scalar_sql, scalar_params = _translate_same_type_comparison(operator, plan.field, plan.value)
+        scalar_sql, scalar_params = _translate_same_type_comparison(
+            operator,
+            plan.field,
+            plan.value,
+        )
         array_sql, array_params = self._translate_multikey_ordered_exists_clause(
             collection_id,
             db_name,
@@ -1977,7 +2238,10 @@ class SQLiteEngine(AsyncStorageEngine):
             element_key=signature[1],
             operator=operator,
         )
-        return f"(({scalar_sql}) OR {array_sql})", [*scalar_params, *array_params]
+        return f"(({scalar_sql}) OR {array_sql})", [
+            *scalar_params,
+            *array_params,
+        ]
 
     def _translate_query_plan_with_multikey(
         self,
@@ -1990,25 +2254,49 @@ class SQLiteEngine(AsyncStorageEngine):
         if isinstance(plan, EqualsCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
-                if not self._field_is_top_level_array_in_collection(db_name, coll_name, plan.field):
+                if not self._field_is_top_level_array_in_collection(
+                    db_name,
+                    coll_name,
+                    plan.field,
+                ):
                     return _translate_equals_scalar_only(
                         plan.field,
                         plan.value,
                         null_matches_undefined=plan.null_matches_undefined,
                     )
                 return translate_query_plan(plan)
-            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            collection_id = self._lookup_collection_id(
+                self._require_connection(),
+                db_name,
+                coll_name,
+            )
             if collection_id is None:
                 return translate_query_plan(plan)
-            return self._translate_equals_with_multikey(collection_id, db_name, coll_name, plan, index)
+            return self._translate_equals_with_multikey(
+                collection_id,
+                db_name,
+                coll_name,
+                plan,
+                index,
+            )
         if isinstance(plan, InCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 return translate_query_plan(plan)
-            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            collection_id = self._lookup_collection_id(
+                self._require_connection(),
+                db_name,
+                coll_name,
+            )
             if collection_id is None:
                 return translate_query_plan(plan)
-            return self._translate_in_with_multikey(collection_id, db_name, coll_name, plan, index)
+            return self._translate_in_with_multikey(
+                collection_id,
+                db_name,
+                coll_name,
+                plan,
+                index,
+            )
         if isinstance(plan, AllCondition):
             try:
                 return _translate_all_condition(plan.field, plan.values)
@@ -2029,7 +2317,11 @@ class SQLiteEngine(AsyncStorageEngine):
                 expected_type, _ = _normalize_comparable_value(plan.value)
                 if (
                     "." not in plan.field
-                    and self._field_is_top_level_array_in_collection(db_name, coll_name, plan.field)
+                    and self._field_is_top_level_array_in_collection(
+                        db_name,
+                        coll_name,
+                        plan.field,
+                    )
                     and not self._field_has_scalar_or_array_element_type_mismatch_in_collection(
                         db_name,
                         coll_name,
@@ -2037,26 +2329,49 @@ class SQLiteEngine(AsyncStorageEngine):
                         expected_type,
                     )
                 ):
-                    return _translate_scalar_or_array_same_type_comparison(">", plan.field, plan.value)
+                    return _translate_scalar_or_array_same_type_comparison(
+                        ">",
+                        plan.field,
+                        plan.value,
+                    )
                 if not self._field_has_comparison_type_mismatch_in_collection(
                     db_name,
                     coll_name,
                     plan.field,
                     expected_type,
                 ):
-                    return _translate_same_type_comparison(">", plan.field, plan.value)
+                    return _translate_same_type_comparison(
+                        ">",
+                        plan.field,
+                        plan.value,
+                    )
                 return translate_query_plan(plan)
-            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            collection_id = self._lookup_collection_id(
+                self._require_connection(),
+                db_name,
+                coll_name,
+            )
             if collection_id is None:
                 return translate_query_plan(plan)
-            return self._translate_range_with_multikey(collection_id, db_name, coll_name, plan, index, operator=">")
+            return self._translate_range_with_multikey(
+                collection_id,
+                db_name,
+                coll_name,
+                plan,
+                index,
+                operator=">",
+            )
         if isinstance(plan, GreaterThanOrEqualCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 expected_type, _ = _normalize_comparable_value(plan.value)
                 if (
                     "." not in plan.field
-                    and self._field_is_top_level_array_in_collection(db_name, coll_name, plan.field)
+                    and self._field_is_top_level_array_in_collection(
+                        db_name,
+                        coll_name,
+                        plan.field,
+                    )
                     and not self._field_has_scalar_or_array_element_type_mismatch_in_collection(
                         db_name,
                         coll_name,
@@ -2064,26 +2379,49 @@ class SQLiteEngine(AsyncStorageEngine):
                         expected_type,
                     )
                 ):
-                    return _translate_scalar_or_array_same_type_comparison(">=", plan.field, plan.value)
+                    return _translate_scalar_or_array_same_type_comparison(
+                        ">=",
+                        plan.field,
+                        plan.value,
+                    )
                 if not self._field_has_comparison_type_mismatch_in_collection(
                     db_name,
                     coll_name,
                     plan.field,
                     expected_type,
                 ):
-                    return _translate_same_type_comparison(">=", plan.field, plan.value)
+                    return _translate_same_type_comparison(
+                        ">=",
+                        plan.field,
+                        plan.value,
+                    )
                 return translate_query_plan(plan)
-            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            collection_id = self._lookup_collection_id(
+                self._require_connection(),
+                db_name,
+                coll_name,
+            )
             if collection_id is None:
                 return translate_query_plan(plan)
-            return self._translate_range_with_multikey(collection_id, db_name, coll_name, plan, index, operator=">=")
+            return self._translate_range_with_multikey(
+                collection_id,
+                db_name,
+                coll_name,
+                plan,
+                index,
+                operator=">=",
+            )
         if isinstance(plan, LessThanCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 expected_type, _ = _normalize_comparable_value(plan.value)
                 if (
                     "." not in plan.field
-                    and self._field_is_top_level_array_in_collection(db_name, coll_name, plan.field)
+                    and self._field_is_top_level_array_in_collection(
+                        db_name,
+                        coll_name,
+                        plan.field,
+                    )
                     and not self._field_has_scalar_or_array_element_type_mismatch_in_collection(
                         db_name,
                         coll_name,
@@ -2091,26 +2429,49 @@ class SQLiteEngine(AsyncStorageEngine):
                         expected_type,
                     )
                 ):
-                    return _translate_scalar_or_array_same_type_comparison("<", plan.field, plan.value)
+                    return _translate_scalar_or_array_same_type_comparison(
+                        "<",
+                        plan.field,
+                        plan.value,
+                    )
                 if not self._field_has_comparison_type_mismatch_in_collection(
                     db_name,
                     coll_name,
                     plan.field,
                     expected_type,
                 ):
-                    return _translate_same_type_comparison("<", plan.field, plan.value)
+                    return _translate_same_type_comparison(
+                        "<",
+                        plan.field,
+                        plan.value,
+                    )
                 return translate_query_plan(plan)
-            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            collection_id = self._lookup_collection_id(
+                self._require_connection(),
+                db_name,
+                coll_name,
+            )
             if collection_id is None:
                 return translate_query_plan(plan)
-            return self._translate_range_with_multikey(collection_id, db_name, coll_name, plan, index, operator="<")
+            return self._translate_range_with_multikey(
+                collection_id,
+                db_name,
+                coll_name,
+                plan,
+                index,
+                operator="<",
+            )
         if isinstance(plan, LessThanOrEqualCondition):
             index = self._find_multikey_index(db_name, coll_name, plan.field)
             if index is None:
                 expected_type, _ = _normalize_comparable_value(plan.value)
                 if (
                     "." not in plan.field
-                    and self._field_is_top_level_array_in_collection(db_name, coll_name, plan.field)
+                    and self._field_is_top_level_array_in_collection(
+                        db_name,
+                        coll_name,
+                        plan.field,
+                    )
                     and not self._field_has_scalar_or_array_element_type_mismatch_in_collection(
                         db_name,
                         coll_name,
@@ -2118,39 +2479,82 @@ class SQLiteEngine(AsyncStorageEngine):
                         expected_type,
                     )
                 ):
-                    return _translate_scalar_or_array_same_type_comparison("<=", plan.field, plan.value)
+                    return _translate_scalar_or_array_same_type_comparison(
+                        "<=",
+                        plan.field,
+                        plan.value,
+                    )
                 if not self._field_has_comparison_type_mismatch_in_collection(
                     db_name,
                     coll_name,
                     plan.field,
                     expected_type,
                 ):
-                    return _translate_same_type_comparison("<=", plan.field, plan.value)
+                    return _translate_same_type_comparison(
+                        "<=",
+                        plan.field,
+                        plan.value,
+                    )
                 return translate_query_plan(plan)
-            collection_id = self._lookup_collection_id(self._require_connection(), db_name, coll_name)
+            collection_id = self._lookup_collection_id(
+                self._require_connection(),
+                db_name,
+                coll_name,
+            )
             if collection_id is None:
                 return translate_query_plan(plan)
-            return self._translate_range_with_multikey(collection_id, db_name, coll_name, plan, index, operator="<=")
+            return self._translate_range_with_multikey(
+                collection_id,
+                db_name,
+                coll_name,
+                plan,
+                index,
+                operator="<=",
+            )
         if isinstance(plan, AndCondition):
-            fragments = [self._translate_query_plan_with_multikey(db_name, coll_name, clause) for clause in plan.clauses]
+            fragments = [
+                self._translate_query_plan_with_multikey(
+                    db_name,
+                    coll_name,
+                    clause,
+                )
+                for clause in plan.clauses
+            ]
             sql = " AND ".join(f"({fragment_sql})" for fragment_sql, _ in fragments)
             params: list[object] = []
             for _, fragment_params in fragments:
                 params.extend(fragment_params)
             return sql, params
         if isinstance(plan, OrCondition):
-            fragments = [self._translate_query_plan_with_multikey(db_name, coll_name, clause) for clause in plan.clauses]
+            fragments = [
+                self._translate_query_plan_with_multikey(
+                    db_name,
+                    coll_name,
+                    clause,
+                )
+                for clause in plan.clauses
+            ]
             sql = " OR ".join(f"({fragment_sql})" for fragment_sql, _ in fragments)
             params: list[object] = []
             for _, fragment_params in fragments:
                 params.extend(fragment_params)
             return sql, params
         if isinstance(plan, NotCondition):
-            clause_sql, clause_params = self._translate_query_plan_with_multikey(db_name, coll_name, plan.clause)
+            clause_sql, clause_params = self._translate_query_plan_with_multikey(
+                db_name,
+                coll_name,
+                plan.clause,
+            )
             return f"NOT COALESCE(({clause_sql}), 0)", clause_params
         return translate_query_plan(plan)
 
-    def _sort_requires_python(self, db_name: str, coll_name: str, plan: QueryNode, sort: SortSpec | None) -> bool:
+    def _sort_requires_python(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: QueryNode,
+        sort: SortSpec | None,
+    ) -> bool:
         return _sqlite_sort_requires_python(
             db_name=db_name,
             coll_name=coll_name,
@@ -2161,7 +2565,9 @@ class SQLiteEngine(AsyncStorageEngine):
             field_traverses_array_in_collection=self._field_traverses_array_in_collection,
             field_contains_tagged_bytes_in_collection=self._field_contains_tagged_bytes_in_collection,
             field_contains_tagged_undefined_in_collection=self._field_contains_tagged_undefined_in_collection,
-            fetchone=lambda sql, params: self._require_connection().execute(sql, params).fetchone(),
+            fetchone=lambda sql, params: (
+                self._require_connection().execute(sql, params).fetchone()
+            ),
             type_expression_sql=type_expression_sql,
             json_path_for_field=json_path_for_field,
         )
@@ -2171,19 +2577,24 @@ class SQLiteEngine(AsyncStorageEngine):
         if isinstance(plan, MatchAll):
             return set()
         if hasattr(plan, "field"):
-            field = getattr(plan, "field")
+            field = plan.field
             if isinstance(field, str):
                 return {field}
         if hasattr(plan, "clause"):
-            return SQLiteEngine._plan_fields(getattr(plan, "clause"))
+            return SQLiteEngine._plan_fields(plan.clause)
         if hasattr(plan, "clauses"):
             fields: set[str] = set()
-            for clause in getattr(plan, "clauses"):
+            for clause in plan.clauses:
                 fields.update(SQLiteEngine._plan_fields(clause))
             return fields
         return set()
 
-    def _field_traverses_array_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+    def _field_traverses_array_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> bool:
         feature_key = (db_name, coll_name, f"traverses_array:{field}")
         if feature_key in self._collection_features_cache:
             return self._collection_features_cache[feature_key]
@@ -2210,7 +2621,12 @@ class SQLiteEngine(AsyncStorageEngine):
         self._collection_features_cache[feature_key] = result
         return result
 
-    def _plan_has_array_traversing_paths(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
+    def _plan_has_array_traversing_paths(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: QueryNode,
+    ) -> bool:
         return _sqlite_plan_has_array_traversing_paths(
             db_name=db_name,
             coll_name=coll_name,
@@ -2219,7 +2635,12 @@ class SQLiteEngine(AsyncStorageEngine):
             field_traverses_array_in_collection=self._field_traverses_array_in_collection,
         )
 
-    def _field_traverses_dbref_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+    def _field_traverses_dbref_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> bool:
         if "." not in field:
             return False
         feature_key = (db_name, coll_name, f"traverses_dbref:{field}")
@@ -2230,7 +2651,10 @@ class SQLiteEngine(AsyncStorageEngine):
         result = False
         for prefix_length in range(1, len(parts)):
             prefix = ".".join(parts[:prefix_length])
-            tagged_type_path = json_path_for_field(prefix) + f'."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
+            tagged_type_path = (
+                json_path_for_field(prefix)
+                + f'."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
+            )
             row = conn.execute(
                 """
                 SELECT 1
@@ -2247,7 +2671,12 @@ class SQLiteEngine(AsyncStorageEngine):
         self._collection_features_cache[feature_key] = result
         return result
 
-    def _plan_requires_python_for_dbref_paths(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
+    def _plan_requires_python_for_dbref_paths(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: QueryNode,
+    ) -> bool:
         return _sqlite_plan_requires_python_for_dbref_paths(
             db_name=db_name,
             coll_name=coll_name,
@@ -2258,7 +2687,15 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @staticmethod
     def _comparison_fields(plan: QueryNode) -> set[str]:
-        if isinstance(plan, (GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition)):
+        if isinstance(
+            plan,
+            (
+                GreaterThanCondition,
+                GreaterThanOrEqualCondition,
+                LessThanCondition,
+                LessThanOrEqualCondition,
+            ),
+        ):
             return {plan.field}
         if isinstance(plan, NotCondition):
             return SQLiteEngine._comparison_fields(plan.clause)
@@ -2280,7 +2717,10 @@ class SQLiteEngine(AsyncStorageEngine):
         if feature_key in self._collection_features_cache:
             return self._collection_features_cache[feature_key]
         conn = self._require_connection()
-        tagged_type_path = json_path_for_field(field) + f'."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
+        tagged_type_path = (
+            json_path_for_field(field)
+            + f'."{DocumentCodec._MARKER}".{DocumentCodec._TYPE}'
+        )
         row = conn.execute(
             """
             SELECT 1
@@ -2295,13 +2735,38 @@ class SQLiteEngine(AsyncStorageEngine):
         self._collection_features_cache[feature_key] = result
         return result
 
-    def _field_contains_tagged_bytes_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
-        return self._field_contains_tagged_value_type_in_collection(db_name, coll_name, field, 'bytes')
+    def _field_contains_tagged_bytes_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> bool:
+        return self._field_contains_tagged_value_type_in_collection(
+            db_name,
+            coll_name,
+            field,
+            "bytes",
+        )
 
-    def _field_contains_tagged_undefined_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
-        return self._field_contains_tagged_value_type_in_collection(db_name, coll_name, field, 'undefined')
+    def _field_contains_tagged_undefined_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> bool:
+        return self._field_contains_tagged_value_type_in_collection(
+            db_name,
+            coll_name,
+            field,
+            "undefined",
+        )
 
-    def _plan_requires_python_for_bytes(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
+    def _plan_requires_python_for_bytes(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: QueryNode,
+    ) -> bool:
         return _sqlite_plan_requires_python_for_tagged_type(
             db_name=db_name,
             coll_name=coll_name,
@@ -2310,7 +2775,12 @@ class SQLiteEngine(AsyncStorageEngine):
             field_contains_tagged_type_in_collection=self._field_contains_tagged_bytes_in_collection,
         )
 
-    def _plan_requires_python_for_undefined(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
+    def _plan_requires_python_for_undefined(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: QueryNode,
+    ) -> bool:
         return _sqlite_plan_requires_python_for_tagged_type(
             db_name=db_name,
             coll_name=coll_name,
@@ -2367,13 +2837,22 @@ class SQLiteEngine(AsyncStorageEngine):
                     value_type,
                 )
                 for field in self._plan_fields(plan)
-                for value_type in ("decimal", "decimal128", "decimal128_public")
+                for value_type in (
+                    "decimal",
+                    "decimal128",
+                    "decimal128_public",
+                )
             )
         except RuntimeError:
             # Pure planner tests may compile against an unconnected empty engine.
             return False
 
-    def _field_is_top_level_array_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+    def _field_is_top_level_array_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> bool:
         feature_key = (db_name, coll_name, f"top_level_array:{field}")
         if feature_key in self._collection_features_cache:
             return self._collection_features_cache[feature_key]
@@ -2393,7 +2872,12 @@ class SQLiteEngine(AsyncStorageEngine):
         self._collection_features_cache[feature_key] = result
         return result
 
-    def _field_contains_real_numeric_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+    def _field_contains_real_numeric_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> bool:
         feature_key = (db_name, coll_name, f"contains_real_numeric:{field}")
         if feature_key in self._collection_features_cache:
             return self._collection_features_cache[feature_key]
@@ -2413,7 +2897,12 @@ class SQLiteEngine(AsyncStorageEngine):
         self._collection_features_cache[feature_key] = result
         return result
 
-    def _field_contains_non_ascii_text_in_collection(self, db_name: str, coll_name: str, field: str) -> bool:
+    def _field_contains_non_ascii_text_in_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        field: str,
+    ) -> bool:
         feature_key = (db_name, coll_name, f"contains_non_ascii_text:{field}")
         if feature_key in self._collection_features_cache:
             return self._collection_features_cache[feature_key]
@@ -2432,10 +2921,27 @@ class SQLiteEngine(AsyncStorageEngine):
         self._collection_features_cache[feature_key] = result
         return result
 
-    def _plan_requires_python_for_array_comparisons(self, db_name: str, coll_name: str, plan: QueryNode) -> bool:
+    def _plan_requires_python_for_array_comparisons(
+        self,
+        db_name: str,
+        coll_name: str,
+        plan: QueryNode,
+    ) -> bool:
         def requires_python(node: QueryNode) -> bool:
-            if isinstance(node, (GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition)):
-                if not self._field_is_top_level_array_in_collection(db_name, coll_name, node.field):
+            if isinstance(
+                node,
+                (
+                    GreaterThanCondition,
+                    GreaterThanOrEqualCondition,
+                    LessThanCondition,
+                    LessThanOrEqualCondition,
+                ),
+            ):
+                if not self._field_is_top_level_array_in_collection(
+                    db_name,
+                    coll_name,
+                    node.field,
+                ):
                     return False
                 if "." in node.field:
                     return True
@@ -2443,11 +2949,13 @@ class SQLiteEngine(AsyncStorageEngine):
                     expected_type, _ = _normalize_comparable_value(node.value)
                 except NotImplementedError:
                     return True
-                return self._field_has_scalar_or_array_element_type_mismatch_in_collection(
-                    db_name,
-                    coll_name,
-                    node.field,
-                    expected_type,
+                return (
+                    self._field_has_scalar_or_array_element_type_mismatch_in_collection(
+                        db_name,
+                        coll_name,
+                        node.field,
+                        expected_type,
+                    )
                 )
             if isinstance(node, NotCondition):
                 return requires_python(node.clause)
@@ -2458,7 +2966,10 @@ class SQLiteEngine(AsyncStorageEngine):
         return requires_python(plan)
 
     @staticmethod
-    def _document_traverses_array_on_field(document: Document, field: str) -> bool:
+    def _document_traverses_array_on_field(
+        document: Document,
+        field: str,
+    ) -> bool:
         for prefix in path_array_prefixes(field):
             found, value = get_document_value(document, prefix)
             if found and isinstance(value, list):
@@ -2494,16 +3005,27 @@ class SQLiteEngine(AsyncStorageEngine):
                     (db_name, coll_name, document_id_storage_key),
                 ).fetchone()
                 if row is not None:
-                    raise DuplicateKeyError(f"Duplicate key: _id={document['_id']}")
+                    raise DuplicateKeyError(
+                        f"Duplicate key: _id={document['_id']}",
+                    )
             if scan_payload_id:
-                for storage_key, existing_document in self._load_documents(db_name, coll_name):
-                    if exclude_storage_key is not None and storage_key == exclude_storage_key:
+                for storage_key, existing_document in self._load_documents(
+                    db_name,
+                    coll_name,
+                ):
+                    if (
+                        exclude_storage_key is not None
+                        and storage_key == exclude_storage_key
+                    ):
                         continue
                     if (
                         "_id" in existing_document
-                        and self._storage_key(existing_document["_id"]) == document_id_storage_key
+                        and self._storage_key(existing_document["_id"])
+                        == document_id_storage_key
                     ):
-                        raise DuplicateKeyError(f"Duplicate key: _id={document['_id']}")
+                        raise DuplicateKeyError(
+                            f"Duplicate key: _id={document['_id']}",
+                        )
         indexes = self._load_indexes(db_name, coll_name)
         for index in indexes:
             if document_in_virtual_index(document, index):
@@ -2515,19 +3037,33 @@ class SQLiteEngine(AsyncStorageEngine):
             if not document_in_virtual_index(document, index):
                 continue
             fields = index["fields"]
-            if (
-                index.get("collation") is not None
-                or self._unique_index_uses_multikey_values(db_name, coll_name, document, index)
+            if index.get(
+                "collation",
+            ) is not None or self._unique_index_uses_multikey_values(
+                db_name,
+                coll_name,
+                document,
+                index,
             ):
-                for storage_key, existing_document in self._load_documents(db_name, coll_name):
-                    if exclude_storage_key is not None and storage_key == exclude_storage_key:
+                for storage_key, existing_document in self._load_documents(
+                    db_name,
+                    coll_name,
+                ):
+                    if (
+                        exclude_storage_key is not None
+                        and storage_key == exclude_storage_key
+                    ):
                         continue
                     if not document_in_virtual_index(existing_document, index):
                         continue
-                    duplicate_key = self._unique_index_conflict(document, existing_document, index)
+                    duplicate_key = self._unique_index_conflict(
+                        document,
+                        existing_document,
+                        index,
+                    )
                     if duplicate_key is not None:
                         raise DuplicateKeyError(
-                            f"Duplicate key for unique index '{index['name']}': {fields}={duplicate_key!r}"
+                            f"Duplicate key for unique index '{index['name']}': {fields}={duplicate_key!r}",
                         )
                 continue
             scalar_conflict = self._unique_index_conflict_via_scalar_entries(
@@ -2539,20 +3075,28 @@ class SQLiteEngine(AsyncStorageEngine):
             )
             if scalar_conflict is True:
                 raise DuplicateKeyError(
-                    f"Duplicate key for unique index '{index['name']}': {fields}={tuple(self._index_value(document, field) for field in fields)!r}"
+                    f"Duplicate key for unique index '{index['name']}': {fields}={tuple(self._index_value(document, field) for field in fields)!r}",
                 )
             if scalar_conflict is False:
                 continue
             key = tuple(self._index_value(document, field) for field in fields)
-            for storage_key, existing_document in self._load_documents(db_name, coll_name):
-                if exclude_storage_key is not None and storage_key == exclude_storage_key:
+            for storage_key, existing_document in self._load_documents(
+                db_name,
+                coll_name,
+            ):
+                if (
+                    exclude_storage_key is not None
+                    and storage_key == exclude_storage_key
+                ):
                     continue
                 if not document_in_virtual_index(existing_document, index):
                     continue
-                existing_key = tuple(self._index_value(existing_document, field) for field in fields)
+                existing_key = tuple(
+                    self._index_value(existing_document, field) for field in fields
+                )
                 if existing_key == key:
                     raise DuplicateKeyError(
-                        f"Duplicate key for unique index '{index['name']}': {fields}={key!r}"
+                        f"Duplicate key for unique index '{index['name']}': {fields}={key!r}",
                     )
 
     def _unique_index_conflict_via_scalar_entries(
@@ -2702,7 +3246,10 @@ class SQLiteEngine(AsyncStorageEngine):
         dialect: MongoDialect | None = None,
         context: ClientSession | None = None,
     ) -> EngineReadExecutionPlan:
-        semantics = compile_find_semantics_from_operation(operation, dialect=dialect)
+        semantics = compile_find_semantics_from_operation(
+            operation,
+            dialect=dialect,
+        )
         return await self.plan_find_semantics(
             db_name,
             coll_name,
@@ -2800,7 +3347,11 @@ class SQLiteEngine(AsyncStorageEngine):
                 dialect=dialect,
             )
 
-    def _load_indexes(self, db_name: str, coll_name: str) -> list[EngineIndexRecord]:
+    def _load_indexes(
+        self,
+        db_name: str,
+        coll_name: str,
+    ) -> list[EngineIndexRecord]:
         cache_key = (db_name, coll_name)
         cached = self._index_cache.get(cache_key)
         cache_version = self._index_cache_version(db_name, coll_name)
@@ -2974,17 +3525,19 @@ class SQLiteEngine(AsyncStorageEngine):
                 ) = row
             else:
                 raise OperationFailure(
-                    f"Invalid SQLite index metadata for {db_name}.{coll_name}"
+                    f"Invalid SQLite index metadata for {db_name}.{coll_name}",
                 )
             try:
                 parsed_fields = json_loads(fields)
             except json.JSONDecodeError as exc:
                 raise OperationFailure(
-                    f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                    f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}",
                 ) from exc
-            if not isinstance(parsed_fields, list) or not all(isinstance(field, str) for field in parsed_fields):
+            if not isinstance(parsed_fields, list) or not all(
+                isinstance(field, str) for field in parsed_fields
+            ):
                 raise OperationFailure(
-                    f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                    f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}",
                 )
             if keys is None:
                 parsed_keys = [(field, 1) for field in parsed_fields]
@@ -2993,7 +3546,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     parsed_keys = normalize_index_keys(json_loads(keys))
                 except (TypeError, ValueError, json.JSONDecodeError) as exc:
                     raise OperationFailure(
-                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}",
                     ) from exc
             collation: Filter | None = None
             if collation_json is not None:
@@ -3001,22 +3554,24 @@ class SQLiteEngine(AsyncStorageEngine):
                     parsed_collation = json_loads(collation_json)
                 except json.JSONDecodeError as exc:
                     raise OperationFailure(
-                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}",
                     ) from exc
                 if not isinstance(parsed_collation, dict):
                     raise OperationFailure(
-                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}",
                     )
                 collation = parsed_collation
             partial_filter_expression: Filter | None = None
             if partial_filter_json is not None:
                 try:
                     partial_filter_expression = normalize_partial_filter_expression(
-                        DocumentCodec.decode(json_loads(partial_filter_json))
+                        DocumentCodec.decode(
+                            json_loads(partial_filter_json),
+                        ),
                     )
                 except (TypeError, ValueError, json.JSONDecodeError) as exc:
                     raise OperationFailure(
-                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}",
                     ) from exc
             text_weights: dict[str, int] | None = None
             if text_weights_json is not None:
@@ -3024,11 +3579,13 @@ class SQLiteEngine(AsyncStorageEngine):
                     parsed_weights = json_loads(text_weights_json)
                 except json.JSONDecodeError as exc:
                     raise OperationFailure(
-                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}",
                     ) from exc
                 if (
                     not isinstance(parsed_weights, dict)
-                    or not all(isinstance(field, str) and field for field in parsed_weights)
+                    or not all(
+                        isinstance(field, str) and field for field in parsed_weights
+                    )
                     or not all(
                         isinstance(weight, int)
                         and not isinstance(weight, bool)
@@ -3037,27 +3594,28 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
                 ):
                     raise OperationFailure(
-                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                        f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}",
                     )
-                text_weights = {field: int(weight) for field, weight in parsed_weights.items()}
+                text_weights = {
+                    field: int(weight) for field, weight in parsed_weights.items()
+                }
             if default_language is not None and (
-                not isinstance(default_language, str)
-                or not default_language
+                not isinstance(default_language, str) or not default_language
             ):
                 raise OperationFailure(
-                    f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                    f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}",
                 )
             if language_override is not None and (
-                not isinstance(language_override, str)
-                or not language_override
+                not isinstance(language_override, str) or not language_override
             ):
                 raise OperationFailure(
-                    f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}"
+                    f"Invalid SQLite index metadata for {db_name}.{coll_name}.{name}",
                 )
             indexes.append(
                 EngineIndexRecord(
                     name=name,
-                    physical_name=physical_name or self._physical_index_name(db_name, coll_name, name),
+                    physical_name=physical_name
+                    or self._physical_index_name(db_name, coll_name, name),
                     fields=parsed_fields,
                     key=parsed_keys,
                     unique=bool(unique_flag),
@@ -3078,14 +3636,22 @@ class SQLiteEngine(AsyncStorageEngine):
                     bucket_size=bucket_size,
                     multikey=bool(multikey_flag),
                     multikey_physical_name=multikey_physical_name
-                    or self._physical_multikey_index_name(db_name, coll_name, name),
+                    or self._physical_multikey_index_name(
+                        db_name,
+                        coll_name,
+                        name,
+                    ),
                     scalar_physical_name=scalar_physical_name
                     or (
-                        self._physical_scalar_index_name(db_name, coll_name, name)
+                        self._physical_scalar_index_name(
+                            db_name,
+                            coll_name,
+                            name,
+                        )
                         if len(parsed_fields) == 1
                         else None
                     ),
-                )
+                ),
             )
         self._ensure_multikey_physical_indexes_sync(conn, indexes)
         self._index_cache[cache_key] = (cache_version, deepcopy(indexes))
@@ -3102,14 +3668,17 @@ class SQLiteEngine(AsyncStorageEngine):
             if not index.get("multikey"):
                 continue
             field = index["fields"][0]
-            for element_type, element_key in self._extract_multikey_entries(document, field):
+            for element_type, element_key in self._extract_multikey_entries(
+                document,
+                field,
+            ):
                 rows.append(
                     (
                         str(index["name"]),
                         element_type,
                         self._multikey_type_score(element_type),
                         element_key,
-                    )
+                    ),
                 )
         return rows
 
@@ -3135,7 +3704,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 continue
             if not document_in_virtual_index(document, index):
                 continue
-            signature = self._scalar_value_signature_for_document(document, index["fields"][0])
+            signature = self._scalar_value_signature_for_document(
+                document,
+                index["fields"][0],
+            )
             if signature is None:
                 continue
             rows.append(
@@ -3144,7 +3716,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     signature[0],
                     self._multikey_type_score(signature[0]),
                     signature[1],
-                )
+                ),
             )
         return rows
 
@@ -3162,16 +3734,27 @@ class SQLiteEngine(AsyncStorageEngine):
             name=name,
         )
 
-    def _load_search_indexes(self, db_name: str, coll_name: str) -> list[SearchIndexDefinition]:
+    def _load_search_indexes(
+        self,
+        db_name: str,
+        coll_name: str,
+    ) -> list[SearchIndexDefinition]:
         return _sqlite_runtime_load_search_indexes(self, db_name, coll_name)
 
     def _pending_search_index_ready_at(self) -> float | None:
         return _sqlite_pending_search_index_ready_at(self)
 
-    def _search_index_is_ready_sync(self, ready_at_epoch: float | None) -> bool:
+    def _search_index_is_ready_sync(
+        self,
+        ready_at_epoch: float | None,
+    ) -> bool:
         return _sqlite_search_index_is_ready_sync(ready_at_epoch)
 
-    def _drop_search_backend_sync(self, conn: sqlite3.Connection, physical_name: str | None) -> None:
+    def _drop_search_backend_sync(
+        self,
+        conn: sqlite3.Connection,
+        physical_name: str | None,
+    ) -> None:
         _sqlite_drop_search_backend_sync(self, conn, physical_name)
 
     def _ensure_search_backend_sync(
@@ -3216,7 +3799,9 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
         storage_key: str,
-        search_indexes: list[tuple[SearchIndexDefinition, str | None, float | None]] | None = None,
+        search_indexes: (
+            list[tuple[SearchIndexDefinition, str | None, float | None]] | None
+        ) = None,
     ) -> None:
         _sqlite_delete_search_entries_for_storage_key(
             self,
@@ -3234,7 +3819,9 @@ class SQLiteEngine(AsyncStorageEngine):
         coll_name: str,
         storage_key: str,
         document: Document,
-        search_indexes: list[tuple[SearchIndexDefinition, str | None, float | None]] | None = None,
+        search_indexes: (
+            list[tuple[SearchIndexDefinition, str | None, float | None]] | None
+        ) = None,
     ) -> None:
         _sqlite_replace_search_entries_for_document(
             self,
@@ -3375,7 +3962,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         options_json TEXT NOT NULL DEFAULT '{}',
                         PRIMARY KEY (db_name, coll_name)
                     )
-                    """
+                    """,
                 )
                 connection.execute(
                     """
@@ -3386,7 +3973,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         document TEXT NOT NULL,
                         PRIMARY KEY (db_name, coll_name, storage_key)
                     )
-                    """
+                    """,
                 )
                 connection.execute(
                     """
@@ -3413,7 +4000,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         multikey_physical_name TEXT,
                         PRIMARY KEY (db_name, coll_name, name)
                     )
-                    """
+                    """,
                 )
                 connection.execute(
                     """
@@ -3426,7 +4013,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         ready_at_epoch REAL,
                         PRIMARY KEY (db_name, coll_name, name)
                     )
-                    """
+                    """,
                 )
                 connection.execute(
                     """
@@ -3438,7 +4025,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         type_score INTEGER NOT NULL DEFAULT 100,
                         element_key TEXT NOT NULL
                     )
-                    """
+                    """,
                 )
                 connection.execute(
                     """
@@ -3450,69 +4037,113 @@ class SQLiteEngine(AsyncStorageEngine):
                         type_score INTEGER NOT NULL DEFAULT 100,
                         element_key TEXT NOT NULL
                     )
-                    """
+                    """,
                 )
                 ensure_change_outbox_schema(connection)
                 _sqlite_expire_ephemeral_consumers(connection)
                 collection_columns = {
                     row[1]
-                    for row in connection.execute("PRAGMA table_info(collections)").fetchall()
+                    for row in connection.execute(
+                        "PRAGMA table_info(collections)",
+                    ).fetchall()
                 }
                 if "options_json" not in collection_columns:
                     connection.execute(
-                        "ALTER TABLE collections ADD COLUMN options_json TEXT NOT NULL DEFAULT '{}'"
+                        "ALTER TABLE collections ADD COLUMN options_json TEXT NOT NULL DEFAULT '{}'",
                     )
                 if "collection_id" not in collection_columns:
                     connection.execute(
-                        "ALTER TABLE collections ADD COLUMN collection_id INTEGER"
+                        "ALTER TABLE collections ADD COLUMN collection_id INTEGER",
                     )
                 columns = {
                     row[1]
-                    for row in connection.execute("PRAGMA table_info(indexes)").fetchall()
+                    for row in connection.execute(
+                        "PRAGMA table_info(indexes)",
+                    ).fetchall()
                 }
                 if "physical_name" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN physical_name TEXT")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN physical_name TEXT",
+                    )
                 if "keys" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN keys TEXT")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN keys TEXT",
+                    )
                 if "sparse_flag" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN sparse_flag INTEGER NOT NULL DEFAULT 0")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN sparse_flag INTEGER NOT NULL DEFAULT 0",
+                    )
                 if "partial_filter_json" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN partial_filter_json TEXT")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN partial_filter_json TEXT",
+                    )
                 if "hidden_flag" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN hidden_flag INTEGER NOT NULL DEFAULT 0")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN hidden_flag INTEGER NOT NULL DEFAULT 0",
+                    )
                 if "collation_json" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN collation_json TEXT")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN collation_json TEXT",
+                    )
                 if "expire_after_seconds" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN expire_after_seconds INTEGER")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN expire_after_seconds INTEGER",
+                    )
                 if "text_weights_json" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN text_weights_json TEXT")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN text_weights_json TEXT",
+                    )
                 if "default_language" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN default_language TEXT")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN default_language TEXT",
+                    )
                 if "language_override" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN language_override TEXT")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN language_override TEXT",
+                    )
                 if "min_value" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN min_value REAL")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN min_value REAL",
+                    )
                 if "max_value" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN max_value REAL")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN max_value REAL",
+                    )
                 if "bucket_size" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN bucket_size REAL")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN bucket_size REAL",
+                    )
                 if "multikey_flag" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN multikey_flag INTEGER NOT NULL DEFAULT 0",
+                    )
                 if "multikey_physical_name" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN multikey_physical_name TEXT")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN multikey_physical_name TEXT",
+                    )
                 if "scalar_physical_name" not in columns:
-                    connection.execute("ALTER TABLE indexes ADD COLUMN scalar_physical_name TEXT")
+                    connection.execute(
+                        "ALTER TABLE indexes ADD COLUMN scalar_physical_name TEXT",
+                    )
                 search_index_columns = {
                     row[1]
-                    for row in connection.execute("PRAGMA table_info(search_indexes)").fetchall()
+                    for row in connection.execute(
+                        "PRAGMA table_info(search_indexes)",
+                    ).fetchall()
                 }
                 if "physical_name" not in search_index_columns:
-                    connection.execute("ALTER TABLE search_indexes ADD COLUMN physical_name TEXT")
+                    connection.execute(
+                        "ALTER TABLE search_indexes ADD COLUMN physical_name TEXT",
+                    )
                 if "ready_at_epoch" not in search_index_columns:
-                    connection.execute("ALTER TABLE search_indexes ADD COLUMN ready_at_epoch REAL")
+                    connection.execute(
+                        "ALTER TABLE search_indexes ADD COLUMN ready_at_epoch REAL",
+                    )
                 multikey_columns = {
                     row[1]
-                    for row in connection.execute("PRAGMA table_info(multikey_entries)").fetchall()
+                    for row in connection.execute(
+                        "PRAGMA table_info(multikey_entries)",
+                    ).fetchall()
                 }
                 if (
                     "collection_id" not in multikey_columns
@@ -3530,15 +4161,23 @@ class SQLiteEngine(AsyncStorageEngine):
                             type_score INTEGER NOT NULL DEFAULT 100,
                             element_key TEXT NOT NULL
                         )
-                        """
+                        """,
                     )
                     select_type_score = (
                         "multikey_entries.type_score"
                         if "type_score" in multikey_columns
                         else "100"
                     )
-                    join_db_name = "multikey_entries.db_name" if "db_name" in multikey_columns else "collections.db_name"
-                    join_coll_name = "multikey_entries.coll_name" if "coll_name" in multikey_columns else "collections.coll_name"
+                    join_db_name = (
+                        "multikey_entries.db_name"
+                        if "db_name" in multikey_columns
+                        else "collections.db_name"
+                    )
+                    join_coll_name = (
+                        "multikey_entries.coll_name"
+                        if "coll_name" in multikey_columns
+                        else "collections.coll_name"
+                    )
                     collection_id_sql = (
                         "CASE "
                         "WHEN multikey_entries.collection_id IS NOT NULL AND multikey_entries.collection_id != 0 "
@@ -3563,13 +4202,17 @@ class SQLiteEngine(AsyncStorageEngine):
                         LEFT JOIN collections
                           ON collections.db_name = {join_db_name}
                          AND collections.coll_name = {join_coll_name}
-                        """
+                        """,
                     )
                     connection.execute("DROP TABLE multikey_entries")
-                    connection.execute("ALTER TABLE multikey_entries_new RENAME TO multikey_entries")
+                    connection.execute(
+                        "ALTER TABLE multikey_entries_new RENAME TO multikey_entries",
+                    )
                 scalar_columns = {
                     row[1]
-                    for row in connection.execute("PRAGMA table_info(scalar_index_entries)").fetchall()
+                    for row in connection.execute(
+                        "PRAGMA table_info(scalar_index_entries)",
+                    ).fetchall()
                 }
                 if (
                     not scalar_columns
@@ -3578,7 +4221,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     or "db_name" in scalar_columns
                     or "coll_name" in scalar_columns
                 ):
-                    connection.execute("DROP TABLE IF EXISTS scalar_index_entries_new")
+                    connection.execute(
+                        "DROP TABLE IF EXISTS scalar_index_entries_new",
+                    )
                     connection.execute(
                         """
                         CREATE TABLE scalar_index_entries_new (
@@ -3589,7 +4234,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             type_score INTEGER NOT NULL DEFAULT 100,
                             element_key TEXT NOT NULL
                         )
-                        """
+                        """,
                     )
                     if scalar_columns:
                         select_type_score = (
@@ -3597,8 +4242,16 @@ class SQLiteEngine(AsyncStorageEngine):
                             if "type_score" in scalar_columns
                             else "100"
                         )
-                        join_db_name = "scalar_index_entries.db_name" if "db_name" in scalar_columns else "collections.db_name"
-                        join_coll_name = "scalar_index_entries.coll_name" if "coll_name" in scalar_columns else "collections.coll_name"
+                        join_db_name = (
+                            "scalar_index_entries.db_name"
+                            if "db_name" in scalar_columns
+                            else "collections.db_name"
+                        )
+                        join_coll_name = (
+                            "scalar_index_entries.coll_name"
+                            if "coll_name" in scalar_columns
+                            else "collections.coll_name"
+                        )
                         collection_id_sql = (
                             "CASE "
                             "WHEN scalar_index_entries.collection_id IS NOT NULL AND scalar_index_entries.collection_id != 0 "
@@ -3623,10 +4276,14 @@ class SQLiteEngine(AsyncStorageEngine):
                             LEFT JOIN collections
                               ON collections.db_name = {join_db_name}
                              AND collections.coll_name = {join_coll_name}
-                            """
+                            """,
                         )
-                    connection.execute("DROP TABLE IF EXISTS scalar_index_entries")
-                    connection.execute("ALTER TABLE scalar_index_entries_new RENAME TO scalar_index_entries")
+                    connection.execute(
+                        "DROP TABLE IF EXISTS scalar_index_entries",
+                    )
+                    connection.execute(
+                        "ALTER TABLE scalar_index_entries_new RENAME TO scalar_index_entries",
+                    )
                 connection.execute(
                     """
                     INSERT OR IGNORE INTO collections (db_name, coll_name, options_json)
@@ -3635,33 +4292,33 @@ class SQLiteEngine(AsyncStorageEngine):
                     SELECT db_name, coll_name, '{}' FROM indexes
                     UNION
                     SELECT db_name, coll_name, '{}' FROM search_indexes
-                    """
+                    """,
                 )
                 connection.execute(
                     """
                     UPDATE collections
                     SET collection_id = rowid
                     WHERE collection_id IS NULL OR collection_id = 0
-                    """
+                    """,
                 )
                 connection.execute(
                     """
                     CREATE UNIQUE INDEX IF NOT EXISTS idx_collections_collection_id
                     ON collections (collection_id)
-                    """
+                    """,
                 )
                 connection.execute(
                     """
                     CREATE INDEX IF NOT EXISTS idx_scalar_index_entries_storage
                     ON scalar_index_entries (collection_id, storage_key)
-                    """
+                    """,
                 )
                 search_index_rows = connection.execute(
                     """
                     SELECT db_name, coll_name, name
                     FROM search_indexes
                     WHERE physical_name IS NULL OR physical_name = ''
-                    """
+                    """,
                 ).fetchall()
                 for db_name, coll_name, name in search_index_rows:
                     connection.execute(
@@ -3671,7 +4328,11 @@ class SQLiteEngine(AsyncStorageEngine):
                         WHERE db_name = ? AND coll_name = ? AND name = ?
                         """,
                         (
-                            self._physical_search_index_name(db_name, coll_name, name),
+                            self._physical_search_index_name(
+                                db_name,
+                                coll_name,
+                                name,
+                            ),
                             db_name,
                             coll_name,
                             name,
@@ -3681,10 +4342,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 with self._bind_connection(connection):
                     self._backfill_scalar_indexes_sync(connection)
                 connection.commit()
-                if self._path != ':memory:':
-                    change_delivery_connection = (
-                        self._create_sqlite_connection()
-                    )
+                if self._path != ":memory:":
+                    change_delivery_connection = self._create_sqlite_connection()
                     try:
                         ensure_change_outbox_schema(
                             change_delivery_connection,
@@ -3698,9 +4357,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         connection.close()
                         self._connection = None
                         raise
-                    self._change_delivery_connection = (
-                        change_delivery_connection
-                    )
+                    self._change_delivery_connection = change_delivery_connection
                 self._ensured_multikey_physical_indexes.clear()
                 self._ensured_search_backends.clear()
                 self._vector_search_backends.clear()
@@ -3727,15 +4384,11 @@ class SQLiteEngine(AsyncStorageEngine):
         allow_transactional_registration: bool = False,
     ):
         dedicated = self._change_delivery_connection
-        lock = (
-            self._change_delivery_lock
-            if dedicated is not None
-            else self._lock
-        )
+        lock = self._change_delivery_lock if dedicated is not None else self._lock
         with lock:
             conn = dedicated or self._connection
             if conn is None:
-                message = 'SQLiteEngine must be connected for change delivery'
+                message = "SQLiteEngine must be connected for change delivery"
                 raise RuntimeError(message)
             if (
                 dedicated is None
@@ -3743,8 +4396,8 @@ class SQLiteEngine(AsyncStorageEngine):
                 and not allow_transactional_registration
             ):
                 message = (
-                    'change delivery control plane cannot share an active '
-                    'SQLite data transaction'
+                    "change delivery control plane cannot share an active "
+                    "SQLite data transaction"
                 )
                 raise InvalidOperation(message)
             yield conn
@@ -3767,13 +4420,9 @@ class SQLiteEngine(AsyncStorageEngine):
                 consumer_id,
                 initial_checkpoint=initial_checkpoint,
                 durable=durable,
-                owner_instance=(
-                    None if durable else self._change_dispatch_owner
-                ),
+                owner_instance=(None if durable else self._change_dispatch_owner),
                 ephemeral_ttl_seconds=(
-                    None
-                    if durable
-                    else _EPHEMERAL_CHANGE_CONSUMER_TTL_SECONDS
+                    None if durable else _EPHEMERAL_CHANGE_CONSUMER_TTL_SECONDS
                 ),
             )
             if not was_in_transaction:
@@ -3784,7 +4433,7 @@ class SQLiteEngine(AsyncStorageEngine):
         return checkpoint
 
     def _ensure_ephemeral_registration_heartbeat(self) -> None:
-        if self._path == ':memory:':
+        if self._path == ":memory:":
             return
         with self._registration_heartbeat_guard:
             thread = self._registration_heartbeat_thread
@@ -3800,7 +4449,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 target=self._maintain_ephemeral_registrations,
                 args=(state,),
                 daemon=True,
-                name='mongoeco-outbox-registration',
+                name="mongoeco-outbox-registration",
             )
             self._registration_heartbeat_state = state
             self._registration_heartbeat_thread = thread
@@ -3843,7 +4492,7 @@ class SQLiteEngine(AsyncStorageEngine):
         )
         if thread.is_alive():
             error: BaseException | None = OperationFailure(
-                'ephemeral registration heartbeat did not terminate',
+                "ephemeral registration heartbeat did not terminate",
             )
         else:
             error = state.error()
@@ -3858,7 +4507,7 @@ class SQLiteEngine(AsyncStorageEngine):
         consumer_id: str,
         consumer: Callable[[CommittedChange], None],
     ) -> None:
-        dispatch_key = f'{self._change_dispatch_scope}\0{consumer_id}'
+        dispatch_key = f"{self._change_dispatch_scope}\0{consumer_id}"
         with _SQLITE_CHANGE_DISPATCH.hold(dispatch_key):
             generation = self._acquire_change_dispatch_lease(consumer_id)
             heartbeat_state = _ChangeDispatchHeartbeat()
@@ -3870,7 +4519,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     heartbeat_state,
                 ),
                 daemon=True,
-                name=f'mongoeco-outbox-{consumer_id}',
+                name=f"mongoeco-outbox-{consumer_id}",
             )
             heartbeat.start()
             dispatch_error: BaseException | None = None
@@ -3889,7 +4538,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 if heartbeat.is_alive():
                     heartbeat_state.fail(
                         OperationFailure(
-                            'change dispatch heartbeat did not terminate',
+                            "change dispatch heartbeat did not terminate",
                         ),
                     )
                 else:
@@ -3945,7 +4594,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
                     conn.commit()
                 if not renewed:
-                    message = 'change consumer dispatch lease was lost'
+                    message = "change consumer dispatch lease was lost"
                     heartbeat.fail(OperationFailure(message))
                     return
         except BaseException as exc:
@@ -3978,7 +4627,7 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> None:
         with self._change_delivery_storage() as conn:
             checkpoint = _sqlite_consumer_checkpoint(conn, consumer_id)
-            through_sequence = _sqlite_outbox_info(conn)['newestSequence']
+            through_sequence = _sqlite_outbox_info(conn)["newestSequence"]
 
         while checkpoint < through_sequence:
             with self._change_delivery_storage() as conn:
@@ -4005,9 +4654,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
                     conn.commit()
                 with self._lock:
-                    self._change_outbox_checkpoints[
-                        consumer_id
-                    ] = change.sequence
+                    self._change_outbox_checkpoints[consumer_id] = change.sequence
                     checkpoint = change.sequence
 
         heartbeat.raise_if_failed()
@@ -4041,12 +4688,14 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             self._change_outbox_checkpoints.pop(consumer_id, None)
             self._registered_change_consumers.pop(consumer_id, None)
-        dispatch_key = f'{self._change_dispatch_scope}\0{consumer_id}'
+        dispatch_key = f"{self._change_dispatch_scope}\0{consumer_id}"
         _SQLITE_CHANGE_DISPATCH.retire(dispatch_key)
 
     def _can_use_dedicated_reader(self, context: ClientSession | None) -> bool:
         self._ensure_session_can_use_engine(context)
-        return self._path != ":memory:" and not self._session_owns_transaction(context)
+        return self._path != ":memory:" and not self._session_owns_transaction(
+            context,
+        )
 
     def _ensure_collection_row(
         self,
@@ -4061,11 +4710,20 @@ class SQLiteEngine(AsyncStorageEngine):
             INSERT OR IGNORE INTO collections (db_name, coll_name, options_json)
             VALUES (?, ?, ?)
             """,
-            (db_name, coll_name, json_dumps_compact(options or {}, sort_keys=True)),
+            (
+                db_name,
+                coll_name,
+                json_dumps_compact(options or {}, sort_keys=True),
+            ),
         )
         self._lookup_collection_id(conn, db_name, coll_name, create=True)
 
-    def _collection_exists_sync(self, conn: sqlite3.Connection, db_name: str, coll_name: str) -> bool:
+    def _collection_exists_sync(
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+    ) -> bool:
         return self._admin_runtime.collection_exists(conn, db_name, coll_name)
 
     def _collection_options_sync(
@@ -4075,7 +4733,11 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> dict[str, object]:
         with self._lock:
-            return self._admin_runtime.collection_options(db_name, coll_name, context=context)
+            return self._admin_runtime.collection_options(
+                db_name,
+                coll_name,
+                context=context,
+            )
 
     def _collection_options_or_empty_sync(
         self,
@@ -4083,7 +4745,11 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
     ) -> dict[str, object]:
-        return self._admin_runtime.collection_options_or_empty(conn, db_name, coll_name)
+        return self._admin_runtime.collection_options_or_empty(
+            conn,
+            db_name,
+            coll_name,
+        )
 
     def _load_existing_document_for_storage_key(
         self,
@@ -4114,9 +4780,7 @@ class SQLiteEngine(AsyncStorageEngine):
             self._connection_count -= 1
             if self._connection_count != 0:
                 return
-            heartbeat_error = (
-                self._stop_ephemeral_registration_heartbeat()
-            )
+            heartbeat_error = self._stop_ephemeral_registration_heartbeat()
             with self._scan_condition:
                 while self._active_scan_count > 0:
                     self._scan_condition.wait()
@@ -4131,7 +4795,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 )
                 with control_lock:
                     for consumer_id, durable in tuple(
-                        self._registered_change_consumers.items()
+                        self._registered_change_consumers.items(),
                     ):
                         if not durable:
                             _sqlite_unregister_consumer(
@@ -4166,7 +4830,11 @@ class SQLiteEngine(AsyncStorageEngine):
             raise heartbeat_error
 
     def _profile_documents(self, db_name: str) -> list[Document]:
-        profile_documents = getattr(self._admin_runtime, "profile_namespace_documents", None)
+        profile_documents = getattr(
+            self._admin_runtime,
+            "profile_namespace_documents",
+            None,
+        )
         if callable(profile_documents):
             return profile_documents(db_name)
         return self._admin_runtime.profile_documents(db_name)
@@ -4197,9 +4865,18 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn):
                 with sqlite_write_scope(
                     conn,
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
+                    begin_write=lambda current: self._begin_write(
+                        current,
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
                 ):
                     applied = _sqlite_put_document(
                         conn,
@@ -4211,18 +4888,20 @@ class SQLiteEngine(AsyncStorageEngine):
                         dialect=effective_dialect,
                         storage_key=storage_key,
                         serialized_document=serialized_document,
-                        purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
-                            current,
-                            current_db_name,
-                            current_coll_name,
-                            context=context,
-                            now=(
-                                self._ttl_now()
-                                if operation_context is None
-                                else operation_context.expressions.now.replace(
-                                    tzinfo=datetime.timezone.utc
-                                )
-                            ),
+                        purge_expired_documents=lambda current, current_db_name, current_coll_name: (
+                            self._purge_expired_documents_sync(
+                                current,
+                                current_db_name,
+                                current_coll_name,
+                                context=context,
+                                now=(
+                                    self._ttl_now()
+                                    if operation_context is None
+                                    else operation_context.expressions.now.replace(
+                                        tzinfo=datetime.UTC,
+                                    )
+                                ),
+                            )
                         ),
                         begin_write=lambda current: None,
                         rollback_write=lambda current: None,
@@ -4230,41 +4909,47 @@ class SQLiteEngine(AsyncStorageEngine):
                         collection_options_or_empty=self._collection_options_or_empty_sync,
                         load_existing_document_for_storage_key=self._load_existing_document_for_storage_key,
                         ensure_collection_row=self._ensure_collection_row,
-                        validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: self._validate_document_against_unique_indexes(
-                            current_db_name,
-                            current_coll_name,
-                            current_document,
-                            exclude_storage_key=exclude_storage_key,
-                            skip_id_check=skip_id_check,
-                            scan_payload_id=scan_payload_id,
+                        validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: (
+                            self._validate_document_against_unique_indexes(
+                                current_db_name,
+                                current_coll_name,
+                                current_document,
+                                exclude_storage_key=exclude_storage_key,
+                                skip_id_check=skip_id_check,
+                                scan_payload_id=scan_payload_id,
+                            )
                         ),
                         load_indexes=self._load_indexes,
                         rebuild_multikey_entries_for_document=self._rebuild_multikey_entries_for_document,
                         supports_scalar_index=self._supports_scalar_index,
                         rebuild_scalar_entries_for_document=self._rebuild_scalar_entries_for_document,
-                        load_search_index_rows=lambda current_db_name, current_coll_name: self._load_search_index_rows(
-                            current_db_name,
-                            current_coll_name,
+                        load_search_index_rows=lambda current_db_name, current_coll_name: (
+                            self._load_search_index_rows(
+                                current_db_name,
+                                current_coll_name,
+                            )
                         ),
-                        replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, current_storage_key, current_document, search_indexes: self._replace_search_entries_for_document(
-                            current,
-                            current_db_name,
-                            current_coll_name,
-                            current_storage_key,
-                            current_document,
-                            search_indexes=search_indexes,
+                        replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, current_storage_key, current_document, search_indexes: (
+                            self._replace_search_entries_for_document(
+                                current,
+                                current_db_name,
+                                current_coll_name,
+                                current_storage_key,
+                                current_document,
+                                search_indexes=search_indexes,
+                            )
                         ),
                         invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                     )
                     commit_sequence = None
-                    if applied and '_id' in document:
+                    if applied and "_id" in document:
                         commit_sequence = _sqlite_append_change(
                             conn,
                             context=operation_context,
-                            operation_type='insert',
+                            operation_type="insert",
                             db_name=db_name,
                             coll_name=coll_name,
-                            document_key={'_id': deepcopy(document['_id'])},
+                            document_key={"_id": deepcopy(document["_id"])},
                             full_document=deepcopy(document),
                             serialize_document=self._serialize_document,
                             max_entries=self._change_outbox_max_entries,
@@ -4309,15 +4994,24 @@ class SQLiteEngine(AsyncStorageEngine):
                         self._ttl_now()
                         if operation_context is None
                         else operation_context.expressions.now.replace(
-                            tzinfo=datetime.timezone.utc
+                            tzinfo=datetime.UTC,
                         )
                     ),
                 )
                 with sqlite_write_scope(
                     conn,
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
+                    begin_write=lambda current: self._begin_write(
+                        current,
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
                 ):
                     original_document = self._load_existing_document_for_storage_key(
                         conn,
@@ -4326,7 +5020,10 @@ class SQLiteEngine(AsyncStorageEngine):
                         storage_key,
                     )
                     if original_document is None:
-                        for candidate_key, candidate_document in self._load_documents(
+                        for (
+                            candidate_key,
+                            candidate_document,
+                        ) in self._load_documents(
                             db_name,
                             coll_name,
                         ):
@@ -4448,7 +5145,10 @@ class SQLiteEngine(AsyncStorageEngine):
                             next_document,
                             indexes,
                         )
-                    search_indexes = self._load_search_index_rows(db_name, coll_name)
+                    search_indexes = self._load_search_index_rows(
+                        db_name,
+                        coll_name,
+                    )
                     if search_indexes:
                         self._replace_search_entries_for_document(
                             conn,
@@ -4458,7 +5158,10 @@ class SQLiteEngine(AsyncStorageEngine):
                             next_document,
                             search_indexes=search_indexes,
                         )
-                    self._invalidate_collection_features_cache(db_name, coll_name)
+                    self._invalidate_collection_features_cache(
+                        db_name,
+                        coll_name,
+                    )
 
                     outcome = MergeOutcome(
                         matched=original_document is not None,
@@ -4473,14 +5176,12 @@ class SQLiteEngine(AsyncStorageEngine):
                         operation_type=operation_type,
                         db_name=db_name,
                         coll_name=coll_name,
-                        document_key={'_id': deepcopy(next_document['_id'])},
+                        document_key={"_id": deepcopy(next_document["_id"])},
                         full_document=deepcopy(next_document),
                         serialize_document=self._serialize_document,
                         max_entries=self._change_outbox_max_entries,
                     )
-                    outcome = replace(
-                        outcome, commit_sequence=commit_sequence
-                    )
+                    outcome = replace(outcome, commit_sequence=commit_sequence)
                 if on_commit is not None:
                     on_commit(outcome)
                 return outcome
@@ -4494,7 +5195,11 @@ class SQLiteEngine(AsyncStorageEngine):
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
-                return self._collection_options_or_empty_sync(conn, db_name, coll_name)
+                return self._collection_options_or_empty_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                )
 
     def _insert_documents_sync(
         self,
@@ -4519,87 +5224,108 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn):
                 with sqlite_write_scope(
                     conn,
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
+                    begin_write=lambda current: self._begin_write(
+                        current,
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
                 ):
                     results = _sqlite_put_documents_bulk(
                         conn,
-                    db_name=db_name,
-                    coll_name=coll_name,
-                    documents=documents,
-                    prepared_documents=prepared_documents,
-                    snapshot_indexes=snapshot_indexes,
-                    bypass_document_validation=bypass_document_validation,
-                    dialect=effective_dialect,
-                    snapshot_options=snapshot_options,
-                    purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
-                        current,
-                        current_db_name,
-                        current_coll_name,
-                        context=context,
-                        now=(
-                            self._ttl_now()
-                            if operation_context is None
-                            else operation_context.expressions.now.replace(
-                                tzinfo=datetime.timezone.utc
+                        db_name=db_name,
+                        coll_name=coll_name,
+                        documents=documents,
+                        prepared_documents=prepared_documents,
+                        snapshot_indexes=snapshot_indexes,
+                        bypass_document_validation=bypass_document_validation,
+                        dialect=effective_dialect,
+                        snapshot_options=snapshot_options,
+                        purge_expired_documents=lambda current, current_db_name, current_coll_name: (
+                            self._purge_expired_documents_sync(
+                                current,
+                                current_db_name,
+                                current_coll_name,
+                                context=context,
+                                now=(
+                                    self._ttl_now()
+                                    if operation_context is None
+                                    else operation_context.expressions.now.replace(
+                                        tzinfo=datetime.UTC,
+                                    )
+                                ),
                             )
                         ),
-                    ),
-                    collection_options_or_empty=self._collection_options_or_empty_sync,
-                    load_indexes=self._load_indexes,
-                    load_search_index_rows=lambda current_db_name, current_coll_name: self._load_search_index_rows(
-                        current_db_name,
-                        current_coll_name,
-                    ),
-                    begin_write=lambda current: None,
-                    ensure_collection_row=self._ensure_collection_row,
-                    lookup_collection_id=lambda current, current_db_name, current_coll_name, create: self._lookup_collection_id(
-                        current,
-                        current_db_name,
-                        current_coll_name,
-                        create=create,
-                    ),
-                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: self._validate_document_against_unique_indexes(
-                        current_db_name,
-                        current_coll_name,
-                        current_document,
-                        exclude_storage_key=exclude_storage_key,
-                        skip_id_check=skip_id_check,
-                        scan_payload_id=scan_payload_id,
-                    ),
-                    delete_multikey_entries_for_storage_key=self._delete_multikey_entries_for_storage_key,
-                    delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
-                    build_multikey_rows_for_document=self._build_multikey_rows_for_document,
-                    ensure_multikey_physical_indexes=self._ensure_multikey_physical_indexes_sync,
-                    build_scalar_rows_for_document=self._build_scalar_rows_for_document,
-                    ensure_scalar_physical_indexes=self._ensure_scalar_physical_indexes_sync,
-                    replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, current_storage_key, current_document, search_indexes: self._replace_search_entries_for_document(
-                        current,
-                        current_db_name,
-                        current_coll_name,
-                        current_storage_key,
-                        current_document,
-                        search_indexes=search_indexes,
-                    ),
-                    commit_write=lambda current: None,
-                    rollback_write=lambda current: None,
-                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                        collection_options_or_empty=self._collection_options_or_empty_sync,
+                        load_indexes=self._load_indexes,
+                        load_search_index_rows=lambda current_db_name, current_coll_name: (
+                            self._load_search_index_rows(
+                                current_db_name,
+                                current_coll_name,
+                            )
+                        ),
+                        begin_write=lambda current: None,
+                        ensure_collection_row=self._ensure_collection_row,
+                        lookup_collection_id=lambda current, current_db_name, current_coll_name, create: (
+                            self._lookup_collection_id(
+                                current,
+                                current_db_name,
+                                current_coll_name,
+                                create=create,
+                            )
+                        ),
+                        validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: (
+                            self._validate_document_against_unique_indexes(
+                                current_db_name,
+                                current_coll_name,
+                                current_document,
+                                exclude_storage_key=exclude_storage_key,
+                                skip_id_check=skip_id_check,
+                                scan_payload_id=scan_payload_id,
+                            )
+                        ),
+                        delete_multikey_entries_for_storage_key=self._delete_multikey_entries_for_storage_key,
+                        delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
+                        build_multikey_rows_for_document=self._build_multikey_rows_for_document,
+                        ensure_multikey_physical_indexes=self._ensure_multikey_physical_indexes_sync,
+                        build_scalar_rows_for_document=self._build_scalar_rows_for_document,
+                        ensure_scalar_physical_indexes=self._ensure_scalar_physical_indexes_sync,
+                        replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, current_storage_key, current_document, search_indexes: (
+                            self._replace_search_entries_for_document(
+                                current,
+                                current_db_name,
+                                current_coll_name,
+                                current_storage_key,
+                                current_document,
+                                search_indexes=search_indexes,
+                            )
+                        ),
+                        commit_write=lambda current: None,
+                        rollback_write=lambda current: None,
+                        invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                     )
                     outcomes: list[InsertOutcome] = []
                     for event_index, (document, applied) in enumerate(
-                        zip(documents, results, strict=False)
+                        zip(documents, results, strict=False),
                     ):
                         commit_sequence = None
-                        if applied and '_id' in document:
+                        if applied and "_id" in document:
                             commit_sequence = _sqlite_append_change(
                                 conn,
                                 context=operation_context,
                                 event_index=event_index,
-                                operation_type='insert',
+                                operation_type="insert",
                                 db_name=db_name,
                                 coll_name=coll_name,
-                                document_key={'_id': deepcopy(document['_id'])},
+                                document_key={
+                                    "_id": deepcopy(document["_id"]),
+                                },
                                 full_document=deepcopy(document),
                                 serialize_document=self._serialize_document,
                                 max_entries=self._change_outbox_max_entries,
@@ -4609,7 +5335,7 @@ class SQLiteEngine(AsyncStorageEngine):
                                 applied=applied,
                                 document=deepcopy(document) if applied else None,
                                 commit_sequence=commit_sequence,
-                            )
+                            ),
                         )
                 return tuple(outcomes)
 
@@ -4639,10 +5365,15 @@ class SQLiteEngine(AsyncStorageEngine):
             )
         ]
 
-    def _prepare_bulk_document_sync(self, document: Document) -> tuple[str, str]:
+    def _prepare_bulk_document_sync(
+        self,
+        document: Document,
+    ) -> tuple[str, str]:
         if "_id" in document:
             assert_valid_root_document_id(document["_id"])
-        return self._storage_key(document.get("_id")), self._serialize_document(document)
+        return self._storage_key(
+            document.get("_id"),
+        ), self._serialize_document(document)
 
     def _snapshot_bulk_insert_preparation_sync(
         self,
@@ -4654,7 +5385,11 @@ class SQLiteEngine(AsyncStorageEngine):
             conn = self._require_connection(context)
             with self._bind_connection(conn):
                 return (
-                    self._collection_options_or_empty_sync(conn, db_name, coll_name),
+                    self._collection_options_or_empty_sync(
+                        conn,
+                        db_name,
+                        coll_name,
+                    ),
                     self._load_indexes(db_name, coll_name),
                 )
 
@@ -4663,11 +5398,17 @@ class SQLiteEngine(AsyncStorageEngine):
         document: Document,
         indexes: list[EngineIndexRecord],
     ) -> tuple[str, str, list[tuple[str, str, int, str]]]:
-        storage_key, serialized_document = self._prepare_bulk_document_sync(document)
+        storage_key, serialized_document = self._prepare_bulk_document_sync(
+            document,
+        )
         return (
             storage_key,
             serialized_document,
-            self._build_multikey_rows_for_document(storage_key, document, indexes),
+            self._build_multikey_rows_for_document(
+                storage_key,
+                document,
+                indexes,
+            ),
         )
 
     def _get_document_sync(
@@ -4686,7 +5427,11 @@ class SQLiteEngine(AsyncStorageEngine):
         self._ensure_session_can_use_engine(context)
         effective_dialect = operation_context.dialect
         if self._is_profile_namespace(coll_name):
-            profile_document = getattr(self._admin_runtime, "profile_namespace_document", None)
+            profile_document = getattr(
+                self._admin_runtime,
+                "profile_namespace_document",
+                None,
+            )
             if callable(profile_document):
                 return profile_document(
                     db_name,
@@ -4697,7 +5442,11 @@ class SQLiteEngine(AsyncStorageEngine):
             document = self._admin_runtime.profile_document(db_name, doc_id)
             if document is None:
                 return None
-            return apply_projection(document, projection, dialect=effective_dialect)
+            return apply_projection(
+                document,
+                projection,
+                dialect=effective_dialect,
+            )
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -4718,10 +5467,18 @@ class SQLiteEngine(AsyncStorageEngine):
                     projection=projection,
                     dialect=effective_dialect,
                     storage_key=self._storage_key(doc_id),
-                    deserialize_document=lambda payload: DocumentCodec.to_public(self._deserialize_document(payload)),
+                    deserialize_document=lambda payload: DocumentCodec.to_public(
+                        self._deserialize_document(payload),
+                    ),
                 )
 
-    def _delete_document_sync(self, db_name: str, coll_name: str, doc_id: DocumentId, context: ClientSession | None) -> bool:
+    def _delete_document_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        doc_id: DocumentId,
+        context: ClientSession | None,
+    ) -> bool:
         self._ensure_session_can_use_engine(context)
         if self._is_profile_namespace(coll_name):
             return False
@@ -4736,7 +5493,9 @@ class SQLiteEngine(AsyncStorageEngine):
                     projection=None,
                     dialect=MONGODB_DIALECT_70,
                     storage_key=self._storage_key(doc_id),
-                    deserialize_document=lambda payload: DocumentCodec.to_public(self._deserialize_document(payload)),
+                    deserialize_document=lambda payload: DocumentCodec.to_public(
+                        self._deserialize_document(payload),
+                    ),
                 )
                 if document is None:
                     return False
@@ -4747,9 +5506,18 @@ class SQLiteEngine(AsyncStorageEngine):
                     db_name=db_name,
                     coll_name=coll_name,
                     storage_key=self._storage_key(doc_id),
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
+                    begin_write=lambda current: self._begin_write(
+                        current,
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
                     delete_multikey_entries_for_storage_key=self._delete_multikey_entries_for_storage_key,
                     delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
                     delete_search_entries_for_storage_key=self._delete_search_entries_for_storage_key,
@@ -4770,8 +5538,14 @@ class SQLiteEngine(AsyncStorageEngine):
         if text_query is None:
             return documents
         indexes = self._load_indexes(db_name, coll_name)
-        index_name, fields = resolve_classic_text_index_for_hint(indexes, semantics.hint)
-        matched_index = next((index for index in indexes if index.name == index_name), None)
+        index_name, fields = resolve_classic_text_index_for_hint(
+            indexes,
+            semantics.hint,
+        )
+        matched_index = next(
+            (index for index in indexes if index.name == index_name),
+            None,
+        )
         weights = matched_index.weights if matched_index is not None else None
 
         def _iter():
@@ -4848,7 +5622,11 @@ class SQLiteEngine(AsyncStorageEngine):
                 dialect=python_semantics.dialect,
                 collation=python_semantics.collation,
             )
-            documents = finalize_documents(documents, python_semantics, apply_sort_phase=False)
+            documents = finalize_documents(
+                documents,
+                python_semantics,
+                apply_sort_phase=False,
+            )
             for document in documents:
                 enforce_deadline(deadline)
                 if stop_event is not None and stop_event.is_set():
@@ -4868,13 +5646,12 @@ class SQLiteEngine(AsyncStorageEngine):
                         coll_name,
                         context=context,
                         now=semantics.variables.now.replace(
-                            tzinfo=datetime.timezone.utc
+                            tzinfo=datetime.UTC,
                         ),
                     )
         if (
             semantics.text_query is None
-            and
-            semantics.sort is None
+            and semantics.sort is None
             and semantics.skip == 0
             and semantics.limit == 1
             and semantics.collation is None
@@ -4912,7 +5689,11 @@ class SQLiteEngine(AsyncStorageEngine):
 
         active_connection = dedicated_reader or shared_connection
         try:
-            with self._bind_connection(active_connection) if active_connection is not None else nullcontext():
+            with (
+                self._bind_connection(active_connection)
+                if active_connection is not None
+                else nullcontext()
+            ):
                 try:
                     if shared_connection is None:
                         enforce_deadline(deadline)
@@ -4931,15 +5712,22 @@ class SQLiteEngine(AsyncStorageEngine):
                                 semantics,
                                 hint=hint,
                             )
-                    sql, sql_params = _sqlite_require_sql_execution_plan(execution_plan)
+                    sql, sql_params = _sqlite_require_sql_execution_plan(
+                        execution_plan,
+                    )
                     if active_connection is None:
                         with self._lock:
-                            active_connection = self._require_connection(context)
+                            active_connection = self._require_connection(
+                                context,
+                            )
                     cursor = active_connection.execute(sql, tuple(sql_params))
                     try:
                         if execution_plan.apply_python_sort:
                             documents = finalize_documents(
-                                (self._deserialize_document(payload) for (payload,) in cursor),
+                                (
+                                    self._deserialize_document(payload)
+                                    for (payload,) in cursor
+                                ),
                                 semantics,
                             )
                             for document in documents:
@@ -4969,14 +5757,23 @@ class SQLiteEngine(AsyncStorageEngine):
                     documents_iter = self._iter_documents_for_classic_text_query_sync(
                         db_name,
                         coll_name,
-                        (document for _, document in self._load_documents(db_name, coll_name)),
+                        (
+                            document
+                            for _, document in self._load_documents(
+                                db_name,
+                                coll_name,
+                            )
+                        ),
                         semantics=python_semantics,
                         context=context,
                     )
                     try:
                         if python_semantics.sort is None:
                             for document in stream_finalize_documents(
-                                iter_filtered_documents(documents_iter, python_semantics),
+                                iter_filtered_documents(
+                                    documents_iter,
+                                    python_semantics,
+                                ),
                                 python_semantics,
                             ):
                                 if stop_event is not None and stop_event.is_set():
@@ -5058,9 +5855,18 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn):
                 with sqlite_write_scope(
                     conn,
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
+                    begin_write=lambda current: self._begin_write(
+                        current,
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
                 ):
                     effective_dialect = (
                         operation_context.dialect
@@ -5100,22 +5906,24 @@ class SQLiteEngine(AsyncStorageEngine):
                         collation=effective_collation,
                         variables=effective_variables,
                         compile_find_semantics=compile_find_semantics,
-                        ensure_query_plan=lambda current_filter, current_plan: ensure_query_plan(
-                            current_filter,
-                            current_plan,
-                            dialect=effective_dialect,
+                        ensure_query_plan=lambda current_filter, current_plan: (
+                            ensure_query_plan(
+                                current_filter,
+                                current_plan,
+                                dialect=effective_dialect,
+                            )
                         ),
                         require_connection=lambda: conn,
-                        purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
-                            current,
-                            current_db_name,
-                            current_coll_name,
-                            context=context,
-                            now=ensure_expression_context(
-                                effective_variables,
-                            ).now.replace(
-                                tzinfo=datetime.timezone.utc
-                            ),
+                        purge_expired_documents=lambda current, current_db_name, current_coll_name: (
+                            self._purge_expired_documents_sync(
+                                current,
+                                current_db_name,
+                                current_coll_name,
+                                context=context,
+                                now=ensure_expression_context(
+                                    effective_variables,
+                                ).now.replace(tzinfo=datetime.UTC),
+                            )
                         ),
                         select_first_document_for_plan=self._select_first_document_for_plan,
                         storage_key_for_id=self._storage_key,
@@ -5126,12 +5934,14 @@ class SQLiteEngine(AsyncStorageEngine):
                         delete_scalar_entries_for_storage_key=self._delete_scalar_entries_for_storage_key,
                         delete_search_entries_for_storage_key=self._delete_search_entries_for_storage_key,
                         load_documents=self._load_documents,
-                        match_plan=lambda document, query_plan, current_dialect, current_collation, variables: QueryEngine.match_plan(
-                            document,
-                            query_plan,
-                            dialect=current_dialect,
-                            collation=current_collation,
-                            variables=variables,
+                        match_plan=lambda document, query_plan, current_dialect, current_collation, variables: (
+                            QueryEngine.match_plan(
+                                document,
+                                query_plan,
+                                dialect=current_dialect,
+                                collation=current_collation,
+                                variables=variables,
+                            )
                         ),
                         invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                         sort=sort,
@@ -5143,24 +5953,22 @@ class SQLiteEngine(AsyncStorageEngine):
                         change_context = operation_context
                         if (
                             change_context is not None
-                            and '_id' not in result.deleted_document
+                            and "_id" not in result.deleted_document
                         ):
-                            change_context = (
-                                change_context.for_unpublishable_change()
-                            )
+                            change_context = change_context.for_unpublishable_change()
                         commit_sequence = _sqlite_append_change(
                             conn,
                             context=change_context,
-                            operation_type='delete',
+                            operation_type="delete",
                             db_name=db_name,
                             coll_name=coll_name,
                             document_key=(
                                 {
-                                    '_id': deepcopy(
-                                        result.deleted_document['_id'],
+                                    "_id": deepcopy(
+                                        result.deleted_document["_id"],
                                     ),
                                 }
-                                if '_id' in result.deleted_document
+                                if "_id" in result.deleted_document
                                 else {}
                             ),
                             full_document=None,
@@ -5168,7 +5976,8 @@ class SQLiteEngine(AsyncStorageEngine):
                             max_entries=self._change_outbox_max_entries,
                         )
                         result = replace(
-                            result, commit_sequence=commit_sequence
+                            result,
+                            commit_sequence=commit_sequence,
                         )
                 if result.result.deleted_count and on_commit is not None:
                     on_commit(result)
@@ -5201,7 +6010,11 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn) if conn is not None else nullcontext():
                 if conn is not None:
                     self._purge_expired_documents_sync(
-                        conn, db_name, coll_name, context=context, now=self._ttl_now()
+                        conn,
+                        db_name,
+                        coll_name,
+                        context=context,
+                        now=self._ttl_now(),
                     )
                 try:
                     execution_plan = self._compile_read_execution_plan(
@@ -5220,7 +6033,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 except (NotImplementedError, TypeError):
                     return sum(
                         1
-                        for _, document in self._load_documents(db_name, coll_name)
+                        for _, document in self._load_documents(
+                            db_name,
+                            coll_name,
+                        )
                         if QueryEngine.match_plan(
                             document,
                             semantics.query_plan,
@@ -5245,9 +6061,9 @@ class SQLiteEngine(AsyncStorageEngine):
         weights: dict[str, int] | None,
         default_language: str | None,
         language_override: str | None,
-        min_value: float | int | None,
-        max_value: float | int | None,
-        bucket_size: float | int | None,
+        min_value: float | None,
+        max_value: float | None,
+        bucket_size: float | None,
         max_time_ms: int | None,
         context: ClientSession | None,
     ) -> str:
@@ -5275,15 +6091,26 @@ class SQLiteEngine(AsyncStorageEngine):
                     bucket_size=bucket_size,
                     deadline=deadline,
                     enforce_deadline_fn=enforce_deadline,
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
-                    purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
+                    begin_write=lambda current: self._begin_write(
                         current,
-                        current_db_name,
-                        current_coll_name,
-                        context=context,
-                        now=self._ttl_now(),
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
+                    purge_expired_documents=lambda current, current_db_name, current_coll_name: (
+                        self._purge_expired_documents_sync(
+                            current,
+                            current_db_name,
+                            current_coll_name,
+                            context=context,
+                            now=self._ttl_now(),
+                        )
                     ),
                     mark_index_metadata_changed=self._mark_index_metadata_changed,
                     invalidate_collection_features_cache=self._invalidate_collection_features_cache,
@@ -5293,10 +6120,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     physical_multikey_index_name=self._physical_multikey_index_name,
                     physical_scalar_index_name=self._physical_scalar_index_name,
                     is_builtin_id_index=self._is_builtin_id_index,
-                    validate_ttl_index_candidates=lambda ttl_indexes: self._assert_expired_documents_have_stable_identity_sync(
-                        db_name,
-                        coll_name,
-                        ttl_indexes,
+                    validate_ttl_index_candidates=lambda ttl_indexes: (
+                        self._assert_expired_documents_have_stable_identity_sync(
+                            db_name,
+                            coll_name,
+                            ttl_indexes,
+                        )
                     ),
                     replace_multikey_entries_for_document=self._replace_multikey_entries_for_index_for_document,
                     replace_scalar_entries_for_document=self._replace_scalar_entries_for_index_for_document,
@@ -5306,7 +6135,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     quote_identifier=self._quote_identifier,
                 )
 
-    def _list_indexes_sync(self, db_name: str, coll_name: str, context: ClientSession | None) -> list[IndexDocument]:
+    def _list_indexes_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        context: ClientSession | None,
+    ) -> list[IndexDocument]:
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -5340,14 +6174,25 @@ class SQLiteEngine(AsyncStorageEngine):
                     db_name=db_name,
                     coll_name=coll_name,
                     index_or_name=index_or_name,
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
-                    load_indexes=self._load_indexes,
-                    lookup_collection_id=lambda current, current_db_name, current_coll_name: self._lookup_collection_id(
+                    begin_write=lambda current: self._begin_write(
                         current,
-                        current_db_name,
-                        current_coll_name,
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
+                    load_indexes=self._load_indexes,
+                    lookup_collection_id=lambda current, current_db_name, current_coll_name: (
+                        self._lookup_collection_id(
+                            current,
+                            current_db_name,
+                            current_coll_name,
+                        )
                     ),
                     quote_identifier=self._quote_identifier,
                     mark_index_metadata_changed=self._mark_index_metadata_changed,
@@ -5366,7 +6211,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._admin_runtime.drop_database(db_name, context=context)
             self._clear_search_backend_state_for_database(db_name)
 
-    def _clear_index_metadata_versions_for_database(self, db_name: str) -> None:
+    def _clear_index_metadata_versions_for_database(
+        self,
+        db_name: str,
+    ) -> None:
         self._admin_runtime.clear_index_metadata_versions_for_database(db_name)
 
     def _drop_indexes_sync(
@@ -5382,14 +6230,25 @@ class SQLiteEngine(AsyncStorageEngine):
                     conn,
                     db_name=db_name,
                     coll_name=coll_name,
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
-                    load_indexes=self._load_indexes,
-                    lookup_collection_id=lambda current, current_db_name, current_coll_name: self._lookup_collection_id(
+                    begin_write=lambda current: self._begin_write(
                         current,
-                        current_db_name,
-                        current_coll_name,
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
+                    load_indexes=self._load_indexes,
+                    lookup_collection_id=lambda current, current_db_name, current_coll_name: (
+                        self._lookup_collection_id(
+                            current,
+                            current_db_name,
+                            current_coll_name,
+                        )
                     ),
                     quote_identifier=self._quote_identifier,
                     mark_index_metadata_changed=self._mark_index_metadata_changed,
@@ -5521,6 +6380,8 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
         result_limit_hint: int | None = None,
         downstream_filter_spec: dict[str, object] | None = None,
+        query: SearchQuery | None = None,
+        operation_context: OperationContext | None = None,
     ) -> list[Document]:
         with self._lock:
             return _sqlite_search_documents_sync(
@@ -5533,6 +6394,22 @@ class SQLiteEngine(AsyncStorageEngine):
                 context,
                 result_limit_hint,
                 downstream_filter_spec,
+                query,
+                operation_context,
+            )
+
+    def _collect_search_metadata_pushdown_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        request: SearchRequest,
+    ):
+        with self._lock:
+            return _sqlite_collect_search_metadata_pushdown_sync(
+                self,
+                db_name,
+                coll_name,
+                request,
             )
 
     def _explain_search_documents_sync(
@@ -5545,6 +6422,7 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None,
         result_limit_hint: int | None = None,
         downstream_filter_spec: dict[str, object] | None = None,
+        operation_context: OperationContext | None = None,
     ) -> QueryPlanExplanation:
         with self._lock:
             return _sqlite_explain_search_documents_sync(
@@ -5557,15 +6435,40 @@ class SQLiteEngine(AsyncStorageEngine):
                 context,
                 result_limit_hint,
                 downstream_filter_spec,
+                operation_context,
             )
 
-    def _list_databases_sync(self, context: ClientSession | None = None) -> list[str]:
+    def _plan_search_documents_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        request: SearchRequest,
+    ) -> QueryPlanExplanation:
+        with self._lock:
+            return _sqlite_plan_search_documents_sync(
+                self,
+                db_name,
+                coll_name,
+                request,
+            )
+
+    def _list_databases_sync(
+        self,
+        context: ClientSession | None = None,
+    ) -> list[str]:
         with self._lock:
             return self._admin_runtime.list_databases(context=context)
 
-    def _list_collections_sync(self, db_name: str, context: ClientSession | None = None) -> list[str]:
+    def _list_collections_sync(
+        self,
+        db_name: str,
+        context: ClientSession | None = None,
+    ) -> list[str]:
         with self._lock:
-            return self._admin_runtime.list_collections(db_name, context=context)
+            return self._admin_runtime.list_collections(
+                db_name,
+                context=context,
+            )
 
     def _create_collection_sync(
         self,
@@ -5581,9 +6484,18 @@ class SQLiteEngine(AsyncStorageEngine):
                 db_name=db_name,
                 coll_name=coll_name,
                 options=options,
-                begin_write=lambda current: self._begin_write(current, context),
-                commit_write=lambda current: self._commit_write(current, context),
-                rollback_write=lambda current: self._rollback_write(current, context),
+                begin_write=lambda current: self._begin_write(
+                    current,
+                    context,
+                ),
+                commit_write=lambda current: self._commit_write(
+                    current,
+                    context,
+                ),
+                rollback_write=lambda current: self._rollback_write(
+                    current,
+                    context,
+                ),
                 collection_exists=self._collection_exists_sync,
                 ensure_collection_row=self._ensure_collection_row,
             )
@@ -5602,16 +6514,30 @@ class SQLiteEngine(AsyncStorageEngine):
                 db_name=db_name,
                 coll_name=coll_name,
                 new_name=new_name,
-                begin_write=lambda current: self._begin_write(current, context),
-                commit_write=lambda current: self._commit_write(current, context),
-                rollback_write=lambda current: self._rollback_write(current, context),
+                begin_write=lambda current: self._begin_write(
+                    current,
+                    context,
+                ),
+                commit_write=lambda current: self._commit_write(
+                    current,
+                    context,
+                ),
+                rollback_write=lambda current: self._rollback_write(
+                    current,
+                    context,
+                ),
                 collection_exists=self._collection_exists_sync,
                 mark_index_metadata_changed=self._mark_index_metadata_changed,
                 invalidate_collection_id_cache=self._invalidate_collection_id_cache,
                 invalidate_collection_features_cache=self._invalidate_collection_features_cache,
             )
 
-    def _drop_collection_sync(self, db_name: str, coll_name: str, context: ClientSession | None = None) -> None:
+    def _drop_collection_sync(
+        self,
+        db_name: str,
+        coll_name: str,
+        context: ClientSession | None = None,
+    ) -> None:
         self._ensure_session_can_use_engine(context)
         if self._is_profile_namespace(coll_name):
             self._admin_runtime.clear_profile_namespace(db_name)
@@ -5623,9 +6549,18 @@ class SQLiteEngine(AsyncStorageEngine):
                     conn=conn,
                     db_name=db_name,
                     coll_name=coll_name,
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
+                    begin_write=lambda current: self._begin_write(
+                        current,
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
                     load_indexes=self._load_indexes,
                     load_search_index_rows=self._load_search_index_rows,
                     lookup_collection_id=self._lookup_collection_id,
@@ -5840,10 +6775,14 @@ class SQLiteEngine(AsyncStorageEngine):
                 loop.run_in_executor(
                     self._ensure_executor(),
                     contextvars.copy_context().run,
-                    partial(self._prepare_bulk_document_with_indexes_sync, document, snapshot_indexes),
+                    partial(
+                        self._prepare_bulk_document_with_indexes_sync,
+                        document,
+                        snapshot_indexes,
+                    ),
                 )
                 for document in documents
-            ]
+            ],
         )
         return await self._run_blocking(
             self._insert_documents_sync,
@@ -5859,7 +6798,17 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     @override
-    async def get_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, projection: Projection | None = None, dialect: MongoDialect | None = None, context: ClientSession | None = None, operation_context: OperationContext | None = None) -> Document | None:
+    async def get_document(
+        self,
+        db_name: str,
+        coll_name: str,
+        doc_id: DocumentId,
+        *,
+        projection: Projection | None = None,
+        dialect: MongoDialect | None = None,
+        context: ClientSession | None = None,
+        operation_context: OperationContext | None = None,
+    ) -> Document | None:
         operation_context = operation_context or OperationContext.create(
             dialect=dialect or MONGODB_DIALECT_70,
             session=context,
@@ -5874,8 +6823,21 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     @override
-    async def delete_document(self, db_name: str, coll_name: str, doc_id: DocumentId, *, context: ClientSession | None = None) -> bool:
-        return await self._run_blocking(self._delete_document_sync, db_name, coll_name, doc_id, context)
+    async def delete_document(
+        self,
+        db_name: str,
+        coll_name: str,
+        doc_id: DocumentId,
+        *,
+        context: ClientSession | None = None,
+    ) -> bool:
+        return await self._run_blocking(
+            self._delete_document_sync,
+            db_name,
+            coll_name,
+            doc_id,
+            context,
+        )
 
     @override
     def open_read_snapshot(
@@ -6017,8 +6979,13 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> MutationOutcome:
         if operation_context is not None:
             context = operation_context.session
-        if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
-            raise OperationFailure("update operation does not include a compiled update plan")
+        if (
+            operation.compiled_update_plan is None
+            or operation.compiled_upsert_plan is None
+        ):
+            raise OperationFailure(
+                "update operation does not include a compiled update plan",
+            )
         return await self._run_blocking(
             self._update_with_operation_sync,
             db_name,
@@ -6057,9 +7024,18 @@ class SQLiteEngine(AsyncStorageEngine):
             with self._bind_connection(conn):
                 with sqlite_write_scope(
                     conn,
-                    begin_write=lambda current: self._begin_write(current, context),
-                    commit_write=lambda current: self._commit_write(current, context),
-                    rollback_write=lambda current: self._rollback_write(current, context),
+                    begin_write=lambda current: self._begin_write(
+                        current,
+                        context,
+                    ),
+                    commit_write=lambda current: self._commit_write(
+                        current,
+                        context,
+                    ),
+                    rollback_write=lambda current: self._rollback_write(
+                        current,
+                        context,
+                    ),
                 ):
                     semantics = compile_update_semantics(
                         operation,
@@ -6075,109 +7051,119 @@ class SQLiteEngine(AsyncStorageEngine):
                         collation=semantics.collation,
                     )
                     result = _sqlite_update_with_operation(
-                    db_name=db_name,
-                    coll_name=coll_name,
-                    operation=operation,
-                    upsert=upsert,
-                    upsert_seed=upsert_seed,
-                    selector_filter=selector_filter,
-                    dialect=dialect,
-                    bypass_document_validation=bypass_document_validation,
-                    compile_update_semantics=compile_update_semantics,
-                    require_connection=lambda: conn,
-                    purge_expired_documents=lambda current, current_db_name, current_coll_name: self._purge_expired_documents_sync(
-                        current,
-                        current_db_name,
-                        current_coll_name,
-                        context=context,
-                        now=semantics.variables.now.replace(
-                            tzinfo=datetime.timezone.utc
+                        db_name=db_name,
+                        coll_name=coll_name,
+                        operation=operation,
+                        upsert=upsert,
+                        upsert_seed=upsert_seed,
+                        selector_filter=selector_filter,
+                        dialect=dialect,
+                        bypass_document_validation=bypass_document_validation,
+                        compile_update_semantics=compile_update_semantics,
+                        require_connection=lambda: conn,
+                        purge_expired_documents=lambda current, current_db_name, current_coll_name: (
+                            self._purge_expired_documents_sync(
+                                current,
+                                current_db_name,
+                                current_coll_name,
+                                context=context,
+                                now=semantics.variables.now.replace(
+                                    tzinfo=datetime.UTC,
+                                ),
+                            )
                         ),
-                    ),
-                    collection_options_or_empty=self._collection_options_or_empty_sync,
-                    dialect_requires_python_fallback=self._dialect_requires_python_fallback,
-                    select_first_document_for_plan=self._select_first_document_for_plan,
-                    load_documents=self._load_documents,
-                    match_plan=lambda document, query_plan, current_dialect, current_collation, variables: QueryEngine.match_plan(
-                        document,
-                        query_plan,
-                        dialect=current_dialect,
-                        collation=current_collation,
-                        variables=variables,
-                    ),
-                    enforce_collection_document_validation=enforce_collection_document_validation,
-                    validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: self._validate_document_against_unique_indexes(
-                        current_db_name,
-                        current_coll_name,
-                        document,
-                        exclude_storage_key=exclude_storage_key,
-                        skip_id_check=skip_id_check,
-                        scan_payload_id=scan_payload_id,
-                    ),
-                    load_indexes=self._load_indexes,
-                    load_search_index_rows=lambda current_db_name, current_coll_name: self._load_search_index_rows(
-                        current_db_name,
-                        current_coll_name,
-                    ),
-                    begin_write=lambda current: None,
-                    commit_write=lambda current: None,
-                    rollback_write=lambda current: None,
-                    translate_compiled_update_plan=lambda compiled_update_plan, current_document: translate_compiled_update_plan(
-                        compiled_update_plan,
-                        current_document=current_document,
-                    ),
-                    compiled_update_plan_type=CompiledUpdatePlan,
-                    rebuild_multikey_entries_for_document=self._rebuild_multikey_entries_for_document,
-                    rebuild_scalar_entries_for_document=self._rebuild_scalar_entries_for_document,
-                    replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, storage_key, document, search_indexes: self._replace_search_entries_for_document(
-                        current,
-                        current_db_name,
-                        current_coll_name,
-                        storage_key,
-                        document,
-                        search_indexes=search_indexes,
-                    ),
-                    serialize_document=self._serialize_document,
-                    storage_key_for_id=self._storage_key,
-                    new_object_id=ObjectId,
-                    invalidate_collection_features_cache=self._invalidate_collection_features_cache,
-                    replacement_document=replacement_document,
-                )
-                    if (
-                        result.after_document is not None
-                        and (
-                            result.result.upserted_id is not None
-                            or result.result.modified_count > 0
-                        )
+                        collection_options_or_empty=self._collection_options_or_empty_sync,
+                        dialect_requires_python_fallback=self._dialect_requires_python_fallback,
+                        select_first_document_for_plan=self._select_first_document_for_plan,
+                        load_documents=self._load_documents,
+                        match_plan=lambda document, query_plan, current_dialect, current_collation, variables: (
+                            QueryEngine.match_plan(
+                                document,
+                                query_plan,
+                                dialect=current_dialect,
+                                collation=current_collation,
+                                variables=variables,
+                            )
+                        ),
+                        enforce_collection_document_validation=enforce_collection_document_validation,
+                        validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: (
+                            self._validate_document_against_unique_indexes(
+                                current_db_name,
+                                current_coll_name,
+                                document,
+                                exclude_storage_key=exclude_storage_key,
+                                skip_id_check=skip_id_check,
+                                scan_payload_id=scan_payload_id,
+                            )
+                        ),
+                        load_indexes=self._load_indexes,
+                        load_search_index_rows=lambda current_db_name, current_coll_name: (
+                            self._load_search_index_rows(
+                                current_db_name,
+                                current_coll_name,
+                            )
+                        ),
+                        begin_write=lambda current: None,
+                        commit_write=lambda current: None,
+                        rollback_write=lambda current: None,
+                        translate_compiled_update_plan=lambda compiled_update_plan, current_document: (
+                            translate_compiled_update_plan(
+                                compiled_update_plan,
+                                current_document=current_document,
+                            )
+                        ),
+                        compiled_update_plan_type=CompiledUpdatePlan,
+                        rebuild_multikey_entries_for_document=self._rebuild_multikey_entries_for_document,
+                        rebuild_scalar_entries_for_document=self._rebuild_scalar_entries_for_document,
+                        replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, storage_key, document, search_indexes: (
+                            self._replace_search_entries_for_document(
+                                current,
+                                current_db_name,
+                                current_coll_name,
+                                storage_key,
+                                document,
+                                search_indexes=search_indexes,
+                            )
+                        ),
+                        serialize_document=self._serialize_document,
+                        storage_key_for_id=self._storage_key,
+                        new_object_id=ObjectId,
+                        invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                        replacement_document=replacement_document,
+                    )
+                    if result.after_document is not None and (
+                        result.result.upserted_id is not None
+                        or result.result.modified_count > 0
                     ):
                         change_context = operation_context
                         if (
                             change_context is not None
-                            and '_id' not in result.after_document
+                            and "_id" not in result.after_document
                         ):
-                            change_context = (
-                                change_context.for_unpublishable_change()
-                            )
+                            change_context = change_context.for_unpublishable_change()
                         commit_sequence = _sqlite_append_change(
                             conn,
                             context=change_context,
                             operation_type=(
-                                'insert'
+                                "insert"
                                 if result.result.upserted_id is not None
-                                else operation_context.change_operation_type
-                                if operation_context is not None
-                                and operation_context.change_operation_type is not None
-                                else 'update'
+                                else (
+                                    operation_context.change_operation_type
+                                    if operation_context is not None
+                                    and operation_context.change_operation_type
+                                    is not None
+                                    else "update"
+                                )
                             ),
                             db_name=db_name,
                             coll_name=coll_name,
                             document_key=(
                                 {
-                                    '_id': deepcopy(
-                                        result.after_document['_id'],
+                                    "_id": deepcopy(
+                                        result.after_document["_id"],
                                     ),
                                 }
-                                if '_id' in result.after_document
+                                if "_id" in result.after_document
                                 else {}
                             ),
                             full_document=deepcopy(result.after_document),
@@ -6185,7 +7171,8 @@ class SQLiteEngine(AsyncStorageEngine):
                             max_entries=self._change_outbox_max_entries,
                         )
                         result = replace(
-                            result, commit_sequence=commit_sequence
+                            result,
+                            commit_sequence=commit_sequence,
                         )
                 if result.after_document is not None and on_commit is not None:
                     on_commit(result)
@@ -6262,9 +7249,9 @@ class SQLiteEngine(AsyncStorageEngine):
         weights: dict[str, int] | None = None,
         default_language: str | None = None,
         language_override: str | None = None,
-        min_value: float | int | None = None,
-        max_value: float | int | None = None,
-        bucket_size: float | int | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
+        bucket_size: float | None = None,
         max_time_ms: int | None = None,
         context: ClientSession | None = None,
     ) -> str:
@@ -6291,12 +7278,34 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     @override
-    async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[IndexDocument]:
-        return await self._run_blocking(self._list_indexes_sync, db_name, coll_name, context)
+    async def list_indexes(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> list[IndexDocument]:
+        return await self._run_blocking(
+            self._list_indexes_sync,
+            db_name,
+            coll_name,
+            context,
+        )
 
     @override
-    async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> IndexInformation:
-        return await self._run_blocking(self._index_information_sync, db_name, coll_name, context)
+    async def index_information(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> IndexInformation:
+        return await self._run_blocking(
+            self._index_information_sync,
+            db_name,
+            coll_name,
+            context,
+        )
 
     @override
     async def drop_index(
@@ -6307,7 +7316,13 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
-        await self._run_blocking(self._drop_index_sync, db_name, coll_name, index_or_name, context)
+        await self._run_blocking(
+            self._drop_index_sync,
+            db_name,
+            coll_name,
+            index_or_name,
+            context,
+        )
 
     @override
     async def drop_indexes(
@@ -6317,7 +7332,12 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
-        await self._run_blocking(self._drop_indexes_sync, db_name, coll_name, context)
+        await self._run_blocking(
+            self._drop_indexes_sync,
+            db_name,
+            coll_name,
+            context,
+        )
 
     @override
     async def create_search_index(
@@ -6419,6 +7439,85 @@ class SQLiteEngine(AsyncStorageEngine):
             downstream_filter_spec,
         )
 
+    async def execute_search(
+        self,
+        db_name: str,
+        coll_name: str,
+        request: SearchRequest,
+    ) -> SearchExecutionOutcome:
+        if request.mode is SearchExecutionMode.METADATA:
+            pushdown = await self._run_blocking(
+                self._collect_search_metadata_pushdown_sync,
+                db_name,
+                coll_name,
+                request,
+            )
+            if pushdown is not None:
+                return SearchExecutionOutcome(
+                    metadata=pushdown.metadata,
+                    trace=SearchExecutionTrace(
+                        backend="sqlite",
+                        matched_count=pushdown.candidate_count,
+                        candidate_count=pushdown.candidate_count,
+                        documents_scanned=0,
+                        collector_backend="sqlite",
+                        collector_pushdown=True,
+                        collector_count=pushdown.collector_count,
+                        collector_plan=SearchCollectorPlan(
+                            backend="sqlite",
+                            pushed_down=True,
+                            candidate_exact=True,
+                            count_strategy="candidate-set",
+                            facet_strategy="group-by-distinct-storage-key",
+                        ),
+                    ),
+                )
+        documents = await self._run_blocking(
+            self._search_documents_sync,
+            db_name,
+            coll_name,
+            request.effective_operator,
+            request.effective_specification,
+            request.max_time_ms,
+            request.operation_context.session,
+            request.result_limit_hint,
+            request.downstream_filter_spec,
+            request.query,
+            request.operation_context,
+        )
+        if request.mode is SearchExecutionMode.METADATA:
+            return SearchExecutionOutcome(
+                metadata=collect_search_metadata(
+                    documents,
+                    query=request.query,
+                ),
+                trace=SearchExecutionTrace(
+                    backend="sqlite",
+                    matched_count=len(documents),
+                    collector_backend="semantic-core",
+                    collector_count=(
+                        (1 if request.query.stage_options.count else 0)
+                        + (
+                            len(request.query.stage_options.facet.definitions)
+                            if request.query.stage_options.facet
+                            else 0
+                        )
+                    ),
+                    collector_plan=SearchCollectorPlan(
+                        backend="semantic-core",
+                        pushed_down=False,
+                        candidate_exact=None,
+                        count_strategy="materialized-outcome",
+                        facet_strategy="semantic-accumulator",
+                        fallback_reason="pushdown-not-provably-exact",
+                    ),
+                ),
+            )
+        return SearchExecutionOutcome.from_documents(
+            documents,
+            backend="sqlite",
+        )
+
     async def explain_search_documents(
         self,
         db_name: str,
@@ -6442,6 +7541,78 @@ class SQLiteEngine(AsyncStorageEngine):
             result_limit_hint,
             downstream_filter_spec,
         )
+
+    async def explain_search(
+        self,
+        db_name: str,
+        coll_name: str,
+        request: SearchRequest,
+        verbosity: SearchExplainVerbosity,
+    ) -> QueryPlanExplanation:
+        if verbosity is SearchExplainVerbosity.QUERY_PLANNER:
+            return await self._run_blocking(
+                self._plan_search_documents_sync,
+                db_name,
+                coll_name,
+                request,
+            )
+        if request.mode is SearchExecutionMode.HITS:
+            explanation = await self._run_blocking(
+                self._explain_search_documents_sync,
+                db_name,
+                coll_name,
+                request.operator,
+                request.specification,
+                request.max_time_ms,
+                request.operation_context.session,
+                request.result_limit_hint,
+                request.downstream_filter_spec,
+                request.operation_context,
+            )
+            details = dict(explanation.details or {})
+            details.update(
+                {
+                    "contractVersion": "search-v1",
+                    "verbosity": verbosity.value,
+                    "executionStats": SearchExecutionTrace.from_explain_details(
+                        details,
+                        default_backend="sqlite",
+                    ).to_document(),
+                },
+            )
+            return replace(explanation, details=details)
+        plan = await self._run_blocking(
+            self._plan_search_documents_sync,
+            db_name,
+            coll_name,
+            request,
+        )
+        outcome = await self.execute_search(db_name, coll_name, request)
+        details = dict(plan.details or {})
+        trace = outcome.trace
+        details.update(
+            {
+                "contractVersion": "search-v1",
+                "verbosity": verbosity.value,
+                "executionStats": trace.to_document() if trace is not None else None,
+            },
+        )
+        if request.mode is SearchExecutionMode.METADATA:
+            collector_pushdown = dict(details.get("collectorPushdown") or {})
+            if trace is not None:
+                collector_pushdown.update(
+                    {
+                        "backend": trace.collector_backend,
+                        "pushedDown": trace.collector_pushdown,
+                    },
+                )
+            details["collectorPlan"] = (
+                trace.collector_plan.to_document()
+                if trace is not None and trace.collector_plan is not None
+                else None
+            )
+            details["collectorPushdown"] = collector_pushdown
+        return replace(plan, details=details)
 
     @override
     async def explain_find_semantics(
@@ -6470,14 +7641,17 @@ class SQLiteEngine(AsyncStorageEngine):
                 semantics.hint,
             )
         else:
-            text_indexes = await self._run_blocking(self._load_indexes, db_name, coll_name)
-            text_index_name, text_fields = resolve_classic_text_index_for_hint(text_indexes, semantics.hint)
+            text_indexes = await self._run_blocking(
+                self._load_indexes,
+                db_name,
+                coll_name,
+            )
+            text_index_name, text_fields = resolve_classic_text_index_for_hint(
+                text_indexes,
+                semantics.hint,
+            )
             text_index_metadata = next(
-                (
-                    index
-                    for index in text_indexes
-                    if index.name == text_index_name
-                ),
+                (index for index in text_indexes if index.name == text_index_name),
                 None,
             )
             hinted_index = text_index_metadata if semantics.hint is not None else None
@@ -6489,7 +7663,10 @@ class SQLiteEngine(AsyncStorageEngine):
         )
         pushdown_details = sqlite_pushdown_details(execution_plan)
         details: object
-        if isinstance(execution_plan, SQLiteReadExecutionPlan) and execution_plan.use_sql:
+        if (
+            isinstance(execution_plan, SQLiteReadExecutionPlan)
+            and execution_plan.use_sql
+        ):
             sql_details = await self._run_blocking(
                 self._explain_query_plan_sync,
                 db_name,
@@ -6509,7 +7686,12 @@ class SQLiteEngine(AsyncStorageEngine):
                 "fallback_reason": execution_plan.fallback_reason,
             }
         virtual_details = describe_virtual_index_usage(
-            await self._run_blocking(self._list_indexes_sync, db_name, coll_name, context),
+            await self._run_blocking(
+                self._list_indexes_sync,
+                db_name,
+                coll_name,
+                context,
+            ),
             semantics.query_plan,
             hinted_index_name=None if hinted_index is None else hinted_index["name"],
             dialect=semantics.dialect,
@@ -6530,34 +7712,40 @@ class SQLiteEngine(AsyncStorageEngine):
                     "tokenizer": "lowercase+punctuation-split",
                     "caseSensitive": semantics.text_query.case_sensitive,
                     "diacriticSensitive": semantics.text_query.diacritic_sensitive,
-                }
+                },
             }
             if semantics.text_query.required_phrases:
                 text_details["textQuery"]["requiredPhrases"] = [
-                    " ".join(phrase)
-                    for phrase in semantics.text_query.required_phrases
+                    " ".join(phrase) for phrase in semantics.text_query.required_phrases
                 ]
             if semantics.text_query.excluded_terms:
                 text_details["textQuery"]["excludedTerms"] = list(
-                    semantics.text_query.excluded_terms
+                    semantics.text_query.excluded_terms,
                 )
             if semantics.text_query.excluded_phrases:
                 text_details["textQuery"]["excludedPhrases"] = [
-                    " ".join(phrase)
-                    for phrase in semantics.text_query.excluded_phrases
+                    " ".join(phrase) for phrase in semantics.text_query.excluded_phrases
                 ]
             if semantics.text_query.language is not None:
                 text_details["textQuery"]["language"] = semantics.text_query.language
             if text_index_metadata is not None:
                 if text_index_metadata.weights is not None:
-                    text_details["textQuery"]["weights"] = deepcopy(text_index_metadata.weights)
+                    text_details["textQuery"]["weights"] = deepcopy(
+                        text_index_metadata.weights,
+                    )
                 if text_index_metadata.default_language is not None:
-                    text_details["textQuery"]["defaultLanguage"] = text_index_metadata.default_language
+                    text_details["textQuery"]["defaultLanguage"] = (
+                        text_index_metadata.default_language
+                    )
                 if text_index_metadata.language_override is not None:
-                    text_details["textQuery"]["languageOverride"] = text_index_metadata.language_override
+                    text_details["textQuery"]["languageOverride"] = (
+                        text_index_metadata.language_override
+                    )
             if isinstance(details, dict):
                 details = {**details, **text_details}
-        planning_issues = sqlite_planning_issues(execution_plan.fallback_reason)
+        planning_issues = sqlite_planning_issues(
+            execution_plan.fallback_reason,
+        )
         pushdown_hints = sqlite_pushdown_followup_hints(
             semantics.query_plan,
             execution_plan.fallback_reason,
@@ -6577,7 +7765,11 @@ class SQLiteEngine(AsyncStorageEngine):
         )
 
     @override
-    async def list_databases(self, *, context: ClientSession | None = None) -> list[str]:
+    async def list_databases(
+        self,
+        *,
+        context: ClientSession | None = None,
+    ) -> list[str]:
         return await self._run_blocking(self._list_databases_sync, context)
 
     async def drop_database(
@@ -6589,8 +7781,17 @@ class SQLiteEngine(AsyncStorageEngine):
         await self._run_blocking(self._drop_database_sync, db_name, context)
 
     @override
-    async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]:
-        return await self._run_blocking(self._list_collections_sync, db_name, context)
+    async def list_collections(
+        self,
+        db_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> list[str]:
+        return await self._run_blocking(
+            self._list_collections_sync,
+            db_name,
+            context,
+        )
 
     @override
     async def collection_options(
@@ -6649,4 +7850,9 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> None:
-        await self._run_blocking(self._drop_collection_sync, db_name, coll_name, context)
+        await self._run_blocking(
+            self._drop_collection_sync,
+            db_name,
+            coll_name,
+            context,
+        )

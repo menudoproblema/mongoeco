@@ -1,9 +1,11 @@
 import math
 import re
 import unittest
+
 from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import patch
+
 
 try:
     from bson.objectid import ObjectId as BsonObjectId
@@ -11,6 +13,7 @@ except Exception:  # pragma: no cover - optional dependency
     BsonObjectId = None
 
 import mongoeco.core.operators as operators_module
+
 from mongoeco.compat import MongoDialect
 from mongoeco.core.bson_scalars import BsonInt32, BsonInt64
 from mongoeco.core.collation import normalize_collation
@@ -26,17 +29,17 @@ class UpdateEngineTests(unittest.TestCase):
         class _NoSetDialect(MongoDialect):
             def supports_update_operator(self, name: str) -> bool:
                 return (
-                    False
-                    if name == '$set'
-                    else super().supports_update_operator(name)
+                    False if name == "$set" else super().supports_update_operator(name)
                 )
 
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
                 {},
-                {'$set': {'field': 1}},
+                {"$set": {"field": 1}},
                 dialect=_NoSetDialect(
-                    key='test', server_version='test', label='No Set'
+                    key="test",
+                    server_version="test",
+                    label="No Set",
                 ),
             )
 
@@ -51,30 +54,32 @@ class UpdateEngineTests(unittest.TestCase):
         document: dict[str, object] = {}
         UpdateEngine.apply_update(
             document,
-            {'$set': {'b': 1, 'a': 2}},
+            {"$set": {"b": 1, "a": 2}},
             dialect=_InsertionFieldOrderDialect(
-                key='test',
-                server_version='test',
-                label='Insertion Update Order',
+                key="test",
+                server_version="test",
+                label="Insertion Update Order",
             ),
         )
 
-        self.assertEqual(list(document.keys()), ['b', 'a'])
+        self.assertEqual(list(document.keys()), ["b", "a"])
 
     def test_set_none_creates_missing_field(self):
         document = {}
 
         modified = UpdateEngine.apply_update(
-            document, {'$set': {'field': None}}
+            document,
+            {"$set": {"field": None}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'field': None})
+        self.assertEqual(document, {"field": None})
 
     def test_unknown_operator_raises_operation_failure(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'arr': []}, {'$bit': {'arr': {'and': 1}}}
+                {"arr": []},
+                {"$bit": {"arr": {"and": 1}}},
             )
 
     def test_update_engine_rejects_custom_supported_but_unimplemented_operator(
@@ -84,18 +89,18 @@ class UpdateEngineTests(unittest.TestCase):
             def supports_update_operator(self, name: str) -> bool:
                 return (
                     True
-                    if name == '$futureUpdate'
+                    if name == "$futureUpdate"
                     else super().supports_update_operator(name)
                 )
 
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'arr': []},
-                {'$futureUpdate': {'arr': 'items'}},
+                {"arr": []},
+                {"$futureUpdate": {"arr": "items"}},
                 dialect=_FutureUpdateDialect(
-                    key='test',
-                    server_version='test',
-                    label='Future Update',
+                    key="test",
+                    server_version="test",
+                    label="Future Update",
                 ),
             )
 
@@ -103,7 +108,7 @@ class UpdateEngineTests(unittest.TestCase):
         self,
     ):
         unsupported_specs = [
-            {'$pushAll': {'tags': ['python']}},
+            {"$pushAll": {"tags": ["python"]}},
         ]
 
         for spec in unsupported_specs:
@@ -113,72 +118,74 @@ class UpdateEngineTests(unittest.TestCase):
 
     def test_update_rejects_empty_or_non_document_specs(self):
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({'a': 1}, {})
+            UpdateEngine.apply_update({"a": 1}, {})
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({'a': 1}, [])  # type: ignore[arg-type]
+            UpdateEngine.apply_update({"a": 1}, [])  # type: ignore[arg-type]
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({'a': 1}, None)  # type: ignore[arg-type]
+            UpdateEngine.apply_update({"a": 1}, None)  # type: ignore[arg-type]
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({'a': 1}, {'$set': []})  # type: ignore[dict-item]
+            UpdateEngine.apply_update({"a": 1}, {"$set": []})  # type: ignore[dict-item]
 
     def test_set_cannot_modify_immutable_id(self):
-        document = {'_id': 'old', 'name': 'Ada'}
+        document = {"_id": "old", "name": "Ada"}
 
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update(document, {'$set': {'_id': 'new'}})
+            UpdateEngine.apply_update(document, {"$set": {"_id": "new"}})
 
-        self.assertEqual(document, {'_id': 'old', 'name': 'Ada'})
+        self.assertEqual(document, {"_id": "old", "name": "Ada"})
 
     def test_set_same_id_is_allowed(self):
-        document = {'_id': 'old', 'name': 'Ada'}
+        document = {"_id": "old", "name": "Ada"}
 
         modified = UpdateEngine.apply_update(
-            document, {'$set': {'_id': 'old'}}
+            document,
+            {"$set": {"_id": "old"}},
         )
 
         self.assertFalse(modified)
-        self.assertEqual(document, {'_id': 'old', 'name': 'Ada'})
+        self.assertEqual(document, {"_id": "old", "name": "Ada"})
 
     def test_set_on_insert_can_create_or_preserve_seeded_id(self):
-        seeded = {'_id': 'seed', 'kind': 'user'}
+        seeded = {"_id": "seed", "kind": "user"}
         modified = UpdateEngine.apply_update(
             seeded,
-            {'$setOnInsert': {'_id': 'seed', 'state': 'new'}},
+            {"$setOnInsert": {"_id": "seed", "state": "new"}},
             is_upsert_insert=True,
         )
 
         self.assertTrue(modified)
         self.assertEqual(
-            seeded, {'_id': 'seed', 'kind': 'user', 'state': 'new'}
+            seeded,
+            {"_id": "seed", "kind": "user", "state": "new"},
         )
 
         unseeded: dict[str, object] = {}
         modified_unseeded = UpdateEngine.apply_update(
             unseeded,
-            {'$setOnInsert': {'_id': 'created'}},
+            {"$setOnInsert": {"_id": "created"}},
             is_upsert_insert=True,
         )
 
         self.assertTrue(modified_unseeded)
-        self.assertEqual(unseeded, {'_id': 'created'})
+        self.assertEqual(unseeded, {"_id": "created"})
 
-        conflict = {'_id': 'seed', 'kind': 'user'}
+        conflict = {"_id": "seed", "kind": "user"}
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
                 conflict,
-                {'$setOnInsert': {'_id': 'other', 'state': 'new'}},
+                {"$setOnInsert": {"_id": "other", "state": "new"}},
                 is_upsert_insert=True,
             )
-        self.assertEqual(conflict, {'_id': 'seed', 'kind': 'user'})
+        self.assertEqual(conflict, {"_id": "seed", "kind": "user"})
 
     def test_classic_update_can_create_valid_id_when_original_has_none(self):
         cases = [
-            ({'$set': {'_id': 'set'}}, 'set'),
-            ({'$inc': {'_id': 4}}, 4),
-            ({'$min': {'_id': 2}}, 2),
-            ({'$max': {'_id': 9}}, 9),
-            ({'$mul': {'_id': 3}}, 0),
-            ({'$bit': {'_id': {'or': 4}}}, 4),
+            ({"$set": {"_id": "set"}}, "set"),
+            ({"$inc": {"_id": 4}}, 4),
+            ({"$min": {"_id": 2}}, 2),
+            ({"$max": {"_id": 9}}, 9),
+            ({"$mul": {"_id": 3}}, 0),
+            ({"$bit": {"_id": {"or": 4}}}, 4),
         ]
 
         for update, expected_id in cases:
@@ -191,17 +198,17 @@ class UpdateEngineTests(unittest.TestCase):
                 )
 
                 self.assertTrue(modified)
-                self.assertEqual(document['_id'], expected_id)
+                self.assertEqual(document["_id"], expected_id)
 
         dated: dict[str, object] = {}
         self.assertTrue(
             UpdateEngine.apply_update(
                 dated,
-                {'$currentDate': {'_id': True}},
+                {"$currentDate": {"_id": True}},
                 is_upsert_insert=True,
-            )
+            ),
         )
-        self.assertIsInstance(dated['_id'], datetime)
+        self.assertIsInstance(dated["_id"], datetime)
 
     def test_classic_update_rejects_root_array_id_creation_atomically(self):
         document: dict[str, object] = {}
@@ -209,51 +216,51 @@ class UpdateEngineTests(unittest.TestCase):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
                 document,
-                {'$set': {'_id': [1]}},
+                {"$set": {"_id": [1]}},
                 is_upsert_insert=True,
             )
 
         self.assertEqual(document, {})
 
     def test_classic_update_rejects_existing_root_array_id_atomically(self):
-        document: dict[str, object] = {'_id': [1], 'name': 'Ada'}
+        document: dict[str, object] = {"_id": [1], "name": "Ada"}
 
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update(document, {'$set': {'done': True}})
+            UpdateEngine.apply_update(document, {"$set": {"done": True}})
 
-        self.assertEqual(document, {'_id': [1], 'name': 'Ada'})
+        self.assertEqual(document, {"_id": [1], "name": "Ada"})
 
     def test_classic_update_id_noops_are_allowed(self):
         cases = [
-            ({'$set': {'_id': 7}}, 7),
-            ({'$inc': {'_id': 0}}, 7),
-            ({'$mul': {'_id': 1}}, 7),
-            ({'$min': {'_id': 9}}, 7),
-            ({'$max': {'_id': 3}}, 7),
-            ({'$bit': {'_id': {'and': 7}}}, 7),
+            ({"$set": {"_id": 7}}, 7),
+            ({"$inc": {"_id": 0}}, 7),
+            ({"$mul": {"_id": 1}}, 7),
+            ({"$min": {"_id": 9}}, 7),
+            ({"$max": {"_id": 3}}, 7),
+            ({"$bit": {"_id": {"and": 7}}}, 7),
         ]
 
         for update, initial_id in cases:
             with self.subTest(update=update):
-                document = {'_id': initial_id, 'name': 'Ada'}
+                document = {"_id": initial_id, "name": "Ada"}
                 modified = UpdateEngine.apply_update(document, update)
 
                 self.assertFalse(modified)
-                self.assertEqual(document, {'_id': initial_id, 'name': 'Ada'})
+                self.assertEqual(document, {"_id": initial_id, "name": "Ada"})
 
     def test_classic_update_rejects_real_id_changes_atomically(self):
         cases = [
-            {'$set': {'_id': 'new'}},
-            {'$inc': {'_id': 1}},
-            {'$unset': {'_id': ''}},
-            {'$rename': {'_id': 'old_id'}},
+            {"$set": {"_id": "new"}},
+            {"$inc": {"_id": 1}},
+            {"$unset": {"_id": ""}},
+            {"$rename": {"_id": "old_id"}},
         ]
 
         for update in cases:
             with self.subTest(update=update):
                 document = {
-                    '_id': 'old' if '$inc' not in update else 1,
-                    'name': 'Ada',
+                    "_id": "old" if "$inc" not in update else 1,
+                    "name": "Ada",
                 }
                 original = dict(document)
 
@@ -263,162 +270,169 @@ class UpdateEngineTests(unittest.TestCase):
                 self.assertEqual(document, original)
 
     def test_rename_can_create_id_or_noop_but_not_replace_existing_id(self):
-        created = {'source': 'seed'}
+        created = {"source": "seed"}
         self.assertTrue(
             UpdateEngine.apply_update(
                 created,
-                {'$rename': {'source': '_id'}},
+                {"$rename": {"source": "_id"}},
                 is_upsert_insert=True,
-            )
+            ),
         )
-        self.assertEqual(created, {'_id': 'seed'})
+        self.assertEqual(created, {"_id": "seed"})
 
-        noop = {'_id': 'seed', 'name': 'Ada'}
+        noop = {"_id": "seed", "name": "Ada"}
         self.assertFalse(
-            UpdateEngine.apply_update(noop, {'$rename': {'missing': '_id'}})
+            UpdateEngine.apply_update(noop, {"$rename": {"missing": "_id"}}),
         )
-        self.assertEqual(noop, {'_id': 'seed', 'name': 'Ada'})
+        self.assertEqual(noop, {"_id": "seed", "name": "Ada"})
 
-        conflict = {'_id': 'seed', 'source': 'other'}
+        conflict = {"_id": "seed", "source": "other"}
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update(conflict, {'$rename': {'source': '_id'}})
-        self.assertEqual(conflict, {'_id': 'seed', 'source': 'other'})
+            UpdateEngine.apply_update(conflict, {"$rename": {"source": "_id"}})
+        self.assertEqual(conflict, {"_id": "seed", "source": "other"})
 
     def test_descendant_id_paths_preserve_whole_id_value(self):
         created: dict[str, object] = {}
         self.assertTrue(
-            UpdateEngine.apply_update(created, {'$set': {'_id.a': [1]}})
+            UpdateEngine.apply_update(created, {"$set": {"_id.a": [1]}}),
         )
-        self.assertEqual(created, {'_id': {'a': [1]}})
+        self.assertEqual(created, {"_id": {"a": [1]}})
 
-        noop = {'_id': {'a': [1]}, 'name': 'Ada'}
+        noop = {"_id": {"a": [1]}, "name": "Ada"}
         self.assertFalse(
-            UpdateEngine.apply_update(noop, {'$set': {'_id.a': [1]}})
+            UpdateEngine.apply_update(noop, {"$set": {"_id.a": [1]}}),
         )
-        self.assertEqual(noop, {'_id': {'a': [1]}, 'name': 'Ada'})
+        self.assertEqual(noop, {"_id": {"a": [1]}, "name": "Ada"})
 
-        changed = {'_id': {'a': 1}, 'name': 'Ada'}
+        changed = {"_id": {"a": 1}, "name": "Ada"}
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update(changed, {'$set': {'_id.a': 2}})
-        self.assertEqual(changed, {'_id': {'a': 1}, 'name': 'Ada'})
+            UpdateEngine.apply_update(changed, {"$set": {"_id.a": 2}})
+        self.assertEqual(changed, {"_id": {"a": 1}, "name": "Ada"})
 
     def test_pipeline_updates_preserve_or_validate_id(self):
-        same = {'_id': '1', 'name': 'Ada'}
+        same = {"_id": "1", "name": "Ada"}
         self.assertFalse(
-            UpdateEngine.apply_update(same, [{'$set': {'_id': '1'}}])
+            UpdateEngine.apply_update(same, [{"$set": {"_id": "1"}}]),
         )
-        self.assertEqual(same, {'_id': '1', 'name': 'Ada'})
+        self.assertEqual(same, {"_id": "1", "name": "Ada"})
 
-        unset = {'_id': '1', 'name': 'Ada'}
-        self.assertTrue(UpdateEngine.apply_update(unset, [{'$unset': '_id'}]))
-        self.assertEqual(unset, {'name': 'Ada', '_id': '1'})
+        unset = {"_id": "1", "name": "Ada"}
+        self.assertTrue(UpdateEngine.apply_update(unset, [{"$unset": "_id"}]))
+        self.assertEqual(unset, {"_id": "1", "name": "Ada"})
 
-        projected = {'_id': '1', 'name': 'Ada', 'legacy': True}
+        projected = {"_id": "1", "name": "Ada", "legacy": True}
         self.assertTrue(
             UpdateEngine.apply_update(
-                projected, [{'$project': {'_id': 0, 'name': 1}}]
-            )
+                projected,
+                [{"$project": {"_id": 0, "name": 1}}],
+            ),
         )
-        self.assertEqual(projected, {'name': 'Ada', '_id': '1'})
+        self.assertEqual(projected, {"_id": "1", "name": "Ada"})
 
-        replaced = {'_id': '1', 'name': 'Ada', 'legacy': True}
+        replaced = {"_id": "1", "name": "Ada", "legacy": True}
         self.assertTrue(
             UpdateEngine.apply_update(
                 replaced,
-                [{'$replaceRoot': {'newRoot': {'name': 'Ada'}}}],
-            )
+                [{"$replaceRoot": {"newRoot": {"name": "Ada"}}}],
+            ),
         )
-        self.assertEqual(replaced, {'name': 'Ada', '_id': '1'})
+        self.assertEqual(replaced, {"_id": "1", "name": "Ada"})
 
-        changed = {'_id': '1', 'name': 'Ada'}
+        changed = {"_id": "1", "name": "Ada"}
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update(changed, [{'$set': {'_id': '2'}}])
-        self.assertEqual(changed, {'_id': '1', 'name': 'Ada'})
+            UpdateEngine.apply_update(changed, [{"$set": {"_id": "2"}}])
+        self.assertEqual(changed, {"_id": "1", "name": "Ada"})
 
-        created: dict[str, object] = {'name': 'Ada'}
+        created: dict[str, object] = {"name": "Ada"}
         self.assertTrue(
-            UpdateEngine.apply_update(created, [{'$set': {'_id': 'created'}}])
+            UpdateEngine.apply_update(created, [{"$set": {"_id": "created"}}]),
         )
-        self.assertEqual(created, {'name': 'Ada', '_id': 'created'})
+        self.assertEqual(created, {"name": "Ada", "_id": "created"})
 
-        invalid: dict[str, object] = {'name': 'Ada'}
+        invalid: dict[str, object] = {"name": "Ada"}
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update(invalid, [{'$set': {'_id': [1]}}])
-        self.assertEqual(invalid, {'name': 'Ada'})
+            UpdateEngine.apply_update(invalid, [{"$set": {"_id": [1]}}])
+        self.assertEqual(invalid, {"name": "Ada"})
 
-        invalid_existing = {'_id': [1], 'name': 'Ada'}
+        invalid_existing = {"_id": [1], "name": "Ada"}
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                invalid_existing, [{'$project': {'_id': 0, 'name': 1}}]
+                invalid_existing,
+                [{"$project": {"_id": 0, "name": 1}}],
             )
-        self.assertEqual(invalid_existing, {'_id': [1], 'name': 'Ada'})
+        self.assertEqual(invalid_existing, {"_id": [1], "name": "Ada"})
 
     def test_set_rejects_different_immutable_id(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'_id': 'old', 'name': 'Ada'}, {'$set': {'_id': 'new'}}
+                {"_id": "old", "name": "Ada"},
+                {"$set": {"_id": "new"}},
             )
 
     def test_unset_cannot_modify_immutable_id(self):
-        document = {'_id': 'old', 'name': 'Ada'}
+        document = {"_id": "old", "name": "Ada"}
 
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update(document, {'$unset': {'_id': ''}})
+            UpdateEngine.apply_update(document, {"$unset": {"_id": ""}})
 
-        self.assertEqual(document, {'_id': 'old', 'name': 'Ada'})
+        self.assertEqual(document, {"_id": "old", "name": "Ada"})
 
     def test_update_rejects_legacy_positional_and_missing_array_filter_paths(
         self,
     ):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'qty': 1}]}, {'$set': {'items.$.qty': 2}}
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$.qty": 2}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'qty': 1}]}, {'$set': {'items.$[i].qty': 2}}
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[i].qty": 2}},
             )
 
     def test_update_engine_resolves_targets_before_applying_mutation(self):
         targets = UpdateEngine._resolve_update_targets(
-            {'items': [{'qty': 1}, {'qty': 2}]},
-            'items.$[].qty',
+            {"items": [{"qty": 1}, {"qty": 2}]},
+            "items.$[].qty",
             array_filters={},
             allow_positional=True,
         )
 
         self.assertEqual(
             [target.concrete_path for target in targets],
-            ['items.0.qty', 'items.1.qty'],
+            ["items.0.qty", "items.1.qty"],
         )
 
     def test_update_engine_deduplicates_repeated_resolved_targets(self):
         targets = UpdateEngine._resolve_update_targets(
-            {'items': [[{'qty': 1}]]},
-            'items.$[].$[].qty',
+            {"items": [[{"qty": 1}]]},
+            "items.$[].$[].qty",
             array_filters={},
             allow_positional=True,
         )
 
         self.assertEqual(
-            [target.concrete_path for target in targets], ['items.0.0.qty']
+            [target.concrete_path for target in targets],
+            ["items.0.0.qty"],
         )
 
     def test_update_engine_resolve_update_targets_deduplicates_duplicate_expansions(
         self,
     ):
-        compiled_path = compile_update_path('items.$[].qty')
+        compiled_path = compile_update_path("items.$[].qty")
         duplicate_target = ResolvedUpdatePath(
-            requested=compiled_path, concrete_path='items.0.qty'
+            requested=compiled_path,
+            concrete_path="items.0.qty",
         )
 
         with patch.object(
             operators_module,
-            'resolve_positional_update_paths',
+            "resolve_positional_update_paths",
             return_value=[duplicate_target, duplicate_target],
         ):
             targets = UpdateEngine._resolve_update_targets(
-                {'items': [{'qty': 1}]},
+                {"items": [{"qty": 1}]},
                 compiled_path,
                 array_filters={},
                 allow_positional=True,
@@ -428,14 +442,14 @@ class UpdateEngineTests(unittest.TestCase):
 
     def test_update_engine_compiles_resolved_instruction_applications(self):
         context = UpdateEngine.build_execution_context(
-            selector_filter={'items.qty': {'$gt': 0}},
+            selector_filter={"items.qty": {"$gt": 0}},
         )
         compiled = UpdateEngine._compile_update_spec(
-            {'$set': {'items.$[].qty': 5}},
+            {"$set": {"items.$[].qty": 5}},
             {},
         )
         applications = UpdateEngine._resolve_instruction_applications(
-            {'items': [{'qty': 1}, {'qty': 2}]},
+            {"items": [{"qty": 1}, {"qty": 2}]},
             compiled[0].instructions,
             context=context,
             allow_positional=True,
@@ -444,60 +458,62 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(len(applications), 1)
         self.assertEqual(
             [target.concrete_path for target in applications[0].targets],
-            ['items.0.qty', 'items.1.qty'],
+            ["items.0.qty", "items.1.qty"],
         )
 
     def test_update_engine_compiles_ordered_operator_instructions(self):
         compiled = UpdateEngine._compile_update_spec(
             {
-                '$set': {'b': 1, 'a': 2},
-                '$rename': {'profile.name': 'profile.alias'},
-                '$pull': {'tags': 'legacy'},
+                "$set": {"b": 1, "a": 2},
+                "$rename": {"profile.name": "profile.alias"},
+                "$pull": {"tags": "legacy"},
             },
             {},
         )
 
         self.assertEqual(
             [operator.operator for operator in compiled],
-            ['$set', '$rename', '$pull'],
+            ["$set", "$rename", "$pull"],
         )
         self.assertEqual(
             [instruction.path.raw for instruction in compiled[0].instructions],
-            ['a', 'b'],
+            ["a", "b"],
         )
-        self.assertEqual(compiled[1].instructions[0].path.raw, 'profile.name')
+        self.assertEqual(compiled[1].instructions[0].path.raw, "profile.name")
         self.assertEqual(
-            compiled[1].instructions[0].target_path.raw, 'profile.alias'
+            compiled[1].instructions[0].target_path.raw,
+            "profile.alias",
         )
-        self.assertEqual(compiled[2].instructions[0].path.raw, 'tags')
+        self.assertEqual(compiled[2].instructions[0].path.raw, "tags")
 
     def test_update_engine_builds_explicit_execution_context(self):
         context = UpdateEngine.build_execution_context(
-            selector_filter={'items.qty': {'$gt': 0}},
-            array_filters=[{'item.qty': {'$gt': 1}}],
+            selector_filter={"items.qty": {"$gt": 0}},
+            array_filters=[{"item.qty": {"$gt": 1}}],
             is_upsert_insert=True,
         )
 
-        self.assertEqual(context.selector_filter, {'items.qty': {'$gt': 0}})
-        self.assertEqual(context.raw_array_filters, [{'item.qty': {'$gt': 1}}])
+        self.assertEqual(context.selector_filter, {"items.qty": {"$gt": 0}})
+        self.assertEqual(context.raw_array_filters, [{"item.qty": {"$gt": 1}}])
         self.assertEqual(
-            context.compiled_array_filters, {'item': {'qty': {'$gt': 1}}}
+            context.compiled_array_filters,
+            {"item": {"qty": {"$gt": 1}}},
         )
         self.assertTrue(context.is_upsert_insert)
 
     def test_update_engine_can_compile_and_reuse_update_plan(self):
         plan = UpdateEngine.compile_update_plan(
-            {'$set': {'profile.name': 'Ada'}},
-            selector_filter={'_id': 'user-1'},
+            {"$set": {"profile.name": "Ada"}},
+            selector_filter={"_id": "user-1"},
         )
-        document = {'_id': 'user-1', 'profile': {}}
+        document = {"_id": "user-1", "profile": {}}
 
         modified = UpdateEngine.apply_compiled_update(document, plan)
 
         self.assertTrue(modified)
-        self.assertEqual(document['profile'], {'name': 'Ada'})
-        self.assertEqual(plan.context.selector_filter, {'_id': 'user-1'})
-        self.assertEqual(plan.compiled_operators[0].operator, '$set')
+        self.assertEqual(document["profile"], {"name": "Ada"})
+        self.assertEqual(plan.context.selector_filter, {"_id": "user-1"})
+        self.assertEqual(plan.compiled_operators[0].operator, "$set")
 
     def test_compile_update_plan_rejects_empty_spec_directly(self):
         with self.assertRaises(OperationFailure):
@@ -507,130 +523,138 @@ class UpdateEngineTests(unittest.TestCase):
         self,
     ):
         context = UpdateEngine.build_execution_context(
-            array_filters=[{'item.qty': {'$gt': 1}}]
+            array_filters=[{"item.qty": {"$gt": 1}}],
         )
 
         with self.assertRaisesRegex(
-            OperationFailure, 'arrayFilters may not be specified'
+            OperationFailure,
+            "arrayFilters may not be specified",
         ):
             UpdateEngine.compile_update_pipeline_plan(
-                [{'$set': {'done': True}}],
+                [{"$set": {"done": True}}],
                 context=context,
             )
 
     def test_compiled_update_pipeline_plan_rejects_non_document_output(self):
         context = UpdateEngine.build_execution_context()
         plan = CompiledUpdatePipelinePlan(
-            update_spec=[{'$set': {'done': True}}],
+            update_spec=[{"$set": {"done": True}}],
             context=context,
             compiled_pipeline=SimpleNamespace(
-                execute=lambda _docs, variables=None: [1]
+                execute=lambda _docs, variables=None: [1],
             ),
         )
 
-        with self.assertRaisesRegex(OperationFailure, 'single document'):
-            plan.apply({'done': False})
+        with self.assertRaisesRegex(OperationFailure, "single document"):
+            plan.apply({"done": False})
 
     def test_compiled_update_pipeline_plan_uses_pipeline_fallback_when_not_precompiled(
         self,
     ):
         context = UpdateEngine.build_execution_context()
         plan = CompiledUpdatePipelinePlan(
-            update_spec=[{'$set': {'done': True}}],
+            update_spec=[{"$set": {"done": True}}],
             context=context,
         )
-        document = {'done': False}
+        document = {"done": False}
 
         self.assertTrue(plan.apply(document))
-        self.assertEqual(document, {'done': True})
+        self.assertEqual(document, {"done": True})
 
     def test_validate_update_pipeline_rejects_invalid_stage_shapes(self):
-        with self.assertRaisesRegex(OperationFailure, 'single-key document'):
+        with self.assertRaisesRegex(OperationFailure, "single-key document"):
             UpdateEngine.validate_update_pipeline(
-                [{'$set': {'a': 1}, '$unset': {'b': ''}}]
+                [{"$set": {"a": 1}, "$unset": {"b": ""}}],
             )
         with self.assertRaisesRegex(
-            OperationFailure, "operator must start with '\\$'"
+            OperationFailure,
+            "operator must start with '\\$'",
         ):
-            UpdateEngine.validate_update_pipeline([{'set': {'a': 1}}])
+            UpdateEngine.validate_update_pipeline([{"set": {"a": 1}}])
         with self.assertRaisesRegex(
-            OperationFailure, 'Unsupported update pipeline stage: \\$future'
+            OperationFailure,
+            "Unsupported update pipeline stage: \\$future",
         ):
-            UpdateEngine.validate_update_pipeline([{'$future': {}}])
+            UpdateEngine.validate_update_pipeline([{"$future": {}}])
 
         class _NoProjectDialect(MongoDialect):
             def supports_aggregation_stage(self, name: str) -> bool:
                 return (
                     False
-                    if name == '$project'
+                    if name == "$project"
                     else super().supports_aggregation_stage(name)
                 )
 
         with self.assertRaisesRegex(
-            OperationFailure, 'Unsupported update pipeline stage: \\$project'
+            OperationFailure,
+            "Unsupported update pipeline stage: \\$project",
         ):
             UpdateEngine.validate_update_pipeline(
-                [{'$project': {'a': 1}}],
+                [{"$project": {"a": 1}}],
                 dialect=_NoProjectDialect(
-                    key='test', server_version='test', label='No Project'
+                    key="test",
+                    server_version="test",
+                    label="No Project",
                 ),
             )
 
     def test_normalize_update_collation_accepts_documents(self):
         self.assertEqual(
             operators_module._normalize_update_collation(
-                {'locale': 'en', 'strength': 2}
+                {"locale": "en", "strength": 2},
             ),
-            normalize_collation({'locale': 'en', 'strength': 2}),
+            normalize_collation({"locale": "en", "strength": 2}),
         )
 
     def test_set_same_value_is_noop(self):
-        document = {'field': 1}
+        document = {"field": 1}
 
-        modified = UpdateEngine.apply_update(document, {'$set': {'field': 1}})
+        modified = UpdateEngine.apply_update(document, {"$set": {"field": 1}})
 
         self.assertFalse(modified)
-        self.assertEqual(document, {'field': 1})
+        self.assertEqual(document, {"field": 1})
 
     def test_set_detaches_inserted_values_from_update_spec(self):
         document: dict[str, object] = {}
-        payload = {'nested': {'value': 1}}
+        payload = {"nested": {"value": 1}}
 
-        UpdateEngine.apply_update(document, {'$set': {'field': payload}})
-        payload['nested']['value'] = 2
+        UpdateEngine.apply_update(document, {"$set": {"field": payload}})
+        payload["nested"]["value"] = 2
 
-        self.assertEqual(document, {'field': {'nested': {'value': 1}}})
+        self.assertEqual(document, {"field": {"nested": {"value": 1}}})
 
     def test_set_nested_rejects_crossing_non_container_parent(self):
-        document = {'profile': 'invalid'}
+        document = {"profile": "invalid"}
 
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                document, {'$set': {'profile.name': 'Ada'}}
+                document,
+                {"$set": {"profile.name": "Ada"}},
             )
 
     def test_compile_update_spec_rejects_non_string_rename_target(self):
         with self.assertRaisesRegex(
-            OperationFailure, 'requires string target paths'
+            OperationFailure,
+            "requires string target paths",
         ):
-            UpdateEngine._compile_update_spec({'$rename': {'name': 1}}, {})
+            UpdateEngine._compile_update_spec({"$rename": {"name": 1}}, {})
 
     def test_compile_array_filters_rejects_invalid_shapes(self):
         invalid_specs = [
-            ([{}], 'non-empty documents'),
-            ([{1: {'$gt': 0}}], 'field names must be strings'),
-            ([{'$and': [{'i.qty': {'$gt': 0}}]}], 'Top-level operators'),
+            ([{}], "non-empty documents"),
+            ([{1: {"$gt": 0}}], "field names must be strings"),
+            ([{"$and": [{"i.qty": {"$gt": 0}}]}], "Top-level operators"),
             (
-                [{'9.qty': {'$gt': 0}}],
-                'identifiers must begin with a lowercase letter',
+                [{"9.qty": {"$gt": 0}}],
+                "identifiers must begin with a lowercase letter",
             ),
             (
-                [{'i.qty': {'$gt': 0}, 'j.qty': {'$lt': 5}}],
-                'exactly one identifier',
+                [{"i.qty": {"$gt": 0}, "j.qty": {"$lt": 5}}],
+                "exactly one identifier",
             ),
             (
-                [{'i.qty': {'$gt': 0}}, {'i.name': 'Ada'}],
-                'duplicate array filter identifiers',
+                [{"i.qty": {"$gt": 0}}, {"i.name": "Ada"}],
+                "duplicate array filter identifiers",
             ),
         ]
 
@@ -644,32 +668,34 @@ class UpdateEngineTests(unittest.TestCase):
     ):
         self.assertFalse(
             UpdateEngine._array_filter_matches(
-                'i', {'qty': 2}, array_filters={}
-            )
+                "i",
+                {"qty": 2},
+                array_filters={},
+            ),
         )
         self.assertFalse(
             UpdateEngine._array_filter_matches(
-                'i',
-                'not-a-document',
-                array_filters={'i': {'qty': {'$gt': 1}}},
-            )
+                "i",
+                "not-a-document",
+                array_filters={"i": {"qty": {"$gt": 1}}},
+            ),
         )
         self.assertTrue(
             UpdateEngine._array_filter_matches(
-                'i',
-                {'qty': 2},
-                array_filters={'i': {'qty': {'$gt': 1}}},
-            )
+                "i",
+                {"qty": 2},
+                array_filters={"i": {"qty": {"$gt": 1}}},
+            ),
         )
 
     def test_array_filter_matches_honors_collation(self):
         self.assertTrue(
             UpdateEngine._array_filter_matches(
-                'item',
-                {'kind': 'Ada'},
-                array_filters={'item': {'kind': 'ada'}},
-                collation=normalize_collation({'locale': 'en', 'strength': 2}),
-            )
+                "item",
+                {"kind": "Ada"},
+                array_filters={"item": {"kind": "ada"}},
+                collation=normalize_collation({"locale": "en", "strength": 2}),
+            ),
         )
 
     def test_resolve_update_targets_rejects_positional_paths_when_disabled(
@@ -677,11 +703,11 @@ class UpdateEngineTests(unittest.TestCase):
     ):
         with self.assertRaisesRegex(
             OperationFailure,
-            'Positional and array-filter update paths are not supported',
+            "Positional and array-filter update paths are not supported",
         ):
             UpdateEngine._resolve_update_targets(
-                {'items': [{'qty': 1}]},
-                'items.$[].qty',
+                {"items": [{"qty": 1}]},
+                "items.$[].qty",
                 array_filters={},
                 allow_positional=False,
             )
@@ -690,197 +716,220 @@ class UpdateEngineTests(unittest.TestCase):
         self,
     ):
         matcher = UpdateEngine._build_legacy_positional_matcher(
-            'items',
-            {'$and': [{'items': {'$elemMatch': {'qty': {'$gte': 2}}}}]},
+            "items",
+            {"$and": [{"items": {"$elemMatch": {"qty": {"$gte": 2}}}}]},
         )
 
-        self.assertTrue(matcher({'qty': 2}))
-        self.assertFalse(matcher({'qty': 1}))
+        self.assertTrue(matcher({"qty": 2}))
+        self.assertFalse(matcher({"qty": 1}))
 
     def test_legacy_positional_matcher_rejects_missing_predicates_and_scalar_subpaths(
         self,
     ):
         with self.assertRaisesRegex(
-            OperationFailure, 'did not find the match needed'
+            OperationFailure,
+            "did not find the match needed",
         ):
             UpdateEngine._build_legacy_positional_matcher(
-                'items', {'$or': [{'other': 1}]}
+                "items",
+                {"$or": [{"other": 1}]},
             )
 
         matcher = UpdateEngine._build_legacy_positional_matcher(
-            'items',
-            {'items.name': 'Ada'},
+            "items",
+            {"items.name": "Ada"},
         )
-        self.assertFalse(matcher('not-a-document'))
-        self.assertFalse(matcher({'name': 'Grace'}))
+        self.assertFalse(matcher("not-a-document"))
+        self.assertFalse(matcher({"name": "Grace"}))
 
     def test_update_path_guards_reject_conflicts_and_unsupported_rename_shapes(
         self,
     ):
-        seen_paths = ['profile']
-        with self.assertRaisesRegex(
-            OperationFailure, 'conflicting update paths'
-        ):
-            UpdateEngine._register_update_path(seen_paths, 'profile.name')
-        UpdateEngine._assert_mutable_path('_id')
+        seen_paths = ["profile"]
         with self.assertRaisesRegex(
             OperationFailure,
-            'Positional and array-filter update paths are not supported',
+            "conflicting update paths",
         ):
-            UpdateEngine._assert_mutable_path('items.$[].qty')
-        UpdateEngine._assert_rename_path('_id')
+            UpdateEngine._register_update_path(seen_paths, "profile.name")
+        UpdateEngine._assert_mutable_path("_id")
         with self.assertRaisesRegex(
             OperationFailure,
-            'Positional and array-filter update paths are not supported',
+            "Positional and array-filter update paths are not supported",
         ):
-            UpdateEngine._assert_rename_path('items.$[].qty')
+            UpdateEngine._assert_mutable_path("items.$[].qty")
+        UpdateEngine._assert_rename_path("_id")
         with self.assertRaisesRegex(
-            OperationFailure, 'embedded documents in arrays'
+            OperationFailure,
+            "Positional and array-filter update paths are not supported",
         ):
-            UpdateEngine._assert_rename_path('items.0.name')
+            UpdateEngine._assert_rename_path("items.$[].qty")
+        with self.assertRaisesRegex(
+            OperationFailure,
+            "embedded documents in arrays",
+        ):
+            UpdateEngine._assert_rename_path("items.0.name")
 
     def test_iter_ordered_update_items_wraps_type_errors_from_dialect_policy(
         self,
     ):
         class _BrokenDialect(MongoDialect):
             def sort_update_path_items(
-                self, params: dict[str, object]
+                self,
+                params: dict[str, object],
             ) -> list[tuple[str, object]]:
-                raise TypeError('broken sorter')
+                raise TypeError("broken sorter")
 
         with self.assertRaisesRegex(
-            OperationFailure, 'field names must be strings'
+            OperationFailure,
+            "field names must be strings",
         ):
             UpdateEngine._iter_ordered_update_items(
-                {'name': 'Ada'},
+                {"name": "Ada"},
                 dialect=_BrokenDialect(
-                    key='test', server_version='test', label='Broken'
+                    key="test",
+                    server_version="test",
+                    label="Broken",
                 ),
             )
 
     def test_unset_existing_and_missing_fields(self):
-        document = {'profile': {'name': 'Ada'}, 'role': 'admin'}
+        document = {"profile": {"name": "Ada"}, "role": "admin"}
 
         modified_existing = UpdateEngine.apply_update(
-            document, {'$unset': {'profile.name': ''}}
+            document,
+            {"$unset": {"profile.name": ""}},
         )
         modified_missing = UpdateEngine.apply_update(
-            document, {'$unset': {'profile.age': ''}}
+            document,
+            {"$unset": {"profile.age": ""}},
         )
 
         self.assertTrue(modified_existing)
         self.assertFalse(modified_missing)
-        self.assertEqual(document, {'profile': {}, 'role': 'admin'})
+        self.assertEqual(document, {"profile": {}, "role": "admin"})
 
     def test_unset_nested_path_returns_false_when_parent_is_missing(self):
         self.assertFalse(
-            UpdateEngine.apply_update({}, {'$unset': {'profile.name': ''}})
+            UpdateEngine.apply_update({}, {"$unset": {"profile.name": ""}}),
         )
 
     def test_set_supports_numeric_segments_for_arrays(self):
-        document = {'tags': ['old', 'keep']}
+        document = {"tags": ["old", "keep"]}
 
         modified = UpdateEngine.apply_update(
-            document, {'$set': {'tags.0': 'new'}}
+            document,
+            {"$set": {"tags.0": "new"}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'tags': ['new', 'keep']})
+        self.assertEqual(document, {"tags": ["new", "keep"]})
 
     def test_update_operators_process_string_and_numeric_field_names_in_stable_order(
         self,
     ):
         document: dict[str, object] = {}
 
-        UpdateEngine.apply_update(document, {'$set': {'b': 1, 'a': 2}})
-        self.assertEqual(list(document.keys()), ['a', 'b'])
+        UpdateEngine.apply_update(document, {"$set": {"b": 1, "a": 2}})
+        self.assertEqual(list(document.keys()), ["a", "b"])
 
         numeric_document: dict[str, object] = {}
         UpdateEngine.apply_update(
-            numeric_document, {'$set': {'10': 'x', '2': 'y'}}
+            numeric_document,
+            {"$set": {"10": "x", "2": "y"}},
         )
-        self.assertEqual(list(numeric_document.keys()), ['2', '10'])
+        self.assertEqual(list(numeric_document.keys()), ["2", "10"])
 
     def test_unset_supports_numeric_segments_for_arrays(self):
-        document = {'tags': ['old', 'keep']}
+        document = {"tags": ["old", "keep"]}
 
         modified = UpdateEngine.apply_update(
-            document, {'$unset': {'tags.0': ''}}
+            document,
+            {"$unset": {"tags.0": ""}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'tags': [None, 'keep']})
+        self.assertEqual(document, {"tags": [None, "keep"]})
 
     def test_inc_supports_existing_and_missing_numeric_fields(self):
-        document = {'count': 1}
+        document = {"count": 1}
 
         modified_existing = UpdateEngine.apply_update(
-            document, {'$inc': {'count': 2}}
+            document,
+            {"$inc": {"count": 2}},
         )
         modified_missing = UpdateEngine.apply_update(
-            document, {'$inc': {'nested.total': 3}}
+            document,
+            {"$inc": {"nested.total": 3}},
         )
 
         self.assertTrue(modified_existing)
         self.assertTrue(modified_missing)
-        self.assertEqual(document, {'count': 3, 'nested': {'total': 3}})
+        self.assertEqual(document, {"count": 3, "nested": {"total": 3}})
 
     def test_inc_rejects_non_numeric_input_or_target(self):
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({'count': 1}, {'$inc': {'count': 'x'}})
+            UpdateEngine.apply_update({"count": 1}, {"$inc": {"count": "x"}})
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({'count': 'x'}, {'$inc': {'count': 1}})
+            UpdateEngine.apply_update({"count": "x"}, {"$inc": {"count": 1}})
 
     def test_inc_preserves_bson_integer_width_when_possible(self):
-        document = {'count': BsonInt32(1)}
+        document = {"count": BsonInt32(1)}
 
-        UpdateEngine.apply_update(document, {'$inc': {'count': 2}})
+        UpdateEngine.apply_update(document, {"$inc": {"count": 2}})
 
-        self.assertEqual(document['count'], BsonInt32(3))
+        self.assertEqual(document["count"], BsonInt32(3))
 
     def test_inc_promotes_to_bson_int64_when_int32_overflows(self):
-        document = {'count': BsonInt32((1 << 31) - 1)}
+        document = {"count": BsonInt32((1 << 31) - 1)}
 
-        UpdateEngine.apply_update(document, {'$inc': {'count': 1}})
+        UpdateEngine.apply_update(document, {"$inc": {"count": 1}})
 
-        self.assertEqual(document['count'], BsonInt64(1 << 31))
+        self.assertEqual(document["count"], BsonInt64(1 << 31))
 
     def test_min_updates_missing_or_greater_values_using_bson_order(self):
-        document = {'score': 10, 'typed': 'text'}
+        document = {"score": 10, "typed": "text"}
 
         changed_existing = UpdateEngine.apply_update(
-            document, {'$min': {'score': 4}}
+            document,
+            {"$min": {"score": 4}},
         )
         changed_missing = UpdateEngine.apply_update(
-            document, {'$min': {'nested.level': 3}}
+            document,
+            {"$min": {"nested.level": 3}},
         )
         changed_type = UpdateEngine.apply_update(
-            document, {'$min': {'typed': 5}}
+            document,
+            {"$min": {"typed": 5}},
         )
-        unchanged = UpdateEngine.apply_update(document, {'$min': {'score': 7}})
+        unchanged = UpdateEngine.apply_update(document, {"$min": {"score": 7}})
 
         self.assertTrue(changed_existing)
         self.assertTrue(changed_missing)
         self.assertTrue(changed_type)
         self.assertFalse(unchanged)
         self.assertEqual(
-            document, {'score': 4, 'typed': 5, 'nested': {'level': 3}}
+            document,
+            {"score": 4, "typed": 5, "nested": {"level": 3}},
         )
 
     def test_max_updates_missing_or_lower_values_using_bson_order(self):
-        document = {'score': 10, 'typed': None}
+        document = {"score": 10, "typed": None}
 
         changed_existing = UpdateEngine.apply_update(
-            document, {'$max': {'score': 12}}
+            document,
+            {"$max": {"score": 12}},
         )
         changed_missing = UpdateEngine.apply_update(
-            document, {'$max': {'nested.level': 3}}
+            document,
+            {"$max": {"nested.level": 3}},
         )
         changed_type = UpdateEngine.apply_update(
-            document, {'$max': {'typed': 'text'}}
+            document,
+            {"$max": {"typed": "text"}},
         )
         unchanged = UpdateEngine.apply_update(
-            document, {'$max': {'score': 11}}
+            document,
+            {"$max": {"score": 11}},
         )
 
         self.assertTrue(changed_existing)
@@ -888,19 +937,22 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertTrue(changed_type)
         self.assertFalse(unchanged)
         self.assertEqual(
-            document, {'score': 12, 'typed': 'text', 'nested': {'level': 3}}
+            document,
+            {"score": 12, "typed": "text", "nested": {"level": 3}},
         )
 
     def test_mul_supports_missing_existing_and_rejects_non_numeric_values(
         self,
     ):
-        document = {'count': 3, 'ratio': 1.5}
+        document = {"count": 3, "ratio": 1.5}
 
         changed_existing = UpdateEngine.apply_update(
-            document, {'$mul': {'count': 4, 'ratio': 2.0}}
+            document,
+            {"$mul": {"count": 4, "ratio": 2.0}},
         )
         changed_missing = UpdateEngine.apply_update(
-            document, {'$mul': {'missing_int': 3, 'missing_float': 1.5}}
+            document,
+            {"$mul": {"missing_int": 3, "missing_float": 1.5}},
         )
 
         self.assertTrue(changed_existing)
@@ -908,166 +960,170 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(
             document,
             {
-                'count': 12,
-                'ratio': 3.0,
-                'missing_int': 0,
-                'missing_float': 0.0,
+                "count": 12,
+                "ratio": 3.0,
+                "missing_int": 0,
+                "missing_float": 0.0,
             },
         )
 
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({'count': 1}, {'$mul': {'count': 'x'}})
+            UpdateEngine.apply_update({"count": 1}, {"$mul": {"count": "x"}})
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({'count': 'x'}, {'$mul': {'count': 2}})
+            UpdateEngine.apply_update({"count": "x"}, {"$mul": {"count": 2}})
 
     def test_rename_moves_fields_and_removes_existing_target(self):
-        document = {'profile': {'name': 'Ada'}, 'name': 'Grace'}
+        document = {"profile": {"name": "Ada"}, "name": "Grace"}
 
         modified = UpdateEngine.apply_update(
             document,
             {
-                '$rename': {
-                    'profile.name': 'profile.alias',
-                    'name': 'display_name',
-                }
+                "$rename": {
+                    "profile.name": "profile.alias",
+                    "name": "display_name",
+                },
             },
         )
 
         self.assertTrue(modified)
         self.assertEqual(
-            document, {'profile': {'alias': 'Ada'}, 'display_name': 'Grace'}
+            document,
+            {"profile": {"alias": "Ada"}, "display_name": "Grace"},
         )
 
     def test_rename_is_noop_for_missing_source_field(self):
-        document = {'profile': {'name': 'Ada'}}
+        document = {"profile": {"name": "Ada"}}
 
         modified = UpdateEngine.apply_update(
-            document, {'$rename': {'missing': 'alias'}}
+            document,
+            {"$rename": {"missing": "alias"}},
         )
 
         self.assertFalse(modified)
-        self.assertEqual(document, {'profile': {'name': 'Ada'}})
+        self.assertEqual(document, {"profile": {"name": "Ada"}})
 
     def test_rename_rejects_array_paths_and_conflicting_targets(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'name': 'Ada'}]},
-                {'$rename': {'items.0.name': 'items.0.alias'}},
+                {"items": [{"name": "Ada"}]},
+                {"$rename": {"items.0.name": "items.0.alias"}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'name': 'Ada'}]},
-                {'$rename': {'items.name': 'names'}},
+                {"items": [{"name": "Ada"}]},
+                {"$rename": {"items.name": "names"}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'name': 'Ada'}], 'name': 'Ada'},
-                {'$rename': {'name': 'items.alias'}},
+                {"items": [{"name": "Ada"}], "name": "Ada"},
+                {"$rename": {"name": "items.alias"}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'name': 'Ada'}, {'$rename': {'name': 'name'}}
+                {"name": "Ada"},
+                {"$rename": {"name": "name"}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'profile': {'name': 'Ada'}},
-                {'$rename': {'profile': 'profile.name'}},
+                {"profile": {"name": "Ada"}},
+                {"$rename": {"profile": "profile.name"}},
             )
 
     def test_classic_update_runtime_failures_leave_document_unchanged(self):
-        document = {'a': 1, 'items': [{'name': 'Ada'}]}
+        document = {"a": 1, "items": [{"name": "Ada"}]}
 
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
                 document,
-                {'$rename': {'a': 'b', 'items.name': 'names'}},
+                {"$rename": {"a": "b", "items.name": "names"}},
             )
 
-        self.assertEqual(document, {'a': 1, 'items': [{'name': 'Ada'}]})
+        self.assertEqual(document, {"a": 1, "items": [{"name": "Ada"}]})
 
     def test_path_array_prefixes_keep_non_numeric_prefixes_before_index_segments(
         self,
     ):
-        self.assertEqual(_path_array_prefixes('a.0.b.c'), ('a', 'a.0.b'))
-        self.assertEqual(_path_array_prefixes('items.0'), ('items',))
+        self.assertEqual(_path_array_prefixes("a.0.b.c"), ("a", "a.0.b"))
+        self.assertEqual(_path_array_prefixes("items.0"), ("items",))
 
     def test_current_date_sets_datetime_and_rejects_unsupported_shapes(self):
-        document = {'name': 'Ada'}
+        document = {"name": "Ada"}
 
         modified = UpdateEngine.apply_update(
             document,
             {
-                '$currentDate': {
-                    'updated_at': True,
-                    'reviewed_at': {'$type': 'date'},
-                    'clustered_at': {'$type': 'timestamp'},
-                    'clustered_again_at': {'$type': 'timestamp'},
-                }
+                "$currentDate": {
+                    "updated_at": True,
+                    "reviewed_at": {"$type": "date"},
+                    "clustered_at": {"$type": "timestamp"},
+                    "clustered_again_at": {"$type": "timestamp"},
+                },
             },
         )
 
         self.assertTrue(modified)
         self.assertIsInstance(
-            document['updated_at'], type(document['reviewed_at'])
+            document["updated_at"],
+            type(document["reviewed_at"]),
         )
-        self.assertEqual(document['updated_at'], document['reviewed_at'])
-        self.assertIsNone(document['updated_at'].tzinfo)
-        self.assertEqual(document['updated_at'].microsecond % 1_000, 0)
-        self.assertIsInstance(document['clustered_at'], Timestamp)
+        self.assertEqual(document["updated_at"], document["reviewed_at"])
+        self.assertIsNone(document["updated_at"].tzinfo)
+        self.assertEqual(document["updated_at"].microsecond % 1_000, 0)
+        self.assertIsInstance(document["clustered_at"], Timestamp)
         self.assertEqual(
-            {document['clustered_at'].inc, document['clustered_again_at'].inc},
+            {document["clustered_at"].inc, document["clustered_again_at"].inc},
             {1, 2},
         )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
                 {},
                 {
-                    '$currentDate': {
-                        'updated_at': {'$type': 'date', 'extra': 1}
-                    }
+                    "$currentDate": {
+                        "updated_at": {"$type": "date", "extra": 1},
+                    },
                 },
             )
 
     def test_set_on_insert_only_applies_for_upsert_insert_mode(self):
-        existing = {'name': 'Ada'}
-        inserted = {'name': 'Ada'}
+        existing = {"name": "Ada"}
+        inserted = {"name": "Ada"}
 
         modified_existing = UpdateEngine.apply_update(
             existing,
-            {'$setOnInsert': {'created_at': 1}},
+            {"$setOnInsert": {"created_at": 1}},
         )
         modified_insert = UpdateEngine.apply_update(
             inserted,
-            {'$setOnInsert': {'created_at': 1}},
+            {"$setOnInsert": {"created_at": 1}},
             is_upsert_insert=True,
         )
 
         self.assertFalse(modified_existing)
-        self.assertEqual(existing, {'name': 'Ada'})
+        self.assertEqual(existing, {"name": "Ada"})
         self.assertTrue(modified_insert)
-        self.assertEqual(inserted, {'name': 'Ada', 'created_at': 1})
+        self.assertEqual(inserted, {"name": "Ada", "created_at": 1})
 
     def test_array_filters_and_all_positional_updates_are_applied_to_matching_elements(
         self,
     ):
         document = {
-            'items': [{'qty': 1}, {'qty': 3}],
-            'scores': [1, 2, 3],
+            "items": [{"qty": 1}, {"qty": 3}],
+            "scores": [1, 2, 3],
         }
 
         inc_modified = UpdateEngine.apply_update(
             document,
-            {'$inc': {'items.$[high].qty': 2}},
-            array_filters=[{'high.qty': {'$gte': 2}}],
+            {"$inc": {"items.$[high].qty": 2}},
+            array_filters=[{"high.qty": {"$gte": 2}}],
         )
         set_modified = UpdateEngine.apply_update(
             document,
-            {'$set': {'items.$[].flag': True}},
+            {"$set": {"items.$[].flag": True}},
         )
         max_modified = UpdateEngine.apply_update(
             document,
-            {'$max': {'scores.$[score]': 5}},
-            array_filters=[{'score': {'$gte': 2}}],
+            {"$max": {"scores.$[score]": 5}},
+            array_filters=[{"score": {"$gte": 2}}],
         )
 
         self.assertTrue(inc_modified)
@@ -1076,8 +1132,8 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(
             document,
             {
-                'items': [{'qty': 1, 'flag': True}, {'qty': 5, 'flag': True}],
-                'scores': [1, 5, 5],
+                "items": [{"qty": 1, "flag": True}, {"qty": 5, "flag": True}],
+                "scores": [1, 5, 5],
             },
         )
 
@@ -1086,77 +1142,78 @@ class UpdateEngineTests(unittest.TestCase):
     ):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'qty': 1}]},
-                {'$set': {'items.$[item].flag': True}},
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[item].flag": True}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'qty': 1}]},
-                {'$set': {'items.$[item].flag': True}},
-                array_filters=[{'other.qty': {'$gte': 1}}],
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[item].flag": True}},
+                array_filters=[{"other.qty": {"$gte": 1}}],
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'qty': 1}]},
-                {'$set': {'items.$[item].flag': True}},
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[item].flag": True}},
                 array_filters=[
-                    {'item.qty': {'$gte': 1}, 'other.qty': {'$gte': 2}}
+                    {"item.qty": {"$gte": 1}, "other.qty": {"$gte": 2}},
                 ],
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'qty': 1}]},
-                {'$set': {'items.$[item].flag': True}},
-                array_filters=[{'item.qty': {'$gte': 1}}, {'item.flag': True}],
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[item].flag": True}},
+                array_filters=[{"item.qty": {"$gte": 1}}, {"item.flag": True}],
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'qty': 1}]},
-                {'$set': {'items.$[].flag': True}},
-                array_filters=[{'item.qty': {'$gte': 1}}],
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$[].flag": True}},
+                array_filters=[{"item.qty": {"$gte": 1}}],
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'items': [{'qty': 1}]},
-                {'$set': {'items.$.flag': True}},
-                array_filters=[{'item.qty': {'$gte': 1}}],
+                {"items": [{"qty": 1}]},
+                {"$set": {"items.$.flag": True}},
+                array_filters=[{"item.qty": {"$gte": 1}}],
             )
 
     def test_legacy_positional_operator_updates_first_matching_array_element(
         self,
     ):
-        document = {'items': [{'qty': 1}, {'qty': 3}, {'qty': 4}]}
+        document = {"items": [{"qty": 1}, {"qty": 3}, {"qty": 4}]}
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$inc': {'items.$.qty': 2}},
-            selector_filter={'items.qty': {'$gte': 3}},
+            {"$inc": {"items.$.qty": 2}},
+            selector_filter={"items.qty": {"$gte": 3}},
         )
 
         self.assertTrue(modified)
         self.assertEqual(
-            document, {'items': [{'qty': 1}, {'qty': 5}, {'qty': 4}]}
+            document,
+            {"items": [{"qty": 1}, {"qty": 5}, {"qty": 4}]},
         )
 
     def test_legacy_positional_operator_supports_array_field_predicates_and_rejects_missing_match(
         self,
     ):
-        document = {'scores': [1, 5, 3]}
+        document = {"scores": [1, 5, 3]}
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$set': {'scores.$': 9}},
-            selector_filter={'scores': {'$gte': 4}},
+            {"$set": {"scores.$": 9}},
+            selector_filter={"scores": {"$gte": 4}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'scores': [1, 9, 3]})
+        self.assertEqual(document, {"scores": [1, 9, 3]})
 
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'scores': [1, 2, 3]},
-                {'$set': {'scores.$': 9}},
-                selector_filter={'scores': {'$gte': 4}},
+                {"scores": [1, 2, 3]},
+                {"$set": {"scores.$": 9}},
+                selector_filter={"scores": {"$gte": 4}},
             )
 
     def test_legacy_positional_operator_rejects_upsert_without_match_and_negation_queries(
@@ -1164,231 +1221,255 @@ class UpdateEngineTests(unittest.TestCase):
     ):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'scores': []},
-                {'$set': {'scores.$': 9}},
+                {"scores": []},
+                {"$set": {"scores.$": 9}},
                 is_upsert_insert=True,
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'scores': [1, 2, 3]},
-                {'$set': {'scores.$': 9}},
-                selector_filter={'scores': {'$ne': 4}},
+                {"scores": [1, 2, 3]},
+                {"$set": {"scores.$": 9}},
+                selector_filter={"scores": {"$ne": 4}},
             )
 
     def test_resolve_legacy_positional_path_rejects_multiple_segments_and_missing_arrays(
         self,
     ):
         with self.assertRaisesRegex(
-            OperationFailure, 'exactly one positional segment'
+            OperationFailure,
+            "exactly one positional segment",
         ):
             UpdateEngine._resolve_legacy_positional_path(
-                {'items': [[{'qty': 1}]]},
-                'items.$.$.qty',
-                {'items.qty': {'$gte': 1}},
+                {"items": [[{"qty": 1}]]},
+                "items.$.$.qty",
+                {"items.qty": {"$gte": 1}},
             )
 
         with self.assertRaisesRegex(
-            OperationFailure, 'did not find the match needed'
+            OperationFailure,
+            "did not find the match needed",
         ):
             UpdateEngine._resolve_legacy_positional_path(
-                {'items': {'qty': 1}},
-                'items.$.qty',
-                {'items.qty': {'$gte': 1}},
+                {"items": {"qty": 1}},
+                "items.$.qty",
+                {"items.qty": {"$gte": 1}},
             )
 
     def test_resolve_legacy_positional_path_raises_when_shared_resolver_returns_empty(
         self,
     ):
-        with patch.object(
-            operators_module,
-            'resolve_positional_update_paths',
-            return_value=[],
+        with (
+            patch.object(
+                operators_module,
+                "resolve_positional_update_paths",
+                return_value=[],
+            ),
+            self.assertRaisesRegex(
+                OperationFailure,
+                "did not find the match needed",
+            ),
         ):
-            with self.assertRaisesRegex(
-                OperationFailure, 'did not find the match needed'
-            ):
-                UpdateEngine._resolve_legacy_positional_path(
-                    {'items': [{'qty': 1}]},
-                    'items.$.qty',
-                    {'items.qty': {'$gte': 1}},
-                )
+            UpdateEngine._resolve_legacy_positional_path(
+                {"items": [{"qty": 1}]},
+                "items.$.qty",
+                {"items.qty": {"$gte": 1}},
+            )
 
     def test_resolve_legacy_positional_path_returns_first_resolved_target(
         self,
     ):
-        compiled_path = compile_update_path('items.$.qty')
+        compiled_path = compile_update_path("items.$.qty")
         resolved_target = ResolvedUpdatePath(
             requested=compiled_path,
-            concrete_path='items.0.qty',
+            concrete_path="items.0.qty",
         )
 
         with patch.object(
             operators_module,
-            'resolve_positional_update_paths',
+            "resolve_positional_update_paths",
             return_value=[resolved_target],
         ):
             resolved = UpdateEngine._resolve_legacy_positional_path(
-                {'items': [{'qty': 1}]},
+                {"items": [{"qty": 1}]},
                 compiled_path,
-                {'items.qty': {'$gte': 1}},
+                {"items.qty": {"$gte": 1}},
             )
 
         self.assertIs(resolved, resolved_target)
 
     def test_bit_supports_and_or_xor_and_positional_targets(self):
-        document = {'score': 13, 'flags': [1, 3, 4]}
+        document = {"score": 13, "flags": [1, 3, 4]}
 
         and_modified = UpdateEngine.apply_update(
-            document, {'$bit': {'score': {'and': 10}}}
+            document,
+            {"$bit": {"score": {"and": 10}}},
         )
         or_modified = UpdateEngine.apply_update(
-            document, {'$bit': {'score': {'or': 1}}}
+            document,
+            {"$bit": {"score": {"or": 1}}},
         )
         xor_modified = UpdateEngine.apply_update(
             document,
-            {'$bit': {'flags.$[flag]': {'xor': 2}}},
-            array_filters=[{'flag': {'$gte': 3}}],
+            {"$bit": {"flags.$[flag]": {"xor": 2}}},
+            array_filters=[{"flag": {"$gte": 3}}],
         )
 
         self.assertTrue(and_modified)
         self.assertTrue(or_modified)
         self.assertTrue(xor_modified)
-        self.assertEqual(document, {'score': 9, 'flags': [1, 1, 6]})
+        self.assertEqual(document, {"score": 9, "flags": [1, 1, 6]})
 
     def test_bit_creates_missing_field_from_zero(self):
         document: dict[str, object] = {}
 
         modified = UpdateEngine.apply_update(
-            document, {'$bit': {'score': {'or': 4}}}
+            document,
+            {"$bit": {"score": {"or": 4}}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'score': 4})
+        self.assertEqual(document, {"score": 4})
 
     def test_bit_rejects_non_integer_or_invalid_operation_shapes(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'score': 1.5}, {'$bit': {'score': {'and': 1}}}
+                {"score": 1.5},
+                {"$bit": {"score": {"and": 1}}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'score': 1}, {'$bit': {'score': {'and': 1.5}}}
+                {"score": 1},
+                {"$bit": {"score": {"and": 1.5}}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'score': 1}, {'$bit': {'score': {'shift': 1}}}
+                {"score": 1},
+                {"$bit": {"score": {"shift": 1}}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'score': 1}, {'$bit': {'score': {'and': 1, 'or': 2}}}
+                {"score": 1},
+                {"$bit": {"score": {"and": 1, "or": 2}}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'score': 1}, {'$bit': {'score': {'and': 1 << 80}}}
+                {"score": 1},
+                {"$bit": {"score": {"and": 1 << 80}}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'score': 1 << 80}, {'$bit': {'score': {'and': 1}}}
+                {"score": 1 << 80},
+                {"$bit": {"score": {"and": 1}}},
             )
 
     def test_bit_allows_empty_field_spec_as_noop(self):
-        document = {'score': 7}
+        document = {"score": 7}
 
-        modified = UpdateEngine.apply_update(document, {'$bit': {'score': {}}})
+        modified = UpdateEngine.apply_update(document, {"$bit": {"score": {}}})
 
         self.assertFalse(modified)
-        self.assertEqual(document, {'score': 7})
+        self.assertEqual(document, {"score": 7})
 
     def test_pull_all_removes_exact_matches_and_rejects_invalid_shapes(self):
         document = {
-            'tags': ['python', 'async', 'python', {'x': 1}],
-            'nested': {'items': [1, 2, 3]},
+            "tags": ["python", "async", "python", {"x": 1}],
+            "nested": {"items": [1, 2, 3]},
         }
 
         modified_tags = UpdateEngine.apply_update(
-            document, {'$pullAll': {'tags': ['python', {'x': 1}]}}
+            document,
+            {"$pullAll": {"tags": ["python", {"x": 1}]}},
         )
         modified_nested = UpdateEngine.apply_update(
-            document, {'$pullAll': {'nested.items': [2, 4]}}
+            document,
+            {"$pullAll": {"nested.items": [2, 4]}},
         )
         missing_noop = UpdateEngine.apply_update(
-            document, {'$pullAll': {'missing': [1]}}
+            document,
+            {"$pullAll": {"missing": [1]}},
         )
 
         self.assertTrue(modified_tags)
         self.assertTrue(modified_nested)
         self.assertFalse(missing_noop)
         self.assertEqual(
-            document, {'tags': ['async'], 'nested': {'items': [1, 3]}}
+            document,
+            {"tags": ["async"], "nested": {"items": [1, 3]}},
         )
 
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': ['python']}, {'$pullAll': {'tags': 'python'}}
+                {"tags": ["python"]},
+                {"$pullAll": {"tags": "python"}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': 'python'}, {'$pullAll': {'tags': ['python']}}
+                {"tags": "python"},
+                {"$pullAll": {"tags": ["python"]}},
             )
 
     def test_push_add_to_set_and_pull_support_array_mutation(self):
-        document = {'tags': ['python']}
+        document = {"tags": ["python"]}
 
         pushed = UpdateEngine.apply_update(
-            document, {'$push': {'tags': 'mongodb'}}
+            document,
+            {"$push": {"tags": "mongodb"}},
         )
         add_duplicate = UpdateEngine.apply_update(
-            document, {'$addToSet': {'tags': 'python'}}
+            document,
+            {"$addToSet": {"tags": "python"}},
         )
         add_new = UpdateEngine.apply_update(
-            document, {'$addToSet': {'tags': 'sqlite'}}
+            document,
+            {"$addToSet": {"tags": "sqlite"}},
         )
         pulled = UpdateEngine.apply_update(
-            document, {'$pull': {'tags': 'mongodb'}}
+            document,
+            {"$pull": {"tags": "mongodb"}},
         )
 
         self.assertTrue(pushed)
         self.assertFalse(add_duplicate)
         self.assertTrue(add_new)
         self.assertTrue(pulled)
-        self.assertEqual(document, {'tags': ['python', 'sqlite']})
+        self.assertEqual(document, {"tags": ["python", "sqlite"]})
 
     def test_array_mutation_operators_support_positional_and_array_filter_paths(
         self,
     ):
         document = {
-            'groups': [
-                {'name': 'alpha', 'tags': ['a'], 'scores': [1, 2]},
-                {'name': 'beta', 'tags': ['b'], 'scores': [2, 3]},
-            ]
+            "groups": [
+                {"name": "alpha", "tags": ["a"], "scores": [1, 2]},
+                {"name": "beta", "tags": ["b"], "scores": [2, 3]},
+            ],
         }
 
         pushed = UpdateEngine.apply_update(
             document,
             {
-                '$push': {
-                    'groups.$[group].tags': {'$each': ['x'], '$position': 0}
-                }
+                "$push": {
+                    "groups.$[group].tags": {"$each": ["x"], "$position": 0},
+                },
             },
-            array_filters=[{'group.name': 'beta'}],
+            array_filters=[{"group.name": "beta"}],
         )
         added = UpdateEngine.apply_update(
             document,
-            {'$addToSet': {'groups.$[].tags': 'common'}},
+            {"$addToSet": {"groups.$[].tags": "common"}},
         )
         pulled = UpdateEngine.apply_update(
             document,
-            {'$pull': {'groups.$[group].tags': 'x'}},
-            array_filters=[{'group.name': 'beta'}],
+            {"$pull": {"groups.$[group].tags": "x"}},
+            array_filters=[{"group.name": "beta"}],
         )
         pulled_all = UpdateEngine.apply_update(
             document,
-            {'$pullAll': {'groups.$[].scores': [2]}},
+            {"$pullAll": {"groups.$[].scores": [2]}},
         )
         popped = UpdateEngine.apply_update(
             document,
-            {'$pop': {'groups.$.scores': 1}},
-            selector_filter={'groups.name': 'beta'},
+            {"$pop": {"groups.$.scores": 1}},
+            selector_filter={"groups.name": "beta"},
         )
 
         self.assertTrue(pushed)
@@ -1399,44 +1480,48 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(
             document,
             {
-                'groups': [
-                    {'name': 'alpha', 'tags': ['a', 'common'], 'scores': [1]},
-                    {'name': 'beta', 'tags': ['b', 'common'], 'scores': []},
-                ]
+                "groups": [
+                    {"name": "alpha", "tags": ["a", "common"], "scores": [1]},
+                    {"name": "beta", "tags": ["b", "common"], "scores": []},
+                ],
             },
         )
 
     def test_push_and_add_to_set_detach_inserted_values_from_update_spec(self):
-        push_value = {'kind': 'a'}
-        add_value = {'kind': 'b'}
-        document = {'items': []}
+        push_value = {"kind": "a"}
+        add_value = {"kind": "b"}
+        document = {"items": []}
 
-        UpdateEngine.apply_update(document, {'$push': {'items': push_value}})
+        UpdateEngine.apply_update(document, {"$push": {"items": push_value}})
         UpdateEngine.apply_update(
-            document, {'$addToSet': {'items': add_value}}
+            document,
+            {"$addToSet": {"items": add_value}},
         )
-        push_value['kind'] = 'changed'
-        add_value['kind'] = 'changed'
+        push_value["kind"] = "changed"
+        add_value["kind"] = "changed"
 
-        self.assertEqual(document, {'items': [{'kind': 'a'}, {'kind': 'b'}]})
+        self.assertEqual(document, {"items": [{"kind": "a"}, {"kind": "b"}]})
 
     def test_add_to_set_and_pull_support_embedded_documents(self):
-        document = {'items': [{'kind': 'a'}]}
+        document = {"items": [{"kind": "a"}]}
 
         add_duplicate = UpdateEngine.apply_update(
-            document, {'$addToSet': {'items': {'kind': 'a'}}}
+            document,
+            {"$addToSet": {"items": {"kind": "a"}}},
         )
         add_new = UpdateEngine.apply_update(
-            document, {'$addToSet': {'items': {'kind': 'b'}}}
+            document,
+            {"$addToSet": {"items": {"kind": "b"}}},
         )
         pull_doc = UpdateEngine.apply_update(
-            document, {'$pull': {'items': {'kind': 'a'}}}
+            document,
+            {"$pull": {"items": {"kind": "a"}}},
         )
 
         self.assertFalse(add_duplicate)
         self.assertTrue(add_new)
         self.assertTrue(pull_doc)
-        self.assertEqual(document, {'items': [{'kind': 'b'}]})
+        self.assertEqual(document, {"items": [{"kind": "b"}]})
 
     def test_add_to_set_and_pull_honor_custom_dialect_equality(self):
         class _CaseInsensitiveDialect(MongoDialect):
@@ -1446,26 +1531,26 @@ class UpdateEngineTests(unittest.TestCase):
                 return super().values_equal(left, right)
 
         dialect = _CaseInsensitiveDialect(
-            key='test',
-            server_version='test',
-            label='Case Insensitive',
+            key="test",
+            server_version="test",
+            label="Case Insensitive",
         )
-        document = {'tags': ['Ada']}
+        document = {"tags": ["Ada"]}
 
         add_duplicate = UpdateEngine.apply_update(
             document,
-            {'$addToSet': {'tags': 'ada'}},
+            {"$addToSet": {"tags": "ada"}},
             dialect=dialect,
         )
         pulled = UpdateEngine.apply_update(
             document,
-            {'$pull': {'tags': 'ada'}},
+            {"$pull": {"tags": "ada"}},
             dialect=dialect,
         )
 
         self.assertFalse(add_duplicate)
         self.assertTrue(pulled)
-        self.assertEqual(document, {'tags': []})
+        self.assertEqual(document, {"tags": []})
 
     def test_pull_predicate_honors_custom_dialect(self):
         class _CaseInsensitiveDialect(MongoDialect):
@@ -1475,58 +1560,59 @@ class UpdateEngineTests(unittest.TestCase):
                 return super().values_equal(left, right)
 
         dialect = _CaseInsensitiveDialect(
-            key='test',
-            server_version='test',
-            label='Case Insensitive',
+            key="test",
+            server_version="test",
+            label="Case Insensitive",
         )
-        document = {'items': [{'kind': 'Ada'}, {'kind': 'Grace'}]}
+        document = {"items": [{"kind": "Ada"}, {"kind": "Grace"}]}
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$pull': {'items': {'kind': 'ada'}}},
+            {"$pull": {"items": {"kind": "ada"}}},
             dialect=dialect,
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'items': [{'kind': 'Grace'}]})
+        self.assertEqual(document, {"items": [{"kind": "Grace"}]})
 
     def test_pull_supports_predicate_documents(self):
         document = {
-            'items': [
-                {'kind': 'a', 'qty': 1},
-                {'kind': 'b', 'qty': 3},
-                {'kind': 'c', 'qty': 5},
-            ]
+            "items": [
+                {"kind": "a", "qty": 1},
+                {"kind": "b", "qty": 3},
+                {"kind": "c", "qty": 5},
+            ],
         }
 
         modified = UpdateEngine.apply_update(
-            document, {'$pull': {'items': {'qty': {'$gte': 3}}}}
+            document,
+            {"$pull": {"items": {"qty": {"$gte": 3}}}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'items': [{'kind': 'a', 'qty': 1}]})
+        self.assertEqual(document, {"items": [{"kind": "a", "qty": 1}]})
 
     def test_pull_supports_logical_operators_combined_with_field_conditions(
         self,
     ):
         document = {
-            'items': [
-                {'kind': 'a', 'qty': 1},
-                {'kind': 'b', 'qty': 3},
-                {'kind': 'c', 'qty': 5},
-                'scalar',
-            ]
+            "items": [
+                {"kind": "a", "qty": 1},
+                {"kind": "b", "qty": 3},
+                {"kind": "c", "qty": 5},
+                "scalar",
+            ],
         }
 
         modified = UpdateEngine.apply_update(
             document,
             {
-                '$pull': {
-                    'items': {
-                        '$or': [{'kind': 'b'}, {'kind': 'c'}],
-                        'qty': {'$gte': 5},
-                    }
-                }
+                "$pull": {
+                    "items": {
+                        "$or": [{"kind": "b"}, {"kind": "c"}],
+                        "qty": {"$gte": 5},
+                    },
+                },
             },
         )
 
@@ -1534,188 +1620,195 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(
             document,
             {
-                'items': [
-                    {'kind': 'a', 'qty': 1},
-                    {'kind': 'b', 'qty': 3},
-                    'scalar',
-                ]
+                "items": [
+                    {"kind": "a", "qty": 1},
+                    {"kind": "b", "qty": 3},
+                    "scalar",
+                ],
             },
         )
 
         pure_or_document = {
-            'items': [
-                {'kind': 'a', 'qty': 1},
-                {'kind': 'b', 'qty': 3},
-                {'kind': 'c', 'qty': 5},
-            ]
+            "items": [
+                {"kind": "a", "qty": 1},
+                {"kind": "b", "qty": 3},
+                {"kind": "c", "qty": 5},
+            ],
         }
         pure_or_modified = UpdateEngine.apply_update(
             pure_or_document,
-            {'$pull': {'items': {'$or': [{'kind': 'b'}, {'kind': 'c'}]}}},
+            {"$pull": {"items": {"$or": [{"kind": "b"}, {"kind": "c"}]}}},
         )
 
         self.assertTrue(pure_or_modified)
         self.assertEqual(
-            pure_or_document, {'items': [{'kind': 'a', 'qty': 1}]}
+            pure_or_document,
+            {"items": [{"kind": "a", "qty": 1}]},
         )
 
         pure_and_document = {
-            'items': [
-                {'kind': 'a', 'qty': 1},
-                {'kind': 'b', 'qty': 3},
-                {'kind': 'c', 'qty': 5},
-            ]
+            "items": [
+                {"kind": "a", "qty": 1},
+                {"kind": "b", "qty": 3},
+                {"kind": "c", "qty": 5},
+            ],
         }
         pure_and_modified = UpdateEngine.apply_update(
             pure_and_document,
             {
-                '$pull': {
-                    'items': {
-                        '$and': [
-                            {'kind': {'$ne': 'a'}},
-                            {'qty': {'$gte': 3}},
-                        ]
-                    }
-                }
+                "$pull": {
+                    "items": {
+                        "$and": [
+                            {"kind": {"$ne": "a"}},
+                            {"qty": {"$gte": 3}},
+                        ],
+                    },
+                },
             },
         )
 
         self.assertTrue(pure_and_modified)
         self.assertEqual(
-            pure_and_document, {'items': [{'kind': 'a', 'qty': 1}]}
+            pure_and_document,
+            {"items": [{"kind": "a", "qty": 1}]},
         )
 
     def test_pull_supports_python_regex_values(self):
-        document = {'tags': ['python', 'mongodb', 'pytest']}
+        document = {"tags": ["python", "mongodb", "pytest"]}
 
         modified = UpdateEngine.apply_update(
-            document, {'$pull': {'tags': re.compile(r'^py')}}
+            document,
+            {"$pull": {"tags": re.compile(r"^py")}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'tags': ['mongodb']})
+        self.assertEqual(document, {"tags": ["mongodb"]})
 
     def test_pull_matches_embedded_documents_by_field_conditions(self):
         document = {
-            'items': [
-                {'kind': 'a'},
-                {'kind': 'a', 'qty': 1},
-                {'kind': 'b'},
-            ]
+            "items": [
+                {"kind": "a"},
+                {"kind": "a", "qty": 1},
+                {"kind": "b"},
+            ],
         }
 
         modified = UpdateEngine.apply_update(
-            document, {'$pull': {'items': {'kind': 'a'}}}
+            document,
+            {"$pull": {"items": {"kind": "a"}}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'items': [{'kind': 'b'}]})
+        self.assertEqual(document, {"items": [{"kind": "b"}]})
 
     def test_pull_does_not_report_modification_when_nan_array_is_unchanged(
         self,
     ):
-        document = {'values': [math.nan]}
+        document = {"values": [math.nan]}
 
         modified = UpdateEngine.apply_update(
-            document, {'$pull': {'values': 1}}
+            document,
+            {"$pull": {"values": 1}},
         )
 
         self.assertFalse(modified)
-        self.assertEqual(len(document['values']), 1)
-        self.assertTrue(math.isnan(document['values'][0]))
+        self.assertEqual(len(document["values"]), 1)
+        self.assertTrue(math.isnan(document["values"][0]))
 
     def test_add_to_set_treats_embedded_documents_with_different_key_order_as_distinct(
         self,
     ):
-        document = {'items': [{'kind': 'a', 'qty': 1}]}
+        document = {"items": [{"kind": "a", "qty": 1}]}
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$addToSet': {'items': {'qty': 1, 'kind': 'a'}}},
+            {"$addToSet": {"items": {"qty": 1, "kind": "a"}}},
         )
 
         self.assertTrue(modified)
         self.assertEqual(
             document,
-            {'items': [{'kind': 'a', 'qty': 1}, {'qty': 1, 'kind': 'a'}]},
+            {"items": [{"kind": "a", "qty": 1}, {"qty": 1, "kind": "a"}]},
         )
 
     def test_add_to_set_and_pull_distinguish_bool_and_int_inside_compound_values(
         self,
     ):
-        document = {'items': [{'flag': True}]}
+        document = {"items": [{"flag": True}]}
 
         added = UpdateEngine.apply_update(
-            document, {'$addToSet': {'items': {'flag': 1}}}
+            document,
+            {"$addToSet": {"items": {"flag": 1}}},
         )
         removed = UpdateEngine.apply_update(
-            document, {'$pull': {'items': {'flag': 1}}}
+            document,
+            {"$pull": {"items": {"flag": 1}}},
         )
 
         self.assertTrue(added)
         self.assertTrue(removed)
-        self.assertEqual(document, {'items': [{'flag': True}]})
+        self.assertEqual(document, {"items": [{"flag": True}]})
 
     def test_add_to_set_honors_collation(self):
-        document = {'tags': ['Ada']}
+        document = {"tags": ["Ada"]}
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$addToSet': {'tags': 'ada'}},
-            collation=normalize_collation({'locale': 'en', 'strength': 2}),
+            {"$addToSet": {"tags": "ada"}},
+            collation=normalize_collation({"locale": "en", "strength": 2}),
         )
 
         self.assertFalse(modified)
-        self.assertEqual(document, {'tags': ['Ada']})
+        self.assertEqual(document, {"tags": ["Ada"]})
 
     def test_pull_ignores_embedded_document_key_order_and_extra_fields(self):
         document = {
-            'items': [
-                {'kind': 'a', 'qty': 1},
-                {'qty': 1, 'kind': 'a'},
-                {'kind': 'a', 'qty': 1, 'extra': True},
-                {'kind': 'b', 'qty': 1},
-            ]
+            "items": [
+                {"kind": "a", "qty": 1},
+                {"qty": 1, "kind": "a"},
+                {"kind": "a", "qty": 1, "extra": True},
+                {"kind": "b", "qty": 1},
+            ],
         }
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$pull': {'items': {'kind': 'a', 'qty': 1}}},
+            {"$pull": {"items": {"kind": "a", "qty": 1}}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'items': [{'kind': 'b', 'qty': 1}]})
+        self.assertEqual(document, {"items": [{"kind": "b", "qty": 1}]})
 
     def test_pull_matches_embedded_documents_with_objectid_subset_across_objectid_types(
         self,
     ):
         if BsonObjectId is None:
-            self.skipTest('bson is not installed')
+            self.skipTest("bson is not installed")
 
-        object_id = ObjectId('65f0a1000000000000000000')
+        object_id = ObjectId("65f0a1000000000000000000")
         document = {
-            'tasks': [
+            "tasks": [
                 {
-                    'enrollment_task_id': object_id,
-                    'name': 'Ada',
-                    'studied_at': None,
+                    "enrollment_task_id": object_id,
+                    "name": "Ada",
+                    "studied_at": None,
                 },
                 {
-                    'enrollment_task_id': ObjectId('65f0a1000000000000000001'),
-                    'name': 'Grace',
-                    'studied_at': None,
+                    "enrollment_task_id": ObjectId("65f0a1000000000000000001"),
+                    "name": "Grace",
+                    "studied_at": None,
                 },
-            ]
+            ],
         }
 
         modified = UpdateEngine.apply_update(
             document,
             {
-                '$pull': {
-                    'tasks': {
-                        'enrollment_task_id': BsonObjectId(str(object_id)),
-                    }
-                }
+                "$pull": {
+                    "tasks": {
+                        "enrollment_task_id": BsonObjectId(str(object_id)),
+                    },
+                },
             },
         )
 
@@ -1723,98 +1816,101 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(
             document,
             {
-                'tasks': [
+                "tasks": [
                     {
-                        'enrollment_task_id': ObjectId(
-                            '65f0a1000000000000000001'
+                        "enrollment_task_id": ObjectId(
+                            "65f0a1000000000000000001",
                         ),
-                        'name': 'Grace',
-                        'studied_at': None,
-                    }
-                ]
+                        "name": "Grace",
+                        "studied_at": None,
+                    },
+                ],
             },
         )
 
     def test_pull_honors_collation_for_scalar_values(self):
-        document = {'tags': ['Ada', 'Grace']}
+        document = {"tags": ["Ada", "Grace"]}
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$pull': {'tags': 'ada'}},
-            collation=normalize_collation({'locale': 'en', 'strength': 2}),
+            {"$pull": {"tags": "ada"}},
+            collation=normalize_collation({"locale": "en", "strength": 2}),
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'tags': ['Grace']})
+        self.assertEqual(document, {"tags": ["Grace"]})
 
     def test_add_to_set_treats_local_and_pymongo_objectids_as_same_value(self):
         if BsonObjectId is None:
-            self.skipTest('bson is not installed')
+            self.skipTest("bson is not installed")
 
-        object_id = ObjectId('65f0a1000000000000000000')
-        document = {'items': [object_id]}
+        object_id = ObjectId("65f0a1000000000000000000")
+        document = {"items": [object_id]}
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$addToSet': {'items': BsonObjectId(str(object_id))}},
+            {"$addToSet": {"items": BsonObjectId(str(object_id))}},
         )
 
         self.assertFalse(modified)
-        self.assertEqual(document, {'items': [object_id]})
+        self.assertEqual(document, {"items": [object_id]})
 
     def test_pull_all_matches_local_and_pymongo_objectids_as_same_value(self):
         if BsonObjectId is None:
-            self.skipTest('bson is not installed')
+            self.skipTest("bson is not installed")
 
-        object_id = ObjectId('65f0a1000000000000000000')
-        document = {'items': [object_id, ObjectId('65f0a1000000000000000001')]}
+        object_id = ObjectId("65f0a1000000000000000000")
+        document = {"items": [object_id, ObjectId("65f0a1000000000000000001")]}
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$pullAll': {'items': [BsonObjectId(str(object_id))]}},
+            {"$pullAll": {"items": [BsonObjectId(str(object_id))]}},
         )
 
         self.assertTrue(modified)
         self.assertEqual(
             document,
-            {'items': [ObjectId('65f0a1000000000000000001')]},
+            {"items": [ObjectId("65f0a1000000000000000001")]},
         )
 
     def test_pull_all_honors_collation(self):
-        document = {'tags': ['Ada', 'Grace']}
+        document = {"tags": ["Ada", "Grace"]}
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$pullAll': {'tags': ['ada']}},
-            collation=normalize_collation({'locale': 'en', 'strength': 2}),
+            {"$pullAll": {"tags": ["ada"]}},
+            collation=normalize_collation({"locale": "en", "strength": 2}),
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'tags': ['Grace']})
+        self.assertEqual(document, {"tags": ["Grace"]})
 
     def test_push_and_add_to_set_create_missing_arrays(self):
         document = {}
 
         pushed = UpdateEngine.apply_update(
-            document, {'$push': {'tags': 'python'}}
+            document,
+            {"$push": {"tags": "python"}},
         )
         added = UpdateEngine.apply_update(
-            document, {'$addToSet': {'roles': 'admin'}}
+            document,
+            {"$addToSet": {"roles": "admin"}},
         )
 
         self.assertTrue(pushed)
         self.assertTrue(added)
-        self.assertEqual(document, {'tags': ['python'], 'roles': ['admin']})
+        self.assertEqual(document, {"tags": ["python"], "roles": ["admin"]})
 
     def test_push_and_add_to_set_support_each_modifier(self):
-        document = {'tags': ['python'], 'roles': ['admin']}
+        document = {"tags": ["python"], "roles": ["admin"]}
 
         pushed = UpdateEngine.apply_update(
-            document, {'$push': {'tags': {'$each': ['mongodb', 'sqlite']}}}
+            document,
+            {"$push": {"tags": {"$each": ["mongodb", "sqlite"]}}},
         )
         added = UpdateEngine.apply_update(
             document,
-            {'$addToSet': {'roles': {'$each': ['admin', 'staff', 'staff']}}},
+            {"$addToSet": {"roles": {"$each": ["admin", "staff", "staff"]}}},
         )
 
         self.assertTrue(pushed)
@@ -1822,8 +1918,8 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(
             document,
             {
-                'tags': ['python', 'mongodb', 'sqlite'],
-                'roles': ['admin', 'staff'],
+                "tags": ["python", "mongodb", "sqlite"],
+                "roles": ["admin", "staff"],
             },
         )
 
@@ -1834,109 +1930,112 @@ class UpdateEngineTests(unittest.TestCase):
 
         modified = UpdateEngine.apply_update(
             document,
-            {'$addToSet': {'roles': {'$each': ['admin', 'admin', 'staff']}}},
+            {"$addToSet": {"roles": {"$each": ["admin", "admin", "staff"]}}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'roles': ['admin', 'staff']})
+        self.assertEqual(document, {"roles": ["admin", "staff"]})
 
     def test_add_to_set_empty_operand_is_noop(self):
-        document = {'roles': ['admin']}
+        document = {"roles": ["admin"]}
 
-        modified = UpdateEngine.apply_update(document, {'$addToSet': {}})
+        modified = UpdateEngine.apply_update(document, {"$addToSet": {}})
 
         self.assertFalse(modified)
-        self.assertEqual(document, {'roles': ['admin']})
+        self.assertEqual(document, {"roles": ["admin"]})
 
     def test_add_to_set_adds_array_as_single_element_and_preserves_existing_duplicates(
         self,
     ):
-        document = {'items': [['existing'], ['dup'], ['dup']]}
+        document = {"items": [["existing"], ["dup"], ["dup"]]}
 
         modified = UpdateEngine.apply_update(
-            document, {'$addToSet': {'items': ['new', 'values']}}
+            document,
+            {"$addToSet": {"items": ["new", "values"]}},
         )
 
         self.assertTrue(modified)
         self.assertEqual(
             document,
-            {'items': [['existing'], ['dup'], ['dup'], ['new', 'values']]},
+            {"items": [["existing"], ["dup"], ["dup"], ["new", "values"]]},
         )
 
     def test_push_and_add_to_set_reject_invalid_each_modifier_payloads(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': []}, {'$push': {'tags': {'$each': 'python'}}}
+                {"tags": []},
+                {"$push": {"tags": {"$each": "python"}}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': []},
-                {'$push': {'tags': {'$each': ['python'], '$slice': '1'}}},
+                {"tags": []},
+                {"$push": {"tags": {"$each": ["python"], "$slice": "1"}}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': []},
-                {'$push': {'tags': {'$each': ['python'], '$position': '0'}}},
+                {"tags": []},
+                {"$push": {"tags": {"$each": ["python"], "$position": "0"}}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': []},
-                {'$push': {'tags': {'$each': ['python'], '$sort': 0}}},
+                {"tags": []},
+                {"$push": {"tags": {"$each": ["python"], "$sort": 0}}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': []}, {'$addToSet': {'tags': {'$each': 'python'}}}
+                {"tags": []},
+                {"$addToSet": {"tags": {"$each": "python"}}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': []},
-                {'$addToSet': {'tags': {'$each': ['python'], '$slice': 1}}},
+                {"tags": []},
+                {"$addToSet": {"tags": {"$each": ["python"], "$slice": 1}}},
             )
 
     def test_push_supports_position_slice_and_scalar_sort_modifiers(self):
-        document = {'scores': [4, 1]}
+        document = {"scores": [4, 1]}
 
         modified = UpdateEngine.apply_update(
             document,
             {
-                '$push': {
-                    'scores': {
-                        '$each': [3, 2],
-                        '$position': 1,
-                        '$sort': 1,
-                        '$slice': 3,
-                    }
-                }
+                "$push": {
+                    "scores": {
+                        "$each": [3, 2],
+                        "$position": 1,
+                        "$sort": 1,
+                        "$slice": 3,
+                    },
+                },
             },
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'scores': [1, 2, 3]})
+        self.assertEqual(document, {"scores": [1, 2, 3]})
 
     def test_push_supports_document_sort_modifier(self):
         document = {
-            'quizzes': [
-                {'wk': 1, 'score': 10},
-                {'wk': 2, 'score': 8},
-                {'wk': 3, 'score': 5},
-                {'wk': 4, 'score': 6},
-            ]
+            "quizzes": [
+                {"wk": 1, "score": 10},
+                {"wk": 2, "score": 8},
+                {"wk": 3, "score": 5},
+                {"wk": 4, "score": 6},
+            ],
         }
 
         modified = UpdateEngine.apply_update(
             document,
             {
-                '$push': {
-                    'quizzes': {
-                        '$each': [
-                            {'wk': 5, 'score': 8},
-                            {'wk': 6, 'score': 7},
-                            {'wk': 7, 'score': 6},
+                "$push": {
+                    "quizzes": {
+                        "$each": [
+                            {"wk": 5, "score": 8},
+                            {"wk": 6, "score": 7},
+                            {"wk": 7, "score": 6},
                         ],
-                        '$sort': {'score': -1},
-                        '$slice': 3,
-                    }
-                }
+                        "$sort": {"score": -1},
+                        "$slice": 3,
+                    },
+                },
             },
         )
 
@@ -1944,116 +2043,127 @@ class UpdateEngineTests(unittest.TestCase):
         self.assertEqual(
             document,
             {
-                'quizzes': [
-                    {'wk': 1, 'score': 10},
-                    {'wk': 2, 'score': 8},
-                    {'wk': 5, 'score': 8},
-                ]
+                "quizzes": [
+                    {"wk": 1, "score": 10},
+                    {"wk": 2, "score": 8},
+                    {"wk": 5, "score": 8},
+                ],
             },
         )
 
     def test_pull_missing_array_is_noop_and_non_array_targets_raise(self):
         self.assertFalse(
-            UpdateEngine.apply_update({}, {'$pull': {'tags': 'python'}})
+            UpdateEngine.apply_update({}, {"$pull": {"tags": "python"}}),
         )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': 'python'}, {'$pull': {'tags': 'python'}}
+                {"tags": "python"},
+                {"$pull": {"tags": "python"}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': 'python'}, {'$push': {'tags': 'mongodb'}}
+                {"tags": "python"},
+                {"$push": {"tags": "mongodb"}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': 'python'}, {'$addToSet': {'tags': 'mongodb'}}
+                {"tags": "python"},
+                {"$addToSet": {"tags": "mongodb"}},
             )
 
     def test_pull_removes_all_duplicate_matches(self):
         document = {
-            'tags': ['python', 'mongodb', 'python', 'sqlite', 'python']
+            "tags": ["python", "mongodb", "python", "sqlite", "python"],
         }
 
         modified = UpdateEngine.apply_update(
-            document, {'$pull': {'tags': 'python'}}
+            document,
+            {"$pull": {"tags": "python"}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'tags': ['mongodb', 'sqlite']})
+        self.assertEqual(document, {"tags": ["mongodb", "sqlite"]})
 
     def test_pop_supports_first_and_last_and_handles_missing_or_empty_arrays(
         self,
     ):
-        document = {'tags': ['python', 'mongodb', 'sqlite'], 'empty': []}
+        document = {"tags": ["python", "mongodb", "sqlite"], "empty": []}
 
-        pop_first = UpdateEngine.apply_update(document, {'$pop': {'tags': -1}})
-        pop_last = UpdateEngine.apply_update(document, {'$pop': {'tags': 1}})
-        pop_empty = UpdateEngine.apply_update(document, {'$pop': {'empty': 1}})
+        pop_first = UpdateEngine.apply_update(document, {"$pop": {"tags": -1}})
+        pop_last = UpdateEngine.apply_update(document, {"$pop": {"tags": 1}})
+        pop_empty = UpdateEngine.apply_update(document, {"$pop": {"empty": 1}})
         pop_missing = UpdateEngine.apply_update(
-            document, {'$pop': {'missing': 1}}
+            document,
+            {"$pop": {"missing": 1}},
         )
 
         self.assertTrue(pop_first)
         self.assertTrue(pop_last)
         self.assertFalse(pop_empty)
         self.assertFalse(pop_missing)
-        self.assertEqual(document, {'tags': ['mongodb'], 'empty': []})
+        self.assertEqual(document, {"tags": ["mongodb"], "empty": []})
 
     def test_pop_supports_single_element_and_nested_array_paths(self):
         document = {
-            'tags': ['python'],
-            'profile': {'tags': ['mongodb', 'sqlite']},
+            "tags": ["python"],
+            "profile": {"tags": ["mongodb", "sqlite"]},
         }
 
-        pop_single = UpdateEngine.apply_update(document, {'$pop': {'tags': 1}})
+        pop_single = UpdateEngine.apply_update(document, {"$pop": {"tags": 1}})
         pop_nested = UpdateEngine.apply_update(
-            document, {'$pop': {'profile.tags': -1}}
+            document,
+            {"$pop": {"profile.tags": -1}},
         )
 
         self.assertTrue(pop_single)
         self.assertTrue(pop_nested)
         self.assertEqual(
-            document, {'tags': [], 'profile': {'tags': ['sqlite']}}
+            document,
+            {"tags": [], "profile": {"tags": ["sqlite"]}},
         )
 
     def test_inc_supports_nested_paths(self):
         document = {}
 
         modified = UpdateEngine.apply_update(
-            document, {'$inc': {'stats.daily.count': 2}}
+            document,
+            {"$inc": {"stats.daily.count": 2}},
         )
 
         self.assertTrue(modified)
-        self.assertEqual(document, {'stats': {'daily': {'count': 2}}})
+        self.assertEqual(document, {"stats": {"daily": {"count": 2}}})
 
     def test_pop_rejects_invalid_direction_and_non_array_targets(self):
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': ['python']}, {'$pop': {'tags': 0}}
+                {"tags": ["python"]},
+                {"$pop": {"tags": 0}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': ['python']}, {'$pop': {'tags': True}}
+                {"tags": ["python"]},
+                {"$pop": {"tags": True}},
             )
         with self.assertRaises(OperationFailure):
             UpdateEngine.apply_update(
-                {'tags': 'python'}, {'$pop': {'tags': 1}}
+                {"tags": "python"},
+                {"$pop": {"tags": 1}},
             )
 
     def test_update_rejects_non_string_field_names(self):
         with self.assertRaises(OperationFailure):
-            UpdateEngine.apply_update({}, {'$set': {1: 'x'}})  # type: ignore[dict-item]
+            UpdateEngine.apply_update({}, {"$set": {1: "x"}})  # type: ignore[dict-item]
         with self.assertRaises(OperationFailure):
-            UpdateEngine._iter_ordered_update_items({1: 'x'})  # type: ignore[dict-item]
+            UpdateEngine._iter_ordered_update_items({1: "x"})  # type: ignore[dict-item]
 
     def test_update_rejects_conflicting_paths(self):
         conflict_specs = [
-            {'$set': {'a': {}, 'a.b': 1}},
-            {'$set': {'a.b': 1, 'a': {}}},
-            {'$unset': {'a': 1, 'a.b': 1}},
-            {'$set': {'a': 1}, '$unset': {'a.b': 1}},
-            {'$set': {'a': 1}, '$inc': {'a.b': 1}},
-            {'$inc': {'a.b': 1}, '$set': {'a': 1}},
+            {"$set": {"a": {}, "a.b": 1}},
+            {"$set": {"a.b": 1, "a": {}}},
+            {"$unset": {"a": 1, "a.b": 1}},
+            {"$set": {"a": 1}, "$unset": {"a.b": 1}},
+            {"$set": {"a": 1}, "$inc": {"a.b": 1}},
+            {"$inc": {"a.b": 1}, "$set": {"a": 1}},
         ]
 
         for spec in conflict_specs:

@@ -3,6 +3,10 @@ from typing import Any
 
 
 class BenchmarkEngine(ABC):
+    benchmark_capabilities = frozenset(
+        {"crud", "aggregation", "search", "vector-search"},
+    )
+
     @abstractmethod
     def setup(self) -> None:
         """Inicializa el motor y la conexión."""

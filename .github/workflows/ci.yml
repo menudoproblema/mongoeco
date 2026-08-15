@@ -91,6 +91,7 @@ jobs:
         run: |
           export SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
           python -m build --no-isolation --sdist --wheel
+          python scripts/normalize_sdist.py dist/mongoeco-*.tar.gz
           python -m twine check dist/*
           sha256sum dist/* > SHA256SUMS
 
@@ -170,7 +171,7 @@ jobs:
       - name: Run unit and integration tests
         run: python -m unittest discover -s tests -p 'test*.py'
 
-      - name: Enforce changed-line lint ratchet
+      - name: Enforce symbol-level lint ratchet
         run: |
           BASE_REF="$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^)"
           python scripts/check_lint_ratchet.py --base-ref "$BASE_REF"
@@ -215,6 +216,11 @@ jobs:
       - name: Smoke installed sdist
         run: python scripts/smoke_installed_wheel.py --sdist
 
+  release-differential:
+    name: Required MongoDB release differential
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/mongodb-differential.yml
+
   publish:
     name: Publish tagged release
     if: startsWith(github.ref, 'refs/tags/v')
@@ -222,6 +228,7 @@ jobs:
       - build
       - minimal-imports
       - test
+      - release-differential
     runs-on: ubuntu-latest
     environment:
       name: pypi

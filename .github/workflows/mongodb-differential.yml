@@ -1,0 +1,92 @@
+name: MongoDB Differential
+
+on:
+  workflow_call:
+    inputs:
+      case_filter:
+        required: false
+        type: string
+  workflow_dispatch:
+    inputs:
+      case_filter:
+        description: Optional comma-separated case glob
+        required: false
+        type: string
+  schedule:
+    - cron: "23 4 * * 1"
+  pull_request:
+    types: [labeled, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  differential:
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'mongodb-differential')
+    name: MongoDB ${{ matrix.target }} differential
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ["7.0", "8.0"]
+    services:
+      mongodb:
+        image: mongo:${{ matrix.target }}
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      MONGOECO_REAL_MONGODB_URI: mongodb://localhost:27017
+      MONGOECO_REAL_MONGODB_TARGET: ${{ matrix.target }}
+      MONGOECO_DIFFERENTIAL_SEED: "42"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+
+      - name: Install differential dependencies
+        run: |
+          python -m pip install ".[mongodb-real]" unittest-xml-reporting
+
+      - name: Run reproducible differential suite
+        env:
+          CASE_FILTER: ${{ inputs.case_filter }}
+        run: |
+          mkdir -p "artifacts/${{ matrix.target }}/junit"
+          args=("${{ matrix.target }}")
+          if [ -n "$CASE_FILTER" ]; then
+            args+=("$CASE_FILTER")
+          fi
+          timeout 20m python scripts/run_mongodb_real_differential.py \
+            "${args[@]}" \
+            --seed "$MONGOECO_DIFFERENTIAL_SEED" \
+            --json-report "artifacts/${{ matrix.target }}/report.json" \
+            --junit-dir "artifacts/${{ matrix.target }}/junit" \
+              2>&1 | tee "artifacts/${{ matrix.target }}/run.log"
+
+      - name: Record exact MongoDB runtime
+        if: always()
+        run: |
+          docker exec "${{ job.services.mongodb.id }}" mongosh --quiet \
+            --eval 'EJSON.stringify(db.adminCommand({buildInfo: 1}), null, 2)' \
+            > "artifacts/${{ matrix.target }}/mongodb-build-info.json"
+
+      - name: Upload differential evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mongodb-${{ matrix.target }}-differential
+          path: artifacts/${{ matrix.target }}/
+          if-no-files-found: error
+          retention-days: 14

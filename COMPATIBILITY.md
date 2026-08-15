@@ -258,15 +258,17 @@ Esto implica:
   `regex`, `exists`, `in`, `equals`, `range`, `near` y `compound`
   como subset explícito y documentado, sin pretender semántica Atlas Search
   completa.
-* ese subset textual local se considera ya cerrado como tier; lo pendiente se
-  concentra en `facet`, `highlight`, `count` y semánticas Atlas-like más ricas
-  de `autocomplete` / `wildcard` / `regex`.
+* ese subset textual local se publica bajo el contrato estable `search-v1`;
+  incluye collectors, highlight y explain locales sin prometer paridad Atlas.
 * el runtime local añade ya un siguiente subset avanzado y explícito:
   * `autocomplete.tokenOrder` con `any` y `sequential`;
   * `regex.flags` con `i`, `m` y `s`;
   * `wildcard.allowAnalyzedField`;
-  * `$search.count`, `$search.highlight` y `$search.facet` como stage options
-    locales, con `searchHighlights` en resultados y previews en `explain()`.
+  * `$searchMeta` con count total/lower-bound y facets simples o nombradas;
+  * `$search.highlight` como metadata sidecar proyectable mediante
+    `$meta: "searchHighlights"`;
+  * `explain("queryPlanner"|"executionStats")`, conservando las previews
+    antiguas solo como aliases deprecated durante 4.x.
 * los mappings locales de `$search` cubren ya una familia más rica de campos:
   `string`, `autocomplete`, `token`, `number`, `date`, `boolean`,
   `objectId`, `uuid`, `document` y `embeddedDocuments`; los tipos textuales
@@ -675,10 +677,10 @@ El runtime local soporta ya un subset explícito de `$search`:
 
 Límites conscientes:
 
-* no hay collector `facet` completo ni `searchMeta` Atlas-like;
-* `count`, `highlight` y `facet` entran hoy como subset local visible en
-  `explain()` y `highlight` además como metadata de resultados, no como paridad
-  total de Atlas Search;
+* `$searchMeta`, count, facets y highlight siguen el contrato local
+  `search-v1`, no el contrato completo de Atlas Search;
+* SQLite solo baja collectors a SQL cuando demuestra exactitud sobre mappings
+  textuales explicitos; en el resto usa el acumulador semantico compartido;
 * `wildcard` sigue siendo matching local `fnmatch` y no sintaxis Atlas Search
   completa;
 * `regex` entra como matching Python local sobre entradas materializadas, ahora

@@ -11,7 +11,13 @@ from typing import Any
 
 from mongoeco.core.json_compat import get_json_backend_name
 
-from benchmarks.run import WORKLOAD_ORDER, WORKLOADS, run_benchmarks, resolve_workload_names
+from benchmarks.run import (
+    SKIPPED_WORKLOADS_KEY,
+    WORKLOAD_ORDER,
+    WORKLOADS,
+    resolve_workload_names,
+    run_benchmarks,
+)
 
 
 def _git_revision(project_root: Path) -> str | None:
@@ -31,13 +37,13 @@ def _git_revision(project_root: Path) -> str | None:
 def _git_is_dirty(project_root: Path) -> bool | None:
     try:
         result = subprocess.run(
-            ["git", "diff", "--quiet"],
+            ["git", "status", "--porcelain"],
             cwd=project_root,
             capture_output=True,
         )
     except (FileNotFoundError, subprocess.CalledProcessError):
         return None
-    return result.returncode == 1
+    return bool(result.stdout.strip())
 
 
 def _optional_dependency_version(name: str) -> str | None:
@@ -155,7 +161,16 @@ def render_markdown_report(
                     else:
                         lines.append(f"| {engine_name} | ERROR | - | - | - | - | - | - |")
                     continue
-                metrics = engine_result[workload_name][task_name]
+                skipped = engine_result.get(SKIPPED_WORKLOADS_KEY, {})
+                if workload_name in skipped:
+                    lines.append(
+                        f"| {engine_name} | SKIPPED | - | - | - | - | - | - |",
+                    )
+                    continue
+                workload_data = engine_result.get(workload_name, {})
+                metrics = workload_data.get(task_name)
+                if metrics is None:
+                    continue
                 metadata = metrics.get("metadata")
                 plan_summary = "-"
                 if isinstance(metadata, dict):
@@ -281,6 +296,10 @@ def main() -> int:
         repetitions=args.repetitions,
         workload_names=workload_names,
     )
+    failed = any(
+        isinstance(engine_result, dict) and "error" in engine_result
+        for engine_result in results.values()
+    )
     baseline = _load_json(args.baseline_json)
 
     if args.output_json is not None:
@@ -306,7 +325,7 @@ def main() -> int:
         args.output_markdown.write_text(markdown, encoding="utf-8")
     else:
         print(markdown)
-    return 0
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

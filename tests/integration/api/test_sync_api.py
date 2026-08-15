@@ -6,13 +6,14 @@ import threading
 import time
 import unittest
 import uuid
+
 from bson import decode_all
 from bson.objectid import ObjectId as BsonObjectId
 
 from mongoeco import (
     Binary,
-    CodecOptions,
     ClientSession,
+    CodecOptions,
     DeleteMany,
     DeleteOne,
     IndexModel,
@@ -31,7 +32,6 @@ from mongoeco import (
     UuidRepresentation,
     WriteConcern,
 )
-from mongoeco.types import PlanningMode
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.cursor import Cursor
 from mongoeco.engines.memory import MemoryEngine
@@ -44,40 +44,22 @@ from mongoeco.errors import (
     InvalidOperation,
     OperationFailure,
 )
-from tests.integration.api.search_vector_scenarios import (
-    assert_search_advanced_option_explanation,
-    assert_compound_candidateable_should_explanation,
-    assert_compound_candidateable_should_limited_explanation,
-    assert_compound_candidateable_should_matched_limited_explanation,
-    assert_compound_candidateable_should_title_prefilter_explanation,
-    assert_compound_should_near_explanation,
-    assert_boolean_vector_residual_explanation,
-    assert_in_equals_and_range_explanations,
-    assert_filtered_vector_explanation,
-    assert_phrase_slop_explanation,
-    assert_phrase_in_range_compound_explanation,
-    assert_regex_explanation,
-    assert_ranged_vector_explanation,
-    assert_vector_min_score_explanation,
-    assert_vector_query_and_downstream_filter_explanation,
-    assert_vector_downstream_filter_explanation,
-    assert_vector_score_projection_results,
-    assert_vector_similarity_explanation,
-)
+from mongoeco.types import PlanningMode
+
 from tests.integration.api.admin_command_cases import (
     assert_build_info_command_shares_source_of_truth_with_server_info,
     assert_client_server_info_reflects_target_dialect,
     assert_database_command_count_supports_skip_limit_hint_and_comment,
     assert_database_command_distinct_supports_hint_comment_and_max_time,
-    assert_database_command_supports_configure_fail_point,
     assert_database_command_index_commands_support_comment_and_max_time,
     assert_database_command_rejects_invalid_command_shapes,
     assert_database_command_rejects_unsupported_commands,
-    assert_database_command_supports_db_hash_and_profile_status,
     assert_database_command_supports_coll_stats_and_db_stats,
     assert_database_command_supports_collection_index_count_and_distinct_commands,
-    assert_database_command_supports_explain_for_find_and_aggregate,
+    assert_database_command_supports_configure_fail_point,
+    assert_database_command_supports_db_hash_and_profile_status,
     assert_database_command_supports_explain_for_count_distinct_and_find_and_modify,
+    assert_database_command_supports_explain_for_find_and_aggregate,
     assert_database_command_supports_explain_for_update_and_delete,
     assert_database_command_supports_find_and_aggregate,
     assert_database_command_supports_find_and_modify,
@@ -89,14 +71,37 @@ from tests.integration.api.admin_command_cases import (
     assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata,
     assert_list_collections_command_supports_name_only,
     assert_list_commands_and_connection_status_commands_return_local_admin_metadata,
-    assert_server_status_opcounters_track_local_runtime_activity,
     assert_server_status_command_returns_local_runtime_metadata,
+    assert_server_status_opcounters_track_local_runtime_activity,
     assert_validate_collection_returns_metadata_and_rejects_missing_namespace,
 )
 from tests.integration.api.json_schema_cases import (
     assert_sync_find_supports_richer_top_level_json_schema_filter,
 )
-from tests.support import ENGINE_FACTORIES as SYNC_ENGINE_FACTORIES, open_sync_client
+from tests.integration.api.search_vector_scenarios import (
+    assert_boolean_vector_residual_explanation,
+    assert_compound_candidateable_should_explanation,
+    assert_compound_candidateable_should_limited_explanation,
+    assert_compound_candidateable_should_matched_limited_explanation,
+    assert_compound_candidateable_should_title_prefilter_explanation,
+    assert_compound_should_near_explanation,
+    assert_filtered_vector_explanation,
+    assert_in_equals_and_range_explanations,
+    assert_phrase_in_range_compound_explanation,
+    assert_phrase_slop_explanation,
+    assert_ranged_vector_explanation,
+    assert_regex_explanation,
+    assert_search_advanced_option_explanation,
+    assert_vector_downstream_filter_explanation,
+    assert_vector_min_score_explanation,
+    assert_vector_query_and_downstream_filter_explanation,
+    assert_vector_score_projection_results,
+    assert_vector_similarity_explanation,
+)
+from tests.support import (
+    ENGINE_FACTORIES as SYNC_ENGINE_FACTORIES,
+    open_sync_client,
+)
 
 
 class SyncApiIntegrationTests(unittest.TestCase):
@@ -106,12 +111,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.search.get_collection("docs")
 
-                    created = collection.create_search_index({"mappings": {"dynamic": False}})
+                    created = collection.create_search_index(
+                        {"mappings": {"dynamic": False}},
+                    )
                     self.assertEqual(created, "default")
 
                     created_many = collection.create_search_indexes(
                         [
-                            SearchIndexModel({"mappings": {"dynamic": True}}, name="by_text"),
+                            SearchIndexModel(
+                                {"mappings": {"dynamic": True}},
+                                name="by_text",
+                            ),
                             SearchIndexModel(
                                 {
                                     "fields": [
@@ -120,13 +130,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "path": "embedding",
                                             "numDimensions": 3,
                                             "similarity": "cosine",
-                                        }
-                                    ]
+                                        },
+                                    ],
                                 },
                                 name="by_keyword",
                                 type="vectorSearch",
                             ),
-                        ]
+                        ],
                     )
                     self.assertEqual(created_many, ["by_text", "by_keyword"])
 
@@ -136,38 +146,71 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ["by_keyword", "by_text", "default"],
                     )
                     by_keyword = next(
-                        document for document in listed if document["name"] == "by_keyword"
+                        document
+                        for document in listed
+                        if document["name"] == "by_keyword"
                     )
                     self.assertTrue(by_keyword["queryable"])
                     self.assertEqual(by_keyword["status"], "READY")
                     self.assertEqual(by_keyword["queryMode"], "vector")
                     self.assertTrue(by_keyword["experimental"])
-                    self.assertEqual(by_keyword["capabilities"], ["vectorSearch"])
+                    self.assertEqual(
+                        by_keyword["capabilities"],
+                        ["vectorSearch"],
+                    )
 
-                    only_default = collection.list_search_indexes("default").to_list()
+                    only_default = collection.list_search_indexes(
+                        "default",
+                    ).to_list()
                     self.assertEqual(len(only_default), 1)
                     self.assertEqual(only_default[0]["name"], "default")
                     self.assertEqual(only_default[0]["queryMode"], "text")
                     self.assertEqual(
                         only_default[0]["capabilities"],
-                        ["text", "phrase", "autocomplete", "wildcard", "regex", "exists", "in", "equals", "range", "near", "compound"],
+                        [
+                            "text",
+                            "phrase",
+                            "autocomplete",
+                            "wildcard",
+                            "regex",
+                            "exists",
+                            "in",
+                            "equals",
+                            "range",
+                            "near",
+                            "compound",
+                        ],
                     )
 
-                    collection.update_search_index("default", {"mappings": {"dynamic": True}})
+                    collection.update_search_index(
+                        "default",
+                        {"mappings": {"dynamic": True}},
+                    )
                     updated = collection.list_search_indexes("default").first()
-                    self.assertEqual(updated["latestDefinition"], {"mappings": {"dynamic": True}})
+                    self.assertEqual(
+                        updated["latestDefinition"],
+                        {"mappings": {"dynamic": True}},
+                    )
 
                     collection.drop_search_index("by_keyword")
                     remaining = collection.list_search_indexes().to_list()
-                    self.assertEqual([document["name"] for document in remaining], ["by_text", "default"])
+                    self.assertEqual(
+                        [document["name"] for document in remaining],
+                        ["by_text", "default"],
+                    )
 
-    def test_create_search_indexes_rolls_back_created_indexes_on_later_failure(self):
+    def test_create_search_indexes_rolls_back_created_indexes_on_later_failure(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.search.get_collection("docs")
                     collection.create_search_index(
-                        SearchIndexModel({"mappings": {"dynamic": True}}, name="conflict")
+                        SearchIndexModel(
+                            {"mappings": {"dynamic": True}},
+                            name="conflict",
+                        ),
                     )
 
                     with self.assertRaises(OperationFailure):
@@ -181,19 +224,26 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     {"mappings": {"dynamic": False}},
                                     name="conflict",
                                 ),
-                            ]
+                            ],
                         )
 
                     listed = collection.list_search_indexes().to_list()
-                    self.assertEqual([document["name"] for document in listed], ["conflict"])
+                    self.assertEqual(
+                        [document["name"] for document in listed],
+                        ["conflict"],
+                    )
 
-    def test_aggregate_search_executes_text_search_and_rejects_invalid_runtime(self):
+    def test_aggregate_search_executes_text_search_and_rejects_invalid_runtime(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.search_runtime.get_collection("docs")
                     shared_owner = ObjectId("64f0c0d2e1382374dbf95e01")
-                    shared_trace = uuid.UUID("12345678-1234-5678-1234-567812345678")
+                    shared_trace = uuid.UUID(
+                        "12345678-1234-5678-1234-567812345678",
+                    )
                     collection.insert_many(
                         [
                             {
@@ -202,10 +252,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "body": "Analytical engine notes",
                                 "kind": "reference",
                                 "score": 9,
-                                "publishedAt": datetime.datetime(2024, 1, 1, 12, 0, 0),
+                                "publishedAt": datetime.datetime(
+                                    2024,
+                                    1,
+                                    1,
+                                    12,
+                                    0,
+                                    0,
+                                ),
                                 "active": False,
                                 "owner": ObjectId("64f0c0d2e1382374dbf95e00"),
-                                "traceId": uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                                "traceId": uuid.UUID(
+                                    "00000000-0000-0000-0000-000000000001",
+                                ),
                                 "embedding": [1.0, 0.0, 0.0],
                             },
                             {
@@ -214,7 +273,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "body": "Compiler pioneer",
                                 "kind": "note",
                                 "score": 15,
-                                "publishedAt": datetime.datetime(2024, 1, 1, 12, 5, 0),
+                                "publishedAt": datetime.datetime(
+                                    2024,
+                                    1,
+                                    1,
+                                    12,
+                                    5,
+                                    0,
+                                ),
                                 "active": True,
                                 "owner": shared_owner,
                                 "traceId": shared_trace,
@@ -226,14 +292,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "body": "Ada wrote the first algorithm",
                                 "kind": "note",
                                 "score": 11,
-                                "publishedAt": datetime.datetime(2024, 1, 1, 12, 1, 0),
+                                "publishedAt": datetime.datetime(
+                                    2024,
+                                    1,
+                                    1,
+                                    12,
+                                    1,
+                                    0,
+                                ),
                                 "active": True,
                                 "owner": shared_owner,
                                 "traceId": shared_trace,
                                 "embedding": [0.9, 0.1, 0.0],
                                 "summary": "Algorithm summary",
                             },
-                        ]
+                        ],
                     )
                     collection.create_search_indexes(
                         [
@@ -251,7 +324,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "owner": {"type": "objectId"},
                                             "traceId": {"type": "uuid"},
                                         },
-                                    }
+                                    },
                                 },
                                 name="by_text",
                             ),
@@ -263,8 +336,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "path": "embedding",
                                             "numDimensions": 3,
                                             "similarity": "cosine",
-                                        }
-                                    ]
+                                        },
+                                    ],
                                 },
                                 name="by_vector",
                                 type="vectorSearch",
@@ -277,8 +350,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "path": "embedding",
                                             "numDimensions": 3,
                                             "similarity": "dotProduct",
-                                        }
-                                    ]
+                                        },
+                                    ],
                                 },
                                 name="by_vector_dot",
                                 type="vectorSearch",
@@ -291,70 +364,182 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "path": "embedding",
                                             "numDimensions": 3,
                                             "similarity": "euclidean",
-                                        }
-                                    ]
+                                        },
+                                    ],
                                 },
                                 name="by_vector_euclidean",
                                 type="vectorSearch",
                             ),
-                        ]
+                        ],
                     )
 
                     hits = collection.aggregate(
                         [
-                            {"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}},
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
+                                },
+                            },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in hits], [1, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in hits],
+                        [1, 3],
+                    )
 
-                    collection.update_one({"_id": 2}, {"$set": {"body": "Ada and Grace built compilers"}})
+                    collection.update_one(
+                        {"_id": 2},
+                        {"$set": {"body": "Ada and Grace built compilers"}},
+                    )
                     collection.delete_one({"_id": 1})
                     updated_hits = collection.aggregate(
                         [
-                            {"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}},
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
+                                },
+                            },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in updated_hits], [2, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in updated_hits],
+                        [2, 3],
+                    )
 
                     explanation = collection.aggregate(
-                        [{"$search": {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
+                                },
+                            },
+                        ],
                     ).explain()
-                    self.assertEqual(explanation["engine_plan"]["strategy"], "search")
+                    self.assertEqual(
+                        explanation["engine_plan"]["strategy"],
+                        "search",
+                    )
                     self.assertEqual(explanation["pushdown"]["mode"], "search")
-                    self.assertEqual(explanation["pushdown"]["pushedDownStages"], 1)
+                    self.assertEqual(
+                        explanation["pushdown"]["pushedDownStages"],
+                        1,
+                    )
                     self.assertEqual(explanation["pushdown"]["totalStages"], 1)
-                    self.assertTrue(explanation["engine_plan"]["details"]["backendAvailable"])
-                    self.assertIn("readyAtEpoch", explanation["engine_plan"]["details"])
+                    self.assertTrue(
+                        explanation["engine_plan"]["details"]["backendAvailable"],
+                    )
+                    self.assertIn(
+                        "readyAtEpoch",
+                        explanation["engine_plan"]["details"],
+                    )
                     if engine_name == "sqlite":
-                        self.assertEqual(explanation["engine_plan"]["details"]["backend"], "fts5")
-                        self.assertEqual(explanation["engine_plan"]["details"]["fts5_match"], '"ada"')
-                        self.assertTrue(explanation["engine_plan"]["details"]["backendMaterialized"])
-                        self.assertIsNotNone(explanation["engine_plan"]["details"]["physicalName"])
-                        self.assertIsNotNone(explanation["engine_plan"]["details"]["fts5Available"])
+                        self.assertEqual(
+                            explanation["engine_plan"]["details"]["backend"],
+                            "fts5",
+                        )
+                        self.assertEqual(
+                            explanation["engine_plan"]["details"]["fts5_match"],
+                            '"ada"',
+                        )
+                        self.assertTrue(
+                            explanation["engine_plan"]["details"][
+                                "backendMaterialized"
+                            ],
+                        )
+                        self.assertIsNotNone(
+                            explanation["engine_plan"]["details"]["physicalName"],
+                        )
+                        self.assertIsNotNone(
+                            explanation["engine_plan"]["details"]["fts5Available"],
+                        )
                     else:
-                        self.assertEqual(explanation["engine_plan"]["details"]["backend"], "python")
-                        self.assertFalse(explanation["engine_plan"]["details"]["backendMaterialized"])
-                        self.assertIsNone(explanation["engine_plan"]["details"]["physicalName"])
-                        self.assertIsNone(explanation["engine_plan"]["details"]["fts5Available"])
+                        self.assertEqual(
+                            explanation["engine_plan"]["details"]["backend"],
+                            "python",
+                        )
+                        self.assertFalse(
+                            explanation["engine_plan"]["details"][
+                                "backendMaterialized"
+                            ],
+                        )
+                        self.assertIsNone(
+                            explanation["engine_plan"]["details"]["physicalName"],
+                        )
+                        self.assertIsNone(
+                            explanation["engine_plan"]["details"]["fts5Available"],
+                        )
 
                     autocomplete_hits = collection.aggregate(
                         [
-                            {"$search": {"index": "by_text", "autocomplete": {"query": "ada", "path": ["title", "body"]}}},
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "autocomplete": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
+                                },
+                            },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in autocomplete_hits], [2, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in autocomplete_hits],
+                        [2, 3],
+                    )
                     autocomplete_explanation = collection.aggregate(
-                        [{"$search": {"index": "by_text", "autocomplete": {"query": "ada", "path": ["title", "body"]}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "autocomplete": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
+                                },
+                            },
+                        ],
                     ).explain()
-                    self.assertEqual(autocomplete_explanation["engine_plan"]["details"]["queryOperator"], "autocomplete")
+                    self.assertEqual(
+                        autocomplete_explanation["engine_plan"]["details"][
+                            "queryOperator"
+                        ],
+                        "autocomplete",
+                    )
                     if engine_name == "sqlite":
-                        self.assertEqual(autocomplete_explanation["engine_plan"]["details"]["backend"], "fts5")
-                        self.assertEqual(autocomplete_explanation["engine_plan"]["details"]["fts5_match"], '"ada"*')
+                        self.assertEqual(
+                            autocomplete_explanation["engine_plan"]["details"][
+                                "backend"
+                            ],
+                            "fts5",
+                        )
+                        self.assertEqual(
+                            autocomplete_explanation["engine_plan"]["details"][
+                                "fts5_match"
+                            ],
+                            '"ada"*',
+                        )
                     else:
-                        self.assertEqual(autocomplete_explanation["engine_plan"]["details"]["backend"], "python")
+                        self.assertEqual(
+                            autocomplete_explanation["engine_plan"]["details"][
+                                "backend"
+                            ],
+                            "python",
+                        )
 
                     fuzzy_autocomplete_hits = collection.aggregate(
                         [
@@ -364,14 +549,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "autocomplete": {
                                         "query": "algoritm",
                                         "path": "body",
-                                        "fuzzy": {"maxEdits": 2, "prefixLength": 1},
+                                        "fuzzy": {
+                                            "maxEdits": 2,
+                                            "prefixLength": 1,
+                                        },
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in fuzzy_autocomplete_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in fuzzy_autocomplete_hits],
+                        [3],
+                    )
                     fuzzy_autocomplete_explanation = collection.aggregate(
                         [
                             {
@@ -380,87 +571,231 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "autocomplete": {
                                         "query": "algoritm",
                                         "path": "body",
-                                        "fuzzy": {"maxEdits": 2, "prefixLength": 1},
+                                        "fuzzy": {
+                                            "maxEdits": 2,
+                                            "prefixLength": 1,
+                                        },
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     self.assertEqual(
-                        fuzzy_autocomplete_explanation["engine_plan"]["details"]["querySemantics"]["fuzzy"],
-                        {"maxEdits": 2, "prefixLength": 1, "maxExpansions": 50},
+                        fuzzy_autocomplete_explanation["engine_plan"]["details"][
+                            "querySemantics"
+                        ]["fuzzy"],
+                        {
+                            "maxEdits": 2,
+                            "prefixLength": 1,
+                            "maxExpansions": 50,
+                        },
                     )
                     if engine_name == "sqlite":
                         self.assertEqual(
-                            fuzzy_autocomplete_explanation["engine_plan"]["details"]["backend"],
+                            fuzzy_autocomplete_explanation["engine_plan"]["details"][
+                                "backend"
+                            ],
                             "fts5-path",
                         )
                     else:
                         self.assertEqual(
-                            fuzzy_autocomplete_explanation["engine_plan"]["details"]["backend"],
+                            fuzzy_autocomplete_explanation["engine_plan"]["details"][
+                                "backend"
+                            ],
                             "python",
                         )
 
                     wildcard_hits = collection.aggregate(
-                        [{"$search": {"index": "by_text", "wildcard": {"query": "*algorithm*", "path": "body"}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "wildcard": {
+                                        "query": "*algorithm*",
+                                        "path": "body",
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in wildcard_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in wildcard_hits],
+                        [3],
+                    )
                     wildcard_explanation = collection.aggregate(
-                        [{"$search": {"index": "by_text", "wildcard": {"query": "*algorithm*", "path": "body"}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "wildcard": {
+                                        "query": "*algorithm*",
+                                        "path": "body",
+                                    },
+                                },
+                            },
+                        ],
                     ).explain()
-                    self.assertEqual(wildcard_explanation["engine_plan"]["details"]["queryOperator"], "wildcard")
+                    self.assertEqual(
+                        wildcard_explanation["engine_plan"]["details"]["queryOperator"],
+                        "wildcard",
+                    )
                     if engine_name == "sqlite":
-                        self.assertEqual(wildcard_explanation["engine_plan"]["details"]["backend"], "fts5-glob")
-                        self.assertEqual(wildcard_explanation["engine_plan"]["details"]["candidateCount"], 1)
+                        self.assertEqual(
+                            wildcard_explanation["engine_plan"]["details"]["backend"],
+                            "fts5-glob",
+                        )
+                        self.assertEqual(
+                            wildcard_explanation["engine_plan"]["details"][
+                                "candidateCount"
+                            ],
+                            1,
+                        )
                     else:
-                        self.assertEqual(wildcard_explanation["engine_plan"]["details"]["backend"], "python")
+                        self.assertEqual(
+                            wildcard_explanation["engine_plan"]["details"]["backend"],
+                            "python",
+                        )
 
                     exists_hits = collection.aggregate(
                         [
-                            {"$search": {"index": "by_text", "exists": {"path": "title"}}},
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "exists": {"path": "title"},
+                                },
+                            },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in exists_hits], [2, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in exists_hits],
+                        [2, 3],
+                    )
                     exists_explanation = collection.aggregate(
-                        [{"$search": {"index": "by_text", "exists": {"path": "title"}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "exists": {"path": "title"},
+                                },
+                            },
+                        ],
                     ).explain()
-                    self.assertEqual(exists_explanation["engine_plan"]["details"]["queryOperator"], "exists")
+                    self.assertEqual(
+                        exists_explanation["engine_plan"]["details"]["queryOperator"],
+                        "exists",
+                    )
                     if engine_name == "sqlite":
-                        self.assertEqual(exists_explanation["engine_plan"]["details"]["backend"], "fts5-path")
-                        self.assertEqual(exists_explanation["engine_plan"]["details"]["candidateCount"], 2)
+                        self.assertEqual(
+                            exists_explanation["engine_plan"]["details"]["backend"],
+                            "fts5-path",
+                        )
+                        self.assertEqual(
+                            exists_explanation["engine_plan"]["details"][
+                                "candidateCount"
+                            ],
+                            2,
+                        )
                     else:
-                        self.assertEqual(exists_explanation["engine_plan"]["details"]["backend"], "python")
+                        self.assertEqual(
+                            exists_explanation["engine_plan"]["details"]["backend"],
+                            "python",
+                        )
 
                     in_hits = collection.aggregate(
                         [
-                            {"$search": {"index": "by_text", "in": {"path": "kind", "value": ["note", "reference"]}}},
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "in": {
+                                        "path": "kind",
+                                        "value": ["note", "reference"],
+                                    },
+                                },
+                            },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in in_hits], [2, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in in_hits],
+                        [2, 3],
+                    )
                     equals_hits = collection.aggregate(
                         [
-                            {"$search": {"index": "by_text", "equals": {"path": "kind", "value": "note"}}},
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "equals": {
+                                        "path": "kind",
+                                        "value": "note",
+                                    },
+                                },
+                            },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in equals_hits], [2, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in equals_hits],
+                        [2, 3],
+                    )
                     range_hits = collection.aggregate(
                         [
-                            {"$search": {"index": "by_text", "range": {"path": "score", "gte": 9, "lte": 11}}},
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "range": {
+                                        "path": "score",
+                                        "gte": 9,
+                                        "lte": 11,
+                                    },
+                                },
+                            },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in range_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in range_hits],
+                        [3],
+                    )
                     in_explanation = collection.aggregate(
-                        [{"$search": {"index": "by_text", "in": {"path": "kind", "value": ["note", "reference"]}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "in": {
+                                        "path": "kind",
+                                        "value": ["note", "reference"],
+                                    },
+                                },
+                            },
+                        ],
                     ).explain()
                     equals_explanation = collection.aggregate(
-                        [{"$search": {"index": "by_text", "equals": {"path": "kind", "value": "note"}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "equals": {
+                                        "path": "kind",
+                                        "value": "note",
+                                    },
+                                },
+                            },
+                        ],
                     ).explain()
                     range_explanation = collection.aggregate(
-                        [{"$search": {"index": "by_text", "range": {"path": "score", "gte": 9, "lte": 11}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "range": {
+                                        "path": "score",
+                                        "gte": 9,
+                                        "lte": 11,
+                                    },
+                                },
+                            },
+                        ],
                     ).explain()
                     assert_in_equals_and_range_explanations(
                         self,
@@ -471,11 +806,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     regex_hits = collection.aggregate(
                         [
-                            {"$search": {"index": "by_text", "regex": {"query": "Ada.*algorithm", "path": "body"}}},
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "regex": {
+                                        "query": "Ada.*algorithm",
+                                        "path": "body",
+                                    },
+                                },
+                            },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in regex_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in regex_hits],
+                        [3],
+                    )
                     assert_regex_explanation(
                         self,
                         collection.aggregate(
@@ -488,9 +834,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "path": "body",
                                             "flags": "i",
                                         },
-                                    }
-                                }
-                            ]
+                                    },
+                                },
+                            ],
                         ).explain(),
                         engine_name=engine_name,
                         expected_flags="i",
@@ -509,9 +855,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "options": "i",
                                             "allowAnalyzedField": True,
                                         },
-                                    }
-                                }
-                            ]
+                                    },
+                                },
+                            ],
                         ).explain(),
                         engine_name=engine_name,
                         expected_flags="i",
@@ -527,12 +873,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "path": "body",
                                         "allowAnalyzedField": True,
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in regex_token_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in regex_token_hits],
+                        [3],
+                    )
                     regex_token_strict_hits = collection.aggregate(
                         [
                             {
@@ -543,10 +892,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "path": "body",
                                         "allowAnalyzedField": False,
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
                     self.assertEqual(regex_token_strict_hits, [])
                     wildcard_token_hits = collection.aggregate(
@@ -559,12 +908,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "path": "body",
                                         "allowAnalyzedField": True,
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in wildcard_token_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in wildcard_token_hits],
+                        [3],
+                    )
                     wildcard_strict_hits = collection.aggregate(
                         [
                             {
@@ -575,10 +927,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "path": "body",
                                         "allowAnalyzedField": False,
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
                     self.assertEqual(wildcard_strict_hits, [])
                     sequential_autocomplete_hits = collection.aggregate(
@@ -591,18 +943,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "path": "body",
                                         "tokenOrder": "sequential",
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in sequential_autocomplete_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in sequential_autocomplete_hits],
+                        [3],
+                    )
                     advanced_hits = collection.aggregate(
                         [
                             {
                                 "$search": {
                                     "index": "by_text",
-                                    "text": {"query": "ada", "path": ["title", "body"]},
+                                    "text": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
                                     "count": {"type": "total"},
                                     "highlight": {
                                         "path": ["title", "body"],
@@ -610,20 +968,56 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "maxNumPassages": 1,
                                     },
                                     "facet": {"path": "kind", "numBuckets": 5},
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in advanced_hits], [2, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in advanced_hits],
+                        [2, 3],
+                    )
                     self.assertIn("searchHighlights", advanced_hits[0])
                     self.assertTrue(advanced_hits[0]["searchHighlights"])
+                    projected_highlights = collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
+                                    "highlight": {"path": ["title", "body"]},
+                                },
+                            },
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "matches": {"$meta": "searchHighlights"},
+                                },
+                            },
+                            {"$sort": {"_id": 1}},
+                        ],
+                    ).to_list()
+                    self.assertEqual(
+                        [document["_id"] for document in projected_highlights],
+                        [2, 3],
+                    )
+                    self.assertTrue(projected_highlights[0]["matches"])
+                    self.assertNotIn(
+                        "searchHighlights",
+                        projected_highlights[0],
+                    )
                     advanced_explanation = collection.aggregate(
                         [
                             {
                                 "$search": {
                                     "index": "by_text",
-                                    "text": {"query": "ada", "path": ["title", "body"]},
+                                    "text": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
                                     "count": {"type": "total"},
                                     "highlight": {
                                         "path": ["title", "body"],
@@ -631,9 +1025,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "maxNumPassages": 1,
                                     },
                                     "facet": {"path": "kind", "numBuckets": 5},
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     assert_search_advanced_option_explanation(
                         self,
@@ -644,12 +1038,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {
                                 "$searchMeta": {
                                     "index": "by_text",
-                                    "text": {"query": "ada", "path": ["title", "body"]},
+                                    "text": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
                                     "count": {"type": "total"},
                                     "facet": {"path": "kind", "numBuckets": 5},
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
                     self.assertEqual(
                         search_meta,
@@ -662,7 +1059,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "numBuckets": 5,
                                     "buckets": [{"value": "note", "count": 2}],
                                 },
-                            }
+                            },
                         ],
                     )
                     search_meta_lower_bound = collection.aggregate(
@@ -670,22 +1067,40 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {
                                 "$searchMeta": {
                                     "index": "by_text",
-                                    "text": {"query": "ada", "path": ["title", "body"]},
-                                    "count": {"type": "lowerBound", "threshold": 1},
-                                }
-                            }
-                        ]
+                                    "text": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
+                                    "count": {
+                                        "type": "lowerBound",
+                                        "threshold": 1,
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
                     self.assertEqual(
                         search_meta_lower_bound,
-                        [{"count": {"lowerBound": 1, "exact": False, "threshold": 1, "cappedByThreshold": True}}],
+                        [
+                            {
+                                "count": {
+                                    "lowerBound": 1,
+                                    "exact": False,
+                                    "threshold": 1,
+                                    "cappedByThreshold": True,
+                                },
+                            },
+                        ],
                     )
                     search_meta_facets = collection.aggregate(
                         [
                             {
                                 "$searchMeta": {
                                     "index": "by_text",
-                                    "text": {"query": "ada", "path": ["title", "body"]},
+                                    "text": {
+                                        "query": "ada",
+                                        "path": ["title", "body"],
+                                    },
                                     "facet": {
                                         "facets": {
                                             "kindFacet": {
@@ -694,15 +1109,30 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                                 "numBuckets": 5,
                                                 "includeMeta": True,
                                             },
-                                            "titleFacet": {"path": "title", "numBuckets": 3},
-                                            "activeFacet": {"type": "boolean", "path": "active", "numBuckets": 2},
-                                            "ownerFacet": {"type": "objectId", "path": "owner", "numBuckets": 2},
-                                            "traceFacet": {"type": "uuid", "path": "traceId", "numBuckets": 2},
-                                        }
+                                            "titleFacet": {
+                                                "path": "title",
+                                                "numBuckets": 3,
+                                            },
+                                            "activeFacet": {
+                                                "type": "boolean",
+                                                "path": "active",
+                                                "numBuckets": 2,
+                                            },
+                                            "ownerFacet": {
+                                                "type": "objectId",
+                                                "path": "owner",
+                                                "numBuckets": 2,
+                                            },
+                                            "traceFacet": {
+                                                "type": "uuid",
+                                                "path": "traceId",
+                                                "numBuckets": 2,
+                                            },
+                                        },
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
                     self.assertEqual(
                         search_meta_facets,
@@ -714,7 +1144,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "type": "string",
                                             "path": "kind",
                                             "numBuckets": 5,
-                                            "buckets": [{"value": "note", "count": 2}],
+                                            "buckets": [
+                                                {"value": "note", "count": 2},
+                                            ],
                                             "meta": {
                                                 "distinctValueCount": 1,
                                                 "returnedBucketCount": 1,
@@ -739,23 +1171,35 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "type": "boolean",
                                             "path": "active",
                                             "numBuckets": 2,
-                                            "buckets": [{"value": True, "count": 2}],
+                                            "buckets": [
+                                                {"value": True, "count": 2},
+                                            ],
                                         },
                                         "ownerFacet": {
                                             "type": "objectId",
                                             "path": "owner",
                                             "numBuckets": 2,
-                                            "buckets": [{"value": shared_owner, "count": 2}],
+                                            "buckets": [
+                                                {
+                                                    "value": shared_owner,
+                                                    "count": 2,
+                                                },
+                                            ],
                                         },
                                         "traceFacet": {
                                             "type": "uuid",
                                             "path": "traceId",
                                             "numBuckets": 2,
-                                            "buckets": [{"value": shared_trace, "count": 2}],
+                                            "buckets": [
+                                                {
+                                                    "value": shared_trace,
+                                                    "count": 2,
+                                                },
+                                            ],
                                         },
-                                    }
-                                }
-                            }
+                                    },
+                                },
+                            },
                         ],
                     )
                     search_meta_collector = collection.aggregate(
@@ -768,15 +1212,18 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "text": {
                                                 "query": "ada",
                                                 "path": ["title", "body"],
-                                            }
+                                            },
                                         },
                                         "facets": {
-                                            "kindFacet": {"path": "kind", "numBuckets": 5},
+                                            "kindFacet": {
+                                                "path": "kind",
+                                                "numBuckets": 5,
+                                            },
                                         },
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
                     self.assertEqual(
                         search_meta_collector,
@@ -788,25 +1235,33 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "type": "string",
                                             "path": "kind",
                                             "numBuckets": 5,
-                                            "buckets": [{"value": "note", "count": 2}],
+                                            "buckets": [
+                                                {"value": "note", "count": 2},
+                                            ],
                                         },
-                                    }
-                                }
-                            }
+                                    },
+                                },
+                            },
                         ],
                     )
-                    with self.assertRaisesRegex(OperationFailure, "\\$searchMeta does not support highlight"):
+                    with self.assertRaisesRegex(
+                        OperationFailure,
+                        "\\$searchMeta does not support highlight",
+                    ):
                         collection.aggregate(
                             [
                                 {
                                     "$searchMeta": {
                                         "index": "by_text",
-                                        "text": {"query": "ada", "path": ["title", "body"]},
+                                        "text": {
+                                            "query": "ada",
+                                            "path": ["title", "body"],
+                                        },
                                         "count": {"type": "total"},
                                         "highlight": {"path": "title"},
-                                    }
-                                }
-                            ]
+                                    },
+                                },
+                            ],
                         ).to_list()
 
                     compound_hits = collection.aggregate(
@@ -815,46 +1270,103 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "$search": {
                                     "index": "by_text",
                                     "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
-                                        "filter": [{"wildcard": {"query": "*algorithm*", "path": "body"}}],
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "ada",
+                                                    "path": ["title", "body"],
+                                                },
+                                            },
+                                        ],
+                                        "filter": [
+                                            {
+                                                "wildcard": {
+                                                    "query": "*algorithm*",
+                                                    "path": "body",
+                                                },
+                                            },
+                                        ],
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in compound_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in compound_hits],
+                        [3],
+                    )
                     compound_scalar_hits = collection.aggregate(
                         [
                             {
                                 "$search": {
                                     "index": "by_text",
                                     "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "ada",
+                                                    "path": ["title", "body"],
+                                                },
+                                            },
+                                        ],
                                         "filter": [
                                             {"exists": {"path": "summary"}},
-                                            {"in": {"path": "kind", "value": ["note", "reference"]}},
-                                            {"range": {"path": "score", "gte": 9}},
+                                            {
+                                                "in": {
+                                                    "path": "kind",
+                                                    "value": [
+                                                        "note",
+                                                        "reference",
+                                                    ],
+                                                },
+                                            },
+                                            {
+                                                "range": {
+                                                    "path": "score",
+                                                    "gte": 9,
+                                                },
+                                            },
                                         ],
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in compound_scalar_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in compound_scalar_hits],
+                        [3],
+                    )
                     compound_explanation = collection.aggregate(
                         [
                             {
                                 "$search": {
                                     "index": "by_text",
                                     "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
-                                        "filter": [{"wildcard": {"query": "*algorithm*", "path": "body"}}],
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "ada",
+                                                    "path": ["title", "body"],
+                                                },
+                                            },
+                                        ],
+                                        "filter": [
+                                            {
+                                                "wildcard": {
+                                                    "query": "*algorithm*",
+                                                    "path": "body",
+                                                },
+                                            },
+                                        ],
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
-                    self.assertEqual(compound_explanation["engine_plan"]["details"]["queryOperator"], "compound")
+                    self.assertEqual(
+                        compound_explanation["engine_plan"]["details"]["queryOperator"],
+                        "compound",
+                    )
                     self.assertEqual(
                         collection.aggregate(
                             [
@@ -862,17 +1374,46 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "$search": {
                                         "index": "by_text",
                                         "compound": {
-                                            "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                            "must": [
+                                                {
+                                                    "text": {
+                                                        "query": "ada",
+                                                        "path": [
+                                                            "title",
+                                                            "body",
+                                                        ],
+                                                    },
+                                                },
+                                            ],
                                             "filter": [
-                                                {"exists": {"path": "summary"}},
-                                                {"in": {"path": "kind", "value": ["note", "reference"]}},
-                                                {"range": {"path": "score", "gte": 9}},
+                                                {
+                                                    "exists": {
+                                                        "path": "summary",
+                                                    },
+                                                },
+                                                {
+                                                    "in": {
+                                                        "path": "kind",
+                                                        "value": [
+                                                            "note",
+                                                            "reference",
+                                                        ],
+                                                    },
+                                                },
+                                                {
+                                                    "range": {
+                                                        "path": "score",
+                                                        "gte": 9,
+                                                    },
+                                                },
                                             ],
                                         },
-                                    }
-                                }
-                            ]
-                        ).explain()["engine_plan"]["details"]["compound"]["filterOperators"],
+                                    },
+                                },
+                            ],
+                        ).explain()["engine_plan"]["details"]["compound"][
+                            "filterOperators"
+                        ],
                         ["exists", "in", "range"],
                     )
                     phrase_compound_hits = collection.aggregate(
@@ -886,23 +1427,44 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                                 "phrase": {
                                                     "query": "Ada wrote the first algorithm",
                                                     "path": "body",
-                                                }
-                                            }
+                                                },
+                                            },
                                         ],
                                         "filter": [
-                                            {"in": {"path": "kind", "value": ["note", "reference"]}},
-                                            {"range": {"path": "score", "gte": 9}},
+                                            {
+                                                "in": {
+                                                    "path": "kind",
+                                                    "value": [
+                                                        "note",
+                                                        "reference",
+                                                    ],
+                                                },
+                                            },
+                                            {
+                                                "range": {
+                                                    "path": "score",
+                                                    "gte": 9,
+                                                },
+                                            },
                                         ],
                                         "should": [
                                             {"exists": {"path": "summary"}},
-                                            {"regex": {"query": "Algorithm.*", "path": "summary"}},
+                                            {
+                                                "regex": {
+                                                    "query": "Algorithm.*",
+                                                    "path": "summary",
+                                                },
+                                            },
                                         ],
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in phrase_compound_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in phrase_compound_hits],
+                        [3],
+                    )
                     assert_phrase_in_range_compound_explanation(
                         self,
                         collection.aggregate(
@@ -916,28 +1478,61 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                                     "phrase": {
                                                         "query": "Ada wrote the first algorithm",
                                                         "path": "body",
-                                                    }
-                                                }
+                                                    },
+                                                },
                                             ],
                                             "filter": [
-                                                {"in": {"path": "kind", "value": ["note", "reference"]}},
-                                                {"range": {"path": "score", "gte": 9}},
+                                                {
+                                                    "in": {
+                                                        "path": "kind",
+                                                        "value": [
+                                                            "note",
+                                                            "reference",
+                                                        ],
+                                                    },
+                                                },
+                                                {
+                                                    "range": {
+                                                        "path": "score",
+                                                        "gte": 9,
+                                                    },
+                                                },
                                             ],
                                             "should": [
-                                                {"exists": {"path": "summary"}},
-                                                {"regex": {"query": "Algorithm.*", "path": "summary"}},
+                                                {
+                                                    "exists": {
+                                                        "path": "summary",
+                                                    },
+                                                },
+                                                {
+                                                    "regex": {
+                                                        "query": "Algorithm.*",
+                                                        "path": "summary",
+                                                    },
+                                                },
                                             ],
                                         },
-                                    }
-                                }
-                            ]
+                                    },
+                                },
+                            ],
                         ).explain(),
                     )
                     if engine_name == "sqlite":
-                        self.assertEqual(compound_explanation["engine_plan"]["details"]["backend"], "fts5-prefilter")
-                        self.assertEqual(compound_explanation["engine_plan"]["details"]["candidateCount"], 1)
+                        self.assertEqual(
+                            compound_explanation["engine_plan"]["details"]["backend"],
+                            "fts5-prefilter",
+                        )
+                        self.assertEqual(
+                            compound_explanation["engine_plan"]["details"][
+                                "candidateCount"
+                            ],
+                            1,
+                        )
                     else:
-                        self.assertEqual(compound_explanation["engine_plan"]["details"]["backend"], "python")
+                        self.assertEqual(
+                            compound_explanation["engine_plan"]["details"]["backend"],
+                            "python",
+                        )
                     self.assertEqual(
                         compound_explanation["engine_plan"]["details"]["compound"],
                         {
@@ -988,17 +1583,37 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "$search": {
                                     "index": "by_text",
                                     "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
-                                        "filter": [{"wildcard": {"query": "*algorithm*", "path": "body"}}],
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "ada",
+                                                    "path": ["title", "body"],
+                                                },
+                                            },
+                                        ],
+                                        "filter": [
+                                            {
+                                                "wildcard": {
+                                                    "query": "*algorithm*",
+                                                    "path": "body",
+                                                },
+                                            },
+                                        ],
                                         "should": [
                                             {"exists": {"path": "title"}},
-                                            {"near": {"path": "score", "origin": 10, "pivot": 2}},
+                                            {
+                                                "near": {
+                                                    "path": "score",
+                                                    "origin": 10,
+                                                    "pivot": 2,
+                                                },
+                                            },
                                         ],
                                         "minimumShouldMatch": 2,
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     assert_compound_should_near_explanation(
                         self,
@@ -1012,19 +1627,35 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "$search": {
                                     "index": "by_text",
                                     "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "ada",
+                                                    "path": ["title", "body"],
+                                                },
+                                            },
+                                        ],
                                         "should": [
                                             {"exists": {"path": "title"}},
-                                            {"near": {"path": "score", "origin": 10, "pivot": 2}},
+                                            {
+                                                "near": {
+                                                    "path": "score",
+                                                    "origin": 10,
+                                                    "pivot": 2,
+                                                },
+                                            },
                                         ],
                                         "minimumShouldMatch": 0,
                                     },
-                                }
+                                },
                             },
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in compound_should_near_hits], [3, 2])
+                    self.assertEqual(
+                        [document["_id"] for document in compound_should_near_hits],
+                        [3, 2],
+                    )
 
                     compound_candidateable_should_explanation = collection.aggregate(
                         [
@@ -1032,17 +1663,40 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "$search": {
                                     "index": "by_text",
                                     "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "ada",
+                                                    "path": [
+                                                        "title",
+                                                        "body",
+                                                    ],
+                                                },
+                                            },
+                                        ],
                                         "should": [
                                             {"exists": {"path": "title"}},
-                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
-                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                            {
+                                                "wildcard": {
+                                                    "query": "*algorithm*",
+                                                    "path": "body",
+                                                },
+                                            },
+                                            {
+                                                "autocomplete": {
+                                                    "query": "alg",
+                                                    "path": [
+                                                        "title",
+                                                        "body",
+                                                    ],
+                                                },
+                                            },
                                         ],
                                         "minimumShouldMatch": 1,
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     assert_compound_candidateable_should_explanation(
                         self,
@@ -1055,41 +1709,89 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "$search": {
                                     "index": "by_text",
                                     "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "ada",
+                                                    "path": ["title", "body"],
+                                                },
+                                            },
+                                        ],
                                         "should": [
                                             {"exists": {"path": "title"}},
-                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
-                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                            {
+                                                "wildcard": {
+                                                    "query": "*algorithm*",
+                                                    "path": "body",
+                                                },
+                                            },
+                                            {
+                                                "autocomplete": {
+                                                    "query": "alg",
+                                                    "path": ["title", "body"],
+                                                },
+                                            },
                                         ],
                                         "minimumShouldMatch": 1,
                                     },
-                                }
+                                },
                             },
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in compound_candidateable_should_hits], [3, 2])
-
-                    compound_candidateable_should_limited_explanation = collection.aggregate(
+                    self.assertEqual(
                         [
-                            {
-                                "$search": {
-                                    "index": "by_text",
-                                    "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
-                                        "should": [
-                                            {"exists": {"path": "title"}},
-                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
-                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
-                                        ],
-                                        "minimumShouldMatch": 1,
+                            document["_id"]
+                            for document in compound_candidateable_should_hits
+                        ],
+                        [3, 2],
+                    )
+
+                    compound_candidateable_should_limited_explanation = (
+                        collection.aggregate(
+                            [
+                                {
+                                    "$search": {
+                                        "index": "by_text",
+                                        "compound": {
+                                            "must": [
+                                                {
+                                                    "text": {
+                                                        "query": "ada",
+                                                        "path": [
+                                                            "title",
+                                                            "body",
+                                                        ],
+                                                    },
+                                                },
+                                            ],
+                                            "should": [
+                                                {"exists": {"path": "title"}},
+                                                {
+                                                    "wildcard": {
+                                                        "query": "*algorithm*",
+                                                        "path": "body",
+                                                    },
+                                                },
+                                                {
+                                                    "autocomplete": {
+                                                        "query": "alg",
+                                                        "path": [
+                                                            "title",
+                                                            "body",
+                                                        ],
+                                                    },
+                                                },
+                                            ],
+                                            "minimumShouldMatch": 1,
+                                        },
                                     },
-                                }
-                            },
-                            {"$project": {"_id": 1}},
-                            {"$limit": 1},
-                        ]
-                    ).explain()
+                                },
+                                {"$project": {"_id": 1}},
+                                {"$limit": 1},
+                            ],
+                        ).explain()
+                    )
                     assert_compound_candidateable_should_limited_explanation(
                         self,
                         compound_candidateable_should_limited_explanation,
@@ -1102,93 +1804,191 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "$search": {
                                     "index": "by_text",
                                     "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "ada",
+                                                    "path": [
+                                                        "title",
+                                                        "body",
+                                                    ],
+                                                },
+                                            },
+                                        ],
                                         "should": [
                                             {"exists": {"path": "title"}},
-                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
-                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                            {
+                                                "wildcard": {
+                                                    "query": "*algorithm*",
+                                                    "path": "body",
+                                                },
+                                            },
+                                            {
+                                                "autocomplete": {
+                                                    "query": "alg",
+                                                    "path": [
+                                                        "title",
+                                                        "body",
+                                                    ],
+                                                },
+                                            },
                                         ],
                                         "minimumShouldMatch": 1,
                                     },
-                                }
+                                },
                             },
                             {"$project": {"_id": 1}},
                             {"$limit": 1},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in compound_candidateable_should_limited_hits], [3])
-
-                    compound_candidateable_should_matched_limited_explanation = collection.aggregate(
+                    self.assertEqual(
                         [
-                            {
-                                "$search": {
-                                    "index": "by_text",
-                                    "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
-                                        "should": [
-                                            {"exists": {"path": "title"}},
-                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
-                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
-                                        ],
-                                        "minimumShouldMatch": 1,
+                            document["_id"]
+                            for document in compound_candidateable_should_limited_hits
+                        ],
+                        [3],
+                    )
+
+                    compound_candidateable_should_matched_limited_explanation = (
+                        collection.aggregate(
+                            [
+                                {
+                                    "$search": {
+                                        "index": "by_text",
+                                        "compound": {
+                                            "must": [
+                                                {
+                                                    "text": {
+                                                        "query": "ada",
+                                                        "path": ["title", "body"],
+                                                    },
+                                                },
+                                            ],
+                                            "should": [
+                                                {"exists": {"path": "title"}},
+                                                {
+                                                    "wildcard": {
+                                                        "query": "*algorithm*",
+                                                        "path": "body",
+                                                    },
+                                                },
+                                                {
+                                                    "autocomplete": {
+                                                        "query": "alg",
+                                                        "path": ["title", "body"],
+                                                    },
+                                                },
+                                            ],
+                                            "minimumShouldMatch": 1,
+                                        },
                                     },
-                                }
-                            },
-                            {"$match": {"_id": 3}},
-                            {"$project": {"_id": 1}},
-                            {"$limit": 1},
-                        ]
-                    ).explain()
+                                },
+                                {"$match": {"_id": 3}},
+                                {"$project": {"_id": 1}},
+                                {"$limit": 1},
+                            ],
+                        ).explain()
+                    )
                     assert_compound_candidateable_should_matched_limited_explanation(
                         self,
                         compound_candidateable_should_matched_limited_explanation,
                         engine_name=engine_name,
                     )
 
-                    compound_candidateable_should_matched_limited_hits = collection.aggregate(
-                        [
-                            {
-                                "$search": {
-                                    "index": "by_text",
-                                    "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
-                                        "should": [
-                                            {"exists": {"path": "title"}},
-                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
-                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
-                                        ],
-                                        "minimumShouldMatch": 1,
+                    compound_candidateable_should_matched_limited_hits = (
+                        collection.aggregate(
+                            [
+                                {
+                                    "$search": {
+                                        "index": "by_text",
+                                        "compound": {
+                                            "must": [
+                                                {
+                                                    "text": {
+                                                        "query": "ada",
+                                                        "path": [
+                                                            "title",
+                                                            "body",
+                                                        ],
+                                                    },
+                                                },
+                                            ],
+                                            "should": [
+                                                {"exists": {"path": "title"}},
+                                                {
+                                                    "wildcard": {
+                                                        "query": "*algorithm*",
+                                                        "path": "body",
+                                                    },
+                                                },
+                                                {
+                                                    "autocomplete": {
+                                                        "query": "alg",
+                                                        "path": [
+                                                            "title",
+                                                            "body",
+                                                        ],
+                                                    },
+                                                },
+                                            ],
+                                            "minimumShouldMatch": 1,
+                                        },
                                     },
-                                }
-                            },
-                            {"$match": {"_id": 3}},
-                            {"$project": {"_id": 1}},
-                            {"$limit": 1},
-                        ]
-                    ).to_list()
-                    self.assertEqual([document["_id"] for document in compound_candidateable_should_matched_limited_hits], [3])
+                                },
+                                {"$match": {"_id": 3}},
+                                {"$project": {"_id": 1}},
+                                {"$limit": 1},
+                            ],
+                        ).to_list()
+                    )
+                    self.assertEqual(
+                        [
+                            document["_id"]
+                            for document in compound_candidateable_should_matched_limited_hits
+                        ],
+                        [3],
+                    )
 
-                    compound_candidateable_should_title_prefilter_explanation = collection.aggregate(
-                        [
-                            {
-                                "$search": {
-                                    "index": "by_text",
-                                    "compound": {
-                                        "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
-                                        "should": [
-                                            {"exists": {"path": "title"}},
-                                            {"wildcard": {"query": "*algorithm*", "path": "body"}},
-                                            {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
-                                        ],
-                                        "minimumShouldMatch": 1,
+                    compound_candidateable_should_title_prefilter_explanation = (
+                        collection.aggregate(
+                            [
+                                {
+                                    "$search": {
+                                        "index": "by_text",
+                                        "compound": {
+                                            "must": [
+                                                {
+                                                    "text": {
+                                                        "query": "ada",
+                                                        "path": ["title", "body"],
+                                                    },
+                                                },
+                                            ],
+                                            "should": [
+                                                {"exists": {"path": "title"}},
+                                                {
+                                                    "wildcard": {
+                                                        "query": "*algorithm*",
+                                                        "path": "body",
+                                                    },
+                                                },
+                                                {
+                                                    "autocomplete": {
+                                                        "query": "alg",
+                                                        "path": ["title", "body"],
+                                                    },
+                                                },
+                                            ],
+                                            "minimumShouldMatch": 1,
+                                        },
                                     },
-                                }
-                            },
-                            {"$match": {"title": "Notes"}},
-                            {"$project": {"_id": 1}},
-                            {"$limit": 1},
-                        ]
-                    ).explain()
+                                },
+                                {"$match": {"title": "Notes"}},
+                                {"$project": {"_id": 1}},
+                                {"$limit": 1},
+                            ],
+                        ).explain()
+                    )
                     assert_compound_candidateable_should_title_prefilter_explanation(
                         self,
                         compound_candidateable_should_title_prefilter_explanation,
@@ -1197,17 +1997,49 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     near_hits = collection.aggregate(
                         [
-                            {"$search": {"index": "by_text", "near": {"path": "score", "origin": 10, "pivot": 2}}},
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "near": {
+                                        "path": "score",
+                                        "origin": 10,
+                                        "pivot": 2,
+                                    },
+                                },
+                            },
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in near_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in near_hits],
+                        [3],
+                    )
                     near_explanation = collection.aggregate(
-                        [{"$search": {"index": "by_text", "near": {"path": "score", "origin": 10, "pivot": 2}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "near": {
+                                        "path": "score",
+                                        "origin": 10,
+                                        "pivot": 2,
+                                    },
+                                },
+                            },
+                        ],
                     ).explain()
-                    self.assertEqual(near_explanation["engine_plan"]["details"]["queryOperator"], "near")
-                    self.assertEqual(near_explanation["engine_plan"]["details"]["path"], "score")
-                    self.assertEqual(near_explanation["engine_plan"]["details"]["pivot"], 2.0)
+                    self.assertEqual(
+                        near_explanation["engine_plan"]["details"]["queryOperator"],
+                        "near",
+                    )
+                    self.assertEqual(
+                        near_explanation["engine_plan"]["details"]["path"],
+                        "score",
+                    )
+                    self.assertEqual(
+                        near_explanation["engine_plan"]["details"]["pivot"],
+                        2.0,
+                    )
                     self.assertEqual(
                         near_explanation["engine_plan"]["details"]["pathSummary"],
                         {
@@ -1223,7 +2055,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "embeddedPaths": [],
                         },
                     )
-                    self.assertEqual(near_explanation["engine_plan"]["details"]["backend"], "python")
+                    self.assertEqual(
+                        near_explanation["engine_plan"]["details"]["backend"],
+                        "python",
+                    )
 
                     vector_hits = collection.aggregate(
                         [
@@ -1234,11 +2069,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "queryVector": [1.0, 0.0, 0.0],
                                     "limit": 2,
                                     "numCandidates": 3,
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in vector_hits], [3, 2])
+                    self.assertEqual(
+                        [document["_id"] for document in vector_hits],
+                        [3, 2],
+                    )
 
                     vector_explanation = collection.aggregate(
                         [
@@ -1249,23 +2087,51 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "queryVector": [1.0, 0.0, 0.0],
                                     "limit": 2,
                                     "numCandidates": 3,
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     if engine_name == "sqlite":
-                        self.assertEqual(vector_explanation["engine_plan"]["details"]["backend"], "usearch")
-                        self.assertEqual(vector_explanation["engine_plan"]["details"]["mode"], "ann")
-                        self.assertTrue(vector_explanation["engine_plan"]["details"]["backendMaterialized"])
-                        self.assertTrue(vector_explanation["engine_plan"]["details"]["annAvailable"])
-                        self.assertIsNotNone(vector_explanation["engine_plan"]["details"]["vectorBackend"])
+                        self.assertEqual(
+                            vector_explanation["engine_plan"]["details"]["backend"],
+                            "usearch",
+                        )
+                        self.assertEqual(
+                            vector_explanation["engine_plan"]["details"]["mode"],
+                            "ann",
+                        )
+                        self.assertTrue(
+                            vector_explanation["engine_plan"]["details"][
+                                "backendMaterialized"
+                            ],
+                        )
+                        self.assertTrue(
+                            vector_explanation["engine_plan"]["details"][
+                                "annAvailable"
+                            ],
+                        )
+                        self.assertIsNotNone(
+                            vector_explanation["engine_plan"]["details"][
+                                "vectorBackend"
+                            ],
+                        )
                         self.assertGreaterEqual(
-                            vector_explanation["engine_plan"]["details"]["candidatesRequested"],
-                            vector_explanation["engine_plan"]["details"]["candidatesEvaluated"],
+                            vector_explanation["engine_plan"]["details"][
+                                "candidatesRequested"
+                            ],
+                            vector_explanation["engine_plan"]["details"][
+                                "candidatesEvaluated"
+                            ],
                         )
                     else:
-                        self.assertEqual(vector_explanation["engine_plan"]["details"]["backend"], "python")
-                    self.assertEqual(vector_explanation["engine_plan"]["details"]["path"], "embedding")
+                        self.assertEqual(
+                            vector_explanation["engine_plan"]["details"]["backend"],
+                            "python",
+                        )
+                    self.assertEqual(
+                        vector_explanation["engine_plan"]["details"]["path"],
+                        "embedding",
+                    )
                     assert_vector_similarity_explanation(
                         self,
                         vector_explanation,
@@ -1282,9 +2148,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "queryVector": [1.0, 0.0, 0.0],
                                         "limit": 2,
                                         "numCandidates": 3,
-                                    }
-                                }
-                            ]
+                                    },
+                                },
+                            ],
                         ).explain(),
                         expected_similarity="dotProduct",
                     )
@@ -1299,9 +2165,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "queryVector": [1.0, 0.0, 0.0],
                                         "limit": 2,
                                         "numCandidates": 3,
-                                    }
-                                }
-                            ]
+                                    },
+                                },
+                            ],
                         ).explain(),
                         expected_similarity="euclidean",
                     )
@@ -1316,9 +2182,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "limit": 1,
                                     "numCandidates": 1,
                                     "filter": {"kind": "reference"},
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     assert_filtered_vector_explanation(
                         self,
@@ -1334,13 +2200,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "queryVector": [1.0, 0.0, 0.0],
                                     "limit": 2,
                                     "numCandidates": 3,
-                                }
+                                },
                             },
                             {"$match": {"score": {"$gte": 15}}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in downstream_filtered_vector_hits], [2])
+                    self.assertEqual(
+                        [
+                            document["_id"]
+                            for document in downstream_filtered_vector_hits
+                        ],
+                        [2],
+                    )
                     downstream_filtered_vector_explanation = collection.aggregate(
                         [
                             {
@@ -1350,10 +2222,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "queryVector": [1.0, 0.0, 0.0],
                                     "limit": 2,
                                     "numCandidates": 3,
-                                }
+                                },
                             },
                             {"$match": {"score": {"$gte": 15}}},
-                        ]
+                        ],
                     ).explain()
                     assert_vector_downstream_filter_explanation(
                         self,
@@ -1370,28 +2242,36 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "limit": 2,
                                     "numCandidates": 3,
                                     "filter": {"kind": "note"},
-                                }
+                                },
                             },
                             {"$match": {"score": {"$gte": 15}}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in query_and_downstream_filtered_vector_hits], [2])
-                    query_and_downstream_filtered_vector_explanation = collection.aggregate(
+                    self.assertEqual(
                         [
-                            {
-                                "$vectorSearch": {
-                                    "index": "by_vector",
-                                    "path": "embedding",
-                                    "queryVector": [1.0, 0.0, 0.0],
-                                    "limit": 2,
-                                    "numCandidates": 3,
-                                    "filter": {"kind": "note"},
-                                }
-                            },
-                            {"$match": {"score": {"$gte": 15}}},
-                        ]
-                    ).explain()
+                            document["_id"]
+                            for document in query_and_downstream_filtered_vector_hits
+                        ],
+                        [2],
+                    )
+                    query_and_downstream_filtered_vector_explanation = (
+                        collection.aggregate(
+                            [
+                                {
+                                    "$vectorSearch": {
+                                        "index": "by_vector",
+                                        "path": "embedding",
+                                        "queryVector": [1.0, 0.0, 0.0],
+                                        "limit": 2,
+                                        "numCandidates": 3,
+                                        "filter": {"kind": "note"},
+                                    },
+                                },
+                                {"$match": {"score": {"$gte": 15}}},
+                            ],
+                        ).explain()
+                    )
                     assert_vector_query_and_downstream_filter_explanation(
                         self,
                         query_and_downstream_filtered_vector_explanation,
@@ -1407,10 +2287,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "queryVector": [1.0, 0.0, 0.0],
                                     "limit": 2,
                                     "numCandidates": 2,
-                                    "filter": {"score": {"$gte": 11, "$lt": 16}},
-                                }
-                            }
-                        ]
+                                    "filter": {
+                                        "score": {"$gte": 11, "$lt": 16},
+                                    },
+                                },
+                            },
+                        ],
                     ).explain()
                     assert_ranged_vector_explanation(
                         self,
@@ -1428,14 +2310,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "numCandidates": 3,
                                     "filter": {
                                         "$and": [
-                                            {"kind": {"$in": ["note", "reference"]}},
+                                            {
+                                                "kind": {
+                                                    "$in": [
+                                                        "note",
+                                                        "reference",
+                                                    ],
+                                                },
+                                            },
                                             {"score": {"$gte": 9}},
                                             {"title": {"$regex": "Ada"}},
-                                        ]
+                                        ],
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     assert_boolean_vector_residual_explanation(
                         self,
@@ -1453,11 +2342,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "numCandidates": 3,
                                     "filter": {"kind": "note"},
                                     "minScore": 0.95,
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in min_score_vector_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in min_score_vector_hits],
+                        [3],
+                    )
                     min_score_vector_explanation = collection.aggregate(
                         [
                             {
@@ -1469,9 +2361,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "numCandidates": 3,
                                     "filter": {"kind": "note"},
                                     "minScore": 0.95,
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     assert_vector_min_score_explanation(
                         self,
@@ -1488,28 +2380,70 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "queryVector": [1.0, 0.0, 0.0],
                                     "limit": 2,
                                     "numCandidates": 3,
-                                }
+                                },
                             },
-                            {"$project": {"_id": 1, "title": 1, "vectorScore": {"$meta": "vectorSearchScore"}}},
-                        ]
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "title": 1,
+                                    "vectorScore": {
+                                        "$meta": "vectorSearchScore",
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
-                    assert_vector_score_projection_results(self, vector_score_hits, expected_ids=[3, 2])
+                    assert_vector_score_projection_results(
+                        self,
+                        vector_score_hits,
+                        expected_ids=[3, 2],
+                    )
 
                     with self.assertRaises(OperationFailure):
                         collection.aggregate(
                             [
                                 {"$match": {"_id": {"$gt": 0}}},
-                                {"$search": {"index": "by_text", "text": {"query": "ada"}}},
-                            ]
+                                {
+                                    "$search": {
+                                        "index": "by_text",
+                                        "text": {"query": "ada"},
+                                    },
+                                },
+                            ],
                         )
                     with self.assertRaises(OperationFailure):
-                        collection.aggregate([{"$vectorSearch": {"index": "vec"}}]).to_list()
+                        collection.aggregate(
+                            [{"$vectorSearch": {"index": "vec"}}],
+                        ).to_list()
                     phrase_hits = collection.aggregate(
-                        [{"$search": {"index": "by_text", "phrase": {"query": "Ada wrote the first algorithm", "path": "body"}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "phrase": {
+                                        "query": "Ada wrote the first algorithm",
+                                        "path": "body",
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in phrase_hits], [3])
+                    self.assertEqual(
+                        [document["_id"] for document in phrase_hits],
+                        [3],
+                    )
                     phrase_explanation = collection.aggregate(
-                        [{"$search": {"index": "by_text", "phrase": {"query": "Ada wrote the first algorithm", "path": "body"}}}]
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "phrase": {
+                                        "query": "Ada wrote the first algorithm",
+                                        "path": "body",
+                                    },
+                                },
+                            },
+                        ],
                     ).explain()
                     assert_phrase_slop_explanation(
                         self,
@@ -1519,9 +2453,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         expected_match='"Ada wrote the first algorithm"',
                     )
                     with self.assertRaises(OperationFailure):
-                        collection.create_search_index({"mappings": {"fields": {"title": {"type": "decimal"}}}})
+                        collection.create_search_index(
+                            {
+                                "mappings": {
+                                    "fields": {"title": {"type": "decimal"}},
+                                },
+                            },
+                        )
 
-    def test_search_exists_uses_stable_id_tie_break_without_explicit_sort(self):
+    def test_search_exists_uses_stable_id_tie_break_without_explicit_sort(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -1531,7 +2473,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": 3, "title": "gamma"},
                             {"_id": 1, "title": "alpha"},
                             {"_id": 2, "title": "beta"},
-                        ]
+                        ],
                     )
                     collection.create_search_indexes(
                         [
@@ -1542,19 +2484,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "fields": {
                                             "title": {"type": "string"},
                                         },
-                                    }
+                                    },
                                 },
                                 name="by_text",
-                            )
-                        ]
+                            ),
+                        ],
                     )
                     hits = collection.aggregate(
                         [
-                            {"$search": {"index": "by_text", "exists": {"path": "title"}}},
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "exists": {"path": "title"},
+                                },
+                            },
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in hits], [1, 2, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in hits],
+                        [1, 2, 3],
+                    )
 
     def test_search_phrase_slop_keeps_parity_between_memory_and_sqlite(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -1581,7 +2531,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "title": "Different topic",
                                 "body": "Grace documented the compiler pipeline.",
                             },
-                        ]
+                        ],
                     )
                     collection.create_search_indexes(
                         [
@@ -1594,11 +2544,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "body": {"type": "string"},
                                             "kind": {"type": "token"},
                                         },
-                                    }
+                                    },
                                 },
                                 name="by_text",
-                            )
-                        ]
+                            ),
+                        ],
                     )
 
                     exact_hits = collection.aggregate(
@@ -1610,12 +2560,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "query": "Ada wrote the first algorithm",
                                         "path": "body",
                                     },
-                                }
+                                },
                             },
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in exact_hits], [1])
+                    self.assertEqual(
+                        [document["_id"] for document in exact_hits],
+                        [1],
+                    )
 
                     slop_hits = collection.aggregate(
                         [
@@ -1627,12 +2580,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "path": "body",
                                         "slop": 1,
                                     },
-                                }
+                                },
                             },
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in slop_hits], [1, 2])
+                    self.assertEqual(
+                        [document["_id"] for document in slop_hits],
+                        [1, 2],
+                    )
 
                     compound_hits = collection.aggregate(
                         [
@@ -1646,17 +2602,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                                     "query": "Ada wrote the first algorithm",
                                                     "path": "body",
                                                     "slop": 1,
-                                                }
-                                            }
+                                                },
+                                            },
                                         ],
-                                        "filter": [{"equals": {"path": "kind", "value": "note"}}],
+                                        "filter": [
+                                            {
+                                                "equals": {
+                                                    "path": "kind",
+                                                    "value": "note",
+                                                },
+                                            },
+                                        ],
                                     },
-                                }
+                                },
                             },
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in compound_hits], [1, 2])
+                    self.assertEqual(
+                        [document["_id"] for document in compound_hits],
+                        [1, 2],
+                    )
 
                     slop_explanation = collection.aggregate(
                         [
@@ -1668,9 +2634,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "path": "body",
                                         "slop": 1,
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     assert_phrase_slop_explanation(
                         self,
@@ -1680,7 +2646,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         expected_match='"ada" AND "wrote" AND "the" AND "first" AND "algorithm"',
                     )
 
-    def test_search_embedded_documents_mapping_keeps_parity_between_memory_and_sqlite(self):
+    def test_search_embedded_documents_mapping_keeps_parity_between_memory_and_sqlite(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -1691,25 +2659,45 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "_id": 1,
                                 "title": "Local search handbook",
                                 "contributors": [
-                                    {"name": "Ada Lovelace", "role": "author", "verified": True, "impact": 10},
-                                    {"name": "Charles Babbage", "role": "editor", "verified": False, "impact": 2},
+                                    {
+                                        "name": "Ada Lovelace",
+                                        "role": "author",
+                                        "verified": True,
+                                        "impact": 10,
+                                    },
+                                    {
+                                        "name": "Charles Babbage",
+                                        "role": "editor",
+                                        "verified": False,
+                                        "impact": 2,
+                                    },
                                 ],
                             },
                             {
                                 "_id": 2,
                                 "title": "Compiler reference",
                                 "contributors": [
-                                    {"name": "Grace Hopper", "role": "author", "verified": False, "impact": 4},
+                                    {
+                                        "name": "Grace Hopper",
+                                        "role": "author",
+                                        "verified": False,
+                                        "impact": 4,
+                                    },
                                 ],
                             },
                             {
                                 "_id": 3,
                                 "title": "Ada algorithms handbook",
                                 "contributors": [
-                                    {"name": "Ada Byron", "role": "author", "verified": True, "impact": 7},
+                                    {
+                                        "name": "Ada Byron",
+                                        "role": "author",
+                                        "verified": True,
+                                        "impact": 7,
+                                    },
                                 ],
                             },
-                        ]
+                        ],
                     )
                     collection.create_search_index(
                         SearchIndexModel(
@@ -1723,15 +2711,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "fields": {
                                                 "name": {"type": "string"},
                                                 "role": {"type": "token"},
-                                                "verified": {"type": "boolean"},
+                                                "verified": {
+                                                    "type": "boolean",
+                                                },
                                                 "impact": {"type": "number"},
                                             },
                                         },
                                     },
-                                }
+                                },
                             },
                             name="by_text",
-                        )
+                        ),
                     )
 
                     hits = collection.aggregate(
@@ -1743,13 +2733,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "query": "Ada",
                                         "path": "contributors.name",
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in hits], [1, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in hits],
+                        [1, 3],
+                    )
 
                     parent_hits = collection.aggregate(
                         [
@@ -1760,13 +2753,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "query": "Ada",
                                         "path": "contributors",
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in parent_hits], [1, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in parent_hits],
+                        [1, 3],
+                    )
 
                     parent_autocomplete_hits = collection.aggregate(
                         [
@@ -1777,13 +2773,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "query": "Ada Lo",
                                         "path": "contributors",
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in parent_autocomplete_hits], [1])
+                    self.assertEqual(
+                        [document["_id"] for document in parent_autocomplete_hits],
+                        [1],
+                    )
 
                     parent_regex_hits = collection.aggregate(
                         [
@@ -1794,13 +2793,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "query": "Charles.*",
                                         "path": "contributors",
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in parent_regex_hits], [1])
+                    self.assertEqual(
+                        [document["_id"] for document in parent_regex_hits],
+                        [1],
+                    )
 
                     parent_exists_hits = collection.aggregate(
                         [
@@ -1810,11 +2812,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "exists": {
                                         "path": "contributors",
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
                     self.assertEqual(
                         [document["_id"] for document in parent_exists_hits],
@@ -1830,13 +2832,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "path": "contributors.verified",
                                         "value": True,
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in equals_hits], [1, 3])
+                    self.assertEqual(
+                        [document["_id"] for document in equals_hits],
+                        [1, 3],
+                    )
 
                     near_hits = collection.aggregate(
                         [
@@ -1848,12 +2853,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "origin": 8,
                                         "pivot": 3,
                                     },
-                                }
+                                },
                             },
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in near_hits], [3, 1])
+                    self.assertEqual(
+                        [document["_id"] for document in near_hits],
+                        [3, 1],
+                    )
 
                     compound_hits = collection.aggregate(
                         [
@@ -1865,17 +2873,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             {
                                                 "text": {
                                                     "query": "Ada",
-                                                    "path": ["title", "contributors.name"],
-                                                }
-                                            }
+                                                    "path": [
+                                                        "title",
+                                                        "contributors.name",
+                                                    ],
+                                                },
+                                            },
                                         ],
                                         "filter": [
                                             {
                                                 "equals": {
                                                     "path": "contributors.verified",
                                                     "value": True,
-                                                }
-                                            }
+                                                },
+                                            },
                                         ],
                                         "should": [
                                             {
@@ -1883,16 +2894,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                                     "path": "contributors.impact",
                                                     "origin": 8,
                                                     "pivot": 3,
-                                                }
-                                            }
+                                                },
+                                            },
                                         ],
                                     },
-                                }
+                                },
                             },
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in compound_hits], [3, 1])
+                    self.assertEqual(
+                        [document["_id"] for document in compound_hits],
+                        [3, 1],
+                    )
 
                     compound_explain = collection.aggregate(
                         [
@@ -1904,17 +2918,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             {
                                                 "text": {
                                                     "query": "Ada",
-                                                    "path": ["title", "contributors.name"],
-                                                }
-                                            }
+                                                    "path": [
+                                                        "title",
+                                                        "contributors.name",
+                                                    ],
+                                                },
+                                            },
                                         ],
                                         "filter": [
                                             {
                                                 "equals": {
                                                     "path": "contributors.verified",
                                                     "value": True,
-                                                }
-                                            }
+                                                },
+                                            },
                                         ],
                                         "should": [
                                             {
@@ -1922,13 +2939,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                                     "path": "contributors.impact",
                                                     "origin": 8,
                                                     "pivot": 3,
-                                                }
-                                            }
+                                                },
+                                            },
                                         ],
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     self.assertEqual(
                         compound_explain["engine_plan"]["details"]["pathSummary"][
@@ -1955,7 +2972,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ["contributors.impact", "contributors.verified"],
                     )
 
-    def test_search_document_mapping_and_date_near_keep_parity_between_memory_and_sqlite(self):
+    def test_search_document_mapping_and_date_near_keep_parity_between_memory_and_sqlite(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -1968,7 +2987,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "metadata": {
                                     "topic": "Local search",
                                     "series": "analysis",
-                                    "publishedAt": datetime.datetime(2024, 1, 10, 0, 0, 0),
+                                    "publishedAt": datetime.datetime(
+                                        2024,
+                                        1,
+                                        10,
+                                        0,
+                                        0,
+                                        0,
+                                    ),
                                 },
                             },
                             {
@@ -1977,7 +3003,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "metadata": {
                                     "topic": "Compiler internals",
                                     "series": "reference",
-                                    "publishedAt": datetime.datetime(2024, 2, 20, 0, 0, 0),
+                                    "publishedAt": datetime.datetime(
+                                        2024,
+                                        2,
+                                        20,
+                                        0,
+                                        0,
+                                        0,
+                                    ),
                                 },
                             },
                             {
@@ -1986,10 +3019,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "metadata": {
                                     "topic": "Algorithm ranking",
                                     "series": "analysis",
-                                    "publishedAt": datetime.datetime(2024, 1, 18, 0, 0, 0),
+                                    "publishedAt": datetime.datetime(
+                                        2024,
+                                        1,
+                                        18,
+                                        0,
+                                        0,
+                                        0,
+                                    ),
                                 },
                             },
-                        ]
+                        ],
                     )
                     collection.create_search_index(
                         SearchIndexModel(
@@ -2002,14 +3042,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "fields": {
                                                 "topic": {"type": "string"},
                                                 "series": {"type": "token"},
-                                                "publishedAt": {"type": "date"},
+                                                "publishedAt": {
+                                                    "type": "date",
+                                                },
                                             },
                                         },
                                     },
-                                }
+                                },
                             },
                             name="by_text",
-                        )
+                        ),
                     )
 
                     topic_hits = collection.aggregate(
@@ -2021,13 +3063,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "query": "Local",
                                         "path": "metadata.topic",
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in topic_hits], [1])
+                    self.assertEqual(
+                        [document["_id"] for document in topic_hits],
+                        [1],
+                    )
 
                     parent_topic_hits = collection.aggregate(
                         [
@@ -2038,13 +3083,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "query": "Local",
                                         "path": "metadata",
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in parent_topic_hits], [1])
+                    self.assertEqual(
+                        [document["_id"] for document in parent_topic_hits],
+                        [1],
+                    )
 
                     parent_wildcard_hits = collection.aggregate(
                         [
@@ -2055,13 +3103,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "query": "*search*",
                                         "path": "metadata",
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in parent_wildcard_hits], [1])
+                    self.assertEqual(
+                        [document["_id"] for document in parent_wildcard_hits],
+                        [1],
+                    )
 
                     parent_exists_hits = collection.aggregate(
                         [
@@ -2071,11 +3122,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "exists": {
                                         "path": "metadata",
                                     },
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
                     self.assertEqual(
                         [document["_id"] for document in parent_exists_hits],
@@ -2090,15 +3141,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "exists": {
                                         "path": "metadata",
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).explain()
                     self.assertEqual(
                         parent_exists_explain["engine_plan"]["details"]["pathSummary"][
                             "resolvedLeafPaths"
                         ],
-                        ["metadata.publishedAt", "metadata.series", "metadata.topic"],
+                        [
+                            "metadata.publishedAt",
+                            "metadata.series",
+                            "metadata.topic",
+                        ],
                     )
 
                     near_hits = collection.aggregate(
@@ -2111,12 +3166,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "origin": datetime.date(2024, 1, 15),
                                         "pivot": 10 * 86400,
                                     },
-                                }
+                                },
                             },
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
-                    self.assertEqual([document["_id"] for document in near_hits], [3, 1])
+                    self.assertEqual(
+                        [document["_id"] for document in near_hits],
+                        [3, 1],
+                    )
 
     def test_aggregate_explain_reports_pipeline_pushdown_summary(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -2128,7 +3186,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": 1, "kind": "view", "rank": 3},
                             {"_id": 2, "kind": "view", "rank": 1},
                             {"_id": 3, "kind": "click", "rank": 2},
-                        ]
+                        ],
                     )
 
                     explanation = collection.aggregate(
@@ -2137,43 +3195,71 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"$sort": {"rank": 1}},
                             {"$limit": 1},
                             {"$project": {"_id": 0, "rank": 1}},
-                        ]
+                        ],
                     ).explain()
 
-                    self.assertEqual(explanation["pushdown"]["mode"], "pipeline-prefix")
+                    self.assertEqual(
+                        explanation["pushdown"]["mode"],
+                        "pipeline-prefix",
+                    )
                     self.assertEqual(explanation["pushdown"]["totalStages"], 4)
-                    self.assertEqual(explanation["pushdown"]["pushedDownStages"], 4)
-                    self.assertEqual(explanation["pushdown"]["remainingStages"], 0)
+                    self.assertEqual(
+                        explanation["pushdown"]["pushedDownStages"],
+                        4,
+                    )
+                    self.assertEqual(
+                        explanation["pushdown"]["remainingStages"],
+                        0,
+                    )
                     self.assertEqual(explanation["remaining_pipeline"], [])
 
     def test_search_index_latency_can_surface_pending_state(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory(simulate_search_index_latency=0.02)) as client:
-                    collection = client.search_latency.get_collection("docs")
-                    collection.create_search_index(
-                        SearchIndexModel(
-                            {
-                                "mappings": {
-                                    "dynamic": False,
-                                    "fields": {"title": {"type": "string"}},
-                                }
+            with (
+                self.subTest(engine=engine_name),
+                MongoClient(
+                    factory(simulate_search_index_latency=0.02),
+                ) as client,
+            ):
+                collection = client.search_latency.get_collection("docs")
+                collection.create_search_index(
+                    SearchIndexModel(
+                        {
+                            "mappings": {
+                                "dynamic": False,
+                                "fields": {"title": {"type": "string"}},
                             },
-                            name="by_text",
-                        )
-                    )
-                    listed = collection.list_search_indexes("by_text").to_list()
-                    self.assertEqual(listed[0]["status"], "PENDING")
-                    self.assertEqual(listed[0]["statusDetail"], "pending-build")
-                    self.assertIsNotNone(listed[0]["readyAtEpoch"])
-                    with self.assertRaises(OperationFailure):
-                        collection.aggregate(
-                            [{"$search": {"index": "by_text", "text": {"query": "ada", "path": "title"}}}]
-                        ).to_list()
-                    time.sleep(0.03)
-                    ready = collection.list_search_indexes("by_text").to_list()
-                    self.assertEqual(ready[0]["status"], "READY")
-                    self.assertEqual(ready[0]["statusDetail"], "ready")
+                        },
+                        name="by_text",
+                    ),
+                )
+                listed = collection.list_search_indexes(
+                    "by_text",
+                ).to_list()
+                self.assertEqual(listed[0]["status"], "PENDING")
+                self.assertEqual(
+                    listed[0]["statusDetail"],
+                    "pending-build",
+                )
+                self.assertIsNotNone(listed[0]["readyAtEpoch"])
+                with self.assertRaises(OperationFailure):
+                    collection.aggregate(
+                        [
+                            {
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "ada",
+                                        "path": "title",
+                                    },
+                                },
+                            },
+                        ],
+                    ).to_list()
+                time.sleep(0.03)
+                ready = collection.list_search_indexes("by_text").to_list()
+                self.assertEqual(ready[0]["status"], "READY")
+                self.assertEqual(ready[0]["statusDetail"], "ready")
 
     def test_watch_surfaces_client_database_and_collection_scopes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -2182,7 +3268,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.observe.get_collection("items")
                     other = client.observe.get_collection("other")
                     client_stream = client.watch(max_await_time_ms=5)
-                    lookup_stream = client.watch(max_await_time_ms=5, full_document="updateLookup")
+                    lookup_stream = client.watch(
+                        max_await_time_ms=5,
+                        full_document="updateLookup",
+                    )
                     database_stream = client.observe.watch(max_await_time_ms=5)
                     collection_stream = collection.watch(
                         [{"$match": {"operationType": "insert"}}],
@@ -2194,8 +3283,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     collection_event = collection_stream.try_next()
                     self.assertIsNotNone(collection_event)
-                    self.assertEqual(collection_event["operationType"], "insert")
-                    self.assertEqual(collection_event["ns"], {"db": "observe", "coll": "items"})
+                    self.assertEqual(
+                        collection_event["operationType"],
+                        "insert",
+                    )
+                    self.assertEqual(
+                        collection_event["ns"],
+                        {"db": "observe", "coll": "items"},
+                    )
 
                     database_event = database_stream.try_next()
                     self.assertIsNotNone(database_event)
@@ -2203,20 +3298,32 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     client_event = client_stream.try_next()
                     self.assertIsNotNone(client_event)
-                    self.assertIn(client_event["ns"]["coll"], {"items", "other"})
+                    self.assertIn(
+                        client_event["ns"]["coll"],
+                        {"items", "other"},
+                    )
                     second_insert = client_stream.try_next()
                     self.assertIsNotNone(second_insert)
                     self.assertEqual(second_insert["operationType"], "insert")
 
-                    lookup_stream = client.observe.watch(max_await_time_ms=5, full_document="updateLookup")
-                    collection.update_one({"_id": 1}, {"$set": {"name": "Ada Lovelace"}})
+                    lookup_stream = client.observe.watch(
+                        max_await_time_ms=5,
+                        full_document="updateLookup",
+                    )
+                    collection.update_one(
+                        {"_id": 1},
+                        {"$set": {"name": "Ada Lovelace"}},
+                    )
                     collection.delete_one({"_id": 1})
                     update_event = client_stream.try_next()
                     update_lookup_event = lookup_stream.try_next()
                     delete_event = client_stream.try_next()
                     self.assertEqual(update_event["operationType"], "update")
                     self.assertNotIn("fullDocument", update_event)
-                    self.assertEqual(update_lookup_event["fullDocument"]["name"], "Ada Lovelace")
+                    self.assertEqual(
+                        update_lookup_event["fullDocument"]["name"],
+                        "Ada Lovelace",
+                    )
                     self.assertEqual(delete_event["operationType"], "delete")
 
                     invalidate_stream = collection.watch(max_await_time_ms=5)
@@ -2224,10 +3331,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertIsNone(invalidate_stream.try_next())
                     collection.drop()
                     invalidate_event = invalidate_stream.try_next()
-                    self.assertEqual(invalidate_event["operationType"], "invalidate")
+                    self.assertEqual(
+                        invalidate_event["operationType"],
+                        "invalidate",
+                    )
                     self.assertFalse(invalidate_stream.alive)
 
-    def test_watch_defers_transaction_events_until_commit_and_discards_abort(self):
+    def test_watch_defers_transaction_events_until_commit_and_discards_abort(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -2236,7 +3348,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {"_id": "update-target", "name": "Ada"},
                             {"_id": "delete-target", "name": "Grace"},
-                        ]
+                        ],
                     )
                     stream = collection.watch(max_await_time_ms=5)
 
@@ -2248,7 +3360,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"$set": {"name": "Ada Lovelace"}},
                         session=session,
                     )
-                    collection.delete_one({"_id": "delete-target"}, session=session)
+                    collection.delete_one(
+                        {"_id": "delete-target"},
+                        session=session,
+                    )
 
                     self.assertIsNone(stream.try_next())
                     session.abort_transaction()
@@ -2265,20 +3380,28 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     session = client.start_session()
                     session.start_transaction()
-                    collection.insert_one({"_id": "committed"}, session=session)
+                    collection.insert_one(
+                        {"_id": "committed"},
+                        session=session,
+                    )
                     self.assertIsNone(stream.try_next())
                     session.commit_transaction()
 
                     event = stream.try_next()
                     self.assertIsNotNone(event)
                     self.assertEqual(event["operationType"], "insert")
-                    self.assertEqual(event["documentKey"], {"_id": "committed"})
+                    self.assertEqual(
+                        event["documentKey"],
+                        {"_id": "committed"},
+                    )
                     self.assertEqual(
                         collection.find_one({"_id": "committed"}),
                         {"_id": "committed"},
                     )
 
-    def test_change_stream_publish_failure_does_not_fail_completed_writes(self):
+    def test_change_stream_publish_failure_does_not_fail_completed_writes(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -2291,11 +3414,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     direct_result = collection.insert_one({"_id": "direct"})
                     self.assertEqual(direct_result.inserted_id, "direct")
-                    self.assertEqual(collection.find_one({"_id": "direct"}), {"_id": "direct"})
+                    self.assertEqual(
+                        collection.find_one({"_id": "direct"}),
+                        {"_id": "direct"},
+                    )
 
                     session = client.start_session()
                     session.start_transaction()
-                    collection.insert_one({"_id": "committed"}, session=session)
+                    collection.insert_one(
+                        {"_id": "committed"},
+                        session=session,
+                    )
                     session.commit_transaction()
 
                     self.assertFalse(session.in_transaction)
@@ -2304,7 +3433,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"_id": "committed"},
                     )
 
-    def test_profile_recording_failure_does_not_fail_completed_operations(self):
+    def test_profile_recording_failure_does_not_fail_completed_operations(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -2313,11 +3444,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     def _profile_boom(*_args, **_kwargs):
                         raise RuntimeError("profile boom")
 
-                    client._async_client._engine._record_profile_event = _profile_boom  # type: ignore[method-assign]
+                    client._async_client._engine._record_profile_event = (
+                        _profile_boom  # type: ignore[method-assign]
+                    )
 
                     insert_result = collection.insert_one({"_id": "profiled"})
                     self.assertEqual(insert_result.inserted_id, "profiled")
-                    self.assertEqual(collection.find_one({"_id": "profiled"}), {"_id": "profiled"})
+                    self.assertEqual(
+                        collection.find_one({"_id": "profiled"}),
+                        {"_id": "profiled"},
+                    )
                     self.assertEqual(client.admin.command("ping")["ok"], 1.0)
 
                     async def _write_boom(*_args, **_kwargs):
@@ -2327,7 +3463,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaisesRegex(RuntimeError, "write boom"):
                         collection.insert_one({"_id": "failed"})
 
-    def test_operation_metadata_failure_does_not_fail_completed_bulk_write(self):
+    def test_operation_metadata_failure_does_not_fail_completed_bulk_write(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -2335,6 +3473,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     session = client.start_session()
 
                     with session:
+
                         def _metadata_boom(*_args, **_kwargs):
                             raise RuntimeError("metadata boom")
 
@@ -2347,9 +3486,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                         self.assertEqual(result.inserted_count, 1)
                         self.assertIsNotNone(session.operation_time)
-                        self.assertEqual(collection.find_one({"_id": "metadata"}), {"_id": "metadata"})
+                        self.assertEqual(
+                            collection.find_one({"_id": "metadata"}),
+                            {"_id": "metadata"},
+                        )
 
-    def test_drop_database_profiler_cleanup_failure_does_not_fail_completed_drop(self):
+    def test_drop_database_profiler_cleanup_failure_does_not_fail_completed_drop(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -2366,7 +3510,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     finally:
                         engine._profiler.clear = original_clear  # type: ignore[method-assign]
 
-                    self.assertIsNone(client.profiled.items.find_one({"_id": "drop-me"}))
+                    self.assertIsNone(
+                        client.profiled.items.find_one({"_id": "drop-me"}),
+                    )
                     self.assertNotIn("profiled", client.list_database_names())
 
     def test_closed_sessions_fail_before_collection_side_effects(self):
@@ -2378,7 +3524,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     session.close()
 
                     with self.assertRaises(InvalidOperation):
-                        collection.insert_one({"_id": "closed"}, session=session)
+                        collection.insert_one(
+                            {"_id": "closed"},
+                            session=session,
+                        )
                     self.assertIsNone(collection.find_one({"_id": "closed"}))
 
                     with self.assertRaises(InvalidOperation):
@@ -2386,34 +3535,55 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             [InsertOne({"_id": "closed-bulk"})],
                             session=session,
                         )
-                    self.assertIsNone(collection.find_one({"_id": "closed-bulk"}))
+                    self.assertIsNone(
+                        collection.find_one({"_id": "closed-bulk"}),
+                    )
 
                     with self.assertRaises(InvalidOperation):
                         client.observe.command(
-                            {"insert": "items", "documents": [{"_id": "closed-command"}]},
+                            {
+                                "insert": "items",
+                                "documents": [{"_id": "closed-command"}],
+                            },
                             session=session,
                         )
-                    self.assertIsNone(collection.find_one({"_id": "closed-command"}))
+                    self.assertIsNone(
+                        collection.find_one({"_id": "closed-command"}),
+                    )
 
                     with self.assertRaises(InvalidOperation):
                         collection.create_index("tenant", session=session)
-                    self.assertNotIn("tenant_1", collection.index_information())
+                    self.assertNotIn(
+                        "tenant_1",
+                        collection.index_information(),
+                    )
 
                     database = client.get_database("closed_admin")
                     database.create_collection("existing")
 
                     with self.assertRaises(InvalidOperation):
-                        database.create_collection("new_collection", session=session)
-                    self.assertNotIn("new_collection", database.list_collection_names())
+                        database.create_collection(
+                            "new_collection",
+                            session=session,
+                        )
+                    self.assertNotIn(
+                        "new_collection",
+                        database.list_collection_names(),
+                    )
 
                     with self.assertRaises(InvalidOperation):
                         client.list_database_names(session=session)
 
                     with self.assertRaises(InvalidOperation):
                         client.drop_database("closed_admin", session=session)
-                    self.assertEqual(database.list_collection_names(), ["existing"])
+                    self.assertEqual(
+                        database.list_collection_names(),
+                        ["existing"],
+                    )
 
-    def test_collection_json_schema_validator_rejects_invalid_inserts_and_updates(self):
+    def test_collection_json_schema_validator_rejects_invalid_inserts_and_updates(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -2427,17 +3597,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "name": {"bsonType": "string"},
                                     "age": {"bsonType": "int"},
                                 },
-                            }
+                            },
                         },
                     )
 
-                    with self.assertRaises(DocumentValidationFailure) as insert_error:
+                    with self.assertRaises(
+                        DocumentValidationFailure,
+                    ) as insert_error:
                         collection.insert_one({"_id": "1", "age": 10})
                     self.assertEqual(insert_error.exception.code, 121)
 
-                    collection.insert_one({"_id": "1", "name": "Ada", "age": 10})
+                    collection.insert_one(
+                        {"_id": "1", "name": "Ada", "age": 10},
+                    )
                     with self.assertRaises(DocumentValidationFailure):
-                        collection.update_one({"_id": "1"}, {"$set": {"age": "old"}})
+                        collection.update_one(
+                            {"_id": "1"},
+                            {"$set": {"age": "old"}},
+                        )
 
     def test_collection_json_schema_warn_mode_allows_write(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -2449,25 +3626,30 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "$jsonSchema": {
                                 "required": ["name"],
                                 "properties": {"name": {"bsonType": "string"}},
-                            }
+                            },
                         },
                         validationAction="warn",
                     )
 
                     collection.insert_one({"_id": "1"})
-                    self.assertEqual(collection.find_one({"_id": "1"}), {"_id": "1"})
+                    self.assertEqual(
+                        collection.find_one({"_id": "1"}),
+                        {"_id": "1"},
+                    )
 
     def test_find_supports_top_level_json_schema_filter(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
-                    collection = client.validation.get_collection("query_users")
+                    collection = client.validation.get_collection(
+                        "query_users",
+                    )
                     collection.insert_many(
                         [
                             {"_id": "1", "name": "Ada", "age": 10},
                             {"_id": "2", "name": "Bob", "age": "old"},
                             {"_id": "3", "age": 11},
-                        ]
+                        ],
                     )
 
                     result = collection.find(
@@ -2478,11 +3660,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "name": {"bsonType": "string"},
                                     "age": {"bsonType": "int"},
                                 },
-                            }
-                        }
+                            },
+                        },
                     ).to_list()
 
-                    self.assertEqual(result, [{"_id": "1", "name": "Ada", "age": 10}])
+                    self.assertEqual(
+                        result,
+                        [{"_id": "1", "name": "Ada", "age": 10}],
+                    )
 
     def test_find_supports_top_level_json_schema_inside_logical_clauses(self):
         schema_clause = {
@@ -2492,20 +3677,37 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     "name": {"bsonType": "string"},
                     "age": {"bsonType": "int"},
                 },
-            }
+            },
         }
 
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
-                    collection = client.validation.get_collection("logical_query_users")
+                    collection = client.validation.get_collection(
+                        "logical_query_users",
+                    )
                     collection.insert_many(
                         [
-                            {"_id": "1", "tenant": "a", "name": "Ada", "age": 10},
-                            {"_id": "2", "tenant": "a", "name": "Bob", "age": "old"},
+                            {
+                                "_id": "1",
+                                "tenant": "a",
+                                "name": "Ada",
+                                "age": 10,
+                            },
+                            {
+                                "_id": "2",
+                                "tenant": "a",
+                                "name": "Bob",
+                                "age": "old",
+                            },
                             {"_id": "3", "tenant": "b", "age": 11},
-                            {"_id": "4", "tenant": "c", "name": "Cora", "age": 12},
-                        ]
+                            {
+                                "_id": "4",
+                                "tenant": "c",
+                                "name": "Cora",
+                                "age": 12,
+                            },
+                        ],
                     )
 
                     and_result = collection.find(
@@ -2521,19 +3723,44 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         sort=[("_id", 1)],
                     ).to_list()
 
-                    self.assertEqual(and_result, [{"_id": "1", "tenant": "a", "name": "Ada", "age": 10}])
+                    self.assertEqual(
+                        and_result,
+                        [
+                            {
+                                "_id": "1",
+                                "tenant": "a",
+                                "name": "Ada",
+                                "age": 10,
+                            },
+                        ],
+                    )
                     self.assertEqual(
                         or_result,
                         [
-                            {"_id": "1", "tenant": "a", "name": "Ada", "age": 10},
+                            {
+                                "_id": "1",
+                                "tenant": "a",
+                                "name": "Ada",
+                                "age": 10,
+                            },
                             {"_id": "3", "tenant": "b", "age": 11},
-                            {"_id": "4", "tenant": "c", "name": "Cora", "age": 12},
+                            {
+                                "_id": "4",
+                                "tenant": "c",
+                                "name": "Cora",
+                                "age": 12,
+                            },
                         ],
                     )
                     self.assertEqual(
                         nor_result,
                         [
-                            {"_id": "2", "tenant": "a", "name": "Bob", "age": "old"},
+                            {
+                                "_id": "2",
+                                "tenant": "a",
+                                "name": "Bob",
+                                "age": "old",
+                            },
                             {"_id": "3", "tenant": "b", "age": 11},
                         ],
                     )
@@ -2542,7 +3769,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
-                    assert_sync_find_supports_richer_top_level_json_schema_filter(client)
+                    assert_sync_find_supports_richer_top_level_json_schema_filter(
+                        client,
+                    )
 
     def test_bypass_document_validation_allows_invalid_writes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -2557,11 +3786,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "name": {"bsonType": "string"},
                                     "age": {"bsonType": "int"},
                                 },
-                            }
+                            },
                         },
                     )
 
-                    collection.insert_one({"_id": "1", "age": 10}, bypass_document_validation=True)
+                    collection.insert_one(
+                        {"_id": "1", "age": 10},
+                        bypass_document_validation=True,
+                    )
                     collection.update_one(
                         {"_id": "1"},
                         {"$set": {"age": "old"}},
@@ -2575,13 +3807,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection.bulk_write(
                         [
                             InsertOne({"_id": "2"}),
-                            UpdateOne({"_id": "2"}, {"$set": {"age": "legacy"}}),
+                            UpdateOne(
+                                {"_id": "2"},
+                                {"$set": {"age": "legacy"}},
+                            ),
                         ],
                         bypass_document_validation=True,
                     )
 
-                    self.assertEqual(collection.find_one({"_id": "1"}), {"_id": "1", "age": "stale"})
-                    self.assertEqual(collection.find_one({"_id": "2"}), {"_id": "2", "age": "legacy"})
+                    self.assertEqual(
+                        collection.find_one({"_id": "1"}),
+                        {"_id": "1", "age": "stale"},
+                    )
+                    self.assertEqual(
+                        collection.find_one({"_id": "2"}),
+                        {"_id": "2", "age": "legacy"},
+                    )
 
     def test_collation_applies_to_query_sort_update_delete_and_distinct(self):
         collation = {"locale": "en", "strength": 2, "numericOrdering": True}
@@ -2594,10 +3835,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": 1, "name": "Alice", "code": "10"},
                             {"_id": 2, "name": "alice", "code": "2"},
                             {"_id": 3, "name": "Bob", "code": "3"},
-                        ]
+                        ],
                     )
 
-                    found = collection.find_one({"name": "ALICE"}, collation=collation)
+                    found = collection.find_one(
+                        {"name": "ALICE"},
+                        collation=collation,
+                    )
                     self.assertEqual(found["_id"], 1)
 
                     ordered = collection.find(
@@ -2606,7 +3850,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         sort=[("code", 1)],
                         collation=collation,
                     ).to_list()
-                    self.assertEqual(ordered, [{"code": "2"}, {"code": "3"}, {"code": "10"}])
+                    self.assertEqual(
+                        ordered,
+                        [{"code": "2"}, {"code": "3"}, {"code": "10"}],
+                    )
 
                     update_result = collection.update_one(
                         {"name": "ALICE"},
@@ -2614,12 +3861,26 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         collation=collation,
                     )
                     self.assertEqual(update_result.matched_count, 1)
-                    self.assertEqual(collection.find_one({"_id": 1}), {"_id": 1, "name": "Alice", "code": "10", "matched": True})
+                    self.assertEqual(
+                        collection.find_one({"_id": 1}),
+                        {
+                            "_id": 1,
+                            "name": "Alice",
+                            "code": "10",
+                            "matched": True,
+                        },
+                    )
 
-                    distinct_names = collection.distinct("name", collation=collation)
+                    distinct_names = collection.distinct(
+                        "name",
+                        collation=collation,
+                    )
                     self.assertEqual(distinct_names, ["Alice", "Bob"])
 
-                    delete_result = collection.delete_one({"name": "bob"}, collation=collation)
+                    delete_result = collection.delete_one(
+                        {"name": "bob"},
+                        collation=collation,
+                    )
                     self.assertEqual(delete_result.deleted_count, 1)
                     self.assertIsNone(collection.find_one({"_id": 3}))
 
@@ -2634,7 +3895,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": 1, "kind": "View", "rank": "10"},
                             {"_id": 2, "kind": "view", "rank": "2"},
                             {"_id": 3, "kind": "click", "rank": "3"},
-                        ]
+                        ],
                     )
 
                     aggregated = collection.aggregate(
@@ -2645,7 +3906,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                         collation=collation,
                     ).to_list()
-                    self.assertEqual(aggregated, [{"rank": "2"}, {"rank": "10"}])
+                    self.assertEqual(
+                        aggregated,
+                        [{"rank": "2"}, {"rank": "10"}],
+                    )
 
                     command_result = client.alpha.command(
                         {
@@ -2657,17 +3921,23 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             ],
                             "collation": collation,
                             "cursor": {"batchSize": 1},
-                        }
+                        },
                     )
                     self.assertEqual(
                         command_result,
                         {
-                            "cursor": {"id": 0, "ns": "alpha.events", "firstBatch": [{"rank": "2"}, {"rank": "10"}]},
+                            "cursor": {
+                                "id": 0,
+                                "ns": "alpha.events",
+                                "firstBatch": [{"rank": "2"}, {"rank": "10"}],
+                            },
                             "ok": 1.0,
                         },
                     )
 
-    def test_collation_applies_to_array_update_operators_and_array_filters(self):
+    def test_collation_applies_to_array_update_operators_and_array_filters(
+        self,
+    ):
         collation = {"locale": "en", "strength": 2}
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -2678,7 +3948,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "_id": "1",
                             "tags": ["Ada", "Grace"],
                             "items": [{"kind": "Ada"}, {"kind": "Grace"}],
-                        }
+                        },
                     )
 
                     add_result = collection.update_one(
@@ -2713,11 +3983,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {
                             "_id": "1",
                             "tags": [],
-                            "items": [{"kind": "Ada", "matched": True}, {"kind": "Grace"}],
+                            "items": [
+                                {"kind": "Ada", "matched": True},
+                                {"kind": "Grace"},
+                            ],
                         },
                     )
 
-    def test_database_command_supports_bypass_document_validation_and_collation(self):
+    def test_database_command_supports_bypass_document_validation_and_collation(
+        self,
+    ):
         collation = {"locale": "en", "strength": 2}
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
@@ -2729,7 +4004,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "$jsonSchema": {
                                 "required": ["name"],
                                 "properties": {"name": {"bsonType": "string"}},
-                            }
+                            },
                         },
                     )
                     database.command(
@@ -2737,18 +4012,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "insert": "cmd_users",
                             "documents": [{"_id": "1"}],
                             "bypassDocumentValidation": True,
-                        }
+                        },
                     )
                     collection.insert_many(
                         [
                             {"_id": "2", "name": "Alice"},
                             {"_id": "3", "name": "alice"},
                             {"_id": "4", "name": "Bob"},
-                        ]
+                        ],
                     )
 
                     count_result = database.command(
-                        {"count": "cmd_users", "query": {"name": "ALICE"}, "collation": collation}
+                        {
+                            "count": "cmd_users",
+                            "query": {"name": "ALICE"},
+                            "collation": collation,
+                        },
                     )
                     self.assertEqual(count_result["n"], 2)
 
@@ -2760,11 +4039,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "q": {"name": "ALICE"},
                                     "u": {"$set": {"matched": True}},
                                     "collation": collation,
-                                }
+                                },
                             ],
-                        }
+                        },
                     )
-                    self.assertTrue(collection.find_one({"_id": "2"})["matched"])
+                    self.assertTrue(
+                        collection.find_one({"_id": "2"})["matched"],
+                    )
 
                     distinct_result = database.command(
                         {
@@ -2772,15 +4053,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "key": "name",
                             "query": {"name": {"$exists": True}},
                             "collation": collation,
-                        }
+                        },
                     )
-                    self.assertEqual(distinct_result["values"], ["Alice", "Bob"])
+                    self.assertEqual(
+                        distinct_result["values"],
+                        ["Alice", "Bob"],
+                    )
 
                     database.command(
                         {
                             "delete": "cmd_users",
-                            "deletes": [{"q": {"name": "bob"}, "limit": 1, "collation": collation}],
-                        }
+                            "deletes": [
+                                {
+                                    "q": {"name": "bob"},
+                                    "limit": 1,
+                                    "collation": collation,
+                                },
+                            ],
+                        },
                     )
                     self.assertIsNone(collection.find_one({"_id": "4"}))
 
@@ -2797,7 +4087,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     database = client.get_database("profiled")
-                    profile_enabled = database.command({"profile": 2, "slowms": 0})
+                    profile_enabled = database.command(
+                        {"profile": 2, "slowms": 0},
+                    )
                     self.assertEqual(profile_enabled["was"], 0)
                     self.assertEqual(profile_enabled["level"], 2)
                     self.assertEqual(profile_enabled["entryCount"], 0)
@@ -2805,24 +4097,38 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = database.get_collection("users")
                     collection.insert_one({"_id": "1", "name": "Ada"})
                     collection.find_one({"_id": "1"})
-                    collection.update_one({"_id": "1"}, {"$set": {"active": True}})
+                    collection.update_one(
+                        {"_id": "1"},
+                        {"$set": {"active": True}},
+                    )
 
                     profile_status = database.command({"profile": -1})
                     self.assertEqual(profile_status["was"], 2)
                     self.assertEqual(profile_status["level"], 2)
                     self.assertGreaterEqual(profile_status["entryCount"], 3)
-                    profile_entries = database.get_collection("system.profile").find().to_list()
+                    profile_entries = (
+                        database.get_collection("system.profile").find().to_list()
+                    )
 
-                    self.assertTrue(any(entry["op"] == "insert" for entry in profile_entries))
-                    self.assertTrue(any(entry["op"] == "query" for entry in profile_entries))
-                    self.assertTrue(any(entry["op"] == "update" for entry in profile_entries))
+                    self.assertTrue(
+                        any(entry["op"] == "insert" for entry in profile_entries),
+                    )
+                    self.assertTrue(
+                        any(entry["op"] == "query" for entry in profile_entries),
+                    )
+                    self.assertTrue(
+                        any(entry["op"] == "update" for entry in profile_entries),
+                    )
 
     def test_memory_engine_transactions_use_isolated_mvcc_snapshots(self):
         with MongoClient(MemoryEngine()) as client:
             session = client.start_session()
             session.start_transaction()
 
-            client.alpha.users.insert_one({"_id": "1", "name": "Ada"}, session=session)
+            client.alpha.users.insert_one(
+                {"_id": "1", "name": "Ada"},
+                session=session,
+            )
 
             self.assertIsNone(client.alpha.users.find_one({"_id": "1"}))
             self.assertEqual(
@@ -2832,7 +4138,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
             session.commit_transaction()
 
-            self.assertEqual(client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
+            self.assertEqual(
+                client.alpha.users.find_one({"_id": "1"}),
+                {"_id": "1", "name": "Ada"},
+            )
 
     def test_memory_engine_transactions_detect_write_conflicts_on_commit(self):
         with MongoClient(MemoryEngine()) as client:
@@ -2841,8 +4150,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
             first.start_transaction()
             second.start_transaction()
 
-            client.alpha.users.insert_one({"_id": "1", "name": "Ada"}, session=first)
-            client.alpha.users.insert_one({"_id": "1", "name": "Grace"}, session=second)
+            client.alpha.users.insert_one(
+                {"_id": "1", "name": "Ada"},
+                session=first,
+            )
+            client.alpha.users.insert_one(
+                {"_id": "1", "name": "Grace"},
+                session=second,
+            )
 
             first.commit_transaction()
             with self.assertRaisesRegex(OperationFailure, "Write conflict"):
@@ -2853,12 +4168,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 client.alpha.users.find_one({"_id": "1"}, session=second),
                 {"_id": "1", "name": "Grace"},
             )
-            client.alpha.users.insert_one({"_id": "after-conflict"}, session=second)
-            self.assertIsNone(client.alpha.users.find_one({"_id": "after-conflict"}))
+            client.alpha.users.insert_one(
+                {"_id": "after-conflict"},
+                session=second,
+            )
+            self.assertIsNone(
+                client.alpha.users.find_one({"_id": "after-conflict"}),
+            )
             second.abort_transaction()
 
-            self.assertEqual(client.alpha.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
-            self.assertIsNone(client.alpha.users.find_one({"_id": "after-conflict"}))
+            self.assertEqual(
+                client.alpha.users.find_one({"_id": "1"}),
+                {"_id": "1", "name": "Ada"},
+            )
+            self.assertIsNone(
+                client.alpha.users.find_one({"_id": "after-conflict"}),
+            )
 
     def test_memory_engine_id_fast_path_uses_transaction_snapshot(self):
         with MongoClient(MemoryEngine()) as client:
@@ -2889,7 +4214,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 collection.find_one({"_id": "1"}),
                 {"_id": "1", "state": "draft", "value": 0},
             )
-            self.assertIsNone(collection.find_one({"_id": "1"}, session=session))
+            self.assertIsNone(
+                collection.find_one({"_id": "1"}, session=session),
+            )
 
             session.commit_transaction()
             self.assertIsNone(collection.find_one({"_id": "1"}))
@@ -2897,28 +4224,51 @@ class SyncApiIntegrationTests(unittest.TestCase):
     def test_transaction_session_cannot_write_through_foreign_engine(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as owner_client, MongoClient(factory()) as foreign_client:
+                with (
+                    MongoClient(factory()) as owner_client,
+                    MongoClient(factory()) as foreign_client,
+                ):
                     session = owner_client.start_session()
 
                     with self.assertRaises(InvalidOperation):
-                        foreign_client.alpha.users.insert_one({"_id": "foreign-non-tx"}, session=session)
+                        foreign_client.alpha.users.insert_one(
+                            {"_id": "foreign-non-tx"},
+                            session=session,
+                        )
                     with self.assertRaises(InvalidOperation):
                         foreign_client.list_database_names(session=session)
                     with self.assertRaises(InvalidOperation):
-                        foreign_client.alpha.command({"profile": -1}, session=session)
+                        foreign_client.alpha.command(
+                            {"profile": -1},
+                            session=session,
+                        )
                     with self.assertRaises(InvalidOperation):
-                        foreign_client.alpha.command({"ping": 1}, session=session)
+                        foreign_client.alpha.command(
+                            {"ping": 1},
+                            session=session,
+                        )
                     with self.assertRaises(InvalidOperation):
-                        foreign_client.alpha.command({"hello": 1}, session=session)
+                        foreign_client.alpha.command(
+                            {"hello": 1},
+                            session=session,
+                        )
                     with self.assertRaises(InvalidOperation):
                         foreign_client.alpha.users.aggregate(
                             [{"$currentOp": {}}],
                             session=session,
                         ).to_list()
-                    self.assertIsNone(foreign_client.alpha.users.find_one({"_id": "foreign-non-tx"}))
+                    self.assertIsNone(
+                        foreign_client.alpha.users.find_one(
+                            {"_id": "foreign-non-tx"},
+                        ),
+                    )
 
                     foreign_client.alpha.users.insert_one(
-                        {"_id": "count-seed", "marker": "count", "items": [{"value": 1}]}
+                        {
+                            "_id": "count-seed",
+                            "marker": "count",
+                            "items": [{"value": 1}],
+                        },
                     )
                     with self.assertRaises(InvalidOperation):
                         foreign_client.alpha.users.count_documents(
@@ -2930,42 +4280,71 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"items": {"$elemMatch": {"value": 1}}},
                             session=session,
                         )
-                    self.assertEqual(foreign_client.alpha.users.count_documents({}), 1)
+                    self.assertEqual(
+                        foreign_client.alpha.users.count_documents({}),
+                        1,
+                    )
 
                     foreign_client.alpha.command({"profile": 2})
-                    foreign_client.alpha.users.insert_one({"_id": "profile-seed"})
-                    profile_collection = foreign_client.alpha.get_collection("system.profile")
+                    foreign_client.alpha.users.insert_one(
+                        {"_id": "profile-seed"},
+                    )
+                    profile_collection = foreign_client.alpha.get_collection(
+                        "system.profile",
+                    )
                     profile_entries = profile_collection.find({}).to_list()
                     self.assertGreaterEqual(len(profile_entries), 1)
                     profile_id = profile_entries[0]["_id"]
                     with self.assertRaises(InvalidOperation):
-                        profile_collection.find_one({"_id": profile_id}, session=session)
+                        profile_collection.find_one(
+                            {"_id": profile_id},
+                            session=session,
+                        )
                     with self.assertRaises(InvalidOperation):
-                        profile_collection.delete_one({"_id": profile_id}, session=session)
+                        profile_collection.delete_one(
+                            {"_id": profile_id},
+                            session=session,
+                        )
                     with self.assertRaises(InvalidOperation):
                         profile_collection.drop(session=session)
-                    self.assertEqual(profile_collection.find({}).to_list(), profile_entries)
+                    self.assertEqual(
+                        profile_collection.find({}).to_list(),
+                        profile_entries,
+                    )
 
                     session.start_transaction()
 
                     with self.assertRaises(InvalidOperation):
-                        foreign_client.alpha.users.insert_one({"_id": "foreign"}, session=session)
+                        foreign_client.alpha.users.insert_one(
+                            {"_id": "foreign"},
+                            session=session,
+                        )
 
                     session.abort_transaction()
-                    self.assertIsNone(foreign_client.alpha.users.find_one({"_id": "foreign"}))
+                    self.assertIsNone(
+                        foreign_client.alpha.users.find_one({"_id": "foreign"}),
+                    )
 
-    def test_session_observes_operation_times_after_successful_collection_ops(self):
+    def test_session_observes_operation_times_after_successful_collection_ops(
+        self,
+    ):
         with MongoClient(MemoryEngine()) as client:
             session = client.start_session()
 
             self.assertIsNone(session.operation_time)
             self.assertIsNone(session.cluster_time)
 
-            client.alpha.users.insert_one({"_id": "1", "name": "Ada"}, session=session)
+            client.alpha.users.insert_one(
+                {"_id": "1", "name": "Ada"},
+                session=session,
+            )
 
             self.assertIsNotNone(session.operation_time)
             self.assertIsNotNone(session.cluster_time)
-            self.assertGreaterEqual(session.cluster_time, session.operation_time)
+            self.assertGreaterEqual(
+                session.cluster_time,
+                session.operation_time,
+            )
 
     def test_client_supports_attribute_and_item_access_with_lazy_connect(self):
         client = MongoClient()
@@ -2981,28 +4360,75 @@ class SyncApiIntegrationTests(unittest.TestCase):
             client.close()
 
     def test_client_server_info_reflects_target_dialect(self):
-        asyncio.run(assert_client_server_info_reflects_target_dialect(self, open_sync_client))
+        asyncio.run(
+            assert_client_server_info_reflects_target_dialect(
+                self,
+                open_sync_client,
+            ),
+        )
 
     def test_build_info_command_shares_source_of_truth_with_server_info(self):
-        asyncio.run(assert_build_info_command_shares_source_of_truth_with_server_info(self, open_sync_client))
+        asyncio.run(
+            assert_build_info_command_shares_source_of_truth_with_server_info(
+                self,
+                open_sync_client,
+            ),
+        )
 
     def test_hello_and_is_master_commands_return_handshake_metadata(self):
-        asyncio.run(assert_hello_and_is_master_commands_return_handshake_metadata(self, open_sync_client))
+        asyncio.run(
+            assert_hello_and_is_master_commands_return_handshake_metadata(
+                self,
+                open_sync_client,
+            ),
+        )
 
-    def test_list_commands_and_connection_status_commands_return_local_admin_metadata(self):
-        asyncio.run(assert_list_commands_and_connection_status_commands_return_local_admin_metadata(self, open_sync_client))
+    def test_list_commands_and_connection_status_commands_return_local_admin_metadata(
+        self,
+    ):
+        asyncio.run(
+            assert_list_commands_and_connection_status_commands_return_local_admin_metadata(
+                self,
+                open_sync_client,
+            ),
+        )
 
     def test_server_status_command_returns_local_runtime_metadata(self):
-        asyncio.run(assert_server_status_command_returns_local_runtime_metadata(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_server_status_command_returns_local_runtime_metadata(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_server_status_opcounters_track_local_runtime_activity(self):
-        asyncio.run(assert_server_status_opcounters_track_local_runtime_activity(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_server_status_opcounters_track_local_runtime_activity(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
-    def test_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(self):
-        asyncio.run(assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(self, open_sync_client))
+    def test_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(
+        self,
+    ):
+        asyncio.run(
+            assert_host_info_whats_my_uri_and_cmd_line_opts_commands_return_local_metadata(
+                self,
+                open_sync_client,
+            ),
+        )
 
     def test_list_collections_command_supports_name_only(self):
-        asyncio.run(assert_list_collections_command_supports_name_only(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_list_collections_command_supports_name_only(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_insert_find_and_list_names(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -3015,8 +4441,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertIs(type(result.inserted_id), BsonObjectId)
                     self.assertEqual(found["name"], "Ada")
-                    self.assertEqual(set(client.list_database_names()), {"test"})
-                    self.assertEqual(client.test.list_collection_names(), ["users"])
+                    self.assertEqual(
+                        set(client.list_database_names()),
+                        {"test"},
+                    )
+                    self.assertEqual(
+                        client.test.list_collection_names(),
+                        ["users"],
+                    )
 
     def test_find_supports_implicit_regex_literals_and_in_regex(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -3024,9 +4456,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     client.alpha.users.insert_many(
                         [
-                            {"_id": "1", "name": "MongoDB", "tags": ["beta", "stable"]},
-                            {"_id": "2", "name": "Postgres", "tags": ["alpha", "stable"]},
-                        ]
+                            {
+                                "_id": "1",
+                                "name": "MongoDB",
+                                "tags": ["beta", "stable"],
+                            },
+                            {
+                                "_id": "2",
+                                "name": "Postgres",
+                                "tags": ["alpha", "stable"],
+                            },
+                        ],
                     )
 
                     implicit = client.alpha.users.find(
@@ -3038,28 +4478,48 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         sort=[("_id", 1)],
                     ).to_list()
                     in_regex = client.alpha.users.find(
-                        {"tags": {"$in": [re.compile("^be"), re.compile("^zz")]}},
+                        {
+                            "tags": {
+                                "$in": [re.compile("^be"), re.compile("^zz")],
+                            },
+                        },
                         sort=[("_id", 1)],
                     ).to_list()
 
-                    self.assertEqual([document["_id"] for document in implicit], ["1"])
-                    self.assertEqual([document["_id"] for document in eq_regex], ["1"])
-                    self.assertEqual([document["_id"] for document in in_regex], ["1"])
+                    self.assertEqual(
+                        [document["_id"] for document in implicit],
+                        ["1"],
+                    )
+                    self.assertEqual(
+                        [document["_id"] for document in eq_regex],
+                        ["1"],
+                    )
+                    self.assertEqual(
+                        [document["_id"] for document in in_regex],
+                        ["1"],
+                    )
 
-    def test_create_collection_registers_empty_namespace_and_rejects_duplicates(self):
+    def test_create_collection_registers_empty_namespace_and_rejects_duplicates(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     created = client.alpha.create_collection("events")
 
                     self.assertEqual(created.name, "events")
-                    self.assertEqual(client.alpha.list_collection_names(), ["events"])
+                    self.assertEqual(
+                        client.alpha.list_collection_names(),
+                        ["events"],
+                    )
                     self.assertIn("alpha", client.list_database_names())
 
                     with self.assertRaises(CollectionInvalid):
                         client.alpha.create_collection("events")
 
-    def test_list_collections_returns_cursor_documents_and_supports_filter(self):
+    def test_list_collections_returns_cursor_documents_and_supports_filter(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -3076,7 +4536,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "type": "collection",
                                 "options": {},
                                 "info": {"readOnly": False},
-                            }
+                            },
                         ],
                     )
                     self.assertEqual(
@@ -3099,14 +4559,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"capped": True, "size": 1024},
                     )
                     self.assertEqual(
-                        client.alpha.list_collections({"name": "events"}).to_list(),
+                        client.alpha.list_collections(
+                            {"name": "events"},
+                        ).to_list(),
                         [
                             {
                                 "name": "events",
                                 "type": "collection",
                                 "options": {"capped": True, "size": 1024},
                                 "info": {"readOnly": False},
-                            }
+                            },
                         ],
                     )
 
@@ -3124,7 +4586,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     result = collection.delete_one({"_id": "1"})
 
                     self.assertEqual(result.deleted_count, 1)
-                    self.assertEqual(collection.find({}, sort=[("_id", 1)]).to_list(), [{"_id": "2"}])
+                    self.assertEqual(
+                        collection.find({}, sort=[("_id", 1)]).to_list(),
+                        [{"_id": "2"}],
+                    )
 
     def test_list_collections_rejects_invalid_filter(self):
         with MongoClient(MemoryEngine()) as client:
@@ -3133,55 +4598,129 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.assertRaises(TypeError):
                 client.alpha.list_collection_names(["bad"])  # type: ignore[arg-type]
 
-    def test_database_admin_methods_respect_session_bound_sqlite_transactions(self):
+    def test_database_admin_methods_respect_session_bound_sqlite_transactions(
+        self,
+    ):
         with MongoClient(SQLiteEngine()) as client:
             session = client.start_session()
             session.start_transaction()
 
             client.alpha.create_collection("events", session=session)
 
-            self.assertEqual(client.list_database_names(session=session), ["alpha"])
-            self.assertEqual(client.alpha.list_collection_names(session=session), ["events"])
+            self.assertEqual(
+                client.list_database_names(session=session),
+                ["alpha"],
+            )
+            self.assertEqual(
+                client.alpha.list_collection_names(session=session),
+                ["events"],
+            )
 
             session.abort_transaction()
 
             self.assertEqual(client.list_database_names(), [])
             self.assertEqual(client.alpha.list_collection_names(), [])
 
-    def test_database_command_supports_ping_list_collections_and_drop_database(self):
-        asyncio.run(assert_database_command_supports_ping_list_collections_and_drop_database(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+    def test_database_command_supports_ping_list_collections_and_drop_database(
+        self,
+    ):
+        asyncio.run(
+            assert_database_command_supports_ping_list_collections_and_drop_database(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
-    def test_database_command_supports_collection_index_count_and_distinct_commands(self):
-        asyncio.run(assert_database_command_supports_collection_index_count_and_distinct_commands(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+    def test_database_command_supports_collection_index_count_and_distinct_commands(
+        self,
+    ):
+        asyncio.run(
+            assert_database_command_supports_collection_index_count_and_distinct_commands(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
-    def test_database_command_index_commands_support_comment_and_max_time(self):
-        asyncio.run(assert_database_command_index_commands_support_comment_and_max_time(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+    def test_database_command_index_commands_support_comment_and_max_time(
+        self,
+    ):
+        asyncio.run(
+            assert_database_command_index_commands_support_comment_and_max_time(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_database_command_count_supports_skip_limit_hint_and_comment(self):
-        asyncio.run(assert_database_command_count_supports_skip_limit_hint_and_comment(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_database_command_count_supports_skip_limit_hint_and_comment(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
-    def test_database_command_distinct_supports_hint_comment_and_max_time(self):
-        asyncio.run(assert_database_command_distinct_supports_hint_comment_and_max_time(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+    def test_database_command_distinct_supports_hint_comment_and_max_time(
+        self,
+    ):
+        asyncio.run(
+            assert_database_command_distinct_supports_hint_comment_and_max_time(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
-    def test_database_command_supports_rename_collection_within_current_database(self):
-        asyncio.run(assert_database_command_supports_rename_collection_within_current_database(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+    def test_database_command_supports_rename_collection_within_current_database(
+        self,
+    ):
+        asyncio.run(
+            assert_database_command_supports_rename_collection_within_current_database(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_database_command_supports_find_and_aggregate(self):
-        asyncio.run(assert_database_command_supports_find_and_aggregate(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_database_command_supports_find_and_aggregate(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_database_command_supports_explain_for_find_and_aggregate(self):
-        asyncio.run(assert_database_command_supports_explain_for_find_and_aggregate(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_database_command_supports_explain_for_find_and_aggregate(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_database_command_supports_explain_for_update_and_delete(self):
-        asyncio.run(assert_database_command_supports_explain_for_update_and_delete(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_database_command_supports_explain_for_update_and_delete(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
-    def test_database_command_supports_explain_for_count_distinct_and_find_and_modify(self):
+    def test_database_command_supports_explain_for_count_distinct_and_find_and_modify(
+        self,
+    ):
         asyncio.run(
             assert_database_command_supports_explain_for_count_distinct_and_find_and_modify(
                 self,
                 SYNC_ENGINE_FACTORIES,
                 open_sync_client,
-            )
+            ),
         )
 
     def test_database_command_supports_db_hash_and_profile_status(self):
@@ -3190,32 +4729,79 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 self,
                 SYNC_ENGINE_FACTORIES,
                 open_sync_client,
-            )
+            ),
         )
 
     def test_database_command_supports_insert_update_and_delete(self):
-        asyncio.run(assert_database_command_supports_insert_update_and_delete(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_database_command_supports_insert_update_and_delete(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_database_command_write_commands_surface_write_errors(self):
-        asyncio.run(assert_database_command_write_commands_surface_write_errors(self, open_sync_client))
+        asyncio.run(
+            assert_database_command_write_commands_surface_write_errors(
+                self,
+                open_sync_client,
+            ),
+        )
 
     def test_database_command_supports_find_and_modify(self):
-        asyncio.run(assert_database_command_supports_find_and_modify(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_database_command_supports_find_and_modify(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_database_command_supports_coll_stats_and_db_stats(self):
-        asyncio.run(assert_database_command_supports_coll_stats_and_db_stats(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_database_command_supports_coll_stats_and_db_stats(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_database_command_supports_configure_fail_point(self):
-        asyncio.run(assert_database_command_supports_configure_fail_point(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+        asyncio.run(
+            assert_database_command_supports_configure_fail_point(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_database_command_rejects_unsupported_commands(self):
-        asyncio.run(assert_database_command_rejects_unsupported_commands(self, open_sync_client))
+        asyncio.run(
+            assert_database_command_rejects_unsupported_commands(
+                self,
+                open_sync_client,
+            ),
+        )
 
     def test_database_command_rejects_invalid_command_shapes(self):
-        asyncio.run(assert_database_command_rejects_invalid_command_shapes(self, open_sync_client))
+        asyncio.run(
+            assert_database_command_rejects_invalid_command_shapes(
+                self,
+                open_sync_client,
+            ),
+        )
 
-    def test_validate_collection_returns_metadata_and_rejects_missing_namespace(self):
-        asyncio.run(assert_validate_collection_returns_metadata_and_rejects_missing_namespace(self, SYNC_ENGINE_FACTORIES, open_sync_client))
+    def test_validate_collection_returns_metadata_and_rejects_missing_namespace(
+        self,
+    ):
+        asyncio.run(
+            assert_validate_collection_returns_metadata_and_rejects_missing_namespace(
+                self,
+                SYNC_ENGINE_FACTORIES,
+                open_sync_client,
+            ),
+        )
 
     def test_collection_rename_moves_documents_and_indexes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -3228,8 +4814,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     renamed = collection.rename("archived")
 
                     self.assertEqual(renamed.name, "archived")
-                    self.assertEqual(client.alpha.list_collection_names(), ["archived"])
-                    self.assertEqual(renamed.find_one({"_id": "1"}), {"_id": "1", "kind": "view"})
+                    self.assertEqual(
+                        client.alpha.list_collection_names(),
+                        ["archived"],
+                    )
+                    self.assertEqual(
+                        renamed.find_one({"_id": "1"}),
+                        {"_id": "1", "kind": "view"},
+                    )
                     self.assertIn("kind_idx", renamed.index_information())
                     self.assertEqual(renamed.options(), {})
 
@@ -3258,18 +4850,35 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         "events",
                         write_concern=WriteConcern("majority"),
                         read_concern=ReadConcern("majority"),
-                        read_preference=ReadPreference(ReadPreferenceMode.SECONDARY),
+                        read_preference=ReadPreference(
+                            ReadPreferenceMode.SECONDARY,
+                        ),
                         codec_options=CodecOptions(dict, tz_aware=True),
                     ).with_options(planning_mode=PlanningMode.RELAXED)
                     collection.insert_one({"_id": "1"})
 
                     renamed = collection.rename("archived")
 
-                    self.assertEqual(renamed.write_concern, collection.write_concern)
-                    self.assertEqual(renamed.read_concern, collection.read_concern)
-                    self.assertEqual(renamed.read_preference, collection.read_preference)
-                    self.assertEqual(renamed.codec_options, collection.codec_options)
-                    self.assertEqual(renamed.planning_mode, collection.planning_mode)
+                    self.assertEqual(
+                        renamed.write_concern,
+                        collection.write_concern,
+                    )
+                    self.assertEqual(
+                        renamed.read_concern,
+                        collection.read_concern,
+                    )
+                    self.assertEqual(
+                        renamed.read_preference,
+                        collection.read_preference,
+                    )
+                    self.assertEqual(
+                        renamed.codec_options,
+                        collection.codec_options,
+                    )
+                    self.assertEqual(
+                        renamed.planning_mode,
+                        collection.planning_mode,
+                    )
 
     def test_collection_rename_rejects_conflicting_or_identical_names(self):
         with MongoClient(MemoryEngine()) as client:
@@ -3281,7 +4890,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.assertRaises(CollectionInvalid):
                 client.alpha.events.rename("events")
 
-    def test_client_database_and_collection_expose_configured_pymongo_options(self):
+    def test_client_database_and_collection_expose_configured_pymongo_options(
+        self,
+    ):
         write_concern = WriteConcern("majority", j=True)
         read_concern = ReadConcern("majority")
         read_preference = ReadPreference(ReadPreferenceMode.SECONDARY)
@@ -3318,7 +4929,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertIs(collection.read_preference, read_preference)
             self.assertIs(collection.codec_options, codec_options)
 
-    def test_codec_options_materialize_find_results_with_timezone_uuid_and_document_class(self):
+    def test_codec_options_materialize_find_results_with_timezone_uuid_and_document_class(
+        self,
+    ):
         class AuditDocument(dict):
             pass
 
@@ -3334,11 +4947,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
         codec_options = CodecOptions(
             AuditDocument,
             tz_aware=True,
-            tzinfo=datetime.timezone.utc,
+            tzinfo=datetime.UTC,
             uuid_representation=UuidRepresentation.UNSPECIFIED,
         )
 
-        with MongoClient(MemoryEngine(), codec_options=codec_options) as client:
+        with MongoClient(
+            MemoryEngine(),
+            codec_options=codec_options,
+        ) as client:
             collection = client.alpha.get_collection("events")
             collection.insert_one(
                 {
@@ -3346,7 +4962,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     "created_at": aware_datetime,
                     "trace": trace_id,
                     "nested": {"owner": "ada"},
-                }
+                },
             )
             found = collection.find_one({"_id": "evt-1"})
 
@@ -3355,11 +4971,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
         self.assertIsInstance(found["nested"], AuditDocument)
         self.assertEqual(
             found["created_at"],
-            datetime.datetime(2026, 4, 8, 8, 30, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2026, 4, 8, 8, 30, tzinfo=datetime.UTC),
         )
         self.assertEqual(found["trace"], Binary(trace_id.bytes, subtype=4))
 
-    def test_with_options_clones_database_and_collection_without_mutating_parent(self):
+    def test_with_options_clones_database_and_collection_without_mutating_parent(
+        self,
+    ):
         with MongoClient(MemoryEngine()) as client:
             base_database = client.get_database("alpha")
             tuned_database = base_database.with_options(
@@ -3368,7 +4986,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             )
             base_collection = tuned_database.get_collection("events")
             tuned_collection = base_collection.with_options(
-                read_preference=ReadPreference(ReadPreferenceMode.SECONDARY_PREFERRED),
+                read_preference=ReadPreference(
+                    ReadPreferenceMode.SECONDARY_PREFERRED,
+                ),
                 codec_options=CodecOptions(dict, tz_aware=True),
             )
 
@@ -3377,8 +4997,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(tuned_database.write_concern, WriteConcern(1))
             self.assertEqual(tuned_database.read_concern, ReadConcern("local"))
             self.assertEqual(base_collection.read_preference, ReadPreference())
-            self.assertEqual(tuned_collection.read_preference, ReadPreference(ReadPreferenceMode.SECONDARY_PREFERRED))
-            self.assertEqual(tuned_collection.codec_options, CodecOptions(dict, tz_aware=True))
+            self.assertEqual(
+                tuned_collection.read_preference,
+                ReadPreference(ReadPreferenceMode.SECONDARY_PREFERRED),
+            )
+            self.assertEqual(
+                tuned_collection.codec_options,
+                CodecOptions(dict, tz_aware=True),
+            )
 
     def test_client_with_options_clones_client_without_mutating_parent(self):
         with MongoClient(MemoryEngine()) as client:
@@ -3392,7 +5018,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertEqual(tuned.write_concern, WriteConcern(1))
             self.assertEqual(tuned.read_concern, ReadConcern("local"))
 
-    def test_get_default_database_uses_uri_name_or_explicit_default_and_preserves_options(self):
+    def test_get_default_database_uses_uri_name_or_explicit_default_and_preserves_options(
+        self,
+    ):
         read_preference = ReadPreference(ReadPreferenceMode.SECONDARY)
         codec_options = CodecOptions(dict, tz_aware=True)
 
@@ -3427,8 +5055,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
             first = client.server_info()
             second = client.server_info()
 
-            self.assertTrue(first["version"].startswith(f"{client.mongodb_dialect.server_version}."))
-            self.assertTrue(second["version"].startswith(f"{client.mongodb_dialect.server_version}."))
+            self.assertTrue(
+                first["version"].startswith(
+                    f"{client.mongodb_dialect.server_version}.",
+                ),
+            )
+            self.assertTrue(
+                second["version"].startswith(
+                    f"{client.mongodb_dialect.server_version}.",
+                ),
+            )
             self.assertEqual(first["versionArray"], second["versionArray"])
 
     def test_collection_namespace_helpers_and_cursor_metadata(self):
@@ -3451,31 +5087,57 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(collection.database.name, "alpha")
                     self.assertEqual(child.name, "events.daily")
                     self.assertEqual(child.full_name, "alpha.events.daily")
-                    self.assertEqual(child_underscore.name, "events.daily_logs")
-                    self.assertEqual(child_underscore.full_name, "alpha.events.daily_logs")
+                    self.assertEqual(
+                        child_underscore.name,
+                        "events.daily_logs",
+                    )
+                    self.assertEqual(
+                        child_underscore.full_name,
+                        "alpha.events.daily_logs",
+                    )
                     self.assertEqual(sibling.name, "logs")
                     self.assertEqual(sibling.full_name, "alpha.logs")
-                    self.assertEqual(sibling.read_concern, ReadConcern("local"))
-                    self.assertEqual(collection.read_concern, ReadConcern("majority"))
+                    self.assertEqual(
+                        sibling.read_concern,
+                        ReadConcern("local"),
+                    )
+                    self.assertEqual(
+                        collection.read_concern,
+                        ReadConcern("majority"),
+                    )
 
                     collection.insert_many(
                         [
                             {"_id": "1", "kind": "view"},
                             {"_id": "2", "kind": "click"},
-                        ]
+                        ],
                     )
                     collection.create_index([("kind", 1)], name="kind_idx")
 
                     cursor = collection.find({"kind": "view"}).hint("kind_idx")
                     clone = cursor.clone().limit(1)
 
-                    self.assertEqual(cursor.collection.full_name, "alpha.events")
-                    self.assertEqual(clone.collection.full_name, "alpha.events")
+                    self.assertEqual(
+                        cursor.collection.full_name,
+                        "alpha.events",
+                    )
+                    self.assertEqual(
+                        clone.collection.full_name,
+                        "alpha.events",
+                    )
                     self.assertTrue(cursor.alive)
-                    self.assertEqual(clone.to_list(), [{"_id": "1", "kind": "view"}])
-                    self.assertEqual(cursor.to_list(), [{"_id": "1", "kind": "view"}])
+                    self.assertEqual(
+                        clone.to_list(),
+                        [{"_id": "1", "kind": "view"}],
+                    )
+                    self.assertEqual(
+                        cursor.to_list(),
+                        [{"_id": "1", "kind": "view"}],
+                    )
 
-    def test_start_session_inherits_default_transaction_options_from_client(self):
+    def test_start_session_inherits_default_transaction_options_from_client(
+        self,
+    ):
         transaction_options = TransactionOptions(
             write_concern=WriteConcern("majority"),
             max_commit_time_ms=200,
@@ -3488,7 +5150,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
             session = client.start_session()
             session.start_transaction()
 
-            self.assertEqual(session.default_transaction_options, transaction_options)
+            self.assertEqual(
+                session.default_transaction_options,
+                transaction_options,
+            )
             self.assertEqual(session.transaction_options, transaction_options)
 
     def test_duplicate_id_raises(self):
@@ -3508,21 +5173,37 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.test.users
 
                     inserted = collection.insert_many(
-                        [{"_id": "1", "kind": "view", "done": False}, {"_id": "2", "kind": "view", "done": False}]
+                        [
+                            {"_id": "1", "kind": "view", "done": False},
+                            {"_id": "2", "kind": "view", "done": False},
+                        ],
                     )
-                    collection.insert_one({"_id": "3", "kind": "click", "done": False})
+                    collection.insert_one(
+                        {"_id": "3", "kind": "click", "done": False},
+                    )
 
-                    updated = collection.update_many({"kind": "view"}, {"$set": {"done": True}})
+                    updated = collection.update_many(
+                        {"kind": "view"},
+                        {"$set": {"done": True}},
+                    )
                     deleted = collection.delete_many({"kind": "view"})
-                    remaining = collection.find({}, sort=[("_id", 1)]).to_list()
+                    remaining = collection.find(
+                        {},
+                        sort=[("_id", 1)],
+                    ).to_list()
 
                     self.assertEqual(inserted.inserted_ids, ["1", "2"])
                     self.assertEqual(updated.matched_count, 2)
                     self.assertEqual(updated.modified_count, 2)
                     self.assertEqual(deleted.deleted_count, 2)
-                    self.assertEqual(remaining, [{"_id": "3", "kind": "click", "done": False}])
+                    self.assertEqual(
+                        remaining,
+                        [{"_id": "3", "kind": "click", "done": False}],
+                    )
 
-    def test_insert_many_duplicate_preserves_existing_and_publishes_prior_successes(self):
+    def test_insert_many_duplicate_preserves_existing_and_publishes_prior_successes(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -3536,14 +5217,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 {"_id": "ok"},
                                 {"_id": "dup", "value": "replacement"},
                                 {"_id": "after"},
-                            ]
+                            ],
                         )
 
                     self.assertEqual(
                         collection.find_one({"_id": "dup"}),
                         {"_id": "dup", "value": "original"},
                     )
-                    self.assertEqual(collection.find_one({"_id": "ok"}), {"_id": "ok"})
+                    self.assertEqual(
+                        collection.find_one({"_id": "ok"}),
+                        {"_id": "ok"},
+                    )
                     self.assertIsNone(collection.find_one({"_id": "after"}))
                     event = stream.try_next()
                     self.assertIsNotNone(event)
@@ -3565,7 +5249,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 {"_id": "ok", "email": "same@example.com"},
                                 {"_id": "dup", "email": "same@example.com"},
                                 {"_id": "after", "email": "after@example.com"},
-                            ]
+                            ],
                         )
 
                     self.assertEqual(
@@ -3593,7 +5277,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             [
                                 {"_id": "valid-before-error", "name": "Ada"},
                                 {"_id": "invalid"},
-                            ]
+                            ],
                         )
 
                     self.assertEqual(collection.find({}).to_list(), [])
@@ -3606,25 +5290,52 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     client.alpha.events.insert_one({"_id": "1"})
                     client.alpha.events.delete_one({"_id": "1"})
 
-                    self.assertEqual(client.alpha.list_collection_names(), ["events"])
+                    self.assertEqual(
+                        client.alpha.list_collection_names(),
+                        ["events"],
+                    )
 
     def test_bulk_write_supports_ordered_and_unordered_execution(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory(), pymongo_profile="4.11") as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "seed", "kind": "view", "rank": 2, "done": False})
-                    collection.insert_one({"_id": "other", "kind": "view", "rank": 1, "done": False})
+                    collection.insert_one(
+                        {
+                            "_id": "seed",
+                            "kind": "view",
+                            "rank": 2,
+                            "done": False,
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "other",
+                            "kind": "view",
+                            "rank": 1,
+                            "done": False,
+                        },
+                    )
 
                     success = collection.bulk_write(
                         [
                             InsertOne({"_id": "new", "kind": "click"}),
-                            UpdateOne({"kind": "view"}, {"$set": {"done": True}}, sort=[("rank", 1)]),
-                            UpdateMany({"kind": "view"}, {"$set": {"tag": "seen"}}),
-                            ReplaceOne({"_id": "new"}, {"kind": "click", "done": True}),
+                            UpdateOne(
+                                {"kind": "view"},
+                                {"$set": {"done": True}},
+                                sort=[("rank", 1)],
+                            ),
+                            UpdateMany(
+                                {"kind": "view"},
+                                {"$set": {"tag": "seen"}},
+                            ),
+                            ReplaceOne(
+                                {"_id": "new"},
+                                {"kind": "click", "done": True},
+                            ),
                             DeleteOne({"_id": "seed"}),
                             DeleteMany({"kind": "view"}),
-                        ]
+                        ],
                     )
 
                     self.assertEqual(success.inserted_count, 1)
@@ -3645,13 +5356,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         collection.bulk_write(
                             [
                                 InsertOne({"_id": "dup"}),
-                                UpdateOne({"_id": "dup"}, {"$set": {"done": True}}),
+                                UpdateOne(
+                                    {"_id": "dup"},
+                                    {"$set": {"done": True}},
+                                ),
                                 DeleteOne({"_id": "dup"}),
                             ],
                             ordered=False,
                         )
 
-                    self.assertEqual(ctx.exception.details["writeErrors"][0]["index"], 0)
+                    self.assertEqual(
+                        ctx.exception.details["writeErrors"][0]["index"],
+                        0,
+                    )
                     self.assertEqual(ctx.exception.details["nModified"], 1)
                     self.assertEqual(ctx.exception.details["nRemoved"], 1)
                     self.assertEqual(collection.find({}).to_list(), [])
@@ -3659,14 +5376,23 @@ class SyncApiIntegrationTests(unittest.TestCase):
     def test_replace_one_and_find_one_and_family(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
-                with MongoClient(factory(), pymongo_profile='4.11') as client:
+                with MongoClient(factory(), pymongo_profile="4.11") as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "kind": "view", "rank": 2, "done": False})
-                    collection.insert_one({"_id": "2", "kind": "view", "rank": 1, "done": False})
+                    collection.insert_one(
+                        {"_id": "1", "kind": "view", "rank": 2, "done": False},
+                    )
+                    collection.insert_one(
+                        {"_id": "2", "kind": "view", "rank": 1, "done": False},
+                    )
 
                     replaced = collection.replace_one(
                         {"kind": "view"},
-                        {"kind": "view", "rank": 1, "done": True, "tag": "replaced"},
+                        {
+                            "kind": "view",
+                            "rank": 1,
+                            "done": True,
+                            "tag": "replaced",
+                        },
                         sort=[("rank", 1)],
                     )
                     before = collection.find_one_and_update(
@@ -3677,7 +5403,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     after = collection.find_one_and_replace(
                         {"kind": "view"},
-                        {"kind": "view", "rank": 1, "done": True, "tag": "after"},
+                        {
+                            "kind": "view",
+                            "rank": 1,
+                            "done": True,
+                            "tag": "after",
+                        },
                         sort=[("rank", 1)],
                         return_document=ReturnDocument.AFTER,
                         projection={"done": 1, "tag": 1, "_id": 0},
@@ -3687,7 +5418,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         sort=[("rank", -1)],
                         projection={"rank": 1, "_id": 0},
                     )
-                    remaining = collection.find({}, sort=[("_id", 1)]).to_list()
+                    remaining = collection.find(
+                        {},
+                        sort=[("_id", 1)],
+                    ).to_list()
 
                     self.assertEqual(replaced.matched_count, 1)
                     self.assertEqual(replaced.modified_count, 1)
@@ -3696,13 +5430,23 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(deleted, {"rank": 2})
                     self.assertEqual(
                         remaining,
-                        [{"_id": "2", "kind": "view", "rank": 1, "done": True, "tag": "after"}],
+                        [
+                            {
+                                "_id": "2",
+                                "kind": "view",
+                                "rank": 1,
+                                "done": True,
+                                "tag": "after",
+                            },
+                        ],
                     )
 
-    def test_find_one_and_update_and_delete_support_positional_projection(self):
+    def test_find_one_and_update_and_delete_support_positional_projection(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
-                with MongoClient(factory(), pymongo_profile='4.11') as client:
+                with MongoClient(factory(), pymongo_profile="4.11") as client:
                     collection = client.test.users
                     collection.insert_one(
                         {
@@ -3712,22 +5456,36 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 {"school": 102, "age": 10},
                                 {"school": 102, "age": 11},
                             ],
-                        }
+                        },
                     )
 
                     before = collection.find_one_and_update(
-                        {"_id": "1", "students.school": 102, "students.age": {"$gt": 10}},
+                        {
+                            "_id": "1",
+                            "students.school": 102,
+                            "students.age": {"$gt": 10},
+                        },
                         {"$set": {"flag": True}},
                         return_document=ReturnDocument.BEFORE,
                         projection={"students.$": 1, "_id": 0},
                     )
                     deleted = collection.find_one_and_delete(
-                        {"_id": "1", "students.school": 102, "students.age": {"$gt": 10}},
+                        {
+                            "_id": "1",
+                            "students.school": 102,
+                            "students.age": {"$gt": 10},
+                        },
                         projection={"students.$": 1, "_id": 0},
                     )
 
-                    self.assertEqual(before, {"students": [{"school": 102, "age": 11}]})
-                    self.assertEqual(deleted, {"students": [{"school": 102, "age": 11}]})
+                    self.assertEqual(
+                        before,
+                        {"students": [{"school": 102, "age": 11}]},
+                    )
+                    self.assertEqual(
+                        deleted,
+                        {"students": [{"school": 102, "age": 11}]},
+                    )
 
     def test_find_one_and_update_upsert_returns_none_or_after_document(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -3745,27 +5503,51 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"$set": {"done": True}},
                         upsert=True,
                         return_document=ReturnDocument.AFTER,
-                        projection={"kind": 1, "tenant": 1, "done": 1, "_id": 0},
+                        projection={
+                            "kind": 1,
+                            "tenant": 1,
+                            "done": 1,
+                            "_id": 0,
+                        },
                     )
 
                     self.assertIsNone(before)
-                    self.assertEqual(after, {"kind": "another", "tenant": "b", "done": True})
+                    self.assertEqual(
+                        after,
+                        {"kind": "another", "tenant": "b", "done": True},
+                    )
 
-    def test_update_operators_min_max_mul_and_rename_are_observable_via_api(self):
+    def test_update_operators_min_max_mul_and_rename_are_observable_via_api(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
                     collection.insert_many(
                         [
-                            {"_id": "1", "score": 10, "rank": 2, "profile": {"name": "Ada"}},
+                            {
+                                "_id": "1",
+                                "score": 10,
+                                "rank": 2,
+                                "profile": {"name": "Ada"},
+                            },
                             {"_id": "2", "score": 4, "rank": 1},
-                        ]
+                        ],
                     )
 
-                    min_result = collection.update_one({"_id": "1"}, {"$min": {"score": 7}})
-                    max_result = collection.update_one({"_id": "2"}, {"$max": {"score": 8}})
-                    mul_result = collection.update_many({}, {"$mul": {"score": 2}})
+                    min_result = collection.update_one(
+                        {"_id": "1"},
+                        {"$min": {"score": 7}},
+                    )
+                    max_result = collection.update_one(
+                        {"_id": "2"},
+                        {"$max": {"score": 8}},
+                    )
+                    mul_result = collection.update_many(
+                        {},
+                        {"$mul": {"score": 2}},
+                    )
                     renamed = collection.find_one_and_update(
                         {"_id": "1"},
                         {"$rename": {"profile.name": "profile.alias"}},
@@ -3774,8 +5556,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     bulk = collection.bulk_write(
                         [
                             UpdateOne({"_id": "1"}, {"$max": {"rank": 5}}),
-                            UpdateOne({"_id": "2"}, {"$rename": {"score": "points"}}),
-                        ]
+                            UpdateOne(
+                                {"_id": "2"},
+                                {"$rename": {"score": "points"}},
+                            ),
+                        ],
                     )
                     first = collection.find_one({"_id": "1"})
                     second = collection.find_one({"_id": "2"})
@@ -3787,7 +5572,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(bulk.modified_count, 2)
                     self.assertEqual(first["score"], 14)
                     self.assertEqual(first["rank"], 5)
-                    self.assertEqual(second, {"_id": "2", "rank": 1, "points": 16})
+                    self.assertEqual(
+                        second,
+                        {"_id": "2", "rank": 1, "points": 16},
+                    )
 
     def test_current_date_and_set_on_insert_are_observable_via_api(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -3818,16 +5606,23 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(updated.modified_count, 1)
                     self.assertEqual(inserted.upserted_id, "2")
                     self.assertEqual(existing.modified_count, 0)
-                    self.assertIsInstance(first["updated_at"], datetime.datetime)
+                    self.assertIsInstance(
+                        first["updated_at"],
+                        datetime.datetime,
+                    )
                     self.assertNotIn("created_at", first)
                     self.assertEqual(second["created_at"], "seeded")
 
-    def test_array_filters_and_all_positional_updates_are_observable_via_api(self):
+    def test_array_filters_and_all_positional_updates_are_observable_via_api(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "items": [{"qty": 1}, {"qty": 3}]})
+                    collection.insert_one(
+                        {"_id": "1", "items": [{"qty": 1}, {"qty": 3}]},
+                    )
 
                     update_one_result = collection.update_one(
                         {"_id": "1"},
@@ -3844,8 +5639,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 {"_id": "1"},
                                 {"$max": {"items.$[high].qty": 10}},
                                 array_filters=[{"high.qty": {"$gte": 5}}],
-                            )
-                        ]
+                            ),
+                        ],
                     )
                     updated = collection.find_one_and_update(
                         {"_id": "1"},
@@ -3867,7 +5662,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "items": [{"qty": 1}, {"qty": 3}, {"qty": 4}]})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "items": [{"qty": 1}, {"qty": 3}, {"qty": 4}],
+                        },
+                    )
 
                     result = collection.update_one(
                         {"items.qty": {"$gte": 3}},
@@ -3876,14 +5676,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     updated = collection.find_one({"_id": "1"})
 
                     self.assertEqual(result.modified_count, 1)
-                    self.assertEqual(updated["items"], [{"qty": 1}, {"qty": 5}, {"qty": 4}])
+                    self.assertEqual(
+                        updated["items"],
+                        [{"qty": 1}, {"qty": 5}, {"qty": 4}],
+                    )
 
     def test_bit_update_operator_is_observable_via_api(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "score": 13, "flags": [1, 3, 4]})
+                    collection.insert_one(
+                        {"_id": "1", "score": 13, "flags": [1, 3, 4]},
+                    )
 
                     update_one_result = collection.update_one(
                         {"_id": "1"},
@@ -3898,14 +5703,23 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(update_one_result.modified_count, 1)
                     self.assertEqual(update_many_result.modified_count, 1)
-                    self.assertEqual(updated, {"_id": "1", "score": 8, "flags": [1, 1, 6]})
+                    self.assertEqual(
+                        updated,
+                        {"_id": "1", "score": 8, "flags": [1, 1, 6]},
+                    )
 
     def test_pull_all_update_operator_is_observable_via_api(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "tags": ["python", "async", "python"], "nums": [1, 2, 3, 2]})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "tags": ["python", "async", "python"],
+                            "nums": [1, 2, 3, 2],
+                        },
+                    )
 
                     update_one_result = collection.update_one(
                         {"_id": "1"},
@@ -3914,7 +5728,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     updated = collection.find_one({"_id": "1"})
 
                     self.assertEqual(update_one_result.modified_count, 1)
-                    self.assertEqual(updated, {"_id": "1", "tags": ["async"], "nums": [1, 3]})
+                    self.assertEqual(
+                        updated,
+                        {"_id": "1", "tags": ["async"], "nums": [1, 3]},
+                    )
 
     def test_array_mutation_operators_support_positional_paths_via_api(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -3925,15 +5742,30 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {
                             "_id": "1",
                             "groups": [
-                                {"name": "alpha", "tags": ["a"], "scores": [1, 2]},
-                                {"name": "beta", "tags": ["b"], "scores": [2, 3]},
+                                {
+                                    "name": "alpha",
+                                    "tags": ["a"],
+                                    "scores": [1, 2],
+                                },
+                                {
+                                    "name": "beta",
+                                    "tags": ["b"],
+                                    "scores": [2, 3],
+                                },
                             ],
-                        }
+                        },
                     )
 
                     push_result = collection.update_one(
                         {"_id": "1"},
-                        {"$push": {"groups.$[group].tags": {"$each": ["x"], "$position": 0}}},
+                        {
+                            "$push": {
+                                "groups.$[group].tags": {
+                                    "$each": ["x"],
+                                    "$position": 0,
+                                },
+                            },
+                        },
                         array_filters=[{"group.name": "beta"}],
                     )
                     add_to_set_result = collection.update_one(
@@ -3963,8 +5795,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         updated["groups"],
                         [
-                            {"name": "alpha", "tags": ["a", "common"], "scores": [1]},
-                            {"name": "beta", "tags": ["b", "common"], "scores": []},
+                            {
+                                "name": "alpha",
+                                "tags": ["a", "common"],
+                                "scores": [1],
+                            },
+                            {
+                                "name": "beta",
+                                "tags": ["b", "common"],
+                                "scores": [],
+                            },
                         ],
                     )
 
@@ -3974,17 +5814,35 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
                     collection.insert_one(
-                        {"_id": "1", "kind": "view", "tags": ["a", "b"], "profile": {"city": "Madrid"}}
+                        {
+                            "_id": "1",
+                            "kind": "view",
+                            "tags": ["a", "b"],
+                            "profile": {"city": "Madrid"},
+                        },
                     )
                     collection.insert_one(
-                        {"_id": "2", "kind": "view", "tags": ["b", "c"], "profile": {"city": "Sevilla"}}
+                        {
+                            "_id": "2",
+                            "kind": "view",
+                            "tags": ["b", "c"],
+                            "profile": {"city": "Sevilla"},
+                        },
                     )
                     collection.insert_one(
-                        {"_id": "3", "kind": "click", "tags": [], "profile": {"city": "Madrid"}}
+                        {
+                            "_id": "3",
+                            "kind": "click",
+                            "tags": [],
+                            "profile": {"city": "Madrid"},
+                        },
                     )
 
                     tags = collection.distinct("tags")
-                    cities = collection.distinct("profile.city", {"kind": "view"})
+                    cities = collection.distinct(
+                        "profile.city",
+                        {"kind": "view"},
+                    )
 
                     self.assertEqual(tags, ["a", "b", "c"])
                     self.assertEqual(cities, ["Madrid", "Sevilla"])
@@ -4000,22 +5858,29 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "_id": "1",
                                 "profile": {"city": "Madrid"},
                                 "items": [{"code": "a"}, {"code": "b"}],
-                                "nested": {"items": [{"code": "a"}, {"code": "b"}]},
+                                "nested": {
+                                    "items": [{"code": "a"}, {"code": "b"}],
+                                },
                             },
                             {
                                 "_id": "2",
                                 "profile": {"city": "Sevilla"},
                                 "items": [{"code": "b"}, {"code": "c"}],
-                                "nested": {"items": [{"code": "b"}, {"code": "c"}]},
+                                "nested": {
+                                    "items": [{"code": "b"}, {"code": "c"}],
+                                },
                             },
-                        ]
+                        ],
                     )
 
                     profiles = collection.distinct("profile")
                     item_documents = collection.distinct("items")
                     nested_codes = collection.distinct("nested.items.code")
 
-                    self.assertEqual(profiles, [{"city": "Madrid"}, {"city": "Sevilla"}])
+                    self.assertEqual(
+                        profiles,
+                        [{"city": "Madrid"}, {"city": "Sevilla"}],
+                    )
                     self.assertEqual(
                         item_documents,
                         [{"code": "a"}, {"code": "b"}, {"code": "c"}],
@@ -4031,7 +5896,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {"_id": "1", "matrix": [[1, 2, 3], [3, 4]]},
                             {"_id": "2", "matrix": [[1, 2, 3], [5, 6]]},
-                        ]
+                        ],
                     )
 
                     values = collection.distinct("matrix")
@@ -4052,7 +5917,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                         session=session,
                     )
-                    collection.create_index([("kind", 1)], name="kind_idx", session=session)
+                    collection.create_index(
+                        [("kind", 1)],
+                        name="kind_idx",
+                        session=session,
+                    )
 
                     values = collection.distinct(
                         "tag",
@@ -4065,8 +5934,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     state = next(iter(session.engine_state.values()))
 
                     self.assertEqual(values, ["python", "mongodb"])
-                    self.assertEqual(state["last_operation"]["comment"], "trace-distinct")
-                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+                    self.assertEqual(
+                        state["last_operation"]["comment"],
+                        "trace-distinct",
+                    )
+                    self.assertEqual(
+                        state["last_operation"]["max_time_ms"],
+                        25,
+                    )
 
     def test_find_supports_type_query_operator(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -4078,12 +5953,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": "1", "value": 7},
                             {"_id": "2", "value": "7"},
                             {"_id": "3", "value": [1, "x"]},
-                        ]
+                        ],
                     )
 
-                    numbers = [doc["_id"] for doc in collection.find({"value": {"$type": "number"}})]
-                    arrays = [doc["_id"] for doc in collection.find({"value": {"$type": "array"}})]
-                    strings_in_arrays = [doc["_id"] for doc in collection.find({"value": {"$type": "string"}})]
+                    numbers = [
+                        doc["_id"]
+                        for doc in collection.find(
+                            {"value": {"$type": "number"}},
+                        )
+                    ]
+                    arrays = [
+                        doc["_id"]
+                        for doc in collection.find(
+                            {"value": {"$type": "array"}},
+                        )
+                    ]
+                    strings_in_arrays = [
+                        doc["_id"]
+                        for doc in collection.find(
+                            {"value": {"$type": "string"}},
+                        )
+                    ]
 
                     self.assertEqual(numbers, ["1", "3"])
                     self.assertEqual(arrays, ["3"])
@@ -4099,12 +5989,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": "1", "mask": 0b1010},
                             {"_id": "2", "mask": 0b0101},
                             {"_id": "3", "mask": bytes([0b00000101])},
-                        ]
+                        ],
                     )
 
-                    all_set = [doc["_id"] for doc in collection.find({"mask": {"$bitsAllSet": 0b1000}})]
-                    any_clear = [doc["_id"] for doc in collection.find({"mask": {"$bitsAnyClear": [1, 3]}})]
-                    binary = [doc["_id"] for doc in collection.find({"mask": {"$bitsAllSet": bytes([0b00000101])}})]
+                    all_set = [
+                        doc["_id"]
+                        for doc in collection.find(
+                            {"mask": {"$bitsAllSet": 0b1000}},
+                        )
+                    ]
+                    any_clear = [
+                        doc["_id"]
+                        for doc in collection.find(
+                            {"mask": {"$bitsAnyClear": [1, 3]}},
+                        )
+                    ]
+                    binary = [
+                        doc["_id"]
+                        for doc in collection.find(
+                            {"mask": {"$bitsAllSet": bytes([0b00000101])}},
+                        )
+                    ]
 
                     self.assertEqual(all_set, ["1"])
                     self.assertEqual(any_clear, ["2", "3"])
@@ -4115,13 +6020,18 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "user-1", "profile": {"name": "Ada"}})
+                    collection.insert_one(
+                        {"_id": "user-1", "profile": {"name": "Ada"}},
+                    )
 
                     result = collection.update_one(
                         {"_id": "user-1"},
                         {"$set": {"profile.role": "admin"}},
                     )
-                    found = collection.find_one({"_id": "user-1"}, {"profile.role": 1, "_id": 0})
+                    found = collection.find_one(
+                        {"_id": "user-1"},
+                        {"profile.role": 1, "_id": 0},
+                    )
 
                     self.assertEqual(result.matched_count, 1)
                     self.assertEqual(found, {"profile": {"role": "admin"}})
@@ -4135,7 +6045,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection.insert_one({"_id": "2", "rank": 1})
                     collection.insert_one({"_id": "3", "rank": 2})
 
-                    documents = collection.find({}, sort=[("rank", 1)], skip=1, limit=1).to_list()
+                    documents = collection.find(
+                        {},
+                        sort=[("rank", 1)],
+                        skip=1,
+                        limit=1,
+                    ).to_list()
 
                     self.assertEqual(documents, [{"_id": "3", "rank": 2}])
 
@@ -4150,7 +6065,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(users.estimated_document_count(), 1)
                     client.alpha.drop_collection("logs")
-                    self.assertEqual(client.alpha.list_collection_names(), ["users"])
+                    self.assertEqual(
+                        client.alpha.list_collection_names(),
+                        ["users"],
+                    )
 
                     users.drop()
                     self.assertEqual(client.alpha.list_collection_names(), [])
@@ -4180,8 +6098,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     state = next(iter(session.engine_state.values()))
 
                     self.assertEqual(count, 2)
-                    self.assertEqual(state["last_operation"]["comment"], "trace-estimated-count")
-                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+                    self.assertEqual(
+                        state["last_operation"]["comment"],
+                        "trace-estimated-count",
+                    )
+                    self.assertEqual(
+                        state["last_operation"]["max_time_ms"],
+                        25,
+                    )
 
     def test_drop_operations_on_missing_targets_are_noops(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -4192,7 +6116,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     client.drop_database("missing")
                     self.assertEqual(client.list_database_names(), [])
 
-    def test_drop_database_removes_sqlite_database_with_only_index_metadata(self):
+    def test_drop_database_removes_sqlite_database_with_only_index_metadata(
+        self,
+    ):
         with MongoClient(SQLiteEngine()) as client:
             client.alpha.users.create_index(["email"], unique=False)
 
@@ -4204,7 +6130,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             self.assertNotIn("alpha", client.list_database_names())
             self.assertEqual(client.alpha.list_collection_names(), [])
 
-    def test_drop_database_removes_memory_database_with_only_index_metadata(self):
+    def test_drop_database_removes_memory_database_with_only_index_metadata(
+        self,
+    ):
         with MongoClient(MemoryEngine()) as client:
             client.alpha.users.create_index(["email"], unique=False)
 
@@ -4226,7 +6154,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
         self.assertEqual(documents, [])
 
     def test_update_one_sort_is_profile_gated(self):
-        with MongoClient(MemoryEngine(), pymongo_profile='4.9') as client:
+        with MongoClient(MemoryEngine(), pymongo_profile="4.9") as client:
             collection = client.test.users
             collection.insert_one({"_id": "1", "kind": "view", "rank": 2})
             collection.insert_one({"_id": "2", "kind": "view", "rank": 1})
@@ -4241,10 +6169,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
     def test_update_one_sort_updates_first_sorted_document(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
-                with MongoClient(factory(), pymongo_profile='4.11') as client:
+                with MongoClient(factory(), pymongo_profile="4.11") as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "kind": "view", "rank": 2, "done": False})
-                    collection.insert_one({"_id": "2", "kind": "view", "rank": 1, "done": False})
+                    collection.insert_one(
+                        {"_id": "1", "kind": "view", "rank": 2, "done": False},
+                    )
+                    collection.insert_one(
+                        {"_id": "2", "kind": "view", "rank": 1, "done": False},
+                    )
 
                     result = collection.update_one(
                         {"kind": "view"},
@@ -4271,15 +6203,45 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(TypeError):
                         collection.find(False).to_list()
 
-    def test_find_supports_filter_sort_skip_limit_and_projection_together(self):
+    def test_find_supports_filter_sort_skip_limit_and_projection_together(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "kind": "view", "rank": 3, "payload": {"city": "Sevilla"}})
-                    collection.insert_one({"_id": "2", "kind": "click", "rank": 1, "payload": {"city": "Madrid"}})
-                    collection.insert_one({"_id": "3", "kind": "view", "rank": 2, "payload": {"city": "Bilbao"}})
-                    collection.insert_one({"_id": "4", "kind": "view", "rank": 4, "payload": {"city": "Valencia"}})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "kind": "view",
+                            "rank": 3,
+                            "payload": {"city": "Sevilla"},
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "2",
+                            "kind": "click",
+                            "rank": 1,
+                            "payload": {"city": "Madrid"},
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "3",
+                            "kind": "view",
+                            "rank": 2,
+                            "payload": {"city": "Bilbao"},
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "4",
+                            "kind": "view",
+                            "rank": 4,
+                            "payload": {"city": "Valencia"},
+                        },
+                    )
 
                     documents = collection.find(
                         {"kind": "view"},
@@ -4289,18 +6251,43 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         limit=1,
                     ).to_list()
 
-                    self.assertEqual(documents, [{"payload": {"city": "Sevilla"}}])
+                    self.assertEqual(
+                        documents,
+                        [{"payload": {"city": "Sevilla"}}],
+                    )
 
     def test_find_supports_array_sort_and_projection_together(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "rank": [3, 8], "payload": {"city": "Sevilla"}})
-                    collection.insert_one({"_id": "2", "rank": [1, 9], "payload": {"city": "Madrid"}})
-                    collection.insert_one({"_id": "3", "rank": [2, 4], "payload": {"city": "Bilbao"}})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "rank": [3, 8],
+                            "payload": {"city": "Sevilla"},
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "2",
+                            "rank": [1, 9],
+                            "payload": {"city": "Madrid"},
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "3",
+                            "rank": [2, 4],
+                            "payload": {"city": "Bilbao"},
+                        },
+                    )
 
-                    documents = collection.find({}, {"payload.city": 1, "_id": 0}, sort=[("rank", 1)]).to_list()
+                    documents = collection.find(
+                        {},
+                        {"payload.city": 1, "_id": 0},
+                        sort=[("rank", 1)],
+                    ).to_list()
 
                     self.assertEqual(
                         documents,
@@ -4323,8 +6310,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     cursor = collection.find({})
 
                     self.assertIsInstance(cursor, Cursor)
-                    self.assertEqual(cursor.sort([("rank", 1)]).skip(1).limit(1).to_list(), [{"_id": "3", "rank": 2}])
-                    self.assertEqual(collection.find({}).sort([("rank", 1)]).first(), {"_id": "2", "rank": 1})
+                    self.assertEqual(
+                        cursor.sort([("rank", 1)]).skip(1).limit(1).to_list(),
+                        [{"_id": "3", "rank": 2}],
+                    )
+                    self.assertEqual(
+                        collection.find({}).sort([("rank", 1)]).first(),
+                        {"_id": "2", "rank": 1},
+                    )
 
     def test_find_and_aggregate_raw_batches_return_bson_batches(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -4341,16 +6334,31 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         batch_size=2,
                     ).to_list()
                     aggregate_batches = collection.aggregate_raw_batches(
-                        [{"$sort": {"rank": 1}}, {"$project": {"_id": 1, "rank": 1}}],
+                        [
+                            {"$sort": {"rank": 1}},
+                            {"$project": {"_id": 1, "rank": 1}},
+                        ],
                         batch_size=2,
                     ).to_list()
 
                     self.assertEqual(len(find_batches), 2)
-                    self.assertEqual(decode_all(find_batches[0]), [{"_id": "2", "rank": 1}, {"_id": "3", "rank": 2}])
-                    self.assertEqual(decode_all(find_batches[1]), [{"_id": "1", "rank": 3}])
+                    self.assertEqual(
+                        decode_all(find_batches[0]),
+                        [{"_id": "2", "rank": 1}, {"_id": "3", "rank": 2}],
+                    )
+                    self.assertEqual(
+                        decode_all(find_batches[1]),
+                        [{"_id": "1", "rank": 3}],
+                    )
                     self.assertEqual(len(aggregate_batches), 2)
-                    self.assertEqual(decode_all(aggregate_batches[0]), [{"_id": "2", "rank": 1}, {"_id": "3", "rank": 2}])
-                    self.assertEqual(decode_all(aggregate_batches[1]), [{"_id": "1", "rank": 3}])
+                    self.assertEqual(
+                        decode_all(aggregate_batches[0]),
+                        [{"_id": "2", "rank": 1}, {"_id": "3", "rank": 2}],
+                    )
+                    self.assertEqual(
+                        decode_all(aggregate_batches[1]),
+                        [{"_id": "1", "rank": 3}],
+                    )
 
     def test_find_cursor_rejects_mutation_after_iteration_starts(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -4395,26 +6403,55 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "kind": "view", "rank": 3, "payload": {"city": "Sevilla"}})
-                    collection.insert_one({"_id": "2", "kind": "click", "rank": 1, "payload": {"city": "Madrid"}})
-                    collection.insert_one({"_id": "3", "kind": "view", "rank": 2, "payload": {"city": "Bilbao"}})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "kind": "view",
+                            "rank": 3,
+                            "payload": {"city": "Sevilla"},
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "2",
+                            "kind": "click",
+                            "rank": 1,
+                            "payload": {"city": "Madrid"},
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "3",
+                            "kind": "view",
+                            "rank": 2,
+                            "payload": {"city": "Bilbao"},
+                        },
+                    )
 
                     cursor = collection.aggregate(
                         [
                             {"$match": {"kind": "view"}},
                             {"$sort": {"rank": 1}},
                             {"$project": {"payload.city": 1, "_id": 0}},
-                        ]
+                        ],
                     )
 
                     self.assertIsInstance(cursor, AggregationCursor)
                     self.assertEqual(
                         cursor.to_list(),
-                        [{"payload": {"city": "Bilbao"}}, {"payload": {"city": "Sevilla"}}],
+                        [
+                            {"payload": {"city": "Bilbao"}},
+                            {"payload": {"city": "Sevilla"}},
+                        ],
                     )
                     self.assertEqual(
                         collection.aggregate([{"$sort": {"rank": 1}}]).first(),
-                        {"_id": "2", "kind": "click", "rank": 1, "payload": {"city": "Madrid"}},
+                        {
+                            "_id": "2",
+                            "kind": "click",
+                            "rank": 1,
+                            "payload": {"city": "Madrid"},
+                        },
                     )
 
     def test_aggregate_supports_is_number_and_type_expressions(self):
@@ -4422,7 +6459,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "value": 7, "text": "Ada"})
+                    collection.insert_one(
+                        {"_id": "1", "value": 7, "text": "Ada"},
+                    )
                     collection.insert_one({"_id": "2", "value": "7"})
 
                     documents = collection.aggregate(
@@ -4433,17 +6472,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "value_type": {"$type": "$value"},
                                     "value_is_number": {"$isNumber": "$value"},
                                     "missing_type": {"$type": "$missing"},
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
                         [
-                            {"_id": "1", "value_type": "int", "value_is_number": True, "missing_type": "missing"},
-                            {"_id": "2", "value_type": "string", "value_is_number": False, "missing_type": "missing"},
+                            {
+                                "_id": "1",
+                                "value_type": "int",
+                                "value_is_number": True,
+                                "missing_type": "missing",
+                            },
+                            {
+                                "_id": "2",
+                                "value_type": "string",
+                                "value_is_number": False,
+                                "missing_type": "missing",
+                            },
                         ],
                     )
 
@@ -4452,7 +6501,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "int_text": "42", "float_text": "3.5", "truthy_text": "false", "zero": 0})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "int_text": "42",
+                            "float_text": "3.5",
+                            "truthy_text": "false",
+                            "zero": 0,
+                        },
+                    )
 
                     documents = collection.aggregate(
                         [
@@ -4463,14 +6520,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "as_double": {"$toDouble": "$float_text"},
                                     "as_bool": {"$toBool": "$truthy_text"},
                                     "zero_bool": {"$toBool": "$zero"},
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "as_int": 42, "as_double": 3.5, "as_bool": True, "zero_bool": False}],
+                        [
+                            {
+                                "_id": "1",
+                                "as_int": 42,
+                                "as_double": 3.5,
+                                "as_bool": True,
+                                "zero_bool": False,
+                            },
+                        ],
                     )
 
     def test_aggregate_supports_date_math_expressions(self):
@@ -4483,7 +6548,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "_id": "1",
                             "start": datetime.datetime(2026, 3, 25, 10, 0, 0),
                             "end": datetime.datetime(2026, 3, 27, 9, 0, 0),
-                        }
+                        },
                     )
 
                     documents = collection.aggregate(
@@ -4491,12 +6556,30 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {
                                 "$project": {
                                     "_id": 1,
-                                    "added": {"$dateAdd": {"startDate": "$start", "unit": "day", "amount": 2}},
-                                    "subtracted": {"$dateSubtract": {"startDate": "$start", "unit": "hour", "amount": 3}},
-                                    "diff_days": {"$dateDiff": {"startDate": "$start", "endDate": "$end", "unit": "day"}},
-                                }
-                            }
-                        ]
+                                    "added": {
+                                        "$dateAdd": {
+                                            "startDate": "$start",
+                                            "unit": "day",
+                                            "amount": 2,
+                                        },
+                                    },
+                                    "subtracted": {
+                                        "$dateSubtract": {
+                                            "startDate": "$start",
+                                            "unit": "hour",
+                                            "amount": 3,
+                                        },
+                                    },
+                                    "diff_days": {
+                                        "$dateDiff": {
+                                            "startDate": "$start",
+                                            "endDate": "$end",
+                                            "unit": "day",
+                                        },
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -4504,10 +6587,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {
                                 "_id": "1",
-                                "added": datetime.datetime(2026, 3, 27, 10, 0, 0),
-                                "subtracted": datetime.datetime(2026, 3, 25, 7, 0, 0),
+                                "added": datetime.datetime(
+                                    2026,
+                                    3,
+                                    27,
+                                    10,
+                                    0,
+                                    0,
+                                ),
+                                "subtracted": datetime.datetime(
+                                    2026,
+                                    3,
+                                    25,
+                                    7,
+                                    0,
+                                    0,
+                                ),
                                 "diff_days": 2,
-                            }
+                            },
                         ],
                     )
 
@@ -4523,18 +6620,30 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {
                                 "$project": {
                                     "_id": 1,
-                                    "byte_substr": {"$substrBytes": ["$text", 0, 2]},
-                                    "cp_substr": {"$substrCP": ["$text", 1, 2]},
+                                    "byte_substr": {
+                                        "$substrBytes": ["$text", 0, 2],
+                                    },
+                                    "cp_substr": {
+                                        "$substrCP": ["$text", 1, 2],
+                                    },
                                     "byte_len": {"$strLenBytes": "$text"},
                                     "cp_len": {"$strLenCP": "$text"},
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "byte_substr": "é", "cp_substr": "寿司", "byte_len": 9, "cp_len": 4}],
+                        [
+                            {
+                                "_id": "1",
+                                "byte_substr": "é",
+                                "cp_substr": "寿司",
+                                "byte_len": 9,
+                                "cp_len": 4,
+                            },
+                        ],
                     )
 
     def test_aggregate_supports_string_index_and_binary_size_variants(self):
@@ -4542,24 +6651,37 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "text": "é寿司A", "blob": b"abcd"})
+                    collection.insert_one(
+                        {"_id": "1", "text": "é寿司A", "blob": b"abcd"},
+                    )
 
                     documents = collection.aggregate(
                         [
                             {
                                 "$project": {
                                     "_id": 1,
-                                    "byte_index": {"$indexOfBytes": ["$text", "寿", 0, 9]},
-                                    "cp_index": {"$indexOfCP": ["$text", "司A", 0, 4]},
+                                    "byte_index": {
+                                        "$indexOfBytes": ["$text", "寿", 0, 9],
+                                    },
+                                    "cp_index": {
+                                        "$indexOfCP": ["$text", "司A", 0, 4],
+                                    },
                                     "blob_size": {"$binarySize": "$blob"},
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "byte_index": 2, "cp_index": 2, "blob_size": 4}],
+                        [
+                            {
+                                "_id": "1",
+                                "byte_index": 2,
+                                "cp_index": 2,
+                                "blob_size": 4,
+                            },
+                        ],
                     )
 
     def test_aggregate_supports_regex_match_find_and_find_all(self):
@@ -4574,12 +6696,30 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {
                                 "$project": {
                                     "_id": 1,
-                                    "matched": {"$regexMatch": {"input": "$text", "regex": "^ada", "options": "i"}},
-                                    "found": {"$regexFind": {"input": "$text", "regex": "(a)(d)a", "options": "i"}},
-                                    "found_all": {"$regexFindAll": {"input": "$text", "regex": "a", "options": "i"}},
-                                }
-                            }
-                        ]
+                                    "matched": {
+                                        "$regexMatch": {
+                                            "input": "$text",
+                                            "regex": "^ada",
+                                            "options": "i",
+                                        },
+                                    },
+                                    "found": {
+                                        "$regexFind": {
+                                            "input": "$text",
+                                            "regex": "(a)(d)a",
+                                            "options": "i",
+                                        },
+                                    },
+                                    "found_all": {
+                                        "$regexFindAll": {
+                                            "input": "$text",
+                                            "regex": "a",
+                                            "options": "i",
+                                        },
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -4588,7 +6728,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {
                                 "_id": "1",
                                 "matched": True,
-                                "found": {"match": "Ada", "idx": 0, "captures": ["A", "d"]},
+                                "found": {
+                                    "match": "Ada",
+                                    "idx": 0,
+                                    "captures": ["A", "d"],
+                                },
                                 "found_all": [
                                     {"match": "A", "idx": 0, "captures": []},
                                     {"match": "a", "idx": 2, "captures": []},
@@ -4596,7 +6740,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     {"match": "a", "idx": 8, "captures": []},
                                     {"match": "a", "idx": 10, "captures": []},
                                 ],
-                            }
+                            },
                         ],
                     )
 
@@ -4605,7 +6749,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "value": 19.25, "base": 100})
+                    collection.insert_one(
+                        {"_id": "1", "value": 19.25, "base": 100},
+                    )
 
                     documents = collection.aggregate(
                         [
@@ -4620,9 +6766,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "rounded": {"$round": ["$value", 1]},
                                     "truncated": {"$trunc": ["$value", -1]},
                                     "root": {"$sqrt": 25},
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(documents[0]["_id"], "1")
@@ -4640,7 +6786,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "created_at": datetime.datetime(2026, 1, 1, 23, 30, 0)})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "created_at": datetime.datetime(
+                                2026,
+                                1,
+                                1,
+                                23,
+                                30,
+                                0,
+                            ),
+                        },
+                    )
 
                     documents = collection.aggregate(
                         [
@@ -4649,15 +6807,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "_id": 1,
                                     "week": {"$week": "$created_at"},
                                     "iso_week": {"$isoWeek": "$created_at"},
-                                    "iso_week_year": {"$isoWeekYear": "$created_at"},
-                                }
-                            }
-                        ]
+                                    "iso_week_year": {
+                                        "$isoWeekYear": "$created_at",
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "week": 0, "iso_week": 1, "iso_week_year": 2026}],
+                        [
+                            {
+                                "_id": "1",
+                                "week": 0,
+                                "iso_week": 1,
+                                "iso_week_year": 2026,
+                            },
+                        ],
                     )
 
     def test_aggregate_supports_date_string_parts_and_parsing_variants(self):
@@ -4665,7 +6832,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "created_at": datetime.datetime(2026, 3, 25, 10, 5, 6, 789000)})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "created_at": datetime.datetime(
+                                2026,
+                                3,
+                                25,
+                                10,
+                                5,
+                                6,
+                                789000,
+                            ),
+                        },
+                    )
 
                     documents = collection.aggregate(
                         [
@@ -4677,23 +6857,31 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "date": "$created_at",
                                             "format": "%Y-%m-%d %H:%M:%S.%L",
                                             "timezone": "UTC",
-                                        }
+                                        },
                                     },
-                                    "parts": {"$dateToParts": {"date": "$created_at", "timezone": "UTC"}},
+                                    "parts": {
+                                        "$dateToParts": {
+                                            "date": "$created_at",
+                                            "timezone": "UTC",
+                                        },
+                                    },
                                     "parsed": {
                                         "$dateFromString": {
                                             "dateString": "2026-03-25 12:05:06.789",
                                             "format": "%Y-%m-%d %H:%M:%S.%L",
                                             "timezone": "+02:00",
-                                        }
+                                        },
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(documents[0]["_id"], "1")
-                    self.assertEqual(documents[0]["formatted"], "2026-03-25 10:05:06.789")
+                    self.assertEqual(
+                        documents[0]["formatted"],
+                        "2026-03-25 10:05:06.789",
+                    )
                     self.assertEqual(
                         documents[0]["parts"],
                         {
@@ -4706,14 +6894,25 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "millisecond": 789,
                         },
                     )
-                    self.assertEqual(documents[0]["parsed"], datetime.datetime(2026, 3, 25, 10, 5, 6, 789000))
+                    self.assertEqual(
+                        documents[0]["parsed"],
+                        datetime.datetime(2026, 3, 25, 10, 5, 6, 789000),
+                    )
 
     def test_aggregate_supports_object_to_array_and_zip(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "doc": {"a": 1, "b": 2}, "left": ["a", "b"], "right": [1], "defaults": ["x", 0]})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "doc": {"a": 1, "b": 2},
+                            "left": ["a", "b"],
+                            "right": [1],
+                            "defaults": ["x", 0],
+                        },
+                    )
 
                     documents = collection.aggregate(
                         [
@@ -4726,11 +6925,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "inputs": ["$left", "$right"],
                                             "useLongestLength": True,
                                             "defaults": "$defaults",
-                                        }
+                                        },
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -4738,9 +6937,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {
                                 "_id": "1",
-                                "pairs": [{"k": "a", "v": 1}, {"k": "b", "v": 2}],
+                                "pairs": [
+                                    {"k": "a", "v": 1},
+                                    {"k": "b", "v": 2},
+                                ],
                                 "zipped": [["a", 1], ["b", 0]],
-                            }
+                            },
                         ],
                     )
 
@@ -4749,7 +6951,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "millis": 1_711_361_506_789, "text": "2026-03-25T10:05:06.789Z"})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "millis": 1_711_361_506_789,
+                            "text": "2026-03-25T10:05:06.789Z",
+                        },
+                    )
 
                     documents = collection.aggregate(
                         [
@@ -4764,11 +6972,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "day": 25,
                                             "hour": 12,
                                             "timezone": "+02:00",
-                                        }
+                                        },
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -4776,9 +6984,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {
                                 "_id": "1",
-                                "as_date": datetime.datetime(2026, 3, 25, 10, 5, 6, 789000),
-                                "from_parts": datetime.datetime(2026, 3, 25, 10, 0, 0),
-                            }
+                                "as_date": datetime.datetime(
+                                    2026,
+                                    3,
+                                    25,
+                                    10,
+                                    5,
+                                    6,
+                                    789000,
+                                ),
+                                "from_parts": datetime.datetime(
+                                    2026,
+                                    3,
+                                    25,
+                                    10,
+                                    0,
+                                    0,
+                                ),
+                            },
                         ],
                     )
 
@@ -4787,15 +7010,29 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "oid_text": "65f0a1000000000000000000"})
+                    collection.insert_one(
+                        {"_id": "1", "oid_text": "65f0a1000000000000000000"},
+                    )
 
                     documents = collection.aggregate(
-                        [{"$project": {"_id": 1, "oid": {"$toObjectId": "$oid_text"}}}]
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "oid": {"$toObjectId": "$oid_text"},
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "oid": ObjectId("65f0a1000000000000000000")}],
+                        [
+                            {
+                                "_id": "1",
+                                "oid": ObjectId("65f0a1000000000000000000"),
+                            },
+                        ],
                     )
 
     def test_aggregate_supports_to_decimal(self):
@@ -4806,7 +7043,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection.insert_one({"_id": "1", "value": "10.25"})
 
                     documents = collection.aggregate(
-                        [{"$project": {"_id": 1, "decimal": {"$toDecimal": "$value"}}}]
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "decimal": {"$toDecimal": "$value"},
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -4823,11 +7067,18 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {
                             "_id": "1",
                             "uuid_text": "12345678-1234-5678-1234-567812345678",
-                        }
+                        },
                     )
 
                     documents = collection.aggregate(
-                        [{"$project": {"_id": 1, "uuid": {"$toUUID": "$uuid_text"}}}]
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "uuid": {"$toUUID": "$uuid_text"},
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -4835,8 +7086,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {
                                 "_id": "1",
-                                "uuid": uuid.UUID("12345678-1234-5678-1234-567812345678"),
-                            }
+                                "uuid": uuid.UUID(
+                                    "12345678-1234-5678-1234-567812345678",
+                                ),
+                            },
                         ],
                     )
 
@@ -4853,10 +7106,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "$documents": [
                                     {"_id": "1", "score": 10},
                                     {"_id": "2", "score": 20},
-                                ]
+                                ],
                             },
                             {"$match": {"score": {"$gte": 15}}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(documents, [{"_id": "2", "score": 20}])
@@ -4869,8 +7122,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection.insert_one(
                         {
                             "_id": "1",
-                            "created_at": datetime.datetime(2026, 3, 29, 22, 5, 6, 789000),
-                        }
+                            "created_at": datetime.datetime(
+                                2026,
+                                3,
+                                29,
+                                22,
+                                5,
+                                6,
+                                789000,
+                            ),
+                        },
                     )
 
                     documents = collection.aggregate(
@@ -4884,28 +7145,34 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "$dayOfMonth": {
                                             "date": "$created_at",
                                             "timezone": "+02:00",
-                                        }
+                                        },
                                     },
                                     "day_of_week": {
                                         "$dayOfWeek": {
                                             "date": "$created_at",
                                             "timezone": "+02:00",
-                                        }
+                                        },
                                     },
-                                    "day_of_year": {"$dayOfYear": "$created_at"},
+                                    "day_of_year": {
+                                        "$dayOfYear": "$created_at",
+                                    },
                                     "hour": {
                                         "$hour": {
                                             "date": "$created_at",
                                             "timezone": "+02:00",
-                                        }
+                                        },
                                     },
                                     "minute": {"$minute": "$created_at"},
                                     "second": {"$second": "$created_at"},
-                                    "millisecond": {"$millisecond": "$created_at"},
-                                    "iso_day_of_week": {"$isoDayOfWeek": "$created_at"},
-                                }
-                            }
-                        ]
+                                    "millisecond": {
+                                        "$millisecond": "$created_at",
+                                    },
+                                    "iso_day_of_week": {
+                                        "$isoDayOfWeek": "$created_at",
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -4923,7 +7190,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "second": 6,
                                 "millisecond": 789,
                                 "iso_day_of_week": 7,
-                            }
+                            },
                         ],
                     )
 
@@ -4937,7 +7204,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "_id": "1",
                             "values": [1, 2, 3, 4],
                             "nested": {"a": 1},
-                        }
+                        },
                     )
 
                     documents = collection.aggregate(
@@ -4950,9 +7217,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "middle": {"$slice": ["$values", 1, 2]},
                                     "is_array": {"$isArray": "$values"},
                                     "cmp": {"$cmp": [3, 2]},
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -4965,7 +7232,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "middle": [2, 3],
                                 "is_array": True,
                                 "cmp": 1,
-                            }
+                            },
                         ],
                     )
 
@@ -4974,24 +7241,49 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "value": "10", "nested": {"a": 1}})
+                    collection.insert_one(
+                        {"_id": "1", "value": "10", "nested": {"a": 1}},
+                    )
 
                     documents = collection.aggregate(
                         [
                             {
                                 "$project": {
                                     "_id": 1,
-                                    "converted": {"$convert": {"input": "$value", "to": "int"}},
-                                    "updated": {"$setField": {"field": "name", "input": "$nested", "value": "Ada"}},
-                                    "trimmed": {"$unsetField": {"field": "a", "input": "$nested"}},
-                                }
-                            }
-                        ]
+                                    "converted": {
+                                        "$convert": {
+                                            "input": "$value",
+                                            "to": "int",
+                                        },
+                                    },
+                                    "updated": {
+                                        "$setField": {
+                                            "field": "name",
+                                            "input": "$nested",
+                                            "value": "Ada",
+                                        },
+                                    },
+                                    "trimmed": {
+                                        "$unsetField": {
+                                            "field": "a",
+                                            "input": "$nested",
+                                        },
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "converted": 10, "updated": {"a": 1, "name": "Ada"}, "trimmed": {}}],
+                        [
+                            {
+                                "_id": "1",
+                                "converted": 10,
+                                "updated": {"a": 1, "name": "Ada"},
+                                "trimmed": {},
+                            },
+                        ],
                     )
 
     def test_aggregate_supports_bson_size_and_rand(self):
@@ -4999,10 +7291,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "doc": {"a": 1, "name": "Ada"}})
+                    collection.insert_one(
+                        {"_id": "1", "doc": {"a": 1, "name": "Ada"}},
+                    )
 
                     documents = collection.aggregate(
-                        [{"$project": {"_id": 1, "size": {"$bsonSize": "$doc"}, "random": {"$rand": {}}}}]
+                        [
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "size": {"$bsonSize": "$doc"},
+                                    "random": {"$rand": {}},
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(documents[0]["_id"], "1")
@@ -5024,20 +7326,34 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "_id": 1,
                                     "size": {
                                         "$switch": {
-                                            "branches": [{"case": {"$gt": ["$value", 10]}, "then": "big"}],
+                                            "branches": [
+                                                {
+                                                    "case": {
+                                                        "$gt": ["$value", 10],
+                                                    },
+                                                    "then": "big",
+                                                },
+                                            ],
                                             "default": "small",
-                                        }
+                                        },
                                     },
                                     "anded": {"$bitAnd": [7, 3]},
                                     "notted": {"$bitNot": 7},
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "size": "small", "anded": 3, "notted": -8}],
+                        [
+                            {
+                                "_id": "1",
+                                "size": "small",
+                                "anded": 3,
+                                "notted": -8,
+                            },
+                        ],
                     )
 
     def test_aggregate_supports_sync_iteration(self):
@@ -5045,10 +7361,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "kind": "view", "rank": 2})
-                    collection.insert_one({"_id": "2", "kind": "click", "rank": 1})
+                    collection.insert_one(
+                        {"_id": "1", "kind": "view", "rank": 2},
+                    )
+                    collection.insert_one(
+                        {"_id": "2", "kind": "click", "rank": 1},
+                    )
 
-                    documents = list(collection.aggregate([{"$sort": {"rank": 1}}]))
+                    documents = list(
+                        collection.aggregate([{"$sort": {"rank": 1}}]),
+                    )
 
                     self.assertEqual(
                         documents,
@@ -5063,7 +7385,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "tags": ["python", "mongodb"]})
+                    collection.insert_one(
+                        {"_id": "1", "tags": ["python", "mongodb"]},
+                    )
                     collection.insert_one({"_id": "2", "tags": ["sqlite"]})
 
                     documents = collection.aggregate(
@@ -5071,7 +7395,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"$unwind": "$tags"},
                             {"$sort": {"tags": 1}},
                             {"$project": {"tags": 1, "_id": 0}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -5088,17 +7412,59 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "kind": "view", "amount": 10, "user": "ada"})
-                    collection.insert_one({"_id": "2", "kind": "view", "amount": 7, "bonus": 1, "user": "grace"})
-                    collection.insert_one({"_id": "3", "kind": "click", "amount": 3, "bonus": 2, "user": "alan"})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "kind": "view",
+                            "amount": 10,
+                            "user": "ada",
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "2",
+                            "kind": "view",
+                            "amount": 7,
+                            "bonus": 1,
+                            "user": "grace",
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "3",
+                            "kind": "click",
+                            "amount": 3,
+                            "bonus": 2,
+                            "user": "alan",
+                        },
+                    )
 
                     documents = collection.aggregate(
                         [
-                            {"$addFields": {"effective_amount": {"$add": ["$amount", {"$ifNull": ["$bonus", 0]}]}}},
-                            {"$match": {"$expr": {"$gte": ["$effective_amount", 5]}}},
-                            {"$group": {"_id": "$kind", "total": {"$sum": "$effective_amount"}, "first_user": {"$first": "$user"}}},
+                            {
+                                "$addFields": {
+                                    "effective_amount": {
+                                        "$add": [
+                                            "$amount",
+                                            {"$ifNull": ["$bonus", 0]},
+                                        ],
+                                    },
+                                },
+                            },
+                            {
+                                "$match": {
+                                    "$expr": {"$gte": ["$effective_amount", 5]},
+                                },
+                            },
+                            {
+                                "$group": {
+                                    "_id": "$kind",
+                                    "total": {"$sum": "$effective_amount"},
+                                    "first_user": {"$first": "$user"},
+                                },
+                            },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -5115,26 +7481,61 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     events = client.test.events
                     users = client.test.users
-                    users.insert_one({"_id": "u1", "name": "Ada", "city": "Sevilla"})
-                    users.insert_one({"_id": "u2", "name": "Grace", "city": "Madrid"})
-                    events.insert_one({"_id": "1", "kind": "view", "user_id": "u1"})
-                    events.insert_one({"_id": "2", "kind": "click", "user_id": "u2"})
+                    users.insert_one(
+                        {"_id": "u1", "name": "Ada", "city": "Sevilla"},
+                    )
+                    users.insert_one(
+                        {"_id": "u2", "name": "Grace", "city": "Madrid"},
+                    )
+                    events.insert_one(
+                        {"_id": "1", "kind": "view", "user_id": "u1"},
+                    )
+                    events.insert_one(
+                        {"_id": "2", "kind": "click", "user_id": "u2"},
+                    )
 
                     documents = events.aggregate(
                         [
-                            {"$lookup": {"from": "users", "localField": "user_id", "foreignField": "_id", "as": "user"}},
-                            {"$addFields": {"user": {"$arrayElemAt": ["$user", 0]}}},
-                            {"$replaceRoot": {"newRoot": {"$mergeObjects": ["$$ROOT", "$user"]}}},
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "localField": "user_id",
+                                    "foreignField": "_id",
+                                    "as": "user",
+                                },
+                            },
+                            {
+                                "$addFields": {
+                                    "user": {"$arrayElemAt": ["$user", 0]},
+                                },
+                            },
+                            {
+                                "$replaceRoot": {
+                                    "newRoot": {
+                                        "$mergeObjects": ["$$ROOT", "$user"],
+                                    },
+                                },
+                            },
                             {"$project": {"user": 0, "user_id": 0}},
                             {"$sort": {"kind": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
                         [
-                            {"_id": "u2", "kind": "click", "name": "Grace", "city": "Madrid"},
-                            {"_id": "u1", "kind": "view", "name": "Ada", "city": "Sevilla"},
+                            {
+                                "_id": "u2",
+                                "kind": "click",
+                                "name": "Grace",
+                                "city": "Madrid",
+                            },
+                            {
+                                "_id": "u1",
+                                "kind": "view",
+                                "name": "Ada",
+                                "city": "Sevilla",
+                            },
                         ],
                     )
 
@@ -5145,8 +7546,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     deliveries = client.test.deliveries
                     units = client.test.units
                     deliveries.insert_one({"_id": "d1", "tenant": "a"})
-                    units.insert_one({"_id": "u1", "fulfillment_id": "d1", "name": "Box"})
-                    units.insert_one({"_id": "u2", "fulfillment_id": "d1", "status": "packed"})
+                    units.insert_one(
+                        {"_id": "u1", "fulfillment_id": "d1", "name": "Box"},
+                    )
+                    units.insert_one(
+                        {
+                            "_id": "u2",
+                            "fulfillment_id": "d1",
+                            "status": "packed",
+                        },
+                    )
 
                     documents = deliveries.aggregate(
                         [
@@ -5160,18 +7569,38 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "$match": {
                                                 "$expr": {
                                                     "$and": [
-                                                        {"$eq": ["$fulfillment_id", "$$ref_key"]},
-                                                    ]
-                                                }
-                                            }
-                                        }
+                                                        {
+                                                            "$eq": [
+                                                                "$fulfillment_id",
+                                                                "$$ref_key",
+                                                            ],
+                                                        },
+                                                    ],
+                                                },
+                                            },
+                                        },
                                     ],
-                                }
+                                },
                             },
-                            {"$match": {"$expr": {"$gt": [{"$size": "$unit"}, 0]}}},
-                            {"$addFields": {"unit_list": "$unit", "unit": {"$mergeObjects": "$unit"}}},
-                            {"$project": {"_id": 0, "unit_list": 1, "unit": 1}},
-                        ]
+                            {
+                                "$match": {
+                                    "$expr": {"$gt": [{"$size": "$unit"}, 0]},
+                                },
+                            },
+                            {
+                                "$addFields": {
+                                    "unit_list": "$unit",
+                                    "unit": {"$mergeObjects": "$unit"},
+                                },
+                            },
+                            {
+                                "$project": {
+                                    "_id": 0,
+                                    "unit_list": 1,
+                                    "unit": 1,
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(len(documents), 1)
@@ -5185,21 +7614,55 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
-                    collection.insert_one({"_id": "1", "tags": ["a", "b", "c"], "other_tags": ["b", "d"], "numbers": [1, 2, 3, 4]})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "tags": ["a", "b", "c"],
+                            "other_tags": ["b", "d"],
+                            "numbers": [1, 2, 3, 4],
+                        },
+                    )
 
                     documents = collection.aggregate(
                         [
                             {
                                 "$project": {
                                     "_id": 0,
-                                    "mapped": {"$map": {"input": "$tags", "as": "tag", "in": {"$toString": "$$tag"}}},
-                                    "filtered": {"$filter": {"input": "$numbers", "as": "n", "cond": {"$gt": ["$$n", 2]}}},
-                                    "reduced": {"$reduce": {"input": "$numbers", "initialValue": 0, "in": {"$add": ["$$value", "$$this"]}}},
-                                    "concatenated": {"$concatArrays": ["$tags", "$other_tags"]},
-                                    "unioned": {"$setUnion": ["$tags", "$other_tags"]},
-                                }
-                            }
-                        ]
+                                    "mapped": {
+                                        "$map": {
+                                            "input": "$tags",
+                                            "as": "tag",
+                                            "in": {"$toString": "$$tag"},
+                                        },
+                                    },
+                                    "filtered": {
+                                        "$filter": {
+                                            "input": "$numbers",
+                                            "as": "n",
+                                            "cond": {"$gt": ["$$n", 2]},
+                                        },
+                                    },
+                                    "reduced": {
+                                        "$reduce": {
+                                            "input": "$numbers",
+                                            "initialValue": 0,
+                                            "in": {
+                                                "$add": ["$$value", "$$this"],
+                                            },
+                                        },
+                                    },
+                                    "concatenated": {
+                                        "$concatArrays": [
+                                            "$tags",
+                                            "$other_tags",
+                                        ],
+                                    },
+                                    "unioned": {
+                                        "$setUnion": ["$tags", "$other_tags"],
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -5211,7 +7674,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "reduced": 10,
                                 "concatenated": ["a", "b", "c", "b", "d"],
                                 "unioned": ["a", "b", "c", "d"],
-                            }
+                            },
                         ],
                     )
 
@@ -5230,16 +7693,29 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     documents = events.aggregate(
                         [
-                            {"$lookup": {"from": "users", "localField": "tenant", "foreignField": "tenant", "as": "users"}},
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "localField": "tenant",
+                                    "foreignField": "tenant",
+                                    "as": "users",
+                                },
+                            },
                             {"$project": {"_id": 1, "users": 1}},
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
                         [
-                            {"_id": "1", "users": [{"_id": "u1", "tenant": "a"}, {"_id": "u2", "tenant": "a"}]},
+                            {
+                                "_id": "1",
+                                "users": [
+                                    {"_id": "u1", "tenant": "a"},
+                                    {"_id": "u2", "tenant": "a"},
+                                ],
+                            },
                             {"_id": "2", "users": []},
                             {"_id": "3", "users": [{"_id": "u3"}]},
                         ],
@@ -5251,9 +7727,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     events = client.test.events
                     users = client.test.users
-                    users.insert_one({"_id": "u1", "tenant": "a", "name": "Ada"})
-                    users.insert_one({"_id": "u2", "tenant": "a", "name": "Grace"})
-                    users.insert_one({"_id": "u3", "tenant": "b", "name": "Linus"})
+                    users.insert_one(
+                        {"_id": "u1", "tenant": "a", "name": "Ada"},
+                    )
+                    users.insert_one(
+                        {"_id": "u2", "tenant": "a", "name": "Grace"},
+                    )
+                    users.insert_one(
+                        {"_id": "u3", "tenant": "b", "name": "Linus"},
+                    )
                     events.insert_one({"_id": "1", "tenant": "a"})
                     events.insert_one({"_id": "2", "tenant": "b"})
 
@@ -5264,22 +7746,39 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "from": "users",
                                     "let": {"tenantId": "$tenant"},
                                     "pipeline": [
-                                        {"$match": {"$expr": {"$eq": ["$tenant", "$$tenantId"]}}},
+                                        {
+                                            "$match": {
+                                                "$expr": {
+                                                    "$eq": [
+                                                        "$tenant",
+                                                        "$$tenantId",
+                                                    ],
+                                                },
+                                            },
+                                        },
                                         {"$project": {"_id": 0, "name": 1}},
                                         {"$sort": {"name": 1}},
                                     ],
                                     "as": "users",
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
                         [
-                            {"_id": "1", "tenant": "a", "users": [{"name": "Ada"}, {"name": "Grace"}]},
-                            {"_id": "2", "tenant": "b", "users": [{"name": "Linus"}]},
+                            {
+                                "_id": "1",
+                                "tenant": "a",
+                                "users": [{"name": "Ada"}, {"name": "Grace"}],
+                            },
+                            {
+                                "_id": "2",
+                                "tenant": "b",
+                                "users": [{"name": "Linus"}],
+                            },
                         ],
                     )
 
@@ -5289,10 +7788,18 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     events = client.test.events
                     users = client.test.users
-                    users.insert_one({"_id": "u1", "tenant": "a", "name": "Ada"})
-                    users.insert_one({"_id": "u2", "tenant": "a", "name": "Grace"})
-                    users.insert_one({"_id": "u3", "tenant": "b", "name": "Linus"})
-                    users.insert_one({"_id": "u4", "tenant": "c", "name": "Nope"})
+                    users.insert_one(
+                        {"_id": "u1", "tenant": "a", "name": "Ada"},
+                    )
+                    users.insert_one(
+                        {"_id": "u2", "tenant": "a", "name": "Grace"},
+                    )
+                    users.insert_one(
+                        {"_id": "u3", "tenant": "b", "name": "Linus"},
+                    )
+                    users.insert_one(
+                        {"_id": "u4", "tenant": "c", "name": "Nope"},
+                    )
                     events.insert_one({"_id": "1", "tenant": "a"})
                     events.insert_one({"_id": "2", "tenant": "b"})
 
@@ -5305,35 +7812,82 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "foreignField": "tenant",
                                     "let": {"tenantId": "$tenant"},
                                     "pipeline": [
-                                        {"$match": {"$expr": {"$eq": ["$tenant", "$$tenantId"]}}},
+                                        {
+                                            "$match": {
+                                                "$expr": {
+                                                    "$eq": [
+                                                        "$tenant",
+                                                        "$$tenantId",
+                                                    ],
+                                                },
+                                            },
+                                        },
                                         {"$project": {"_id": 0, "name": 1}},
                                         {"$sort": {"name": 1}},
                                     ],
                                     "as": "users",
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
                         [
-                            {"_id": "1", "tenant": "a", "users": [{"name": "Ada"}, {"name": "Grace"}]},
-                            {"_id": "2", "tenant": "b", "users": [{"name": "Linus"}]},
+                            {
+                                "_id": "1",
+                                "tenant": "a",
+                                "users": [{"name": "Ada"}, {"name": "Grace"}],
+                            },
+                            {
+                                "_id": "2",
+                                "tenant": "b",
+                                "users": [{"name": "Linus"}],
+                            },
                         ],
                     )
 
-    def test_aggregate_supports_field_bound_logical_expr_conditions_inside_lookup(self):
+    def test_aggregate_supports_field_bound_logical_expr_conditions_inside_lookup(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     events = client.test.events
                     users = client.test.users
-                    users.insert_one({"_id": "u1", "tenant": "a", "role": "admin", "score": 3})
-                    users.insert_one({"_id": "u2", "tenant": "a", "role": "staff", "score": 4})
-                    users.insert_one({"_id": "u3", "tenant": "a", "role": "guest", "score": 4})
-                    users.insert_one({"_id": "u4", "tenant": "a", "role": "admin", "score": 7})
+                    users.insert_one(
+                        {
+                            "_id": "u1",
+                            "tenant": "a",
+                            "role": "admin",
+                            "score": 3,
+                        },
+                    )
+                    users.insert_one(
+                        {
+                            "_id": "u2",
+                            "tenant": "a",
+                            "role": "staff",
+                            "score": 4,
+                        },
+                    )
+                    users.insert_one(
+                        {
+                            "_id": "u3",
+                            "tenant": "a",
+                            "role": "guest",
+                            "score": 4,
+                        },
+                    )
+                    users.insert_one(
+                        {
+                            "_id": "u4",
+                            "tenant": "a",
+                            "role": "admin",
+                            "score": 7,
+                        },
+                    )
                     events.insert_one({"_id": "1", "tenant": "a"})
 
                     documents = events.aggregate(
@@ -5347,20 +7901,53 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "$match": {
                                                 "$expr": {
                                                     "$and": [
-                                                        {"$eq": ["$tenant", "$$tenantId"]},
-                                                        {"$or": ["$role", [{"$eq": "admin"}, {"$eq": "staff"}]]},
-                                                        {"$and": ["$score", [{"$gte": 3}, {"$lt": 5}]]},
-                                                    ]
-                                                }
-                                            }
+                                                        {
+                                                            "$eq": [
+                                                                "$tenant",
+                                                                "$$tenantId",
+                                                            ],
+                                                        },
+                                                        {
+                                                            "$or": [
+                                                                "$role",
+                                                                [
+                                                                    {
+                                                                        "$eq": "admin",
+                                                                    },
+                                                                    {
+                                                                        "$eq": "staff",
+                                                                    },
+                                                                ],
+                                                            ],
+                                                        },
+                                                        {
+                                                            "$and": [
+                                                                "$score",
+                                                                [
+                                                                    {
+                                                                        "$gte": 3,
+                                                                    },
+                                                                    {"$lt": 5},
+                                                                ],
+                                                            ],
+                                                        },
+                                                    ],
+                                                },
+                                            },
                                         },
-                                        {"$project": {"_id": 0, "role": 1, "score": 1}},
+                                        {
+                                            "$project": {
+                                                "_id": 0,
+                                                "role": 1,
+                                                "score": 1,
+                                            },
+                                        },
                                         {"$sort": {"role": 1}},
                                     ],
                                     "as": "users",
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -5373,11 +7960,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     {"role": "admin", "score": 3},
                                     {"role": "staff", "score": 4},
                                 ],
-                            }
+                            },
                         ],
                     )
 
-    def test_aggregate_supports_field_bound_query_filter_expr_conditions_inside_lookup(self):
+    def test_aggregate_supports_field_bound_query_filter_expr_conditions_inside_lookup(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -5389,8 +7978,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "tenant": "a",
                             "tags": ["a", "b"],
                             "status": "active",
-                            "items": [{"kind": "x", "qty": 1}, {"kind": "y", "qty": 3}],
-                        }
+                            "items": [
+                                {"kind": "x", "qty": 1},
+                                {"kind": "y", "qty": 3},
+                            ],
+                        },
                     )
                     users.insert_one(
                         {
@@ -5399,9 +7991,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "tags": ["a"],
                             "status": "archived",
                             "items": [{"kind": "y", "qty": 1}],
-                        }
+                        },
                     )
-                    users.insert_one({"_id": "u3", "tenant": "a", "status": "active"})
+                    users.insert_one(
+                        {"_id": "u3", "tenant": "a", "status": "active"},
+                    )
                     events.insert_one({"_id": "1", "tenant": "a"})
 
                     documents = events.aggregate(
@@ -5415,29 +8009,67 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "$match": {
                                                 "$expr": {
                                                     "$and": [
-                                                        {"$eq": ["$tenant", "$$tenantId"]},
-                                                        {"$exists": ["$tags", True]},
-                                                        {"$all": ["$tags", ["a", "b"]]},
-                                                        {"$nin": ["$status", ["archived"]]},
-                                                        {"$elemMatch": ["$items", {"kind": "y", "qty": {"$gte": 2}}]},
-                                                    ]
-                                                }
-                                            }
+                                                        {
+                                                            "$eq": [
+                                                                "$tenant",
+                                                                "$$tenantId",
+                                                            ],
+                                                        },
+                                                        {
+                                                            "$exists": [
+                                                                "$tags",
+                                                                True,
+                                                            ],
+                                                        },
+                                                        {
+                                                            "$all": [
+                                                                "$tags",
+                                                                ["a", "b"],
+                                                            ],
+                                                        },
+                                                        {
+                                                            "$nin": [
+                                                                "$status",
+                                                                ["archived"],
+                                                            ],
+                                                        },
+                                                        {
+                                                            "$elemMatch": [
+                                                                "$items",
+                                                                {
+                                                                    "kind": "y",
+                                                                    "qty": {
+                                                                        "$gte": 2,
+                                                                    },
+                                                                },
+                                                            ],
+                                                        },
+                                                    ],
+                                                },
+                                            },
                                         },
                                         {"$project": {"_id": 1}},
                                     ],
                                     "as": "users",
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
-                        [{"_id": "1", "tenant": "a", "users": [{"_id": "u1"}]}],
+                        [
+                            {
+                                "_id": "1",
+                                "tenant": "a",
+                                "users": [{"_id": "u1"}],
+                            },
+                        ],
                     )
 
-    def test_aggregate_supports_correlated_list_lookup_with_in_and_dotted_variable_path(self):
+    def test_aggregate_supports_correlated_list_lookup_with_in_and_dotted_variable_path(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -5446,7 +8078,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     users.insert_one({"_id": "u1", "name": "Ada"})
                     users.insert_one({"_id": "u2", "name": "Grace"})
                     users.insert_one({"_id": "u3", "name": "Linus"})
-                    events.insert_one({"_id": "1", "links": [{"id": "u1"}, {"id": "u3"}]})
+                    events.insert_one(
+                        {"_id": "1", "links": [{"id": "u1"}, {"id": "u3"}]},
+                    )
                     events.insert_one({"_id": "2", "links": []})
                     events.insert_one({"_id": "3"})
 
@@ -5461,26 +8095,47 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                             "$match": {
                                                 "$expr": {
                                                     "$and": [
-                                                        {"$gt": [{"$size": {"$ifNull": ["$$ref_key.id", []]}}, 0]},
-                                                        {"$in": ["$_id", "$$ref_key.id"]},
-                                                    ]
-                                                }
-                                            }
+                                                        {
+                                                            "$gt": [
+                                                                {
+                                                                    "$size": {
+                                                                        "$ifNull": [
+                                                                            "$$ref_key.id",
+                                                                            [],
+                                                                        ],
+                                                                    },
+                                                                },
+                                                                0,
+                                                            ],
+                                                        },
+                                                        {
+                                                            "$in": [
+                                                                "$_id",
+                                                                "$$ref_key.id",
+                                                            ],
+                                                        },
+                                                    ],
+                                                },
+                                            },
                                         },
                                         {"$project": {"_id": 0, "name": 1}},
                                         {"$sort": {"name": 1}},
                                     ],
                                     "as": "users",
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
                         [
-                            {"_id": "1", "links": [{"id": "u1"}, {"id": "u3"}], "users": [{"name": "Ada"}, {"name": "Linus"}]},
+                            {
+                                "_id": "1",
+                                "links": [{"id": "u1"}, {"id": "u3"}],
+                                "users": [{"name": "Ada"}, {"name": "Linus"}],
+                            },
                             {"_id": "2", "links": [], "users": []},
                             {"_id": "3", "users": []},
                         ],
@@ -5495,9 +8150,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     documents = events.aggregate(
                         [
-                            {"$lookup": {"from": "users", "localField": "tenant", "foreignField": "tenant", "as": "users"}},
+                            {
+                                "$lookup": {
+                                    "from": "users",
+                                    "localField": "tenant",
+                                    "foreignField": "tenant",
+                                    "as": "users",
+                                },
+                            },
                             {"$project": {"_id": 1, "users": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(documents, [{"_id": "1", "users": []}])
@@ -5511,8 +8173,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     roles = client.test.roles
                     roles.insert_one({"_id": "r1", "label": "admin"})
                     roles.insert_one({"_id": "r2", "label": "staff"})
-                    users.insert_one({"_id": "u1", "tenant": "a", "role_id": "r1", "name": "Ada"})
-                    users.insert_one({"_id": "u2", "tenant": "a", "role_id": "r2", "name": "Grace"})
+                    users.insert_one(
+                        {
+                            "_id": "u1",
+                            "tenant": "a",
+                            "role_id": "r1",
+                            "name": "Ada",
+                        },
+                    )
+                    users.insert_one(
+                        {
+                            "_id": "u2",
+                            "tenant": "a",
+                            "role_id": "r2",
+                            "name": "Grace",
+                        },
+                    )
                     events.insert_one({"_id": "1", "tenant": "a"})
 
                     documents = events.aggregate(
@@ -5522,15 +8198,37 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "from": "users",
                                     "let": {"tenantId": "$tenant"},
                                     "pipeline": [
-                                        {"$match": {"$expr": {"$eq": ["$tenant", "$$tenantId"]}}},
-                                        {"$lookup": {"from": "roles", "localField": "role_id", "foreignField": "_id", "as": "roles"}},
-                                        {"$project": {"_id": 0, "name": 1, "roles": 1}},
+                                        {
+                                            "$match": {
+                                                "$expr": {
+                                                    "$eq": [
+                                                        "$tenant",
+                                                        "$$tenantId",
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                        {
+                                            "$lookup": {
+                                                "from": "roles",
+                                                "localField": "role_id",
+                                                "foreignField": "_id",
+                                                "as": "roles",
+                                            },
+                                        },
+                                        {
+                                            "$project": {
+                                                "_id": 0,
+                                                "name": 1,
+                                                "roles": 1,
+                                            },
+                                        },
                                         {"$sort": {"name": 1}},
                                     ],
                                     "as": "users",
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -5540,10 +8238,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "_id": "1",
                                 "tenant": "a",
                                 "users": [
-                                    {"name": "Ada", "roles": [{"_id": "r1", "label": "admin"}]},
-                                    {"name": "Grace", "roles": [{"_id": "r2", "label": "staff"}]},
+                                    {
+                                        "name": "Ada",
+                                        "roles": [
+                                            {"_id": "r1", "label": "admin"},
+                                        ],
+                                    },
+                                    {
+                                        "name": "Grace",
+                                        "roles": [
+                                            {"_id": "r2", "label": "staff"},
+                                        ],
+                                    },
                                 ],
-                            }
+                            },
                         ],
                     )
 
@@ -5559,12 +8267,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         "from": "users",
                         "let": {"ref_key": "$tenant"},
                         "pipeline": [
-                            {"$match": {"$expr": {"$eq": ["$tenant", "$$ref_key"]}}},
+                            {
+                                "$match": {
+                                    "$expr": {"$eq": ["$tenant", "$$ref_key"]},
+                                },
+                            },
                             {"$project": {"_id": 0, "name": 1}},
                             {"$sort": {"name": 1}},
                         ],
                         "as": "users",
-                    }
+                    },
                 },
                 {"$match": {"$expr": {"$gt": [{"$size": "$users"}, 0]}}},
                 {"$project": {"_id": 1, "tenant": 1, "users": 1}},
@@ -5576,14 +8288,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         "from": "users",
                         "let": {"ref_key": "$tenant"},
                         "pipeline": [
-                            {"$match": {"$expr": {"$eq": ["$tenant", "$$ref_key"]}}},
+                            {
+                                "$match": {
+                                    "$expr": {"$eq": ["$tenant", "$$ref_key"]},
+                                },
+                            },
                             {"$project": {"_id": 0, "name": 1}},
                             {"$sort": {"name": 1}},
                         ],
                         "as": "users",
-                    }
+                    },
                 },
-                {"$addFields": {"joined_user": {"$mergeObjects": [{"tenant": "$tenant"}, {"$first": "$users"}]}}},
+                {
+                    "$addFields": {
+                        "joined_user": {
+                            "$mergeObjects": [
+                                {"tenant": "$tenant"},
+                                {"$first": "$users"},
+                            ],
+                        },
+                    },
+                },
                 {"$project": {"_id": 1, "joined_user": 1}},
                 {"$sort": {"_id": 1}},
             ],
@@ -5593,12 +8318,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         "from": "users",
                         "let": {"ref_key": "$tenant"},
                         "pipeline": [
-                            {"$match": {"$expr": {"$eq": ["$tenant", "$$ref_key"]}}},
+                            {
+                                "$match": {
+                                    "$expr": {"$eq": ["$tenant", "$$ref_key"]},
+                                },
+                            },
                             {"$project": {"_id": 0, "name": 1}},
                             {"$sort": {"name": 1}},
                         ],
                         "as": "users",
-                    }
+                    },
                 },
                 {
                     "$addFields": {
@@ -5607,9 +8336,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 {"$gt": [{"$size": "$users"}, 0]},
                                 {"$arrayElemAt": ["$users", 0]},
                                 {"name": "unknown"},
-                            ]
-                        }
-                    }
+                            ],
+                        },
+                    },
                 },
                 {"$project": {"_id": 1, "joined_user": 1}},
                 {"$sort": {"_id": 1}},
@@ -5620,11 +8349,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         "from": "users",
                         "let": {"ref_key": "$tenant"},
                         "pipeline": [
-                            {"$match": {"$expr": {"$eq": ["$tenant", "$$ref_key"]}}},
+                            {
+                                "$match": {
+                                    "$expr": {"$eq": ["$tenant", "$$ref_key"]},
+                                },
+                            },
                             {"$project": {"_id": 0, "name": 1}},
                         ],
                         "as": "users",
-                    }
+                    },
                 },
                 {"$set": {"user_count": {"$size": "$users"}}},
                 {"$project": {"_id": 1, "user_count": 1}},
@@ -5636,14 +8369,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         "from": "users",
                         "let": {"ref_key": "$tenant"},
                         "pipeline": [
-                            {"$match": {"$expr": {"$eq": ["$tenant", "$$ref_key"]}}},
+                            {
+                                "$match": {
+                                    "$expr": {"$eq": ["$tenant", "$$ref_key"]},
+                                },
+                            },
                             {"$project": {"_id": 0, "name": 1}},
                             {"$sort": {"name": 1}},
                         ],
                         "as": "users",
-                    }
+                    },
                 },
-                {"$set": {"primary_user": {"$ifNull": [{"$first": "$users"}, {"name": "unknown"}]}}},
+                {
+                    "$set": {
+                        "primary_user": {
+                            "$ifNull": [
+                                {"$first": "$users"},
+                                {"name": "unknown"},
+                            ],
+                        },
+                    },
+                },
                 {"$project": {"_id": 1, "primary_user": 1}},
                 {"$sort": {"_id": 1}},
             ],
@@ -5653,13 +8399,26 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         "from": "users",
                         "let": {"ref_key": "$user_id"},
                         "pipeline": [
-                            {"$match": {"$expr": {"$eq": ["$_id", "$$ref_key"]}}},
+                            {
+                                "$match": {
+                                    "$expr": {"$eq": ["$_id", "$$ref_key"]},
+                                },
+                            },
                             {"$project": {"name": 1, "role": 1}},
                         ],
                         "as": "user_doc",
-                    }
+                    },
                 },
-                {"$replaceRoot": {"newRoot": {"$mergeObjects": ["$$ROOT", {"$arrayElemAt": ["$user_doc", 0]}]}}},
+                {
+                    "$replaceRoot": {
+                        "newRoot": {
+                            "$mergeObjects": [
+                                "$$ROOT",
+                                {"$arrayElemAt": ["$user_doc", 0]},
+                            ],
+                        },
+                    },
+                },
                 {"$project": {"user_doc": 0}},
                 {"$sort": {"_id": 1}},
             ],
@@ -5667,7 +8426,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
         expected = {
             "no_join": [{"_id": "e1", "tenant": "a"}],
             "inner_join": [
-                {"_id": "e1", "tenant": "a", "users": [{"name": "Ada"}, {"name": "Grace"}]},
+                {
+                    "_id": "e1",
+                    "tenant": "a",
+                    "users": [{"name": "Ada"}, {"name": "Grace"}],
+                },
                 {"_id": "e2", "tenant": "b", "users": [{"name": "Linus"}]},
             ],
             "document_join": [
@@ -5691,9 +8454,28 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 {"_id": "e3", "primary_user": {"name": "unknown"}},
             ],
             "merge_join": [
-                {"_id": "e3", "tenant": "missing", "user_id": "ux", "kind": "open"},
-                {"_id": "u1", "tenant": "a", "user_id": "u1", "kind": "view", "name": "Ada", "role": "admin"},
-                {"_id": "u3", "tenant": "b", "user_id": "u3", "kind": "click", "name": "Linus", "role": "owner"},
+                {
+                    "_id": "e3",
+                    "tenant": "missing",
+                    "user_id": "ux",
+                    "kind": "open",
+                },
+                {
+                    "_id": "u1",
+                    "tenant": "a",
+                    "user_id": "u1",
+                    "kind": "view",
+                    "name": "Ada",
+                    "role": "admin",
+                },
+                {
+                    "_id": "u3",
+                    "tenant": "b",
+                    "user_id": "u3",
+                    "kind": "click",
+                    "name": "Linus",
+                    "role": "owner",
+                },
             ],
         }
 
@@ -5702,12 +8484,54 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     events = client.test.events
                     users = client.test.users
-                    users.insert_one({"_id": "u1", "tenant": "a", "name": "Ada", "role": "admin"})
-                    users.insert_one({"_id": "u2", "tenant": "a", "name": "Grace", "role": "staff"})
-                    users.insert_one({"_id": "u3", "tenant": "b", "name": "Linus", "role": "owner"})
-                    events.insert_one({"_id": "e1", "tenant": "a", "user_id": "u1", "kind": "view"})
-                    events.insert_one({"_id": "e2", "tenant": "b", "user_id": "u3", "kind": "click"})
-                    events.insert_one({"_id": "e3", "tenant": "missing", "user_id": "ux", "kind": "open"})
+                    users.insert_one(
+                        {
+                            "_id": "u1",
+                            "tenant": "a",
+                            "name": "Ada",
+                            "role": "admin",
+                        },
+                    )
+                    users.insert_one(
+                        {
+                            "_id": "u2",
+                            "tenant": "a",
+                            "name": "Grace",
+                            "role": "staff",
+                        },
+                    )
+                    users.insert_one(
+                        {
+                            "_id": "u3",
+                            "tenant": "b",
+                            "name": "Linus",
+                            "role": "owner",
+                        },
+                    )
+                    events.insert_one(
+                        {
+                            "_id": "e1",
+                            "tenant": "a",
+                            "user_id": "u1",
+                            "kind": "view",
+                        },
+                    )
+                    events.insert_one(
+                        {
+                            "_id": "e2",
+                            "tenant": "b",
+                            "user_id": "u3",
+                            "kind": "click",
+                        },
+                    )
+                    events.insert_one(
+                        {
+                            "_id": "e3",
+                            "tenant": "missing",
+                            "user_id": "ux",
+                            "kind": "open",
+                        },
+                    )
 
                     for name, pipeline in pipelines.items():
                         with self.subTest(engine=engine_name, pipeline=name):
@@ -5724,19 +8548,35 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection.insert_one({"_id": "3", "a": 4, "b": 20})
 
                     documents = collection.aggregate(
-                        [{"$match": {"$and": [{"a": 5}, {"$expr": {"$gt": ["$b", 10]}}]}}]
+                        [
+                            {
+                                "$match": {
+                                    "$and": [
+                                        {"a": 5},
+                                        {"$expr": {"$gt": ["$b", 10]}},
+                                    ],
+                                },
+                            },
+                        ],
                     ).to_list()
 
-                    self.assertEqual(documents, [{"_id": "1", "a": 5, "b": 11}])
+                    self.assertEqual(
+                        documents,
+                        [{"_id": "1", "a": 5, "b": 11}],
+                    )
 
     def test_aggregate_supports_replace_with(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
-                    collection.insert_one({"_id": "1", "profile": {"name": "Ada"}})
+                    collection.insert_one(
+                        {"_id": "1", "profile": {"name": "Ada"}},
+                    )
 
-                    documents = collection.aggregate([{"$replaceWith": "$profile"}]).to_list()
+                    documents = collection.aggregate(
+                        [{"$replaceWith": "$profile"}],
+                    ).to_list()
 
                     self.assertEqual(documents, [{"name": "Ada"}])
 
@@ -5745,22 +8585,31 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
-                    collection.insert_one({"_id": "1", "tenant": "a", "name": "Ada"})
+                    collection.insert_one(
+                        {"_id": "1", "tenant": "a", "name": "Ada"},
+                    )
 
                     documents = collection.aggregate(
                         [
                             {
                                 "$project": {
                                     "_id": 0,
-                                    "tenant_match": {"$eq": ["$tenant", "$$tenant"]},
-                                    "label": {"$concat": ["$$prefix", "$name"]},
-                                }
-                            }
+                                    "tenant_match": {
+                                        "$eq": ["$tenant", "$$tenant"],
+                                    },
+                                    "label": {
+                                        "$concat": ["$$prefix", "$name"],
+                                    },
+                                },
+                            },
                         ],
                         let={"tenant": "a", "prefix": "user:"},
                     ).to_list()
 
-                    self.assertEqual(documents, [{"tenant_match": True, "label": "user:Ada"}])
+                    self.assertEqual(
+                        documents,
+                        [{"tenant_match": True, "label": "user:Ada"}],
+                    )
 
     def test_write_operations_support_let_through_expr_filters(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -5771,7 +8620,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {"_id": "1", "tenant": "a", "matched": False},
                             {"_id": "2", "tenant": "b", "matched": False},
-                        ]
+                        ],
                     )
 
                     result = collection.update_many(
@@ -5782,8 +8631,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     self.assertEqual(result.matched_count, 1)
                     self.assertEqual(
-                        collection.find({}, {"_id": 1, "matched": 1}, sort=[("_id", 1)]).to_list(),
-                        [{"_id": "1", "matched": True}, {"_id": "2", "matched": False}],
+                        collection.find(
+                            {},
+                            {"_id": 1, "matched": 1},
+                            sort=[("_id", 1)],
+                        ).to_list(),
+                        [
+                            {"_id": "1", "matched": True},
+                            {"_id": "2", "matched": False},
+                        ],
                     )
 
     def test_bulk_write_inherits_let_for_expr_filters(self):
@@ -5795,7 +8651,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {"_id": "1", "tenant": "a", "flag": False},
                             {"_id": "2", "tenant": "b", "flag": False},
-                        ]
+                        ],
                     )
 
                     result = collection.bulk_write(
@@ -5803,18 +8659,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             UpdateOne(
                                 {"$expr": {"$eq": ["$tenant", "$$tenant"]}},
                                 {"$set": {"flag": True}},
-                            )
+                            ),
                         ],
                         let={"tenant": "b"},
                     )
 
                     self.assertEqual(result.matched_count, 1)
                     self.assertEqual(
-                        collection.find({}, {"_id": 1, "flag": 1}, sort=[("_id", 1)]).to_list(),
-                        [{"_id": "1", "flag": False}, {"_id": "2", "flag": True}],
+                        collection.find(
+                            {},
+                            {"_id": 1, "flag": 1},
+                            sort=[("_id", 1)],
+                        ).to_list(),
+                        [
+                            {"_id": "1", "flag": False},
+                            {"_id": "2", "flag": True},
+                        ],
                     )
 
-    def test_aggregate_supports_array_to_object_index_of_array_and_sort_array(self):
+    def test_aggregate_supports_array_to_object_index_of_array_and_sort_array(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -5829,7 +8694,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 {"rank": 1, "name": "a"},
                                 {"rank": 2, "name": "b"},
                             ],
-                        }
+                        },
                     )
 
                     documents = collection.aggregate(
@@ -5838,12 +8703,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "$project": {
                                     "_id": 0,
                                     "mapped": {"$arrayToObject": "$pairs"},
-                                    "position": {"$indexOfArray": ["$numbers", 3]},
-                                    "sorted_numbers": {"$sortArray": {"input": "$numbers", "sortBy": 1}},
-                                    "sorted_items": {"$sortArray": {"input": "$items", "sortBy": {"rank": 1}}},
-                                }
-                            }
-                        ]
+                                    "position": {
+                                        "$indexOfArray": ["$numbers", 3],
+                                    },
+                                    "sorted_numbers": {
+                                        "$sortArray": {
+                                            "input": "$numbers",
+                                            "sortBy": 1,
+                                        },
+                                    },
+                                    "sorted_items": {
+                                        "$sortArray": {
+                                            "input": "$items",
+                                            "sortBy": {"rank": 1},
+                                        },
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -5858,7 +8735,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     {"rank": 2, "name": "b"},
                                     {"rank": 3, "name": "c"},
                                 ],
-                            }
+                            },
                         ],
                     )
 
@@ -5868,18 +8745,63 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
                     collection.insert_one(
-                        {"_id": "1", "kind": "view", "score": 5, "created_at": datetime.datetime(2026, 3, 24, 10, 37, 52)}
+                        {
+                            "_id": "1",
+                            "kind": "view",
+                            "score": 5,
+                            "created_at": datetime.datetime(
+                                2026,
+                                3,
+                                24,
+                                10,
+                                37,
+                                52,
+                            ),
+                        },
                     )
                     collection.insert_one(
-                        {"_id": "2", "kind": "view", "score": 7, "created_at": datetime.datetime(2026, 3, 24, 10, 5, 0)}
+                        {
+                            "_id": "2",
+                            "kind": "view",
+                            "score": 7,
+                            "created_at": datetime.datetime(
+                                2026,
+                                3,
+                                24,
+                                10,
+                                5,
+                                0,
+                            ),
+                        },
                     )
                     collection.insert_one(
-                        {"_id": "3", "kind": "click", "score": 3, "created_at": datetime.datetime(2026, 3, 24, 11, 10, 0)}
+                        {
+                            "_id": "3",
+                            "kind": "click",
+                            "score": 3,
+                            "created_at": datetime.datetime(
+                                2026,
+                                3,
+                                24,
+                                11,
+                                10,
+                                0,
+                            ),
+                        },
                     )
 
                     documents = collection.aggregate(
                         [
-                            {"$addFields": {"bucket": {"$dateTrunc": {"date": "$created_at", "unit": "hour"}}}},
+                            {
+                                "$addFields": {
+                                    "bucket": {
+                                        "$dateTrunc": {
+                                            "date": "$created_at",
+                                            "unit": "hour",
+                                        },
+                                    },
+                                },
+                            },
                             {
                                 "$facet": {
                                     "views": [
@@ -5888,12 +8810,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         {"$sort": {"bucket": 1}},
                                     ],
                                     "scores": [
-                                        {"$group": {"_id": "$kind", "total": {"$sum": "$score"}}},
+                                        {
+                                            "$group": {
+                                                "_id": "$kind",
+                                                "total": {"$sum": "$score"},
+                                            },
+                                        },
                                         {"$sort": {"_id": 1}},
                                     ],
-                                }
+                                },
                             },
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -5901,11 +8828,32 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {
                                 "views": [
-                                    {"bucket": datetime.datetime(2026, 3, 24, 10, 0, 0)},
-                                    {"bucket": datetime.datetime(2026, 3, 24, 10, 0, 0)},
+                                    {
+                                        "bucket": datetime.datetime(
+                                            2026,
+                                            3,
+                                            24,
+                                            10,
+                                            0,
+                                            0,
+                                        ),
+                                    },
+                                    {
+                                        "bucket": datetime.datetime(
+                                            2026,
+                                            3,
+                                            24,
+                                            10,
+                                            0,
+                                            0,
+                                        ),
+                                    },
                                 ],
-                                "scores": [{"_id": "click", "total": 3}, {"_id": "view", "total": 12}],
-                            }
+                                "scores": [
+                                    {"_id": "click", "total": 3},
+                                    {"_id": "view", "total": 12},
+                                ],
+                            },
                         ],
                     )
 
@@ -5919,20 +8867,25 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {"_id": "e1", "kind": "event", "rank": 2},
                             {"_id": "e2", "kind": "event", "rank": 1},
-                        ]
+                        ],
                     )
                     archived.insert_many(
                         [
                             {"_id": "a1", "kind": "archive", "rank": 3},
                             {"_id": "a2", "kind": "archive", "rank": 0},
-                        ]
+                        ],
                     )
 
                     unioned = events.aggregate(
                         [
-                            {"$unionWith": {"coll": "archived_events", "pipeline": [{"$sort": {"rank": 1}}]}},
+                            {
+                                "$unionWith": {
+                                    "coll": "archived_events",
+                                    "pipeline": [{"$sort": {"rank": 1}}],
+                                },
+                            },
                             {"$project": {"_id": 1, "kind": 1, "rank": 1}},
-                        ]
+                        ],
                     ).to_list()
                     faceted = events.aggregate(
                         [
@@ -5942,19 +8895,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         {"$unionWith": "archived_events"},
                                         {"$sort": {"rank": 1}},
                                         {"$project": {"_id": 1}},
-                                    ]
-                                }
-                            }
-                        ]
+                                    ],
+                                },
+                            },
+                        ],
                     ).to_list()
-                    events.insert_one({"_id": "e3", "kind": "archive", "rank": 0})
+                    events.insert_one(
+                        {"_id": "e3", "kind": "archive", "rank": 0},
+                    )
                     current_only = events.aggregate(
                         [
                             {"$match": {"kind": "event"}},
-                            {"$unionWith": {"pipeline": [{"$match": {"kind": "archive"}}]}},
+                            {
+                                "$unionWith": {
+                                    "pipeline": [
+                                        {"$match": {"kind": "archive"}},
+                                    ],
+                                },
+                            },
                             {"$sort": {"rank": 1}},
                             {"$project": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -5968,7 +8929,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         faceted,
-                        [{"combined": [{"_id": "a2"}, {"_id": "e2"}, {"_id": "e1"}, {"_id": "a1"}]}],
+                        [
+                            {
+                                "combined": [
+                                    {"_id": "a2"},
+                                    {"_id": "e2"},
+                                    {"_id": "e1"},
+                                    {"_id": "a1"},
+                                ],
+                            },
+                        ],
                     )
                     self.assertEqual(
                         current_only,
@@ -5980,10 +8950,18 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
-                    collection.insert_one({"_id": "1", "score": 5, "kind": "view"})
-                    collection.insert_one({"_id": "2", "score": 12, "kind": "view"})
-                    collection.insert_one({"_id": "3", "score": 17, "kind": "click"})
-                    collection.insert_one({"_id": "4", "score": 25, "kind": "view"})
+                    collection.insert_one(
+                        {"_id": "1", "score": 5, "kind": "view"},
+                    )
+                    collection.insert_one(
+                        {"_id": "2", "score": 12, "kind": "view"},
+                    )
+                    collection.insert_one(
+                        {"_id": "3", "score": 17, "kind": "click"},
+                    )
+                    collection.insert_one(
+                        {"_id": "4", "score": 25, "kind": "view"},
+                    )
 
                     documents = collection.aggregate(
                         [
@@ -5996,16 +8974,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "count": {"$sum": 1},
                                         "kinds": {"$push": "$kind"},
                                     },
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
                         [
                             {"_id": 0, "count": 1, "kinds": ["view"]},
-                            {"_id": 10, "count": 2, "kinds": ["view", "click"]},
+                            {
+                                "_id": 10,
+                                "count": 2,
+                                "kinds": ["view", "click"],
+                            },
                             {"_id": "other", "count": 1, "kinds": ["view"]},
                         ],
                     )
@@ -6015,10 +8997,42 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
-                    collection.insert_one({"_id": "1", "tenant": "a", "rank": 1, "score": 5, "kind": "view"})
-                    collection.insert_one({"_id": "2", "tenant": "a", "rank": 2, "score": 7, "kind": "view"})
-                    collection.insert_one({"_id": "3", "tenant": "b", "rank": 1, "score": 3, "kind": "click"})
-                    collection.insert_one({"_id": "4", "tenant": "b", "rank": 2, "score": 9, "kind": "click"})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "tenant": "a",
+                            "rank": 1,
+                            "score": 5,
+                            "kind": "view",
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "2",
+                            "tenant": "a",
+                            "rank": 2,
+                            "score": 7,
+                            "kind": "view",
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "3",
+                            "tenant": "b",
+                            "rank": 1,
+                            "score": 3,
+                            "kind": "click",
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "4",
+                            "tenant": "b",
+                            "rank": 2,
+                            "score": 9,
+                            "kind": "click",
+                        },
+                    )
 
                     bucketed = collection.aggregate(
                         [
@@ -6027,9 +9041,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "groupBy": "$score",
                                     "buckets": 2,
                                     "output": {"count": {"$sum": 1}},
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     ).to_list()
                     windowed = collection.aggregate(
                         [
@@ -6040,13 +9054,25 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "output": {
                                         "runningTotal": {
                                             "$sum": "$score",
-                                            "window": {"documents": ["unbounded", "current"]},
-                                        }
+                                            "window": {
+                                                "documents": [
+                                                    "unbounded",
+                                                    "current",
+                                                ],
+                                            },
+                                        },
                                     },
-                                }
+                                },
                             },
-                            {"$project": {"_id": 0, "tenant": 1, "rank": 1, "runningTotal": 1}},
-                        ]
+                            {
+                                "$project": {
+                                    "_id": 0,
+                                    "tenant": 1,
+                                    "rank": 1,
+                                    "runningTotal": 1,
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -6077,11 +9103,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": "2", "group": "a", "rank": 2, "score": 4},
                             {"_id": "3", "group": "a", "rank": 3, "score": 4},
                             {"_id": "4", "group": "b", "rank": 1, "score": 10},
-                        ]
+                        ],
                     )
 
                     grouped = collection.aggregate(
-                        [{"$group": {"_id": "$group", "pop": {"$stdDevPop": "$score"}, "samp": {"$stdDevSamp": "$score"}}}]
+                        [
+                            {
+                                "$group": {
+                                    "_id": "$group",
+                                    "pop": {"$stdDevPop": "$score"},
+                                    "samp": {"$stdDevSamp": "$score"},
+                                },
+                            },
+                        ],
                     ).to_list()
                     windowed = collection.aggregate(
                         [
@@ -6090,27 +9124,69 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "partitionBy": "$group",
                                     "sortBy": {"rank": 1},
                                     "output": {
-                                        "runningPop": {"$stdDevPop": "$score", "window": {"documents": ["unbounded", "current"]}},
+                                        "runningPop": {
+                                            "$stdDevPop": "$score",
+                                            "window": {
+                                                "documents": [
+                                                    "unbounded",
+                                                    "current",
+                                                ],
+                                            },
+                                        },
                                     },
-                                }
+                                },
                             },
-                            {"$project": {"_id": 0, "group": 1, "rank": 1, "runningPop": 1}},
-                        ]
+                            {
+                                "$project": {
+                                    "_id": 0,
+                                    "group": 1,
+                                    "rank": 1,
+                                    "runningPop": 1,
+                                },
+                            },
+                        ],
                     ).to_list()
 
-                    self.assertAlmostEqual(grouped[0]["pop"], 0.94280904158, places=10)
-                    self.assertAlmostEqual(grouped[0]["samp"], 1.15470053838, places=10)
-                    self.assertEqual(grouped[1], {"_id": "b", "pop": 0.0, "samp": None})
+                    self.assertAlmostEqual(
+                        grouped[0]["pop"],
+                        0.94280904158,
+                        places=10,
+                    )
+                    self.assertAlmostEqual(
+                        grouped[0]["samp"],
+                        1.15470053838,
+                        places=10,
+                    )
+                    self.assertEqual(
+                        grouped[1],
+                        {"_id": "b", "pop": 0.0, "samp": None},
+                    )
                     self.assertEqual(windowed[0]["runningPop"], 0.0)
-                    self.assertAlmostEqual(windowed[1]["runningPop"], 1.0, places=10)
-                    self.assertAlmostEqual(windowed[2]["runningPop"], 0.94280904158, places=10)
+                    self.assertAlmostEqual(
+                        windowed[1]["runningPop"],
+                        1.0,
+                        places=10,
+                    )
+                    self.assertAlmostEqual(
+                        windowed[2]["runningPop"],
+                        0.94280904158,
+                        places=10,
+                    )
 
     def test_aggregate_supports_stddev_expression_forms(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
-                    collection.insert_one({"_id": "1", "scores": [2, 4, 4, "x"], "a": 2, "b": 4, "c": 4})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "scores": [2, 4, 4, "x"],
+                            "a": 2,
+                            "b": 4,
+                            "c": 4,
+                        },
+                    )
 
                     documents = collection.aggregate(
                         [
@@ -6119,15 +9195,29 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "_id": 0,
                                     "popArray": {"$stdDevPop": "$scores"},
                                     "sampArray": {"$stdDevSamp": "$scores"},
-                                    "popList": {"$stdDevPop": ["$a", "$b", "$c"]},
-                                }
-                            }
-                        ]
+                                    "popList": {
+                                        "$stdDevPop": ["$a", "$b", "$c"],
+                                    },
+                                },
+                            },
+                        ],
                     ).to_list()
 
-                    self.assertAlmostEqual(documents[0]["popArray"], 0.94280904158, places=10)
-                    self.assertAlmostEqual(documents[0]["sampArray"], 1.15470053838, places=10)
-                    self.assertAlmostEqual(documents[0]["popList"], 0.94280904158, places=10)
+                    self.assertAlmostEqual(
+                        documents[0]["popArray"],
+                        0.94280904158,
+                        places=10,
+                    )
+                    self.assertAlmostEqual(
+                        documents[0]["sampArray"],
+                        1.15470053838,
+                        places=10,
+                    )
+                    self.assertAlmostEqual(
+                        documents[0]["popList"],
+                        0.94280904158,
+                        places=10,
+                    )
 
     def test_aggregate_supports_first_n_and_last_n(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -6141,7 +9231,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": "3", "group": "a", "rank": 3, "score": 6},
                             {"_id": "4", "group": "b", "rank": 1, "score": 9},
                             {"_id": "5", "group": "b", "rank": 2},
-                        ]
+                        ],
                     )
 
                     grouped = collection.aggregate(
@@ -6149,33 +9239,65 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {
                                 "$group": {
                                     "_id": "$group",
-                                    "firstTwo": {"$firstN": {"input": "$score", "n": 2}},
-                                    "lastTwo": {"$lastN": {"input": "$score", "n": 2}},
-                                }
+                                    "firstTwo": {
+                                        "$firstN": {"input": "$score", "n": 2},
+                                    },
+                                    "lastTwo": {
+                                        "$lastN": {"input": "$score", "n": 2},
+                                    },
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
                     projected = collection.aggregate(
                         [
                             {
                                 "$project": {
                                     "_id": 0,
-                                    "firstScores": {"$firstN": {"input": [10, 20, 30, 40], "n": 3}},
-                                    "lastScores": {"$lastN": {"input": [10, 20, 30, 40], "n": 2}},
-                                    "topScores": {"$maxN": {"input": [1, None, 3, 2], "n": 2}},
-                                    "bottomScores": {"$minN": {"input": [1, None, 3, 2], "n": 2}},
-                                }
+                                    "firstScores": {
+                                        "$firstN": {
+                                            "input": [10, 20, 30, 40],
+                                            "n": 3,
+                                        },
+                                    },
+                                    "lastScores": {
+                                        "$lastN": {
+                                            "input": [10, 20, 30, 40],
+                                            "n": 2,
+                                        },
+                                    },
+                                    "topScores": {
+                                        "$maxN": {
+                                            "input": [1, None, 3, 2],
+                                            "n": 2,
+                                        },
+                                    },
+                                    "bottomScores": {
+                                        "$minN": {
+                                            "input": [1, None, 3, 2],
+                                            "n": 2,
+                                        },
+                                    },
+                                },
                             },
                             {"$limit": 1},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         grouped,
                         [
-                            {"_id": "a", "firstTwo": [2, 4], "lastTwo": [4, 6]},
-                            {"_id": "b", "firstTwo": [9, None], "lastTwo": [9, None]},
+                            {
+                                "_id": "a",
+                                "firstTwo": [2, 4],
+                                "lastTwo": [4, 6],
+                            },
+                            {
+                                "_id": "b",
+                                "firstTwo": [9, None],
+                                "lastTwo": [9, None],
+                            },
                         ],
                     )
                     self.assertEqual(
@@ -6186,7 +9308,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "lastScores": [30, 40],
                                 "topScores": [3, 2],
                                 "bottomScores": [1, 2],
-                            }
+                            },
                         ],
                     )
 
@@ -6197,12 +9319,41 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.analytics.events
                     collection.insert_many(
                         [
-                            {"_id": "1", "group": "a", "rank": 1, "score": 2, "label": "a1"},
-                            {"_id": "2", "group": "a", "rank": 2, "score": 4, "label": "a2"},
-                            {"_id": "3", "group": "a", "rank": 3, "score": 4, "label": "a3"},
-                            {"_id": "4", "group": "b", "rank": 1, "score": None, "label": "b1"},
-                            {"_id": "5", "group": "b", "rank": 2, "label": "b2"},
-                        ]
+                            {
+                                "_id": "1",
+                                "group": "a",
+                                "rank": 1,
+                                "score": 2,
+                                "label": "a1",
+                            },
+                            {
+                                "_id": "2",
+                                "group": "a",
+                                "rank": 2,
+                                "score": 4,
+                                "label": "a2",
+                            },
+                            {
+                                "_id": "3",
+                                "group": "a",
+                                "rank": 3,
+                                "score": 4,
+                                "label": "a3",
+                            },
+                            {
+                                "_id": "4",
+                                "group": "b",
+                                "rank": 1,
+                                "score": None,
+                                "label": "b1",
+                            },
+                            {
+                                "_id": "5",
+                                "group": "b",
+                                "rank": 2,
+                                "label": "b2",
+                            },
+                        ],
                     )
 
                     grouped = collection.aggregate(
@@ -6210,21 +9361,55 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {
                                 "$group": {
                                     "_id": "$group",
-                                    "topLabel": {"$top": {"sortBy": {"score": -1}, "output": "$label"}},
-                                    "bottomLabel": {"$bottom": {"sortBy": {"score": -1}, "output": "$label"}},
-                                    "topTwo": {"$topN": {"sortBy": {"score": -1}, "output": "$label", "n": 2}},
-                                    "bottomTwo": {"$bottomN": {"sortBy": {"score": -1}, "output": "$label", "n": 2}},
-                                }
+                                    "topLabel": {
+                                        "$top": {
+                                            "sortBy": {"score": -1},
+                                            "output": "$label",
+                                        },
+                                    },
+                                    "bottomLabel": {
+                                        "$bottom": {
+                                            "sortBy": {"score": -1},
+                                            "output": "$label",
+                                        },
+                                    },
+                                    "topTwo": {
+                                        "$topN": {
+                                            "sortBy": {"score": -1},
+                                            "output": "$label",
+                                            "n": 2,
+                                        },
+                                    },
+                                    "bottomTwo": {
+                                        "$bottomN": {
+                                            "sortBy": {"score": -1},
+                                            "output": "$label",
+                                            "n": 2,
+                                        },
+                                    },
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         grouped,
                         [
-                            {"_id": "a", "topLabel": "a2", "bottomLabel": "a1", "topTwo": ["a2", "a3"], "bottomTwo": ["a2", "a1"]},
-                            {"_id": "b", "topLabel": "b1", "bottomLabel": "b1", "topTwo": ["b1", "b2"], "bottomTwo": ["b1", "b2"]},
+                            {
+                                "_id": "a",
+                                "topLabel": "a2",
+                                "bottomLabel": "a1",
+                                "topTwo": ["a2", "a3"],
+                                "bottomTwo": ["a2", "a1"],
+                            },
+                            {
+                                "_id": "b",
+                                "topLabel": "b1",
+                                "bottomLabel": "b1",
+                                "topTwo": ["b1", "b2"],
+                                "bottomTwo": ["b1", "b2"],
+                            },
                         ],
                     )
 
@@ -6235,11 +9420,29 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.analytics.events
                     collection.insert_many(
                         [
-                            {"_id": "1", "group": "a", "rank": 1, "score": 1, "scores": [1, 2, 3, 4]},
-                            {"_id": "2", "group": "a", "rank": 2, "score": 5, "scores": [10, 20, 30, 40]},
-                            {"_id": "3", "group": "a", "rank": 3, "score": "x", "scores": [7, "x", 9]},
+                            {
+                                "_id": "1",
+                                "group": "a",
+                                "rank": 1,
+                                "score": 1,
+                                "scores": [1, 2, 3, 4],
+                            },
+                            {
+                                "_id": "2",
+                                "group": "a",
+                                "rank": 2,
+                                "score": 5,
+                                "scores": [10, 20, 30, 40],
+                            },
+                            {
+                                "_id": "3",
+                                "group": "a",
+                                "rank": 3,
+                                "score": "x",
+                                "scores": [7, "x", 9],
+                            },
                             {"_id": "4", "group": "b", "rank": 1, "score": 2},
-                        ]
+                        ],
                     )
 
                     grouped = collection.aggregate(
@@ -6247,19 +9450,38 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {
                                 "$group": {
                                     "_id": "$group",
-                                    "medianScore": {"$median": {"input": "$score", "method": "approximate"}},
-                                    "percentiles": {"$percentile": {"input": "$score", "p": [0.0, 0.5, 1.0], "method": "approximate"}},
-                                }
+                                    "medianScore": {
+                                        "$median": {
+                                            "input": "$score",
+                                            "method": "approximate",
+                                        },
+                                    },
+                                    "percentiles": {
+                                        "$percentile": {
+                                            "input": "$score",
+                                            "p": [0.0, 0.5, 1.0],
+                                            "method": "approximate",
+                                        },
+                                    },
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         grouped,
                         [
-                            {"_id": "a", "medianScore": 1, "percentiles": [1, 1, 5]},
-                            {"_id": "b", "medianScore": 2, "percentiles": [2, 2, 2]},
+                            {
+                                "_id": "a",
+                                "medianScore": 1,
+                                "percentiles": [1, 1, 5],
+                            },
+                            {
+                                "_id": "b",
+                                "medianScore": 2,
+                                "percentiles": [2, 2, 2],
+                            },
                         ],
                     )
 
@@ -6274,7 +9496,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": "2", "group": "a", "score": 20},
                             {"_id": "3", "group": "a", "score": 20},
                             {"_id": "4", "group": "b", "score": 5},
-                        ]
+                        ],
                     )
 
                     documents = collection.aggregate(
@@ -6288,19 +9510,56 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "dense": {"$denseRank": {}},
                                         "docnum": {"$documentNumber": {}},
                                     },
-                                }
+                                },
                             },
-                            {"$project": {"_id": 1, "group": 1, "score": 1, "rank": 1, "dense": 1, "docnum": 1}},
-                        ]
+                            {
+                                "$project": {
+                                    "_id": 1,
+                                    "group": 1,
+                                    "score": 1,
+                                    "rank": 1,
+                                    "dense": 1,
+                                    "docnum": 1,
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         documents,
                         [
-                            {"_id": "1", "group": "a", "score": 10, "rank": 1, "dense": 1, "docnum": 1},
-                            {"_id": "2", "group": "a", "score": 20, "rank": 2, "dense": 2, "docnum": 2},
-                            {"_id": "3", "group": "a", "score": 20, "rank": 2, "dense": 2, "docnum": 3},
-                            {"_id": "4", "group": "b", "score": 5, "rank": 1, "dense": 1, "docnum": 1},
+                            {
+                                "_id": "1",
+                                "group": "a",
+                                "score": 10,
+                                "rank": 1,
+                                "dense": 1,
+                                "docnum": 1,
+                            },
+                            {
+                                "_id": "2",
+                                "group": "a",
+                                "score": 20,
+                                "rank": 2,
+                                "dense": 2,
+                                "docnum": 2,
+                            },
+                            {
+                                "_id": "3",
+                                "group": "a",
+                                "score": 20,
+                                "rank": 2,
+                                "dense": 2,
+                                "docnum": 3,
+                            },
+                            {
+                                "_id": "4",
+                                "group": "b",
+                                "score": 5,
+                                "rank": 1,
+                                "dense": 1,
+                                "docnum": 1,
+                            },
                         ],
                     )
 
@@ -6309,24 +9568,52 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.analytics.events
-                    collection.insert_one({"_id": "1", "tenant": "a", "rank": 1, "kind": "view", "label": "Ada"})
-                    collection.insert_one({"_id": "2", "tenant": "a", "rank": 2, "kind": "view", "label": "Lovelace"})
-                    collection.insert_one({"_id": "3", "tenant": "a", "rank": 3, "kind": "click", "label": "Analytical"})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "tenant": "a",
+                            "rank": 1,
+                            "kind": "view",
+                            "label": "Ada",
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "2",
+                            "tenant": "a",
+                            "rank": 2,
+                            "kind": "view",
+                            "label": "Lovelace",
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "3",
+                            "tenant": "a",
+                            "rank": 3,
+                            "kind": "click",
+                            "label": "Analytical",
+                        },
+                    )
 
                     projected = collection.aggregate(
                         [
                             {
                                 "$project": {
                                     "_id": 0,
-                                    "full": {"$concat": ["$label", "-", "$kind"]},
+                                    "full": {
+                                        "$concat": ["$label", "-", "$kind"],
+                                    },
                                     "lower": {"$toLower": "$label"},
                                     "upper": {"$toUpper": "$kind"},
                                     "prefix": {"$substr": ["$label", 0, 3]},
-                                    "compare": {"$strcasecmp": ["$kind", "VIEW"]},
-                                }
+                                    "compare": {
+                                        "$strcasecmp": ["$kind", "VIEW"],
+                                    },
+                                },
                             },
                             {"$sort": {"full": 1}},
-                        ]
+                        ],
                     ).to_list()
                     grouped = collection.aggregate(
                         [
@@ -6336,22 +9623,46 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "_id": "$tenant",
                                     "lastKind": {"$last": "$kind"},
                                     "kinds": {"$addToSet": "$kind"},
-                                }
+                                },
                             },
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
                         projected,
                         [
-                            {"full": "Ada-view", "lower": "ada", "upper": "VIEW", "prefix": "Ada", "compare": 0},
-                            {"full": "Analytical-click", "lower": "analytical", "upper": "CLICK", "prefix": "Ana", "compare": -1},
-                            {"full": "Lovelace-view", "lower": "lovelace", "upper": "VIEW", "prefix": "Lov", "compare": 0},
+                            {
+                                "full": "Ada-view",
+                                "lower": "ada",
+                                "upper": "VIEW",
+                                "prefix": "Ada",
+                                "compare": 0,
+                            },
+                            {
+                                "full": "Analytical-click",
+                                "lower": "analytical",
+                                "upper": "CLICK",
+                                "prefix": "Ana",
+                                "compare": -1,
+                            },
+                            {
+                                "full": "Lovelace-view",
+                                "lower": "lovelace",
+                                "upper": "VIEW",
+                                "prefix": "Lov",
+                                "compare": 0,
+                            },
                         ],
                     )
                     self.assertEqual(
                         grouped,
-                        [{"_id": "a", "lastKind": "click", "kinds": ["view", "click"]}],
+                        [
+                            {
+                                "_id": "a",
+                                "lastKind": "click",
+                                "kinds": ["view", "click"],
+                            },
+                        ],
                     )
 
     def test_aggregate_supports_split_count_and_merge_objects(self):
@@ -6359,15 +9670,41 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.analytics.events
-                    collection.insert_one({"_id": "1", "tenant": "a", "text": "Ada Lovelace", "meta": {"x": 1}})
-                    collection.insert_one({"_id": "2", "tenant": "a", "text": "Grace Hopper", "meta": {"y": 2}})
-                    collection.insert_one({"_id": "3", "tenant": "b", "text": "Alan Turing", "meta": None})
+                    collection.insert_one(
+                        {
+                            "_id": "1",
+                            "tenant": "a",
+                            "text": "Ada Lovelace",
+                            "meta": {"x": 1},
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "2",
+                            "tenant": "a",
+                            "text": "Grace Hopper",
+                            "meta": {"y": 2},
+                        },
+                    )
+                    collection.insert_one(
+                        {
+                            "_id": "3",
+                            "tenant": "b",
+                            "text": "Alan Turing",
+                            "meta": None,
+                        },
+                    )
 
                     projected = collection.aggregate(
                         [
-                            {"$project": {"_id": 0, "parts": {"$split": ["$text", " "]}}},
+                            {
+                                "$project": {
+                                    "_id": 0,
+                                    "parts": {"$split": ["$text", " "]},
+                                },
+                            },
                             {"$limit": 1},
-                        ]
+                        ],
                     ).to_list()
                     grouped = collection.aggregate(
                         [
@@ -6376,17 +9713,24 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                     "_id": "$tenant",
                                     "count": {"$count": {}},
                                     "merged": {"$mergeObjects": "$meta"},
-                                }
+                                },
                             },
                             {"$sort": {"_id": 1}},
-                        ]
+                        ],
                     ).to_list()
 
-                    self.assertEqual(projected, [{"parts": ["Ada", "Lovelace"]}])
+                    self.assertEqual(
+                        projected,
+                        [{"parts": ["Ada", "Lovelace"]}],
+                    )
                     self.assertEqual(
                         grouped,
                         [
-                            {"_id": "a", "count": 2, "merged": {"x": 1, "y": 2}},
+                            {
+                                "_id": "a",
+                                "count": 2,
+                                "merged": {"x": 1, "y": 2},
+                            },
                             {"_id": "b", "count": 1, "merged": {}},
                         ],
                     )
@@ -6400,11 +9744,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection.insert_one({"_id": "2", "kind": "view"})
                     collection.insert_one({"_id": "3", "kind": "click"})
 
-                    counted = collection.aggregate([{"$count": "total"}]).to_list()
-                    sorted_counts = collection.aggregate([{"$sortByCount": "$kind"}]).to_list()
+                    counted = collection.aggregate(
+                        [{"$count": "total"}],
+                    ).to_list()
+                    sorted_counts = collection.aggregate(
+                        [{"$sortByCount": "$kind"}],
+                    ).to_list()
 
                     self.assertEqual(counted, [{"total": 3}])
-                    self.assertEqual(sorted_counts, [{"_id": "view", "count": 2}, {"_id": "click", "count": 1}])
+                    self.assertEqual(
+                        sorted_counts,
+                        [
+                            {"_id": "view", "count": 2},
+                            {"_id": "click", "count": 1},
+                        ],
+                    )
 
     def test_aggregate_supports_set_window_fields_numeric_range(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -6424,12 +9778,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                         "nearbyTotal": {
                                             "$sum": "$score",
                                             "window": {"range": [-2, 2]},
-                                        }
+                                        },
                                     },
-                                }
+                                },
                             },
                             {"$project": {"_id": 1, "nearbyTotal": 1}},
-                        ]
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -6462,15 +9816,34 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             {"_id": "1", "bucket": "a", "x": 1, "qty": 10},
                             {"_id": "2", "bucket": "a", "x": 3, "qty": None},
                             {"_id": "3", "bucket": "a", "x": 4, "qty": 40},
-                        ]
+                        ],
                     )
 
                     densified = source.aggregate(
                         [
-                            {"$project": {"_id": 0, "bucket": 1, "x": 1, "qty": 1}},
-                            {"$densify": {"field": "x", "partitionByFields": ["bucket"], "range": {"step": 1, "bounds": "full"}}},
-                            {"$fill": {"sortBy": {"x": 1}, "partitionByFields": ["bucket"], "output": {"qty": {"method": "linear"}}}},
-                        ]
+                            {
+                                "$project": {
+                                    "_id": 0,
+                                    "bucket": 1,
+                                    "x": 1,
+                                    "qty": 1,
+                                },
+                            },
+                            {
+                                "$densify": {
+                                    "field": "x",
+                                    "partitionByFields": ["bucket"],
+                                    "range": {"step": 1, "bounds": "full"},
+                                },
+                            },
+                            {
+                                "$fill": {
+                                    "sortBy": {"x": 1},
+                                    "partitionByFields": ["bucket"],
+                                    "output": {"qty": {"method": "linear"}},
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(
@@ -6486,13 +9859,26 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     merged = source.aggregate(
                         [
                             {"$project": {"_id": 1, "bucket": 1}},
-                            {"$merge": {"into": "series_filled", "whenMatched": "merge", "whenNotMatched": "insert"}},
-                        ]
+                            {
+                                "$merge": {
+                                    "into": "series_filled",
+                                    "whenMatched": "merge",
+                                    "whenNotMatched": "insert",
+                                },
+                            },
+                        ],
                     ).to_list()
 
                     self.assertEqual(merged, [])
                     stored = sink.find({}, sort=[("_id", 1)]).to_list()
-                    self.assertEqual(stored, [{"_id": "1", "bucket": "a"}, {"_id": "2", "bucket": "a"}, {"_id": "3", "bucket": "a"}])
+                    self.assertEqual(
+                        stored,
+                        [
+                            {"_id": "1", "bucket": "a"},
+                            {"_id": "2", "bucket": "a"},
+                            {"_id": "3", "bucket": "a"},
+                        ],
+                    )
 
     def test_index_metadata_round_trip(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -6500,7 +9886,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
 
-                    name = collection.create_index([("profile.name", -1)], unique=False)
+                    name = collection.create_index(
+                        [("profile.name", -1)],
+                        unique=False,
+                    )
                     indexes = collection.list_indexes().to_list()
                     info = collection.index_information()
 
@@ -6508,7 +9897,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         indexes,
                         [
-                            {"name": "_id_", "key": {"_id": 1}, "unique": True},
+                            {
+                                "name": "_id_",
+                                "key": {"_id": 1},
+                                "unique": True,
+                            },
                             {
                                 "name": "profile.name_-1",
                                 "key": {"profile.name": -1},
@@ -6530,7 +9923,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
 
-                    name = collection.create_index({"email": 1, "created_at": -1})
+                    name = collection.create_index(
+                        {"email": 1, "created_at": -1},
+                    )
                     info = collection.index_information()
 
                     self.assertEqual(name, "email_1_created_at_-1")
@@ -6546,28 +9941,52 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.test.users
                     collection.insert_many(
                         [
-                            {"_id": "1", "content": "Ada Lovelace wrote the first algorithm", "location": [40.0, -3.0]},
-                            {"_id": "2", "content": "Grace Hopper built compilers", "location": [41.0, -3.5]},
-                        ]
+                            {
+                                "_id": "1",
+                                "content": "Ada Lovelace wrote the first algorithm",
+                                "location": [40.0, -3.0],
+                            },
+                            {
+                                "_id": "2",
+                                "content": "Grace Hopper built compilers",
+                                "location": [41.0, -3.5],
+                            },
+                        ],
                     )
 
                     text_name = collection.create_index({"content": "text"})
-                    geo_name = collection.create_index([("location", "2dsphere")])
+                    geo_name = collection.create_index(
+                        [("location", "2dsphere")],
+                    )
                     indexes = collection.list_indexes().to_list()
                     info = collection.index_information()
 
                     self.assertEqual(text_name, "content_text")
                     self.assertEqual(geo_name, "location_2dsphere")
                     self.assertIn(
-                        {"name": "content_text", "key": {"content": "text"}, "unique": False},
+                        {
+                            "name": "content_text",
+                            "key": {"content": "text"},
+                            "unique": False,
+                        },
                         indexes,
                     )
                     self.assertIn(
-                        {"name": "location_2dsphere", "key": {"location": "2dsphere"}, "unique": False},
+                        {
+                            "name": "location_2dsphere",
+                            "key": {"location": "2dsphere"},
+                            "unique": False,
+                        },
                         indexes,
                     )
-                    self.assertEqual(info["content_text"], {"key": [("content", "text")]})
-                    self.assertEqual(info["location_2dsphere"], {"key": [("location", "2dsphere")]})
+                    self.assertEqual(
+                        info["content_text"],
+                        {"key": [("content", "text")]},
+                    )
+                    self.assertEqual(
+                        info["location_2dsphere"],
+                        {"key": [("location", "2dsphere")]},
+                    )
                     self.assertEqual(
                         collection.find(
                             {"$text": {"$search": "algorithm"}},
@@ -6580,19 +9999,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {
                             "find": "users",
                             "filter": {"$text": {"$search": "algorithm"}},
-                            "projection": {"_id": 1, "score": {"$meta": "textScore"}},
+                            "projection": {
+                                "_id": 1,
+                                "score": {"$meta": "textScore"},
+                            },
                             "sort": {"score": {"$meta": "textScore"}},
-                        }
+                        },
                     )
                     self.assertEqual(
                         command_result["cursor"]["firstBatch"],
                         [{"_id": "1", "score": 1.0}],
                     )
-                    explain = collection.find({"$text": {"$search": "algorithm"}}).explain()
+                    explain = collection.find(
+                        {"$text": {"$search": "algorithm"}},
+                    ).explain()
                     self.assertIn("textQuery", explain["details"])
 
                     with self.assertRaises(OperationFailure):
-                        collection.find({"content": "Ada"}, hint="content_text").to_list()
+                        collection.find(
+                            {"content": "Ada"},
+                            hint="content_text",
+                        ).to_list()
 
     def test_collection_rejects_unsupported_special_index_shapes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -6600,9 +10027,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
 
-                    index_name = collection.create_index([("tenant", 1), ("content", "text")])
+                    index_name = collection.create_index(
+                        [("tenant", 1), ("content", "text")],
+                    )
                     with self.assertRaises(OperationFailure):
-                        collection.create_index([("content", "hashed")], unique=True)
+                        collection.create_index(
+                            [("content", "hashed")],
+                            unique=True,
+                        )
 
                     indexes = collection.list_indexes().to_list()
                     self.assertIn(
@@ -6621,13 +10053,27 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.test.articles
                     collection.insert_many(
                         [
-                            {"_id": "1", "title": "Ada", "content": "First algorithm"},
-                            {"_id": "2", "title": "Grace", "content": "Compiler pioneer"},
-                            {"_id": "3", "title": "Ada", "content": "Algorithm notes"},
-                        ]
+                            {
+                                "_id": "1",
+                                "title": "Ada",
+                                "content": "First algorithm",
+                            },
+                            {
+                                "_id": "2",
+                                "title": "Grace",
+                                "content": "Compiler pioneer",
+                            },
+                            {
+                                "_id": "3",
+                                "title": "Ada",
+                                "content": "Algorithm notes",
+                            },
+                        ],
                     )
 
-                    index_name = collection.create_index([("title", "text"), ("content", "text")])
+                    index_name = collection.create_index(
+                        [("title", "text"), ("content", "text")],
+                    )
                     indexes = collection.list_indexes().to_list()
                     info = collection.index_information()
                     results = collection.find(
@@ -6635,7 +10081,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"_id": 1, "score": {"$meta": "textScore"}},
                         sort={"score": {"$meta": "textScore"}},
                     ).to_list()
-                    explain = collection.find({"$text": {"$search": "Ada algorithm"}}).explain()
+                    explain = collection.find(
+                        {"$text": {"$search": "Ada algorithm"}},
+                    ).explain()
 
                     self.assertEqual(index_name, "title_text_content_text")
                     self.assertIn(
@@ -6662,7 +10110,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ["title", "content"],
                     )
 
-    def test_collection_text_index_supports_weights_and_language_metadata(self):
+    def test_collection_text_index_supports_weights_and_language_metadata(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -6671,7 +10121,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {"_id": "1", "title": "Ada", "content": "none"},
                             {"_id": "2", "title": "none", "content": "Ada"},
-                        ]
+                        ],
                     )
 
                     index_name = collection.create_index(
@@ -6688,7 +10138,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"_id": 1, "score": {"$meta": "textScore"}},
                         sort={"score": {"$meta": "textScore"}},
                     ).to_list()
-                    explain = collection.find({"$text": {"$search": "Ada"}}).explain()
+                    explain = collection.find(
+                        {"$text": {"$search": "Ada"}},
+                    ).explain()
 
                     self.assertEqual(index_name, "title_text_content_text")
                     self.assertIn(
@@ -6713,26 +10165,43 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         results,
-                        [{"_id": "1", "score": 5.0}, {"_id": "2", "score": 1.0}],
+                        [
+                            {"_id": "1", "score": 5.0},
+                            {"_id": "2", "score": 1.0},
+                        ],
                     )
                     self.assertEqual(
                         explain["details"]["textQuery"]["weights"],
                         {"title": 5, "content": 1},
                     )
-                    self.assertEqual(explain["details"]["textQuery"]["defaultLanguage"], "english")
-                    self.assertEqual(explain["details"]["textQuery"]["languageOverride"], "lang")
+                    self.assertEqual(
+                        explain["details"]["textQuery"]["defaultLanguage"],
+                        "english",
+                    )
+                    self.assertEqual(
+                        explain["details"]["textQuery"]["languageOverride"],
+                        "lang",
+                    )
 
-    def test_collection_text_query_supports_phrase_and_exclusion_semantics(self):
+    def test_collection_text_query_supports_phrase_and_exclusion_semantics(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.text_semantics
                     collection.insert_many(
                         [
-                            {"_id": "1", "content": "Ada Lovelace algorithm notes"},
-                            {"_id": "2", "content": "Ada Lovelace compiler notes"},
+                            {
+                                "_id": "1",
+                                "content": "Ada Lovelace algorithm notes",
+                            },
+                            {
+                                "_id": "2",
+                                "content": "Ada Lovelace compiler notes",
+                            },
                             {"_id": "3", "content": "Ada debug note"},
-                        ]
+                        ],
                     )
                     collection.create_index({"content": "text"})
 
@@ -6747,33 +10216,77 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         sort={"_id": 1},
                     ).to_list()
                     explain = collection.find(
-                        {"$text": {"$search": '"Ada Lovelace" -compiler -"debug note"'}},
+                        {
+                            "$text": {
+                                "$search": '"Ada Lovelace" -compiler -"debug note"',
+                            },
+                        },
                     ).explain()
 
-                    self.assertEqual(phrase_results, [{"_id": "1", "score": 2.0}])
-                    self.assertEqual(exclusion_results, [{"_id": "1"}, {"_id": "2"}])
-                    self.assertEqual(explain["details"]["textQuery"]["requiredPhrases"], ["ada lovelace"])
-                    self.assertEqual(explain["details"]["textQuery"]["excludedTerms"], ["compiler"])
-                    self.assertEqual(explain["details"]["textQuery"]["excludedPhrases"], ["debug note"])
+                    self.assertEqual(
+                        phrase_results,
+                        [{"_id": "1", "score": 2.0}],
+                    )
+                    self.assertEqual(
+                        exclusion_results,
+                        [{"_id": "1"}, {"_id": "2"}],
+                    )
+                    self.assertEqual(
+                        explain["details"]["textQuery"]["requiredPhrases"],
+                        ["ada lovelace"],
+                    )
+                    self.assertEqual(
+                        explain["details"]["textQuery"]["excludedTerms"],
+                        ["compiler"],
+                    )
+                    self.assertEqual(
+                        explain["details"]["textQuery"]["excludedPhrases"],
+                        ["debug note"],
+                    )
 
-    def test_collection_text_query_hint_selects_text_index_and_rejects_non_text_hint(self):
+    def test_collection_text_query_hint_selects_text_index_and_rejects_non_text_hint(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.text_hint
                     collection.insert_many(
                         [
-                            {"_id": "1", "title": "Ada", "body": "none", "rank": 1},
-                            {"_id": "2", "title": "none", "body": "Ada", "rank": 2},
-                            {"_id": "3", "title": "Ada", "body": "Ada", "rank": 3},
-                        ]
+                            {
+                                "_id": "1",
+                                "title": "Ada",
+                                "body": "none",
+                                "rank": 1,
+                            },
+                            {
+                                "_id": "2",
+                                "title": "none",
+                                "body": "Ada",
+                                "rank": 2,
+                            },
+                            {
+                                "_id": "3",
+                                "title": "Ada",
+                                "body": "Ada",
+                                "rank": 3,
+                            },
+                        ],
                     )
-                    collection.create_index([("title", "text")], name="title_text")
-                    collection.create_index([("body", "text")], name="body_text")
+                    collection.create_index(
+                        [("title", "text")],
+                        name="title_text",
+                    )
+                    collection.create_index(
+                        [("body", "text")],
+                        name="body_text",
+                    )
                     collection.create_index([("rank", 1)], name="rank_1")
 
                     with self.assertRaisesRegex(OperationFailure, "ambiguous"):
-                        collection.find({"$text": {"$search": "Ada"}}).to_list()
+                        collection.find(
+                            {"$text": {"$search": "Ada"}},
+                        ).to_list()
 
                     title_results = collection.find(
                         {"$text": {"$search": "Ada"}},
@@ -6791,10 +10304,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {
                             "find": "text_hint",
                             "filter": {"$text": {"$search": "Ada"}},
-                            "projection": {"_id": 1, "score": {"$meta": "textScore"}},
+                            "projection": {
+                                "_id": 1,
+                                "score": {"$meta": "textScore"},
+                            },
                             "sort": {"score": {"$meta": "textScore"}},
                             "hint": "body_text",
-                        }
+                        },
                     )
                     explanation = collection.find(
                         {"$text": {"$search": "Ada"}},
@@ -6810,13 +10326,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ["2", "3"],
                     )
                     self.assertEqual(
-                        [document["_id"] for document in command_result["cursor"]["firstBatch"]],
+                        [
+                            document["_id"]
+                            for document in command_result["cursor"]["firstBatch"]
+                        ],
                         ["2", "3"],
                     )
                     self.assertEqual(explanation["hinted_index"], "body_text")
-                    self.assertEqual(explanation["details"]["textQuery"]["index"], "body_text")
+                    self.assertEqual(
+                        explanation["details"]["textQuery"]["index"],
+                        "body_text",
+                    )
 
-                    with self.assertRaisesRegex(OperationFailure, "text index"):
+                    with self.assertRaisesRegex(
+                        OperationFailure,
+                        "text index",
+                    ):
                         collection.find(
                             {"$text": {"$search": "Ada"}},
                             hint="rank_1",
@@ -6829,20 +10354,57 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.test.places
                     collection.insert_many(
                         [
-                            {"_id": "a", "name": "Ada", "location": {"type": "Point", "coordinates": [0, 0]}, "kind": "home"},
-                            {"_id": "b", "name": "Grace", "location": [2, 0], "kind": "office"},
-                            {"_id": "c", "name": "Linus", "location": {"type": "Point", "coordinates": [1, 1]}, "kind": "home"},
-                            {"_id": "d", "name": "Route", "location": {"type": "LineString", "coordinates": [[0, 0], [3, 0]]}, "kind": "route"},
+                            {
+                                "_id": "a",
+                                "name": "Ada",
+                                "location": {
+                                    "type": "Point",
+                                    "coordinates": [0, 0],
+                                },
+                                "kind": "home",
+                            },
+                            {
+                                "_id": "b",
+                                "name": "Grace",
+                                "location": [2, 0],
+                                "kind": "office",
+                            },
+                            {
+                                "_id": "c",
+                                "name": "Linus",
+                                "location": {
+                                    "type": "Point",
+                                    "coordinates": [1, 1],
+                                },
+                                "kind": "home",
+                            },
+                            {
+                                "_id": "d",
+                                "name": "Route",
+                                "location": {
+                                    "type": "LineString",
+                                    "coordinates": [[0, 0], [3, 0]],
+                                },
+                                "kind": "route",
+                            },
                             {
                                 "_id": "e",
                                 "name": "Campus",
                                 "location": {
                                     "type": "Polygon",
-                                    "coordinates": [[[4, -1], [6, -1], [6, 1], [4, 1], [4, -1]]],
+                                    "coordinates": [
+                                        [
+                                            [4, -1],
+                                            [6, -1],
+                                            [6, 1],
+                                            [4, 1],
+                                            [4, -1],
+                                        ],
+                                    ],
                                 },
                                 "kind": "area",
                             },
-                        ]
+                        ],
                     )
 
                     within = collection.find(
@@ -6851,48 +10413,74 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "$geoWithin": {
                                     "$geometry": {
                                         "type": "Polygon",
-                                        "coordinates": [[[-1, -1], [1.5, -1], [1.5, 1.5], [-1, 1.5], [-1, -1]]],
-                                    }
-                                }
-                            }
-                        }
+                                        "coordinates": [
+                                            [
+                                                [-1, -1],
+                                                [1.5, -1],
+                                                [1.5, 1.5],
+                                                [-1, 1.5],
+                                                [-1, -1],
+                                            ],
+                                        ],
+                                    },
+                                },
+                            },
+                        },
                     ).to_list()
                     near = collection.find(
                         {
                             "location": {
                                 "$near": {
-                                    "$geometry": {"type": "Point", "coordinates": [0, 0]},
+                                    "$geometry": {
+                                        "type": "Point",
+                                        "coordinates": [0, 0],
+                                    },
                                     "$maxDistance": 1.5,
-                                }
-                            }
-                        }
+                                },
+                            },
+                        },
                     ).to_list()
                     intersects = collection.find(
                         {
                             "location": {
                                 "$geoIntersects": {
-                                    "$geometry": {"type": "Point", "coordinates": [2, 0]},
-                                }
-                            }
-                        }
+                                    "$geometry": {
+                                        "type": "Point",
+                                        "coordinates": [2, 0],
+                                    },
+                                },
+                            },
+                        },
                     ).to_list()
                     aggregate = collection.aggregate(
                         [
                             {
                                 "$geoNear": {
-                                    "near": {"type": "Point", "coordinates": [0, 0]},
+                                    "near": {
+                                        "type": "Point",
+                                        "coordinates": [0, 0],
+                                    },
                                     "key": "location",
                                     "distanceField": "dist",
                                     "query": {"kind": "home"},
-                                }
+                                },
                             },
                             {"$project": {"_id": 1, "dist": 1}},
-                        ]
+                        ],
                     ).to_list()
 
-                    self.assertEqual({document["_id"] for document in within}, {"a", "c"})
-                    self.assertEqual({document["_id"] for document in near}, {"a", "c", "d"})
-                    self.assertEqual({document["_id"] for document in intersects}, {"b", "d"})
+                    self.assertEqual(
+                        {document["_id"] for document in within},
+                        {"a", "c"},
+                    )
+                    self.assertEqual(
+                        {document["_id"] for document in near},
+                        {"a", "c", "d"},
+                    )
+                    self.assertEqual(
+                        {document["_id"] for document in intersects},
+                        {"b", "d"},
+                    )
                     self.assertEqual(
                         aggregate,
                         [
@@ -6901,33 +10489,67 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
-    def test_aggregate_supports_coll_stats_stage_via_collection_and_command(self):
+    def test_aggregate_supports_coll_stats_stage_via_collection_and_command(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
-                    collection.insert_many([{"_id": "1", "kind": "view"}, {"_id": "2", "kind": "click"}])
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "kind": "view"},
+                            {"_id": "2", "kind": "click"},
+                        ],
+                    )
                     collection.create_index([("kind", 1)], name="kind_idx")
 
                     collstats = list(
-                        collection.aggregate([{"$collStats": {"count": {}, "storageStats": {"scale": 2}}}])
+                        collection.aggregate(
+                            [
+                                {
+                                    "$collStats": {
+                                        "count": {},
+                                        "storageStats": {"scale": 2},
+                                    },
+                                },
+                            ],
+                        ),
                     )
                     command_result = client.test.command(
                         {
                             "aggregate": "events",
-                            "pipeline": [{"$collStats": {"count": {}, "storageStats": {"scale": 2}}}],
+                            "pipeline": [
+                                {
+                                    "$collStats": {
+                                        "count": {},
+                                        "storageStats": {"scale": 2},
+                                    },
+                                },
+                            ],
                             "cursor": {},
-                        }
+                        },
                     )
 
                     expected = collstats[0]
                     self.assertEqual(expected["ns"], "test.events")
                     self.assertEqual(expected["count"], {"count": 2})
-                    self.assertEqual(expected["storageStats"]["ns"], "test.events")
-                    self.assertEqual(expected["storageStats"]["scaleFactor"], 2)
-                    self.assertEqual(command_result["cursor"]["firstBatch"], collstats)
+                    self.assertEqual(
+                        expected["storageStats"]["ns"],
+                        "test.events",
+                    )
+                    self.assertEqual(
+                        expected["storageStats"]["scaleFactor"],
+                        2,
+                    )
+                    self.assertEqual(
+                        command_result["cursor"]["firstBatch"],
+                        collstats,
+                    )
 
-    def test_database_command_find_supports_advanced_projection_operators(self):
+    def test_database_command_find_supports_advanced_projection_operators(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -6936,11 +10558,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {
                                 "_id": "1",
-                                "students": [{"school": 101, "age": 10}, {"school": 102, "age": 11}],
+                                "students": [
+                                    {"school": 101, "age": 10},
+                                    {"school": 102, "age": 11},
+                                ],
                                 "tags": ["python", "mongo", "sqlite"],
-                                "grades": [{"subject": "math", "score": 10}, {"subject": "history", "score": 8}],
-                            }
-                        ]
+                                "grades": [
+                                    {"subject": "math", "score": 10},
+                                    {"subject": "history", "score": 8},
+                                ],
+                            },
+                        ],
                     )
 
                     positional = client.test.command(
@@ -6948,7 +10576,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "find": "schools",
                             "filter": {"students.school": 102},
                             "projection": {"students.$": 1, "_id": 0},
-                        }
+                        },
                     )
                     operators = client.test.command(
                         {
@@ -6957,9 +10585,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             "projection": {
                                 "_id": 0,
                                 "tags": {"$slice": 2},
-                                "grades": {"$elemMatch": {"subject": "history"}},
+                                "grades": {
+                                    "$elemMatch": {"subject": "history"},
+                                },
                             },
-                        }
+                        },
                     )
 
                     self.assertEqual(
@@ -6968,61 +10598,116 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         operators["cursor"]["firstBatch"],
-                        [{"tags": ["python", "mongo"], "grades": [{"subject": "history", "score": 8}]}],
+                        [
+                            {
+                                "tags": ["python", "mongo"],
+                                "grades": [{"subject": "history", "score": 8}],
+                            },
+                        ],
                     )
 
-    def test_create_indexes_support_hidden_indexes_and_hidden_hints_are_rejected(self):
+    def test_create_indexes_support_hidden_indexes_and_hidden_hints_are_rejected(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
-                    collection.insert_many([{"_id": "1", "kind": "view"}, {"_id": "2", "kind": "click"}])
+                    collection.insert_many(
+                        [
+                            {"_id": "1", "kind": "view"},
+                            {"_id": "2", "kind": "click"},
+                        ],
+                    )
 
                     created = client.test.command(
                         {
                             "createIndexes": "events",
-                            "indexes": [{"key": {"kind": 1}, "name": "kind_hidden", "hidden": True, "background": True}],
-                        }
+                            "indexes": [
+                                {
+                                    "key": {"kind": 1},
+                                    "name": "kind_hidden",
+                                    "hidden": True,
+                                    "background": True,
+                                },
+                            ],
+                        },
                     )
                     indexes = collection.list_indexes().to_list()
                     info = collection.index_information()
 
                     self.assertEqual(created["ok"], 1.0)
                     self.assertIn(
-                        {"name": "kind_hidden", "key": {"kind": 1}, "unique": False, "hidden": True},
+                        {
+                            "name": "kind_hidden",
+                            "key": {"kind": 1},
+                            "unique": False,
+                            "hidden": True,
+                        },
                         indexes,
                     )
                     self.assertTrue(info["kind_hidden"]["hidden"])
-                    with self.assertRaisesRegex(OperationFailure, "hint does not correspond to a usable index"):
-                        list(collection.find({"kind": "view"}, hint="kind_hidden"))
+                    with self.assertRaisesRegex(
+                        OperationFailure,
+                        "hint does not correspond to a usable index",
+                    ):
+                        list(
+                            collection.find(
+                                {"kind": "view"},
+                                hint="kind_hidden",
+                            ),
+                        )
 
     def test_create_index_supports_ttl_and_expires_documents(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
-                    past = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=120)
-                    future = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=120)
+                    past = datetime.datetime.now(
+                        datetime.UTC,
+                    ) - datetime.timedelta(seconds=120)
+                    future = datetime.datetime.now(
+                        datetime.UTC,
+                    ) + datetime.timedelta(seconds=120)
                     collection.insert_many(
                         [
-                            {"_id": "expired", "expires_at": past, "kind": "old"},
-                            {"_id": "fresh", "expires_at": future, "kind": "new"},
-                        ]
+                            {
+                                "_id": "expired",
+                                "expires_at": past,
+                                "kind": "old",
+                            },
+                            {
+                                "_id": "fresh",
+                                "expires_at": future,
+                                "kind": "new",
+                            },
+                        ],
                     )
 
-                    name = collection.create_index([("expires_at", 1)], expire_after_seconds=30)
+                    name = collection.create_index(
+                        [("expires_at", 1)],
+                        expire_after_seconds=30,
+                    )
                     indexes = collection.list_indexes().to_list()
                     info = collection.index_information()
                     found = collection.find_one({"_id": "expired"})
-                    documents = collection.find({}, {"kind": 1, "_id": 0}).to_list()
+                    documents = collection.find(
+                        {},
+                        {"kind": 1, "_id": 0},
+                    ).to_list()
 
                     self.assertEqual(name, "expires_at_1")
                     self.assertEqual(indexes[1]["expireAfterSeconds"], 30)
-                    self.assertEqual(info["expires_at_1"]["expireAfterSeconds"], 30)
+                    self.assertEqual(
+                        info["expires_at_1"]["expireAfterSeconds"],
+                        30,
+                    )
                     self.assertIsNone(found)
                     self.assertEqual(documents, [{"kind": "new"}])
 
-    def test_create_index_and_create_indexes_round_trip_collation_metadata(self):
+    def test_create_index_and_create_indexes_round_trip_collation_metadata(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -7038,8 +10723,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 [("alias", 1)],
                                 name="alias_1",
                                 collation={"locale": "en", "strength": 1},
-                            )
-                        ]
+                            ),
+                        ],
                     )
                     indexes = collection.list_indexes().to_list()
                     info = collection.index_information()
@@ -7055,7 +10740,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         },
                         indexes,
                     )
-                    self.assertEqual(info["alias_1"]["collation"], {"locale": "en", "strength": 1})
+                    self.assertEqual(
+                        info["alias_1"]["collation"],
+                        {"locale": "en", "strength": 1},
+                    )
 
     def test_create_indexes_round_trip_min_max_and_bucket_size_metadata(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -7071,8 +10759,8 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 min=-180,
                                 max=180,
                                 bucketSize=0.5,
-                            )
-                        ]
+                            ),
+                        ],
                     )
                     indexes = collection.list_indexes().to_list()
                     info = collection.index_information()
@@ -7100,11 +10788,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.test.events
 
                     with self.assertRaises(TypeError):
-                        collection.create_index([("expires_at", 1)], expire_after_seconds=-1)
+                        collection.create_index(
+                            [("expires_at", 1)],
+                            expire_after_seconds=-1,
+                        )
                     with self.assertRaises(OperationFailure):
-                        collection.create_index([("tenant", 1), ("expires_at", 1)], expire_after_seconds=30)
+                        collection.create_index(
+                            [("tenant", 1), ("expires_at", 1)],
+                            expire_after_seconds=30,
+                        )
                     with self.assertRaises(OperationFailure):
-                        collection.create_index([("_id", 1)], expire_after_seconds=30)
+                        collection.create_index(
+                            [("_id", 1)],
+                            expire_after_seconds=30,
+                        )
 
     def test_collection_can_create_and_drop_multiple_indexes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -7115,8 +10812,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     names = collection.create_indexes(
                         [
                             IndexModel([("email", 1)], unique=True),
-                            IndexModel([("tenant", 1), ("created_at", -1)], name="tenant_created"),
-                        ]
+                            IndexModel(
+                                [("tenant", 1), ("created_at", -1)],
+                                name="tenant_created",
+                            ),
+                        ],
                     )
                     collection.drop_index("tenant_created")
                     indexes_after_drop = collection.list_indexes().to_list()
@@ -7127,8 +10827,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         indexes_after_drop,
                         [
-                            {"name": "_id_", "key": {"_id": 1}, "unique": True},
-                            {"name": "email_1", "key": {"email": 1}, "unique": True},
+                            {
+                                "name": "_id_",
+                                "key": {"_id": 1},
+                                "unique": True,
+                            },
+                            {
+                                "name": "email_1",
+                                "key": {"email": 1},
+                                "unique": True,
+                            },
                         ],
                     )
                     self.assertEqual(
@@ -7145,7 +10853,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [
                             {"_id": "1", "kind": "view", "rank": 2},
                             {"_id": "2", "kind": "view", "rank": 1},
-                        ]
+                        ],
                     )
                     collection.create_index([("kind", 1)], name="kind_idx")
 
@@ -7170,7 +10878,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(explanation["hinted_index"], "kind_idx")
 
                     with self.assertRaises(OperationFailure):
-                        collection.find({"kind": "view"}, hint="missing_idx").to_list()
+                        collection.find(
+                            {"kind": "view"},
+                            hint="missing_idx",
+                        ).to_list()
 
     def test_create_indexes_rolls_back_batch_on_failure(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -7182,8 +10893,12 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         collection.create_indexes(
                             [
                                 IndexModel([("email", 1)], name="idx_email"),
-                                IndexModel([("email", 1)], unique=True, name="idx_email_unique"),
-                            ]
+                                IndexModel(
+                                    [("email", 1)],
+                                    unique=True,
+                                    name="idx_email_unique",
+                                ),
+                            ],
                         )
 
                     self.assertEqual(
@@ -7211,9 +10926,15 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
                     collection.create_index([("email", 1)], name="idx_email")
-                    collection.create_index([("email", 1)], name="idx_email_alias")
+                    collection.create_index(
+                        [("email", 1)],
+                        name="idx_email_alias",
+                    )
 
-                    with self.assertRaisesRegex(OperationFailure, "multiple indexes found with key pattern"):
+                    with self.assertRaisesRegex(
+                        OperationFailure,
+                        "multiple indexes found with key pattern",
+                    ):
                         collection.drop_index([("email", 1)])
 
                     collection.drop_index("idx_email")
@@ -7221,8 +10942,16 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(
                         collection.list_indexes().to_list(),
                         [
-                            {"name": "_id_", "key": {"_id": 1}, "unique": True},
-                            {"name": "idx_email_alias", "key": {"email": 1}, "unique": False},
+                            {
+                                "name": "_id_",
+                                "key": {"_id": 1},
+                                "unique": True,
+                            },
+                            {
+                                "name": "idx_email_alias",
+                                "key": {"email": 1},
+                                "unique": False,
+                            },
                         ],
                     )
 
@@ -7232,10 +10961,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
                     collection.create_index(["email"], unique=True)
-                    collection.insert_one({"_id": "1", "email": "a@example.com"})
+                    collection.insert_one(
+                        {"_id": "1", "email": "a@example.com"},
+                    )
 
                     with self.assertRaises(DuplicateKeyError):
-                        collection.insert_one({"_id": "2", "email": "a@example.com"})
+                        collection.insert_one(
+                            {"_id": "2", "email": "a@example.com"},
+                        )
 
     def test_compound_unique_index_is_enforced(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -7243,11 +10976,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
                     collection.create_index(["tenant", "email"], unique=True)
-                    collection.insert_one({"_id": "1", "tenant": "a", "email": "x@example.com"})
-                    collection.insert_one({"_id": "2", "tenant": "b", "email": "x@example.com"})
+                    collection.insert_one(
+                        {"_id": "1", "tenant": "a", "email": "x@example.com"},
+                    )
+                    collection.insert_one(
+                        {"_id": "2", "tenant": "b", "email": "x@example.com"},
+                    )
 
                     with self.assertRaises(DuplicateKeyError):
-                        collection.insert_one({"_id": "3", "tenant": "a", "email": "x@example.com"})
+                        collection.insert_one(
+                            {
+                                "_id": "3",
+                                "tenant": "a",
+                                "email": "x@example.com",
+                            },
+                        )
 
     def test_nested_unique_index_is_enforced(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -7255,10 +10998,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
                     collection.create_index(["profile.email"], unique=True)
-                    collection.insert_one({"_id": "1", "profile": {"email": "a@example.com"}})
+                    collection.insert_one(
+                        {"_id": "1", "profile": {"email": "a@example.com"}},
+                    )
 
                     with self.assertRaises(DuplicateKeyError):
-                        collection.insert_one({"_id": "2", "profile": {"email": "a@example.com"}})
+                        collection.insert_one(
+                            {
+                                "_id": "2",
+                                "profile": {"email": "a@example.com"},
+                            },
+                        )
 
     def test_unique_multikey_index_is_enforced_via_public_api(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -7266,43 +11016,72 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
                     collection.create_index(["tags"], unique=True)
-                    collection.insert_one({"_id": "1", "tags": ["a", "b", "b"]})
+                    collection.insert_one(
+                        {"_id": "1", "tags": ["a", "b", "b"]},
+                    )
                     collection.insert_one({"_id": "2", "tags": ["c", "d"]})
 
                     with self.assertRaises(DuplicateKeyError):
                         collection.insert_one({"_id": "3", "tags": ["b", "e"]})
                     with self.assertRaises(DuplicateKeyError):
-                        collection.update_one({"_id": "2"}, {"$set": {"tags": ["b", "d"]}})
+                        collection.update_one(
+                            {"_id": "2"},
+                            {"$set": {"tags": ["b", "d"]}},
+                        )
 
-                    self.assertEqual(collection.find_one({"_id": "2"}), {"_id": "2", "tags": ["c", "d"]})
+                    self.assertEqual(
+                        collection.find_one({"_id": "2"}),
+                        {"_id": "2", "tags": ["c", "d"]},
+                    )
 
                     compound = client.test.compound_events
                     compound.create_index(["tenant", "tags"], unique=True)
-                    compound.insert_one({"_id": "1", "tenant": "a", "tags": ["x", "shared"]})
-                    compound.insert_one({"_id": "2", "tenant": "b", "tags": ["shared", "z"]})
+                    compound.insert_one(
+                        {"_id": "1", "tenant": "a", "tags": ["x", "shared"]},
+                    )
+                    compound.insert_one(
+                        {"_id": "2", "tenant": "b", "tags": ["shared", "z"]},
+                    )
                     with self.assertRaises(DuplicateKeyError):
-                        compound.insert_one({"_id": "3", "tenant": "a", "tags": ["shared", "z"]})
+                        compound.insert_one(
+                            {
+                                "_id": "3",
+                                "tenant": "a",
+                                "tags": ["shared", "z"],
+                            },
+                        )
 
                     nested = client.test.nested_events
                     nested.create_index(["items.name"], unique=True)
-                    nested.insert_one({"_id": "1", "items": [{"name": "a"}, {"name": "b"}]})
+                    nested.insert_one(
+                        {"_id": "1", "items": [{"name": "a"}, {"name": "b"}]},
+                    )
                     with self.assertRaises(DuplicateKeyError):
-                        nested.insert_one({"_id": "2", "items": [{"name": "b"}]})
+                        nested.insert_one(
+                            {"_id": "2", "items": [{"name": "b"}]},
+                        )
 
                     existing_parallel = client.test.existing_parallel_events
                     existing_parallel.insert_one(
-                        {"_id": "1", "tags": ["a"], "labels": ["priority"]}
+                        {"_id": "1", "tags": ["a"], "labels": ["priority"]},
                     )
                     with self.assertRaises(OperationFailure):
                         existing_parallel.create_index(["tags", "labels"])
 
                     parallel = client.test.parallel_events
                     parallel.create_index(["tags", "labels"])
-                    parallel.insert_one({"_id": "1", "tags": ["a"], "labels": "priority"})
+                    parallel.insert_one(
+                        {"_id": "1", "tags": ["a"], "labels": "priority"},
+                    )
                     with self.assertRaises(OperationFailure):
-                        parallel.insert_one({"_id": "2", "tags": ["b"], "labels": ["bulk"]})
+                        parallel.insert_one(
+                            {"_id": "2", "tags": ["b"], "labels": ["bulk"]},
+                        )
                     with self.assertRaises(OperationFailure):
-                        parallel.update_one({"_id": "1"}, {"$set": {"labels": ["bulk"]}})
+                        parallel.update_one(
+                            {"_id": "1"},
+                            {"$set": {"labels": ["bulk"]}},
+                        )
                     self.assertEqual(
                         parallel.find_one({"_id": "1"}),
                         {"_id": "1", "tags": ["a"], "labels": "priority"},
@@ -7314,15 +11093,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.events
-                    collection.create_index(["name"], unique=True, collation=collation)
+                    collection.create_index(
+                        ["name"],
+                        unique=True,
+                        collation=collation,
+                    )
                     collection.insert_one({"_id": "1", "name": "Ada"})
                     collection.insert_one({"_id": "2", "name": "Grace"})
 
                     with self.assertRaises(DuplicateKeyError):
                         collection.insert_one({"_id": "3", "name": "ada"})
                     with self.assertRaises(DuplicateKeyError):
-                        collection.update_one({"_id": "2"}, {"$set": {"name": "ADA"}})
-
+                        collection.update_one(
+                            {"_id": "2"},
+                            {"$set": {"name": "ADA"}},
+                        )
 
     def test_memory_indexed_nested_equality_preserves_read_api_contract(self):
         target = ObjectId()
@@ -7331,24 +11116,41 @@ class SyncApiIntegrationTests(unittest.TestCase):
             collection.create_index("source.object_id")
             collection.insert_many(
                 [
-                    {"_id": "match", "source": {"object_id": target}, "kind": "match"},
+                    {
+                        "_id": "match",
+                        "source": {"object_id": target},
+                        "kind": "match",
+                    },
                     {"_id": "missing", "kind": "missing"},
-                ]
+                ],
             )
 
             found = collection.find({"source.object_id": target}).to_list()
             found_one = collection.find_one({"source.object_id": target})
             count = collection.count_documents({"source.object_id": target})
-            distinct = collection.distinct("kind", {"source.object_id": target})
-            raw_batches = collection.find_raw_batches({"source.object_id": target}).to_list()
-            aggregate = collection.aggregate([{"$match": {"source.object_id": target}}]).to_list()
+            distinct = collection.distinct(
+                "kind",
+                {"source.object_id": target},
+            )
+            raw_batches = collection.find_raw_batches(
+                {"source.object_id": target},
+            ).to_list()
+            aggregate = collection.aggregate(
+                [{"$match": {"source.object_id": target}}],
+            ).to_list()
 
         self.assertEqual([document["_id"] for document in found], ["match"])
-        self.assertEqual(found_one["_id"] if found_one is not None else None, "match")
+        self.assertEqual(
+            found_one["_id"] if found_one is not None else None,
+            "match",
+        )
         self.assertEqual(count, 1)
         self.assertEqual(distinct, ["match"])
         self.assertEqual(len(raw_batches), 1)
-        self.assertEqual([document["_id"] for document in aggregate], ["match"])
+        self.assertEqual(
+            [document["_id"] for document in aggregate],
+            ["match"],
+        )
 
     def test_sync_client_exposes_client_session_and_accepts_it(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -7358,8 +11160,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertIsInstance(session, ClientSession)
 
                     with session:
-                        result = client.test.users.insert_one({"name": "Ada"}, session=session)
-                        found = client.test.users.find_one({"_id": result.inserted_id}, session=session)
+                        result = client.test.users.insert_one(
+                            {"name": "Ada"},
+                            session=session,
+                        )
+                        found = client.test.users.find_one(
+                            {"_id": result.inserted_id},
+                            session=session,
+                        )
 
                     self.assertFalse(session.active)
                     self.assertEqual(found["name"], "Ada")
@@ -7372,17 +11180,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(len(session.engine_state), 1)
                     state = next(iter(session.engine_state.values()))
 
-                    self.assertTrue(
-                        state["connected"]
-                    )
+                    self.assertTrue(state["connected"])
 
-    def test_find_with_comment_and_max_time_updates_session_state_and_explain(self):
+    def test_find_with_comment_and_max_time_updates_session_state_and_explain(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     session = client.start_session()
                     collection = client.analytics.events
-                    collection.insert_one({"_id": "1", "kind": "view"}, session=session)
+                    collection.insert_one(
+                        {"_id": "1", "kind": "view"},
+                        session=session,
+                    )
 
                     documents = collection.find(
                         {"kind": "view"},
@@ -7399,8 +11210,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     state = next(iter(session.engine_state.values()))
 
                     self.assertEqual(documents, [{"_id": "1", "kind": "view"}])
-                    self.assertEqual(state["last_operation"]["comment"], "trace-find")
-                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+                    self.assertEqual(
+                        state["last_operation"]["comment"],
+                        "trace-find",
+                    )
+                    self.assertEqual(
+                        state["last_operation"]["max_time_ms"],
+                        25,
+                    )
                     self.assertEqual(explanation["comment"], "trace-find")
                     self.assertEqual(explanation["max_time_ms"], 25)
 
@@ -7410,7 +11227,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     session = client.start_session()
                     collection = client.analytics.events
-                    collection.insert_one({"_id": "1", "kind": "view"}, session=session)
+                    collection.insert_one(
+                        {"_id": "1", "kind": "view"},
+                        session=session,
+                    )
 
                     collection.update_one(
                         {"_id": "1"},
@@ -7419,8 +11239,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         session=session,
                     )
                     state = next(iter(session.engine_state.values()))
-                    self.assertEqual(state["last_operation"]["operation"], "update_one")
-                    self.assertEqual(state["last_operation"]["comment"], "trace-update")
+                    self.assertEqual(
+                        state["last_operation"]["operation"],
+                        "update_one",
+                    )
+                    self.assertEqual(
+                        state["last_operation"]["comment"],
+                        "trace-update",
+                    )
 
                     collection.create_index(
                         [("kind", 1)],
@@ -7428,8 +11254,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         session=session,
                     )
                     state = next(iter(session.engine_state.values()))
-                    self.assertEqual(state["last_operation"]["operation"], "create_index")
-                    self.assertEqual(state["last_operation"]["comment"], "trace-index")
+                    self.assertEqual(
+                        state["last_operation"]["operation"],
+                        "create_index",
+                    )
+                    self.assertEqual(
+                        state["last_operation"]["comment"],
+                        "trace-index",
+                    )
 
     def test_sync_client_accepts_sqlite_engine(self):
         with MongoClient(SQLiteEngine()) as client:
@@ -7447,7 +11279,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     session.start_transaction()
                     self.assertTrue(session.transaction_active)
-                    client.test.users.insert_one({"_id": "1", "name": "Ada"}, session=session)
+                    client.test.users.insert_one(
+                        {"_id": "1", "name": "Ada"},
+                        session=session,
+                    )
                     session.commit_transaction()
 
                     self.assertFalse(session.transaction_active)
@@ -7459,7 +11294,10 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     session = client.start_session()
 
                     def _run(active: ClientSession) -> str:
-                        client.test.users.insert_one({"_id": "1", "name": "Ada"}, session=active)
+                        client.test.users.insert_one(
+                            {"_id": "1", "name": "Ada"},
+                            session=active,
+                        )
                         return "ok"
 
                     result = session.with_transaction(_run)
@@ -7468,7 +11306,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertFalse(session.in_transaction)
                     self.assertEqual(client.test.users.count_documents({}), 1)
 
-    def test_sync_client_with_transaction_retries_transient_callback_errors(self):
+    def test_sync_client_with_transaction_retries_transient_callback_errors(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -7496,12 +11336,22 @@ class SyncApiIntegrationTests(unittest.TestCase):
     def test_sync_sqlite_session_transaction_is_isolated_and_abortable(self):
         with MongoClient(SQLiteEngine()) as client:
             session = client.start_session()
-            self.assertTrue(session.get_engine_state(next(iter(session.engine_state)))["supports_transactions"])
+            self.assertTrue(
+                session.get_engine_state(next(iter(session.engine_state)))[
+                    "supports_transactions"
+                ],
+            )
 
             session.start_transaction()
-            client.test.users.insert_one({"_id": "1", "name": "Ada"}, session=session)
+            client.test.users.insert_one(
+                {"_id": "1", "name": "Ada"},
+                session=session,
+            )
 
-            self.assertEqual(client.test.users.count_documents({}, session=session), 1)
+            self.assertEqual(
+                client.test.users.count_documents({}, session=session),
+                1,
+            )
             with self.assertRaises(InvalidOperation):
                 client.test.users.count_documents({})
 
@@ -7521,7 +11371,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         {"_id": {"tenant": 1, "user": 2}},
                         {"$set": {"active": True}},
                     )
-                    delete_result = collection.delete_one({"_id": {"tenant": 1, "user": 2}})
+                    delete_result = collection.delete_one(
+                        {"_id": {"tenant": 1, "user": 2}},
+                    )
 
                     self.assertEqual(update_result.matched_count, 1)
                     self.assertEqual(delete_result.deleted_count, 1)
@@ -7532,13 +11384,20 @@ class SyncApiIntegrationTests(unittest.TestCase):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
                     doc_id = {"tenant": 1, "user": 2}
-                    collection.insert_one({"_id": doc_id, "name": "Ada", "role": "admin"})
+                    collection.insert_one(
+                        {"_id": doc_id, "name": "Ada", "role": "admin"},
+                    )
 
-                    found = collection.find_one({"_id": {"tenant": 1, "user": 2}}, {"name": 1, "_id": 0})
+                    found = collection.find_one(
+                        {"_id": {"tenant": 1, "user": 2}},
+                        {"name": 1, "_id": 0},
+                    )
 
                     self.assertEqual(found, {"name": "Ada"})
 
-    def test_find_projection_supports_slice_elem_match_and_positional_operators(self):
+    def test_find_projection_supports_slice_elem_match_and_positional_operators(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -7554,16 +11413,32 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 {"school": 102, "age": 11},
                             ],
                             "role": "admin",
-                        }
+                        },
                     )
 
-                    sliced = collection.find_one({"_id": "user-1"}, {"tags": {"$slice": [1, 2]}, "role": 0})
+                    sliced = collection.find_one(
+                        {"_id": "user-1"},
+                        {"tags": {"$slice": [1, 2]}, "role": 0},
+                    )
                     matched = collection.find_one(
                         {"_id": "user-1"},
-                        {"name": 1, "students": {"$elemMatch": {"school": 102, "age": {"$gt": 10}}}, "_id": 0},
+                        {
+                            "name": 1,
+                            "students": {
+                                "$elemMatch": {
+                                    "school": 102,
+                                    "age": {"$gt": 10},
+                                },
+                            },
+                            "_id": 0,
+                        },
                     )
                     positional = collection.find_one(
-                        {"_id": "user-1", "students.school": 102, "students.age": {"$gt": 10}},
+                        {
+                            "_id": "user-1",
+                            "students.school": 102,
+                            "students.age": {"$gt": 10},
+                        },
                         {"students.$": 1, "_id": 0},
                     )
 
@@ -7580,8 +11455,17 @@ class SyncApiIntegrationTests(unittest.TestCase):
                             ],
                         },
                     )
-                    self.assertEqual(matched, {"name": "Ada", "students": [{"school": 102, "age": 11}]})
-                    self.assertEqual(positional, {"students": [{"school": 102, "age": 11}]})
+                    self.assertEqual(
+                        matched,
+                        {
+                            "name": "Ada",
+                            "students": [{"school": 102, "age": 11}],
+                        },
+                    )
+                    self.assertEqual(
+                        positional,
+                        {"students": [{"school": 102, "age": 11}]},
+                    )
 
     def test_shared_memory_engine_is_safe_across_sync_threads(self):
         engine = MemoryEngine()
@@ -7632,7 +11516,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     with self.assertRaises(TypeError):
                         collection.count_documents([])
 
-    def test_count_documents_supports_skip_limit_hint_comment_and_max_time(self):
+    def test_count_documents_supports_skip_limit_hint_comment_and_max_time(
+        self,
+    ):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
@@ -7646,7 +11532,11 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                         session=session,
                     )
-                    collection.create_index([("kind", 1)], name="kind_idx", session=session)
+                    collection.create_index(
+                        [("kind", 1)],
+                        name="kind_idx",
+                        session=session,
+                    )
 
                     count = collection.count_documents(
                         {"kind": "view"},
@@ -7660,8 +11550,14 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     state = next(iter(session.engine_state.values()))
 
                     self.assertEqual(count, 1)
-                    self.assertEqual(state["last_operation"]["comment"], "trace-count-documents")
-                    self.assertEqual(state["last_operation"]["max_time_ms"], 25)
+                    self.assertEqual(
+                        state["last_operation"]["comment"],
+                        "trace-count-documents",
+                    )
+                    self.assertEqual(
+                        state["last_operation"]["max_time_ms"],
+                        25,
+                    )
 
     def test_update_one_rejects_invalid_update_shapes(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -7688,22 +11584,49 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection = client.test.users
                     collection.insert_many(
                         [
-                            {"_id": "1", "tenant": "a", "name": "Ada", "points": 2, "bonus": 3, "legacy": "x"},
-                            {"_id": "2", "tenant": "a", "name": "Bob", "points": 5, "bonus": 1, "legacy": "y"},
-                        ]
+                            {
+                                "_id": "1",
+                                "tenant": "a",
+                                "name": "Ada",
+                                "points": 2,
+                                "bonus": 3,
+                                "legacy": "x",
+                            },
+                            {
+                                "_id": "2",
+                                "tenant": "a",
+                                "name": "Bob",
+                                "points": 5,
+                                "bonus": 1,
+                                "legacy": "y",
+                            },
+                        ],
                     )
 
                     first = collection.update_one(
                         {"_id": "1"},
                         [
-                            {"$set": {"total": {"$add": ["$points", "$bonus"]}, "label": "$$tag"}},
+                            {
+                                "$set": {
+                                    "total": {"$add": ["$points", "$bonus"]},
+                                    "label": "$$tag",
+                                },
+                            },
                             {"$unset": "legacy"},
                         ],
                         let={"tag": "single"},
                     )
                     many = collection.update_many(
                         {"tenant": "a"},
-                        [{"$set": {"tenant_label": {"$concat": ["$tenant", "-active"]}}}],
+                        [
+                            {
+                                "$set": {
+                                    "tenant_label": {
+                                        "$concat": ["$tenant", "-active"],
+                                    },
+                                },
+                            },
+                        ],
                     )
                     after = collection.find_one_and_update(
                         {"_id": "2"},
@@ -7712,27 +11635,57 @@ class SyncApiIntegrationTests(unittest.TestCase):
                                 "$replaceWith": {
                                     "$mergeObjects": [
                                         "$$ROOT",
-                                        {"summary": {"$concat": ["$name", ":", "$$suffix"]}},
-                                    ]
-                                }
-                            }
+                                        {
+                                            "summary": {
+                                                "$concat": [
+                                                    "$name",
+                                                    ":",
+                                                    "$$suffix",
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
                         ],
                         let={"suffix": "done"},
                         return_document=ReturnDocument.AFTER,
                     )
                     bulk = collection.bulk_write(
                         [
-                            UpdateOne({"_id": "1"}, [{"$set": {"bulk_rank": {"$literal": 1}}}]),
-                            UpdateMany({"tenant": "a"}, [{"$set": {"bulk_tag": {"$literal": "batch"}}}]),
+                            UpdateOne(
+                                {"_id": "1"},
+                                [{"$set": {"bulk_rank": {"$literal": 1}}}],
+                            ),
+                            UpdateMany(
+                                {"tenant": "a"},
+                                [
+                                    {
+                                        "$set": {
+                                            "bulk_tag": {"$literal": "batch"},
+                                        },
+                                    },
+                                ],
+                            ),
                             UpdateOne(
                                 {"tenant": "b", "kind": {"$eq": "new"}},
-                                [{"$set": {"created_from_filter": "$tenant", "state": {"$literal": "upserted"}}}],
+                                [
+                                    {
+                                        "$set": {
+                                            "created_from_filter": "$tenant",
+                                            "state": {"$literal": "upserted"},
+                                        },
+                                    },
+                                ],
                                 upsert=True,
                             ),
-                        ]
+                        ],
                     )
 
-                    documents = collection.find({}, sort=[("_id", 1)]).to_list()
+                    documents = collection.find(
+                        {},
+                        sort=[("_id", 1)],
+                    ).to_list()
 
                     self.assertEqual(first.matched_count, 1)
                     self.assertEqual(first.modified_count, 1)
@@ -7784,7 +11737,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
             with self.subTest(engine=engine_name):
                 with MongoClient(factory()) as client:
                     collection = client.test.users
-                    collection.insert_one({"_id": "1", "name": "Ada", "legacy": True})
+                    collection.insert_one(
+                        {"_id": "1", "name": "Ada", "legacy": True},
+                    )
 
                     result = collection.update_one(
                         {"_id": "1"},
@@ -7792,12 +11747,21 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     )
 
                     self.assertEqual(result.modified_count, 1)
-                    self.assertEqual(collection.find_one({"_id": "1"}), {"name": "Ada", "_id": "1"})
+                    self.assertEqual(
+                        collection.find_one({"_id": "1"}),
+                        {"name": "Ada", "_id": "1"},
+                    )
 
                     with self.assertRaises(OperationFailure):
-                        collection.update_one({"_id": "1"}, [{"$set": {"_id": "2"}}])
+                        collection.update_one(
+                            {"_id": "1"},
+                            [{"$set": {"_id": "2"}}],
+                        )
 
-                    self.assertEqual(collection.find_one({"_id": "1"}), {"name": "Ada", "_id": "1"})
+                    self.assertEqual(
+                        collection.find_one({"_id": "1"}),
+                        {"name": "Ada", "_id": "1"},
+                    )
                     self.assertIsNone(collection.find_one({"_id": "2"}))
 
     def test_operations_after_close_raise_invalid_operation(self):
@@ -7818,7 +11782,10 @@ class SyncApiLoopSafetyTests(unittest.IsolatedAsyncioTestCase):
         try:
             self.assertEqual(client.list_database_names(), [])
             client.test.users.insert_one({"_id": "1", "name": "Ada"})
-            self.assertEqual(client.test.users.find_one({"_id": "1"}), {"_id": "1", "name": "Ada"})
+            self.assertEqual(
+                client.test.users.find_one({"_id": "1"}),
+                {"_id": "1", "name": "Ada"},
+            )
         finally:
             client.close()
 
@@ -7833,7 +11800,10 @@ class SyncApiFilterAliasTests(unittest.TestCase):
             count = collection.count_documents(filter={"kind": "view"})
             distinct = collection.distinct("kind", filter={"_id": "1"})
 
-            self.assertEqual(found, {"_id": "1", "name": "Ada", "kind": "view"})
+            self.assertEqual(
+                found,
+                {"_id": "1", "name": "Ada", "kind": "view"},
+            )
             self.assertEqual(count, 1)
             self.assertEqual(distinct, ["view"])
 
@@ -7849,7 +11819,10 @@ class SyncApiFilterAliasTests(unittest.TestCase):
             collection = client.test.users
             collection.insert_one({"_id": "1", "name": "Ada", "count": 1})
 
-            collection.update_one(filter={"_id": "1"}, update={"$inc": {"count": 1}})
+            collection.update_one(
+                filter={"_id": "1"},
+                update={"$inc": {"count": 1}},
+            )
 
             self.assertEqual(
                 collection.find_one({"_id": "1"}),
@@ -7883,7 +11856,12 @@ class SyncApiFilterAliasTests(unittest.TestCase):
             client.test.users.insert_one({"_id": "1"})
 
             names = database.list_collection_names(filter={"name": "users"})
-            listings = database.list_collections(filter={"name": "users"}).to_list()
+            listings = database.list_collections(
+                filter={"name": "users"},
+            ).to_list()
 
             self.assertEqual(names, ["users"])
-            self.assertEqual([document["name"] for document in listings], ["users"])
+            self.assertEqual(
+                [document["name"] for document in listings],
+                ["users"],
+            )

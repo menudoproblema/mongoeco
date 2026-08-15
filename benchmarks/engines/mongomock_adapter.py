@@ -10,6 +10,8 @@ except ImportError:
 
 
 class MongomockEngine(BenchmarkEngine):
+    benchmark_capabilities = frozenset({"crud", "aggregation"})
+
     def __init__(self):
         if not HAS_MONGOMOCK:
             raise RuntimeError("mongomock is not installed. Run `pip install mongomock`")

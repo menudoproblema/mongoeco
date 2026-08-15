@@ -23,3 +23,4 @@ decisiones que siguen vivas y explican la arquitectura actual.
 - [ADR-007 - SDAM parcial y explicito](ADR-007-sdam-parcial-y-explicito.md)
 - [ADR-008 - `PyICU` opcional y `pyuca` como fallback](ADR-008-pyicu-opcional-y-pyuca-como-fallback.md)
 - [ADR-009 - Parity tests como politica de aceptacion](ADR-009-parity-tests-como-politica-de-aceptacion.md)
+- [ADR-010 - `search-v1` como contrato local estable](ADR-010-search-v1-como-contrato-local-estable.md)

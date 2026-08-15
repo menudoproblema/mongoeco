@@ -1,5 +1,9 @@
 import unittest
+
+from typing import ClassVar
 from unittest.mock import patch
+
+from scripts.run_mongodb_real_differential import main as differential_main
 
 from tests.differential._real_parity_base import MongoRealParityBase
 from tests.differential.cases import REAL_PARITY_CASES, RealParityCase
@@ -7,7 +11,7 @@ from tests.differential.runner import available_case_names, build_suite
 
 
 class _MongoClientStub:
-    seen_dialects: list[str | None] = []
+    seen_dialects: ClassVar[list[str | None]] = []
 
     def __init__(self, _engine, *, mongodb_dialect=None, **_kwargs):
         type(self).seen_dialects.append(mongodb_dialect)
@@ -33,14 +37,14 @@ class MongoRealParityBaseUnitTests(unittest.TestCase):
         class Harness(MongoRealParityBase):
             TARGET_VERSION = (8, 0)
 
-        harness = Harness(methodName='runTest')
+        harness = Harness(methodName="runTest")
         harness._real_client = type(
-            'RealClientStub',
+            "RealClientStub",
             (),
             {
-                '__getitem__': lambda self, _name: self,
-                'insert_one': lambda self, _document: None,
-                'drop_database': lambda self, _name: None,
+                "__getitem__": lambda self, _name: self,
+                "insert_one": lambda self, _document: None,
+                "drop_database": lambda self, _name: None,
             },
         )()
 
@@ -51,10 +55,12 @@ class MongoRealParityBaseUnitTests(unittest.TestCase):
             action=lambda _collection: "ok",
         )
 
-        with patch('tests.differential._real_parity_base.MongoClient', _MongoClientStub):
+        with patch(
+            "tests.differential._real_parity_base.MongoClient", _MongoClientStub
+        ):
             harness._assert_matches_real_case(case)
 
-        self.assertEqual(_MongoClientStub.seen_dialects, ['8.0', '8.0'])
+        self.assertEqual(_MongoClientStub.seen_dialects, ["8.0", "8.0"])
 
     def test_real_parity_cases_are_exposed_as_dynamic_tests(self):
         dynamic_names = {
@@ -64,8 +70,7 @@ class MongoRealParityBaseUnitTests(unittest.TestCase):
         }
 
         expected_names = {
-            f"test_{case.name}_matches_real_mongodb"
-            for case in REAL_PARITY_CASES
+            f"test_{case.name}_matches_real_mongodb" for case in REAL_PARITY_CASES
         }
 
         self.assertTrue(expected_names)
@@ -80,14 +85,34 @@ class MongoRealParityBaseUnitTests(unittest.TestCase):
 
     def test_build_suite_can_filter_case_pattern(self):
         suite = build_suite("7.0", "find_expr_*")
-        names = {
-            getattr(test, "_testMethodName")
-            for test in self._iter_tests(suite)
-        }
+        names = {test._testMethodName for test in self._iter_tests(suite)}
 
         self.assertIn("test_find_expr_compare_fields_matches_real_mongodb", names)
         self.assertIn("test_find_expr_truthiness_array_matches_real_mongodb", names)
-        self.assertNotIn("test_find_subdocument_order_sensitive_equality_matches_real_mongodb", names)
+        self.assertNotIn(
+            "test_find_subdocument_order_sensitive_equality_matches_real_mongodb", names
+        )
+
+    def test_build_suite_rejects_filters_that_match_no_cases(self):
+        with self.assertRaisesRegex(ValueError, "matched no differential cases"):
+            build_suite("7.0", "definitely-not-a-case")
+
+    def test_differential_cli_returns_usage_error_for_empty_filter(self):
+        with (
+            patch.dict(
+                "os.environ",
+                {"MONGOECO_REAL_MONGODB_URI": "mongodb://unused"},
+            ),
+            patch(
+                "scripts.run_mongodb_real_differential.build_suite",
+                side_effect=ValueError("case filter matched no differential cases"),
+            ),
+        ):
+            result = differential_main(
+                ["run_mongodb_real_differential.py", "7.0", "missing"],
+            )
+
+        self.assertEqual(result, 2)
 
     def _iter_tests(self, suite: unittest.TestSuite):
         for test in suite:

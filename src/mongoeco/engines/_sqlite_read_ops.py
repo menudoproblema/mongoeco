@@ -1,25 +1,27 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-from copy import deepcopy
 import sqlite3
+
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.identity import document_matches_root_id_lookup
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.search import (
+    SearchQuery,
+    SearchVectorQuery,
     attach_search_highlights,
     compile_search_stage,
     is_text_search_query,
-    SearchQuery,
-    SearchVectorQuery,
     search_query_explain_details,
     vector_field_paths,
 )
-from mongoeco.core.operation_limits import enforce_deadline
-from mongoeco.engines.sqlite_planner import SQLiteReadExecutionPlan
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, DocumentId, Projection
+
+if TYPE_CHECKING:
+    from mongoeco.engines.sqlite_planner import SQLiteReadExecutionPlan
+    from mongoeco.types import Document, DocumentId, Projection
 
 
 def get_document(
@@ -45,7 +47,11 @@ def get_document(
     if row is None:
         return None
     document = deserialize_document(row[0])
-    if not document_matches_root_id_lookup(document, doc_id, dialect=effective_dialect):
+    if not document_matches_root_id_lookup(
+        document,
+        doc_id,
+        dialect=effective_dialect,
+    ):
         return None
     return apply_projection(
         document,
@@ -61,27 +67,53 @@ def search_documents(
     operator: str,
     spec: object,
     deadline: float | None,
-    load_search_index_rows: Callable[[str, str, str | None], list[tuple[object, str | None, float | None]]],
+    load_search_index_rows: Callable[
+        [str, str, str | None],
+        list[tuple[object, str | None, float | None]],
+    ],
     search_index_is_ready: Callable[[float | None], bool],
     load_documents: Callable[[str, str], list[tuple[str, Document]]],
-    search_sql: Callable[[str, str, object, object, str | None, int | None], list[Document]],
+    search_sql: Callable[
+        [str, str, object, object, str | None, int | None],
+        list[Document],
+    ],
     result_limit_hint: int | None = None,
+    query: SearchQuery | None = None,
 ) -> list[Document]:
-    query = compile_search_stage(operator, spec)
+    query = query or compile_search_stage(operator, spec)
     rows = load_search_index_rows(db_name, coll_name, query.index_name)
     if not rows:
-        raise OperationFailure(f"search index not found with name [{query.index_name}]")
+        raise OperationFailure(
+            f"search index not found with name [{query.index_name}]",
+        )
     definition, physical_name, ready_at_epoch = rows[0]
     if not search_index_is_ready(ready_at_epoch):
-        raise OperationFailure(f"search index [{query.index_name}] is not ready yet")
+        raise OperationFailure(
+            f"search index [{query.index_name}] is not ready yet",
+        )
     if is_text_search_query(query) and definition.index_type != "search":
-        raise OperationFailure(f"search index [{query.index_name}] does not support $search")
+        raise OperationFailure(
+            f"search index [{query.index_name}] does not support $search",
+        )
     if isinstance(query, SearchVectorQuery) and definition.index_type != "vectorSearch":
-        raise OperationFailure(f"search index [{query.index_name}] does not support $vectorSearch")
-    result = search_sql(db_name, coll_name, definition, query, physical_name, result_limit_hint)
+        raise OperationFailure(
+            f"search index [{query.index_name}] does not support $vectorSearch",
+        )
+    result = search_sql(
+        db_name,
+        coll_name,
+        definition,
+        query,
+        physical_name,
+        result_limit_hint,
+    )
     if is_text_search_query(query):
         return [
-            attach_search_highlights(document, definition=definition, query=query)
+            attach_search_highlights(
+                document,
+                definition=definition,
+                query=query,
+            )
             for document in result
         ]
     return result
@@ -103,9 +135,15 @@ def build_search_explain(
         "physicalName": physical_name,
         "fts5_match": fts5_match,
         **search_query_explain_details(query, definition=definition),
-        "vector_paths": list(vector_field_paths(definition)) if definition.index_type == "vectorSearch" else None,
+        "vector_paths": (
+            list(vector_field_paths(definition))
+            if definition.index_type == "vectorSearch"
+            else None
+        ),
     }
 
 
-def require_sql_execution_plan(plan: SQLiteReadExecutionPlan) -> tuple[str, tuple[object, ...]]:
+def require_sql_execution_plan(
+    plan: SQLiteReadExecutionPlan,
+) -> tuple[str, tuple[object, ...]]:
     return plan.require_sql()

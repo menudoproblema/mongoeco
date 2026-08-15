@@ -341,9 +341,12 @@ The local `$search` subset now includes:
   * `regex.flags` with `i` / `m` / `s` / `x`
   * `wildcard.allowAnalyzedField`
   * `$search.count`, `$search.highlight` and `$search.facet` as local
-    stage options, with `highlight` visible in result documents through
-    `searchHighlights` and `count` / `facet` / `highlight` previews in
-    `explain()`
+    stage options; highlight metadata is projectable through
+    `$meta: "searchHighlights"`, while the legacy `searchHighlights` field is
+    injected only when it does not collide with user data
+  * `$searchMeta` typed count/facet collectors and
+    `explain("queryPlanner"|"executionStats")`; legacy previews remain only as
+    deprecated 4.x aliases
 
 Examples worth showing first:
 
@@ -418,6 +421,11 @@ Contract-testing rule for new features:
 Architecture reference:
 
 * [docs/architecture/index.md](docs/architecture/index.md)
+
+External storage engines can validate SPI v2 with the framework-neutral public
+kit documented in [docs/engine-conformance.md](docs/engine-conformance.md). The
+optional `engine-testing` extra adds the pytest assertion helper without making
+pytest a runtime dependency.
 
 ## Benchmarks
 

@@ -4,23 +4,17 @@ import decimal
 import math
 import re
 import uuid
+
 from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.collation import CollationSpec
+from mongoeco.core.aggregation.accumulators import _evaluate_pick_n_input
 from mongoeco.core.aggregation.array_string_expressions import (
     ARRAY_STRING_EXPRESSION_OPERATORS,
     evaluate_array_string_expression,
-)
-from mongoeco.core.aggregation.evaluation_environment import (
-    environment_for_document,
-)
-from mongoeco.core.aggregation.extensions import (
-    AggregationExpressionExtensionContext,
-    get_registered_aggregation_expression_operator,
 )
 from mongoeco.core.aggregation.control_object_expressions import (
     CONTROL_OBJECT_EXPRESSION_OPERATORS,
@@ -30,21 +24,35 @@ from mongoeco.core.aggregation.date_expressions import (
     DATE_EXPRESSION_OPERATORS,
     evaluate_date_expression,
 )
+from mongoeco.core.aggregation.evaluation_environment import (
+    environment_for_document,
+)
+from mongoeco.core.aggregation.extensions import (
+    AggregationExpressionExtensionContext,
+    get_registered_aggregation_expression_operator,
+)
 from mongoeco.core.aggregation.numeric_expressions import (
     NUMERIC_EXPRESSION_OPERATORS,
     _require_numeric,
     evaluate_numeric_expression,
 )
+from mongoeco.core.aggregation.planning import Pipeline
 from mongoeco.core.aggregation.scalar_expressions import (
     SCALAR_EXPRESSION_OPERATORS,
     evaluate_scalar_expression,
 )
+from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.bson_scalars import (
     bson_numeric_alias,
 )
+from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import get_document_value, set_document_value
-from mongoeco.core.search import TEXT_SCORE_FIELD, VECTOR_SEARCH_SCORE_FIELD
+from mongoeco.core.search import (
+    SEARCH_HIGHLIGHTS_METADATA_FIELD,
+    TEXT_SCORE_FIELD,
+    VECTOR_SEARCH_SCORE_FIELD,
+)
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
     Binary,
@@ -57,12 +65,12 @@ from mongoeco.types import (
     UndefinedType,
     is_object_id_like,
 )
-from mongoeco.core.aggregation.accumulators import _evaluate_pick_n_input
-from mongoeco.core.aggregation.planning import Pipeline
-from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 
 
-type AggregationStageHandler = Callable[[list[Document], object, "AggregationStageContext"], list[Document]]
+type AggregationStageHandler = Callable[
+    [list[Document], object, "AggregationStageContext"],
+    list[Document],
+]
 
 _CURRENT_COLLECTION_RESOLVER_KEY = "__mongoeco_current_collection__"
 
@@ -94,14 +102,19 @@ def _aggregation_key(value: Any) -> Any:
     if isinstance(value, Timestamp):
         return ("timestamp", value)
     if isinstance(value, dict):
-        return ("dict", tuple((key, _aggregation_key(item)) for key, item in value.items()))
+        return (
+            "dict",
+            tuple((key, _aggregation_key(item)) for key, item in value.items()),
+        )
     if isinstance(value, list):
         return ("list", tuple(_aggregation_key(item) for item in value))
     try:
         hash(value)
         return (value.__class__, value)
     except TypeError:
-        raise OperationFailure("$group _id must resolve to BSON-compatible values")
+        raise OperationFailure(
+            "$group _id must resolve to BSON-compatible values",
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,16 +141,25 @@ def _require_unwind_spec(spec: object) -> tuple[str, bool, str | None]:
         path = spec.get("path")
         preserve = bool(spec.get("preserveNullAndEmptyArrays", False))
         include_array_index = spec.get("includeArrayIndex")
-        if include_array_index is not None and not isinstance(include_array_index, str):
-            raise OperationFailure("$unwind includeArrayIndex must be a string")
+        if include_array_index is not None and not isinstance(
+            include_array_index,
+            str,
+        ):
+            raise OperationFailure(
+                "$unwind includeArrayIndex must be a string",
+            )
     else:
         raise OperationFailure("$unwind requires a path string or document")
 
     if not isinstance(path, str) or not path.startswith("$") or path == "$":
-        raise OperationFailure("$unwind path must be a string starting with '$'")
+        raise OperationFailure(
+            "$unwind path must be a string starting with '$'",
+        )
 
     if include_array_index is not None and include_array_index.startswith("$"):
-        raise OperationFailure("$unwind includeArrayIndex must be a field name, not a path expression")
+        raise OperationFailure(
+            "$unwind includeArrayIndex must be a field name, not a path expression",
+        )
 
     return path[1:], preserve, include_array_index
 
@@ -149,12 +171,18 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
         raise OperationFailure("$lookup requires from and as")
     from_collection = spec["from"]
     output_field = spec["as"]
-    if not all(isinstance(value, str) and value for value in (from_collection, output_field)):
+    if not all(
+        isinstance(value, str) and value for value in (from_collection, output_field)
+    ):
         raise OperationFailure("$lookup from and as must be non-empty strings")
     if from_collection.startswith("$"):
-        raise OperationFailure("$lookup from must be a collection name, not a path expression")
+        raise OperationFailure(
+            "$lookup from must be a collection name, not a path expression",
+        )
     if output_field.startswith("$"):
-        raise OperationFailure("$lookup as must be a field name, not a path expression")
+        raise OperationFailure(
+            "$lookup as must be a field name, not a path expression",
+        )
 
     if "pipeline" in spec:
         let_spec = spec.get("let", {})
@@ -169,29 +197,44 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
         has_local = "localField" in spec
         has_foreign = "foreignField" in spec
         if has_local != has_foreign:
-            raise OperationFailure("$lookup localField and foreignField must be provided together")
+            raise OperationFailure(
+                "$lookup localField and foreignField must be provided together",
+            )
         if has_local:
             local_field = spec["localField"]
             foreign_field = spec["foreignField"]
-            if not all(isinstance(value, str) and value for value in (local_field, foreign_field)):
-                raise OperationFailure("$lookup fields must be non-empty strings")
+            if not all(
+                isinstance(value, str) and value
+                for value in (local_field, foreign_field)
+            ):
+                raise OperationFailure(
+                    "$lookup fields must be non-empty strings",
+                )
             if local_field.startswith("$") or foreign_field.startswith("$"):
-                raise OperationFailure("$lookup localField and foreignField must be field paths, not path expressions")
+                raise OperationFailure(
+                    "$lookup localField and foreignField must be field paths, not path expressions",
+                )
             lookup["localField"] = local_field
             lookup["foreignField"] = foreign_field
         return lookup
 
     required = {"from", "localField", "foreignField", "as"}
     if not required <= set(spec):
-        raise OperationFailure("$lookup requires from, localField, foreignField and as")
+        raise OperationFailure(
+            "$lookup requires from, localField, foreignField and as",
+        )
     if "let" in spec:
         raise OperationFailure("$lookup let requires pipeline form")
     local_field = spec["localField"]
     foreign_field = spec["foreignField"]
-    if not all(isinstance(value, str) and value for value in (local_field, foreign_field)):
+    if not all(
+        isinstance(value, str) and value for value in (local_field, foreign_field)
+    ):
         raise OperationFailure("$lookup fields must be non-empty strings")
     if local_field.startswith("$") or foreign_field.startswith("$"):
-        raise OperationFailure("$lookup localField and foreignField must be field paths, not path expressions")
+        raise OperationFailure(
+            "$lookup localField and foreignField must be field paths, not path expressions",
+        )
     return {
         "from": from_collection,
         "as": output_field,
@@ -203,19 +246,27 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
 def _require_union_with_spec(spec: object) -> dict[str, Any]:
     if isinstance(spec, str):
         if not spec:
-            raise OperationFailure("$unionWith collection name must be a non-empty string")
+            raise OperationFailure(
+                "$unionWith collection name must be a non-empty string",
+            )
         return {"coll": spec, "pipeline": []}
     if not isinstance(spec, dict):
-        raise OperationFailure("$unionWith requires a collection name string or a document specification")
+        raise OperationFailure(
+            "$unionWith requires a collection name string or a document specification",
+        )
     pipeline = spec.get("pipeline", [])
     if "pipeline" in spec:
         pipeline = _require_pipeline_spec("$unionWith", pipeline)
     coll = spec.get("coll")
     if coll is not None:
         if not isinstance(coll, str) or not coll:
-            raise OperationFailure("$unionWith coll must be a non-empty string")
+            raise OperationFailure(
+                "$unionWith coll must be a non-empty string",
+            )
         if coll.startswith("$"):
-            raise OperationFailure("$unionWith coll must be a collection name, not a path expression")
+            raise OperationFailure(
+                "$unionWith coll must be a collection name, not a path expression",
+            )
     elif "pipeline" not in spec:
         raise OperationFailure("$unionWith requires coll or pipeline")
     if set(spec) - {"coll", "pipeline"}:
@@ -287,13 +338,23 @@ def _lookup_matches(
     )
 
 
-def _require_expression_args(operator: str, spec: object, *, min_args: int, max_args: int | None = None) -> list[object]:
+def _require_expression_args(
+    operator: str,
+    spec: object,
+    *,
+    min_args: int,
+    max_args: int | None = None,
+) -> list[object]:
     if not isinstance(spec, list):
         raise OperationFailure(f"{operator} requires a list expression")
     if len(spec) < min_args:
-        raise OperationFailure(f"{operator} requires at least {min_args} arguments")
+        raise OperationFailure(
+            f"{operator} requires at least {min_args} arguments",
+        )
     if max_args is not None and len(spec) > max_args:
-        raise OperationFailure(f"{operator} accepts at most {max_args} arguments")
+        raise OperationFailure(
+            f"{operator} accepts at most {max_args} arguments",
+        )
     return spec
 
 
@@ -322,6 +383,7 @@ def _require_array(operator: str, value: object) -> list[Any]:
         raise OperationFailure(f"{operator} requires array arguments")
     return value
 
+
 def _expression_truthy(value: Any, *, dialect: MongoDialect) -> bool:
     return dialect.policy.expression_truthy(value)
 
@@ -335,20 +397,31 @@ def _append_unique_values(
 ) -> None:
     for value in values:
         if any(
-            QueryEngine._values_equal(value, existing, dialect=dialect, collation=collation)
+            QueryEngine._values_equal(
+                value,
+                existing,
+                dialect=dialect,
+                collation=collation,
+            )
             for existing in target
         ):
             continue
         target.append(deepcopy(value))
 
 
-def _resolve_variable_expression(expression: str, variables: Mapping[str, Any]) -> Any:
+def _resolve_variable_expression(
+    expression: str,
+    variables: Mapping[str, Any],
+) -> Any:
     name_and_path = expression[2:]
     name, _, path = name_and_path.partition(".")
     if name == "REMOVE":
         return _REMOVE if not path else _MISSING
     if name not in variables:
-        raise OperationFailure(f"Use of undefined variable: {name}", code=17276)
+        raise OperationFailure(
+            f"Use of undefined variable: {name}",
+            code=17276,
+        )
     value = variables[name]
     if not path:
         return value
@@ -393,7 +466,7 @@ def _resolve_aggregation_field_path(value: Any, path: str) -> Any:
             if resolved is _MISSING:
                 continue
             resolved_items.append(resolved)
-        return resolved_items if resolved_items else _MISSING
+        return resolved_items or _MISSING
 
     if not isinstance(value, dict):
         return _MISSING
@@ -404,7 +477,7 @@ def _resolve_aggregation_field_path(value: Any, path: str) -> Any:
     return _resolve_aggregation_field_path(value[head], tail)
 
 
-def _mongo_mod(left: int | float, right: int | float) -> int | float:
+def _mongo_mod(left: float, right: float) -> int | float:
     if not math.isfinite(left) or not math.isfinite(right):
         return math.nan
     quotient = int(left / right)
@@ -424,7 +497,9 @@ def _stringify_aggregation_value(value: Any) -> str:
         if math.isinf(value):
             return "Infinity" if value > 0 else "-Infinity"
     if isinstance(value, datetime.datetime):
-        normalized = value.astimezone(datetime.UTC) if value.tzinfo is not None else value
+        normalized = (
+            value.astimezone(datetime.UTC) if value.tzinfo is not None else value
+        )
         return normalized.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     if isinstance(value, (bytes, bytearray, Binary)):
         return base64.b64encode(bytes(value)).decode("ascii")
@@ -443,28 +518,34 @@ def _normalize_numeric_place(operator: str, place: Any) -> int:
     return place
 
 
-def _round_numeric(value: int | float, place: int) -> int | float:
+def _round_numeric(value: float, place: int) -> int | float:
     if isinstance(value, int) and place >= 0:
         return value
     quantizer = decimal.Decimal(f"1e{-place}")
-    rounded = decimal.Decimal(str(value)).quantize(quantizer, rounding=decimal.ROUND_HALF_EVEN)
+    rounded = decimal.Decimal(str(value)).quantize(
+        quantizer,
+        rounding=decimal.ROUND_HALF_EVEN,
+    )
     return int(rounded) if place <= 0 else float(rounded)
 
 
-def _trunc_numeric(value: int | float, place: int) -> int | float:
+def _trunc_numeric(value: float, place: int) -> int | float:
     if isinstance(value, int) and place >= 0:
         return value
-    factor = 10 ** place if place >= 0 else 10 ** (-place)
+    factor = 10**place if place >= 0 else 10 ** (-place)
     if place >= 0:
         truncated = math.trunc(value * factor) / factor
         return int(truncated) if place == 0 else truncated
     truncated = math.trunc(value / factor) * factor
     return int(truncated)
 
+
 def _bson_cstring_size(value: str) -> int:
     encoded = value.encode("utf-8")
     if b"\x00" in encoded:
-        raise OperationFailure("$bsonSize cannot encode strings containing NUL bytes")
+        raise OperationFailure(
+            "$bsonSize cannot encode strings containing NUL bytes",
+        )
     return len(encoded) + 1
 
 
@@ -481,7 +562,9 @@ def _bson_value_size(value: Any) -> int:
     if isinstance(value, dict):
         return _bson_document_size(value)
     if isinstance(value, list):
-        return _bson_document_size({str(index): item for index, item in enumerate(value)})
+        return _bson_document_size(
+            {str(index): item for index, item in enumerate(value)},
+        )
     if isinstance(value, (bytes, bytearray, Binary)):
         return 4 + 1 + len(value)
     if isinstance(value, uuid.UUID):
@@ -497,12 +580,16 @@ def _bson_value_size(value: Any) -> int:
     if isinstance(value, re.Pattern):
         return _bson_cstring_size(value.pattern) + _bson_cstring_size("")
     if isinstance(value, Regex):
-        return _bson_cstring_size(value.pattern) + _bson_cstring_size(value.flags)
+        return _bson_cstring_size(value.pattern) + _bson_cstring_size(
+            value.flags,
+        )
     if isinstance(value, Timestamp):
         return 8
     if isinstance(value, int):
         return 4 if -(1 << 31) <= value <= (1 << 31) - 1 else 8
-    raise OperationFailure(f"$bsonSize cannot encode value of type {type(value).__name__}")
+    raise OperationFailure(
+        f"$bsonSize cannot encode value of type {type(value).__name__}",
+    )
 
 
 def _bson_element_size(key: str, value: Any) -> int:
@@ -516,7 +603,10 @@ def _bson_document_size(document: dict[str, Any]) -> int:
     return total
 
 
-def _add_milliseconds(value: datetime.datetime, milliseconds: int | float) -> datetime.datetime:
+def _add_milliseconds(
+    value: datetime.datetime,
+    milliseconds: float,
+) -> datetime.datetime:
     return value + datetime.timedelta(milliseconds=milliseconds)
 
 
@@ -528,8 +618,13 @@ def _subtract_values(left: Any, right: Any) -> Any:
         if isinstance(right, (int, float)) and not isinstance(right, bool):
             return _add_milliseconds(left, -right)
     if isinstance(right, datetime.datetime):
-        raise OperationFailure("$subtract only supports number-number, date-date, or date-number")
-    return _require_numeric("$subtract", left) - _require_numeric("$subtract", right)
+        raise OperationFailure(
+            "$subtract only supports number-number, date-date, or date-number",
+        )
+    return _require_numeric("$subtract", left) - _require_numeric(
+        "$subtract",
+        right,
+    )
 
 
 def _evaluate_expression_with_missing(
@@ -545,7 +640,12 @@ def _evaluate_expression_with_missing(
             return _resolve_variable_expression(expression, variables)
         if expression.startswith("$"):
             return _resolve_aggregation_field_path(document, expression[1:])
-    return evaluate_expression(document, expression, variables, dialect=dialect)
+    return evaluate_expression(
+        document,
+        expression,
+        variables,
+        dialect=dialect,
+    )
 
 
 def evaluate_expression(
@@ -578,7 +678,9 @@ def evaluate_expression(
     if len(expression) == 1:
         operator, spec = next(iter(expression.items()))
         if isinstance(operator, str) and operator.startswith("$"):
-            extension_handler = get_registered_aggregation_expression_operator(operator)
+            extension_handler = get_registered_aggregation_expression_operator(
+                operator,
+            )
             if extension_handler is not None:
                 return extension_handler(
                     document,
@@ -586,39 +688,60 @@ def evaluate_expression(
                     variables,
                     dialect,
                     AggregationExpressionExtensionContext(
-                        evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                            current_document,
-                            current_expression,
-                            current_variables,
-                            dialect=dialect,
+                        evaluate_expression=lambda current_document, current_expression, current_variables=None: (
+                            evaluate_expression(
+                                current_document,
+                                current_expression,
+                                current_variables,
+                                dialect=dialect,
+                            )
                         ),
-                        evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                            current_document,
-                            current_expression,
-                            current_variables,
-                            dialect=dialect,
+                        evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: (
+                            _evaluate_expression_with_missing(
+                                current_document,
+                                current_expression,
+                                current_variables,
+                                dialect=dialect,
+                            )
                         ),
-                        require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: _require_expression_args(
-                            current_operator,
-                            current_spec,
-                            min_args=current_min_args,
-                            max_args=current_max_args,
+                        require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: (
+                            _require_expression_args(
+                                current_operator,
+                                current_spec,
+                                min_args=current_min_args,
+                                max_args=current_max_args,
+                            )
                         ),
                         missing_sentinel=_MISSING,
                     ),
                 )
             if operator == "$meta":
                 if spec == "textScore":
-                    found, value = get_document_value(document, TEXT_SCORE_FIELD)
+                    found, value = get_document_value(
+                        document,
+                        TEXT_SCORE_FIELD,
+                    )
                     return None if not found else deepcopy(value)
                 if spec == "vectorSearchScore":
-                    found, value = get_document_value(document, VECTOR_SEARCH_SCORE_FIELD)
+                    found, value = get_document_value(
+                        document,
+                        VECTOR_SEARCH_SCORE_FIELD,
+                    )
+                    return None if not found else deepcopy(value)
+                if spec == "searchHighlights":
+                    found, value = get_document_value(
+                        document,
+                        SEARCH_HIGHLIGHTS_METADATA_FIELD,
+                    )
                     return None if not found else deepcopy(value)
                 raise OperationFailure(
-                    "$meta aggregation expression only supports 'textScore' or 'vectorSearchScore'"
+                    "$meta aggregation expression only supports "
+                    "searchHighlights, textScore or vectorSearchScore",
                 )
             if not dialect.supports_aggregation_expression_operator(operator):
-                raise OperationFailure(f"Unsupported aggregation expression: {operator}")
+                raise OperationFailure(
+                    f"Unsupported aggregation expression: {operator}",
+                )
             if operator == "$literal":
                 return deepcopy(spec)
             if operator in SCALAR_EXPRESSION_OPERATORS:
@@ -628,23 +751,29 @@ def evaluate_expression(
                     spec,
                     variables,
                     dialect=dialect,
-                    evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                        current_document,
-                        current_expression,
-                        current_variables,
-                        dialect=dialect,
+                    evaluate_expression=lambda current_document, current_expression, current_variables=None: (
+                        evaluate_expression(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        )
                     ),
-                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                        current_document,
-                        current_expression,
-                        current_variables,
-                        dialect=dialect,
+                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: (
+                        _evaluate_expression_with_missing(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        )
                     ),
-                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: _require_expression_args(
-                        current_operator,
-                        current_spec,
-                        min_args=current_min_args,
-                        max_args=current_max_args,
+                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: (
+                        _require_expression_args(
+                            current_operator,
+                            current_spec,
+                            min_args=current_min_args,
+                            max_args=current_max_args,
+                        )
                     ),
                     stringify_value=_stringify_aggregation_value,
                     bson_document_size=_bson_document_size,
@@ -657,23 +786,29 @@ def evaluate_expression(
                     spec,
                     variables,
                     dialect=dialect,
-                    evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                        current_document,
-                        current_expression,
-                        current_variables,
-                        dialect=dialect,
+                    evaluate_expression=lambda current_document, current_expression, current_variables=None: (
+                        evaluate_expression(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        )
                     ),
-                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                        current_document,
-                        current_expression,
-                        current_variables,
-                        dialect=dialect,
+                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: (
+                        _evaluate_expression_with_missing(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        )
                     ),
-                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: _require_expression_args(
-                        current_operator,
-                        current_spec,
-                        min_args=current_min_args,
-                        max_args=current_max_args,
+                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: (
+                        _require_expression_args(
+                            current_operator,
+                            current_spec,
+                            min_args=current_min_args,
+                            max_args=current_max_args,
+                        )
                     ),
                     missing_sentinel=_MISSING,
                 )
@@ -684,51 +819,68 @@ def evaluate_expression(
                     spec,
                     variables,
                     dialect=dialect,
-                    evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                        current_document,
-                        current_expression,
-                        current_variables,
+                    evaluate_expression=lambda current_document, current_expression, current_variables=None: (
+                        evaluate_expression(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        )
+                    ),
+                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: (
+                        _evaluate_expression_with_missing(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        )
+                    ),
+                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: (
+                        _require_expression_args(
+                            current_operator,
+                            current_spec,
+                            min_args=current_min_args,
+                            max_args=current_max_args,
+                        )
+                    ),
+                    compare_values=lambda left, right, comparison_operator: (
+                        _compare_values(
+                            left,
+                            right,
+                            comparison_operator,
+                            dialect=dialect,
+                        )
+                    ),
+                    expression_truthy=lambda value: _expression_truthy(
+                        value,
                         dialect=dialect,
                     ),
-                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                        current_document,
-                        current_expression,
-                        current_variables,
-                        dialect=dialect,
-                    ),
-                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: _require_expression_args(
-                        current_operator,
-                        current_spec,
-                        min_args=current_min_args,
-                        max_args=current_max_args,
-                    ),
-                    compare_values=lambda left, right, comparison_operator: _compare_values(
-                        left,
-                        right,
-                        comparison_operator,
-                        dialect=dialect,
-                    ),
-                    expression_truthy=lambda value: _expression_truthy(value, dialect=dialect),
                     require_array=_require_array,
-                    evaluate_pick_n_input=lambda current_operator, current_document, current_spec, current_variables=None: _evaluate_pick_n_input(
-                        current_operator,
-                        current_document,
-                        current_spec,
-                        current_variables,
-                        dialect=dialect,
-                        evaluate_expression=lambda nested_document, nested_expression, nested_variables=None: evaluate_expression(
-                            nested_document,
-                            nested_expression,
-                            nested_variables,
+                    evaluate_pick_n_input=lambda current_operator, current_document, current_spec, current_variables=None: (
+                        _evaluate_pick_n_input(
+                            current_operator,
+                            current_document,
+                            current_spec,
+                            current_variables,
                             dialect=dialect,
-                        ),
-                        evaluate_expression_with_missing=lambda nested_document, nested_expression, nested_variables=None: _evaluate_expression_with_missing(
-                            nested_document,
-                            nested_expression,
-                            nested_variables,
-                            dialect=dialect,
-                        ),
-                        missing_sentinel=_MISSING,
+                            evaluate_expression=lambda nested_document, nested_expression, nested_variables=None: (
+                                evaluate_expression(
+                                    nested_document,
+                                    nested_expression,
+                                    nested_variables,
+                                    dialect=dialect,
+                                )
+                            ),
+                            evaluate_expression_with_missing=lambda nested_document, nested_expression, nested_variables=None: (
+                                _evaluate_expression_with_missing(
+                                    nested_document,
+                                    nested_expression,
+                                    nested_variables,
+                                    dialect=dialect,
+                                )
+                            ),
+                            missing_sentinel=_MISSING,
+                        )
                     ),
                     missing_sentinel=_MISSING,
                 )
@@ -739,23 +891,29 @@ def evaluate_expression(
                     spec,
                     variables,
                     dialect=dialect,
-                    evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                        current_document,
-                        current_expression,
-                        current_variables,
-                        dialect=dialect,
+                    evaluate_expression=lambda current_document, current_expression, current_variables=None: (
+                        evaluate_expression(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        )
                     ),
-                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                        current_document,
-                        current_expression,
-                        current_variables,
-                        dialect=dialect,
+                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: (
+                        _evaluate_expression_with_missing(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        )
                     ),
-                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: _require_expression_args(
-                        current_operator,
-                        current_spec,
-                        min_args=current_min_args,
-                        max_args=current_max_args,
+                    require_expression_args=lambda current_operator, current_spec, current_min_args, current_max_args=None: (
+                        _require_expression_args(
+                            current_operator,
+                            current_spec,
+                            min_args=current_min_args,
+                            max_args=current_max_args,
+                        )
                     ),
                     missing_sentinel=_MISSING,
                 )
@@ -766,25 +924,36 @@ def evaluate_expression(
                     spec,
                     variables,
                     dialect=dialect,
-                    evaluate_expression=lambda current_document, current_expression, current_variables=None: evaluate_expression(
-                        current_document,
-                        current_expression,
-                        current_variables,
-                        dialect=dialect,
+                    evaluate_expression=lambda current_document, current_expression, current_variables=None: (
+                        evaluate_expression(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        )
                     ),
-                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: _evaluate_expression_with_missing(
-                        current_document,
-                        current_expression,
-                        current_variables,
-                        dialect=dialect,
+                    evaluate_expression_with_missing=lambda current_document, current_expression, current_variables=None: (
+                        _evaluate_expression_with_missing(
+                            current_document,
+                            current_expression,
+                            current_variables,
+                            dialect=dialect,
+                        )
                     ),
                     missing_sentinel=_MISSING,
                 )
-            raise OperationFailure(f"Unsupported aggregation expression: {operator}")
+            raise OperationFailure(
+                f"Unsupported aggregation expression: {operator}",
+            )
 
     rendered: dict[str, Any] = {}
     for key, value in expression.items():
-        resolved = evaluate_expression(document, value, variables, dialect=dialect)
+        resolved = evaluate_expression(
+            document,
+            value,
+            variables,
+            dialect=dialect,
+        )
         if resolved is _MISSING:
             continue
         rendered[key] = resolved

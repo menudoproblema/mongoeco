@@ -46,6 +46,9 @@ dev = [
     "ruff==0.16.2",
     "twine",
 ]
+engine-testing = [
+    "pytest>=8,<10",
+]
 mongodb7 = [
     "pymongo>=4.9,<5",
 ]
@@ -86,7 +89,7 @@ exclude = [
 ]
 respect-gitignore = true
 
-line-length = 79
+line-length = 88
 indent-width = 4
 target-version = "py313"
 src = ["src", "tests"]
@@ -140,6 +143,7 @@ ignore = [
     "D101",  # Missing docstring in public class
     "D102",  # Missing docstring in public method
     "D103",  # Missing docstring in public function
+    "COM812", # Conflicts with the formatter's trailing-comma policy
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
@@ -150,7 +154,11 @@ unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]
+"tests/**" = [
+    "S101",
+    "PT009", # The suite intentionally uses unittest test cases
+    "PT027", # The suite intentionally uses unittest exception assertions
+]
 
 [tool.ruff.lint.flake8-pytest-style]
 parametrize-names-type = "list"        # @pytest.mark.parametrize(['name1', 'name2'], ...)
@@ -173,7 +181,7 @@ force-sort-within-sections = false
 
 
 [tool.ruff.format]
-quote-style = "single"
+quote-style = "double"
 indent-style = "space"
 
 # Respect magic trailing commas.

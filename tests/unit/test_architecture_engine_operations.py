@@ -72,7 +72,12 @@ from mongoeco.engines.semantic_core import (
     compile_update_semantics,
 )
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.types import EngineIndexRecord, IndexDefinition, IndexInformation, default_id_index_definition
+from mongoeco.types import (
+    EngineIndexRecord,
+    IndexDefinition,
+    IndexInformation,
+    default_id_index_definition,
+)
 from mongoeco.types import (
     BulkWriteErrorDetails,
     CodecOptions,
@@ -106,9 +111,12 @@ from mongoeco.types import (
     WriteErrorEntry,
     WriteCommandResult,
 )
-from mongoeco.core.operators import CompiledUpdatePipelinePlan, CompiledUpdatePlan, UpdateEngine
-
-
+from mongoeco.core.operators import (
+    CompiledUpdatePipelinePlan,
+    CompiledUpdatePlan,
+    UpdateEngine,
+)
+from mongoeco.core.search import TEXT_SCORE_FIELD
 
 
 class ArchitectureEngineOperationTests(unittest.TestCase):
@@ -140,6 +148,7 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
                     self.assertIsInstance(plan, EngineReadExecutionPlan)
                     self.assertEqual(plan.semantics.query_plan, semantics.query_plan)
                     self.assertTrue(plan.physical_plan)
+
         asyncio.run(_exercise())
 
     def test_engines_produce_typed_query_plan_explanations(self):
@@ -150,8 +159,12 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             await sqlite.connect()
             try:
                 semantics = compile_find_semantics({})
-                memory_explain = await memory.explain_find_semantics("db", "users", semantics)
-                sqlite_explain = await sqlite.explain_find_semantics("db", "users", semantics)
+                memory_explain = await memory.explain_find_semantics(
+                    "db", "users", semantics
+                )
+                sqlite_explain = await sqlite.explain_find_semantics(
+                    "db", "users", semantics
+                )
                 self.assertIsInstance(memory_explain, QueryPlanExplanation)
                 self.assertIsInstance(sqlite_explain, QueryPlanExplanation)
                 self.assertEqual(memory_explain.to_document()["engine"], "memory")
@@ -187,26 +200,35 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertEqual(semantics.max_time_ms, 25)
         self.assertEqual(semantics.selector_filter, {"name": "Ada"})
 
-    def test_compile_find_operation_extracts_classic_text_query_and_text_score_contract(self):
+    def test_compile_find_operation_extracts_classic_text_query_and_text_score_contract(
+        self,
+    ):
         operation = compile_find_operation(
             {"$text": {"$search": "Ada Lovelace"}, "kind": "person"},
             projection={"score": {"$meta": "textScore"}, "_id": 0},
             sort={"score": {"$meta": "textScore"}},
         )
 
-        self.assertEqual(operation.filter_spec, {"$text": {"$search": "Ada Lovelace"}, "kind": "person"})
+        self.assertEqual(
+            operation.filter_spec,
+            {"$text": {"$search": "Ada Lovelace"}, "kind": "person"},
+        )
         self.assertEqual(operation.selector_filter, {"kind": "person"})
         self.assertIsNotNone(operation.text_query)
         self.assertEqual(operation.text_query.terms, ("ada", "lovelace"))
-        self.assertEqual(operation.sort, [("__mongoeco_textScore__", -1)])
+        self.assertEqual(operation.sort, [(TEXT_SCORE_FIELD, -1)])
 
     def test_compile_find_operation_rejects_text_score_without_text_query(self):
-        with self.assertRaisesRegex(Exception, "\\$meta textScore projection requires a \\$text query"):
+        with self.assertRaisesRegex(
+            Exception, "\\$meta textScore projection requires a \\$text query"
+        ):
             compile_find_operation(
                 {"kind": "person"},
                 projection={"score": {"$meta": "textScore"}},
             )
-        with self.assertRaisesRegex(Exception, "\\$meta textScore sort requires a \\$text query"):
+        with self.assertRaisesRegex(
+            Exception, "\\$meta textScore sort requires a \\$text query"
+        ):
             compile_find_operation(
                 {"kind": "person"},
                 sort={"score": {"$meta": "textScore"}},
@@ -232,8 +254,12 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertIsInstance(semantics, EngineUpdateSemantics)
         self.assertEqual(semantics.filter_spec, {"name": "Ada"})
         self.assertEqual(semantics.selector_filter, {"name": "Ada"})
-        self.assertEqual(semantics.compiled_update_plan.update_spec, {"$set": {"rank": 1}})
-        self.assertEqual(semantics.compiled_upsert_plan.update_spec, {"$set": {"rank": 1}})
+        self.assertEqual(
+            semantics.compiled_update_plan.update_spec, {"$set": {"rank": 1}}
+        )
+        self.assertEqual(
+            semantics.compiled_upsert_plan.update_spec, {"$set": {"rank": 1}}
+        )
 
     def test_query_plan_explanation_builder_reuses_compiled_semantics(self):
         semantics = compile_find_semantics(
@@ -270,8 +296,12 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             strategy="sql",
             semantics=semantics,
             execution_lineage=(
-                ExecutionLineageStep(runtime="sql", phase="scan", detail="engine pushdown"),
-                ExecutionLineageStep(runtime="python", phase="project", detail="semantic core projection"),
+                ExecutionLineageStep(
+                    runtime="sql", phase="scan", detail="engine pushdown"
+                ),
+                ExecutionLineageStep(
+                    runtime="python", phase="project", detail="semantic core projection"
+                ),
             ),
             fallback_reason=None,
         )
@@ -280,7 +310,11 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             explanation.to_document()["execution_lineage"],
             [
                 {"runtime": "sql", "phase": "scan", "detail": "engine pushdown"},
-                {"runtime": "python", "phase": "project", "detail": "semantic core projection"},
+                {
+                    "runtime": "python",
+                    "phase": "project",
+                    "detail": "semantic core projection",
+                },
             ],
         )
 
@@ -289,7 +323,10 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
 
         self.assertTrue(MONGODB_DIALECT_70.policy.null_query_matches_undefined())
         self.assertFalse(MONGODB_DIALECT_80.policy.null_query_matches_undefined())
-        self.assertEqual(MONGODB_DIALECT_70.compare_values(1, 2), MONGODB_DIALECT_70.policy.compare_values(1, 2))
+        self.assertEqual(
+            MONGODB_DIALECT_70.compare_values(1, 2),
+            MONGODB_DIALECT_70.policy.compare_values(1, 2),
+        )
 
     def test_relaxed_planning_mode_keeps_issues_visible_but_not_executable(self):
         async def _run() -> None:
@@ -328,7 +365,9 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertEqual(len(operation.planning_issues), 1)
         self.assertEqual(operation.planning_issues[0].scope, "update")
 
-    def test_private_update_planning_issue_collector_reports_invalid_pipeline_shapes(self):
+    def test_private_update_planning_issue_collector_reports_invalid_pipeline_shapes(
+        self,
+    ):
         malformed_stage = operations_module._collect_update_planning_issues(
             [1],
             dialect=operations_module.MONGODB_DIALECT_70,
@@ -347,15 +386,29 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
 
         self.assertEqual(
             malformed_stage,
-            (operations_module.PlanningIssue(scope="update", message="Each update pipeline stage must be a single-key document"),),
+            (
+                operations_module.PlanningIssue(
+                    scope="update",
+                    message="Each update pipeline stage must be a single-key document",
+                ),
+            ),
         )
         self.assertEqual(
             malformed_operator,
-            (operations_module.PlanningIssue(scope="update", message="Update pipeline stage operator must start with '$'"),),
+            (
+                operations_module.PlanningIssue(
+                    scope="update",
+                    message="Update pipeline stage operator must start with '$'",
+                ),
+            ),
         )
         self.assertEqual(
             unsupported_stage,
-            (operations_module.PlanningIssue(scope="update", message="Unsupported update pipeline stage: $future"),),
+            (
+                operations_module.PlanningIssue(
+                    scope="update", message="Unsupported update pipeline stage: $future"
+                ),
+            ),
         )
 
     def test_private_update_planning_issue_collector_reports_invalid_update_type(self):
@@ -417,10 +470,16 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
 
         self.assertEqual(
             issues,
-            (operations_module.PlanningIssue(scope="update", message="broken pipeline"),),
+            (
+                operations_module.PlanningIssue(
+                    scope="update", message="broken pipeline"
+                ),
+            ),
         )
 
-    def test_relaxed_update_operation_leaves_malformed_pipeline_stage_non_executable(self):
+    def test_relaxed_update_operation_leaves_malformed_pipeline_stage_non_executable(
+        self,
+    ):
         operation = compile_update_operation(
             {"name": "Ada"},
             update_spec=[{"$set": 1}],
@@ -446,32 +505,53 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertIsNone(empty_pipeline.compiled_update_plan)
         self.assertEqual(
             empty_pipeline.planning_issues,
-            (operations_module.PlanningIssue(scope="update", message="update pipeline must be a non-empty list"),),
+            (
+                operations_module.PlanningIssue(
+                    scope="update", message="update pipeline must be a non-empty list"
+                ),
+            ),
         )
         self.assertIsNone(wrong_type.compiled_update_plan)
         self.assertEqual(
             wrong_type.planning_issues,
-            (operations_module.PlanningIssue(scope="update", message="update specification must be a document or pipeline"),),
+            (
+                operations_module.PlanningIssue(
+                    scope="update",
+                    message="update specification must be a document or pipeline",
+                ),
+            ),
         )
 
-    def test_update_operation_skips_compilation_for_non_operator_documents_and_invalid_param_shapes(self):
-        with self.assertRaisesRegex(operations_module.OperationFailure, "update_spec must contain only update operators"):
+    def test_update_operation_skips_compilation_for_non_operator_documents_and_invalid_param_shapes(
+        self,
+    ):
+        with self.assertRaisesRegex(
+            operations_module.OperationFailure,
+            "update_spec must contain only update operators",
+        ):
             compile_update_operation(
                 {"name": "Ada"},
                 update_spec={"name": "Ada"},
             )
-        with self.assertRaisesRegex(operations_module.OperationFailure, "\\$set value must be a dict"):
+        with self.assertRaisesRegex(
+            operations_module.OperationFailure, "\\$set value must be a dict"
+        ):
             compile_update_operation(
                 {"name": "Ada"},
                 update_spec={"$set": 1},  # type: ignore[dict-item]
             )
-        with self.assertRaisesRegex(operations_module.OperationFailure, "update specification must be a document or pipeline"):
+        with self.assertRaisesRegex(
+            operations_module.OperationFailure,
+            "update specification must be a document or pipeline",
+        ):
             compile_update_operation(
                 {"name": "Ada"},
                 update_spec="bad",  # type: ignore[arg-type]
             )
 
-    def test_relaxed_update_operation_reports_invalid_non_operator_documents_and_param_shapes(self):
+    def test_relaxed_update_operation_reports_invalid_non_operator_documents_and_param_shapes(
+        self,
+    ):
         replacement_style = compile_update_operation(
             {"name": "Ada"},
             update_spec={"name": "Ada"},
@@ -491,21 +571,37 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertIsNone(replacement_style.compiled_update_plan)
         self.assertEqual(
             replacement_style.planning_issues,
-            (operations_module.PlanningIssue(scope="update", message="update_spec must contain only update operators"),),
+            (
+                operations_module.PlanningIssue(
+                    scope="update",
+                    message="update_spec must contain only update operators",
+                ),
+            ),
         )
         self.assertIsNone(invalid_params.compiled_update_plan)
         self.assertEqual(
             invalid_params.planning_issues,
-            (operations_module.PlanningIssue(scope="update", message="$set value must be a dict"),),
+            (
+                operations_module.PlanningIssue(
+                    scope="update", message="$set value must be a dict"
+                ),
+            ),
         )
         self.assertIsNone(invalid_pipeline_type.compiled_update_plan)
         self.assertEqual(
             invalid_pipeline_type.planning_issues,
-            (operations_module.PlanningIssue(scope="update", message="update specification must be a document or pipeline"),),
+            (
+                operations_module.PlanningIssue(
+                    scope="update",
+                    message="update specification must be a document or pipeline",
+                ),
+            ),
         )
 
     def test_private_update_compilation_and_normalizers_cover_invalid_inputs(self):
-        with self.assertRaisesRegex(operations_module.OperationFailure, "update_spec must not be empty"):
+        with self.assertRaisesRegex(
+            operations_module.OperationFailure, "update_spec must not be empty"
+        ):
             operations_module._compile_update_plans(
                 {},
                 dialect=operations_module.MONGODB_DIALECT_70,
@@ -546,7 +642,9 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             operations_module._normalize_skip(True)
 
-    def test_private_update_compilation_returns_none_in_relaxed_mode_for_invalid_shapes(self):
+    def test_private_update_compilation_returns_none_in_relaxed_mode_for_invalid_shapes(
+        self,
+    ):
         self.assertEqual(
             operations_module._compile_update_plans(
                 {},
@@ -560,7 +658,9 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             (None, None),
         )
 
-    def test_private_update_compilation_returns_none_in_relaxed_mode_after_engine_failure(self):
+    def test_private_update_compilation_returns_none_in_relaxed_mode_after_engine_failure(
+        self,
+    ):
         with mock.patch.object(
             operations_module.UpdateEngine,
             "compile_update_plan",
@@ -666,14 +766,18 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
                 expected_compile_count = 2 if "let" in kwargs else 4
                 self.assertEqual(compile_mock.call_count, expected_compile_count)
 
-    def test_private_update_compilation_reraises_in_strict_mode_after_engine_failure(self):
+    def test_private_update_compilation_reraises_in_strict_mode_after_engine_failure(
+        self,
+    ):
         operations_module._clear_update_plan_template_cache()
         with mock.patch.object(
             operations_module.UpdateEngine,
             "compile_update_plan",
             side_effect=operations_module.OperationFailure("cannot compile"),
         ):
-            with self.assertRaisesRegex(operations_module.OperationFailure, "cannot compile"):
+            with self.assertRaisesRegex(
+                operations_module.OperationFailure, "cannot compile"
+            ):
                 operations_module._compile_update_plans(
                     {"$set": {"name": "Ada"}},
                     dialect=operations_module.MONGODB_DIALECT_70,
@@ -695,10 +799,17 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
             [issue.scope for issue in operation.planning_issues],
             ["aggregate", "aggregate", "aggregate"],
         )
-        self.assertTrue(any("Unsupported aggregation stage" in issue.message for issue in operation.planning_issues))
+        self.assertTrue(
+            any(
+                "Unsupported aggregation stage" in issue.message
+                for issue in operation.planning_issues
+            )
+        )
 
     def test_relaxed_aggregate_operation_accepts_registered_extension_stage(self):
-        register_aggregation_stage("$future", lambda documents, _spec, _context: documents)
+        register_aggregation_stage(
+            "$future", lambda documents, _spec, _context: documents
+        )
         try:
             operation = compile_aggregate_operation(
                 [{"$future": {}}],
@@ -721,8 +832,12 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
 
     def test_operation_with_overrides_preserves_dataclass_contracts(self):
         find = compile_find_operation({"name": "Ada"}).with_overrides(limit=1)
-        update = compile_update_operation({"name": "Ada"}).with_overrides(comment="patched")
-        aggregate = compile_aggregate_operation([{"$match": {"name": "Ada"}}]).with_overrides(batch_size=5)
+        update = compile_update_operation({"name": "Ada"}).with_overrides(
+            comment="patched"
+        )
+        aggregate = compile_aggregate_operation(
+            [{"$match": {"name": "Ada"}}]
+        ).with_overrides(batch_size=5)
 
         self.assertEqual(find.limit, 1)
         self.assertEqual(update.comment, "patched")
@@ -737,7 +852,11 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
 
         self.assertEqual(
             issues,
-            (operations_module.PlanningIssue(scope="aggregate", message="pipeline must be a list"),),
+            (
+                operations_module.PlanningIssue(
+                    scope="aggregate", message="pipeline must be a list"
+                ),
+            ),
         )
 
     def test_engines_plan_read_execution_before_explain(self):
@@ -918,7 +1037,9 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
 
     def test_aggregate_operation_rejects_invalid_allow_disk_use(self):
         with self.assertRaises(TypeError):
-            compile_aggregate_operation([{"$match": {"name": "Ada"}}], allow_disk_use="yes")  # type: ignore[arg-type]
+            compile_aggregate_operation(
+                [{"$match": {"name": "Ada"}}], allow_disk_use="yes"
+            )  # type: ignore[arg-type]
 
     def test_admin_cursors_share_materialized_base_classes(self):
         self.assertTrue(issubclass(AsyncIndexCursor, AsyncMaterializedCursor))
@@ -931,7 +1052,9 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertIn("$match", AGGREGATION_STAGE_SPECS)
         self.assertIn("$group", AGGREGATION_STAGE_HANDLERS)
         self.assertIn("$lookup", AGGREGATION_STAGE_HANDLERS)
-        self.assertIs(AGGREGATION_STAGE_HANDLERS["$set"], AGGREGATION_STAGE_HANDLERS["$addFields"])
+        self.assertIs(
+            AGGREGATION_STAGE_HANDLERS["$set"], AGGREGATION_STAGE_HANDLERS["$addFields"]
+        )
         self.assertTrue(is_streamable_aggregation_stage("$match"))
         self.assertFalse(is_streamable_aggregation_stage("$group"))
 
@@ -949,7 +1072,9 @@ class ArchitectureEngineOperationTests(unittest.TestCase):
         self.assertEqual(spec.execution_mode, "streamable")
 
     def test_index_definition_is_shared_source_for_public_metadata(self):
-        index = IndexDefinition([("email", 1), ("created_at", -1)], name="email_created", unique=True)
+        index = IndexDefinition(
+            [("email", 1), ("created_at", -1)], name="email_created", unique=True
+        )
 
         self.assertEqual(
             index.to_list_document(),

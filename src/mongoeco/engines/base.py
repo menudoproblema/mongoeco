@@ -3,6 +3,11 @@ from typing import Protocol, runtime_checkable
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MongoDialect
 from mongoeco.core.operation_context import OperationContext
+from mongoeco.core.search_execution import SearchRequest
+from mongoeco.core.search_models import (
+    SearchExecutionOutcome,
+    SearchExplainVerbosity,
+)
 from mongoeco.engines.capabilities import EngineCapabilities
 from mongoeco.engines.results import (
     DeleteOutcome,
@@ -17,7 +22,6 @@ from mongoeco.engines.semantic_core import (
 from mongoeco.engines.snapshots import ReadSnapshot
 from mongoeco.session import ClientSession
 from mongoeco.types import (
-    DeleteResult,
     Document,
     DocumentId,
     Filter,
@@ -29,7 +33,6 @@ from mongoeco.types import (
     QueryPlanExplanation,
     SearchIndexDefinition,
     SearchIndexDocument,
-    UpdateResult,
 )
 
 
@@ -48,8 +51,22 @@ class AsyncLifecycleEngine(Protocol):
 
 @runtime_checkable
 class AsyncReadSemanticsEngine(Protocol):
-    def open_read_snapshot(self, db_name: str, coll_name: str, semantics: EngineFindSemantics, *, operation_context: OperationContext) -> ReadSnapshot: ...
-    async def count_find_semantics(self, db_name: str, coll_name: str, semantics: EngineFindSemantics, *, operation_context: OperationContext) -> int: ...
+    def open_read_snapshot(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        operation_context: OperationContext,
+    ) -> ReadSnapshot: ...
+    async def count_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        operation_context: OperationContext,
+    ) -> int: ...
 
 
 @runtime_checkable
@@ -126,11 +143,57 @@ class AsyncBatchInsertEngine(Protocol):
 
 @runtime_checkable
 class AsyncIndexAdminEngine(Protocol):
-    async def create_index(self, db_name: str, coll_name: str, keys: IndexKeySpec, *, unique: bool = False, name: str | None = None, sparse: bool = False, hidden: bool = False, collation: Filter | None = None, partial_filter_expression: Filter | None = None, expire_after_seconds: int | None = None, weights: dict[str, int] | None = None, default_language: str | None = None, language_override: str | None = None, min_value: float | int | None = None, max_value: float | int | None = None, bucket_size: float | int | None = None, max_time_ms: int | None = None, context: ClientSession | None = None) -> str: ...
-    async def list_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> list[IndexDocument]: ...
-    async def index_information(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> IndexInformation: ...
-    async def drop_index(self, db_name: str, coll_name: str, index_or_name: str | IndexKeySpec, *, context: ClientSession | None = None) -> None: ...
-    async def drop_indexes(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> None: ...
+    async def create_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        keys: IndexKeySpec,
+        *,
+        unique: bool = False,
+        name: str | None = None,
+        sparse: bool = False,
+        hidden: bool = False,
+        collation: Filter | None = None,
+        partial_filter_expression: Filter | None = None,
+        expire_after_seconds: int | None = None,
+        weights: dict[str, int] | None = None,
+        default_language: str | None = None,
+        language_override: str | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
+        bucket_size: float | None = None,
+        max_time_ms: int | None = None,
+        context: ClientSession | None = None,
+    ) -> str: ...
+    async def list_indexes(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> list[IndexDocument]: ...
+    async def index_information(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> IndexInformation: ...
+    async def drop_index(
+        self,
+        db_name: str,
+        coll_name: str,
+        index_or_name: str | IndexKeySpec,
+        *,
+        context: ClientSession | None = None,
+    ) -> None: ...
+    async def drop_indexes(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None: ...
 
 
 @runtime_checkable
@@ -174,8 +237,32 @@ class AsyncSearchIndexAdminEngine(Protocol):
 
 
 @runtime_checkable
+class AsyncSearchEngine(Protocol):
+    async def execute_search(
+        self,
+        db_name: str,
+        coll_name: str,
+        request: SearchRequest,
+    ) -> SearchExecutionOutcome: ...
+    async def explain_search(
+        self,
+        db_name: str,
+        coll_name: str,
+        request: SearchRequest,
+        verbosity: SearchExplainVerbosity,
+    ) -> QueryPlanExplanation: ...
+
+
+@runtime_checkable
 class AsyncExplainSemanticsEngine(Protocol):
-    async def explain_find_semantics(self, db_name: str, coll_name: str, semantics: EngineFindSemantics, *, context: ClientSession | None = None) -> QueryPlanExplanation: ...
+    async def explain_find_semantics(
+        self,
+        db_name: str,
+        coll_name: str,
+        semantics: EngineFindSemantics,
+        *,
+        context: ClientSession | None = None,
+    ) -> QueryPlanExplanation: ...
 
 
 @runtime_checkable
@@ -206,7 +293,11 @@ class AsyncReadPlanningEngine(Protocol):
 
 @runtime_checkable
 class AsyncDatabaseAdminEngine(Protocol):
-    async def list_databases(self, *, context: ClientSession | None = None) -> list[str]: ...
+    async def list_databases(
+        self,
+        *,
+        context: ClientSession | None = None,
+    ) -> list[str]: ...
 
 
 @runtime_checkable
@@ -223,11 +314,42 @@ class AsyncProfilingEngine(Protocol):
 
 @runtime_checkable
 class AsyncNamespaceAdminEngine(Protocol):
-    async def list_collections(self, db_name: str, *, context: ClientSession | None = None) -> list[str]: ...
-    async def collection_options(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> dict[str, object]: ...
-    async def create_collection(self, db_name: str, coll_name: str, *, options: dict[str, object] | None = None, context: ClientSession | None = None) -> None: ...
-    async def rename_collection(self, db_name: str, coll_name: str, new_name: str, *, context: ClientSession | None = None) -> None: ...
-    async def drop_collection(self, db_name: str, coll_name: str, *, context: ClientSession | None = None) -> None: ...
+    async def list_collections(
+        self,
+        db_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> list[str]: ...
+    async def collection_options(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> dict[str, object]: ...
+    async def create_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        options: dict[str, object] | None = None,
+        context: ClientSession | None = None,
+    ) -> None: ...
+    async def rename_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        new_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None: ...
+    async def drop_collection(
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        context: ClientSession | None = None,
+    ) -> None: ...
 
 
 @runtime_checkable

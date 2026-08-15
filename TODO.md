@@ -20,12 +20,10 @@ Objetivo: ampliar búsqueda local solo donde el siguiente salto aporte valor rea
 
 Pendientes:
 
-* decidir si merece la pena ir más allá del tier textual local ya cerrado hacia features Atlas-like avanzadas, sobre todo:
-  * collector `facet` y `searchMeta` más allá del preview local actual
-    (ya con `facet` tipado `string`/`number`/`date` y
-    `facet.operator` en `$searchMeta` local)
-  * `highlight` con semántica más rica que snippets locales
-  * `count` como meta/collector más allá del preview local
+* decidir si merece la pena ir más allá del contrato estable `search-v1` hacia
+  paridad Atlas-like avanzada, sobre todo:
+  * collectors distribuidos o dependientes de analyzers Atlas;
+  * highlight dependiente del backend/analyzer remoto;
   * semántica todavía más rica de `autocomplete`
   * semántica todavía más rica de `wildcard`
   * opciones/flags todavía más ricos de `regex`
@@ -44,7 +42,7 @@ Pendientes:
 * decidir si el backend ANN local actual de `vectorSearch`, ya con
   ampliacion adaptativa de candidatos antes del fallback exacto, es suficiente
   o si necesita una siguiente fase mas ambiciosa;
-* mejorar `explain()` de search si aparecen nuevos backends u operadores.
+* ampliar `explain()` solo si aparecen nuevos backends u operadores.
 
 ## 2. Rendimiento y planificación
 

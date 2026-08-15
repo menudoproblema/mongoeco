@@ -27,6 +27,7 @@ The suite currently covers these workload groups:
 - `predicate_diagnostics`
 - `sort_shape_diagnostics`
 - `search_diagnostics`
+- `search_meta_diagnostics`
 - `vector_search_diagnostics`
 
 Each group is designed to answer a specific question:
@@ -41,6 +42,9 @@ Each group is designed to answer a specific question:
 - search diagnostics isolate local `$search` operators and surface the real
   backend (`fts5`, materialized prefilter paths or Python fallback), including
   hybrid `compound` and `compound+near` shapes
+- search metadata diagnostics isolate `$searchMeta` total count, early
+  lower-bound count and named facets, recording planner eligibility and
+  comparing exact SQLite collector execution with the semantic-core fallback
 - vector diagnostics isolate local ANN-backed `$vectorSearch` and the extra
   cost of post-candidate filtering, while surfacing `similarity`,
   `numCandidates`, candidate counts and exact fallback metadata
@@ -62,6 +66,8 @@ For that reason:
 - benchmark outputs are local artifacts and are ignored by git
 - workloads can be selected explicitly with repeated `--workload` flags so a
   discussion can focus on one subsystem without rerunning the whole suite
+- adapters declare benchmark capabilities; unsupported workloads are reported
+  as `SKIPPED` and remain distinct from execution errors
 
 ## Installation
 
@@ -118,6 +124,21 @@ python -m benchmarks.run \
   --repetitions 1 \
   --workload search_diagnostics \
   --workload vector_search_diagnostics
+```
+
+Collector pushdown matrix:
+
+```bash
+for size in 100 1000 10000; do
+  python -m benchmarks.report \
+    --engine sqlite-sync \
+    --size "$size" \
+    --warmup 1 \
+    --repetitions 5 \
+    --workload search_meta_diagnostics \
+    --output-json "benchmarks/reports/search-meta-${size}.json" \
+    --output-markdown "benchmarks/reports/search-meta-${size}.md"
+done
 ```
 
 Recommended community matrix:
