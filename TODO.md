@@ -74,10 +74,13 @@ Pendientes:
 ## 4. Publicacion y producto
 
 Objetivo: mantener releases publicas reproducibles y una politica de evolucion
-coherente despues de `4.2.1`.
+coherente despues de `4.6.0`.
 
 Pendientes:
 
+* registrar en PyPI el Trusted Publisher para `menudoproblema/mongoeco`,
+  `.github/workflows/ci.yml` y el environment `pypi`; hasta entonces el job de
+  publicacion OIDC falla con `invalid-publisher` y exige el fallback manual;
 * seguir revisando packaging y metadatos en cada release;
 * mantener documentacion publica de uso, alcance y posicionamiento;
 * ejecutar el roadmap verificable de `docs/roadmap-5.0.md`: 4.6 como bridge,
@@ -176,21 +179,19 @@ Orden recomendado a partir de aquí:
 3. preparar publicación si el objetivo es sacar versión;
 4. dejar Rust como línea futura, no como trabajo inmediato.
 
-## 8. Pensando 4.0
+## 8. Pensando 5.0
 
-No es objetivo inmediato, pero sí conviene observar qué justificaría una
-`4.0.0` de producto. Una corrección de contrato público incompatible también
-puede requerir una major por Semantic Versioning aunque no cambie el centro de
-gravedad del producto. El soporte estricto de variables de ejecución de
-`$$NOW` es un ejemplo: se documenta en la
-[guía de migración 4.0](docs/release-4.0.0.md) y no debe quedar bloqueado por
-los objetivos de producto de esta sección.
+El siguiente major solo debe cerrarse tras completar la transicion verificable
+de [roadmap 5.0](docs/roadmap-5.0.md). Una correccion incompatible del contrato
+publico tambien puede exigirlo por Semantic Versioning, pero no debe mezclarse
+con ampliaciones compatibles del subset local.
 
 Líneas a vigilar:
 
-* evaluar si `$search` y `vectorSearch` pasan de subset útil a superficie de
+* validar una minor opt-in de SPI v3 y `search-v2` antes de retirar contratos;
+* evaluar si `$search` y `vectorSearch` pasan de subset util a superficie de
   producto claramente diferenciada;
 * decidir si un provider CXP live opcional merece vivir como adaptador externo
   del runner/orquestador o no existir;
-* reservar una `4.0.0` de producto para un cambio real de centro de gravedad,
-  no para seguir ampliando subset local dentro de `3.x`.
+* reservar `5.0.0` para retiradas contractuales observadas y un cambio real de
+  frontera, no para seguir ampliando de forma compatible el subset local.

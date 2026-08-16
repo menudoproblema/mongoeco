@@ -1,6 +1,7 @@
 # Release 4.6.0
 
-Status: preparada para publicacion el 17 de agosto de 2026.
+Status: publicada el 17 de agosto de 2026 con la etiqueta `v4.6.0` sobre el
+commit `306496d977b813bcbca006e125f68075818013b8`.
 
 ## Alcance
 
@@ -50,8 +51,8 @@ No se incorpora un pushdown nuevo en 4.6.0: las reglas existentes se conservan
 porque mantienen equivalencia y muestran mejora material; el candidato nuevo
 fue ligeramente peor que Python.
 
-La version del paquete, commit, etiqueta y publicacion quedan fuera de estas
-notas y requieren autorizacion expresa.
+El bump de version, el commit, la etiqueta y la publicacion se ejecutaron tras
+la autorizacion expresa de cierre.
 
 ## Evidencia de cierre
 
@@ -81,5 +82,24 @@ Ejecucion final del 17 de agosto de 2026 sobre Python 3.13.13 y 3.14.5:
 - fixture SQLite 4.5 conservada con SHA-256
   `e671484cd736c42eb3c4e11dbc5ca2f5564c35072f0e1a5fcc4dded172400efe`.
 
-La publicacion etiquetada vuelve a ejecutar el diferencial requerido en GitHub
-Actions y solo promueve los artefactos inmutables construidos y probados por CI.
+## Publicacion
+
+El workflow de la etiqueta supero el build reproducible, imports minimos,
+Python 3.13/3.14, cobertura y diferenciales MongoDB 7/8. El intercambio OIDC de
+publicacion fallo con `invalid-publisher`: PyPI no tiene registrado el Trusted
+Publisher para `menudoproblema/mongoeco`, `.github/workflows/ci.yml` y el
+environment `pypi`.
+
+Como fallback ya usado en 4.4.0 y 4.5.0, wheel y sdist se reconstruyeron dos
+veces desde el commit etiquetado con `SOURCE_DATE_EPOCH` fijado, se compararon
+byte a byte, pasaron `twine check` y se publicaron con la credencial local
+existente. Los SHA-256 publicados en PyPI son:
+
+- wheel `mongoeco-4.6.0-py3-none-any.whl`:
+  `8c148ae6e491ef0c37243b70070904138367b0f148c7accd4695091b3834b58d`;
+- sdist `mongoeco-4.6.0.tar.gz`:
+  `1ea30ff876bef8b21d5fab9045f6f626cff327d4356cc8d196677eac3f750cff`.
+
+El smoke posterior instalo `mongoeco==4.6.0` sin cache desde
+`https://pypi.org/simple`, lo importo desde `site-packages` en Python 3.14 y
+valido una operacion completa sobre `MemoryEngine`.
