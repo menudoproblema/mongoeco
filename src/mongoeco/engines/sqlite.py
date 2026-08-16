@@ -15,11 +15,11 @@ import uuid
 
 from collections.abc import AsyncIterable, Callable, Mapping
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager, nullcontext
+from contextlib import contextmanager, nullcontext, suppress
 from copy import deepcopy
 from dataclasses import dataclass, replace
 from decimal import Decimal
-from functools import partial
+from functools import partial, wraps
 from pathlib import Path
 from typing import Any, override
 
@@ -57,6 +57,8 @@ from mongoeco.core.identity import (
     assert_valid_root_document_id,
     canonical_document_id,
     document_matches_root_id_lookup,
+    materialize_merge_insert_document,
+    materialize_merge_update_document,
 )
 from mongoeco.core.json_compat import json_dumps_compact, json_loads
 from mongoeco.core.operation_context import OperationContext
@@ -79,6 +81,10 @@ from mongoeco.core.query_plan import (
     OrCondition,
     QueryNode,
     ensure_query_plan,
+)
+from mongoeco.core.runtime_metadata import (
+    RuntimeDocumentState,
+    legacy_document_from_runtime_state,
 )
 from mongoeco.core.search import (
     SearchQuery,
@@ -368,6 +374,20 @@ def _shutdown_sqlite_shared_executors() -> None:
         executor.shutdown(wait=True, cancel_futures=True)
 
 
+def _cleanup_failed_connect(
+    connect: Callable[["SQLiteEngine"], None],
+) -> Callable[["SQLiteEngine"], None]:
+    @wraps(connect)
+    def guarded(engine: "SQLiteEngine") -> None:
+        try:
+            connect(engine)
+        except BaseException:
+            engine._abort_failed_connect_sync()
+            raise
+
+    return guarded
+
+
 atexit.register(_shutdown_sqlite_shared_executors)
 
 
@@ -380,6 +400,8 @@ class SQLiteEngine(AsyncStorageEngine):
             metadata_collectors=True,
             highlight=True,
             explain_verbosity=True,
+            operators=frozenset({"$search", "$vectorSearch"}),
+            vector_similarities=frozenset({"cosine", "dotProduct", "euclidean"}),
         ),
     )
     """Motor SQLite async-first usando la stdlib como backend persistente."""
@@ -420,6 +442,7 @@ class SQLiteEngine(AsyncStorageEngine):
         self._change_outbox_checkpoints: dict[str, int] = {}
         self._registered_change_consumers: dict[str, bool] = {}
         self._change_delivery_connection: sqlite3.Connection | None = None
+        self._pending_connection: sqlite3.Connection | None = None
         self._change_delivery_lock = threading.RLock()
         self._change_dispatch_owner = uuid.uuid4().hex
         self._registration_heartbeat_guard = threading.Lock()
@@ -680,6 +703,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 "engine": "sqlite",
                 "pushdownModes": ["sql", "hybrid", "python"],
                 "hybridSortFallback": True,
+                "observed": self._runtime_metrics.planner_snapshot(),
             },
             "search": {
                 "backend": "fts5-or-usearch-or-python-fallback",
@@ -3949,10 +3973,43 @@ class SQLiteEngine(AsyncStorageEngine):
     def _backfill_scalar_indexes_sync(self, conn: sqlite3.Connection) -> None:
         _sqlite_runtime_backfill_scalar_indexes_sync(self, conn)
 
+    def _abort_failed_connect_sync(self) -> None:
+        with self._lock:
+            connections = (
+                self._pending_connection,
+                self._connection,
+                self._change_delivery_connection,
+            )
+            self._pending_connection = None
+            self._connection = None
+            self._change_delivery_connection = None
+            self._connection_count = 0
+            self._transaction_owner_session_id = None
+            self._registered_change_consumers.clear()
+            self._change_outbox_checkpoints.clear()
+            self._invalidate_index_cache()
+            self._invalidate_collection_id_cache()
+            self._invalidate_collection_features_cache()
+            self._ensured_search_backends.clear()
+            self._vector_search_backends.clear()
+            self._search_backend_versions.clear()
+            self._materialized_search_entry_cache.clear()
+            self._clear_compound_search_caches()
+            self._fts5_available = None
+        closed: set[int] = set()
+        for connection in connections:
+            if connection is None or id(connection) in closed:
+                continue
+            closed.add(id(connection))
+            with suppress(sqlite3.Error):
+                connection.close()
+
+    @_cleanup_failed_connect
     def _connect_sync(self) -> None:  # noqa: PLR0912, PLR0915
         with self._lock:
             if self._connection_count == 0:
                 connection = self._create_sqlite_connection()
+                self._pending_connection = connection
                 connection.execute(
                     """
                     CREATE TABLE IF NOT EXISTS collections (
@@ -4344,20 +4401,14 @@ class SQLiteEngine(AsyncStorageEngine):
                 connection.commit()
                 if self._path != ":memory:":
                     change_delivery_connection = self._create_sqlite_connection()
-                    try:
-                        ensure_change_outbox_schema(
-                            change_delivery_connection,
-                        )
-                        _sqlite_expire_ephemeral_consumers(
-                            change_delivery_connection,
-                        )
-                        change_delivery_connection.commit()
-                    except BaseException:
-                        change_delivery_connection.close()
-                        connection.close()
-                        self._connection = None
-                        raise
                     self._change_delivery_connection = change_delivery_connection
+                    ensure_change_outbox_schema(
+                        change_delivery_connection,
+                    )
+                    _sqlite_expire_ephemeral_consumers(
+                        change_delivery_connection,
+                    )
+                    change_delivery_connection.commit()
                 self._ensured_multikey_physical_indexes.clear()
                 self._ensured_search_backends.clear()
                 self._vector_search_backends.clear()
@@ -4368,13 +4419,19 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._invalidate_index_cache()
                 self._invalidate_collection_id_cache()
                 self._invalidate_collection_features_cache()
+                self._pending_connection = None
             self._connection_count += 1
 
     def _create_sqlite_connection(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self._path, check_same_thread=False)
-        if self._path != ":memory:":
-            connection.execute("PRAGMA journal_mode=WAL")
-            connection.execute("PRAGMA synchronous=NORMAL")
+        try:
+            if self._path != ":memory:":
+                connection.execute("PRAGMA journal_mode=WAL")
+                connection.execute("PRAGMA synchronous=NORMAL")
+        except BaseException:
+            with suppress(sqlite3.Error):
+                connection.close()
+            raise
         return connection
 
     @contextmanager
@@ -4642,7 +4699,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 break
             for change in changes:
                 heartbeat.raise_if_failed()
-                consumer(change)
+                consumer(change.for_delivery())
                 heartbeat.raise_if_failed()
                 with self._change_delivery_storage() as conn:
                     _sqlite_checkpoint_consumer(
@@ -5057,8 +5114,10 @@ class SQLiteEngine(AsyncStorageEngine):
                             next_document = deepcopy(document)
                             operation_type = "replace"
                         else:
-                            next_document = deepcopy(original_document)
-                            next_document.update(deepcopy(document))
+                            next_document = materialize_merge_update_document(
+                                original_document,
+                                document,
+                            )
                             operation_type = "update"
                         assert_document_kept_storage_key(
                             next_document,
@@ -5082,7 +5141,11 @@ class SQLiteEngine(AsyncStorageEngine):
                                 matched=False,
                                 applied=False,
                             )
-                        next_document = deepcopy(document)
+                        next_document = (
+                            materialize_merge_insert_document(document)
+                            if when_matched == "merge"
+                            else deepcopy(document)
+                        )
                         operation_type = "insert"
 
                     collection_options = self._collection_options_or_empty_sync(
@@ -5712,6 +5775,10 @@ class SQLiteEngine(AsyncStorageEngine):
                                 semantics,
                                 hint=hint,
                             )
+                    self._runtime_metrics.record_planner(
+                        execution_plan.mode.value,
+                        fallback_reason=execution_plan.fallback_reason,
+                    )
                     sql, sql_params = _sqlite_require_sql_execution_plan(
                         execution_plan,
                     )
@@ -5722,7 +5789,10 @@ class SQLiteEngine(AsyncStorageEngine):
                             )
                     cursor = active_connection.execute(sql, tuple(sql_params))
                     try:
-                        if execution_plan.apply_python_sort:
+                        if (
+                            execution_plan.apply_python_sort
+                            or execution_plan.apply_python_residual
+                        ):
                             documents = finalize_documents(
                                 (
                                     self._deserialize_document(payload)
@@ -7427,7 +7497,7 @@ class SQLiteEngine(AsyncStorageEngine):
         result_limit_hint: int | None = None,
         downstream_filter_spec: dict[str, object] | None = None,
     ) -> list[Document]:
-        return await self._run_blocking(
+        result = await self._run_blocking(
             self._search_documents_sync,
             db_name,
             coll_name,
@@ -7438,6 +7508,12 @@ class SQLiteEngine(AsyncStorageEngine):
             result_limit_hint,
             downstream_filter_spec,
         )
+        return [
+            legacy_document_from_runtime_state(document)
+            if isinstance(document, RuntimeDocumentState)
+            else document
+            for document in result
+        ]
 
     async def execute_search(
         self,
@@ -7457,9 +7533,12 @@ class SQLiteEngine(AsyncStorageEngine):
                     metadata=pushdown.metadata,
                     trace=SearchExecutionTrace(
                         backend="sqlite",
+                        operation_id=request.operation_context.operation_id,
+                        snapshot_captured=True,
                         matched_count=pushdown.candidate_count,
                         candidate_count=pushdown.candidate_count,
                         documents_scanned=0,
+                        collector_document_count=pushdown.candidate_count,
                         collector_backend="sqlite",
                         collector_pushdown=True,
                         collector_count=pushdown.collector_count,
@@ -7493,7 +7572,10 @@ class SQLiteEngine(AsyncStorageEngine):
                 ),
                 trace=SearchExecutionTrace(
                     backend="sqlite",
+                    operation_id=request.operation_context.operation_id,
+                    snapshot_captured=True,
                     matched_count=len(documents),
+                    collector_document_count=len(documents),
                     collector_backend="semantic-core",
                     collector_count=(
                         (1 if request.query.stage_options.count else 0)
@@ -7516,6 +7598,7 @@ class SQLiteEngine(AsyncStorageEngine):
         return SearchExecutionOutcome.from_documents(
             documents,
             backend="sqlite",
+            operation_id=request.operation_context.operation_id,
         )
 
     async def explain_search_documents(
@@ -7549,13 +7632,17 @@ class SQLiteEngine(AsyncStorageEngine):
         request: SearchRequest,
         verbosity: SearchExplainVerbosity,
     ) -> QueryPlanExplanation:
+        plan = await self._run_blocking(
+            self._plan_search_documents_sync,
+            db_name,
+            coll_name,
+            request,
+        )
         if verbosity is SearchExplainVerbosity.QUERY_PLANNER:
-            return await self._run_blocking(
-                self._plan_search_documents_sync,
-                db_name,
-                coll_name,
-                request,
-            )
+            return plan
+        if (plan.details or {}).get("status") != "READY":
+            message = f"search index [{request.query.index_name}] is not ready"
+            raise OperationFailure(message)
         if request.mode is SearchExecutionMode.HITS:
             explanation = await self._run_blocking(
                 self._explain_search_documents_sync,
@@ -7577,16 +7664,11 @@ class SQLiteEngine(AsyncStorageEngine):
                     "executionStats": SearchExecutionTrace.from_explain_details(
                         details,
                         default_backend="sqlite",
+                        operation_id=request.operation_context.operation_id,
                     ).to_document(),
                 },
             )
             return replace(explanation, details=details)
-        plan = await self._run_blocking(
-            self._plan_search_documents_sync,
-            db_name,
-            coll_name,
-            request,
-        )
         outcome = await self.execute_search(db_name, coll_name, request)
         details = dict(plan.details or {})
         trace = outcome.trace

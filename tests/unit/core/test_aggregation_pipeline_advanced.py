@@ -1765,20 +1765,15 @@ class AggregationPipelineAdvancedTests(unittest.TestCase):
         self.assertEqual(result[2]['rangeSum'], 4 + 7 + 10)
         self.assertEqual(result[3]['rangeSum'], 7 + 10)
 
-    def test_resolve_aggregation_field_path_returns_missing_for_unknown_key_at_any_depth(
+    def test_resolve_aggregation_field_path_distinguishes_missing_from_empty_array(
         self,
     ):
-        from mongoeco.core.aggregation.runtime import (
-            _MISSING,
-            _resolve_aggregation_field_path,
-        )
-
         self.assertIs(_resolve_aggregation_field_path({'a': 1}, 'b'), _MISSING)
         self.assertIs(
             _resolve_aggregation_field_path({'a': {'b': 1}}, 'a.c'), _MISSING
         )
-        self.assertIs(_resolve_aggregation_field_path([], 'name'), _MISSING)
-        self.assertIs(_resolve_aggregation_field_path([{}], 'name'), _MISSING)
+        self.assertEqual(_resolve_aggregation_field_path([], 'name'), [])
+        self.assertEqual(_resolve_aggregation_field_path([{}], 'name'), [])
 
     def test_pow_expression_returns_double_wrapper_for_integral_bson_inputs(
         self,

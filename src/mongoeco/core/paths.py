@@ -1,6 +1,9 @@
 import math
 from typing import Any
 
+from mongoeco.core.runtime_metadata import (
+    RuntimeDocumentState,
+)
 from mongoeco.errors import OperationFailure
 from mongoeco.types import DBRef
 
@@ -22,7 +25,9 @@ def _make_container(next_path: str) -> dict[str, Any] | list[Any]:
 
 def _ensure_array_index_within_limit(index: int) -> None:
     if index > MAX_ARRAY_INDEX:
-        raise OperationFailure(f"Array index {index} exceeds the maximum supported index of {MAX_ARRAY_INDEX}")
+        raise OperationFailure(
+            f"Array index {index} exceeds the maximum supported index of {MAX_ARRAY_INDEX}"
+        )
 
 
 def _path_mapping(value: Any) -> dict[str, Any] | None:
@@ -43,9 +48,16 @@ def _same_value_for_update(left: Any, right: Any) -> bool:
     if isinstance(left, list):
         if len(left) != len(right):
             return False
-        return all(_same_value_for_update(left_item, right_item) for left_item, right_item in zip(left, right))
+        return all(
+            _same_value_for_update(left_item, right_item)
+            for left_item, right_item in zip(left, right)
+        )
     if isinstance(left, float):
-        return math.isnan(left) and math.isnan(right) if isinstance(right, float) else False
+        return (
+            math.isnan(left) and math.isnan(right)
+            if isinstance(right, float)
+            else False
+        )
     return left == right
 
 
@@ -60,7 +72,12 @@ def set_max_array_index(limit: int) -> None:
     MAX_ARRAY_INDEX = limit
 
 
-def get_document_value(doc: dict[str, Any] | list[Any], path: str) -> tuple[bool, Any]:
+def get_document_value(  # noqa: PLR0912 - BSON path traversal cases
+    doc: dict[str, Any] | list[Any] | RuntimeDocumentState,
+    path: str,
+) -> tuple[bool, Any]:
+    if isinstance(doc, RuntimeDocumentState):
+        return doc.resolve(path)
     doc_mapping = _path_mapping(doc)
     if doc_mapping is not None and doc_mapping is not doc:
         return get_document_value(doc_mapping, path)
@@ -91,12 +108,13 @@ def get_document_value(doc: dict[str, Any] | list[Any], path: str) -> tuple[bool
     first, rest = path.split(".", 1)
     if first not in doc:
         return False, None
-    nested = _path_mapping(doc[first])
+    first_value = doc[first]
+    nested = _path_mapping(first_value)
     if nested is not None:
         return get_document_value(nested, rest)
-    if not isinstance(doc[first], (dict, list)):
+    if not isinstance(first_value, (dict, list)):
         return False, None
-    return get_document_value(doc[first], rest)
+    return get_document_value(first_value, rest)
 
 
 def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -> bool:
@@ -123,7 +141,9 @@ def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -
         if doc[index] is None:
             doc[index] = _make_container(rest)
         elif not isinstance(doc[index], (dict, list)):
-            raise OperationFailure(f"Cannot create field '{rest}' in element {{{first}: {doc[index]!r}}}")
+            raise OperationFailure(
+                f"Cannot create field '{rest}' in element {{{first}: {doc[index]!r}}}"
+            )
         return set_document_value(doc[index], rest, value)
 
     if "." not in path:
@@ -136,7 +156,9 @@ def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -
     if first not in doc:
         doc[first] = {}
     elif not isinstance(doc[first], (dict, list)):
-        raise OperationFailure(f"Cannot create field '{rest}' in element {{{first}: {doc[first]!r}}}")
+        raise OperationFailure(
+            f"Cannot create field '{rest}' in element {{{first}: {doc[first]!r}}}"
+        )
 
     return set_document_value(doc[first], rest, value)
 

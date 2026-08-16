@@ -1,0 +1,26 @@
+{
+  "capture_document": ["src/mongoeco/engines/adapter.py"],
+  "capture_documents": ["src/mongoeco/engines/adapter.py"],
+  "LegacyEngineAdapter": ["src/mongoeco/engines/adapter.py"],
+  "put_document": [
+    "src/mongoeco/engines/_sqlite_write_ops.py",
+    "src/mongoeco/engines/adapter.py",
+    "src/mongoeco/engines/memory.py",
+    "src/mongoeco/engines/sqlite.py"
+  ],
+  "put_documents_bulk": [
+    "src/mongoeco/engines/_sqlite_write_ops.py",
+    "src/mongoeco/engines/adapter.py",
+    "src/mongoeco/engines/capabilities.py",
+    "src/mongoeco/engines/memory.py",
+    "src/mongoeco/engines/sqlite.py"
+  ],
+  "search_documents": [
+    "src/mongoeco/engines/_sqlite_read_ops.py",
+    "src/mongoeco/engines/_sqlite_search_runtime.py",
+    "src/mongoeco/engines/adapter.py",
+    "src/mongoeco/engines/memory.py",
+    "src/mongoeco/engines/sqlite.py"
+  ],
+  "supports_injected_clock": ["src/mongoeco/engines/capabilities.py"]
+}

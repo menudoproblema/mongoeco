@@ -2,11 +2,125 @@
   "source": "real-mongodb",
   "targetDialect": "8.0",
   "cases": {
+    "aggregate_facet_shapes": [
+      {
+        "kept": [
+          {
+            "_id": "local-1"
+          },
+          {
+            "_id": "local-3"
+          }
+        ],
+        "summary": [
+          {
+            "count": {
+              "$numberInt": "3"
+            }
+          }
+        ]
+      }
+    ],
     "aggregate_get_field_literal_name": [
       {
-        "dotted": 1,
-        "dollar": 2,
-        "double_dot": 3
+        "dotted": {
+          "$numberInt": "1"
+        },
+        "dollar": {
+          "$numberInt": "2"
+        },
+        "double_dot": {
+          "$numberInt": "3"
+        }
+      }
+    ],
+    "aggregate_group_shapes": [
+      {
+        "_id": "drop",
+        "count": {
+          "$numberInt": "1"
+        },
+        "values": [
+          {
+            "$numberInt": "2"
+          }
+        ]
+      },
+      {
+        "_id": "keep",
+        "count": {
+          "$numberInt": "2"
+        },
+        "values": [
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "3"
+          }
+        ]
+      }
+    ],
+    "aggregate_lookup_shapes": [
+      {
+        "_id": "local-1",
+        "joined": [
+          {
+            "_id": "foreign-1",
+            "label": "first"
+          }
+        ]
+      },
+      {
+        "_id": "local-2",
+        "joined": []
+      },
+      {
+        "_id": "local-3",
+        "joined": [
+          {
+            "_id": "foreign-1",
+            "label": "first"
+          }
+        ]
+      }
+    ],
+    "aggregate_merge_writeback": [
+      {
+        "_id": "local-1",
+        "__mongoeco_user_data": {
+          "kept": true
+        },
+        "kind": "keep",
+        "nested": {
+          "value": {
+            "$numberInt": "1"
+          },
+          "remove": "legacy"
+        },
+        "searchHighlights": {
+          "caller": {
+            "$numberInt": "1"
+          }
+        }
+      },
+      {
+        "_id": "local-3",
+        "__mongoeco_user_data": {
+          "kept": true
+        },
+        "kind": "keep",
+        "nested": {
+          "value": {
+            "$numberInt": "3"
+          },
+          "remove": "legacy"
+        },
+        "searchHighlights": {
+          "caller": {
+            "$numberInt": "3"
+          }
+        }
       }
     ],
     "aggregate_project_array_traversal": [
@@ -22,6 +136,232 @@
         "kinds": [
           "c"
         ]
+      }
+    ],
+    "aggregate_project_shapes": [
+      {
+        "_id": "local-1",
+        "searchHighlights": {
+          "caller": {
+            "$numberInt": "1"
+          }
+        },
+        "__mongoeco_user_data": {
+          "kept": true
+        },
+        "nestedValue": {
+          "$numberInt": "1"
+        },
+        "arrayValues": [
+          "a",
+          "b"
+        ]
+      },
+      {
+        "_id": "local-2",
+        "searchHighlights": {
+          "caller": {
+            "$numberInt": "2"
+          }
+        },
+        "__mongoeco_user_data": {
+          "kept": true
+        },
+        "nestedValue": {
+          "$numberInt": "2"
+        },
+        "arrayValues": []
+      },
+      {
+        "_id": "local-3",
+        "searchHighlights": {
+          "caller": {
+            "$numberInt": "3"
+          }
+        },
+        "__mongoeco_user_data": {
+          "kept": true
+        },
+        "nestedValue": {
+          "$numberInt": "3"
+        }
+      }
+    ],
+    "aggregate_replace_root": [
+      {
+        "value": {
+          "$numberInt": "1"
+        },
+        "remove": "legacy"
+      },
+      {
+        "value": {
+          "$numberInt": "2"
+        },
+        "remove": "legacy"
+      },
+      {
+        "value": {
+          "$numberInt": "3"
+        },
+        "remove": "legacy"
+      }
+    ],
+    "aggregate_replace_with": [
+      {
+        "value": {
+          "$numberInt": "1"
+        },
+        "source": "local-1"
+      },
+      {
+        "value": {
+          "$numberInt": "2"
+        },
+        "source": "local-2"
+      },
+      {
+        "value": {
+          "$numberInt": "3"
+        },
+        "source": "local-3"
+      }
+    ],
+    "aggregate_set_add_fields": [
+      {
+        "_id": "local-1",
+        "derived": {
+          "$numberInt": "1"
+        },
+        "copied": {
+          "$numberInt": "1"
+        }
+      },
+      {
+        "_id": "local-2",
+        "derived": {
+          "$numberInt": "2"
+        },
+        "copied": {
+          "$numberInt": "2"
+        }
+      },
+      {
+        "_id": "local-3",
+        "derived": {
+          "$numberInt": "3"
+        },
+        "copied": {
+          "$numberInt": "3"
+        }
+      }
+    ],
+    "aggregate_union_with_shapes": [
+      {
+        "_id": "foreign-1",
+        "kind": "keep"
+      },
+      {
+        "_id": "foreign-2",
+        "kind": "other"
+      },
+      {
+        "_id": "local-1",
+        "kind": "keep"
+      },
+      {
+        "_id": "local-2",
+        "kind": "drop"
+      },
+      {
+        "_id": "local-3",
+        "kind": "keep"
+      }
+    ],
+    "aggregate_unset_shapes": [
+      {
+        "_id": "local-1",
+        "kind": "keep",
+        "nested": {
+          "value": {
+            "$numberInt": "1"
+          }
+        },
+        "items": [
+          {
+            "value": "a"
+          },
+          {
+            "value": "b"
+          }
+        ],
+        "searchHighlights": {
+          "caller": {
+            "$numberInt": "1"
+          }
+        },
+        "__mongoeco_user_data": {
+          "kept": true
+        }
+      },
+      {
+        "_id": "local-2",
+        "kind": "drop",
+        "nested": {
+          "value": {
+            "$numberInt": "2"
+          }
+        },
+        "items": [],
+        "searchHighlights": {
+          "caller": {
+            "$numberInt": "2"
+          }
+        },
+        "__mongoeco_user_data": {
+          "kept": true
+        }
+      },
+      {
+        "_id": "local-3",
+        "kind": "keep",
+        "nested": {
+          "value": {
+            "$numberInt": "3"
+          }
+        },
+        "searchHighlights": {
+          "caller": {
+            "$numberInt": "3"
+          }
+        },
+        "__mongoeco_user_data": {
+          "kept": true
+        }
+      }
+    ],
+    "aggregate_unwind_fanout": [
+      {
+        "_id": "local-1",
+        "itemIndex": {
+          "$numberLong": "0"
+        },
+        "itemValue": "a"
+      },
+      {
+        "_id": "local-1",
+        "itemIndex": {
+          "$numberLong": "1"
+        },
+        "itemValue": "b"
+      },
+      {
+        "_id": "local-2",
+        "itemIndex": null
+      },
+      {
+        "_id": "local-3",
+        "itemIndex": null
       }
     ],
     "boolean_filter_matrix": {
@@ -85,25 +425,37 @@
     ],
     "insert_rejects_root_array_id": "error",
     "update_add_to_set_document_order_sensitive": [
-      1,
-      1,
+      {
+        "$numberInt": "1"
+      },
+      {
+        "$numberInt": "1"
+      },
       {
         "_id": "1",
         "items": [
           {
             "kind": "a",
-            "qty": 1
+            "qty": {
+              "$numberInt": "1"
+            }
           },
           {
-            "qty": 1,
+            "qty": {
+              "$numberInt": "1"
+            },
             "kind": "a"
           }
         ]
       }
     ],
     "update_pipeline_project_preserves_id": [
-      1,
-      1,
+      {
+        "$numberInt": "1"
+      },
+      {
+        "$numberInt": "1"
+      },
       {
         "_id": "1",
         "name": "Ada"
@@ -111,11 +463,17 @@
     ],
     "update_pipeline_rejects_id_change": [
       "error",
-      66
+      {
+        "$numberInt": "66"
+      }
     ],
     "update_set_on_insert_id_matches_filter": [
-      0,
-      0,
+      {
+        "$numberInt": "0"
+      },
+      {
+        "$numberInt": "0"
+      },
       "seed",
       {
         "_id": "seed",

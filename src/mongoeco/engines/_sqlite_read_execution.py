@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from mongoeco.compat import MongoDialect
 from mongoeco.core.query_plan import (
     EqualsCondition,
     GreaterThanCondition,
@@ -13,10 +12,16 @@ from mongoeco.core.query_plan import (
     ModCondition,
     RegexCondition,
 )
-from mongoeco.engines.semantic_core import EngineFindSemantics
-from mongoeco.engines.sqlite_planner import SQLiteReadExecutionPlan, compile_sqlite_read_execution_plan
+from mongoeco.engines.sqlite_planner import (
+    SQLiteReadExecutionPlan,
+    compile_sqlite_read_execution_plan,
+)
 from mongoeco.engines.sqlite_query import json_path_for_field, parse_safe_literal_regex
-from mongoeco.types import IndexKeySpec
+
+if TYPE_CHECKING:
+    from mongoeco.compat import MongoDialect
+    from mongoeco.engines.semantic_core import EngineFindSemantics
+    from mongoeco.types import IndexKeySpec
 
 
 def build_scalar_indexed_top_level_equals_sql(
@@ -30,7 +35,9 @@ def build_scalar_indexed_top_level_equals_sql(
     limit: int | None,
     null_matches_undefined: bool,
     lookup_collection_id: Callable[[str, str], int | None],
-    multikey_signatures_for_query_value: Callable[[object, bool], tuple[tuple[str, str], ...]],
+    multikey_signatures_for_query_value: Callable[
+        [object, bool], tuple[tuple[str, str], ...]
+    ],
     multikey_type_score: Callable[[str], int],
     quote_identifier: Callable[[str], str],
 ) -> tuple[str, tuple[object, ...]] | None:
@@ -72,7 +79,9 @@ def build_scalar_indexed_top_level_range_sql(
     index_name: str,
     physical_name: str,
     limit: int | None,
-    can_use_scalar_range_fast_path: Callable[[str, str, object], tuple[object, int, str] | None],
+    can_use_scalar_range_fast_path: Callable[
+        [str, str, object], tuple[object, int, str] | None
+    ],
     lookup_collection_id: Callable[[str, str], int | None],
     quote_identifier: Callable[[str], str],
 ) -> tuple[str, tuple[object, ...]] | None:
@@ -138,13 +147,21 @@ def plan_find_semantics_sync(
     coll_name: str,
     semantics: EngineFindSemantics,
     storage_key_for_id: Callable[[object], str],
-    find_scalar_fast_path_index: Callable[[str, str], object | None],
-    field_is_top_level_array_in_collection: Callable[[str, str], bool],
-    field_contains_real_numeric_in_collection: Callable[[str, str], bool],
-    field_contains_non_ascii_text_in_collection: Callable[[str, str], bool],
-    build_equals_sql: Callable[[str, str, object, str, str, int | None, bool], tuple[str, tuple[object, ...]] | None],
-    build_range_sql: Callable[[str, str, object, str, str, str, int | None], tuple[str, tuple[object, ...]] | None],
-    compile_read_plan: Callable[[EngineFindSemantics, str | IndexKeySpec | None], SQLiteReadExecutionPlan],
+    find_scalar_fast_path_index: Callable[[str, str, str], object | None],
+    field_is_top_level_array_in_collection: Callable[[str, str, str], bool],
+    field_contains_real_numeric_in_collection: Callable[[str, str, str], bool],
+    field_contains_non_ascii_text_in_collection: Callable[[str, str, str], bool],
+    build_equals_sql: Callable[
+        [str, str, object, str, str, int | None, bool],
+        tuple[str, tuple[object, ...]] | None,
+    ],
+    build_range_sql: Callable[
+        [str, str, object, str, str, str, int | None],
+        tuple[str, tuple[object, ...]] | None,
+    ],
+    compile_read_plan: Callable[
+        [EngineFindSemantics, str | IndexKeySpec | None], SQLiteReadExecutionPlan
+    ],
 ) -> SQLiteReadExecutionPlan:
     query_plan = semantics.query_plan
     if semantics.collation is None and semantics.sort is None and semantics.skip == 0:
@@ -154,8 +171,14 @@ def plan_find_semantics_sync(
             and (semantics.limit is None or semantics.limit >= 1)
         ):
             field = query_plan.field
-            index = None if field == "_id" else find_scalar_fast_path_index(db_name, coll_name, field)
-            if index is not None and not field_is_top_level_array_in_collection(db_name, coll_name, field):
+            index = (
+                None
+                if field == "_id"
+                else find_scalar_fast_path_index(db_name, coll_name, field)
+            )
+            if index is not None and not field_is_top_level_array_in_collection(
+                db_name, coll_name, field
+            ):
                 indexed_sql = build_equals_sql(
                     db_name,
                     coll_name,
@@ -185,8 +208,12 @@ def plan_find_semantics_sync(
             and isinstance(query_plan.remainder, int)
             and not isinstance(query_plan.remainder, bool)
             and query_plan.divisor != 0
-            and not field_is_top_level_array_in_collection(db_name, coll_name, query_plan.field)
-            and not field_contains_real_numeric_in_collection(db_name, coll_name, query_plan.field)
+            and not field_is_top_level_array_in_collection(
+                db_name, coll_name, query_plan.field
+            )
+            and not field_contains_real_numeric_in_collection(
+                db_name, coll_name, query_plan.field
+            )
         ):
             path = json_path_for_field(query_plan.field)
             sql = (
@@ -218,18 +245,28 @@ def plan_find_semantics_sync(
         if (
             isinstance(query_plan, RegexCondition)
             and "." not in query_plan.field
-            and not field_is_top_level_array_in_collection(db_name, coll_name, query_plan.field)
+            and not field_is_top_level_array_in_collection(
+                db_name, coll_name, query_plan.field
+            )
         ):
-            safe_regex = parse_safe_literal_regex(query_plan.pattern, query_plan.options)
+            safe_regex = parse_safe_literal_regex(
+                query_plan.pattern, query_plan.options
+            )
             if safe_regex is not None:
                 mode, literal, ignore_case = safe_regex
                 if ignore_case and (
                     not literal.isascii()
-                    or field_contains_non_ascii_text_in_collection(db_name, coll_name, query_plan.field)
+                    or field_contains_non_ascii_text_in_collection(
+                        db_name, coll_name, query_plan.field
+                    )
                 ):
                     return compile_read_plan(semantics, semantics.hint)
                 path = json_path_for_field(query_plan.field)
-                value_expr = f"lower(json_extract(document, ?))" if ignore_case else "json_extract(document, ?)"
+                value_expr = (
+                    f"lower(json_extract(document, ?))"
+                    if ignore_case
+                    else "json_extract(document, ?)"
+                )
                 literal_param = literal.lower() if ignore_case else literal
                 if mode == "exact":
                     sql = (
@@ -246,7 +283,14 @@ def plan_find_semantics_sync(
                         "AND json_type(document, ?) = 'text' "
                         f"AND substr({value_expr}, -length(?)) = ?"
                     )
-                    params = (db_name, coll_name, path, path, literal_param, literal_param)
+                    params = (
+                        db_name,
+                        coll_name,
+                        path,
+                        path,
+                        literal_param,
+                        literal_param,
+                    )
                 elif mode == "contains":
                     sql = (
                         "SELECT document FROM documents "
@@ -262,7 +306,14 @@ def plan_find_semantics_sync(
                         "AND json_type(document, ?) = 'text' "
                         f"AND substr({value_expr}, 1, length(?)) = ?"
                     )
-                    params = (db_name, coll_name, path, path, literal_param, literal_param)
+                    params = (
+                        db_name,
+                        coll_name,
+                        path,
+                        path,
+                        literal_param,
+                        literal_param,
+                    )
                 if semantics.limit is not None:
                     sql += f" LIMIT {int(semantics.limit)}"
                 return SQLiteReadExecutionPlan(
@@ -275,11 +326,22 @@ def plan_find_semantics_sync(
                     params=params,
                 )
 
-        if isinstance(query_plan, (GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition)):
+        if isinstance(
+            query_plan,
+            (
+                GreaterThanCondition,
+                GreaterThanOrEqualCondition,
+                LessThanCondition,
+                LessThanOrEqualCondition,
+            ),
+        ):
             operator = (
-                ">" if isinstance(query_plan, GreaterThanCondition)
-                else ">=" if isinstance(query_plan, GreaterThanOrEqualCondition)
-                else "<" if isinstance(query_plan, LessThanCondition)
+                ">"
+                if isinstance(query_plan, GreaterThanCondition)
+                else ">="
+                if isinstance(query_plan, GreaterThanOrEqualCondition)
+                else "<"
+                if isinstance(query_plan, LessThanCondition)
                 else "<="
             )
             index = find_scalar_fast_path_index(db_name, coll_name, query_plan.field)

@@ -5,6 +5,9 @@ import uuid
 
 from unittest.mock import patch
 
+from bson.int64 import Int64
+from bson.son import SON as BSONSON
+
 import pytest
 
 
@@ -209,8 +212,38 @@ class DocumentCodecTests(unittest.TestCase):
 
         self.assertEqual(
             DocumentCodec.to_public(value),
-            {"i32": 1, "items": [2, {"double": 1.5}]},
+            {"i32": 1, "items": [Int64(2), {"double": 1.5}]},
         )
+
+    def test_document_codec_preserves_public_bson_int64_width(self):
+        internal = DocumentCodec.to_internal({"value": Int64(7)})
+
+        public = DocumentCodec.to_public(internal)
+
+        self.assertIs(type(public["value"]), Int64)
+        self.assertEqual(public["value"], 7)
+
+    def test_document_codec_falls_back_to_int64_value_without_bson_surface(self):
+        with patch("mongoeco.core.codec.BsonInt64Public", None):
+            self.assertEqual(DocumentCodec.to_public(BsonInt64(7)), 7)
+            self.assertEqual(DocumentCodec.to_pymongo(BsonInt64(7)), 7)
+
+    def test_document_codec_materializes_son_for_public_and_pymongo_surfaces(self):
+        value = SON([("long", BsonInt64(7))])
+
+        public = DocumentCodec.to_public(value)
+        pymongo = DocumentCodec.to_pymongo(value)
+
+        self.assertIs(type(public), SON)
+        self.assertIs(type(public["long"]), Int64)
+        self.assertIs(type(pymongo), BSONSON)
+        self.assertIs(type(pymongo["long"]), Int64)
+
+    def test_document_codec_accepts_pymongo_son_at_the_command_boundary(self):
+        internal = DocumentCodec.to_internal(BSONSON([("long", Int64(7))]))
+
+        self.assertTrue(DocumentCodec.is_internal(internal))
+        self.assertEqual(internal["long"], BsonInt64(7))
 
     def test_document_codec_decode_restores_dict_wrapper_payload(self):
         payload = {

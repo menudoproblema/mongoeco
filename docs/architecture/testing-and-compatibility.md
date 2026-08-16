@@ -32,8 +32,29 @@ La suite se apoya en varias capas:
 - integration tests para la superficie publica;
 - contract tests para comportamientos compartidos entre engines;
 - parity tests para superficies async/sync;
+- property tests generativos y metamorficos para Search y provenance;
+- fixtures consumidoras de tipado PEP 561 contra el wheel instalado;
 - replay tests diferenciales contra baseline congelado de Mongo real;
 - smoke de distribuciones y extras opcionales.
+
+Hypothesis es el generador de dominio elegido porque aporta shrinking,
+reproduccion y reporting estandar sin mantener un minimizador propio. El perfil
+`ci` usa un corpus pequeno y determinista en cada PR; el perfil `deep` aumenta
+los ejemplos en el workflow periodico `Contract fuzz`. Un fallo debe conservar
+el ejemplo reducido, engine, pipeline y diferencia entre planes/resultados.
+
+Los contratos de coste no usan tiempos de CPU como gate. Para shapes estables
+fijan modo y reglas del plan, ownership de filtro/sort/ventana, residual,
+candidatos, scans y dominios de metricas. Los benchmarks temporales se guardan
+como evidencia de tendencia y son obligatorios antes de aceptar una nueva regla
+SQLite, pero una fluctuacion pequena no bloquea por si sola.
+
+Los casos diferenciales reales se ejecutan contra Community Server 7 y 8. El
+catalogo ejecutable puede crecer antes de una captura local, pero esos nombres
+permanecen en `REAL_CAPTURE_PENDING_CASES` hasta incorporar en el mismo cambio
+un golden obtenido de MongoDB real. La paridad Memory/SQLite nunca sustituye esa
+evidencia. Atlas Search queda fuera de los contenedores Community y se valida
+contra el oraculo normativo interno de `search-v1`.
 
 ## Politica de parity tests
 

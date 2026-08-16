@@ -273,22 +273,18 @@ class SearchCoreTests(unittest.TestCase):
             )[1],
             0.9,
         )
-        self.assertEqual(
-            strip_search_result_metadata(
-                {
-                    "_id": 1,
-                    "__mongoeco_textScore__": 2.0,
-                    "__mongoeco_vectorSearchScore__": 0.9,
-                    "name": "Ada",
-                },
-            ),
-            {
-                "_id": 1,
-                "__mongoeco_textScore__": 2.0,
-                "__mongoeco_vectorSearchScore__": 0.9,
-                "name": "Ada",
-            },
-        )
+        ordinary_document = {
+            "_id": 1,
+            "__mongoeco_textScore__": 2.0,
+            "__mongoeco_vectorSearchScore__": 0.9,
+            "name": "Ada",
+            "nested": [{"value": 1}],
+        }
+        stripped_ordinary = strip_search_result_metadata(ordinary_document)
+        self.assertIs(stripped_ordinary, ordinary_document)
+        self.assertIs(stripped_ordinary["nested"], ordinary_document["nested"])
+        with self.assertRaisesRegex(TypeError, "requires a document"):
+            strip_search_result_metadata([])  # type: ignore[arg-type]
         self.assertIsNone(
             classic_text_score(
                 {"body": [1, 2, 3]},
@@ -5841,7 +5837,9 @@ class SearchCoreTests(unittest.TestCase):
             definition=definition,
             query=query,
         )
-        self.assertIn("searchHighlights", highlighted)
+        self.assertNotIn("searchHighlights", highlighted)
+        public_highlighted = search_module.strip_search_result_metadata(highlighted)
+        self.assertIn("searchHighlights", public_highlighted)
         self.assertTrue(
             get_document_value(
                 highlighted,
@@ -5914,7 +5912,9 @@ class SearchCoreTests(unittest.TestCase):
             definition=definition,
             query=query,
         )
-        highlights = highlighted.get("searchHighlights")
+        highlights = search_module.strip_search_result_metadata(highlighted).get(
+            "searchHighlights",
+        )
         assert isinstance(highlights, list)
         self.assertEqual(
             sorted(fragment["path"] for fragment in highlights),

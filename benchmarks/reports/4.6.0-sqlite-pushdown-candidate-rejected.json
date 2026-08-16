@@ -1,0 +1,191 @@
+{
+  "sqlite": {
+    "predicate_diagnostics": {
+      "predicate_eq_bool_high_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 1.0868,
+        "wall_time_median_sec": 1.0557,
+        "wall_time_min_sec": 1.0392,
+        "wall_time_max_sec": 1.1656,
+        "cpu_user_mean_sec": 1.0167,
+        "cpu_sys_mean_sec": 0.1433,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "top-level bool equality",
+          "operator_shape": "$eq",
+          "field_shape": "top-level scalar",
+          "selectivity": "high"
+        }
+      },
+      "predicate_eq_string_medium_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.3689,
+        "wall_time_median_sec": 0.3563,
+        "wall_time_min_sec": 0.3036,
+        "wall_time_max_sec": 0.4467,
+        "cpu_user_mean_sec": 0.35,
+        "cpu_sys_mean_sec": 0.0533,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/sql opaque",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": null,
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "top-level string equality",
+          "operator_shape": "$eq",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium"
+        }
+      },
+      "predicate_cmp_int_medium_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.899,
+        "wall_time_median_sec": 0.8676,
+        "wall_time_min_sec": 0.8654,
+        "wall_time_max_sec": 0.9641,
+        "cpu_user_mean_sec": 0.8433,
+        "cpu_sys_mean_sec": 0.1,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "top-level int comparison",
+          "operator_shape": "$gte",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium"
+        }
+      },
+      "predicate_indexed_conjunct_residual_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.8529,
+        "wall_time_median_sec": 0.8446,
+        "wall_time_min_sec": 0.8345,
+        "wall_time_max_sec": 0.8795,
+        "cpu_user_mean_sec": 0.8033,
+        "cpu_sys_mean_sec": 0.0767,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/hybrid prefilter>filter",
+          "engine": "sqlite",
+          "strategy": "hybrid",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "prefilter",
+              "detail": null
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-prefilter",
+          "residual_required": true,
+          "filter_owner": "sql-then-python",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "indexed scalar conjunct + expression residual",
+          "operator_shape": "$eq + $expr",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium prefilter, lower residual",
+          "result_count": 123
+        }
+      },
+      "predicate_unindexed_conjunct_residual_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.8464,
+        "wall_time_median_sec": 0.8415,
+        "wall_time_min_sec": 0.8392,
+        "wall_time_max_sec": 0.8584,
+        "cpu_user_mean_sec": 0.8033,
+        "cpu_sys_mean_sec": 0.07,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/python scan>filter",
+          "engine": "sqlite",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": "translator"
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "python",
+          "residual_required": false,
+          "filter_owner": "python",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "unindexed scalar conjunct + expression residual",
+          "operator_shape": "$eq + $expr",
+          "field_shape": "top-level scalar",
+          "selectivity": "full Python reference"
+        }
+      }
+    }
+  }
+}

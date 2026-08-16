@@ -221,10 +221,11 @@ lote lógico y normaliza el valor a UTC naïve con precisión BSON de milisegund
 El mismo instante alimenta `$$NOW`, `$currentDate` de tipo fecha y la caducidad
 TTL. No afecta a telemetría, handshakes, perfiles ni `ObjectId`.
 
-El contrato sólo está disponible en engines que declaren
-`supports_injected_clock`; Memory y SQLite lo soportan. Un backend externo o
-real lo rechaza al construir el cliente, para no ofrecer una falsa sensación de
-determinismo.
+El contrato solo esta disponible en engines SPI v2 cuya
+`EngineCapabilities.injected_clock` sea `True`; Memory y SQLite lo soportan.
+Los flags privados de SPI v1 se interpretan exclusivamente dentro del adapter
+de compatibilidad 4.x. Un backend externo o real sin la capability lo rechaza
+al construir el cliente, para no ofrecer una falsa sensacion de determinismo.
 
 ## 1.1 Baseline soportado
 
@@ -265,10 +266,52 @@ Esto implica:
   * `regex.flags` con `i`, `m` y `s`;
   * `wildcard.allowAnalyzedField`;
   * `$searchMeta` con count total/lower-bound y facets simples o nombradas;
-  * `$search.highlight` como metadata sidecar proyectable mediante
-    `$meta: "searchHighlights"`;
+  * `$search.highlight` como metadata runtime tipada proyectable mediante
+    `$meta: "searchHighlights"`; el alias legacy se resuelve como campo virtual,
+    sin contaminar el payload persistible ni sobrescribir un campo real;
   * `explain("queryPlanner"|"executionStats")`, conservando las previews
-    antiguas solo como aliases deprecated durante 4.x.
+    antiguas solo como aliases deprecated durante 4.x; `executionStats` requiere
+    un indice listo y separa matches, hits retornados, candidatos y scans. La
+    traza canonica declara estado, fases, dominio, exactitud, origen y
+    disponibilidad; `collectorDocumentCount` y `pipelineOutputCount` no se
+    confunden con `collectorCount`. Todas las metricas estan representadas,
+    aunque su estado sea `unavailable`; los contadores planos son aliases 4.x.
+* La provenance de Search vive fuera del documento BSON en
+  `RuntimeDocumentState`. Proyecciones, stages estructurales y writeback aplican
+  reglas explicitas; el namespace privado con NUL queda limitado al adapter SPI
+  v1 deprecado y nunca se persiste.
+* El planner Search compila efectos semanticos, dominio de stage, reglas,
+  rechazos y ownership una vez. Ejecucion y `explain()` consumen ese mismo
+  plan, y la suite compara resultados, collectors, errores, writeback y eventos
+  con un oraculo interno reproducible sin optimizaciones en Memory/SQLite y
+  sync/async.
+* Los informes de `mongoeco.conformance` usan el schema estable
+  `mongoeco-conformance-report/v1` y estados `passed`, `failed`, `error` y
+  `not-applicable`. El JSON Schema Draft 2020-12 se obtiene mediante
+  `conformance_report_schema()` y evoluciona de forma aditiva dentro de v1; un
+  cambio incompatible requiere otro `schemaVersion`. El constructor 4.5 con
+  `passed=` sigue aceptado.
+* Wheel y sdist incluyen `py.typed`. La garantia PEP 561 cubre las superficies
+  publicas documentadas de clientes, SPI v2, Search y conformidad; no convierte
+  modulos internos o privados en API estable.
+* `mongoeco.compat.deprecation_entries()` y `deprecation_catalog()` son la
+  fuente versionada de retiradas previstas. `decision-pending` significa que no
+  existe aun una deprecacion contractual.
+* `public_api_manifest()` separa compatibilidad Python de compatibilidad de
+  datos. `scripts/update_public_api_manifest.py --check` detecta deltas de
+  exports, firmas, defaults, tipos, async, schemas y recursos. La fachada
+  `ObjectId` mantiene el mismo contrato con o sin PyMongo mediante el protocolo
+  estructural `ObjectIdLike`; una dependencia opcional no crea otro perfil de
+  API publica.
+* La fixture `tests/fixtures/sqlite/mongoeco-4.5.0-bridge.sqlite` fue generada
+  con el wheel oficial 4.5.0 de SHA-256
+  `f168ab9f4172abbf1a7e35f8996c3e01463a26557b213028c83ef64d102a2fd3`.
+  Abrirla con versiones posteriores prueba BSON, indices, Search, outbox y
+  checkpoints; no implica que una ruptura de API Python sea compatible. Si la
+  apertura rechaza un schema futuro o falla durante la inicializacion, todas
+  las conexiones parciales se cierran y el engine permanece desconectado.
+* La CLI `python -m mongoeco.conformance` usa el runner publico, valida el mismo
+  schema y reserva stdout para el informe y stderr para diagnosticos.
 * los mappings locales de `$search` cubren ya una familia más rica de campos:
   `string`, `autocomplete`, `token`, `number`, `date`, `boolean`,
   `objectId`, `uuid`, `document` y `embeddedDocuments`; los tipos textuales
@@ -333,6 +376,9 @@ Esto implica:
   ya vistos por el backend vectorial materializado, `vectorSearch` puede
   aplicar tambien `vectorFilterPrefilter` antes del ranking ANN/documental; si
   el subconjunto es exacto, `filterMode` pasa a `candidate-prefilter`.
+  Esta optimizacion se limita al `filter` interno del stage: un `$match`
+  posterior permanece despues del top-k y `explain()` no lo anuncia como
+  prefilter.
 * `MemoryEngine` tambien materializa ya un subset local para `vectorSearch` y
   deja visible en `explain()` tanto `vectorFilterPrefilter` como
   `documentsScannedAfterPrefilter`; cuando queda filtro documental residual,
@@ -1051,7 +1097,10 @@ Notas observables adicionales de runtime:
   indexada.
 * `explain` en SQLite materializa tambien un bloque `pushdown` para hacer
   visible si la ruta ejecuta SQL puro, plan hibrido o fallback Python, junto
-  con `usesSqlRuntime`, `pythonSort` y `fallbackReason` cuando aplica.
+  con fragmento SQL, numero de parametros, residual, collectors, ownership,
+  `usesSqlRuntime`, `pythonSort` y `fallbackReason` cuando aplica. El value
+  object rechaza SQL sin fragmento, residual sin plan o sort/window SQL antes
+  de un residual Python.
   Cuando existe fallback del engine, `planning_issues` incorpora ya tambien un
   issue estructurado con `scope=\"engine\"`, para que tooling no dependa solo de
   interpretar `fallback_reason` como texto libre.

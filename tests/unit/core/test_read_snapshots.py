@@ -15,15 +15,15 @@ from mongoeco.engines.snapshots import (
 )
 
 
-_SOURCE_FAILED = 'source failed'
-_CLOSE_FAILED = 'close failed'
-_ITERATOR_CLOSE_FAILED = 'iterator close failed'
-_BODY_FAILED = 'body failed'
+_SOURCE_FAILED = "source failed"
+_CLOSE_FAILED = "close failed"
+_ITERATOR_CLOSE_FAILED = "iterator close failed"
+_BODY_FAILED = "body failed"
 
 
 class _Source:
     def __init__(self):
-        self.values = iter([{'_id': 1}, {'_id': 2}])
+        self.values = iter([{"_id": 1}, {"_id": 2}])
         self.close_calls = 0
 
     def __aiter__(self):
@@ -116,8 +116,8 @@ class _SourceOnlyCloseFailure(_FailingSource):
 
 class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
     async def test_snapshot_rejects_undeclared_policy(self):
-        with self.assertRaisesRegex(TypeError, 'SnapshotPolicy'):
-            ReadSnapshot(_Source(), policy='stable')
+        with self.assertRaisesRegex(TypeError, "SnapshotPolicy"):
+            ReadSnapshot(_Source(), policy="stable")
 
     async def test_closed_snapshot_stops_without_reopening_source(self):
         snapshot = ReadSnapshot(_Source(), policy=SnapshotPolicy.STABLE)
@@ -126,12 +126,42 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(StopAsyncIteration):
             await snapshot.__anext__()
 
+    async def test_snapshot_items_are_owned_copies(self):
+        source_document = {"_id": 1, "nested": {"value": 1}}
+        source = _Source()
+        source.values = iter([source_document])
+        snapshot = ReadSnapshot(source, policy=SnapshotPolicy.STABLE)
+
+        delivered = await snapshot.__anext__()
+        delivered["nested"]["value"] = 2
+
+        assert source_document == {"_id": 1, "nested": {"value": 1}}
+        await snapshot.aclose()
+
+    async def test_discard_supervises_cleanup_and_records_failures(self):
+        source = _Source()
+        snapshot = ReadSnapshot(source, policy=SnapshotPolicy.STABLE)
+        snapshot.discard()
+        snapshot.discard()
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+        assert snapshot.closed
+        assert source.close_calls == 1
+
+        failing_source = _FailingSource()
+        failing = ReadSnapshot(failing_source, policy=SnapshotPolicy.STABLE)
+        failing.discard()
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+        assert failing.lifecycle is SnapshotLifecycle.FAILED
+        assert isinstance(failing.close_error, RuntimeError)
+
     async def test_close_attempts_all_resources_and_keeps_first_error(self):
         source = _SeparateSource()
         snapshot = ReadSnapshot(source, policy=SnapshotPolicy.STABLE)
         snapshot._iterator = source.iterator
 
-        with self.assertRaisesRegex(RuntimeError, 'iterator close failed'):
+        with self.assertRaisesRegex(RuntimeError, "iterator close failed"):
             await snapshot.aclose()
 
         assert source.iterator.close_calls == 1
@@ -142,17 +172,17 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         snapshot = ReadSnapshot(
             source,
             policy=SnapshotPolicy.STABLE,
-            operation_id='operation',
+            operation_id="operation",
         )
 
-        assert await snapshot.__anext__() == {'_id': 1}
+        assert await snapshot.__anext__() == {"_id": 1}
         await snapshot.aclose()
         await snapshot.aclose()
 
         assert snapshot.closed
         assert source.close_calls == 1
         assert snapshot.metadata.policy == SnapshotPolicy.STABLE
-        assert snapshot.metadata.operation_id == 'operation'
+        assert snapshot.metadata.operation_id == "operation"
 
     async def test_legacy_scan_is_wrapped_as_stable_snapshot(self):
         source = _Source()
@@ -162,8 +192,8 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
                 return source
 
         snapshot = adapt_engine(LegacyEngine()).open_read_snapshot(
-            'db',
-            'coll',
+            "db",
+            "coll",
             object(),
         )
 
@@ -175,7 +205,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         source = _FailingSource()
         snapshot = ReadSnapshot(source, policy=SnapshotPolicy.STABLE)
 
-        with self.assertRaisesRegex(RuntimeError, 'source failed'):
+        with self.assertRaisesRegex(RuntimeError, "source failed"):
             await snapshot.__anext__()
 
         assert snapshot.closed
@@ -185,7 +215,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         source = _FailingIteratorFactory()
         snapshot = ReadSnapshot(source, policy=SnapshotPolicy.STABLE)
 
-        with self.assertRaisesRegex(RuntimeError, 'source failed'):
+        with self.assertRaisesRegex(RuntimeError, "source failed"):
             await snapshot.__anext__()
 
         assert snapshot.closed
@@ -195,7 +225,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         source = _FailingSource()
         snapshot = ReadSnapshot(source, policy=SnapshotPolicy.STABLE)
 
-        with self.assertRaisesRegex(RuntimeError, 'source failed'):
+        with self.assertRaisesRegex(RuntimeError, "source failed"):
             await snapshot.__anext__()
 
         assert snapshot.closed
@@ -206,7 +236,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         snapshot = ReadSnapshot(source, policy=SnapshotPolicy.STABLE)
         snapshot._iterator = source
 
-        with self.assertRaisesRegex(RuntimeError, 'close failed'):
+        with self.assertRaisesRegex(RuntimeError, "close failed"):
             await snapshot.aclose()
 
         assert snapshot.closed
@@ -231,7 +261,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
     async def test_context_body_failure_is_not_masked_by_close_failure(self):
         source = _FailingSource()
 
-        with self.assertRaisesRegex(RuntimeError, 'body failed'):
+        with self.assertRaisesRegex(RuntimeError, "body failed"):
             async with ReadSnapshot(
                 source,
                 policy=SnapshotPolicy.STABLE,
@@ -242,7 +272,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
     async def test_context_exit_reports_close_failure_without_body_error(self):
         source = _FailingSource()
 
-        with self.assertRaisesRegex(RuntimeError, 'close failed'):
+        with self.assertRaisesRegex(RuntimeError, "close failed"):
             async with ReadSnapshot(
                 source,
                 policy=SnapshotPolicy.STABLE,
@@ -287,7 +317,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
             close_timeout_seconds=0.01,
         )
 
-        with self.assertRaisesRegex(TimeoutError, 'cleanup exceeded'):
+        with self.assertRaisesRegex(TimeoutError, "cleanup exceeded"):
             await snapshot.aclose()
 
         assert not snapshot.closed
@@ -309,7 +339,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
             close_timeout_seconds=0.01,
         )
 
-        with self.assertRaisesRegex(TimeoutError, 'cleanup exceeded'):
+        with self.assertRaisesRegex(TimeoutError, "cleanup exceeded"):
             await snapshot.__anext__()
 
         assert snapshot.lifecycle is SnapshotLifecycle.CLOSING
@@ -321,18 +351,14 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
     async def test_supervised_cleanup_registry_is_bounded(self):
         blockers = [asyncio.Event() for _ in range(3)]
         snapshots = [
-            ReadSnapshot(_Source(), policy=SnapshotPolicy.STABLE)
-            for _ in blockers
+            ReadSnapshot(_Source(), policy=SnapshotPolicy.STABLE) for _ in blockers
         ]
-        tasks = [
-            asyncio.create_task(blocker.wait())
-            for blocker in blockers
-        ]
+        tasks = [asyncio.create_task(blocker.wait()) for blocker in blockers]
         supervisor_limit = 2
         try:
             with patch.object(
                 snapshots_module,
-                '_SUPERVISED_CLOSE_TASK_LIMIT',
+                "_SUPERVISED_CLOSE_TASK_LIMIT",
                 supervisor_limit,
             ):
                 for snapshot, task in zip(snapshots, tasks, strict=True):
@@ -340,10 +366,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
                     snapshot._lifecycle = SnapshotLifecycle.CLOSING
                     snapshot._supervise_close_task(task)
 
-                assert (
-                    len(snapshots_module._SUPERVISED_CLOSE_TASKS)
-                    <= supervisor_limit
-                )
+                assert len(snapshots_module._SUPERVISED_CLOSE_TASKS) <= supervisor_limit
                 assert sum(task.cancelled() for task in tasks) <= 1
                 await asyncio.sleep(0)
                 assert sum(task.cancelled() for task in tasks) == 1
@@ -367,7 +390,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         )
 
         try:
-            with self.assertRaisesRegex(TimeoutError, 'cleanup exceeded'):
+            with self.assertRaisesRegex(TimeoutError, "cleanup exceeded"):
                 await snapshot.aclose()
             source.allow_close.set()
             await asyncio.sleep(0)
@@ -387,7 +410,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         await close_task
 
     async def test_snapshot_rejects_an_unbounded_cleanup_deadline(self):
-        for value in (0, -1, float('inf'), True):
+        for value in (0, -1, float("inf"), True):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 ReadSnapshot(
                     _Source(),
@@ -400,7 +423,7 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         snapshot = ReadSnapshot(source, policy=SnapshotPolicy.STABLE)
         snapshot._iterator = source.iterator
 
-        with self.assertRaisesRegex(RuntimeError, 'close failed'):
+        with self.assertRaisesRegex(RuntimeError, "close failed"):
             await snapshot.aclose()
 
     async def test_snapshot_supports_owned_async_context(self):
@@ -410,11 +433,11 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
             source,
             policy=SnapshotPolicy.MATERIALIZED,
         ) as snapshot:
-            assert await snapshot.__anext__() == {'_id': 1}
+            assert await snapshot.__anext__() == {"_id": 1}
 
         assert snapshot.closed
         assert source.close_calls == 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

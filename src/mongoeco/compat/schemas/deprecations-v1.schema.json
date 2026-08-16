@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mongoeco.dev/schemas/deprecations-v1.schema.json",
+  "title": "MongoEco deprecation catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "entries"],
+  "properties": {
+    "schemaVersion": {"const": "mongoeco-deprecations/v1"},
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/entry"}
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "category", "subject", "deprecatedSince", "plannedRemoval",
+        "replacement", "impact", "migration", "status", "references"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9.-]+$"},
+        "category": {"type": "string", "minLength": 1},
+        "subject": {"type": "string", "minLength": 1},
+        "deprecatedSince": {"type": ["string", "null"], "minLength": 1},
+        "plannedRemoval": {"type": ["string", "null"], "minLength": 1},
+        "replacement": {"type": "string", "minLength": 1},
+        "impact": {"type": "string", "minLength": 1},
+        "migration": {"type": "string", "minLength": 1},
+        "status": {"enum": ["deprecated", "planned", "decision-pending", "removed"]},
+        "references": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "deprecated"}}},
+          "then": {"properties": {"deprecatedSince": {"type": "string"}, "plannedRemoval": {"type": "string"}}}
+        },
+        {
+          "if": {"properties": {"status": {"const": "removed"}}},
+          "then": {"properties": {"plannedRemoval": {"type": "string"}}}
+        }
+      ]
+    }
+  }
+}

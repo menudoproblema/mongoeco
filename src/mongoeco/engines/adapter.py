@@ -5,6 +5,7 @@ import uuid
 import warnings
 import weakref
 
+from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -21,6 +22,7 @@ from mongoeco.core.search_execution import SearchRequest
 from mongoeco.core.search_models import (
     SearchExecutionMode,
     SearchExecutionOutcome,
+    SearchExecutionState,
     SearchExecutionTrace,
     SearchExplainVerbosity,
 )
@@ -152,6 +154,17 @@ class EngineSpiAdapter:
             raise TypeError(message)
         if self.capabilities.search is not None:
             search_capabilities = self.capabilities.search
+            effective_operator = request.effective_operator
+            if effective_operator not in search_capabilities.operators:
+                message = f"engine does not declare {effective_operator} support"
+                raise OperationFailure(message)
+            similarity = getattr(request.query, "similarity", None)
+            if (
+                effective_operator == "$vectorSearch"
+                and similarity not in search_capabilities.vector_similarities
+            ):
+                message = f"engine does not declare vector similarity [{similarity}]"
+                raise OperationFailure(message)
             if (
                 request.mode is SearchExecutionMode.METADATA
                 and not search_capabilities.metadata_collectors
@@ -215,12 +228,16 @@ class EngineSpiAdapter:
                 ),
                 trace=SearchExecutionTrace(
                     backend=backend,
+                    operation_id=request.operation_context.operation_id,
+                    snapshot_captured=True,
                     matched_count=len(documents),
+                    collector_document_count=len(documents),
                 ),
             )
         return SearchExecutionOutcome.from_documents(
             documents,
             backend=backend,
+            operation_id=request.operation_context.operation_id,
         )
 
     async def explain_search(
@@ -256,7 +273,11 @@ class EngineSpiAdapter:
             if not isinstance(explanation, QueryPlanExplanation):
                 message = "Search explain SPI must return QueryPlanExplanation"
                 raise TypeError(message)
-            return explanation
+            return self._attach_search_pipeline_plan(
+                explanation,
+                request,
+                verbosity,
+            )
 
         legacy_explain = getattr(
             self.engine,
@@ -266,7 +287,7 @@ class EngineSpiAdapter:
         if verbosity is SearchExplainVerbosity.QUERY_PLANNER or not callable(
             legacy_explain,
         ):
-            return QueryPlanExplanation(
+            explanation = QueryPlanExplanation(
                 engine=type(self.engine).__name__,
                 strategy="search",
                 plan=(
@@ -289,6 +310,11 @@ class EngineSpiAdapter:
                     **search_query_explain_details(request.query),
                 },
             )
+            return self._attach_search_pipeline_plan(
+                explanation,
+                request,
+                verbosity,
+            )
 
         explanation = await legacy_explain(
             db_name,
@@ -303,7 +329,40 @@ class EngineSpiAdapter:
         if not isinstance(explanation, QueryPlanExplanation):
             message = "legacy Search explain must return QueryPlanExplanation"
             raise TypeError(message)
-        return explanation
+        return self._attach_search_pipeline_plan(explanation, request, verbosity)
+
+    @staticmethod
+    def _attach_search_pipeline_plan(
+        explanation: QueryPlanExplanation,
+        request: SearchRequest,
+        verbosity: SearchExplainVerbosity,
+    ) -> QueryPlanExplanation:
+        if request.pipeline_plan is None and not isinstance(
+            explanation.details,
+            dict,
+        ):
+            return explanation
+        details = (
+            dict(explanation.details)
+            if isinstance(explanation.details, dict)
+            else {"engineDetails": explanation.details}
+        )
+        if request.pipeline_plan is not None:
+            details["pipelinePlan"] = request.pipeline_plan.to_document()
+        if verbosity is SearchExplainVerbosity.QUERY_PLANNER:
+            details["executionObservation"] = SearchExecutionTrace(
+                backend=explanation.engine,
+                operation_id=request.operation_context.operation_id,
+                execution_state=SearchExecutionState.PLANNED,
+            ).to_document()
+        elif isinstance(details.get("executionStats"), dict):
+            execution_stats = dict(details["executionStats"])
+            execution_stats.setdefault(
+                "operationId",
+                request.operation_context.operation_id,
+            )
+            details["executionStats"] = execution_stats
+        return replace(explanation, details=details)
 
     def prepare_change_delivery(self, sink: object | None) -> None:
         if (
@@ -698,9 +757,11 @@ class EngineSpiAdapter:
                     message = "SPI v2 engine did not return ReadSnapshot"
                     raise TypeError(message)
                 if snapshot.metadata.operation_id != operation_context.operation_id:
+                    snapshot.discard()
                     message = "SPI v2 snapshot operation identity is inconsistent"
                     raise RuntimeError(message)
                 if snapshot.metadata.policy is not SnapshotPolicy.STABLE:
+                    snapshot.discard()
                     message = "collection reads require a stable SPI v2 snapshot"
                     raise RuntimeError(message)
                 return snapshot

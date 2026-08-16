@@ -5,8 +5,13 @@ from unittest.mock import patch
 
 from mongoeco import AsyncMongoClient, MongoClient
 from mongoeco.api._async.client import AsyncDatabase
-from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
+from mongoeco.api._async.aggregation_cursor import (
+    AsyncAggregationCursor,
+    _SearchOptimizationPlan,
+    _SearchOptimizationStrategy,
+)
 from mongoeco.api.operations import compile_aggregate_operation
+from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.api._sync.aggregation_cursor import AggregationCursor
 from mongoeco.api._sync.aggregation_cursor import _AggregationCursorIterator
 from mongoeco.core.aggregation import (
@@ -18,6 +23,7 @@ from mongoeco.core.aggregation import (
 from mongoeco.core.bson_scalars import BsonInt32
 from mongoeco.core.aggregation import _CURRENT_COLLECTION_RESOLVER_KEY
 from mongoeco.core.projections import apply_projection
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.memory import MemoryEngine
@@ -47,8 +53,8 @@ class _FakeCollection:
         self.calls = []
         self.built_operations = []
         self._engine = _FakeEngine()
-        self._db_name = 'db'
-        self._collection_name = 'coll'
+        self._db_name = "db"
+        self._collection_name = "coll"
 
     def find(
         self,
@@ -67,20 +73,20 @@ class _FakeCollection:
     ):
         self.calls.append(
             {
-                'filter_spec': filter_spec,
-                'projection': projection,
-                'sort': sort,
-                'skip': skip,
-                'limit': limit,
-                'hint': hint,
-                'comment': comment,
-                'max_time_ms': max_time_ms,
-                'batch_size': batch_size,
-                'session': session,
+                "filter_spec": filter_spec,
+                "projection": projection,
+                "sort": sort,
+                "skip": skip,
+                "limit": limit,
+                "hint": hint,
+                "comment": comment,
+                "max_time_ms": max_time_ms,
+                "batch_size": batch_size,
+                "session": session,
             }
         )
         if collation is not None:
-            self.calls[-1]['collation'] = collation
+            self.calls[-1]["collation"] = collation
         documents = list(self._documents)
         documents = sort_documents(documents, sort)
         if skip:
@@ -89,8 +95,7 @@ class _FakeCollection:
             documents = documents[:limit]
         if projection is not None:
             documents = [
-                apply_projection(document, projection)
-                for document in documents
+                apply_projection(document, projection) for document in documents
             ]
         return _FakeAsyncFindCursor(documents)
 
@@ -117,24 +122,18 @@ class _FakeEngine:
         self.aggregation_spill_policy = AggregationSpillPolicy(threshold=1)
         self.aggregation_cost_policy = None
 
-    async def explain_find_semantics(
-        self, db_name, coll_name, semantics, **kwargs
-    ):
-        self.explain_semantics_calls.append(
-            (db_name, coll_name, semantics, kwargs)
-        )
-        return {'engine': 'fake', 'details': ['IXSCAN']}
+    async def explain_find_semantics(self, db_name, coll_name, semantics, **kwargs):
+        self.explain_semantics_calls.append((db_name, coll_name, semantics, kwargs))
+        return {"engine": "fake", "details": ["IXSCAN"]}
 
     def scan_find_semantics(self, db_name, coll_name, semantics, **kwargs):
-        self.scan_semantics_calls.append(
-            (db_name, coll_name, semantics, kwargs)
-        )
+        self.scan_semantics_calls.append((db_name, coll_name, semantics, kwargs))
 
         async def _iter():
-            if coll_name == 'coll':
-                yield {'_id': '1', 'name': 'Ada'}
-            elif coll_name == 'roles':
-                yield {'_id': 'r1', 'label': 'admin'}
+            if coll_name == "coll":
+                yield {"_id": "1", "name": "Ada"}
+            elif coll_name == "roles":
+                yield {"_id": "r1", "label": "admin"}
 
         return _iter()
 
@@ -157,10 +156,10 @@ class _CountingSyncClientStub(_SyncClientStub):
 
 class _BrokenSyncClientStub:
     def _run(self, awaitable):
-        close = getattr(awaitable, 'close', None)
+        close = getattr(awaitable, "close", None)
         if callable(close):
             close()
-        raise RuntimeError('boom')
+        raise RuntimeError("boom")
 
 
 class _AsyncAggregationCursorStub:
@@ -197,10 +196,62 @@ class _AsyncAggregationCursorStub:
 
 class _FailingAsyncAggregationCursorStub(_AsyncAggregationCursorStub):
     async def __anext__(self):
-        raise InvalidOperation('foreign session')
+        raise InvalidOperation("foreign session")
 
 
 class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
+    def test_bound_operation_context_crosses_cursor_boundary_by_identity(self):
+        context = OperationContext.create(dialect=MONGODB_DIALECT_70)
+        operation = compile_aggregate_operation([]).bind(context)
+
+        cursor = AsyncAggregationCursor(_FakeCollection([]), operation)
+
+        self.assertIs(cursor._operation_context, context)
+        self.assertIs(cursor._execution_context, context.expressions)
+
+    async def test_search_optimization_plan_rejects_incoherent_states(self):
+        invalid_plans = (
+            {
+                "strategy": _SearchOptimizationStrategy.DIRECT_WINDOW,
+            },
+            {
+                "strategy": _SearchOptimizationStrategy.PREFIX_ITERATIVE,
+            },
+            {
+                "strategy": _SearchOptimizationStrategy.EMPTY,
+                "result_limit_hint": 1,
+            },
+            {
+                "strategy": _SearchOptimizationStrategy.FULL,
+                "result_limit_hint": 1,
+            },
+        )
+        for kwargs in invalid_plans:
+            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+                _SearchOptimizationPlan(**kwargs)
+
+        iterative = _SearchOptimizationPlan(
+            strategy=_SearchOptimizationStrategy.PREFIX_ITERATIVE,
+            prefix_output_limit=2,
+        )
+        self.assertEqual(iterative.explain_limit_hint, 2)
+        self.assertEqual(
+            AsyncAggregationCursor._search_runtime_spec_for_stage("$search", {}),
+            {},
+        )
+
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [])
+        cursor._operation_context = None
+        with self.assertRaisesRegex(RuntimeError, "OperationContext"):
+            cursor._build_search_request(
+                "$search",
+                {"text": {"query": "ada", "path": "title"}},
+                result_limit_hint=None,
+                downstream_filter_spec=None,
+            )
+        with self.assertRaisesRegex(ValueError, "verbosity"):
+            await cursor.explain("invalid")
+
     def test_cxp_projection_reports_minimal_profile_for_aggregation_search_paths(
         self,
     ):
@@ -209,96 +260,96 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         plain = AsyncAggregationCursor(collection, [])
         text_search = AsyncAggregationCursor(
             collection,
-            [{'$search': {'text': {'query': 'ada', 'path': 'name'}}}],
+            [{"$search": {"text": {"query": "ada", "path": "name"}}}],
         )
         vector_search = AsyncAggregationCursor(
             collection,
             [
                 {
-                    '$vectorSearch': {
-                        'path': 'embedding',
-                        'queryVector': [0.1],
-                        'numCandidates': 5,
-                        'limit': 2,
+                    "$vectorSearch": {
+                        "path": "embedding",
+                        "queryVector": [0.1],
+                        "numCandidates": 5,
+                        "limit": 2,
                     }
                 }
             ],
         )
 
         self.assertEqual(
-            plain._cxp_explain_projection()['minimalProfile'], 'mongodb-core'
+            plain._cxp_explain_projection()["minimalProfile"], "mongodb-core"
         )
         self.assertEqual(
-            plain._cxp_explain_projection()['compatibleProfiles'],
-            ['mongodb-core', 'mongodb-platform', 'mongodb-aggregate-rich'],
+            plain._cxp_explain_projection()["compatibleProfiles"],
+            ["mongodb-core", "mongodb-platform", "mongodb-aggregate-rich"],
         )
         self.assertEqual(
-            plain._cxp_explain_projection()['operationName'],
-            'aggregate',
+            plain._cxp_explain_projection()["operationName"],
+            "aggregate",
         )
         self.assertTrue(
-            plain._cxp_explain_projection()['operationMetadata'][
-                'supportsDatabaseScope'
+            plain._cxp_explain_projection()["operationMetadata"][
+                "supportsDatabaseScope"
             ]
         )
         self.assertTrue(
-            plain._cxp_explain_projection()['compatibleProfileSupport'][
-                'mongodb-aggregate-rich'
-            ]['supported']
+            plain._cxp_explain_projection()["compatibleProfileSupport"][
+                "mongodb-aggregate-rich"
+            ]["supported"]
         )
         self.assertEqual(
-            plain._cxp_explain_projection()['minimalProfileRequirements'][0][
-                'capabilityName'
+            plain._cxp_explain_projection()["minimalProfileRequirements"][0][
+                "capabilityName"
             ],
-            'read',
+            "read",
         )
         self.assertEqual(
-            text_search._cxp_explain_projection()['minimalProfile'],
-            'mongodb-text-search',
+            text_search._cxp_explain_projection()["minimalProfile"],
+            "mongodb-text-search",
         )
         self.assertEqual(
-            text_search._cxp_explain_projection()['compatibleProfiles'],
-            ['mongodb-text-search', 'mongodb-search'],
+            text_search._cxp_explain_projection()["compatibleProfiles"],
+            ["mongodb-text-search", "mongodb-search"],
         )
         self.assertEqual(
-            text_search._cxp_explain_projection()['operationName'],
-            'aggregate',
+            text_search._cxp_explain_projection()["operationName"],
+            "aggregate",
         )
         self.assertEqual(
-            text_search._cxp_explain_projection()['operationMetadata'][
-                'aggregateStage'
+            text_search._cxp_explain_projection()["operationMetadata"][
+                "aggregateStage"
             ],
-            '$search',
+            "$search",
         )
         self.assertEqual(
-            text_search._cxp_explain_projection()[
-                'minimalProfileRequirements'
-            ][-1]['capabilityName'],
-            'search',
-        )
-        self.assertEqual(
-            vector_search._cxp_explain_projection()['minimalProfile'],
-            'mongodb-search',
-        )
-        self.assertEqual(
-            vector_search._cxp_explain_projection()['compatibleProfiles'],
-            ['mongodb-search'],
-        )
-        self.assertEqual(
-            vector_search._cxp_explain_projection()['operationName'],
-            'aggregate',
-        )
-        self.assertEqual(
-            vector_search._cxp_explain_projection()['operationMetadata'][
-                'aggregateStage'
+            text_search._cxp_explain_projection()["minimalProfileRequirements"][-1][
+                "capabilityName"
             ],
-            '$vectorSearch',
+            "search",
         )
         self.assertEqual(
-            vector_search._cxp_explain_projection()[
-                'minimalProfileRequirements'
-            ][-1]['capabilityName'],
-            'vector_search',
+            vector_search._cxp_explain_projection()["minimalProfile"],
+            "mongodb-search",
+        )
+        self.assertEqual(
+            vector_search._cxp_explain_projection()["compatibleProfiles"],
+            ["mongodb-search"],
+        )
+        self.assertEqual(
+            vector_search._cxp_explain_projection()["operationName"],
+            "aggregate",
+        )
+        self.assertEqual(
+            vector_search._cxp_explain_projection()["operationMetadata"][
+                "aggregateStage"
+            ],
+            "$vectorSearch",
+        )
+        self.assertEqual(
+            vector_search._cxp_explain_projection()["minimalProfileRequirements"][-1][
+                "capabilityName"
+            ],
+            "vector_search",
         )
 
     def test_search_result_limit_hint_is_only_exposed_for_safe_trailing_window(
@@ -306,30 +357,30 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
     ):
         self.assertEqual(
             AsyncAggregationCursor._search_result_limit_hint(
-                [{'$project': {'_id': 1}}, {'$skip': 2}, {'$limit': 3}]
+                [{"$project": {"_id": 1}}, {"$skip": 2}, {"$limit": 3}]
             ),
             5,
         )
         self.assertIsNone(
             AsyncAggregationCursor._search_result_limit_hint(
-                [{'$match': {'kind': 'view'}}, {'$limit': 3}]
+                [{"$match": {"kind": "view"}}, {"$limit": 3}]
             )
         )
         self.assertEqual(
             AsyncAggregationCursor._search_prefix_output_limit(
-                [{'$match': {'kind': 'view'}}, {'$limit': 3}]
+                [{"$match": {"kind": "view"}}, {"$limit": 3}]
             ),
             3,
         )
         self.assertEqual(
             AsyncAggregationCursor._search_prefix_output_limit(
-                [{'$limit': 5}, {'$skip': 2}, {'$project': {'_id': 1}}]
+                [{"$limit": 5}, {"$skip": 2}, {"$project": {"_id": 1}}]
             ),
             3,
         )
         self.assertIsNone(
             AsyncAggregationCursor._search_prefix_output_limit(
-                [{'$sort': {'rank': 1}}, {'$limit': 3}]
+                [{"$sort": {"rank": 1}}, {"$limit": 3}]
             )
         )
         self.assertEqual(
@@ -350,37 +401,53 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ),
             20,
         )
-        self.assertIsNone(
-            AsyncAggregationCursor._search_result_limit_hint(['bad'])
-        )  # type: ignore[list-item]
-        self.assertIsNone(
-            AsyncAggregationCursor._search_prefix_output_limit(['bad'])
-        )  # type: ignore[list-item]
+        self.assertIsNone(AsyncAggregationCursor._search_result_limit_hint(["bad"]))  # type: ignore[list-item]
+        self.assertIsNone(AsyncAggregationCursor._search_prefix_output_limit(["bad"]))  # type: ignore[list-item]
         self.assertIsNone(
             AsyncAggregationCursor._leading_search_downstream_filter_spec(
-                [{'$match': 'bad'}]  # type: ignore[list-item]
+                [{"$match": "bad"}]  # type: ignore[list-item]
             )
         )
         self.assertEqual(
             AsyncAggregationCursor._leading_search_downstream_filter_spec(
                 [
-                    {'$match': {'kind': 'note'}},
-                    {'$match': {'active': True}},
-                    {'$project': {'_id': 1}},
+                    {"$match": {"kind": "note"}},
+                    {"$match": {"active": True}},
+                    {"$project": {"_id": 1}},
                 ]
             ),
-            {'$and': [{'kind': 'note'}, {'active': True}]},
+            {"$and": [{"kind": "note"}, {"active": True}]},
         )
         self.assertIsNone(
             AsyncAggregationCursor._leading_search_downstream_filter_spec(
-                [{'$match': {'$expr': {'$ne': ['$$NOW', None]}}}]
+                [{"$match": {"$expr": {"$ne": ["$$NOW", None]}}}]
             )
         )
         self.assertIsNone(
             AsyncAggregationCursor._leading_search_downstream_filter_spec(
-                [{'$match': {'kind': 'note'}, '$project': {'_id': 1}}]
+                [{"$match": {"kind": "note"}, "$project": {"_id": 1}}]
             )
         )
+
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [])
+        collector_plan = cursor._search_optimization_plan(
+            "$search",
+            {"count": {"type": "total"}},
+            [{"$match": {"kind": "note"}}, {"$limit": 1}],
+            writeback=False,
+        )
+        self.assertIsNone(collector_plan.result_limit_hint)
+        self.assertIsNone(collector_plan.downstream_filter_spec)
+        self.assertIsNone(collector_plan.prefix_output_limit)
+
+        highlight_plan = cursor._search_optimization_plan(
+            "$search",
+            {"highlight": {"path": "title"}},
+            [{"$match": {"searchHighlights.0.path": "title"}}, {"$limit": 1}],
+            writeback=False,
+        )
+        self.assertIsNone(highlight_plan.downstream_filter_spec)
+        self.assertEqual(highlight_plan.prefix_output_limit, 1)
 
     async def test_search_helpers_cover_missing_invalid_and_engine_fallback_paths(
         self,
@@ -389,21 +456,17 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         cursor = AsyncAggregationCursor(collection, [])
         self.assertIsNone(cursor._leading_search_stage())
 
-        cursor = AsyncAggregationCursor(collection, ['invalid'])  # type: ignore[list-item]
+        cursor = AsyncAggregationCursor(collection, ["invalid"])  # type: ignore[list-item]
         self.assertIsNone(cursor._leading_search_stage())
 
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$search': {'text': {'query': 'Ada', 'path': 'name'}}}],
+            [{"$search": {"text": {"query": "Ada", "path": "name"}}}],
         )
-        with self.assertRaisesRegex(
-            OperationFailure, 'not supported by this engine'
-        ):
+        with self.assertRaisesRegex(OperationFailure, "not supported by this engine"):
             await cursor._search_documents()
 
-        with self.assertRaisesRegex(
-            OperationFailure, 'search stage was not present'
-        ):
+        with self.assertRaisesRegex(OperationFailure, "search stage was not present"):
             await AsyncAggregationCursor(collection, [])._search_documents()
 
     async def test_search_meta_helper_maps_to_search_and_returns_metadata(
@@ -416,8 +479,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             del kwargs
             calls.append(str(args[2]))
             return [
-                {'_id': '1', 'kind': 'note'},
-                {'_id': '2', 'kind': 'reference'},
+                {"_id": "1", "kind": "note"},
+                {"_id": "2", "kind": "reference"},
             ]
 
         collection._engine.search_documents = _search_documents
@@ -425,11 +488,11 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             collection,
             [
                 {
-                    '$searchMeta': {
-                        'index': 'by_text',
-                        'text': {'query': 'ada', 'path': 'name'},
-                        'count': {'type': 'total'},
-                        'facet': {'path': 'kind', 'numBuckets': 2},
+                    "$searchMeta": {
+                        "index": "by_text",
+                        "text": {"query": "ada", "path": "name"},
+                        "count": {"type": "total"},
+                        "facet": {"path": "kind", "numBuckets": 2},
                     }
                 }
             ],
@@ -439,48 +502,48 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             await cursor._search_documents(),
             [
                 {
-                    'count': {'total': 2, 'exact': True},
-                    'facet': {
-                        'type': 'string',
-                        'path': 'kind',
-                        'numBuckets': 2,
-                        'buckets': [
-                            {'value': 'note', 'count': 1},
-                            {'value': 'reference', 'count': 1},
+                    "count": {"total": 2, "exact": True},
+                    "facet": {
+                        "type": "string",
+                        "path": "kind",
+                        "numBuckets": 2,
+                        "buckets": [
+                            {"value": "note", "count": 1},
+                            {"value": "reference", "count": 1},
                         ],
                     },
                 }
             ],
         )
-        self.assertEqual(calls, ['$search'])
+        self.assertEqual(calls, ["$search"])
 
         with self.assertRaisesRegex(
             OperationFailure,
-            '\\$searchMeta requires at least one of count or facet',
+            "\\$searchMeta requires at least one of count or facet",
         ):
             await AsyncAggregationCursor(
                 collection,
                 [
                     {
-                        '$searchMeta': {
-                            'index': 'by_text',
-                            'text': {'query': 'ada', 'path': 'name'},
+                        "$searchMeta": {
+                            "index": "by_text",
+                            "text": {"query": "ada", "path": "name"},
                         }
                     }
                 ],
             )._search_documents()
         with self.assertRaisesRegex(
-            OperationFailure, '\\$searchMeta does not support highlight'
+            OperationFailure, "\\$searchMeta does not support highlight"
         ):
             await AsyncAggregationCursor(
                 collection,
                 [
                     {
-                        '$searchMeta': {
-                            'index': 'by_text',
-                            'text': {'query': 'ada', 'path': 'name'},
-                            'count': {'type': 'total'},
-                            'highlight': {'path': 'name'},
+                        "$searchMeta": {
+                            "index": "by_text",
+                            "text": {"query": "ada", "path": "name"},
+                            "count": {"type": "total"},
+                            "highlight": {"path": "name"},
                         }
                     }
                 ],
@@ -495,22 +558,18 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         async def _search_documents(*args, **kwargs):
             del kwargs
             seen_specs.append(args[3])
-            return [{'_id': '1', 'kind': 'note'}]
+            return [{"_id": "1", "kind": "note"}]
 
         collection._engine.search_documents = _search_documents
         cursor = AsyncAggregationCursor(
             collection,
             [
                 {
-                    '$searchMeta': {
-                        'index': 'by_text',
-                        'facet': {
-                            'operator': {
-                                'text': {'query': 'ada', 'path': 'name'}
-                            },
-                            'facets': {
-                                'kindFacet': {'path': 'kind', 'numBuckets': 2}
-                            },
+                    "$searchMeta": {
+                        "index": "by_text",
+                        "facet": {
+                            "operator": {"text": {"query": "ada", "path": "name"}},
+                            "facets": {"kindFacet": {"path": "kind", "numBuckets": 2}},
                         },
                     }
                 }
@@ -521,13 +580,13 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             await cursor._search_documents(),
             [
                 {
-                    'facet': {
-                        'facets': {
-                            'kindFacet': {
-                                'type': 'string',
-                                'path': 'kind',
-                                'numBuckets': 2,
-                                'buckets': [{'value': 'note', 'count': 1}],
+                    "facet": {
+                        "facets": {
+                            "kindFacet": {
+                                "type": "string",
+                                "path": "kind",
+                                "numBuckets": 2,
+                                "buckets": [{"value": "note", "count": 1}],
                             }
                         }
                     }
@@ -538,13 +597,11 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             seen_specs,
             [
                 {
-                    'index': 'by_text',
-                    'facet': {
-                        'facets': {
-                            'kindFacet': {'path': 'kind', 'numBuckets': 2}
-                        }
+                    "index": "by_text",
+                    "facet": {
+                        "facets": {"kindFacet": {"path": "kind", "numBuckets": 2}}
                     },
-                    'text': {'query': 'ada', 'path': 'name'},
+                    "text": {"query": "ada", "path": "name"},
                 }
             ],
         )
@@ -553,18 +610,18 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self,
     ):
         original_spec = {
-            'index': 'by_text',
-            'facet': {
-                'operator': {
-                    'text': {'query': 'ada', 'path': 'name'},
-                    'phrase': {'query': 'ada', 'path': 'name'},
+            "index": "by_text",
+            "facet": {
+                "operator": {
+                    "text": {"query": "ada", "path": "name"},
+                    "phrase": {"query": "ada", "path": "name"},
                 },
-                'facets': {'kindFacet': {'path': 'kind', 'numBuckets': 2}},
+                "facets": {"kindFacet": {"path": "kind", "numBuckets": 2}},
             },
         }
 
         projected_spec = AsyncAggregationCursor._search_runtime_spec_for_stage(
-            '$searchMeta', original_spec
+            "$searchMeta", original_spec
         )
 
         self.assertIs(projected_spec, original_spec)
@@ -575,15 +632,15 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         class BrokenBuilderCollection(_FakeCollection):
             def _build_cursor(self, operation, *, session=None, **kwargs):  # type: ignore[override]
                 del operation, session, kwargs
-                raise TypeError('boom')
+                raise TypeError("boom")
 
         collection = BrokenBuilderCollection([])
         cursor = AsyncAggregationCursor(
-            collection, [{'$project': {'_id': 1}}], batch_size=2
+            collection, [{"$project": {"_id": 1}}], batch_size=2
         )
         operation = cursor._pushdown_find_operation(batch_size=2)
 
-        with self.assertRaisesRegex(TypeError, 'boom'):
+        with self.assertRaisesRegex(TypeError, "boom"):
             cursor._build_pushdown_cursor(operation)
 
     async def test_search_materialization_expands_prefix_for_match_then_limit(
@@ -592,15 +649,15 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         collection = _FakeCollection([])
         calls: list[int | None] = []
         search_documents = [
-            {'_id': '1', 'kind': 'drop'},
-            {'_id': '2', 'kind': 'drop'},
-            {'_id': '3', 'kind': 'keep'},
+            {"_id": "1", "kind": "drop"},
+            {"_id": "2", "kind": "drop"},
+            {"_id": "3", "kind": "keep"},
         ]
 
         async def _search_documents(*args, **kwargs):
             del args
-            calls.append(kwargs.get('result_limit_hint'))
-            limit_hint = kwargs.get('result_limit_hint')
+            calls.append(kwargs.get("result_limit_hint"))
+            limit_hint = kwargs.get("result_limit_hint")
             if isinstance(limit_hint, int) and limit_hint > 0:
                 return search_documents[:limit_hint]
             return list(search_documents)
@@ -609,15 +666,13 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         cursor = AsyncAggregationCursor(
             collection,
             [
-                {'$search': {'text': {'query': 'keep', 'path': 'kind'}}},
-                {'$match': {'kind': 'keep'}},
-                {'$limit': 1},
+                {"$search": {"text": {"query": "keep", "path": "kind"}}},
+                {"$match": {"kind": "keep"}},
+                {"$limit": 1},
             ],
         )
 
-        self.assertEqual(
-            await cursor.to_list(), [{'_id': '3', 'kind': 'keep'}]
-        )
+        self.assertEqual(await cursor.to_list(), [{"_id": "3", "kind": "keep"}])
         self.assertEqual(calls, [1, 4])
 
     async def test_materialize_leading_search_pipeline_returns_empty_for_zero_prefix_limit(
@@ -625,36 +680,34 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
     ):
         collection = _FakeCollection([])
 
+        observed_limit_hints = []
+
         async def _search_documents(*args, **kwargs):
-            del args, kwargs
-            raise AssertionError(
-                'search_documents should not be called when output limit is zero'
-            )
+            del args
+            observed_limit_hints.append(kwargs["result_limit_hint"])
+            return []
 
         collection._engine.search_documents = _search_documents
         cursor = AsyncAggregationCursor(
             collection,
             [
-                {'$search': {'text': {'query': 'keep', 'path': 'kind'}}},
-                {'$limit': 0},
+                {"$search": {"text": {"query": "keep", "path": "kind"}}},
+                {"$limit": 0},
             ],
         )
 
         with (
-            patch.object(
-                cursor, '_search_result_limit_hint', return_value=None
-            ),
-            patch.object(
-                cursor, '_search_prefix_output_limit', return_value=0
-            ),
+            patch.object(cursor, "_search_result_limit_hint", return_value=None),
+            patch.object(cursor, "_search_prefix_output_limit", return_value=0),
         ):
             self.assertEqual(
                 await cursor._materialize_leading_search_pipeline(
-                    [{'$limit': 0}],
+                    [{"$limit": 0}],
                     dialect=None,
                 ),
-                ([], []),
+                ([], [{"$limit": 0}]),
             )
+        self.assertEqual(observed_limit_hints, [0])
 
     async def test_materialize_leading_search_pipeline_rejects_missing_stage_and_engine_without_search(
         self,
@@ -662,50 +715,42 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         collection = _FakeCollection([])
         cursor = AsyncAggregationCursor(collection, [])
         with (
-            patch.object(
-                cursor, '_search_result_limit_hint', return_value=None
-            ),
-            patch.object(
-                cursor, '_search_prefix_output_limit', return_value=1
-            ),
-            patch.object(cursor, '_leading_search_stage', return_value=None),
+            patch.object(cursor, "_search_result_limit_hint", return_value=None),
+            patch.object(cursor, "_search_prefix_output_limit", return_value=1),
+            patch.object(cursor, "_leading_search_stage", return_value=None),
         ):
             with self.assertRaisesRegex(
-                OperationFailure, 'search stage was not present'
+                OperationFailure, "search stage was not present"
             ):
                 await cursor._materialize_leading_search_pipeline(
-                    [{'$match': {'kind': 'note'}}], dialect=None
+                    [{"$match": {"kind": "note"}}], dialect=None
                 )
 
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$search': {'text': {'query': 'Ada', 'path': 'name'}}}],
+            [{"$search": {"text": {"query": "Ada", "path": "name"}}}],
         )
         with (
-            patch.object(
-                cursor, '_search_result_limit_hint', return_value=None
-            ),
-            patch.object(
-                cursor, '_search_prefix_output_limit', return_value=1
-            ),
+            patch.object(cursor, "_search_result_limit_hint", return_value=None),
+            patch.object(cursor, "_search_prefix_output_limit", return_value=1),
         ):
             with self.assertRaisesRegex(
-                OperationFailure, '\\$search is not supported by this engine'
+                OperationFailure, "\\$search is not supported by this engine"
             ):
                 await cursor._materialize_leading_search_pipeline(
-                    [{'$match': {'kind': 'note'}}], dialect=None
+                    [{"$match": {"kind": "note"}}], dialect=None
                 )
 
     async def test_leading_search_downstream_filter_keeps_or_match_with_sibling_fields(
         self,
     ):
         filter_spec = {
-            '$or': [
-                {'planning_status': {'$exists': False}},
-                {'planning_status': 'active'},
+            "$or": [
+                {"planning_status": {"$exists": False}},
+                {"planning_status": "active"},
             ],
-            'completed_at': None,
-            'task_type': {'$in': ['work_unit', 'content_update']},
+            "completed_at": None,
+            "task_type": {"$in": ["work_unit", "content_update"]},
         }
 
         for engine_cls in (MemoryEngine, SQLiteEngine):
@@ -715,31 +760,31 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                     await collection.insert_many(
                         [
                             {
-                                '_id': 'task-1',
-                                'title': 'migration candidate',
-                                'planning_status': 'active',
-                                'completed_at': None,
-                                'task_type': 'work_unit',
+                                "_id": "task-1",
+                                "title": "migration candidate",
+                                "planning_status": "active",
+                                "completed_at": None,
+                                "task_type": "work_unit",
                             },
                             {
-                                '_id': 'task-2',
-                                'title': 'migration candidate',
-                                'planning_status': 'retired',
-                                'completed_at': None,
-                                'task_type': 'work_unit',
+                                "_id": "task-2",
+                                "title": "migration candidate",
+                                "planning_status": "retired",
+                                "completed_at": None,
+                                "task_type": "work_unit",
                             },
                             {
-                                '_id': 'task-3',
-                                'title': 'migration candidate',
-                                'planning_status': 'active',
-                                'completed_at': 'done',
-                                'task_type': 'work_unit',
+                                "_id": "task-3",
+                                "title": "migration candidate",
+                                "planning_status": "active",
+                                "completed_at": "done",
+                                "task_type": "work_unit",
                             },
                             {
-                                '_id': 'task-4',
-                                'title': 'migration candidate',
-                                'completed_at': None,
-                                'task_type': 'content_update',
+                                "_id": "task-4",
+                                "title": "migration candidate",
+                                "completed_at": None,
+                                "task_type": "content_update",
                             },
                         ]
                     )
@@ -747,19 +792,17 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                         [
                             SearchIndexModel(
                                 {
-                                    'mappings': {
-                                        'dynamic': False,
-                                        'fields': {
-                                            'title': {'type': 'string'},
-                                            'planning_status': {
-                                                'type': 'token'
-                                            },
-                                            'task_type': {'type': 'token'},
-                                            'completed_at': {'type': 'token'},
+                                    "mappings": {
+                                        "dynamic": False,
+                                        "fields": {
+                                            "title": {"type": "string"},
+                                            "planning_status": {"type": "token"},
+                                            "task_type": {"type": "token"},
+                                            "completed_at": {"type": "token"},
                                         },
                                     }
                                 },
-                                name='by_text',
+                                name="by_text",
                             )
                         ]
                     )
@@ -767,32 +810,28 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                     documents = await collection.aggregate(
                         [
                             {
-                                '$search': {
-                                    'index': 'by_text',
-                                    'text': {
-                                        'query': 'migration',
-                                        'path': 'title',
+                                "$search": {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "migration",
+                                        "path": "title",
                                     },
                                 }
                             },
-                            {'$match': filter_spec},
-                            {'$project': {'_id': 1}},
-                            {'$sort': {'_id': 1}},
+                            {"$match": filter_spec},
+                            {"$project": {"_id": 1}},
+                            {"$sort": {"_id": 1}},
                         ]
                     ).to_list()
 
-                    self.assertEqual(
-                        documents, [{'_id': 'task-1'}, {'_id': 'task-4'}]
-                    )
+                    self.assertEqual(documents, [{"_id": "task-1"}, {"_id": "task-4"}])
 
     async def test_allow_disk_use_false_disables_engine_spill_policy(self):
-        collection = _FakeCollection(
-            [{'_id': '1', 'rank': 2}, {'_id': '2', 'rank': 1}]
-        )
+        collection = _FakeCollection([{"_id": "1", "rank": 2}, {"_id": "2", "rank": 1}])
         cursor = AsyncAggregationCursor(
             collection,
             compile_aggregate_operation(
-                [{'$sort': {'rank': 1}}],
+                [{"$sort": {"rank": 1}}],
                 allow_disk_use=False,
             ),
         )
@@ -806,37 +845,33 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             collection = client.db.events
             await collection.insert_many(
                 [
-                    {'_id': '1', 'rank': 2},
-                    {'_id': '2', 'rank': 1},
+                    {"_id": "1", "rank": 2},
+                    {"_id": "2", "rank": 1},
                 ],
             )
 
             documents = await collection.aggregate(
-                [{'$sort': {'rank': 1}}],
+                [{"$sort": {"rank": 1}}],
                 allowDiskUse=True,
             ).to_list()
 
-            self.assertEqual(
-                [document['_id'] for document in documents], ['2', '1']
-            )
+            self.assertEqual([document["_id"] for document in documents], ["2", "1"])
             with self.assertRaisesRegex(
                 TypeError,
-                'cannot pass both allowDiskUse and allow_disk_use',
+                "cannot pass both allowDiskUse and allow_disk_use",
             ):
-                collection.aggregate(
-                    [], allow_disk_use=True, allowDiskUse=True
-                )
+                collection.aggregate([], allow_disk_use=True, allowDiskUse=True)
 
     async def test_aggregation_cursor_converts_internal_bson_wrappers_to_public_documents(
         self,
     ):
-        collection = _FakeCollection([{'_id': '1', 'score': BsonInt32(1)}])
+        collection = _FakeCollection([{"_id": "1", "score": BsonInt32(1)}])
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$project': {'score': {'$add': ['$score', 1]}, '_id': 0}}],
+            [{"$project": {"score": {"$add": ["$score", 1]}, "_id": 0}}],
         )
 
-        self.assertEqual(await cursor.to_list(), [{'score': 2}])
+        self.assertEqual(await cursor.to_list(), [{"score": 2}])
 
     async def test_collect_lookup_names_skips_invalid_stages_and_recurses_nested_pipelines(
         self,
@@ -848,49 +883,49 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         names = cursor._collect_lookup_names(
             [
-                'invalid',
-                {'$lookup': []},
+                "invalid",
+                {"$lookup": []},
                 {
-                    '$lookup': {
-                        'from': 'users',
-                        'pipeline': [
+                    "$lookup": {
+                        "from": "users",
+                        "pipeline": [
                             {
-                                '$lookup': {
-                                    'from': 'roles',
-                                    'localField': 'role_id',
-                                    'foreignField': '_id',
-                                    'as': 'roles',
+                                "$lookup": {
+                                    "from": "roles",
+                                    "localField": "role_id",
+                                    "foreignField": "_id",
+                                    "as": "roles",
                                 }
                             }
                         ],
-                        'as': 'users',
+                        "as": "users",
                     }
                 },
-                {'$unionWith': 'archive'},
+                {"$unionWith": "archive"},
                 {
-                    '$unionWith': {
-                        'coll': 'audits',
-                        'pipeline': [
+                    "$unionWith": {
+                        "coll": "audits",
+                        "pipeline": [
                             {
-                                '$lookup': {
-                                    'from': 'teams',
-                                    'localField': 'team_id',
-                                    'foreignField': '_id',
-                                    'as': 'teams',
+                                "$lookup": {
+                                    "from": "teams",
+                                    "localField": "team_id",
+                                    "foreignField": "_id",
+                                    "as": "teams",
                                 }
                             }
                         ],
                     }
                 },
                 {
-                    '$facet': {
-                        'nested': [
+                    "$facet": {
+                        "nested": [
                             {
-                                '$lookup': {
-                                    'from': 'teams',
-                                    'localField': 'team_id',
-                                    'foreignField': '_id',
-                                    'as': 'teams',
+                                "$lookup": {
+                                    "from": "teams",
+                                    "localField": "team_id",
+                                    "foreignField": "_id",
+                                    "as": "teams",
                                 }
                             }
                         ]
@@ -899,9 +934,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ]
         )
 
-        self.assertEqual(
-            names, {'users', 'roles', 'teams', 'archive', 'audits'}
-        )
+        self.assertEqual(names, {"users", "roles", "teams", "archive", "audits"})
 
     async def test_collect_lookup_names_skips_invalid_union_with_payloads(
         self,
@@ -913,61 +946,59 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         names = cursor._collect_lookup_names(
             [
-                {'$unionWith': []},
-                {'$unionWith': {'pipeline': []}},
-                {'$unionWith': {'coll': 'archive'}},
+                {"$unionWith": []},
+                {"$unionWith": {"pipeline": []}},
+                {"$unionWith": {"coll": "archive"}},
             ]
         )
 
-        self.assertEqual(names, {'archive'})
+        self.assertEqual(names, {"archive"})
 
     async def test_split_streamable_pipeline_uses_registered_stage_execution_mode(
         self,
     ):
         register_aggregation_stage(
-            '$future',
+            "$future",
             lambda documents, _spec, _context: documents,
-            execution_mode='streamable',
+            execution_mode="streamable",
         )
         try:
             stream_plan = AsyncAggregationCursor._split_streamable_pipeline(
-                [{'$match': {'x': 1}}, {'$future': {}}, {'$limit': 1}]
+                [{"$match": {"x": 1}}, {"$future": {}}, {"$limit": 1}]
             )
         finally:
-            unregister_aggregation_stage('$future')
+            unregister_aggregation_stage("$future")
 
-        self.assertEqual(
-            stream_plan, ([{'$match': {'x': 1}}, {'$future': {}}], 0, 1)
-        )
+        self.assertEqual(stream_plan, ([{"$match": {"x": 1}}, {"$future": {}}], 0, 1))
 
     async def test_split_streamable_pipeline_returns_none_after_trailing_window_and_accumulates_skip_limit(
         self,
     ):
         self.assertIsNone(
             AsyncAggregationCursor._split_streamable_pipeline(
-                [{'$skip': 1}, {'$match': {'x': 1}}],
+                [{"$skip": 1}, {"$match": {"x": 1}}],
             )
         )
         self.assertEqual(
             AsyncAggregationCursor._split_streamable_pipeline(
                 [
-                    {'$match': {'x': 1}},
-                    {'$skip': 2},
-                    {'$limit': 5},
-                    {'$limit': 3},
+                    {"$match": {"x": 1}},
+                    {"$skip": 2},
+                    {"$limit": 5},
+                    {"$limit": 3},
                 ],
             ),
-            ([{'$match': {'x': 1}}], 2, 3),
+            ([{"$match": {"x": 1}}], 2, 3),
         )
 
     async def test_split_streamable_pipeline_preserves_window_stage_order(self):
         cases = [
-            ([{'$limit': 5}, {'$skip': 3}], ([], 3, 2)),
+            ([{"$limit": 5}, {"$skip": 3}], ([], 3, 2)),
             (
-                [{'$skip': 3}, {'$limit': 5}, {'$skip': 3}],
+                [{"$skip": 3}, {"$limit": 5}, {"$skip": 3}],
                 ([], 6, 2),
             ),
-            ([{'$limit': 5}, {'$skip': 8}], ([], 5, 0)),
+            ([{"$limit": 5}, {"$skip": 8}], ([], 5, 0)),
         ]
 
         for pipeline, expected in cases:
@@ -978,23 +1009,23 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 )
 
     async def test_streaming_window_matches_materialized_execution(self):
-        documents = [{'_id': str(index), 'value': index} for index in range(10)]
+        documents = [{"_id": str(index), "value": index} for index in range(10)]
         windows = [
-            [{'$limit': 5}, {'$skip': 3}],
-            [{'$skip': 3}, {'$limit': 5}, {'$skip': 3}],
-            [{'$limit': 5}, {'$skip': 8}],
+            [{"$limit": 5}, {"$skip": 3}],
+            [{"$skip": 3}, {"$limit": 5}, {"$skip": 3}],
+            [{"$limit": 5}, {"$skip": 8}],
         ]
 
         for window in windows:
             with self.subTest(window=window):
                 streaming = AsyncAggregationCursor(
                     _FakeCollection(documents),
-                    [{'$addFields': {'seen': True}}, *window],
+                    [{"$addFields": {"seen": True}}, *window],
                     batch_size=2,
                 )
                 materialized = AsyncAggregationCursor(
                     _FakeCollection(documents),
-                    [{'$addFields': {'seen': True}}, *window],
+                    [{"$addFields": {"seen": True}}, *window],
                 )
                 self.assertEqual(
                     await streaming.to_list(),
@@ -1004,18 +1035,18 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
     async def test_materialize_pushes_safe_prefix_to_find(self):
         collection = _FakeCollection(
             [
-                {'_id': '1', 'kind': 'view', 'rank': 2},
-                {'_id': '2', 'kind': 'view', 'rank': 3},
+                {"_id": "1", "kind": "view", "rank": 2},
+                {"_id": "2", "kind": "view", "rank": 3},
             ]
         )
         cursor = AsyncAggregationCursor(
             collection,
             [
-                {'$match': {'kind': 'view'}},
-                {'$sort': {'rank': 1}},
-                {'$skip': 1},
-                {'$limit': 1},
-                {'$project': {'rank': 1, '_id': 0}},
+                {"$match": {"kind": "view"}},
+                {"$sort": {"rank": 1}},
+                {"$skip": 1},
+                {"$limit": 1},
+                {"$project": {"rank": 1, "_id": 0}},
             ],
         )
 
@@ -1025,22 +1056,22 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             collection.calls,
             [
                 {
-                    'filter_spec': {'kind': 'view'},
-                    'projection': {'rank': 1, '_id': 0},
-                    'sort': [('rank', 1)],
-                    'skip': 1,
-                    'limit': 1,
-                    'hint': None,
-                    'comment': None,
-                    'max_time_ms': None,
-                    'batch_size': None,
-                    'session': None,
+                    "filter_spec": {"kind": "view"},
+                    "projection": {"rank": 1, "_id": 0},
+                    "sort": [("rank", 1)],
+                    "skip": 1,
+                    "limit": 1,
+                    "hint": None,
+                    "comment": None,
+                    "max_time_ms": None,
+                    "batch_size": None,
+                    "session": None,
                 }
             ],
         )
-        self.assertEqual(documents, [{'rank': 3}])
+        self.assertEqual(documents, [{"rank": 3}])
         self.assertEqual(len(collection.built_operations), 1)
-        self.assertEqual(collection.built_operations[0][0].sort, [('rank', 1)])
+        self.assertEqual(collection.built_operations[0][0].sort, [("rank", 1)])
 
     async def test_load_referenced_collections_uses_compiled_find_operations(
         self,
@@ -1050,25 +1081,25 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             collection,
             [
                 {
-                    '$lookup': {
-                        'from': 'roles',
-                        'localField': 'role_id',
-                        'foreignField': '_id',
-                        'as': 'roles',
+                    "$lookup": {
+                        "from": "roles",
+                        "localField": "role_id",
+                        "foreignField": "_id",
+                        "as": "roles",
                     }
                 },
-                {'$unionWith': {'pipeline': []}},
+                {"$unionWith": {"pipeline": []}},
             ],
-            comment='agg-trace',
+            comment="agg-trace",
             max_time_ms=15,
         )
 
         loaded = await cursor._load_referenced_collections()
 
-        self.assertEqual(loaded['roles'], [{'_id': 'r1', 'label': 'admin'}])
+        self.assertEqual(loaded["roles"], [{"_id": "r1", "label": "admin"}])
         self.assertEqual(
             loaded[_CURRENT_COLLECTION_RESOLVER_KEY],
-            [{'_id': '1', 'name': 'Ada'}],
+            [{"_id": "1", "name": "Ada"}],
         )
         self.assertEqual(len(collection._engine.scan_semantics_calls), 2)
         for (
@@ -1077,28 +1108,28 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             semantics,
             kwargs,
         ) in collection._engine.scan_semantics_calls:
-            self.assertEqual(db_name, 'db')
-            self.assertIn(coll_name, {'coll', 'roles'})
+            self.assertEqual(db_name, "db")
+            self.assertIn(coll_name, {"coll", "roles"})
             self.assertEqual(semantics.filter_spec, {})
-            self.assertEqual(semantics.comment, 'agg-trace')
+            self.assertEqual(semantics.comment, "agg-trace")
             self.assertEqual(semantics.max_time_ms, 15)
             self.assertIsNone(semantics.projection)
-            self.assertEqual(kwargs['context'], None)
+            self.assertEqual(kwargs["context"], None)
 
     async def test_materialize_keeps_remaining_pipeline_when_prefix_breaks(
         self,
     ):
         collection = _FakeCollection(
             [
-                {'kind': 'view'},
-                {'kind': 'click'},
+                {"kind": "view"},
+                {"kind": "click"},
             ]
         )
         cursor = AsyncAggregationCursor(
             collection,
             [
-                {'$project': {'kind': 1, '_id': 0}},
-                {'$sort': {'kind': 1}},
+                {"$project": {"kind": 1, "_id": 0}},
+                {"$sort": {"kind": 1}},
             ],
         )
 
@@ -1108,56 +1139,56 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             collection.calls,
             [
                 {
-                    'filter_spec': {},
-                    'projection': {'kind': 1, '_id': 0},
-                    'sort': None,
-                    'skip': 0,
-                    'limit': None,
-                    'hint': None,
-                    'comment': None,
-                    'max_time_ms': None,
-                    'batch_size': None,
-                    'session': None,
+                    "filter_spec": {},
+                    "projection": {"kind": 1, "_id": 0},
+                    "sort": None,
+                    "skip": 0,
+                    "limit": None,
+                    "hint": None,
+                    "comment": None,
+                    "max_time_ms": None,
+                    "batch_size": None,
+                    "session": None,
                 }
             ],
         )
-        self.assertEqual(documents, [{'kind': 'click'}, {'kind': 'view'}])
+        self.assertEqual(documents, [{"kind": "click"}, {"kind": "view"}])
 
     async def test_materialize_propagates_aggregate_cursor_options_to_find(
         self,
     ):
-        collection = _FakeCollection([{'_id': '1', 'kind': 'view'}])
+        collection = _FakeCollection([{"_id": "1", "kind": "view"}])
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$match': {'kind': 'view'}}],
-            hint='kind_1',
-            comment='trace',
+            [{"$match": {"kind": "view"}}],
+            hint="kind_1",
+            comment="trace",
             max_time_ms=5,
             batch_size=10,
             allow_disk_use=True,
-            let={'tenant': 'a'},
+            let={"tenant": "a"},
         )
 
         await cursor.to_list()
 
-        self.assertEqual(collection.calls[0]['hint'], 'kind_1')
-        self.assertEqual(collection.calls[0]['comment'], 'trace')
-        self.assertEqual(collection.calls[0]['max_time_ms'], 5)
-        self.assertEqual(collection.calls[0]['batch_size'], 10)
+        self.assertEqual(collection.calls[0]["hint"], "kind_1")
+        self.assertEqual(collection.calls[0]["comment"], "trace")
+        self.assertEqual(collection.calls[0]["max_time_ms"], 5)
+        self.assertEqual(collection.calls[0]["batch_size"], 10)
 
     async def test_streaming_batch_execution_uses_one_stable_find_for_streamable_pipeline(
         self,
     ):
         collection = _FakeCollection(
             [
-                {'_id': '1', 'kind': 'view', 'rank': 1},
-                {'_id': '2', 'kind': 'view', 'rank': 2},
-                {'_id': '3', 'kind': 'view', 'rank': 3},
+                {"_id": "1", "kind": "view", "rank": 1},
+                {"_id": "2", "kind": "view", "rank": 2},
+                {"_id": "3", "kind": "view", "rank": 3},
             ]
         )
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$match': {'kind': 'view'}}],
+            [{"$match": {"kind": "view"}}],
             batch_size=2,
         )
 
@@ -1165,11 +1196,11 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(documents, collection._documents)
         self.assertEqual(
-            [call['skip'] for call in collection.calls],
+            [call["skip"] for call in collection.calls],
             [0],
         )
         self.assertEqual(
-            [call['limit'] for call in collection.calls],
+            [call["limit"] for call in collection.calls],
             [None],
         )
 
@@ -1178,15 +1209,15 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
     ):
         collection = _FakeCollection(
             [
-                {'_id': '1', 'kind': 'view', 'rank': 1},
-                {'_id': '2', 'kind': 'view', 'rank': 2},
-                {'_id': '3', 'kind': 'view', 'rank': 3},
-                {'_id': '4', 'kind': 'view', 'rank': 4},
+                {"_id": "1", "kind": "view", "rank": 1},
+                {"_id": "2", "kind": "view", "rank": 2},
+                {"_id": "3", "kind": "view", "rank": 3},
+                {"_id": "4", "kind": "view", "rank": 4},
             ]
         )
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$match': {'kind': 'view'}}, {'$skip': 1}, {'$limit': 2}],
+            [{"$match": {"kind": "view"}}, {"$skip": 1}, {"$limit": 2}],
             batch_size=2,
         )
 
@@ -1195,8 +1226,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             documents,
             [
-                {'_id': '2', 'kind': 'view', 'rank': 2},
-                {'_id': '3', 'kind': 'view', 'rank': 3},
+                {"_id": "2", "kind": "view", "rank": 2},
+                {"_id": "3", "kind": "view", "rank": 3},
             ],
         )
 
@@ -1205,19 +1236,19 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
     ):
         collection = _FakeCollection(
             [
-                {'_id': '1', 'kind': 'view', 'rank': 1},
-                {'_id': '2', 'kind': 'view', 'rank': 2},
-                {'_id': '3', 'kind': 'view', 'rank': 3},
+                {"_id": "1", "kind": "view", "rank": 1},
+                {"_id": "2", "kind": "view", "rank": 2},
+                {"_id": "3", "kind": "view", "rank": 3},
             ]
         )
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$match': {'kind': 'view'}}, {'$skip': 2}, {'$limit': 1}],
+            [{"$match": {"kind": "view"}}, {"$skip": 2}, {"$limit": 1}],
             batch_size=2,
         )
 
         self.assertEqual(
-            await cursor.to_list(), [{'_id': '3', 'kind': 'view', 'rank': 3}]
+            await cursor.to_list(), [{"_id": "3", "kind": "view", "rank": 3}]
         )
 
     async def test_streaming_batch_execution_falls_back_for_global_pipeline_stages(
@@ -1225,74 +1256,74 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
     ):
         collection = _FakeCollection(
             [
-                {'_id': '1', 'kind': 'view', 'rank': 2},
-                {'_id': '2', 'kind': 'view', 'rank': 1},
-                {'_id': '3', 'kind': 'view', 'rank': 3},
+                {"_id": "1", "kind": "view", "rank": 2},
+                {"_id": "2", "kind": "view", "rank": 1},
+                {"_id": "3", "kind": "view", "rank": 3},
             ]
         )
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$group': {'_id': '$kind', 'count': {'$sum': 1}}}],
+            [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
             batch_size=2,
         )
 
         documents = await cursor.to_list()
 
-        self.assertEqual(documents, [{'_id': 'view', 'count': 3}])
+        self.assertEqual(documents, [{"_id": "view", "count": 3}])
         self.assertEqual(len(collection.calls), 1)
         explanation = await cursor.explain()
-        self.assertFalse(explanation['streaming_batch_execution'])
-        self.assertEqual(explanation['pushdown']['mode'], 'pipeline-prefix')
-        self.assertEqual(explanation['pushdown']['pushedDownStages'], 0)
-        self.assertEqual(explanation['pushdown']['remainingStages'], 1)
+        self.assertFalse(explanation["streaming_batch_execution"])
+        self.assertEqual(explanation["pushdown"]["mode"], "pipeline-prefix")
+        self.assertEqual(explanation["pushdown"]["pushedDownStages"], 0)
+        self.assertEqual(explanation["pushdown"]["remainingStages"], 1)
 
     async def test_async_aggregation_cursor_explain_includes_engine_plan_and_options(
         self,
     ):
-        collection = _FakeCollection([{'_id': '1', 'kind': 'view'}])
+        collection = _FakeCollection([{"_id": "1", "kind": "view"}])
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$match': {'kind': 'view'}}],
-            hint='kind_1',
-            comment='trace',
+            [{"$match": {"kind": "view"}}],
+            hint="kind_1",
+            comment="trace",
             max_time_ms=5,
             batch_size=10,
             allow_disk_use=True,
-            let={'tenant': 'a'},
+            let={"tenant": "a"},
         )
 
         explanation = await cursor.explain()
 
         self.assertEqual(
-            explanation['engine_plan'],
-            {'engine': 'fake', 'details': ['IXSCAN']},
+            explanation["engine_plan"],
+            {"engine": "fake", "details": ["IXSCAN"]},
         )
-        self.assertEqual(explanation['pushdown']['mode'], 'pipeline-prefix')
-        self.assertEqual(explanation['pushdown']['totalStages'], 1)
-        self.assertEqual(explanation['pushdown']['pushedDownStages'], 1)
-        self.assertEqual(explanation['pushdown']['remainingStages'], 0)
-        self.assertEqual(explanation['pushdown']['streamableStageCount'], 0)
-        self.assertEqual(explanation['hint'], 'kind_1')
-        self.assertEqual(explanation['comment'], 'trace')
-        self.assertEqual(explanation['max_time_ms'], 5)
-        self.assertEqual(explanation['batch_size'], 10)
-        self.assertTrue(explanation['allow_disk_use'])
-        self.assertEqual(explanation['let'], {'tenant': 'a'})
-        self.assertTrue(explanation['streaming_batch_execution'])
-        self.assertEqual(explanation['cxp']['interface'], 'database/mongodb')
-        self.assertEqual(explanation['cxp']['provider'], 'mongoeco')
-        self.assertEqual(explanation['cxp']['capability'], 'aggregation')
+        self.assertEqual(explanation["pushdown"]["mode"], "pipeline-prefix")
+        self.assertEqual(explanation["pushdown"]["totalStages"], 1)
+        self.assertEqual(explanation["pushdown"]["pushedDownStages"], 1)
+        self.assertEqual(explanation["pushdown"]["remainingStages"], 0)
+        self.assertEqual(explanation["pushdown"]["streamableStageCount"], 0)
+        self.assertEqual(explanation["hint"], "kind_1")
+        self.assertEqual(explanation["comment"], "trace")
+        self.assertEqual(explanation["max_time_ms"], 5)
+        self.assertEqual(explanation["batch_size"], 10)
+        self.assertTrue(explanation["allow_disk_use"])
+        self.assertEqual(explanation["let"], {"tenant": "a"})
+        self.assertTrue(explanation["streaming_batch_execution"])
+        self.assertEqual(explanation["cxp"]["interface"], "database/mongodb")
+        self.assertEqual(explanation["cxp"]["provider"], "mongoeco")
+        self.assertEqual(explanation["cxp"]["capability"], "aggregation")
         explain_semantics = collection._engine.explain_semantics_calls[0][2]
-        self.assertEqual(explain_semantics.hint, 'kind_1')
-        self.assertEqual(explain_semantics.comment, 'trace')
+        self.assertEqual(explain_semantics.hint, "kind_1")
+        self.assertEqual(explain_semantics.comment, "trace")
         self.assertEqual(explain_semantics.max_time_ms, 5)
 
     async def test_async_aggregation_cursor_explain_covers_search_fallback_and_first_empty_profile(
         self,
     ):
         collection = _FakeCollection([])
-        collection._engine.aggregation_spill_policy = lambda: (
-            AggregationSpillPolicy(threshold=2)
+        collection._engine.aggregation_spill_policy = lambda: AggregationSpillPolicy(
+            threshold=2
         )
         profiled = []
 
@@ -1308,99 +1339,87 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         collection._profile_operation = _profile_operation  # type: ignore[attr-defined]
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$search': {'text': {'query': 'Ada', 'path': 'name'}}}],
+            [{"$search": {"text": {"query": "Ada", "path": "name"}}}],
             batch_size=1,
         )
 
         explanation = await cursor.explain()
         self.assertEqual(
-            explanation['engine_plan']['plan'], 'unsupported-search-engine'
+            explanation["engine_plan"]["plan"], "unsupported-search-engine"
         )
-        self.assertEqual(explanation['pushdown']['mode'], 'search')
-        self.assertEqual(
-            explanation['pushdown']['leadingSearchOperator'], '$search'
-        )
-        self.assertEqual(explanation['pushdown']['pushedDownStages'], 1)
-        self.assertEqual(explanation['cxp']['capability'], 'aggregation')
-        self.assertEqual(
-            explanation['cxp']['additionalCapabilities'], ['search']
-        )
+        self.assertEqual(explanation["pushdown"]["mode"], "search")
+        self.assertEqual(explanation["pushdown"]["leadingSearchOperator"], "$search")
+        self.assertEqual(explanation["pushdown"]["pushedDownStages"], 1)
+        self.assertEqual(explanation["cxp"]["capability"], "aggregation")
+        self.assertEqual(explanation["cxp"]["additionalCapabilities"], ["search"])
         self.assertEqual(cursor._spill_policy().threshold, 2)
         self.assertIsNone(await cursor.first())
-        self.assertEqual(profiled[-1]['op'], 'command')
+        self.assertEqual(profiled[-1]["op"], "command")
 
     async def test_aggregation_cursor_profile_and_collstats_cover_no_scale_and_exception_paths(
         self,
     ):
-        collection = _FakeCollection([{'_id': '1'}])
+        collection = _FakeCollection([{"_id": "1"}])
         profiled = []
 
         async def _profile_operation(**kwargs):
             profiled.append(kwargs)
 
         collection._profile_operation = _profile_operation  # type: ignore[attr-defined]
-        cursor = AsyncAggregationCursor(collection, [{'$project': {'_id': 1}}])
-        with patch.object(
-            cursor, '_stream_batches', side_effect=RuntimeError('boom')
-        ):
-            with self.assertRaisesRegex(RuntimeError, 'boom'):
+        cursor = AsyncAggregationCursor(collection, [{"$project": {"_id": 1}}])
+        with patch.object(cursor, "_stream_batches", side_effect=RuntimeError("boom")):
+            with self.assertRaisesRegex(RuntimeError, "boom"):
                 await cursor.to_list()
-        self.assertEqual(profiled[-1]['errmsg'], 'boom')
+        self.assertEqual(profiled[-1]["errmsg"], "boom")
 
         self.assertEqual(
-            await cursor._load_collstats_snapshots([{'$match': {'x': 1}}]), {}
+            await cursor._load_collstats_snapshots([{"$match": {"x": 1}}]), {}
         )
 
     async def test_build_pushdown_cursor_uses_collection_find_when_private_builder_is_missing(
         self,
     ):
-        collection = _FakeCollection([{'_id': '1'}])
+        collection = _FakeCollection([{"_id": "1"}])
         collection._build_cursor = None  # type: ignore[assignment]
-        cursor = AsyncAggregationCursor(collection, [{'$match': {'_id': '1'}}])
+        cursor = AsyncAggregationCursor(collection, [{"$match": {"_id": "1"}}])
 
-        await cursor._build_pushdown_cursor(
-            cursor._pushdown_find_operation()
-        ).to_list()
+        await cursor._build_pushdown_cursor(cursor._pushdown_find_operation()).to_list()
 
-        self.assertEqual(collection.calls[0]['filter_spec'], {'_id': '1'})
+        self.assertEqual(collection.calls[0]["filter_spec"], {"_id": "1"})
 
     async def test_async_aggregation_cursor_explain_surfaces_deferred_reason_details(
         self,
     ):
-        collection = _FakeCollection([{'_id': '1', 'kind': 'view'}])
-        cursor = AsyncAggregationCursor(
-            collection, [{'$match': {'kind': 'view'}}]
-        )
+        collection = _FakeCollection([{"_id": "1", "kind": "view"}])
+        cursor = AsyncAggregationCursor(collection, [{"$match": {"kind": "view"}}])
         cursor._operation = cursor._operation.with_overrides(
             planning_mode=PlanningMode.RELAXED,
             planning_issues=(
-                PlanningIssue(scope='aggregate', message='unsupported stage'),
+                PlanningIssue(scope="aggregate", message="unsupported stage"),
             ),
         )
 
         explanation = await cursor.explain()
 
-        self.assertEqual(explanation['planning_mode'], 'relaxed')
+        self.assertEqual(explanation["planning_mode"], "relaxed")
+        self.assertEqual(explanation["planning_issues"][0]["scope"], "aggregate")
         self.assertEqual(
-            explanation['planning_issues'][0]['scope'], 'aggregate'
+            explanation["engine_plan"]["details"]["reason"],
+            "operation has deferred planning issues (relaxed): aggregate: unsupported stage",
         )
-        self.assertEqual(
-            explanation['engine_plan']['details']['reason'],
-            'operation has deferred planning issues (relaxed): aggregate: unsupported stage',
-        )
-        self.assertEqual(explanation['cxp']['capability'], 'aggregation')
+        self.assertEqual(explanation["cxp"]["capability"], "aggregation")
 
     async def test_stream_batches_use_compiled_pushdown_operations(self):
         collection = _FakeCollection(
             [
-                {'_id': '1', 'kind': 'view', 'rank': 1},
-                {'_id': '2', 'kind': 'view', 'rank': 2},
-                {'_id': '3', 'kind': 'view', 'rank': 3},
+                {"_id": "1", "kind": "view", "rank": 1},
+                {"_id": "2", "kind": "view", "rank": 2},
+                {"_id": "3", "kind": "view", "rank": 3},
             ]
         )
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$match': {'kind': 'view'}}],
+            [{"$match": {"kind": "view"}}],
             batch_size=2,
         )
 
@@ -1412,16 +1431,16 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection.built_operations[0][0].skip, 0)
 
     async def test_materialize_enforces_max_time_deadline(self):
-        collection = _FakeCollection([{'_id': '1', 'kind': 'view'}])
+        collection = _FakeCollection([{"_id": "1", "kind": "view"}])
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$match': {'kind': 'view'}}],
+            [{"$match": {"kind": "view"}}],
             max_time_ms=1,
         )
 
         with patch(
-            'mongoeco.api._async.aggregation_cursor.enforce_deadline',
-            side_effect=ExecutionTimeout('operation exceeded time limit'),
+            "mongoeco.api._async.aggregation_cursor.enforce_deadline",
+            side_effect=ExecutionTimeout("operation exceeded time limit"),
         ):
             with self.assertRaises(ExecutionTimeout):
                 await cursor.to_list()
@@ -1430,7 +1449,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self,
     ):
         collection = _FakeCollection(
-            [{'_id': '1', 'kind': 'a'}, {'_id': '2', 'kind': 'a'}]
+            [{"_id": "1", "kind": "a"}, {"_id": "2", "kind": "a"}]
         )
         collection._engine.aggregation_cost_policy = AggregationCostPolicy(
             max_materialized_documents=1
@@ -1438,7 +1457,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         cursor = AsyncAggregationCursor(
             collection,
             compile_aggregate_operation(
-                [{'$group': {'_id': '$kind', 'count': {'$sum': 1}}}],
+                [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
                 allow_disk_use=False,
             ),
         )
@@ -1450,7 +1469,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self,
     ):
         collection = _FakeCollection(
-            [{'_id': '1', 'kind': 'a'}, {'_id': '2', 'kind': 'a'}]
+            [{"_id": "1", "kind": "a"}, {"_id": "2", "kind": "a"}]
         )
         collection._engine.aggregation_cost_policy = AggregationCostPolicy(
             max_materialized_documents=1
@@ -1458,140 +1477,114 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         cursor = AsyncAggregationCursor(
             collection,
             compile_aggregate_operation(
-                [{'$group': {'_id': '$kind', 'count': {'$sum': 1}}}],
+                [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
                 allow_disk_use=True,
             ),
         )
 
-        self.assertEqual(await cursor.to_list(), [{'_id': 'a', 'count': 2}])
+        self.assertEqual(await cursor.to_list(), [{"_id": "a", "count": 2}])
 
     async def test_aggregation_cursor_merge_helpers_cover_validation_and_target_paths(
         self,
     ):
-        database = AsyncDatabase(MemoryEngine(), 'db')
-        source = database.get_collection('source')
+        database = AsyncDatabase(MemoryEngine(), "db")
+        source = database.get_collection("source")
         cursor = AsyncAggregationCursor(source, [])
 
-        self.assertEqual(cursor._target_database('db').name, 'db')
+        self.assertEqual(cursor._target_database("db").name, "db")
+        self.assertEqual(cursor._target_database("analytics").name, "analytics")
+        self.assertEqual(cursor._split_terminal_writeback_stage([]), ([], None))
         self.assertEqual(
-            cursor._target_database('analytics').name, 'analytics'
-        )
-        self.assertEqual(
-            cursor._split_terminal_writeback_stage([]), ([], None)
-        )
-        self.assertEqual(
-            cursor._split_terminal_writeback_stage([{'$match': {'x': 1}}]),
-            ([{'$match': {'x': 1}}], None),
+            cursor._split_terminal_writeback_stage([{"$match": {"x": 1}}]),
+            ([{"$match": {"x": 1}}], None),
         )
         with self.assertRaisesRegex(
-            OperationFailure, 'only supported as the final aggregation stage'
+            OperationFailure, "only supported as the final aggregation stage"
         ):
             cursor._split_terminal_writeback_stage(
                 [
-                    {'$merge': {'into': 'archive'}},
-                    {'$merge': {'into': 'archive'}},
+                    {"$merge": {"into": "archive"}},
+                    {"$merge": {"into": "archive"}},
                 ]
             )
 
-        with self.assertRaisesRegex(
-            OperationFailure, 'document specification'
-        ):
+        with self.assertRaisesRegex(OperationFailure, "document specification"):
             await cursor._apply_merge_stage([], [])
         with self.assertRaisesRegex(
-            OperationFailure, 'collection name or \\{db, coll\\}'
+            OperationFailure, "collection name or \\{db, coll\\}"
         ):
-            await cursor._apply_merge_stage([], {'into': 1})
-        with self.assertRaisesRegex(OperationFailure, 'non-empty string'):
+            await cursor._apply_merge_stage([], {"into": 1})
+        with self.assertRaisesRegex(OperationFailure, "non-empty string"):
+            await cursor._apply_merge_stage([], {"into": {"db": "", "coll": "archive"}})
+        with self.assertRaisesRegex(OperationFailure, "omitted on or on: '_id'"):
+            await cursor._apply_merge_stage([], {"into": "archive", "on": "slug"})
+        with self.assertRaisesRegex(OperationFailure, "whenMatched currently supports"):
             await cursor._apply_merge_stage(
-                [], {'into': {'db': '', 'coll': 'archive'}}
+                [], {"into": "archive", "whenMatched": "pipeline"}
             )
         with self.assertRaisesRegex(
-            OperationFailure, "omitted on or on: '_id'"
+            OperationFailure, "whenNotMatched currently supports"
         ):
             await cursor._apply_merge_stage(
-                [], {'into': 'archive', 'on': 'slug'}
+                [], {"into": "archive", "whenNotMatched": "upsert"}
             )
-        with self.assertRaisesRegex(
-            OperationFailure, 'whenMatched currently supports'
-        ):
-            await cursor._apply_merge_stage(
-                [], {'into': 'archive', 'whenMatched': 'pipeline'}
-            )
-        with self.assertRaisesRegex(
-            OperationFailure, 'whenNotMatched currently supports'
-        ):
-            await cursor._apply_merge_stage(
-                [], {'into': 'archive', 'whenNotMatched': 'upsert'}
-            )
-        with self.assertRaisesRegex(
-            OperationFailure, 'pipelines are not supported'
-        ):
-            await cursor._apply_merge_stage(
-                [], {'into': 'archive', 'whenMatched': []}
-            )
-        await cursor._apply_merge_stage([{'value': 1}], {'into': 'archive'})
-        generated = await database.get_collection('archive').find_one(
-            {'value': 1}
-        )
+        with self.assertRaisesRegex(OperationFailure, "pipelines are not supported"):
+            await cursor._apply_merge_stage([], {"into": "archive", "whenMatched": []})
+        await cursor._apply_merge_stage([{"value": 1}], {"into": "archive"})
+        generated = await database.get_collection("archive").find_one({"value": 1})
         self.assertIsNotNone(generated)
-        self.assertIn('_id', generated)
+        self.assertIn("_id", generated)
 
         await cursor._apply_merge_stage(
-            [{'_id': '1', 'value': 1}],
-            {'into': 'archive', 'whenNotMatched': 'discard'},
+            [{"_id": "1", "value": 1}],
+            {"into": "archive", "whenNotMatched": "discard"},
         )
         self.assertIsNone(
-            await database.get_collection('archive').find_one({'_id': '1'})
+            await database.get_collection("archive").find_one({"_id": "1"})
         )
         with self.assertRaises(WriteError) as array_id_context:
             await cursor._apply_merge_stage(
-                [{'_id': [1], 'value': 1}],
-                {'into': 'archive', 'whenNotMatched': 'discard'},
+                [{"_id": [1], "value": 1}],
+                {"into": "archive", "whenNotMatched": "discard"},
             )
         self.assertEqual(array_id_context.exception.code, 53)
-        with self.assertRaisesRegex(OperationFailure, 'whenNotMatched=fail'):
+        with self.assertRaisesRegex(OperationFailure, "whenNotMatched=fail"):
             await cursor._apply_merge_stage(
-                [{'_id': '1', 'value': 1}],
-                {'into': 'archive', 'whenNotMatched': 'fail'},
+                [{"_id": "1", "value": 1}],
+                {"into": "archive", "whenNotMatched": "fail"},
             )
 
-        await database.get_collection('archive').insert_one(
-            {'_id': '2', 'value': 10, 'extra': True}
+        await database.get_collection("archive").insert_one(
+            {"_id": "2", "value": 10, "extra": True}
         )
         await cursor._apply_merge_stage(
-            [{'_id': '2', 'value': 20}],
-            {'into': 'archive', 'whenMatched': 'keepExisting'},
+            [{"_id": "2", "value": 20}],
+            {"into": "archive", "whenMatched": "keepExisting"},
         )
         self.assertEqual(
-            (await database.get_collection('archive').find_one({'_id': '2'}))[
-                'value'
-            ],
+            (await database.get_collection("archive").find_one({"_id": "2"}))["value"],
             10,
         )
-        with self.assertRaisesRegex(OperationFailure, 'whenMatched=fail'):
+        with self.assertRaisesRegex(OperationFailure, "whenMatched=fail"):
             await cursor._apply_merge_stage(
-                [{'_id': '2', 'value': 20}],
-                {'into': 'archive', 'whenMatched': 'fail'},
+                [{"_id": "2", "value": 20}],
+                {"into": "archive", "whenMatched": "fail"},
             )
         await cursor._apply_merge_stage(
-            [{'_id': '2', 'value': 30}],
-            {'into': 'archive', 'whenMatched': 'replace'},
+            [{"_id": "2", "value": 30}],
+            {"into": "archive", "whenMatched": "replace"},
         )
         self.assertEqual(
-            (await database.get_collection('archive').find_one({'_id': '2'}))[
-                'value'
-            ],
+            (await database.get_collection("archive").find_one({"_id": "2"}))["value"],
             30,
         )
         await cursor._apply_merge_stage(
-            [{'_id': '2', 'value': 40, 'merged': True}],
-            {'into': 'archive', 'whenMatched': 'merge'},
+            [{"_id": "2", "value": 40, "merged": True}],
+            {"into": "archive", "whenMatched": "merge"},
         )
-        merged = await database.get_collection('archive').find_one(
-            {'_id': '2'}
-        )
-        self.assertEqual(merged['value'], 40)
-        self.assertTrue(merged['merged'])
+        merged = await database.get_collection("archive").find_one({"_id": "2"})
+        self.assertEqual(merged["value"], 40)
+        self.assertTrue(merged["merged"])
 
     async def test_merge_rejects_mismatched_target_storage_key_even_for_keep_existing(
         self,
@@ -1600,32 +1593,32 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             engine = engine_type()
             await engine.connect()
             try:
-                database = AsyncDatabase(engine, 'db')
-                source = database.get_collection('source')
-                target = database.get_collection('target')
-                await source.insert_one({'_id': 'new', 'value': 'incoming'})
-                await target.insert_one({'_id': 'old', 'value': 'target'})
+                database = AsyncDatabase(engine, "db")
+                source = database.get_collection("source")
+                target = database.get_collection("target")
+                await source.insert_one({"_id": "new", "value": "incoming"})
+                await target.insert_one({"_id": "old", "value": "target"})
                 if isinstance(engine, MemoryEngine):
-                    engine._storage['db']['target'][
-                        engine._storage_key('old')
-                    ] = engine._encode_storage_document(
-                        {'_id': 'new', 'value': 'corrupt-target'}
+                    engine._storage["db"]["target"][engine._storage_key("old")] = (
+                        engine._encode_storage_document(
+                            {"_id": "new", "value": "corrupt-target"}
+                        )
                     )
                 else:
                     with engine._lock:
                         conn = engine._require_connection(None)
                         conn.execute(
                             (
-                                'UPDATE documents SET document = ? '
-                                'WHERE db_name = ? AND coll_name = ? AND storage_key = ?'
+                                "UPDATE documents SET document = ? "
+                                "WHERE db_name = ? AND coll_name = ? AND storage_key = ?"
                             ),
                             (
                                 engine._serialize_document(
-                                    {'_id': 'new', 'value': 'corrupt-target'}
+                                    {"_id": "new", "value": "corrupt-target"}
                                 ),
-                                'db',
-                                'target',
-                                engine._storage_key('old'),
+                                "db",
+                                "target",
+                                engine._storage_key("old"),
                             ),
                         )
                         conn.commit()
@@ -1633,8 +1626,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 cursor = AsyncAggregationCursor(source, [])
                 with self.assertRaises(WriteError) as context:
                     await cursor._apply_merge_stage(
-                        [{'_id': 'new', 'value': 'incoming'}],
-                        {'into': 'target', 'whenMatched': 'keepExisting'},
+                        [{"_id": "new", "value": "incoming"}],
+                        {"into": "target", "whenMatched": "keepExisting"},
                     )
                 return context.exception, await target.find({}).to_list()
             finally:
@@ -1646,137 +1639,118 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(error.code, 66)
                 self.assertEqual(
                     target_documents,
-                    [{'_id': 'new', 'value': 'corrupt-target'}],
+                    [{"_id": "new", "value": "corrupt-target"}],
                 )
 
     async def test_aggregation_cursor_collstats_and_stream_batches_cover_fallback_branches(
         self,
     ):
-        collection = _FakeCollection([{'_id': '1'}, {'_id': '2'}])
+        collection = _FakeCollection([{"_id": "1"}, {"_id": "2"}])
         cursor = AsyncAggregationCursor(
-            collection, [{'$project': {'_id': 1}}], batch_size=2
+            collection, [{"$project": {"_id": 1}}], batch_size=2
         )
 
         self.assertEqual(
             cursor._collect_collstats_scales(
-                [{'$collStats': {'storageStats': {'scale': 4}}}]
+                [{"$collStats": {"storageStats": {"scale": 4}}}]
             ),
             {4},
         )
         self.assertEqual(
             cursor._collect_collstats_scales(
-                [{'$collStats': {'count': {}}}, {'$collStats': []}]
+                [{"$collStats": {"count": {}}}, {"$collStats": []}]
             ),
             {1},
         )
-        self.assertTrue(
-            cursor._collect_index_stats_requested([{'$indexStats': {}}])
-        )
+        self.assertTrue(cursor._collect_index_stats_requested([{"$indexStats": {}}]))
         self.assertFalse(
-            cursor._collect_index_stats_requested([{'$project': {'_id': 1}}])
+            cursor._collect_index_stats_requested([{"$project": {"_id": 1}}])
         )
-        self.assertTrue(
-            cursor._collect_current_op_requested([{'$currentOp': {}}])
-        )
+        self.assertTrue(cursor._collect_current_op_requested([{"$currentOp": {}}]))
         self.assertFalse(
-            cursor._collect_current_op_requested([{'$project': {'_id': 1}}])
+            cursor._collect_current_op_requested([{"$project": {"_id": 1}}])
         )
         self.assertTrue(
-            cursor._collect_plan_cache_stats_requested(
-                [{'$planCacheStats': {}}]
-            )
+            cursor._collect_plan_cache_stats_requested([{"$planCacheStats": {}}])
         )
         self.assertFalse(
-            cursor._collect_plan_cache_stats_requested(
-                [{'$project': {'_id': 1}}]
-            )
+            cursor._collect_plan_cache_stats_requested([{"$project": {"_id": 1}}])
         )
         self.assertTrue(
-            cursor._collect_list_sessions_requested([{'$listSessions': {}}])
+            cursor._collect_list_sessions_requested([{"$listSessions": {}}])
         )
         self.assertFalse(
-            cursor._collect_list_sessions_requested([{'$project': {'_id': 1}}])
+            cursor._collect_list_sessions_requested([{"$project": {"_id": 1}}])
         )
 
         search_cursor = AsyncAggregationCursor(
             collection,
-            [{'$search': {'text': {'query': 'Ada', 'path': 'name'}}}],
+            [{"$search": {"text": {"query": "Ada", "path": "name"}}}],
             batch_size=2,
         )
         with patch.object(
-            search_cursor, '_materialize', return_value=[{'_id': 'a'}]
+            search_cursor, "_materialize", return_value=[{"_id": "a"}]
         ) as materialize:
             self.assertEqual(
-                [
-                    document
-                    async for document in search_cursor._stream_batches()
-                ],
-                [{'_id': 'a'}],
+                [document async for document in search_cursor._stream_batches()],
+                [{"_id": "a"}],
             )
             materialize.assert_awaited_once()
 
         merge_cursor = AsyncAggregationCursor(
             collection,
-            [{'$match': {'x': 1}}, {'$merge': {'into': 'archive'}}],
+            [{"$match": {"x": 1}}, {"$merge": {"into": "archive"}}],
             batch_size=2,
         )
         with patch.object(
-            merge_cursor, '_materialize', return_value=[{'_id': 'm'}]
+            merge_cursor, "_materialize", return_value=[{"_id": "m"}]
         ) as materialize:
             self.assertEqual(
-                [
-                    document
-                    async for document in merge_cursor._stream_batches()
-                ],
-                [{'_id': 'm'}],
+                [document async for document in merge_cursor._stream_batches()],
+                [{"_id": "m"}],
             )
             materialize.assert_awaited_once()
 
         unbatched_cursor = AsyncAggregationCursor(
-            collection, [{'$project': {'_id': 1}}], batch_size=None
+            collection, [{"$project": {"_id": 1}}], batch_size=None
         )
         with patch.object(
-            unbatched_cursor, '_materialize', return_value=[{'_id': 'u'}]
+            unbatched_cursor, "_materialize", return_value=[{"_id": "u"}]
         ) as materialize:
             self.assertEqual(
-                [
-                    document
-                    async for document in unbatched_cursor._stream_batches()
-                ],
-                [{'_id': 'u'}],
+                [document async for document in unbatched_cursor._stream_batches()],
+                [{"_id": "u"}],
             )
             materialize.assert_awaited_once()
 
         with (
+            patch.object(cursor, "_split_streamable_pipeline", return_value=None),
             patch.object(
-                cursor, '_split_streamable_pipeline', return_value=None
-            ),
-            patch.object(
-                cursor, '_materialize', return_value=[{'_id': 'p'}]
+                cursor, "_materialize", return_value=[{"_id": "p"}]
             ) as materialize,
         ):
             self.assertEqual(
                 [document async for document in cursor._stream_batches()],
-                [{'_id': 'p'}],
+                [{"_id": "p"}],
             )
             materialize.assert_awaited_once()
 
         stream_cursor = AsyncAggregationCursor(
             collection,
-            [{'$project': {'_id': 1}}, {'$skip': 1}, {'$limit': 1}],
+            [{"$project": {"_id": 1}}, {"$skip": 1}, {"$limit": 1}],
             batch_size=2,
         )
         with (
             patch(
-                'mongoeco.api._async.aggregation_cursor.split_pushdown_pipeline',
+                "mongoeco.api._async.aggregation_cursor.split_pushdown_pipeline",
                 return_value=SimpleNamespace(
                     filter_spec={},
                     projection=None,
                     sort=None,
                     remaining_pipeline=[
-                        {'$project': {'_id': 1}},
-                        {'$skip': 1},
-                        {'$limit': 1},
+                        {"$project": {"_id": 1}},
+                        {"$skip": 1},
+                        {"$limit": 1},
                     ],
                     skip=0,
                     limit=3,
@@ -1784,17 +1758,17 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ),
             patch.object(
                 stream_cursor,
-                '_split_streamable_pipeline',
-                return_value=([{'$project': {'_id': 1}}], 1, 1),
+                "_split_streamable_pipeline",
+                return_value=([{"$project": {"_id": 1}}], 1, 1),
             ),
             patch.object(
-                stream_cursor, '_load_referenced_collections', return_value={}
+                stream_cursor, "_load_referenced_collections", return_value={}
             ),
-            patch.object(stream_cursor, '_spill_policy', return_value=None),
+            patch.object(stream_cursor, "_spill_policy", return_value=None),
         ):
             batches = [
-                [{'_id': '1'}, {'_id': '2'}],
-                [{'_id': '3'}],
+                [{"_id": "1"}, {"_id": "2"}],
+                [{"_id": "3"}],
                 [],
             ]
 
@@ -1805,93 +1779,80 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 async def to_list(self):
                     return self._docs
 
-            stream_cursor._build_pushdown_cursor = lambda _operation: (
-                _BatchCursor(batches.pop(0))
+            stream_cursor._build_pushdown_cursor = lambda _operation: _BatchCursor(
+                batches.pop(0)
             )  # type: ignore[method-assign]
             self.assertEqual(
-                [
-                    document
-                    async for document in stream_cursor._stream_batches()
-                ],
-                [{'_id': '2'}],
+                [document async for document in stream_cursor._stream_batches()],
+                [{"_id": "2"}],
             )
 
     async def test_aggregation_cursor_supports_index_stats_stage_with_local_snapshot_projection(
         self,
     ):
-        database = AsyncDatabase(MemoryEngine(), 'db')
-        collection = database.get_collection('events')
-        await collection.insert_one({'_id': '1', 'name': 'Ada'})
-        await collection.create_index([('name', 1)])
+        database = AsyncDatabase(MemoryEngine(), "db")
+        collection = database.get_collection("events")
+        await collection.insert_one({"_id": "1", "name": "Ada"})
+        await collection.create_index([("name", 1)])
 
-        cursor = AsyncAggregationCursor(collection, [{'$indexStats': {}}])
+        cursor = AsyncAggregationCursor(collection, [{"$indexStats": {}}])
         result = await cursor.to_list()
 
         self.assertGreaterEqual(len(result), 1)
         for entry in result:
-            self.assertIn('name', entry)
-            self.assertIn('key', entry)
-            self.assertIn('spec', entry)
-            self.assertIn('accesses', entry)
-            self.assertEqual(entry['accesses']['ops'], 0)
-            self.assertIsInstance(
-                entry['accesses']['since'], datetime.datetime
-            )
+            self.assertIn("name", entry)
+            self.assertIn("key", entry)
+            self.assertIn("spec", entry)
+            self.assertIn("accesses", entry)
+            self.assertEqual(entry["accesses"]["ops"], 0)
+            self.assertIsInstance(entry["accesses"]["since"], datetime.datetime)
 
     async def test_aggregation_cursor_supports_current_op_stage_with_engine_snapshot(
         self,
     ):
         collection = _FakeCollection([])
         collection._engine._snapshot_active_operations = lambda: [  # type: ignore[attr-defined]
-            {'opid': 'op-1', 'command': 'find', 'ns': 'db.coll'},
-            {'opid': 'op-2', 'command': 'currentOp', 'ns': 'admin.$cmd'},
+            {"opid": "op-1", "command": "find", "ns": "db.coll"},
+            {"opid": "op-2", "command": "currentOp", "ns": "admin.$cmd"},
         ]
 
-        cursor = AsyncAggregationCursor(
-            collection, [{'$currentOp': {}}], batch_size=2
-        )
+        cursor = AsyncAggregationCursor(collection, [{"$currentOp": {}}], batch_size=2)
         result = await cursor.to_list()
 
-        self.assertEqual(
-            result, [{'opid': 'op-1', 'command': 'find', 'ns': 'db.coll'}]
-        )
+        self.assertEqual(result, [{"opid": "op-1", "command": "find", "ns": "db.coll"}])
 
     async def test_aggregation_cursor_supports_plan_cache_stats_stage_with_runtime_diagnostics(
         self,
     ):
         collection = _FakeCollection([])
         collection._engine._runtime_diagnostics_info = lambda: {  # type: ignore[attr-defined]
-            'planner': {'engine': 'python'},
-            'caches': {'trackedCollections': 1},
+            "planner": {"engine": "python"},
+            "caches": {"trackedCollections": 1},
         }
 
         cursor = AsyncAggregationCursor(
-            collection, [{'$planCacheStats': {}}], batch_size=2
+            collection, [{"$planCacheStats": {}}], batch_size=2
         )
         result = await cursor.to_list()
 
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['ns'], 'db.coll')
-        self.assertEqual(
-            result[0]['createdFromQuery']['stage'], '$planCacheStats'
-        )
-        self.assertEqual(
-            result[0]['cachedPlan']['planner']['engine'], 'python'
-        )
+        self.assertEqual(result[0]["ns"], "db.coll")
+        self.assertEqual(result[0]["createdFromQuery"]["stage"], "$planCacheStats")
+        self.assertEqual(result[0]["cachedPlan"]["planner"]["engine"], "python")
 
     async def test_aggregation_cursor_plan_cache_stats_ignores_non_dict_runtime_diagnostics(
         self,
     ):
         collection = _FakeCollection([])
-        collection._engine._runtime_diagnostics_info = lambda: ['unexpected']  # type: ignore[attr-defined]
+        collection._engine._runtime_diagnostics_info = lambda: ["unexpected"]  # type: ignore[attr-defined]
 
         cursor = AsyncAggregationCursor(
-            collection, [{'$planCacheStats': {}}], batch_size=2
+            collection, [{"$planCacheStats": {}}], batch_size=2
         )
         result = await cursor.to_list()
 
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['cachedPlan'], {})
+        self.assertEqual(result[0]["cachedPlan"], {})
 
     async def test_aggregation_cursor_supports_list_sessions_stage_with_explicit_session(
         self,
@@ -1901,16 +1862,16 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         cursor = AsyncAggregationCursor(
             collection,
-            [{'$listSessions': {}}],
+            [{"$listSessions": {}}],
             batch_size=2,
             session=session,
         )
         result = await cursor.to_list()
 
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['_id']['id'], session.session_id)
-        self.assertFalse(result[0]['inTransaction'])
-        self.assertFalse(result[0].get('fromCurrentOp', False))
+        self.assertEqual(result[0]["_id"]["id"], session.session_id)
+        self.assertFalse(result[0]["inTransaction"])
+        self.assertFalse(result[0].get("fromCurrentOp", False))
 
     async def test_aggregation_cursor_list_sessions_stage_uses_current_op_session_ids(
         self,
@@ -1918,77 +1879,68 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         collection = _FakeCollection([])
         collection._engine._snapshot_active_operations = lambda: [  # type: ignore[attr-defined]
             1,
-            {'opid': 'op-1', 'command': 'find', 'sessionId': 'sess-1'},
-            {'opid': 'op-2', 'command': 'find'},
+            {"opid": "op-1", "command": "find", "sessionId": "sess-1"},
+            {"opid": "op-2", "command": "find"},
         ]
 
         cursor = AsyncAggregationCursor(
-            collection, [{'$listSessions': {}}], batch_size=2
+            collection, [{"$listSessions": {}}], batch_size=2
         )
         result = await cursor.to_list()
 
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['_id']['id'], 'sess-1')
-        self.assertTrue(result[0]['fromCurrentOp'])
+        self.assertEqual(result[0]["_id"]["id"], "sess-1")
+        self.assertTrue(result[0]["fromCurrentOp"])
 
     async def test_aggregation_cursor_additional_stream_and_merge_branches(
         self,
     ):
-        database = AsyncDatabase(MemoryEngine(), 'db')
-        source = database.get_collection('source')
-        await source.insert_many([{'_id': '1'}, {'_id': '2'}])
+        database = AsyncDatabase(MemoryEngine(), "db")
+        source = database.get_collection("source")
+        await source.insert_many([{"_id": "1"}, {"_id": "2"}])
         cursor = AsyncAggregationCursor(source, [], batch_size=2)
 
         self.assertEqual(
-            cursor._split_terminal_writeback_stage(['bad-stage']),
-            (['bad-stage'], None),
+            cursor._split_terminal_writeback_stage(["bad-stage"]),
+            (["bad-stage"], None),
         )  # type: ignore[list-item]
-        with self.assertRaisesRegex(
-            OperationFailure, 'final aggregation stage'
-        ):
+        with self.assertRaisesRegex(OperationFailure, "final aggregation stage"):
             cursor._split_terminal_writeback_stage(
                 [
-                    {'$merge': {'into': 'archive'}},
-                    {'$project': {'_id': 1}},
-                    {'$merge': {'into': 'archive'}},
+                    {"$merge": {"into": "archive"}},
+                    {"$project": {"_id": 1}},
+                    {"$merge": {"into": "archive"}},
                 ]
             )
-        with self.assertRaisesRegex(OperationFailure, 'non-empty string'):
+        with self.assertRaisesRegex(OperationFailure, "non-empty string"):
             await cursor._apply_merge_stage(
-                [{'_id': '1'}], {'into': {'db': 'analytics'}}
+                [{"_id": "1"}], {"into": {"db": "analytics"}}
             )
 
         merge_cursor = AsyncAggregationCursor(
-            source, [{'$merge': {'into': 'archive'}}], batch_size=2
+            source, [{"$merge": {"into": "archive"}}], batch_size=2
         )
         with patch.object(
-            merge_cursor, '_materialize', return_value=[{'_id': 'm'}]
+            merge_cursor, "_materialize", return_value=[{"_id": "m"}]
         ) as materialize:
             self.assertEqual(
-                [
-                    document
-                    async for document in merge_cursor._stream_batches()
-                ],
-                [{'_id': 'm'}],
+                [document async for document in merge_cursor._stream_batches()],
+                [{"_id": "m"}],
             )
             materialize.assert_awaited_once()
 
         with (
-            patch.object(cursor, '_leading_search_stage', return_value=None),
+            patch.object(cursor, "_leading_search_stage", return_value=None),
             patch.object(
                 cursor,
-                '_effective_pipeline',
-                return_value=[{'$project': {'_id': 1}}],
+                "_effective_pipeline",
+                return_value=[{"$project": {"_id": 1}}],
             ),
             patch(
-                'mongoeco.api._async.aggregation_cursor.split_pushdown_pipeline',
-                return_value=SimpleNamespace(
-                    remaining_pipeline=[], skip=0, limit=None
-                ),
+                "mongoeco.api._async.aggregation_cursor.split_pushdown_pipeline",
+                return_value=SimpleNamespace(remaining_pipeline=[], skip=0, limit=None),
             ),
-            patch.object(
-                cursor, '_split_streamable_pipeline', return_value=([], 0, 0)
-            ),
+            patch.object(cursor, "_split_streamable_pipeline", return_value=([], 0, 0)),
         ):
             self.assertEqual(
                 [document async for document in cursor._stream_batches()], []
@@ -1997,22 +1949,20 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
     async def test_stream_batches_consumes_entire_batch_when_trailing_skip_exceeds_transformed_size(
         self,
     ):
-        collection = _FakeCollection(
-            [{'_id': '1'}, {'_id': '2'}, {'_id': '3'}]
-        )
+        collection = _FakeCollection([{"_id": "1"}, {"_id": "2"}, {"_id": "3"}])
         cursor = AsyncAggregationCursor(
-            collection, [{'$project': {'_id': 1}}, {'$skip': 3}], batch_size=2
+            collection, [{"$project": {"_id": 1}}, {"$skip": 3}], batch_size=2
         )
         with (
             patch(
-                'mongoeco.api._async.aggregation_cursor.split_pushdown_pipeline',
+                "mongoeco.api._async.aggregation_cursor.split_pushdown_pipeline",
                 return_value=SimpleNamespace(
                     filter_spec={},
                     projection=None,
                     sort=None,
                     remaining_pipeline=[
-                        {'$project': {'_id': 1}},
-                        {'$skip': 3},
+                        {"$project": {"_id": 1}},
+                        {"$skip": 3},
                     ],
                     skip=0,
                     limit=None,
@@ -2020,15 +1970,13 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ),
             patch.object(
                 cursor,
-                '_split_streamable_pipeline',
-                return_value=([{'$project': {'_id': 1}}], 3, None),
+                "_split_streamable_pipeline",
+                return_value=([{"$project": {"_id": 1}}], 3, None),
             ),
-            patch.object(
-                cursor, '_load_referenced_collections', return_value={}
-            ),
-            patch.object(cursor, '_spill_policy', return_value=None),
+            patch.object(cursor, "_load_referenced_collections", return_value={}),
+            patch.object(cursor, "_spill_policy", return_value=None),
         ):
-            batches = [[{'_id': '1'}, {'_id': '2'}], [{'_id': '3'}], []]
+            batches = [[{"_id": "1"}, {"_id": "2"}], [{"_id": "3"}], []]
 
             class _BatchCursor:
                 def __init__(self, docs):
@@ -2049,9 +1997,9 @@ class SyncAggregationCursorTests(unittest.TestCase):
     def test_internal_buffer_and_exhausted_load_paths_are_stable(self):
         async_cursor = _AsyncAggregationCursorStub([])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
-        cursor._sync_buffer = [{'_id': 'buffered'}]
+        cursor._sync_buffer = [{"_id": "buffered"}]
 
-        self.assertEqual(cursor.to_list(1), [{'_id': 'buffered'}])
+        self.assertEqual(cursor.to_list(1), [{"_id": "buffered"}])
         cursor._exhausted = True
         cursor._started = False
         self.assertEqual(cursor._load(), [])
@@ -2080,35 +2028,35 @@ class SyncAggregationCursorTests(unittest.TestCase):
 
     def test_to_list_validates_length_and_consumes_buffered_batches(self):
         async_cursor = _AsyncAggregationCursorStub(
-            [{'_id': '1'}, {'_id': '2'}, {'_id': '3'}]
+            [{"_id": "1"}, {"_id": "2"}, {"_id": "3"}]
         )
         async_cursor._batch_size = 2
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
         self.assertEqual(cursor.to_list(0), [])
-        with self.assertRaisesRegex(ValueError, 'non-negative'):
+        with self.assertRaisesRegex(ValueError, "non-negative"):
             cursor.to_list(-1)
-        self.assertEqual(cursor.to_list(1), [{'_id': '1'}])
-        self.assertEqual(cursor.to_list(2), [{'_id': '2'}, {'_id': '3'}])
+        self.assertEqual(cursor.to_list(1), [{"_id": "1"}])
+        self.assertEqual(cursor.to_list(2), [{"_id": "2"}, {"_id": "3"}])
         self.assertEqual(cursor.to_list(), [])
 
     def test_first_closes_active_iterator_when_read_fails(self):
-        async_cursor = _FailingAsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _FailingAsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
         cursor._active_async_iterable = async_cursor.__aiter__()
 
-        with self.assertRaisesRegex(InvalidOperation, 'foreign session'):
+        with self.assertRaisesRegex(InvalidOperation, "foreign session"):
             cursor.first()
 
         self.assertIsNone(cursor._active_async_iterable)
         self.assertEqual(async_cursor.close_calls, 1)
 
     def test_first_preserves_read_error_when_cleanup_also_fails(self):
-        async_cursor = _FailingAsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _FailingAsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_BrokenSyncClientStub(), async_cursor)
         cursor._active_async_iterable = async_cursor.__aiter__()
 
-        with self.assertRaisesRegex(RuntimeError, 'boom'):
+        with self.assertRaisesRegex(RuntimeError, "boom"):
             cursor.first()
 
     def test_collection_aggregate_accepts_pymongo_allow_disk_use_alias(self):
@@ -2116,55 +2064,49 @@ class SyncAggregationCursorTests(unittest.TestCase):
             collection = client.db.events
             collection.insert_many(
                 [
-                    {'_id': '1', 'rank': 2},
-                    {'_id': '2', 'rank': 1},
+                    {"_id": "1", "rank": 2},
+                    {"_id": "2", "rank": 1},
                 ],
             )
 
             documents = list(
                 collection.aggregate(
-                    [{'$sort': {'rank': 1}}],
+                    [{"$sort": {"rank": 1}}],
                     allowDiskUse=True,
                 ),
             )
 
-            self.assertEqual(
-                [document['_id'] for document in documents], ['2', '1']
-            )
+            self.assertEqual([document["_id"] for document in documents], ["2", "1"])
             with self.assertRaisesRegex(
                 TypeError,
-                'cannot pass both allowDiskUse and allow_disk_use',
+                "cannot pass both allowDiskUse and allow_disk_use",
             ):
-                collection.aggregate(
-                    [], allow_disk_use=True, allowDiskUse=True
-                )
+                collection.aggregate([], allow_disk_use=True, allowDiskUse=True)
 
     def test_closed_message_remains_stable(self):
-        async_cursor = _AsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
         cursor.close()
 
         with self.assertRaisesRegex(
             InvalidOperation,
-            'cannot use aggregation cursor after it has been closed',
+            "cannot use aggregation cursor after it has been closed",
         ):
             cursor.to_list()
 
     def test_first_uses_direct_async_first_path_without_materializing_cache(
         self,
     ):
-        async_cursor = _AsyncAggregationCursorStub(
-            [{'_id': '1'}, {'_id': '2'}]
-        )
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
-        self.assertEqual(cursor.first(), {'_id': '1'})
+        self.assertEqual(cursor.first(), {"_id": "1"})
         self.assertEqual(async_cursor.first_calls, 1)
         self.assertEqual(async_cursor.to_list_calls, 0)
 
     def test_close_is_idempotent_and_blocks_further_use(self):
-        async_cursor = _AsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
         cursor.close()
@@ -2178,38 +2120,34 @@ class SyncAggregationCursorTests(unittest.TestCase):
             list(cursor)
 
     def test_explain_delegates_to_async_cursor(self):
-        async_cursor = _AsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
 
         async def _explain():
-            return {'engine': 'fake', 'details': ['SCAN']}
+            return {"engine": "fake", "details": ["SCAN"]}
 
         async_cursor.explain = _explain  # type: ignore[method-assign]
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
         explanation = cursor.explain()
-        self.assertEqual(explanation['engine'], 'fake')
-        self.assertEqual(explanation['details'], ['SCAN'])
+        self.assertEqual(explanation["engine"], "fake")
+        self.assertEqual(explanation["details"], ["SCAN"])
 
     def test_iteration_closes_active_async_iterator_on_early_break(self):
-        async_cursor = _AsyncAggregationCursorStub(
-            [{'_id': '1'}, {'_id': '2'}]
-        )
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
         for document in cursor:
-            self.assertEqual(document, {'_id': '1'})
+            self.assertEqual(document, {"_id": "1"})
             break
 
         self.assertEqual(async_cursor.close_calls, 1)
 
     def test_close_closes_active_async_iterator(self):
-        async_cursor = _AsyncAggregationCursorStub(
-            [{'_id': '1'}, {'_id': '2'}]
-        )
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
         iterator = iter(cursor)
 
-        self.assertEqual(next(iterator), {'_id': '1'})
+        self.assertEqual(next(iterator), {"_id": "1"})
         cursor.close()
 
         self.assertEqual(async_cursor.close_calls, 1)
@@ -2217,39 +2155,35 @@ class SyncAggregationCursorTests(unittest.TestCase):
     def test_reiterating_after_partial_consumption_continues_from_current_position(
         self,
     ):
-        async_cursor = _AsyncAggregationCursorStub(
-            [{'_id': '1'}, {'_id': '2'}]
-        )
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
         iterator = iter(cursor)
-        self.assertEqual(next(iterator), {'_id': '1'})
+        self.assertEqual(next(iterator), {"_id": "1"})
 
-        self.assertEqual(list(cursor), [{'_id': '2'}])
+        self.assertEqual(list(cursor), [{"_id": "2"}])
 
     def test_first_uses_current_position_after_iteration_starts(self):
-        async_cursor = _AsyncAggregationCursorStub(
-            [{'_id': '1'}, {'_id': '2'}]
-        )
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
         iterator = iter(cursor)
-        self.assertEqual(next(iterator), {'_id': '1'})
+        self.assertEqual(next(iterator), {"_id": "1"})
 
-        self.assertEqual(cursor.first(), {'_id': '2'})
+        self.assertEqual(cursor.first(), {"_id": "2"})
 
     def test_iterator_stops_when_closed(self):
-        async_cursor = _AsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
         iterator = iter(cursor)
 
         self.assertIs(iter(iterator), iterator)
-        self.assertEqual(next(iterator), {'_id': '1'})
+        self.assertEqual(next(iterator), {"_id": "1"})
         with self.assertRaises(StopIteration):
             next(iterator)
 
     def test_iterator_stops_if_replaced_by_another_active_iterator(self):
-        async_cursor = _AsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
         iterator = iter(cursor)
         cursor._active_async_iterable = object()
@@ -2258,7 +2192,7 @@ class SyncAggregationCursorTests(unittest.TestCase):
             next(iterator)
 
     def test_iterator_del_swallows_close_errors(self):
-        async_cursor = _AsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_BrokenSyncClientStub(), async_cursor)
         iterator = iter(cursor)
 
@@ -2266,20 +2200,18 @@ class SyncAggregationCursorTests(unittest.TestCase):
         self.assertTrue(iterator._closed)
 
     def test_first_returns_none_when_active_iterator_is_exhausted(self):
-        async_cursor = _AsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
         iterator = iter(cursor)
-        self.assertEqual(next(iterator), {'_id': '1'})
+        self.assertEqual(next(iterator), {"_id": "1"})
 
         self.assertIsNone(cursor.first())
 
     def test_cursor_stays_exhausted_after_full_iteration(self):
-        async_cursor = _AsyncAggregationCursorStub(
-            [{'_id': '1'}, {'_id': '2'}]
-        )
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
-        self.assertEqual(list(cursor), [{'_id': '1'}, {'_id': '2'}])
+        self.assertEqual(list(cursor), [{"_id": "1"}, {"_id": "2"}])
         self.assertEqual(list(cursor), [])
         self.assertEqual(cursor.to_list(), [])
         self.assertIsNone(cursor.first())
@@ -2287,7 +2219,7 @@ class SyncAggregationCursorTests(unittest.TestCase):
 
     def test_iterator_pulls_sync_batches_with_one_run_per_chunk(self):
         async_cursor = _AsyncAggregationCursorStub(
-            [{'_id': str(index)} for index in range(5)]
+            [{"_id": str(index)} for index in range(5)]
         )
         async_cursor._batch_size = 2
         client = _CountingSyncClientStub()
@@ -2295,22 +2227,20 @@ class SyncAggregationCursorTests(unittest.TestCase):
 
         self.assertEqual(
             list(cursor),
-            [{'_id': str(index)} for index in range(5)],
+            [{"_id": str(index)} for index in range(5)],
         )
         self.assertEqual(client.run_calls, 4)
         self.assertEqual(async_cursor.close_calls, 1)
 
     def test_iter_uses_cache_when_loaded(self):
-        async_cursor = _AsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
-        self.assertEqual(cursor.to_list(), [{'_id': '1'}])
-        self.assertEqual(list(cursor), [{'_id': '1'}])
+        self.assertEqual(cursor.to_list(), [{"_id": "1"}])
+        self.assertEqual(list(cursor), [{"_id": "1"}])
 
     def test_iterator_raises_stop_iteration_when_closed_explicitly(self):
-        async_cursor = _AsyncAggregationCursorStub(
-            [{'_id': '1'}, {'_id': '2'}]
-        )
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
         iterator = iter(cursor)
 
@@ -2320,11 +2250,11 @@ class SyncAggregationCursorTests(unittest.TestCase):
             next(iterator)
 
     def test_iterator_closes_active_async_iterator_when_pull_fails(self):
-        async_cursor = _FailingAsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _FailingAsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
         iterator = iter(cursor)
 
-        with self.assertRaisesRegex(InvalidOperation, 'foreign session'):
+        with self.assertRaisesRegex(InvalidOperation, "foreign session"):
             next(iterator)
 
         self.assertTrue(iterator._closed)
@@ -2339,11 +2269,11 @@ class SyncAggregationCursorTests(unittest.TestCase):
         self.assertIsNone(cursor.first())
 
     def test_del_swallows_close_errors(self):
-        async_cursor = _AsyncAggregationCursorStub([{'_id': '1'}])
+        async_cursor = _AsyncAggregationCursorStub([{"_id": "1"}])
         cursor = AggregationCursor(_SyncClientStub(), async_cursor)
 
         def broken_close() -> None:
-            raise RuntimeError('boom')
+            raise RuntimeError("boom")
 
         cursor.close = broken_close
         cursor.__del__()

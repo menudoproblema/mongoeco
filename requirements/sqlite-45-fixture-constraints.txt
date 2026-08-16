@@ -1,0 +1,8 @@
+cxp==3.1.0
+msgspec==0.21.1
+numpy==2.5.2
+numkong==7.8.0
+pyuca==1.2
+shapely==2.1.2
+tqdm==4.70.0
+usearch==2.26.0

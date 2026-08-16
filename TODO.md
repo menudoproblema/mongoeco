@@ -80,8 +80,9 @@ Pendientes:
 
 * seguir revisando packaging y metadatos en cada release;
 * mantener documentacion publica de uso, alcance y posicionamiento;
-* aplicar la politica de compatibilidad y versiones documentada, incluida la
-  retirada del SPI v1 en `5.0.0`;
+* ejecutar el roadmap verificable de `docs/roadmap-5.0.md`: 4.6 como bridge,
+  una minor opt-in para SPI v3/`search-v2` si es necesaria y retirada en 5.0
+  solo tras conformance y migracion observables;
 * decidir si compensa publicar un adaptador CXP live opcional para `mongoeco`
   ahora que:
   * capabilities, operations y profiles ya salen del catálogo canónico
@@ -140,7 +141,9 @@ Objetivo: abrir líneas nuevas de producto, ya fuera del backlog histórico.
 
 Pendientes:
 
-* valorar si tiene sentido un SDK o contrato más explícito para backends terceros;
+* valorar adaptadores o ejemplos de engines terceros reales sobre el SPI v2 y
+  el kit de conformidad ya publicos; el contrato base y su canario independiente
+  dejan de ser backlog;
 * estudiar si un backend SQL adicional (`DuckDB`, `PostgreSQL`) compensa ahora que el contrato interno está más limpio;
 * evaluar si el runtime de driver debe seguir creciendo como producto propio o quedarse como soporte local suficiente.
 * valorar si el provider CXP live debe vivir:

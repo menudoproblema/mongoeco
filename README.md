@@ -64,6 +64,11 @@ Development install:
 python -m pip install -e .[dev]
 ```
 
+MongoEco is a PEP 561 typed package. Wheels and source distributions include
+`py.typed`; the supported typing boundary covers the documented client,
+engine SPI v2, Search and conformance surfaces. CI checks those contracts with
+strict positive and negative consumer fixtures against the installed wheel.
+
 The base install now also includes `cxp>=3.0.0`, so `mongoeco` can expose the
 canonical `database/mongodb` contract directly.
 Reference:
@@ -128,6 +133,8 @@ their own packages:
 
 * `mongoeco.compat`
 * `mongoeco.cxp`
+* `mongoeco.engines` for the public storage-engine SPI v2
+* `mongoeco.conformance` for versioned engine contract validation
 
 Lower-level driver/runtime details remain available from subpackages such as
 `mongoeco.driver`.
@@ -135,6 +142,11 @@ Lower-level driver/runtime details remain available from subpackages such as
 `mongoeco.compat` follows the same idea: the top-level package keeps the
 catalog exports, profile resolution helpers and option-support surface, while
 more tactical constants and raw catalog data stay in explicit submodules.
+It also exposes `deprecation_entries()` and `public_api_manifest()` so release
+tooling can inspect planned removals and the semantic 4.x surface without
+scraping documentation.
+The catalog lifecycle is documented in
+[docs/deprecations.md](docs/deprecations.md).
 
 Import guidance by layer:
 
@@ -143,8 +155,10 @@ Import guidance by layer:
 * use `mongoeco.cxp` for the curated MongoDB CXP contract and reusable profiles
 * use `mongoeco.cxp.catalogs.interfaces.database.mongodb` for the full
   MongoDB capability/operation vocabulary
-* use `mongoeco.driver`, `mongoeco.engines` and `mongoeco.wire` only when you
-  intentionally need lower-level runtime surfaces
+* use `mongoeco.engines` and `mongoeco.conformance` for third-party storage
+  engines and their public contract tests
+* use `mongoeco.driver` and `mongoeco.wire` only when you intentionally need
+  lower-level runtime surfaces
 
 Custom storage engines should implement the versioned SPI v2 contract. The
 public capability, outcome, operation-context and snapshot types are exported
@@ -156,7 +170,8 @@ deprecated compatibility path until 5.0.0 and emits `DeprecationWarning`.
 
 The 4.x contract is intentionally explicit:
 
-* stable import roots are `mongoeco`, `mongoeco.compat` and `mongoeco.cxp`
+* stable import roots are `mongoeco`, `mongoeco.compat`, `mongoeco.cxp`,
+  `mongoeco.engines` and `mongoeco.conformance`
 * each root surface is curated through its `__all__`
 * lower-level runtime symbols stay in explicit subpackages
 
@@ -425,7 +440,24 @@ Architecture reference:
 External storage engines can validate SPI v2 with the framework-neutral public
 kit documented in [docs/engine-conformance.md](docs/engine-conformance.md). The
 optional `engine-testing` extra adds the pytest assertion helper without making
-pytest a runtime dependency.
+pytest a runtime dependency. The repository also keeps an independent canary
+engine that imports only `mongoeco.engines`; `scripts/smoke_external_engine.py`
+executes it against the installed distribution.
+
+The same runner is available as a stable CLI layer:
+
+```bash
+python -m mongoeco.conformance package.engine:factory \
+  --format json \
+  --output conformance.json \
+  --require-success
+```
+
+Search planning and runtime provenance additionally use deterministic
+Hypothesis suites. The default `ci` profile is small, reproducible and runs on
+each PR; the scheduled `Contract fuzz` workflow selects the deeper profile.
+Planner regressions block on semantic plan and work counters, not elapsed wall
+time. Benchmarks remain trend evidence rather than timing gates.
 
 ## Benchmarks
 
@@ -477,8 +509,9 @@ remains available but deprecated until its planned removal in 5.0.0.
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
-* [docs/release-4.4.0.md](docs/release-4.4.0.md)
-* [docs/release-4.3.0.md](docs/release-4.3.0.md)
+* [docs/release-4.6.0.md](docs/release-4.6.0.md)
+* [docs/migrating-to-5.0.md](docs/migrating-to-5.0.md)
+* [docs/roadmap-5.0.md](docs/roadmap-5.0.md)
 * [TODO.md](TODO.md)
 * [MISSING_FEATURES.md](MISSING_FEATURES.md)
 

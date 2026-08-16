@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "mongoeco-deprecations/v1",
+  "entries": [
+    {
+      "id": "engine.spi-v1",
+      "category": "engine-spi",
+      "subject": "EngineCapabilities.spi_version=1 and inferred SPI v1 engines",
+      "deprecatedSince": "4.3.0",
+      "plannedRemoval": "5.0.0",
+      "replacement": "Declare EngineCapabilities(spi_version=2) and implement the public SPI v2 outcomes and snapshots.",
+      "impact": "External engines relying on inferred capabilities will no longer adapt automatically.",
+      "migration": "Run the SPI v2 conformance profile and replace every inferred capability with an explicit declaration.",
+      "status": "deprecated",
+      "references": ["docs/architecture/engine-spi-v2.md#migracion-desde-spi-v1"]
+    }
+  ]
+}

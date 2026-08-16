@@ -14,6 +14,7 @@ from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.paths import get_document_value
+from mongoeco.core.runtime_metadata import RuntimeDocumentState
 from mongoeco.core.search import (
     VECTOR_SEARCH_SCORE_FIELD,
     MaterializedSearchDocument,
@@ -111,8 +112,10 @@ from mongoeco.types import (
 )
 
 if TYPE_CHECKING:
-    from mongoeco.core.operation_context import OperationContext
     from mongoeco.core.search_execution import SearchRequest
+
+if TYPE_CHECKING:
+    from mongoeco.core.operation_context import OperationContext
     from mongoeco.session import ClientSession
 
 
@@ -1591,12 +1594,19 @@ def exact_vector_hits_sync(
     return vector_hits
 
 
-def _vector_result_tie_break_key(document: Document) -> str:
-    return repr(bson_engine_key(document.get("_id")))
+def _vector_result_tie_break_key(
+    document: Document | RuntimeDocumentState,
+) -> str:
+    source = (
+        document.document if isinstance(document, RuntimeDocumentState) else document
+    )
+    return repr(bson_engine_key(source.get("_id")))
 
 
-def _sort_vector_scored_documents(documents: list[Document]) -> None:
-    def score(document: Document) -> float:
+def _sort_vector_scored_documents(
+    documents: list[Document | RuntimeDocumentState],
+) -> None:
+    def score(document: Document | RuntimeDocumentState) -> float:
         found, value = get_document_value(document, VECTOR_SEARCH_SCORE_FIELD)
         return float(value) if found else float("-inf")
 
@@ -2537,6 +2547,7 @@ def explain_search_documents_sync(
     topk_prefilter: dict[str, object] | None = None
     compound_prefilter: dict[str, object] | None = None
     stage_option_previews: dict[str, object] = {}
+    matched_documents: list[Document] | None = None
     conn = engine._require_connection(context)
     with engine._bind_connection(conn):
         rows = engine._load_search_index_rows(
@@ -2810,24 +2821,18 @@ def explain_search_documents_sync(
         else None
     )
     query_prefilter_candidate_count = (
-        len(vector_filter_storage_keys)
-        if isinstance(query, SearchVectorQuery)
-        and vector_filter_storage_keys is not None
-        else (
-            vector_state.valid_vectors
-            if isinstance(query, SearchVectorQuery) and vector_state is not None
-            else None
-        )
+        None
+        if not isinstance(query, SearchVectorQuery) or query.filter_spec is None
+        else len(vector_filter_storage_keys)
+        if vector_filter_storage_keys is not None
+        else (vector_state.valid_vectors if vector_state is not None else None)
     )
     downstream_prefilter_candidate_count = (
-        len(downstream_filter_storage_keys)
-        if isinstance(query, SearchVectorQuery)
-        and downstream_filter_storage_keys is not None
-        else (
-            vector_state.valid_vectors
-            if isinstance(query, SearchVectorQuery) and vector_state is not None
-            else None
-        )
+        None
+        if not isinstance(query, SearchVectorQuery) or downstream_filter_spec is None
+        else len(downstream_filter_storage_keys)
+        if downstream_filter_storage_keys is not None
+        else (vector_state.valid_vectors if vector_state is not None else None)
     )
     vector_prefilter_candidate_count = (
         len(combined_prefilter_storage_keys)
@@ -2990,7 +2995,20 @@ def explain_search_documents_sync(
         if isinstance(query, SearchVectorQuery)
         else None
     )
-    if is_text_search_query(query):
+    if is_text_search_query(query) and ready:
+        matched_documents = search_documents_sync(
+            engine,
+            db_name,
+            coll_name,
+            operator,
+            spec,
+            max_time_ms,
+            context,
+            None,
+            downstream_filter_spec,
+            query,
+            operation_context,
+        )
         stage_options = getattr(query, "stage_options", None)
         if stage_options is not None and any(
             option is not None
@@ -3000,24 +3018,22 @@ def explain_search_documents_sync(
                 stage_options.facet,
             )
         ):
-            matched_documents = search_documents_sync(
-                engine,
-                db_name,
-                coll_name,
-                operator,
-                spec,
-                max_time_ms,
-                context,
-                None,
-                downstream_filter_spec,
-                query,
-                operation_context,
-            )
             stage_option_previews = build_search_stage_option_previews(
                 matched_documents,
                 definition=definition,
                 query=query,
             )
+
+    observed_match_count = (
+        len(matched_documents)
+        if matched_documents is not None
+        else vector_documents_matched_before_limit
+    )
+    returned_hit_count = observed_match_count
+    if returned_hit_count is not None and result_limit_hint is not None:
+        returned_hit_count = min(returned_hit_count, result_limit_hint)
+    if returned_hit_count is not None and isinstance(query, SearchVectorQuery):
+        returned_hit_count = min(returned_hit_count, query.limit)
 
     return QueryPlanExplanation(
         engine="sqlite",
@@ -3165,6 +3181,18 @@ def explain_search_documents_sync(
                 else None
             ),
             "documentsMatchedBeforeLimit": vector_documents_matched_before_limit,
+            "matchedCount": observed_match_count,
+            "queryMatchedCount": (
+                observed_match_count if downstream_filter_spec is None else None
+            ),
+            "returnedHitCount": returned_hit_count,
+            "downstreamFilteredCount": (
+                documents_filtered
+                if isinstance(query, SearchVectorQuery)
+                and downstream_filter_spec is not None
+                and query.filter_spec is None
+                else None
+            ),
             "documentsFilteredByMinScore": (
                 documents_filtered_by_min_score
                 if isinstance(query, SearchVectorQuery) and query.min_score is not None

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import datetime
-from functools import lru_cache
 import re
 import uuid
+
+from collections.abc import Mapping
+from functools import lru_cache
 from typing import Any
 
 from mongoeco.errors import OperationFailure
@@ -55,12 +57,18 @@ def hashable_in_lookup_key(value: Any) -> tuple[str, Any] | None:
     return None
 
 
-def path_mapping(value: Any) -> dict[str, Any] | None:
+def path_mapping(value: Any) -> Mapping[str, Any] | None:
     if isinstance(value, DBRef):
         return value.as_document()
-    if isinstance(value, dict):
+    if isinstance(value, Mapping):
         return value
     return None
+
+
+def _mapping_field(mapping: Mapping[str, Any], field: str) -> tuple[bool, Any]:
+    if field not in mapping:
+        return False, None
+    return True, mapping[field]
 
 
 def extract_values(doc: Any, path: str) -> list[Any]:
@@ -98,19 +106,24 @@ def extract_values(doc: Any, path: str) -> list[Any]:
                 else:
                     for subitem in item:
                         mapping = path_mapping(subitem)
-                        if mapping is not None and part in mapping:
-                            val = mapping[part]
-                            if isinstance(val, list):
-                                next_level.append(val)
-                                if is_terminal:
-                                    next_level.extend(val)
-                            else:
-                                next_level.append(val)
+                        if mapping is None:
+                            continue
+                        found, val = _mapping_field(mapping, part)
+                        if not found:
+                            continue
+                        if isinstance(val, list):
+                            next_level.append(val)
+                            if is_terminal:
+                                next_level.extend(val)
+                        else:
+                            next_level.append(val)
             else:
                 mapping = path_mapping(item)
-                if mapping is None or part not in mapping:
+                if mapping is None:
                     continue
-                val = mapping[part]
+                found, val = _mapping_field(mapping, part)
+                if not found:
+                    continue
                 if isinstance(val, list):
                     next_level.append(val)
                     if is_terminal:
@@ -125,6 +138,15 @@ def extract_values(doc: Any, path: str) -> list[Any]:
     return current_level
 
 
+def _resolve_indexed_value(value: list[Any], part: str) -> tuple[bool, Any]:
+    if not part.isdigit():
+        return False, None
+    index = int(part)
+    if index >= len(value):
+        return False, None
+    return True, value[index]
+
+
 def get_field_value(doc: Any, path: str) -> tuple[bool, Any]:
     doc_mapping = path_mapping(doc)
     if doc_mapping is not None and doc_mapping is not doc:
@@ -137,18 +159,14 @@ def get_field_value(doc: Any, path: str) -> tuple[bool, Any]:
     current = doc
     for part in parts:
         if isinstance(current, list):
-            if not part.isdigit():
-                return False, None
-            idx = int(part)
-            if 0 <= idx < len(current):
-                current = current[idx]
-            else:
-                return False, None
+            found, current = _resolve_indexed_value(current, part)
         else:
             mapping = path_mapping(current)
-            if mapping is None or part not in mapping:
+            if mapping is None:
                 return False, None
-            current = mapping[part]
+            found, current = _mapping_field(mapping, part)
+        if not found:
+            return False, None
     return True, current
 
 
@@ -182,23 +200,28 @@ def extract_all_candidates(doc: Any, field: str) -> list[Any]:
                 else:
                     for subitem in item:
                         mapping = path_mapping(subitem)
-                        if mapping is not None and part in mapping:
-                            value = mapping[part]
-                            if is_last:
-                                if isinstance(value, list):
-                                    next_level.extend(value)
-                                else:
-                                    next_level.append(value)
-                            elif isinstance(value, list):
-                                next_level.append(value)
+                        if mapping is None:
+                            continue
+                        found, value = _mapping_field(mapping, part)
+                        if not found:
+                            continue
+                        if is_last:
+                            if isinstance(value, list):
                                 next_level.extend(value)
                             else:
                                 next_level.append(value)
+                        elif isinstance(value, list):
+                            next_level.append(value)
+                            next_level.extend(value)
+                        else:
+                            next_level.append(value)
             else:
                 mapping = path_mapping(item)
-                if mapping is None or part not in mapping:
+                if mapping is None:
                     continue
-                value = mapping[part]
+                found, value = _mapping_field(mapping, part)
+                if not found:
+                    continue
                 if is_last:
                     if isinstance(value, list):
                         next_level.extend(value)

@@ -16,6 +16,7 @@ try:
     from bson.code import Code as BsonCode
     from bson.dbref import DBRef as BsonDBRef
     from bson.decimal128 import Decimal128 as BsonDecimal128Public
+    from bson.int64 import Int64 as BsonInt64Public
     from bson.max_key import MaxKey as BsonMaxKey
     from bson.min_key import MinKey as BsonMinKey
     from bson.objectid import ObjectId as BsonObjectId
@@ -27,6 +28,7 @@ except Exception:  # pragma: no cover - optional dependency
     BsonCode = None
     BsonDBRef = None
     BsonDecimal128Public = None
+    BsonInt64Public = None
     BsonMaxKey = None
     BsonMinKey = None
     BsonObjectId = None
@@ -160,6 +162,14 @@ def _own_internal_bson_scalar(data: Any) -> Any:
     return data
 
 
+def _materialize_public_int64(data: Any) -> Any:
+    if not isinstance(data, BsonInt64):
+        return data
+    if BsonInt64Public is None:
+        return data.value
+    return BsonInt64Public(data.value)
+
+
 class DocumentCodec:
     """
     Normaliza documentos usando un formato interno reversible (Extended JSON style).
@@ -203,7 +213,10 @@ class DocumentCodec:
         """Apply the BSON command boundary before engine evaluation."""
         if isinstance(data, (_InternalBsonDocument, _InternalBsonArray)):
             return data
-        normalized = DocumentCodec.decode(DocumentCodec.encode(data))
+        normalized = DocumentCodec.decode(
+            DocumentCodec.encode(data),
+            preserve_bson_wrappers=True,
+        )
         return _own_internal_bson(normalized)
 
     @staticmethod
@@ -333,6 +346,9 @@ class DocumentCodec:
                 "decimal128_public",
                 str(data),
             )
+
+        if BsonInt64Public is not None and isinstance(data, BsonInt64Public):
+            return DocumentCodec._tagged_value("int64", int(data))
 
         if isinstance(data, Decimal128):
             return DocumentCodec._tagged_value("decimal128_public", str(data.value))
@@ -622,6 +638,7 @@ class DocumentCodec:
     @staticmethod
     def to_pymongo(data: Any) -> Any:
         """Materialize internal BSON values as the selected PyMongo surface."""
+        data = _materialize_public_int64(data)
         if BsonObjectId is None:
             return data
         if BsonCode is not None and isinstance(data, BsonCode):
@@ -710,7 +727,7 @@ class DocumentCodec:
             for key, value in data.items():
                 if isinstance(value, DocumentCodec._BSON_WRAPPER_TYPES):
                     flat_changed = True
-                    flat_items.append((key, unwrap_bson_numeric(value)))
+                    flat_items.append((key, DocumentCodec._to_public_numeric(value)))
                     continue
                 if isinstance(value, list):
                     public_list, list_changed, contains_nested = DocumentCodec._to_public_flat_list(value)
@@ -761,6 +778,15 @@ class DocumentCodec:
                 return data
             return converted_items
 
+        if isinstance(data, DocumentCodec._BSON_WRAPPER_TYPES):
+            return DocumentCodec._to_public_numeric(data)
+        return data
+
+    @staticmethod
+    def _to_public_numeric(data: Any) -> Any:
+        materialized = _materialize_public_int64(data)
+        if materialized is not data:
+            return materialized
         return unwrap_bson_numeric(data)
 
     @staticmethod
@@ -770,7 +796,7 @@ class DocumentCodec:
         for value in data:
             if isinstance(value, DocumentCodec._BSON_WRAPPER_TYPES):
                 changed = True
-                converted_items.append(unwrap_bson_numeric(value))
+                converted_items.append(DocumentCodec._to_public_numeric(value))
                 continue
             if isinstance(value, dict | list):
                 return converted_items, changed, True

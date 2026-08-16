@@ -43,11 +43,20 @@ from mongoeco.core.aggregation.scalar_expressions import (
 )
 from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.bson_scalars import (
+    BsonInt64,
     bson_numeric_alias,
 )
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.paths import get_document_value, set_document_value
+from mongoeco.core.paths import (
+    delete_document_value,
+    get_document_value,
+    set_document_value,
+)
+from mongoeco.core.runtime_metadata import (
+    RuntimeDocumentState,
+    RuntimeMetadataKey,
+)
 from mongoeco.core.search import (
     SEARCH_HIGHLIGHTS_METADATA_FIELD,
     TEXT_SCORE_FIELD,
@@ -297,6 +306,7 @@ def _apply_unwind(documents: list[Document], spec: object) -> list[Document]:
             if not value:
                 if preserve:
                     preserved = deepcopy(document)
+                    delete_document_value(preserved, path)
                     if include_array_index is not None:
                         preserved[include_array_index] = None
                     result.append(preserved)
@@ -305,7 +315,7 @@ def _apply_unwind(documents: list[Document], spec: object) -> list[Document]:
                 unwound = deepcopy(document)
                 set_document_value(unwound, path, item)
                 if include_array_index is not None:
-                    unwound[include_array_index] = index
+                    unwound[include_array_index] = BsonInt64(index)
                 result.append(unwound)
             continue
 
@@ -432,10 +442,15 @@ def _resolve_variable_expression(
 
 
 def _variables_for_document(
-    document: Document,
+    document: Document | RuntimeDocumentState,
     variables: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
-    return environment_for_document(document, variables)
+    return environment_for_document(
+        document.public_document()
+        if isinstance(document, RuntimeDocumentState)
+        else document,
+        variables,
+    )
 
 
 _MISSING = object()
@@ -448,6 +463,10 @@ def _resolve_aggregation_field_path(value: Any, path: str) -> Any:
 
     if isinstance(value, DBRef):
         return _resolve_aggregation_field_path(value.as_document(), path)
+
+    if isinstance(value, RuntimeDocumentState):
+        found, resolved = value.resolve(path)
+        return resolved if found else _MISSING
 
     if isinstance(value, list):
         head, _, tail = path.partition(".")
@@ -466,7 +485,7 @@ def _resolve_aggregation_field_path(value: Any, path: str) -> Any:
             if resolved is _MISSING:
                 continue
             resolved_items.append(resolved)
-        return resolved_items or _MISSING
+        return resolved_items
 
     if not isinstance(value, dict):
         return _MISSING
@@ -474,7 +493,8 @@ def _resolve_aggregation_field_path(value: Any, path: str) -> Any:
     head, _, tail = path.partition(".")
     if head not in value:
         return _MISSING
-    return _resolve_aggregation_field_path(value[head], tail)
+    field_value = value[head]
+    return _resolve_aggregation_field_path(field_value, tail)
 
 
 def _mongo_mod(left: float, right: float) -> int | float:
@@ -649,7 +669,7 @@ def _evaluate_expression_with_missing(
 
 
 def evaluate_expression(
-    document: Document,
+    document: Document | RuntimeDocumentState,
     expression: object,
     variables: Mapping[str, Any] | None = None,
     *,
@@ -716,6 +736,16 @@ def evaluate_expression(
                     ),
                 )
             if operator == "$meta":
+                if isinstance(document, RuntimeDocumentState):
+                    metadata_keys = {
+                        "textScore": RuntimeMetadataKey.TEXT_SCORE,
+                        "vectorSearchScore": RuntimeMetadataKey.VECTOR_SEARCH_SCORE,
+                        "searchHighlights": RuntimeMetadataKey.SEARCH_HIGHLIGHTS,
+                    }
+                    key = metadata_keys.get(spec)
+                    if key is not None:
+                        found, value = document.metadata_value(key)
+                        return None if not found else value
                 if spec == "textScore":
                     found, value = get_document_value(
                         document,

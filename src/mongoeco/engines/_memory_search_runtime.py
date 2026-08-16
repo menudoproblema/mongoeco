@@ -10,6 +10,7 @@ from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import get_document_value
+from mongoeco.core.runtime_metadata import RuntimeDocumentState
 from mongoeco.core.search import (
     VECTOR_SEARCH_SCORE_FIELD,
     SearchCompoundQuery,
@@ -81,12 +82,19 @@ class _MemorySearchRuntimeEngine(Protocol):
     _search_index_ready_at: dict[tuple[str, str, str], float]
 
 
-def _document_tie_break_key(document: Document) -> str:
-    return repr(bson_engine_key(document.get("_id")))
+def _document_tie_break_key(
+    document: Document | RuntimeDocumentState,
+) -> str:
+    source = (
+        document.document if isinstance(document, RuntimeDocumentState) else document
+    )
+    return repr(bson_engine_key(source.get("_id")))
 
 
-def _sort_vector_scored_documents(documents: list[Document]) -> None:
-    def score(document: Document) -> float:
+def _sort_vector_scored_documents(
+    documents: list[Document | RuntimeDocumentState],
+) -> None:
+    def score(document: Document | RuntimeDocumentState) -> float:
         found, value = get_document_value(document, VECTOR_SEARCH_SCORE_FIELD)
         return float(value) if found else float("-inf")
 
@@ -156,6 +164,34 @@ def _safe_ratio(
     if numerator is None or denominator is None or denominator <= 0:
         return None
     return float(numerator) / float(denominator)
+
+
+def _search_execution_count_details(
+    query: SearchQuery,
+    observed_match_count: int | None,
+    result_limit_hint: int | None,
+    downstream_filter_spec: dict[str, object] | None,
+    filtered_count: int,
+) -> dict[str, int | None]:
+    returned_hit_count = observed_match_count
+    if returned_hit_count is not None and result_limit_hint is not None:
+        returned_hit_count = min(returned_hit_count, result_limit_hint)
+    if returned_hit_count is not None and isinstance(query, SearchVectorQuery):
+        returned_hit_count = min(returned_hit_count, query.limit)
+    return {
+        "matchedCount": observed_match_count,
+        "queryMatchedCount": (
+            observed_match_count if downstream_filter_spec is None else None
+        ),
+        "returnedHitCount": returned_hit_count,
+        "downstreamFilteredCount": (
+            filtered_count
+            if isinstance(query, SearchVectorQuery)
+            and downstream_filter_spec is not None
+            and query.filter_spec is None
+            else None
+        ),
+    }
 
 
 def _prefilter_intersection_summary(
@@ -408,7 +444,7 @@ async def execute_search_documents(
         context = operation_context.session
     effective_limit = (
         result_limit_hint
-        if isinstance(result_limit_hint, int) and result_limit_hint > 0
+        if isinstance(result_limit_hint, int) and result_limit_hint >= 0
         else None
     )
     async with engine._get_lock(db_name, coll_name):
@@ -816,12 +852,16 @@ async def explain_search_documents(
                 )
             )
         query_prefilter_candidate_count = (
-            len(query_filter_rows)
+            None
+            if query.filter_spec is None
+            else len(query_filter_rows)
             if query_filter_rows is not None
             else len(path_positions)
         )
         downstream_prefilter_candidate_count = (
-            len(downstream_filter_rows)
+            None
+            if downstream_filter_spec is None
+            else len(downstream_filter_rows)
             if downstream_filter_rows is not None
             else len(path_positions)
         )
@@ -895,6 +935,34 @@ async def explain_search_documents(
             passing_hits += 1
         vector_documents_matched_before_limit = passing_hits
         vector_documents_filtered = rejected_hits
+    matched_text_documents: list[Document] | None = None
+    stage_option_previews: dict[str, object] = {}
+    if is_text_search_query(query) and ready:
+        matched_text_documents = await execute_search_documents(
+            engine,
+            db_name,
+            coll_name,
+            operator,
+            spec,
+            context=context,
+            operation_context=operation_context,
+            result_limit_hint=None,
+            downstream_filter_spec=downstream_filter_spec,
+        )
+        stage_options = getattr(query, "stage_options", None)
+        if stage_options is not None and any(
+            value is not None
+            for value in (
+                stage_options.count,
+                stage_options.highlight,
+                stage_options.facet,
+            )
+        ):
+            stage_option_previews = build_search_stage_option_previews(
+                matched_text_documents,
+                definition=definition,
+                query=query,
+            )
     vector_score_breakdown = (
         {
             "similarity": resolved_similarity,
@@ -976,6 +1044,11 @@ async def explain_search_documents(
         }
         if isinstance(query, SearchVectorQuery)
         else None
+    )
+    observed_match_count = (
+        len(matched_text_documents)
+        if matched_text_documents is not None
+        else vector_documents_matched_before_limit
     )
     vector_hybrid_retrieval = (
         {
@@ -1106,6 +1179,13 @@ async def explain_search_documents(
             "queryPrefilterCandidateCount": query_prefilter_candidate_count,
             "downstreamPrefilterCandidateCount": downstream_prefilter_candidate_count,
             "documentsMatchedBeforeLimit": vector_documents_matched_before_limit,
+            **_search_execution_count_details(
+                query,
+                observed_match_count,
+                result_limit_hint,
+                downstream_filter_spec,
+                vector_documents_filtered,
+            ),
             "documentsFiltered": vector_documents_filtered,
             "documentsFilteredByMinScore": vector_documents_filtered_by_min_score,
             "documentsScanned": (
@@ -1132,45 +1212,7 @@ async def explain_search_documents(
                 if downstream_filter_spec is not None
                 else None
             ),
-            **(
-                build_search_stage_option_previews(
-                    await execute_search_documents(
-                        engine,
-                        db_name,
-                        coll_name,
-                        operator,
-                        spec,
-                        context=context,
-                        operation_context=operation_context,
-                        result_limit_hint=None,
-                        downstream_filter_spec=downstream_filter_spec,
-                    ),
-                    definition=definition,
-                    query=query,
-                )
-                if is_text_search_query(query)
-                and any(
-                    value is not None
-                    for value in (
-                        (
-                            getattr(query, "stage_options", None).count
-                            if hasattr(query, "stage_options")
-                            else None
-                        ),
-                        (
-                            getattr(query, "stage_options", None).highlight
-                            if hasattr(query, "stage_options")
-                            else None
-                        ),
-                        (
-                            getattr(query, "stage_options", None).facet
-                            if hasattr(query, "stage_options")
-                            else None
-                        ),
-                    )
-                )
-                else {}
-            ),
+            **stage_option_previews,
         },
     )
 

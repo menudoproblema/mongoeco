@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 import copy
-import json
 import os
+import sys
 from pathlib import Path
 import uuid
 
-from tests.differential.cases import REAL_PARITY_CASES
+from bson.json_util import CANONICAL_JSON_OPTIONS, dumps
+from pymongo import MongoClient as PyMongoClient
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from tests.differential.cases import REAL_PARITY_CASES  # noqa: E402
 
 
 def _to_jsonable(value):
@@ -26,8 +34,6 @@ def main() -> None:
 
     target = os.getenv("MONGOECO_REAL_MONGODB_TARGET", "8.0")
     output_path = Path("tests/fixtures/differential_replay_golden.json")
-
-    from pymongo import MongoClient as PyMongoClient
 
     client = PyMongoClient(uri, serverSelectionTimeoutMS=3000)
     client.admin.command("ping")
@@ -51,7 +57,12 @@ def main() -> None:
         "cases": dict(sorted(cases.items())),
     }
     output_path.write_text(
-        json.dumps(payload, indent=2, sort_keys=False) + "\n",
+        dumps(
+            payload,
+            indent=2,
+            json_options=CANONICAL_JSON_OPTIONS,
+        )
+        + "\n",
         encoding="utf-8",
     )
     print(f"updated {output_path}")

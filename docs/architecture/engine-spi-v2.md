@@ -93,6 +93,13 @@ MongoEco rechaza en la frontera del adaptador outcomes v2 aplicados que no
 incluyan las imagenes requeridas, conteos imposibles o secuencias de commit en
 operaciones no aplicadas.
 
+Los value objects de outcome toman una copia profunda de imagenes y payloads
+al construirse. Un engine puede reutilizar o mutar sus buffers internos despues
+de retornar sin alterar el resultado ya publicado; la garantia vive en los
+tipos centrales y no depende de que cada implementacion recuerde copiar.
+`BulkOutcome` valida tambien el resultado agregado y la tupla de efectos que
+expone; todos los DTO publicos aplican la misma politica de ownership.
+
 `open_read_snapshot()` retorna `ReadSnapshot`. Para lecturas de coleccion, el
 adaptador exige politica `STABLE` y el mismo `operation_id` del contexto que lo
 abre. El consumidor es propietario de su cierre y puede usar `async with`;
@@ -103,6 +110,10 @@ supervisada, evitando bloquear indefinidamente cancelaciones o shutdown. El
 lifecycle publico distingue `OPEN`, `CLOSING`, `CLOSED` y `FAILED`.
 `MATERIALIZED` y `LIVE` quedan disponibles para contratos que los declaren
 fuera del scan ordinario.
+Cada documento entregado es propiedad del consumidor y puede mutarse sin
+alterar buffers del engine ni otras lecturas. Si el adapter rechaza un snapshot
+por identidad o politica, llama `discard()` y supervisa su cierre antes de
+propagar el error de contrato.
 
 ## Entrega de cambios
 
@@ -112,6 +123,28 @@ fuera del scan ordinario.
 misma transaccion. Mientras una transaccion de usuario sigue abierta, el
 outcome puede no incluir aun secuencia: esta se hace observable al commit, no
 antes.
+
+El checkpoint se confirma despues de que el consumer retorna con exito. Si el
+callback falla, el error se propaga y el evento permanece pendiente para el
+siguiente dispatch; adelantar el checkpoint violaria el contrato at-least-once.
+Cada callback recibe una copia independiente del payload confirmado. Si un
+lote falla despues de confirmar un prefijo, el siguiente dispatch entrega solo
+el sufijo no confirmado; mutaciones hechas por otro consumer nunca son
+observables.
+
+Search es una capability compuesta. `SearchEngineCapabilities.operators`
+declara `$search` y, opcionalmente, `$vectorSearch`; un engine vectorial debe
+declarar ademas las similitudes soportadas. El adapter rechaza requests que no
+esten cubiertos por esa matriz.
+
+Los outcomes Search del SPI v2 transportan documentos BSON y `RuntimeMetadata`
+separados mediante `SearchHit`. Un engine no debe insertar campos privados para
+scores o highlights. El adapter legacy puede traducir temporalmente el sidecar
+4.x con NUL en su frontera, pero la representacion canonica es
+`RuntimeDocumentState` y `persistence_document()` siempre descarta metadata no
+materializada. El `SearchRequest` transporta tambien el plan semantico
+inmutable compilado por el cursor; engine y `explain()` no pueden reconstruir
+reglas distintas a partir de hints sueltos.
 
 Una operacion que produce varios eventos conserva un `operation_id` comun y
 deriva un ordinal distinto por efecto. SQLite persiste esa pareja como
@@ -170,7 +203,14 @@ La migracion recomendada es:
 6. declarar una estrategia de cambios y sus primitivas de consumidor;
 7. ejecutar `tests/contracts/engines/test_storage_engine_v2_contract.py`
    contra el engine.
+8. ejecutar `mongoeco.conformance.run_engine_conformance()` y conservar el
+   informe versionado, incluidas capabilities no aplicables.
 
 No se debe silenciar la advertencia como sustituto de la migracion. Un engine
 puede mantener wrappers v1 propios mientras sus primitivas v2 sean la unica
 implementacion semantica.
+
+La propuesta sucesora se documenta en
+[engine-spi-v3-proposal.md](engine-spi-v3-proposal.md). No modifica este
+contrato: SPI v2 sigue estable y su eventual retirada requiere una decision y
+una ventana de deprecacion posteriores.

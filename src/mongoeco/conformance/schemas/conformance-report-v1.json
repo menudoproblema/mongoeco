@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mongoeco.dev/schemas/conformance-report-v1.json",
+  "title": "MongoEco engine conformance report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "provider",
+    "passed",
+    "summary",
+    "checks"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "mongoeco-conformance-report/v1"
+    },
+    "contractVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/check"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"passed": {"const": true}},
+        "required": ["passed"]
+      },
+      "then": {
+        "properties": {
+          "summary": {
+            "properties": {
+              "failed": {"const": 0},
+              "error": {"const": 0},
+              "passed": {"minimum": 1}
+            }
+          },
+          "checks": {
+            "contains": {
+              "properties": {"status": {"const": "passed"}},
+              "required": ["status"]
+            },
+            "minContains": 1,
+            "items": {
+              "properties": {
+                "status": {"enum": ["passed", "not-applicable"]}
+              },
+              "required": ["status"]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"passed": {"const": false}},
+        "required": ["passed"]
+      },
+      "then": {
+        "properties": {
+          "summary": {
+            "anyOf": [
+              {"properties": {"failed": {"minimum": 1}}},
+              {"properties": {"error": {"minimum": 1}}},
+              {"properties": {"passed": {"const": 0}}}
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed", "failed", "error", "not-applicable"],
+      "properties": {
+        "passed": {"type": "integer", "minimum": 0},
+        "failed": {"type": "integer", "minimum": 0},
+        "error": {"type": "integer", "minimum": 0},
+        "not-applicable": {"type": "integer", "minimum": 0}
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "profile",
+        "name",
+        "status",
+        "passed",
+        "applicable",
+        "capability",
+        "phase",
+        "durationMs",
+        "detail",
+        "evidence",
+        "cleanupError"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "profile": {
+          "enum": [
+            "spi-v2-core",
+            "spi-v2-atomicity",
+            "spi-v2-clock",
+            "spi-v2-snapshots",
+            "spi-v2-change-delivery",
+            "search-v1"
+          ]
+        },
+        "name": {"type": "string", "minLength": 1},
+        "status": {
+          "enum": ["passed", "failed", "error", "not-applicable"]
+        },
+        "passed": {"type": "boolean"},
+        "applicable": {"type": "boolean"},
+        "capability": {"type": "string", "minLength": 1},
+        "phase": {"enum": ["contract", "cleanup"]},
+        "durationMs": {"type": "number", "minimum": 0},
+        "detail": {
+          "oneOf": [
+            {"type": "string", "minLength": 1},
+            {"type": "null"}
+          ]
+        },
+        "evidence": {"type": "object"},
+        "cleanupError": {
+          "oneOf": [
+            {"type": "string", "minLength": 1},
+            {"type": "null"}
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "passed"}}},
+          "then": {
+            "properties": {
+              "passed": {"const": true},
+              "applicable": {"const": true},
+              "detail": {"type": "null"},
+              "cleanupError": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "not-applicable"}}},
+          "then": {
+            "properties": {
+              "passed": {"const": false},
+              "applicable": {"const": false}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {"enum": ["failed", "error"]}
+            }
+          },
+          "then": {
+            "properties": {
+              "passed": {"const": false},
+              "applicable": {"const": true}
+            },
+            "anyOf": [
+              {"properties": {"detail": {"type": "string"}}},
+              {"properties": {"cleanupError": {"type": "string"}}}
+            ]
+          }
+        },
+        {
+          "if": {"properties": {"phase": {"const": "cleanup"}}},
+          "then": {
+            "properties": {
+              "status": {"const": "error"},
+              "cleanupError": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

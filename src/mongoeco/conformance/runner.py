@@ -1,24 +1,29 @@
 from __future__ import annotations
 
 import asyncio
+import time
 import uuid
 
+from copy import deepcopy
+from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.api.operations import compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.conformance.models import (
     DEFAULT_SPI_V2_PROFILES,
     ConformanceCheckResult,
+    ConformancePhase,
     ConformanceProfile,
     ConformanceReport,
+    ConformanceStatus,
 )
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.operation_context import ChangePublicationPolicy, OperationContext
-from mongoeco.core.paths import get_document_value
-from mongoeco.core.search import SEARCH_HIGHLIGHTS_METADATA_FIELD, compile_search_stage
+from mongoeco.core.runtime_metadata import RuntimeMetadataKey
+from mongoeco.core.search import compile_search_stage
 from mongoeco.core.search_execution import SearchRequest
 from mongoeco.core.search_models import (
     SearchExecutionMode,
@@ -30,6 +35,7 @@ from mongoeco.engines.capabilities import (
     validate_engine_contract,
 )
 from mongoeco.engines.results import (
+    CommittedChange,
     DeleteOutcome,
     InsertOutcome,
     MergeOutcome,
@@ -41,13 +47,23 @@ from mongoeco.types import SearchIndexDefinition
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Awaitable, Callable, Iterable
 
     from mongoeco.conformance.provider import EngineConformanceProvider
 
 
 _SPI_V2 = 2
 _EXPECTED_CHANGE_EVENTS = 2
+
+
+@dataclass(frozen=True, slots=True)
+class _CheckDefinition:
+    profile: ConformanceProfile
+    name: str
+    capability: str
+    check: Callable[[Any, str, str], Awaitable[None]]
+    applicable: bool
+    inapplicable_detail: str | None = None
 
 
 def _context() -> OperationContext:
@@ -64,53 +80,59 @@ async def run_engine_conformance(
     checks: list[ConformanceCheckResult] = []
     async with provider.open_engine() as engine:
         capabilities = resolve_engine_capabilities(engine)
-        for profile, name, check, applicable in _checks(capabilities):
-            if profile not in selected or not applicable:
+        for definition in _checks(capabilities):
+            if definition.profile not in selected:
                 continue
-            db_name, coll_name = provider.namespace(name)
-            failure: Exception | None = None
-            try:
-                await check(engine, db_name, coll_name)
-            except Exception as error:
-                failure = error
+            if not definition.applicable:
                 checks.append(
                     ConformanceCheckResult(
-                        profile=profile,
-                        name=name,
-                        passed=False,
-                        detail=f"{type(error).__name__}: {error}",
+                        profile=definition.profile,
+                        name=definition.name,
+                        status=ConformanceStatus.NOT_APPLICABLE,
+                        capability=definition.capability,
+                        detail=(
+                            definition.inapplicable_detail
+                            or "capability is not declared by the engine"
+                        ),
+                        evidence={"capabilityDeclared": False},
                     )
                 )
+                continue
+            db_name, coll_name = provider.namespace(definition.name)
+            started = time.perf_counter()
+            status = ConformanceStatus.PASSED
+            phase = ConformancePhase.CONTRACT
+            detail: str | None = None
+            cleanup_error: str | None = None
+            try:
+                await definition.check(engine, db_name, coll_name)
+            except AssertionError as error:
+                status = ConformanceStatus.FAILED
+                detail = f"{type(error).__name__}: {error}"
+            except Exception as error:
+                status = ConformanceStatus.ERROR
+                detail = f"{type(error).__name__}: {error}"
             try:
                 await provider.cleanup_namespace(engine, db_name)
             except Exception as error:
-                if failure is None:
-                    checks.append(
-                        ConformanceCheckResult(
-                            profile=profile,
-                            name=name,
-                            passed=False,
-                            detail=f"cleanup {type(error).__name__}: {error}",
-                        )
-                    )
-                else:
-                    checks.append(
-                        ConformanceCheckResult(
-                            profile=profile,
-                            name=f"{name}:cleanup",
-                            passed=False,
-                            detail=f"{type(error).__name__}: {error}",
-                        )
-                    )
-                continue
-            if failure is None:
-                checks.append(
-                    ConformanceCheckResult(
-                        profile=profile,
-                        name=name,
-                        passed=True,
-                    )
+                cleanup_error = f"{type(error).__name__}: {error}"
+                if status is ConformanceStatus.PASSED:
+                    status = ConformanceStatus.ERROR
+                    phase = ConformancePhase.CLEANUP
+                    detail = f"cleanup {cleanup_error}"
+            checks.append(
+                ConformanceCheckResult(
+                    profile=definition.profile,
+                    name=definition.name,
+                    status=status,
+                    capability=definition.capability,
+                    phase=phase,
+                    duration_ms=(time.perf_counter() - started) * 1000,
+                    detail=detail,
+                    evidence={"capabilityDeclared": True},
+                    cleanup_error=cleanup_error,
                 )
+            )
     return ConformanceReport(
         provider_name=provider.name,
         contract_version="spi-v2",
@@ -120,53 +142,81 @@ async def run_engine_conformance(
 
 def _checks(capabilities):
     return (
-        (
+        _CheckDefinition(
             ConformanceProfile.SPI_V2_CORE,
             "capabilities",
+            "spi-v2",
             _check_capabilities,
-            True,
+            applicable=True,
         ),
-        (
+        _CheckDefinition(
             ConformanceProfile.SPI_V2_CORE,
             "crud-outcomes",
+            "typed-outcomes",
             _check_crud_outcomes,
-            True,
+            applicable=True,
         ),
-        (
+        _CheckDefinition(
+            ConformanceProfile.SPI_V2_CORE,
+            "batch-outcomes",
+            "batch-inserts",
+            _check_batch_outcomes,
+            applicable=capabilities.batch_inserts,
+            inapplicable_detail="engine does not declare batch insert support",
+        ),
+        _CheckDefinition(
             ConformanceProfile.SPI_V2_CORE,
             "operation-context",
+            "operation-context",
             _check_operation_context,
-            True,
+            applicable=True,
         ),
-        (
+        _CheckDefinition(
             ConformanceProfile.SPI_V2_ATOMICITY,
             "compare-and-set",
+            "atomic-conditional-mutation",
             _check_atomic_mutation,
-            True,
+            applicable=True,
         ),
-        (
+        _CheckDefinition(
             ConformanceProfile.SPI_V2_CLOCK,
             "injected-clock",
+            "injected-clock",
             _check_injected_clock,
-            capabilities.injected_clock,
+            applicable=capabilities.injected_clock,
+            inapplicable_detail="engine does not declare injected-clock support",
         ),
-        (
+        _CheckDefinition(
             ConformanceProfile.SPI_V2_SNAPSHOTS,
             "stable-snapshot",
+            "stable-snapshot",
             _check_snapshot,
-            capabilities.explicit_read_snapshots,
+            applicable=capabilities.spi_version == _SPI_V2,
+            inapplicable_detail="engine does not implement SPI v2 snapshots",
         ),
-        (
+        _CheckDefinition(
             ConformanceProfile.SPI_V2_CHANGE_DELIVERY,
             "change-delivery-contract",
+            "sequenced-change-delivery",
             _check_change_delivery,
-            capabilities.monotonic_commit_sequence,
+            applicable=capabilities.monotonic_commit_sequence,
+            inapplicable_detail="engine does not declare monotonic change delivery",
         ),
-        (
+        _CheckDefinition(
+            ConformanceProfile.SPI_V2_CHANGE_DELIVERY,
+            "change-delivery-recovery",
+            "sequenced-change-delivery",
+            _check_change_delivery_recovery,
+            applicable=capabilities.monotonic_commit_sequence,
+            inapplicable_detail="engine does not declare monotonic change delivery",
+        ),
+        _CheckDefinition(
             ConformanceProfile.SEARCH_V1,
             "search-contract",
+            "search-v1",
             _check_search,
-            capabilities.search is not None,
+            applicable=capabilities.search is not None,
+            inapplicable_detail="engine does not declare Search support",
         ),
     )
 
@@ -176,7 +226,10 @@ async def _check_capabilities(engine: object, _db: str, _coll: str) -> None:
     if capabilities.spi_version != _SPI_V2:
         message = "conformance requires SPI v2"
         raise AssertionError(message)
-    validate_engine_contract(engine, capabilities)
+    try:
+        validate_engine_contract(engine, capabilities)
+    except (TypeError, ValueError) as error:
+        raise AssertionError(str(error)) from error
 
 
 async def _check_crud_outcomes(engine: object, db: str, coll: str) -> None:
@@ -236,6 +289,41 @@ async def _check_crud_outcomes(engine: object, db: str, coll: str) -> None:
     )
     if not isinstance(deleted, DeleteOutcome) or deleted.deleted_count != 1:
         message = "delete_with_operation must return DeleteOutcome"
+        raise AssertionError(message)
+
+
+async def _check_batch_outcomes(engine: object, db: str, coll: str) -> None:
+    documents = [
+        {"_id": "batch-1", "nested": {"value": 1}},
+        {"_id": "batch-2", "nested": {"value": 2}},
+    ]
+    original = deepcopy(documents)
+    try:
+        outcomes = await adapt_engine(engine).insert_many_outcomes(
+            db,
+            coll,
+            documents,
+            operation_context=_context(),
+        )
+    except (TypeError, ValueError, RuntimeError) as error:
+        raise AssertionError(str(error)) from error
+    if len(outcomes) != len(documents) or not all(
+        isinstance(outcome, InsertOutcome) and outcome.applied for outcome in outcomes
+    ):
+        message = "declared batch inserts must return one applied outcome per input"
+        raise AssertionError(message)
+    if documents != original:
+        message = "batch insert must not mutate caller-owned documents"
+        raise AssertionError(message)
+    documents[0]["nested"]["value"] = 999
+    stored = await engine.get_document(
+        db,
+        coll,
+        "batch-1",
+        operation_context=_context(),
+    )
+    if stored != original[0]:
+        message = "batch outcomes must not alias engine-owned documents"
         raise AssertionError(message)
 
 
@@ -360,7 +448,7 @@ async def _check_snapshot(engine: object, db: str, coll: str) -> None:
     await engine.insert_document(
         db,
         coll,
-        {"_id": "snapshot"},
+        {"_id": "snapshot", "nested": {"value": 1}},
         overwrite=False,
         operation_context=context,
     )
@@ -371,29 +459,57 @@ async def _check_snapshot(engine: object, db: str, coll: str) -> None:
         overwrite=False,
         operation_context=context,
     )
-    snapshot = engine.open_read_snapshot(
+    capabilities = resolve_engine_capabilities(engine)
+    snapshot_owner = (
+        adapt_engine(engine) if capabilities.spi_version == _SPI_V2 else engine
+    )
+    snapshot = snapshot_owner.open_read_snapshot(
         db,
         coll,
-        compile_find_semantics({}, sort=[("_id", 1)]),
+        compile_find_semantics(
+            {},
+            sort=[("_id", 1)],
+            operation_context=context,
+        ),
         operation_context=context,
     )
     if not isinstance(snapshot, ReadSnapshot):
         message = "open_read_snapshot must return ReadSnapshot"
         raise AssertionError(message)
-    first = await snapshot.__anext__()
-    await engine.insert_document(
-        db,
-        coll,
-        {"_id": "after-snapshot"},
-        overwrite=False,
-        operation_context=_context(),
-    )
-    documents = [first, *[document async for document in snapshot]]
+    try:
+        first = await snapshot.__anext__()
+        await engine.insert_document(
+            db,
+            coll,
+            {"_id": "after-snapshot"},
+            overwrite=False,
+            operation_context=_context(),
+        )
+        documents = [first, *[document async for document in snapshot]]
+    finally:
+        await snapshot.aclose()
     if snapshot.metadata.policy is not SnapshotPolicy.STABLE:
         message = "snapshot must declare STABLE policy"
         raise AssertionError(message)
-    if documents != [{"_id": "snapshot"}, {"_id": "snapshot-2"}] or not snapshot.closed:
+    if (
+        documents
+        != [
+            {"_id": "snapshot", "nested": {"value": 1}},
+            {"_id": "snapshot-2"},
+        ]
+        or not snapshot.closed
+    ):
         message = "snapshot must be owned, stable and close after exhaustion"
+        raise AssertionError(message)
+    documents[0]["nested"]["value"] = 999
+    stored = await engine.get_document(
+        db,
+        coll,
+        "snapshot",
+        operation_context=_context(),
+    )
+    if stored != {"_id": "snapshot", "nested": {"value": 1}}:
+        message = "snapshot items must not expose mutable engine-owned documents"
         raise AssertionError(message)
 
 
@@ -451,12 +567,146 @@ async def _check_change_delivery(
         engine.unregister_change_consumer(consumer_id)
 
 
-async def _check_search(engine: object, db: str, coll: str) -> None:
+async def _check_change_delivery_recovery(
+    engine: object,
+    db: str,
+    coll: str,
+) -> None:
+    consumer_id = f"conformance-recovery-{uuid.uuid4().hex}"
+    observer_id = f"conformance-isolation-{uuid.uuid4().hex}"
+    engine.register_change_consumer(consumer_id, initial_checkpoint=None)
+    engine.register_change_consumer(observer_id, initial_checkpoint=None)
+    try:
+        outcomes: list[InsertOutcome] = []
+        for identifier in ("event-acknowledged", "event-retry"):
+            context = OperationContext.create(
+                dialect=MONGODB_DIALECT_70,
+                publication=ChangePublicationPolicy.EMIT,
+                change_operation_type="insert",
+            )
+            outcome = await engine.insert_document(
+                db,
+                coll,
+                {"_id": identifier, "nested": {"value": 1}},
+                overwrite=False,
+                operation_context=context,
+            )
+            if (
+                not isinstance(outcome, InsertOutcome)
+                or outcome.commit_sequence is None
+            ):
+                msg = "sequenced writes require commit_sequence"
+                raise AssertionError(msg)
+            outcomes.append(outcome)
+
+        rejected_sequences: list[int] = []
+
+        class _DeliveryRejectedError(RuntimeError):
+            pass
+
+        def reject(change: CommittedChange) -> None:
+            rejected_sequences.append(change.sequence)
+            if change.sequence == outcomes[0].commit_sequence:
+                if change.payload is not None:
+                    change.payload["mutatedByConsumer"] = True
+                return
+            raise _DeliveryRejectedError
+
+        try:
+            engine.dispatch_committed_changes(consumer_id, reject)
+        except _DeliveryRejectedError:
+            pass
+        else:
+            msg = "change delivery must propagate consumer failures"
+            raise AssertionError(msg)
+
+        isolated: list[CommittedChange] = []
+        engine.dispatch_committed_changes(observer_id, isolated.append)
+        if any(
+            change.payload is not None and "mutatedByConsumer" in change.payload
+            for change in isolated
+        ):
+            msg = "change consumers must receive isolated payload snapshots"
+            raise AssertionError(msg)
+
+        observed: list[CommittedChange] = []
+        engine.dispatch_committed_changes(consumer_id, observed.append)
+        expected = [item.commit_sequence for item in outcomes]
+        if (
+            rejected_sequences != expected
+            or [change.sequence for change in observed] != expected[1:]
+        ):
+            msg = "partial delivery must retry only the unacknowledged suffix"
+            raise AssertionError(msg)
+    finally:
+        engine.unregister_change_consumer(consumer_id)
+        engine.unregister_change_consumer(observer_id)
+
+
+async def _check_vector_search_capabilities(
+    engine: object,
+    db: str,
+    coll: str,
+    *,
+    context: OperationContext,
+    similarities: frozenset[str],
+) -> None:
+    adapter = adapt_engine(engine)
+    for similarity in sorted(similarities):
+        index_name = f"by_vector_{similarity}"
+        await engine.create_search_index(
+            db,
+            coll,
+            SearchIndexDefinition(
+                {
+                    "fields": [
+                        {
+                            "type": "vector",
+                            "path": "embedding",
+                            "numDimensions": 2,
+                            "similarity": similarity,
+                        },
+                    ],
+                },
+                name=index_name,
+                index_type="vectorSearch",
+            ),
+        )
+        specification = {
+            "index": index_name,
+            "path": "embedding",
+            "queryVector": [1.0, 0.0],
+            "numCandidates": 1,
+            "limit": 1,
+        }
+        request = SearchRequest(
+            operator="$vectorSearch",
+            specification=specification,
+            query=compile_search_stage("$vectorSearch", specification),
+            mode=SearchExecutionMode.HITS,
+            operation_context=context,
+        )
+        outcome = await adapter.execute_search(db, coll, request)
+        if [item["_id"] for item in outcome.documents] != ["search"]:
+            msg = "declared vector Search capability must preserve hit semantics"
+            raise AssertionError(msg)
+
+
+async def _check_search(  # noqa: PLR0912, PLR0915 - capability matrix
+    engine: object,
+    db: str,
+    coll: str,
+) -> None:
     context = _context()
     await engine.insert_document(
         db,
         coll,
-        {"_id": "search", "title": "Ada", "kind": "note"},
+        {
+            "_id": "search",
+            "title": "Ada",
+            "kind": "note",
+            "embedding": [1.0, 0.0],
+        },
         overwrite=False,
         operation_context=context,
     )
@@ -494,6 +744,14 @@ async def _check_search(engine: object, db: str, coll: str) -> None:
         raise AssertionError(message)
     capabilities = resolve_engine_capabilities(engine)
     search_capabilities = capabilities.search
+    if "$vectorSearch" in search_capabilities.operators:
+        await _check_vector_search_capabilities(
+            engine,
+            db,
+            coll,
+            context=context,
+            similarities=search_capabilities.vector_similarities,
+        )
     if search_capabilities.metadata_collectors:
         metadata_specification = {
             **specification,
@@ -537,12 +795,20 @@ async def _check_search(engine: object, db: str, coll: str) -> None:
             operation_context=context,
         )
         highlight_outcome = await adapter.execute_search(db, coll, highlight_request)
-        has_highlights, highlights = get_document_value(
-            highlight_outcome.documents[0],
-            SEARCH_HIGHLIGHTS_METADATA_FIELD,
+        has_highlights, highlights = highlight_outcome.runtime_states[0].metadata_value(
+            RuntimeMetadataKey.SEARCH_HIGHLIGHTS,
         )
         if not has_highlights or not isinstance(highlights, list) or not highlights:
-            msg = "Search highlight must publish sidecar metadata"
+            msg = "Search highlight must publish typed runtime metadata"
+            raise AssertionError(msg)
+        persisted = highlight_outcome.runtime_states[0].persistence_document()
+        if persisted != {
+            "_id": "search",
+            "title": "Ada",
+            "kind": "note",
+            "embedding": [1.0, 0.0],
+        }:
+            msg = "Search runtime metadata must not cross persistence boundaries"
             raise AssertionError(msg)
     if search_capabilities.explain_verbosity:
         planner = await adapter.explain_search(
@@ -562,4 +828,11 @@ async def _check_search(engine: object, db: str, coll: str) -> None:
             raise AssertionError(msg)
         if execution.details.get("executionStats") is None:
             msg = "executionStats must expose Search runtime evidence"
+            raise AssertionError(msg)
+        execution_stats = execution.details["executionStats"]
+        if (
+            not isinstance(execution_stats, dict)
+            or execution_stats.get("matchedCount") != 1
+        ):
+            msg = "executionStats must expose the observed Search match count"
             raise AssertionError(msg)

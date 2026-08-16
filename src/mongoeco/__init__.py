@@ -1,6 +1,51 @@
 from importlib import import_module
+from typing import TYPE_CHECKING, Any
 
 from mongoeco._version import __version__ as __version__
+
+
+if TYPE_CHECKING:
+    from mongoeco._types import (
+        SON as SON,
+        Binary as Binary,
+        BulkWriteResult as BulkWriteResult,
+        CodecOptions as CodecOptions,
+        DBRef as DBRef,
+        Decimal128 as Decimal128,
+        DeleteMany as DeleteMany,
+        DeleteOne as DeleteOne,
+        IndexDefinition as IndexDefinition,
+        IndexModel as IndexModel,
+        InsertOne as InsertOne,
+        ObjectId as ObjectId,
+        ObjectIdLike as ObjectIdLike,
+        ReadConcern as ReadConcern,
+        ReadPreference as ReadPreference,
+        ReadPreferenceMode as ReadPreferenceMode,
+        Regex as Regex,
+        ReplaceOne as ReplaceOne,
+        ReturnDocument as ReturnDocument,
+        SearchIndexDefinition as SearchIndexDefinition,
+        SearchIndexModel as SearchIndexModel,
+        Timestamp as Timestamp,
+        TransactionOptions as TransactionOptions,
+        UndefinedType as UndefinedType,
+        UpdateMany as UpdateMany,
+        UpdateOne as UpdateOne,
+        UuidRepresentation as UuidRepresentation,
+        WriteConcern as WriteConcern,
+    )
+    from mongoeco.api import (
+        AsyncMongoClient as AsyncMongoClient,
+        MongoClient as MongoClient,
+        NowFactory as NowFactory,
+    )
+    from mongoeco.driver import (
+        MongoClientOptions as MongoClientOptions,
+        MongoUri as MongoUri,
+        parse_mongo_uri as parse_mongo_uri,
+    )
+    from mongoeco.session import ClientSession as ClientSession
 
 _CLIENT_EXPORTS = (
     "AsyncMongoClient",
@@ -42,6 +87,7 @@ _TYPE_EXPORTS = (
     "SON",
     "DBRef",
     "ObjectId",
+    "ObjectIdLike",
     "ReturnDocument",
     "UndefinedType",
     "UNDEFINED",
@@ -68,7 +114,7 @@ _EXPORT_MODULES = {
 }
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     module_name = _EXPORT_MODULES.get(name)
     if module_name is None:
         raise AttributeError(name)

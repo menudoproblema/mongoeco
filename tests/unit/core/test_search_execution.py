@@ -9,11 +9,20 @@ from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.search import compile_search_stage
 from mongoeco.core.search_execution import SearchRequest
+from mongoeco.core.search_planning import (
+    SearchPipelinePlan,
+    SearchPipelineStrategy,
+    SearchWindow,
+)
 from mongoeco.core.search_models import (
     SearchCollectorPlan,
     SearchCountResult,
+    SearchDegradation,
+    SearchExecutionMetric,
     SearchExecutionMode,
     SearchExecutionOutcome,
+    SearchExecutionPhase,
+    SearchExecutionState,
     SearchExecutionTrace,
     SearchExplainVerbosity,
     SearchFacetBucket,
@@ -24,6 +33,11 @@ from mongoeco.core.search_models import (
     SearchHighlightSpan,
     SearchHit,
     SearchMetadata,
+    SearchMetricAvailability,
+    SearchMetricDomain,
+    SearchMetricExactness,
+    SearchMetricName,
+    SearchMetricOrigin,
 )
 from mongoeco.engines._sqlite_search_runtime import _eligible_collector_options
 from mongoeco.engines.adapter import adapt_engine
@@ -313,12 +327,16 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
     def test_search_result_models_own_documents_and_nested_outputs(self) -> None:
         source = {"_id": 1, "nested": {"values": [1]}}
         outcome = SearchExecutionOutcome.from_documents([source], backend="test")
+        facet_value = {"range": [1, 2]}
+        bucket = SearchFacetBucket(value=facet_value, count=1)
 
         source["nested"]["values"].append(2)
+        facet_value["range"].append(3)
         first_read = outcome.documents
         first_read[0]["nested"]["values"].append(3)
 
         self.assertEqual(outcome.documents, [{"_id": 1, "nested": {"values": [1]}}])
+        self.assertEqual(bucket.value, {"range": [1, 2]})
 
     def test_search_result_models_validate_all_public_state_boundaries(self) -> None:
         unnamed = SearchFacetDefinition(name=None, path="kind")
@@ -480,6 +498,10 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
             ),
             "trace-backend": lambda: SearchExecutionTrace(""),
             "trace-count": lambda: SearchExecutionTrace("test", matched_count=False),
+            "trace-executed-type": lambda: SearchExecutionTrace(
+                "test",
+                executed=1,
+            ),
             "trace-collector-count": lambda: SearchExecutionTrace(
                 "test",
                 collector_count=-1,
@@ -533,10 +555,269 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(trace.backend, "memory")
         self.assertEqual(trace.matched_count, 2)
+        self.assertEqual(trace.query_matched_count, 2)
         self.assertEqual(trace.candidate_count, 4)
         self.assertEqual(trace.documents_scanned, 5)
-        self.assertEqual(trace.degradations, ("residual",))
+        self.assertEqual(trace.degradations, ("memory.exact-fallback",))
+        self.assertEqual(
+            trace.degradation_details[0].message,
+            "residual",
+        )
         self.assertEqual(valid_plan.to_document()["backend"], "sqlite")
+
+        planned = SearchExecutionTrace("test", executed=False)
+        self.assertIs(planned.execution_state, SearchExecutionState.PLANNED)
+        self.assertFalse(planned.executed)
+
+    def test_search_trace_uses_typed_metrics_and_rejects_impossible_states(
+        self,
+    ) -> None:
+        metric = SearchExecutionMetric(
+            name=SearchMetricName.QUERY_MATCHED_COUNT,
+            domain=SearchMetricDomain.QUERY,
+            value=3,
+        )
+        trace = SearchExecutionTrace("memory", metrics=(metric,))
+
+        self.assertEqual(trace.query_matched_count, 3)
+        self.assertEqual(trace.matched_count, 3)
+        self.assertEqual(trace.phases, (SearchExecutionPhase.QUERY,))
+        serialized_metrics = trace.to_document()["metrics"]
+        self.assertEqual(serialized_metrics[0], metric.to_document())
+        self.assertEqual(
+            {item["name"] for item in serialized_metrics},
+            {name.value for name in SearchMetricName},
+        )
+        self.assertTrue(
+            all(
+                item["availability"] == "unavailable" for item in serialized_metrics[1:]
+            ),
+        )
+
+        with self.assertRaisesRegex(ValueError, "domain"):
+            SearchExecutionMetric(
+                name=SearchMetricName.QUERY_MATCHED_COUNT,
+                domain=SearchMetricDomain.RESULT,
+                value=1,
+            )
+        with self.assertRaisesRegex(ValueError, "unknown exactness"):
+            SearchExecutionMetric(
+                name=SearchMetricName.CANDIDATE_COUNT,
+                domain=SearchMetricDomain.CANDIDATE,
+                value=None,
+                exactness=SearchMetricExactness.EXACT,
+                availability=SearchMetricAvailability.UNAVAILABLE,
+            )
+        with self.assertRaisesRegex(ValueError, "non-executed"):
+            SearchExecutionTrace(
+                "memory",
+                execution_state=SearchExecutionState.PLANNED,
+                metrics=(metric,),
+            )
+        with self.assertRaisesRegex(ValueError, "residual"):
+            SearchExecutionTrace(
+                "memory",
+                downstream_filtered_count=1,
+                phases=(SearchExecutionPhase.QUERY,),
+            )
+
+        with self.assertRaisesRegex(ValueError, "bound context"):
+            SearchExecutionTrace(
+                "memory",
+                execution_state=SearchExecutionState.EXECUTED,
+                context_bound=False,
+                snapshot_captured=True,
+            )
+        with self.assertRaisesRegex(ValueError, "captured snapshot"):
+            SearchExecutionTrace(
+                "memory",
+                operation_id="operation",
+                execution_state=SearchExecutionState.EXECUTED,
+                snapshot_captured=False,
+            )
+        with self.assertRaisesRegex(TypeError, "context_bound"):
+            SearchExecutionTrace("memory", context_bound="yes")
+        with self.assertRaisesRegex(ValueError, "requires operation_id"):
+            SearchExecutionTrace(
+                "memory",
+                context_bound=True,
+                snapshot_captured=True,
+            )
+
+    def test_search_trace_separates_collector_work_from_pipeline_output(self) -> None:
+        trace = SearchExecutionTrace(
+            "memory",
+            operation_id="operation",
+            snapshot_captured=True,
+            collector_count=2,
+            collector_document_count=5,
+            pipeline_output_count=1,
+        )
+
+        self.assertEqual(trace.collector_count, 2)
+        self.assertEqual(trace.collector_document_count, 5)
+        self.assertEqual(trace.pipeline_output_count, 1)
+        metrics = {metric.name: metric for metric in trace.metrics}
+        self.assertEqual(metrics[SearchMetricName.COLLECTOR_COUNT].value, 2)
+        self.assertEqual(
+            metrics[SearchMetricName.COLLECTOR_DOCUMENT_COUNT].value,
+            5,
+        )
+        self.assertEqual(metrics[SearchMetricName.PIPELINE_OUTPUT_COUNT].value, 1)
+        self.assertEqual(
+            trace.to_document()["executionContext"],
+            {"bound": True, "snapshotCaptured": True},
+        )
+
+    def test_search_observability_rejects_invalid_typed_contracts(self) -> None:
+        metric_cases = (
+            lambda: SearchExecutionMetric(
+                "queryMatchedCount", SearchMetricDomain.QUERY, 1
+            ),
+            lambda: SearchExecutionMetric(
+                SearchMetricName.QUERY_MATCHED_COUNT, "query", 1
+            ),
+            lambda: SearchExecutionMetric(
+                SearchMetricName.QUERY_MATCHED_COUNT,
+                SearchMetricDomain.QUERY,
+                1,
+                exactness="exact",
+            ),
+            lambda: SearchExecutionMetric(
+                SearchMetricName.QUERY_MATCHED_COUNT,
+                SearchMetricDomain.QUERY,
+                1,
+                origin="engine",
+            ),
+            lambda: SearchExecutionMetric(
+                SearchMetricName.QUERY_MATCHED_COUNT,
+                SearchMetricDomain.QUERY,
+                1,
+                availability="available",
+            ),
+            lambda: SearchExecutionMetric(
+                SearchMetricName.QUERY_MATCHED_COUNT,
+                SearchMetricDomain.QUERY,
+                -1,
+            ),
+            lambda: SearchExecutionMetric(
+                SearchMetricName.QUERY_MATCHED_COUNT,
+                SearchMetricDomain.QUERY,
+                1,
+                exactness=SearchMetricExactness.UNKNOWN,
+                availability=SearchMetricAvailability.UNAVAILABLE,
+            ),
+        )
+        for factory in metric_cases:
+            with (
+                self.subTest(factory=factory),
+                self.assertRaises((TypeError, ValueError)),
+            ):
+                factory()
+
+        degradation_cases = (
+            lambda: SearchDegradation("", "fallback"),
+            lambda: SearchDegradation("search.fallback", ""),
+            lambda: SearchDegradation(
+                "search.fallback",
+                "fallback",
+                origin="engine",
+            ),
+        )
+        for factory in degradation_cases:
+            with (
+                self.subTest(factory=factory),
+                self.assertRaises((TypeError, ValueError)),
+            ):
+                factory()
+
+        trace_cases = (
+            lambda: SearchExecutionTrace("memory", operation_id=""),
+            lambda: SearchExecutionTrace("memory", execution_state="executed"),
+            lambda: SearchExecutionTrace("memory", executed="yes"),
+            lambda: SearchExecutionTrace(
+                "memory",
+                executed=False,
+                execution_state=SearchExecutionState.EXECUTED,
+            ),
+            lambda: SearchExecutionTrace("memory", collector_backend=""),
+            lambda: SearchExecutionTrace("memory", metrics=("bad",)),
+            lambda: SearchExecutionTrace("memory", phases=("query",)),
+            lambda: SearchExecutionTrace(
+                "memory",
+                phases=(SearchExecutionPhase.QUERY, SearchExecutionPhase.QUERY),
+            ),
+            lambda: SearchExecutionTrace(
+                "memory",
+                metrics=(
+                    SearchExecutionMetric(
+                        SearchMetricName.QUERY_MATCHED_COUNT,
+                        SearchMetricDomain.QUERY,
+                        1,
+                    ),
+                )
+                * 2,
+            ),
+            lambda: SearchExecutionTrace("memory", degradation_details=("bad",)),
+            lambda: SearchExecutionTrace("memory", engine_details=[]),
+            lambda: SearchExecutionTrace(
+                "memory",
+                execution_state=SearchExecutionState.PLANNED,
+                phases=(SearchExecutionPhase.QUERY,),
+            ),
+            lambda: SearchExecutionTrace(
+                "memory",
+                collector_count=1,
+                phases=(SearchExecutionPhase.QUERY,),
+            ),
+            lambda: SearchExecutionTrace(
+                "memory",
+                query_matched_count=1,
+                returned_hit_count=2,
+            ),
+            lambda: SearchExecutionTrace(
+                "memory",
+                query_matched_count=2,
+                metrics=(
+                    SearchExecutionMetric(
+                        SearchMetricName.QUERY_MATCHED_COUNT,
+                        SearchMetricDomain.QUERY,
+                        1,
+                    ),
+                ),
+            ),
+            lambda: SearchExecutionTrace(
+                "memory",
+                degradation_details=(
+                    SearchDegradation("duplicate", "first"),
+                    SearchDegradation("duplicate", "second"),
+                ),
+            ),
+            lambda: SearchHit({"_id": 1}, runtime_metadata={}),
+        )
+        for factory in trace_cases:
+            with (
+                self.subTest(factory=factory),
+                self.assertRaises((TypeError, ValueError)),
+            ):
+                factory()
+
+        degradation = SearchDegradation(
+            "search.fallback",
+            "fallback",
+            SearchMetricOrigin.SEMANTIC_CORE,
+        )
+        trace = SearchExecutionTrace(
+            "memory",
+            degradations=("legacy-code",),
+            degradation_details=(degradation,),
+        )
+        self.assertEqual(
+            trace.degradations,
+            ("search.fallback", "legacy-code"),
+        )
+        residual = SearchExecutionTrace("memory", downstream_filtered_count=1)
+        self.assertIn(SearchExecutionPhase.RESIDUAL_FILTER, residual.phases)
 
     def test_search_outcome_and_collector_plan_have_stable_public_shapes(
         self,
@@ -554,6 +835,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(outcome.documents, [{"_id": 1}, {"_id": 2}])
         self.assertEqual(outcome.trace.matched_count, 2)
+        self.assertEqual(outcome.trace.returned_hit_count, 2)
         self.assertEqual(
             plan.to_document(),
             {
@@ -566,6 +848,38 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
             },
         )
 
+    def test_search_request_rejects_plans_that_diverge_from_execution(self) -> None:
+        request = _request()
+        plans = (
+            (object(), {}),
+            (SearchPipelinePlan(), {}),
+            (
+                SearchPipelinePlan(
+                    strategy=SearchPipelineStrategy.DIRECT_WINDOW,
+                    window=SearchWindow(limit=1),
+                    result_limit_hint=1,
+                    downstream_filter_spec={"kind": "note"},
+                ),
+                {},
+            ),
+            (
+                SearchPipelinePlan(
+                    strategy=SearchPipelineStrategy.PREFIX_ITERATIVE,
+                    prefix_output_limit=2,
+                    downstream_filter_spec={"kind": "note"},
+                ),
+                {},
+            ),
+            (
+                SearchPipelinePlan(downstream_filter_spec={"kind": "note"}),
+                {"result_limit_hint": 1},
+            ),
+        )
+
+        for plan, overrides in plans:
+            with self.subTest(plan=plan), self.assertRaises((TypeError, ValueError)):
+                replace(request, pipeline_plan=plan, **overrides)
+
     def test_search_capabilities_validate_contract_version_and_types(
         self,
     ) -> None:
@@ -573,8 +887,78 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
             SearchEngineCapabilities(contract_version="search-v2")
         with self.assertRaisesRegex(TypeError, "metadata_collectors"):
             SearchEngineCapabilities(metadata_collectors=1)
+        with self.assertRaisesRegex(ValueError, "similarities"):
+            SearchEngineCapabilities(
+                operators=frozenset({"$search", "$vectorSearch"}),
+            )
+        with self.assertRaisesRegex(ValueError, "operators"):
+            SearchEngineCapabilities(operators={"$search"})  # type: ignore[arg-type]
+        with self.assertRaisesRegex(ValueError, "operators"):
+            SearchEngineCapabilities(operators=frozenset({"$searchMeta"}))
+        with self.assertRaisesRegex(ValueError, "similarities"):
+            SearchEngineCapabilities(vector_similarities={"cosine"})  # type: ignore[arg-type]
+        with self.assertRaisesRegex(ValueError, "similarities"):
+            SearchEngineCapabilities(
+                vector_similarities=frozenset({"manhattan"}),
+            )
+        with self.assertRaisesRegex(ValueError, "require"):
+            SearchEngineCapabilities(
+                vector_similarities=frozenset({"cosine"}),
+            )
         with self.assertRaisesRegex(TypeError, "search must"):
             EngineCapabilities(search=object())
+
+    def test_search_request_owns_zero_window_and_rejects_unsafe_prefilters(
+        self,
+    ) -> None:
+        specification = {
+            "index": "by_text",
+            "text": {"query": "ada", "path": "title"},
+        }
+        zero_window = SearchRequest(
+            operator="$search",
+            specification=specification,
+            query=compile_search_stage("$search", specification),
+            mode=SearchExecutionMode.HITS,
+            operation_context=OperationContext.create(dialect=MONGODB_DIALECT_70),
+            result_limit_hint=0,
+        )
+        self.assertEqual(zero_window.result_limit_hint, 0)
+
+        vector_specification = {
+            "index": "by_vector",
+            "path": "embedding",
+            "queryVector": [1.0],
+            "numCandidates": 1,
+            "limit": 1,
+        }
+        with self.assertRaisesRegex(ValueError, "downstream"):
+            SearchRequest(
+                operator="$vectorSearch",
+                specification=vector_specification,
+                query=compile_search_stage("$vectorSearch", vector_specification),
+                mode=SearchExecutionMode.HITS,
+                operation_context=OperationContext.create(
+                    dialect=MONGODB_DIALECT_70,
+                ),
+                downstream_filter_spec={"kind": "note"},
+            )
+
+        highlight_specification = {
+            **specification,
+            "highlight": {"path": "title"},
+        }
+        with self.assertRaisesRegex(ValueError, "metadata"):
+            SearchRequest(
+                operator="$search",
+                specification=highlight_specification,
+                query=compile_search_stage("$search", highlight_specification),
+                mode=SearchExecutionMode.HITS,
+                operation_context=OperationContext.create(
+                    dialect=MONGODB_DIALECT_70,
+                ),
+                downstream_filter_spec={"kind": "note"},
+            )
 
     def test_declared_search_capability_requires_primitive(self) -> None:
         engine = _NativeSearchEngine()
@@ -651,6 +1035,33 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
                 "items",
                 highlight_request,
             )
+
+        vector_specification = {
+            "index": "by_vector",
+            "path": "embedding",
+            "queryVector": [1.0],
+            "numCandidates": 1,
+            "limit": 1,
+        }
+        vector_request = SearchRequest(
+            operator="$vectorSearch",
+            specification=vector_specification,
+            query=compile_search_stage("$vectorSearch", vector_specification),
+            mode=SearchExecutionMode.HITS,
+            operation_context=OperationContext.create(dialect=MONGODB_DIALECT_70),
+        )
+        with self.assertRaisesRegex(OperationFailure, r"\$vectorSearch"):
+            await adapt_engine(engine).execute_search("db", "items", vector_request)
+
+        engine.capabilities = replace(
+            engine.capabilities,
+            search=SearchEngineCapabilities(
+                operators=frozenset({"$search", "$vectorSearch"}),
+                vector_similarities=frozenset({"dotProduct"}),
+            ),
+        )
+        with self.assertRaisesRegex(OperationFailure, "similarity"):
+            await adapt_engine(engine).execute_search("db", "items", vector_request)
         self.assertIsNone(engine.request)
 
     async def test_adapter_rejects_invalid_search_inputs_and_returns(
@@ -1288,7 +1699,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertEqual(
                         details["highlightPlan"]["storage"],
-                        "sidecar",
+                        "runtime-envelope",
                     )
 
 

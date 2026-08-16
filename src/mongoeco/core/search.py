@@ -20,6 +20,15 @@ from mongoeco.core._search_contract import (
 )
 from mongoeco.core.bson_ordering import bson_engine_key
 from mongoeco.core.paths import get_document_value
+from mongoeco.core.runtime_metadata import (
+    RUNTIME_METADATA_FIELD,
+    RuntimeDocumentState,
+    RuntimeMetadataKey,
+    ensure_runtime_state,
+    prepare_persistence_document,
+    prepare_public_document,
+    runtime_state_from_legacy_document,
+)
 from mongoeco.core.search_models import (
     SearchCountResult,
     SearchFacetBucket,
@@ -44,9 +53,7 @@ from mongoeco.types import (
 
 SUPPORTED_SEARCH_INDEX_TYPES = {"search", "vectorSearch"}
 TEXTUAL_SEARCH_INDEX_TYPES = {"search"}
-# BSON cstrings cannot contain NUL, so persisted user documents can never
-# collide with this internal sidecar namespace.
-SEARCH_RESULT_METADATA_FIELD = "\x00mongoeco_search_metadata"
+SEARCH_RESULT_METADATA_FIELD = RUNTIME_METADATA_FIELD
 TEXT_SCORE_FIELD = f"{SEARCH_RESULT_METADATA_FIELD}.textScore"
 VECTOR_SEARCH_SCORE_FIELD = f"{SEARCH_RESULT_METADATA_FIELD}.vectorSearchScore"
 SEARCH_HIGHLIGHTS_METADATA_FIELD = f"{SEARCH_RESULT_METADATA_FIELD}.highlights"
@@ -679,28 +686,45 @@ def _token_sequence_contains(
     return False
 
 
-def attach_text_score(document: Document, score: float) -> Document:
-    enriched = deepcopy(document)
-    metadata = dict(enriched.get(SEARCH_RESULT_METADATA_FIELD, {}))
-    metadata["textScore"] = float(score)
-    enriched[SEARCH_RESULT_METADATA_FIELD] = metadata
-    return enriched
+def attach_text_score(
+    document: Document | RuntimeDocumentState,
+    score: float,
+) -> RuntimeDocumentState:
+    return ensure_runtime_state(document).with_metadata_value(
+        RuntimeMetadataKey.TEXT_SCORE,
+        float(score),
+    )
 
 
-def attach_vector_search_score(document: Document, score: float) -> Document:
-    enriched = deepcopy(document)
-    metadata = dict(enriched.get(SEARCH_RESULT_METADATA_FIELD, {}))
-    metadata["vectorSearchScore"] = float(score)
-    enriched[SEARCH_RESULT_METADATA_FIELD] = metadata
-    return enriched
+def attach_vector_search_score(
+    document: Document | RuntimeDocumentState,
+    score: float,
+) -> RuntimeDocumentState:
+    return ensure_runtime_state(document).with_metadata_value(
+        RuntimeMetadataKey.VECTOR_SEARCH_SCORE,
+        float(score),
+    )
 
 
-def strip_search_result_metadata(document: Document) -> Document:
-    if SEARCH_RESULT_METADATA_FIELD not in document:
+def strip_search_result_metadata(
+    document: Document | RuntimeDocumentState,
+    *,
+    for_persistence: bool = False,
+) -> Document:
+    """Remove runtime metadata, preserving explicitly materialized values."""
+    if isinstance(document, RuntimeDocumentState):
+        return (
+            prepare_persistence_document(document)
+            if for_persistence
+            else prepare_public_document(document)
+        )
+    if not isinstance(document, dict):
+        message = "runtime document state requires a document"
+        raise TypeError(message)
+    if RUNTIME_METADATA_FIELD not in document:
         return document
-    cleaned = dict(document)
-    cleaned.pop(SEARCH_RESULT_METADATA_FIELD, None)
-    return cleaned
+    state = runtime_state_from_legacy_document(document)
+    return state.persistence_document() if for_persistence else state.public_document()
 
 
 def iter_classic_text_values(
@@ -1765,7 +1789,7 @@ def _search_highlight_plan(query: SearchQuery) -> dict[str, object]:
     return {
         "enabled": options.highlight is not None,
         "extractor": "shared-span-extractor",
-        "storage": "sidecar",
+        "storage": "runtime-envelope",
         "offsetUnit": "python-code-point",
     }
 
@@ -3503,33 +3527,38 @@ def _query_paths(query: SearchTextLikeQuery) -> tuple[str, ...]:
 
 
 def attach_search_highlights(
-    document: Document,
+    document: Document | RuntimeDocumentState,
     *,
     definition: SearchIndexDefinition,
     query: SearchTextLikeQuery,
-) -> Document:
+) -> Document | RuntimeDocumentState:
+    state = ensure_runtime_state(document)
     options = _search_stage_options(query)
     if options.highlight is None:
-        return document
+        return state if isinstance(document, RuntimeDocumentState) else document
     highlights = build_search_highlights(
-        document,
+        state.document,
         definition=definition,
         query=query,
         spec=options.highlight,
     )
     if not highlights:
-        return document
-    highlighted = deepcopy(document)
-    metadata = dict(highlighted.get(SEARCH_RESULT_METADATA_FIELD, {}))
-    metadata["highlights"] = deepcopy(highlights)
-    highlighted[SEARCH_RESULT_METADATA_FIELD] = metadata
-    if SEARCH_HIGHLIGHTS_FIELD not in highlighted:
-        highlighted[SEARCH_HIGHLIGHTS_FIELD] = highlights
-    return highlighted
+        return state if isinstance(document, RuntimeDocumentState) else document
+    state = state.with_metadata_value(
+        RuntimeMetadataKey.SEARCH_HIGHLIGHTS,
+        highlights,
+    )
+    if SEARCH_HIGHLIGHTS_FIELD not in state.document:
+        state = state.with_virtual_field(
+            SEARCH_HIGHLIGHTS_FIELD,
+            highlights,
+            source=RuntimeMetadataKey.SEARCH_HIGHLIGHTS,
+        )
+    return state
 
 
 def build_search_stage_option_previews(
-    documents: list[Document],
+    documents: list[Document | RuntimeDocumentState],
     *,
     definition: SearchIndexDefinition,
     query: SearchTextLikeQuery,
@@ -3548,8 +3577,8 @@ def build_search_stage_option_previews(
     if options.highlight is not None:
         preview_fragments: list[dict[str, object]] = []
         for document in documents:
-            value = document.get(SEARCH_HIGHLIGHTS_FIELD)
-            if isinstance(value, list):
+            found, value = get_document_value(document, SEARCH_HIGHLIGHTS_FIELD)
+            if found and isinstance(value, list):
                 for item in value:
                     if isinstance(item, dict):
                         preview_fragments.append(deepcopy(item))
@@ -3563,9 +3592,12 @@ def build_search_stage_option_previews(
                 else list(options.highlight.paths)
             ),
             "fragmentCount": sum(
-                len(document.get(SEARCH_HIGHLIGHTS_FIELD, ()))
+                len(get_document_value(document, SEARCH_HIGHLIGHTS_FIELD)[1])
                 for document in documents
-                if isinstance(document.get(SEARCH_HIGHLIGHTS_FIELD), list)
+                if isinstance(
+                    get_document_value(document, SEARCH_HIGHLIGHTS_FIELD)[1],
+                    list,
+                )
             ),
             "sample": preview_fragments[:3],
         }
@@ -3574,7 +3606,7 @@ def build_search_stage_option_previews(
         previews["highlightPreview"] = highlight_preview
     if options.facet is not None:
         previews["facetPreview"] = _facet_preview_payload(
-            documents,
+            [prepare_public_document(document) for document in documents],
             options.facet,
         )
     return previews
@@ -3591,10 +3623,11 @@ def build_search_meta_document(
 
 
 def collect_search_metadata(
-    documents: list[Document],
+    documents: list[Document | RuntimeDocumentState],
     *,
     query: SearchTextLikeQuery,
 ) -> SearchMetadata:
+    public_documents = [prepare_public_document(document) for document in documents]
     options = _search_stage_options(query)
     if options.highlight is not None:
         message = "$searchMeta does not support highlight"
@@ -3610,7 +3643,7 @@ def collect_search_metadata(
         )
     facets = (
         tuple(
-            _collect_facet_result(documents, definition)
+            _collect_facet_result(public_documents, definition)
             for definition in options.facet.definitions
         )
         if options.facet is not None

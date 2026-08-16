@@ -26,6 +26,13 @@ The workflow has a bounded timeout and preserves evidence even on failure.
 It also records the exact server `buildInfo`. A case filter that resolves to
 zero tests exits with a usage error instead of producing a false green.
 
+The aggregation matrix covers `$project`, `$set`, `$addFields`, `$unset`,
+`$replaceRoot`, `$replaceWith`, `$unwind`, `$group`, `$facet`, `$lookup`,
+`$unionWith` and `$merge`, including nested arrays, missing fields, fan-out and
+writeback. `REAL_CAPTURE_PENDING_CASES` identifies executable cases not yet
+present in the checked-in real-server replay fixture. Local engine parity does
+not remove a case from that set; only a successful real capture may do so.
+
 Tagged releases call this workflow as a required reusable job for both MongoDB
 7.0 and 8.0. Publication cannot start unless the differential matrix, the
 artifact build and the installed-wheel test jobs have all succeeded.

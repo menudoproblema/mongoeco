@@ -41,6 +41,8 @@ class SearchEngineCapabilities:
     metadata_collectors: bool = False
     highlight: bool = False
     explain_verbosity: bool = False
+    operators: frozenset[str] = frozenset({"$search"})
+    vector_similarities: frozenset[str] = frozenset()
 
     def __post_init__(self) -> None:
         if self.contract_version != "search-v1":
@@ -54,6 +56,28 @@ class SearchEngineCapabilities:
             if not isinstance(getattr(self, field_name), bool):
                 message = f"{field_name} must be a bool"
                 raise TypeError(message)
+        if (
+            not isinstance(self.operators, frozenset)
+            or not self.operators
+            or not all(
+                operator in {"$search", "$vectorSearch"} for operator in self.operators
+            )
+        ):
+            message = "Search operators must be a non-empty supported frozenset"
+            raise ValueError(message)
+        supported_similarities = {"cosine", "dotProduct", "euclidean"}
+        if (
+            not isinstance(self.vector_similarities, frozenset)
+            or not self.vector_similarities <= supported_similarities
+        ):
+            message = "vector similarities must be a supported frozenset"
+            raise ValueError(message)
+        if "$vectorSearch" in self.operators and not self.vector_similarities:
+            message = "vector Search capability requires declared similarities"
+            raise ValueError(message)
+        if "$vectorSearch" not in self.operators and self.vector_similarities:
+            message = "vector similarities require the $vectorSearch capability"
+            raise ValueError(message)
 
 
 @dataclass(frozen=True, slots=True)
@@ -179,6 +203,6 @@ def validate_engine_contract(
     message = (
         f"SPI v{capabilities.spi_version} engine "
         f"{type(engine).__name__} is missing required methods: "
-        f'{", ".join(missing)}'
+        f"{', '.join(missing)}"
     )
     raise TypeError(message)

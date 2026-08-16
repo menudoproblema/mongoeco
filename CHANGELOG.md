@@ -8,6 +8,120 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.6.0] - 2026-08-17
+
+### Added
+
+- `mongoeco.compat` publica un catalogo de deprecaciones versionado, tipado y
+  validado por JSON Schema. El recurso se distribuye en wheel/sdist y distingue
+  retiradas decididas de elementos todavia `decision-pending`.
+- Un manifest semantico reproducible captura exports, firmas, defaults, tipos,
+  async, DTO, protocolos, contratos y recursos publicos. Su comparador
+  clasifica adiciones, retiradas y cambios de firma, default, tipo, schema o
+  revision manual; CI aplica `--check` contra el wheel instalado.
+- Una fixture SQLite creada con el wheel oficial 4.5.0 conserva BSON, indices,
+  Search, outbox y checkpoints. El generador fija dependencias, normaliza el
+  unico timestamp operacional y registra artefacto, runtime y SHA-256 para
+  probar compatibilidad persistente por separado de la API Python.
+- `python -m mongoeco.conformance package.module:factory` expone el runner
+  publico mediante una CLI fina con perfiles, JSON/human, fichero, cleanup,
+  timeout, validacion de schema y codigos de salida estables.
+- ADR-016 selecciona una transicion cohesiva hacia 5.0. Las propuestas SPI v3,
+  `search-v2`, adapters versionados, guia de migracion y roadmap definen una
+  minor opt-in antes de retirar contratos; no publican aun esos contratos.
+- Las distribuciones son PEP 561: incluyen `py.typed`, declaran
+  `Typing :: Typed` y CI ejecuta fixtures consumidoras positivas y negativas
+  con mypy estricto contra el wheel instalado.
+- Un engine canario independiente implementa SPI v2 importando solo
+  `mongoeco.engines`. Su smoke de artefacto y una comprobacion AST bloquean
+  dependencias accidentales de Memory, SQLite o modulos privados.
+- El informe `mongoeco-conformance-report/v1` dispone de JSON Schema Draft
+  2020-12 publico, versionado y distribuido. El schema valida estados globales y
+  por check, y mantiene una fixture de compatibilidad v1.
+- Hypothesis genera pipelines Search/provenance acotados y compara oraculo
+  optimizado/reference, Memory/SQLite y sync/async, incluidos errores,
+  writeback y change events. CI usa un corpus rapido y el workflow periodico
+  `Contract fuzz` conserva una exploracion profunda.
+- Las guardas de coste fijan reglas, ownership, residuals, candidatos, scans y
+  dominios de metricas sin depender de tiempos absolutos.
+- El diferencial real MongoDB 7/8 incorpora `$project`, `$set`, `$addFields`,
+  `$unset`, `$replaceRoot`, `$replaceWith`, `$unwind`, `$group`, `$facet`,
+  `$lookup`, `$unionWith` y `$merge`; los casos pendientes de captura golden se
+  distinguen explicitamente del corpus ya obtenido de un servidor real.
+- Search usa `RuntimeDocumentState` para separar documento BSON, metadata y
+  campos virtuales. `$unwind`, `$group`, `$facet`, `$lookup`, `$unionWith`,
+  proyecciones y writeback aplican reglas explicitas de provenance; el sidecar
+  con NUL queda limitado al adapter SPI v1 deprecado.
+- Un planner Search inmutable modela efectos de cardinalidad, orden, metadata y
+  writeback, dominio de stage, reglas aplicadas, rechazos y ownership por fase.
+  Ejecucion y `explain()` consumen el mismo plan y un modo reference interno
+  prueba resultados, collectors, errores, writeback y eventos con semilla
+  reproducible en Memory/SQLite y sync/async.
+- Las trazas Search declaran estado, fases, metricas con dominio, exactitud,
+  origen y disponibilidad, degradaciones con codigo estable y detalles fisicos
+  aislados bajo `engineDetails`. Los campos planos siguen como aliases 4.x.
+- El kit de conformidad emite el schema JSON estable
+  `mongoeco-conformance-report/v1`, distingue `passed`, `failed`, `error` y
+  `not-applicable`, prueba batches declarados y publica factories deterministas
+  para contextos, snapshots, outcomes, cancelacion, change delivery y Search.
+- El planner SQLite expone un contrato tipado `sql-exact`, `sql-prefilter` o
+  `python`, con SQL, parametros, residual, collectors y ownership explicito de
+  filtros, sort y ventana. Los estados contradictorios se rechazan al construir
+  el plan y las metricas runtime se agrupan por modo.
+
+### Fixed
+
+- SQLite cierra de forma transaccional todos los handles en construccion si
+  falla cualquier fase de `connect()`, incluidos los `PRAGMA`, la validacion de
+  schema futuro y la conexion dedicada de change delivery. El engine vuelve a
+  estado desconectado reutilizable sin filtrar recursos ni publicar caches
+  parciales.
+- La fachada publica `ObjectId` declara la misma firma, propiedad `binary` y
+  contrato introspectable con o sin el extra PyMongo. El protocolo estructural
+  `ObjectIdLike` conserva la interoperabilidad tipada y runtime con
+  `bson.ObjectId` sin hacer depender el manifest del entorno instalado.
+- Las proyecciones inclusivas de rutas hermanas dentro de un array de
+  subdocumentos se compilan ahora como un unico arbol. Los campos del mismo
+  elemento ya no se fragmentan en entradas separadas y los arrays independientes
+  no se combinan por posicion.
+- Aggregation reproduce el orden BSON de MongoDB en proyecciones inclusivas y
+  `$merge`, conserva `[]` al recorrer arrays sin valores y materializa
+  `includeArrayIndex` de `$unwind` como BSON `Int64`. Con
+  `preserveNullAndEmptyArrays`, un array vacio elimina el campo igual que
+  MongoDB, sin confundirlo con `null` ni con una ruta ausente.
+- El planner de aggregation conserva el orden semantico entre Search y el
+  pipeline: `$searchMeta` no recibe optimizaciones del dominio de hits,
+  `$vectorSearch` aplica el `$match` downstream despues de top-k y los filtros
+  dependientes de highlight o collectors no se adelantan a su metadata.
+  Ejecucion y `explain()` consumen ahora el mismo plan inmutable; `$limit: 0`
+  valida Search sin materializar hits.
+- La metadata privada de Search no forma parte del documento BSON. El alias
+  legacy de highlight es ahora un campo virtual con provenance ligada al valor:
+  `$merge` no lo persiste tras una proyeccion, pero conserva sobrescrituras y
+  copias explicitas del usuario.
+- `executionStats` ejecuta Search una sola vez, rechaza indices pendientes y
+  separa matches de query, hits retornados, filtrado downstream, candidatos y
+  documentos escaneados sin fabricar evidencia de runtime. El trabajo de
+  collectors y la salida final tienen dominios propios; toda metrica canonica
+  representa tambien su estado no disponible.
+- Las capabilities Search declaran operadores y similitudes vectoriales; el
+  adapter y el kit de conformidad verifican toda capacidad anunciada.
+- Los outcomes SPI v2, cambios confirmados y buckets de facets toman ownership
+  defensivo de documentos y valores mutables. Cada consumer recibe un payload
+  aislado, los replays parciales conservan solo el sufijo no confirmado y los
+  snapshots entregan documentos propios y descartan recursos rechazados.
+- La normalizacion reproducible del sdist exige una unica raiz, `PKG-INFO`,
+  nombres NFC sin colisiones case-insensitive y ausencia de links. CI compara
+  byte a byte dos builds de wheel/sdist y aplica el 99% de cobertura sin
+  redondeo.
+
+### Performance
+
+- Se rechazo deliberadamente el prefiltrado SQLite de igualdad indexada con
+  residual `$expr`: el benchmark reproducible fue ligeramente peor que el
+  baseline Python (0,8529 s frente a 0,8464 s). El fallback se conserva para no
+  asumir coste de mantenimiento sin una mejora material.
+
 ## [4.5.0] - 2026-08-15
 
 ### Added

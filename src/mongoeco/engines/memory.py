@@ -37,6 +37,8 @@ from mongoeco.core.identity import (
     assert_document_matches_storage_key,
     assert_valid_root_document_id,
     document_matches_root_id_lookup,
+    materialize_merge_insert_document,
+    materialize_merge_update_document,
     materialize_replacement_document,
 )
 from mongoeco.core.operation_context import (
@@ -50,6 +52,10 @@ from mongoeco.core.query_plan import (
     EqualsCondition,
     QueryNode,
     ensure_query_plan,
+)
+from mongoeco.core.runtime_metadata import (
+    RuntimeDocumentState,
+    legacy_document_from_runtime_state,
 )
 from mongoeco.core.search import (
     MaterializedSearchDocument,
@@ -337,6 +343,8 @@ class MemoryEngine(AsyncStorageEngine):
             metadata_collectors=True,
             highlight=True,
             explain_verbosity=True,
+            operators=frozenset({"$search", "$vectorSearch"}),
+            vector_similarities=frozenset({"cosine", "dotProduct", "euclidean"}),
         ),
     )
     """Motor de almacenamiento en memoria ultra-rápido."""
@@ -980,7 +988,7 @@ class MemoryEngine(AsyncStorageEngine):
                     if change.sequence > checkpoint
                 )
             for change in changes:
-                consumer(change)
+                consumer(change.for_delivery())
                 with self._meta_lock:
                     self._change_checkpoints[consumer_id] = max(
                         self._change_checkpoints[consumer_id],
@@ -2550,8 +2558,10 @@ class MemoryEngine(AsyncStorageEngine):
                     next_document = deepcopy(document)
                     operation_type = "replace"
                 else:
-                    next_document = deepcopy(original_document)
-                    next_document.update(deepcopy(document))
+                    next_document = materialize_merge_update_document(
+                        original_document,
+                        document,
+                    )
                     operation_type = "update"
                 assert_document_kept_storage_key(
                     next_document,
@@ -2573,7 +2583,11 @@ class MemoryEngine(AsyncStorageEngine):
             else:
                 if when_not_matched != "insert":
                     return MergeOutcome(matched=False, applied=False)
-                next_document = deepcopy(document)
+                next_document = (
+                    materialize_merge_insert_document(document)
+                    if when_matched == "merge"
+                    else deepcopy(document)
+                )
                 operation_type = "insert"
 
             enforce_collection_document_validation(
@@ -4299,7 +4313,12 @@ class MemoryEngine(AsyncStorageEngine):
             downstream_filter_spec=downstream_filter_spec,
         )
         enforce_deadline(deadline)
-        return result
+        return [
+            legacy_document_from_runtime_state(document)
+            if isinstance(document, RuntimeDocumentState)
+            else document
+            for document in result
+        ]
 
     async def execute_search(
         self,
@@ -4328,7 +4347,10 @@ class MemoryEngine(AsyncStorageEngine):
                 ),
                 trace=SearchExecutionTrace(
                     backend="memory",
+                    operation_id=request.operation_context.operation_id,
+                    snapshot_captured=True,
                     matched_count=len(documents),
+                    collector_document_count=len(documents),
                     collector_backend="semantic-core",
                     collector_count=(
                         (1 if request.query.stage_options.count else 0)
@@ -4350,6 +4372,7 @@ class MemoryEngine(AsyncStorageEngine):
         return SearchExecutionOutcome.from_documents(
             documents,
             backend="memory",
+            operation_id=request.operation_context.operation_id,
         )
 
     async def explain_search_documents(
@@ -4383,13 +4406,17 @@ class MemoryEngine(AsyncStorageEngine):
         request: SearchRequest,
         verbosity: SearchExplainVerbosity,
     ) -> QueryPlanExplanation:
+        plan = await _plan_memory_search_documents(
+            self,
+            db_name,
+            coll_name,
+            request,
+        )
         if verbosity is SearchExplainVerbosity.QUERY_PLANNER:
-            return await _plan_memory_search_documents(
-                self,
-                db_name,
-                coll_name,
-                request,
-            )
+            return plan
+        if (plan.details or {}).get("status") != "READY":
+            message = f"search index [{request.query.index_name}] is not ready"
+            raise OperationFailure(message)
         if request.mode is SearchExecutionMode.HITS:
             explanation = await _explain_memory_search_documents(
                 self,
@@ -4411,16 +4438,11 @@ class MemoryEngine(AsyncStorageEngine):
                     "executionStats": SearchExecutionTrace.from_explain_details(
                         details,
                         default_backend="memory",
+                        operation_id=request.operation_context.operation_id,
                     ).to_document(),
                 },
             )
             return replace(explanation, details=details)
-        plan = await _plan_memory_search_documents(
-            self,
-            db_name,
-            coll_name,
-            request,
-        )
         outcome = await self.execute_search(db_name, coll_name, request)
         details = dict(plan.details or {})
         trace = outcome.trace

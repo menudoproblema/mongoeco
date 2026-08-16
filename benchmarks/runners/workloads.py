@@ -47,7 +47,7 @@ def _operation_summary(explain: dict[str, Any]) -> str:
 
 
 def _summarize_find_explain(explain: dict[str, Any]) -> dict[str, Any]:
-    return {
+    summary = {
         "summary": _operation_summary(explain),
         "engine": explain.get("engine"),
         "strategy": explain.get("strategy"),
@@ -55,6 +55,19 @@ def _summarize_find_explain(explain: dict[str, Any]) -> dict[str, Any]:
         "limit": explain.get("limit"),
         "physical_plan": explain.get("physical_plan"),
     }
+    details = explain.get("details")
+    pushdown = details.get("pushdown") if isinstance(details, dict) else None
+    if isinstance(pushdown, dict):
+        summary.update(
+            {
+                "pushdown_mode": pushdown.get("contractMode"),
+                "residual_required": pushdown.get("residualRequired"),
+                "filter_owner": pushdown.get("filterOwner"),
+                "sort_owner": pushdown.get("sortOwner"),
+                "window_owner": pushdown.get("windowOwner"),
+            },
+        )
+    return summary
 
 
 def _summarize_aggregate_explain(explain: dict[str, Any]) -> dict[str, Any]:
@@ -172,7 +185,7 @@ def _augment_search_documents(docs: list[dict[str, Any]]) -> None:
         document["body"] = (
             f"{person} wrote about {topic}. "
             f"{summary}. "
-            f'{document["city"]} field report {index % 7}.'
+            f"{document['city']} field report {index % 7}."
         )
         document["kind"] = "reference" if index % 3 == 0 else "note"
         # Avoid ANN tie instability while preserving the four semantic clusters.
@@ -632,11 +645,21 @@ def predicate_diagnostics(
     eq_bool_metrics: list[Metrics] = []
     eq_string_metrics: list[Metrics] = []
     cmp_int_metrics: list[Metrics] = []
+    conjunct_residual_metrics: list[Metrics] = []
+    conjunct_residual_reference_metrics: list[Metrics] = []
     db_name, coll_name, docs = _load_users(engine, count)
     try:
+        reference_coll_name = "users_conjunct_reference"
+        engine.drop_collection(db_name, reference_coll_name)
+        engine.insert_many(db_name, reference_coll_name, docs)
+        engine.create_index(db_name, coll_name, [("city", 1)])
         eq_bool_filter = {"active": True}
         eq_string_filter = {"city": "Madrid"}
         cmp_int_filter = {"age": {"$gte": 40}}
+        conjunct_residual_filter = {
+            "city": "Madrid",
+            "$expr": {"$gte": ["$age", 40]},
+        }
 
         eq_bool_metadata = {
             **_summarize_find_explain(
@@ -665,6 +688,35 @@ def predicate_diagnostics(
             "field_shape": "top-level scalar",
             "selectivity": "medium",
         }
+        conjunct_residual_metadata = {
+            **_summarize_find_explain(
+                engine.explain_find(
+                    db_name,
+                    coll_name,
+                    conjunct_residual_filter,
+                ),
+            ),
+            "query_shape": "indexed scalar conjunct + expression residual",
+            "operator_shape": "$eq + $expr",
+            "field_shape": "top-level scalar",
+            "selectivity": "medium prefilter, lower residual",
+            "result_count": len(
+                engine.find(db_name, coll_name, conjunct_residual_filter),
+            ),
+        }
+        conjunct_residual_reference_metadata = {
+            **_summarize_find_explain(
+                engine.explain_find(
+                    db_name,
+                    reference_coll_name,
+                    conjunct_residual_filter,
+                ),
+            ),
+            "query_shape": "unindexed scalar conjunct + expression residual",
+            "operator_shape": "$eq + $expr",
+            "field_shape": "top-level scalar",
+            "selectivity": "full Python reference",
+        }
 
         return {
             "predicate_eq_bool_high_100": _measure_single_task(
@@ -688,6 +740,26 @@ def predicate_diagnostics(
                     engine.find(db_name, coll_name, cmp_int_filter) for _ in range(100)
                 ],
                 metadata=cmp_int_metadata,
+            ),
+            "predicate_indexed_conjunct_residual_100": _measure_single_task(
+                conjunct_residual_metrics,
+                callback=lambda: [
+                    engine.find(db_name, coll_name, conjunct_residual_filter)
+                    for _ in range(100)
+                ],
+                metadata=conjunct_residual_metadata,
+            ),
+            "predicate_unindexed_conjunct_residual_100": _measure_single_task(
+                conjunct_residual_reference_metrics,
+                callback=lambda: [
+                    engine.find(
+                        db_name,
+                        reference_coll_name,
+                        conjunct_residual_filter,
+                    )
+                    for _ in range(100)
+                ],
+                metadata=conjunct_residual_reference_metadata,
             ),
         }
     finally:

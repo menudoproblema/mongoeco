@@ -40,7 +40,7 @@ class WireBsonBridgeTests(unittest.TestCase):
         )
 
         self.assertEqual(decoded["_id"], ObjectId("507f1f77bcf86cd799439011"))
-        self.assertEqual(decoded["long"], 9)
+        self.assertEqual(decoded["long"], BsonInt64(9))
         self.assertEqual(decoded["decimal"], MongoecoDecimal128("12.5"))
         self.assertEqual(decoded["uuid"], session_id)
         self.assertEqual(decoded["regex"], MongoecoRegex("^ab", "im"))

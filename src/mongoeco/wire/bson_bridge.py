@@ -59,7 +59,7 @@ def decode_wire_value(value: Any) -> Any:
     if isinstance(value, BsonDecimal128Public):
         return Decimal128(value.to_decimal())
     if isinstance(value, Int64):
-        return int(value)
+        return BsonInt64(int(value))
     if isinstance(value, BsonDBRef):
         return DBRef(
             value.collection,

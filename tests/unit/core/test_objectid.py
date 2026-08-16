@@ -7,13 +7,47 @@ from pathlib import Path
 from unittest.mock import patch
 
 import mongoeco._types._bson_objectid as objectid_module
-from mongoeco.types import DeleteResult, InsertManyResult, InsertOneResult, ObjectId, UNDEFINED, UndefinedType, UpdateResult
+from mongoeco.types import (
+    DeleteResult,
+    InsertManyResult,
+    InsertOneResult,
+    ObjectId,
+    ObjectIdLike,
+    UNDEFINED,
+    UndefinedType,
+    UpdateResult,
+)
+
 try:
     from bson.objectid import ObjectId as BsonObjectId
 except Exception:  # pragma: no cover - optional dependency
     BsonObjectId = None
 
+
+class _CompatibleObjectId:
+    binary = bytes.fromhex("507f1f77bcf86cd799439011")
+
+
+class _InvalidCompatibleObjectId:
+    binary = b"short"
+
+
+def _assert_structural_fallback_contract(test_case, fallback_object_id):
+    from_compatible = fallback_object_id(_CompatibleObjectId())
+    test_case.assertEqual(from_compatible.binary, _CompatibleObjectId.binary)
+    with test_case.assertRaises(ValueError):
+        fallback_object_id(_InvalidCompatibleObjectId())
+
+
 class TestObjectId(unittest.TestCase):
+    def test_accepts_structural_object_id_input(self):
+        class CompatibleObjectId:
+            binary = bytes.fromhex("507f1f77bcf86cd799439011")
+
+        compatible: ObjectIdLike = CompatibleObjectId()
+
+        self.assertEqual(ObjectId(compatible).binary, compatible.binary)
+
     def test_generation_is_unique(self):
         oid1 = ObjectId()
         oid2 = ObjectId()
@@ -25,7 +59,7 @@ class TestObjectId(unittest.TestCase):
         s = str(oid)
         self.assertEqual(len(s), 24)
         self.assertTrue(all(c in "0123456789abcdef" for c in s))
-        
+
         # Round-trip
         oid2 = ObjectId(s)
         self.assertEqual(oid, oid2)
@@ -42,12 +76,12 @@ class TestObjectId(unittest.TestCase):
         before = int(time.time())
         oid = ObjectId()
         after = int(time.time())
-        
+
         self.assertTrue(before <= oid.generation_time <= after)
 
     def test_ordering(self):
         oid1 = ObjectId()
-        time.sleep(0.01) # Asegurar que el timestamp o contador avance
+        time.sleep(0.01)  # Asegurar que el timestamp o contador avance
         oid2 = ObjectId()
         self.assertTrue(oid1 < oid2)
 
@@ -85,7 +119,9 @@ class TestObjectId(unittest.TestCase):
         if BsonObjectId is None:
             self.skipTest("bson is not installed")
 
-        with patch.object(objectid_module._PyMongoObjectId, "__init__", side_effect=TypeError("boom")):
+        with patch.object(
+            objectid_module._PyMongoObjectId, "__init__", side_effect=TypeError("boom")
+        ):
             with self.assertRaisesRegex(TypeError, "boom"):
                 ObjectId("0" * 24)
 
@@ -104,7 +140,9 @@ class TestObjectId(unittest.TestCase):
     def test_result_types_use_slots(self):
         self.assertFalse(hasattr(InsertOneResult(inserted_id="x"), "__dict__"))
         self.assertFalse(hasattr(InsertManyResult(inserted_ids=["x"]), "__dict__"))
-        self.assertFalse(hasattr(UpdateResult(matched_count=1, modified_count=0), "__dict__"))
+        self.assertFalse(
+            hasattr(UpdateResult(matched_count=1, modified_count=0), "__dict__")
+        )
         self.assertFalse(hasattr(DeleteResult(deleted_count=1), "__dict__"))
 
     def test_undefined_singleton_has_stable_repr_hash_and_equality(self):
@@ -113,7 +151,7 @@ class TestObjectId(unittest.TestCase):
         self.assertEqual(UNDEFINED, UndefinedType())
 
     def test_fallback_objectid_implementation_behaves_without_bson_dependency(self):
-        module_path = Path(__file__).resolve().parents[3] / "src" / "mongoeco" / "_types" / "_bson_objectid.py"
+        module_path = Path(objectid_module.__file__).resolve()
         module_name = "mongoeco._types._bson_objectid_fallback_test"
         spec = importlib.util.spec_from_file_location(module_name, module_path)
         self.assertIsNotNone(spec)
@@ -132,6 +170,8 @@ class TestObjectId(unittest.TestCase):
             spec.loader.exec_module(module)
 
         FallbackObjectId = module.ObjectId
+        _assert_structural_fallback_contract(self, FallbackObjectId)
+
         generated = FallbackObjectId()
         copied = FallbackObjectId(generated)
         from_text = FallbackObjectId(str(generated))
@@ -150,7 +190,9 @@ class TestObjectId(unittest.TestCase):
         self.assertFalse(FallbackObjectId("0" * 24) == "other")
         self.assertIs(FallbackObjectId("0" * 24).__lt__("other"), NotImplemented)
         self.assertEqual(FallbackObjectId("0" * 24).generation_time, 0)
-        self.assertEqual(hash(FallbackObjectId("0" * 24)), hash(FallbackObjectId("0" * 24)))
+        self.assertEqual(
+            hash(FallbackObjectId("0" * 24)), hash(FallbackObjectId("0" * 24))
+        )
         self.assertTrue(FallbackObjectId("0" * 24) < FallbackObjectId("1" * 24))
 
         normalized_same = module.normalize_object_id(generated)

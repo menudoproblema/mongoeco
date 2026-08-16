@@ -70,6 +70,7 @@ from mongoeco._types import (
     normalize_transaction_options,
     normalize_write_concern,
     ObjectId,
+    ObjectIdLike as ObjectIdLike,  # noqa: PLC0414 - public re-export
     OkResult,
     OBJECT_ID_TYPES,
     PhysicalPlanStep,

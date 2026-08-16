@@ -7,6 +7,7 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.search import SearchQuery, compile_search_stage
 from mongoeco.core.search_models import SearchExecutionMode
+from mongoeco.core.search_planning import SearchPipelinePlan, SearchPipelineStrategy
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +22,7 @@ class SearchRequest:
     max_time_ms: int | None = None
     result_limit_hint: int | None = None
     downstream_filter_spec: dict[str, object] | None = None
+    pipeline_plan: SearchPipelinePlan | None = None
 
     def __post_init__(self) -> None:
         if self.operator not in {"$search", "$searchMeta", "$vectorSearch"}:
@@ -38,8 +40,15 @@ class SearchRequest:
         if not isinstance(self.operation_context, OperationContext):
             message = "search requests require OperationContext"
             raise TypeError(message)
+        if self.pipeline_plan is not None and not isinstance(
+            self.pipeline_plan,
+            SearchPipelinePlan,
+        ):
+            message = "search pipeline_plan must be SearchPipelinePlan or None"
+            raise TypeError(message)
         self._validate_execution_shape()
         self._validate_limits()
+        self._validate_pipeline_plan()
         self._own_inputs()
         if compile_search_stage(self.operator, self.specification) != self.query:
             msg = "compiled search query diverges from its specification"
@@ -67,6 +76,19 @@ class SearchRequest:
         ):
             msg = "runtime overrides are reserved for $searchMeta lowering"
             raise ValueError(msg)
+        if self.downstream_filter_spec is None:
+            return
+        if self.operator == "$vectorSearch":
+            msg = "$vectorSearch cannot receive a downstream pipeline filter"
+            raise ValueError(msg)
+        stage_options = getattr(self.query, "stage_options", None)
+        if stage_options is not None and (
+            getattr(stage_options, "highlight", None) is not None
+            or getattr(stage_options, "count", None) is not None
+            or getattr(stage_options, "facet", None) is not None
+        ):
+            msg = "Search metadata and collectors cannot receive a downstream filter"
+            raise ValueError(msg)
 
     def _validate_limits(self) -> None:
         if self.max_time_ms is not None and (
@@ -79,9 +101,36 @@ class SearchRequest:
         if self.result_limit_hint is not None and (
             not isinstance(self.result_limit_hint, int)
             or isinstance(self.result_limit_hint, bool)
-            or self.result_limit_hint <= 0
+            or self.result_limit_hint < 0
         ):
-            message = "result_limit_hint must be a positive integer"
+            message = "result_limit_hint must be a non-negative integer"
+            raise ValueError(message)
+
+    def _validate_pipeline_plan(self) -> None:
+        if self.pipeline_plan is None:
+            return
+        if self.pipeline_plan.downstream_filter_spec != self.downstream_filter_spec:
+            message = "search request filter must come from its pipeline plan"
+            raise ValueError(message)
+        strategy = self.pipeline_plan.strategy
+        if strategy in {
+            SearchPipelineStrategy.DIRECT_WINDOW,
+            SearchPipelineStrategy.EMPTY,
+        } and (self.result_limit_hint != self.pipeline_plan.result_limit_hint):
+            message = "search request limit must come from its pipeline plan"
+            raise ValueError(message)
+        if strategy is SearchPipelineStrategy.PREFIX_ITERATIVE and (
+            self.result_limit_hint is None
+            or self.pipeline_plan.prefix_output_limit is None
+            or self.result_limit_hint < self.pipeline_plan.prefix_output_limit
+        ):
+            message = "iterative Search fetch must cover its planned output limit"
+            raise ValueError(message)
+        if (
+            strategy is SearchPipelineStrategy.FULL
+            and self.result_limit_hint is not None
+        ):
+            message = "full Search plan cannot carry an execution limit"
             raise ValueError(message)
 
     def _own_inputs(self) -> None:

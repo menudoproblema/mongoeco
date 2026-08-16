@@ -27,17 +27,14 @@ from mongoeco.types import PlanningIssue
 
 
 def sqlite_pushdown_details(execution_plan: object) -> dict[str, object]:
-    use_sql = isinstance(execution_plan, SQLiteReadExecutionPlan) and execution_plan.use_sql
-    apply_python_sort = (
-        isinstance(execution_plan, SQLiteReadExecutionPlan)
-        and execution_plan.apply_python_sort
-    )
+    if isinstance(execution_plan, SQLiteReadExecutionPlan):
+        return execution_plan.to_document()
     strategy = getattr(execution_plan, "strategy")
     fallback_reason = getattr(execution_plan, "fallback_reason")
     return {
         "mode": strategy,
-        "usesSqlRuntime": bool(use_sql),
-        "pythonSort": bool(apply_python_sort),
+        "usesSqlRuntime": False,
+        "pythonSort": False,
         "fallbackReason": fallback_reason,
     }
 
@@ -62,7 +59,9 @@ def sqlite_pushdown_followup_hints(
             operator_counts["$geoWithin"] = operator_counts.get("$geoWithin", 0) + 1
             return
         if isinstance(node, GeoIntersectsCondition):
-            operator_counts["$geoIntersects"] = operator_counts.get("$geoIntersects", 0) + 1
+            operator_counts["$geoIntersects"] = (
+                operator_counts.get("$geoIntersects", 0) + 1
+            )
             return
         if isinstance(node, NearCondition):
             operator_counts["$nearSphere" if node.spherical else "$near"] = (
@@ -93,8 +92,18 @@ def sqlite_pushdown_followup_hints(
         if isinstance(node, JsonSchemaCondition):
             operator_counts["$jsonSchema"] = operator_counts.get("$jsonSchema", 0) + 1
             return
-        if isinstance(node, (GreaterThanCondition, GreaterThanOrEqualCondition, LessThanCondition, LessThanOrEqualCondition)):
-            operator_counts["range-comparison"] = operator_counts.get("range-comparison", 0) + 1
+        if isinstance(
+            node,
+            (
+                GreaterThanCondition,
+                GreaterThanOrEqualCondition,
+                LessThanCondition,
+                LessThanOrEqualCondition,
+            ),
+        ):
+            operator_counts["range-comparison"] = (
+                operator_counts.get("range-comparison", 0) + 1
+            )
             return
         if isinstance(node, NotCondition):
             visit(node.clause)
@@ -186,7 +195,12 @@ def sqlite_pushdown_followup_hints(
                 "nextStep": "broaden explicit BSON type pushdown and explain coverage",
             }
         )
-    for bitwise_operator in ("$bitsAllSet", "$bitsAnySet", "$bitsAllClear", "$bitsAnyClear"):
+    for bitwise_operator in (
+        "$bitsAllSet",
+        "$bitsAnySet",
+        "$bitsAllClear",
+        "$bitsAnyClear",
+    ):
         if bitwise_operator in operator_counts:
             hints.append(
                 {

@@ -110,6 +110,25 @@ def materialize_replacement_document(
     return materialized
 
 
+def materialize_merge_insert_document(document: dict[str, Any]) -> dict[str, Any]:
+    """Apply MongoDB's update-style field ordering for a merge upsert."""
+    materialized = {"_id": deepcopy(document["_id"])}
+    for key in sorted(key for key in document if key != "_id"):
+        materialized[key] = deepcopy(document[key])
+    return materialized
+
+
+def materialize_merge_update_document(
+    original_document: dict[str, Any],
+    incoming_document: dict[str, Any],
+) -> dict[str, Any]:
+    """Merge fields in update-operator order while retaining existing positions."""
+    materialized = deepcopy(original_document)
+    for key in sorted(incoming_document):
+        materialized[key] = deepcopy(incoming_document[key])
+    return materialized
+
+
 def document_matches_root_id_lookup(
     document: dict[str, Any],
     document_id: Any,

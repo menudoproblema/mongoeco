@@ -51,6 +51,14 @@ class ProjectionTests(unittest.TestCase):
             {"_id": 1, "profile": {"city": "Madrid"}},
         )
 
+    def test_inclusion_projection_materializes_id_before_source_fields(self):
+        projected = apply_projection(
+            {"_id": "1", "first": 1, "second": 2},
+            {"second": 1, "first": 1, "_id": 1},
+        )
+
+        self.assertEqual(list(projected), ["_id", "first", "second"])
+
     def test_inclusion_projection_supports_dot_notation_through_list_of_documents(
         self,
     ):
@@ -79,6 +87,91 @@ class ProjectionTests(unittest.TestCase):
             {"_id": 1, "items": [[{"name": "Ada"}], [{"name": "Grace"}], []]},
         )
 
+    def test_inclusion_projection_merges_sibling_paths_per_array_element(self):
+        doc = {
+            "_id": 1,
+            "items": [
+                {"code": "a", "label": "Ada", "private": True},
+                {"code": "g", "label": "Grace", "private": False},
+            ],
+        }
+
+        self.assertEqual(
+            apply_projection(doc, {"items.code": 1, "items.label": 1}),
+            {
+                "_id": 1,
+                "items": [
+                    {"code": "a", "label": "Ada"},
+                    {"code": "g", "label": "Grace"},
+                ],
+            },
+        )
+
+    def test_inclusion_projection_keeps_sibling_fields_with_asymmetric_presence(self):
+        doc = {
+            "_id": 1,
+            "items": [
+                {"code": "a"},
+                {"label": "Grace"},
+                {"code": "l", "label": "Lin"},
+                {"private": True},
+            ],
+        }
+
+        self.assertEqual(
+            apply_projection(doc, {"items.code": 1, "items.label": 1}),
+            {
+                "_id": 1,
+                "items": [
+                    {"code": "a"},
+                    {"label": "Grace"},
+                    {"code": "l", "label": "Lin"},
+                ],
+            },
+        )
+
+    def test_inclusion_projection_merges_sibling_paths_inside_nested_arrays(self):
+        doc = {
+            "_id": 1,
+            "groups": [
+                [
+                    {"code": "a", "label": "Ada", "private": True},
+                    {"code": "g", "label": "Grace", "private": False},
+                ],
+                [],
+            ],
+        }
+
+        self.assertEqual(
+            apply_projection(doc, {"groups.code": 1, "groups.label": 1}),
+            {
+                "_id": 1,
+                "groups": [
+                    [
+                        {"code": "a", "label": "Ada"},
+                        {"code": "g", "label": "Grace"},
+                    ],
+                    [],
+                ],
+            },
+        )
+
+    def test_inclusion_projection_does_not_combine_independent_arrays(self):
+        doc = {
+            "_id": 1,
+            "left": [{"code": "a"}, {"code": "b"}],
+            "right": [{"label": "Ada"}],
+        }
+
+        self.assertEqual(
+            apply_projection(doc, {"left.code": 1, "right.label": 1}),
+            {
+                "_id": 1,
+                "left": [{"code": "a"}, {"code": "b"}],
+                "right": [{"label": "Ada"}],
+            },
+        )
+
     def test_inclusion_projection_preserves_positions_for_scalar_items_in_arrays(
         self,
     ):
@@ -96,6 +189,23 @@ class ProjectionTests(unittest.TestCase):
         projected["profile"]["city"] = "Berlin"
 
         self.assertEqual(doc, {"_id": 1, "profile": {"city": "Madrid"}})
+
+    def test_multi_path_inclusion_projection_does_not_alias_inputs(self):
+        doc = {
+            "_id": 1,
+            "items": [{"code": {"value": "a"}, "label": ["Ada"]}],
+        }
+        projection = {"items.code": 1, "items.label": 1}
+
+        projected = apply_projection(doc, projection)
+        projected["items"][0]["code"]["value"] = "changed"
+        projected["items"][0]["label"].append("Lovelace")
+
+        self.assertEqual(
+            doc,
+            {"_id": 1, "items": [{"code": {"value": "a"}, "label": ["Ada"]}]},
+        )
+        self.assertEqual(projection, {"items.code": 1, "items.label": 1})
 
     def test_exclusion_projection_keeps_deepcopied_id_value(self):
         doc = {"_id": {"tenant": "a"}, "name": "Ada"}

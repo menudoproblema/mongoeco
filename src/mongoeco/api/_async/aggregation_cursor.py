@@ -31,7 +31,7 @@ from mongoeco.core.aggregation import (
     is_streamable_aggregation_stage,
     split_pushdown_pipeline,
 )
-from mongoeco.core.aggregation.planning import _match_spec_contains_expr
+from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
@@ -47,6 +47,11 @@ from mongoeco.core.operation_context import (
     resolve_operation_session,
 )
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.runtime_metadata import (
+    RuntimeDocumentState,
+    prepare_persistence_document,
+    prepare_public_document,
+)
 from mongoeco.core.search import (
     compile_search_stage,
     serialize_search_metadata,
@@ -56,6 +61,15 @@ from mongoeco.core.search_execution import SearchRequest
 from mongoeco.core.search_models import (
     SearchExecutionMode,
     SearchExplainVerbosity,
+)
+from mongoeco.core.search_planning import (
+    SearchPipelinePlan,
+    SearchPipelineStrategy,
+    SearchPlanningMode,
+    compile_search_pipeline_plan,
+    leading_search_downstream_filter_spec,
+    search_prefix_output_limit,
+    search_result_limit_hint,
 )
 from mongoeco.cxp import build_mongodb_explain_projection
 from mongoeco.engines.adapter import adapt_engine
@@ -68,10 +82,6 @@ from mongoeco.types import (
     ObjectId,
     QueryPlanExplanation,
 )
-
-
-def _search_spec_requests_highlight(spec: object) -> bool:
-    return isinstance(spec, dict) and spec.get("highlight") is not None
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,6 +107,10 @@ class _StreamWindow:
         return self.start, max(self.end - self.start, 0)
 
 
+_SearchOptimizationStrategy = SearchPipelineStrategy
+_SearchOptimizationPlan = SearchPipelinePlan
+
+
 class AsyncAggregationCursor:
     """Cursor async mínimo para resultados de aggregate()."""
 
@@ -106,24 +120,7 @@ class AsyncAggregationCursor:
 
         return _resolve().__await__()
 
-    _SEARCH_TOPK_SAFE_STAGE_OPERATORS = frozenset(
-        {
-            "$project",
-            "$unset",
-            "$addFields",
-            "$set",
-            "$replaceRoot",
-            "$replaceWith",
-        },
-    )
-    _SEARCH_PREFIX_MONOTONIC_STAGE_OPERATORS = frozenset(
-        _SEARCH_TOPK_SAFE_STAGE_OPERATORS
-        | {
-            "$match",
-            "$skip",
-            "$limit",
-        },
-    )
+    _force_full_search_execution = False
 
     def __init__(
         self,
@@ -252,75 +249,37 @@ class AsyncAggregationCursor:
 
     @classmethod
     def _search_result_limit_hint(cls, pipeline: Pipeline) -> int | None:
-        trailing_skip = 0
-        trailing_limit: int | None = None
-        seen_window = False
-        for stage in pipeline:
-            if not isinstance(stage, dict) or len(stage) != 1:
-                return None
-            operator, spec = next(iter(stage.items()))
-            if operator == "$skip":
-                seen_window = True
-                trailing_skip += int(spec)
-                continue
-            if operator == "$limit":
-                seen_window = True
-                value = int(spec)
-                trailing_limit = (
-                    value if trailing_limit is None else min(trailing_limit, value)
-                )
-                continue
-            if seen_window or operator not in cls._SEARCH_TOPK_SAFE_STAGE_OPERATORS:
-                return None
-        if trailing_limit is None:
-            return None
-        return trailing_skip + trailing_limit
+        return search_result_limit_hint(pipeline)
 
     @classmethod
     def _search_prefix_output_limit(cls, pipeline: Pipeline) -> int | None:
-        output_cap: int | None = None
-        seen_limit = False
-        for stage in pipeline:
-            if not isinstance(stage, dict) or len(stage) != 1:
-                return None
-            operator, spec = next(iter(stage.items()))
-            if operator not in cls._SEARCH_PREFIX_MONOTONIC_STAGE_OPERATORS:
-                return None
-            if operator == "$limit":
-                seen_limit = True
-                value = int(spec)
-                output_cap = value if output_cap is None else min(output_cap, value)
-                continue
-            if operator == "$skip" and output_cap is not None:
-                output_cap = max(output_cap - int(spec), 0)
-        if not seen_limit:
-            return None
-        return output_cap
+        return search_prefix_output_limit(pipeline)
 
     @staticmethod
     def _leading_search_downstream_filter_spec(
         pipeline: Pipeline,
     ) -> dict[str, object] | None:
-        clauses: list[dict[str, object]] = []
-        for stage in pipeline:
-            if not isinstance(stage, dict) or len(stage) != 1:
-                break
-            operator, spec = next(iter(stage.items()))
-            if operator != "$match":
-                break
-            if not isinstance(spec, dict):
-                return None
-            # El runtime de búsqueda no recibe bindings de expresiones. Dejar
-            # estos $match en el pipeline evita capturar un NOW distinto o
-            # perder un let de usuario durante la optimización de búsqueda.
-            if _match_spec_contains_expr(spec):
-                return None
-            clauses.append(deepcopy(spec))
-        if not clauses:
-            return None
-        if len(clauses) == 1:
-            return clauses[0]
-        return {"$and": clauses}
+        return leading_search_downstream_filter_spec(pipeline)
+
+    def _search_optimization_plan(
+        self,
+        operator: str,
+        spec: object,
+        pipeline: Pipeline,
+        *,
+        writeback: bool,
+    ) -> _SearchOptimizationPlan:
+        return compile_search_pipeline_plan(
+            operator,
+            spec,
+            pipeline,
+            writeback=writeback,
+            mode=(
+                SearchPlanningMode.REFERENCE
+                if self._force_full_search_execution
+                else SearchPlanningMode.OPTIMIZED
+            ),
+        )
 
     @staticmethod
     def _next_search_prefix_fetch_limit(
@@ -381,7 +340,7 @@ class AsyncAggregationCursor:
 
     async def _apply_merge_stage(
         self,
-        documents: list[Document],
+        documents: list[Document] | list[RuntimeDocumentState],
         spec: object,
     ) -> None:
         if not isinstance(spec, dict):
@@ -433,7 +392,14 @@ class AsyncAggregationCursor:
         ).get_collection(target_coll_name)
 
         for source_document in documents:
-            candidate = strip_search_result_metadata(deepcopy(source_document))
+            candidate = (
+                prepare_persistence_document(source_document)
+                if isinstance(source_document, RuntimeDocumentState)
+                else strip_search_result_metadata(
+                    deepcopy(source_document),
+                    for_persistence=True,
+                )
+            )
             if "_id" not in candidate:
                 candidate["_id"] = ObjectId()
             assert_valid_root_document_id(candidate["_id"])
@@ -458,45 +424,45 @@ class AsyncAggregationCursor:
             if outcome.matched and when_matched == "fail":
                 raise OperationFailure(
                     "$merge whenMatched=fail found an existing target document "
-                    f'for _id={candidate["_id"]!r}',
+                    f"for _id={candidate['_id']!r}",
                 )
             if not outcome.matched and when_not_matched == "fail":
                 raise OperationFailure(
                     "$merge whenNotMatched=fail found no target document "
-                    f'for _id={candidate["_id"]!r}',
+                    f"for _id={candidate['_id']!r}",
                 )
 
-    async def _search_documents(self) -> list[Document]:
+    async def _search_states(
+        self,
+        optimization: _SearchOptimizationPlan | None = None,
+    ) -> list[RuntimeDocumentState]:
+        if optimization is None:
+            optimization = _SearchOptimizationPlan()
         leading_search = self._leading_search_stage()
         if leading_search is None:
-            raise OperationFailure("search stage was not present")
+            message = "search stage was not present"
+            raise OperationFailure(message)
         operator, spec = leading_search
-        effective_pipeline, writeback_stage = self._split_terminal_writeback_stage(
-            self._effective_pipeline(),
-        )
-        # `$searchMeta` produces one metadata document. Trailing stages operate
-        # on that document, never on the source hit set.
-        optimize_hits = operator != "$searchMeta"
-        result_limit_hint = (
-            self._search_result_limit_hint(effective_pipeline)
-            if optimize_hits and writeback_stage is None
-            else None
-        )
-        downstream_filter_spec = (
-            self._leading_search_downstream_filter_spec(effective_pipeline)
-            if optimize_hits and not _search_spec_requests_highlight(spec)
-            else None
-        )
         _query, outcome = await self._execute_search(
             operator,
             spec,
-            result_limit_hint=result_limit_hint,
-            downstream_filter_spec=downstream_filter_spec,
+            result_limit_hint=optimization.result_limit_hint,
+            downstream_filter_spec=optimization.downstream_filter_spec,
+            pipeline_plan=optimization,
         )
-        documents = outcome.documents
+        documents = outcome.runtime_states
         if operator != "$searchMeta":
             return documents
-        return [serialize_search_metadata(outcome.metadata)]
+        return [RuntimeDocumentState(serialize_search_metadata(outcome.metadata))]
+
+    async def _search_documents(
+        self,
+        optimization: _SearchOptimizationPlan | None = None,
+    ) -> list[Document]:
+        """Compatibility view for callers of the pre-4.6 private helper."""
+        return [
+            state.public_document() for state in await self._search_states(optimization)
+        ]
 
     async def _execute_search(
         self,
@@ -505,12 +471,14 @@ class AsyncAggregationCursor:
         *,
         result_limit_hint: int | None,
         downstream_filter_spec: dict[str, object] | None,
+        pipeline_plan: SearchPipelinePlan | None = None,
     ):
         query, request = self._build_search_request(
             operator,
             spec,
             result_limit_hint=result_limit_hint,
             downstream_filter_spec=downstream_filter_spec,
+            pipeline_plan=pipeline_plan,
         )
         outcome = await adapt_engine(
             self._collection._engine,
@@ -528,6 +496,7 @@ class AsyncAggregationCursor:
         *,
         result_limit_hint: int | None,
         downstream_filter_spec: dict[str, object] | None,
+        pipeline_plan: SearchPipelinePlan | None = None,
     ):
         if self._operation_context is None:
             message = "Search execution requires OperationContext"
@@ -552,6 +521,7 @@ class AsyncAggregationCursor:
             max_time_ms=self._max_time_ms,
             result_limit_hint=result_limit_hint,
             downstream_filter_spec=downstream_filter_spec,
+            pipeline_plan=pipeline_plan,
         )
         return query, request
 
@@ -583,24 +553,27 @@ class AsyncAggregationCursor:
         pipeline: Pipeline,
         *,
         dialect,
-    ) -> tuple[list[Document], Pipeline]:
-        result_limit_hint = self._search_result_limit_hint(pipeline)
-        if result_limit_hint is not None:
-            return await self._search_documents(), pipeline
-
-        output_limit = self._search_prefix_output_limit(pipeline)
-        if output_limit is None:
-            return await self._search_documents(), pipeline
-        downstream_filter_spec = self._leading_search_downstream_filter_spec(
-            pipeline,
-        )
-
+        writeback: bool = False,
+    ) -> tuple[list[RuntimeDocumentState], Pipeline]:
         leading_search = self._leading_search_stage()
         if leading_search is None:
             raise OperationFailure("search stage was not present")
         operator, spec = leading_search
-        if output_limit == 0:
-            return [], []
+        optimization = self._search_optimization_plan(
+            operator,
+            spec,
+            pipeline,
+            writeback=writeback,
+        )
+        if optimization.strategy in {
+            _SearchOptimizationStrategy.DIRECT_WINDOW,
+            _SearchOptimizationStrategy.EMPTY,
+        }:
+            return await self._search_states(optimization), pipeline
+
+        output_limit = optimization.prefix_output_limit
+        if output_limit is None:
+            return await self._search_states(optimization), pipeline
 
         fetch_limit = max(output_limit, 1)
         previous_count = -1
@@ -609,10 +582,11 @@ class AsyncAggregationCursor:
                 operator,
                 spec,
                 result_limit_hint=fetch_limit,
-                downstream_filter_spec=downstream_filter_spec,
+                downstream_filter_spec=optimization.downstream_filter_spec,
+                pipeline_plan=optimization,
             )
-            documents = outcome.documents
-            transformed = apply_pipeline(
+            documents = outcome.runtime_states
+            transformed = apply_pipeline_states(
                 documents,
                 pipeline,
                 variables=self._execution_variables(),
@@ -722,10 +696,10 @@ class AsyncAggregationCursor:
                 None,
             )
             if isinstance(collection_name, str):
-                loaded[_CURRENT_COLLECTION_RESOLVER_KEY] = (
-                    await self._load_collection_documents(
-                        collection_name,
-                    )
+                loaded[
+                    _CURRENT_COLLECTION_RESOLVER_KEY
+                ] = await self._load_collection_documents(
+                    collection_name,
                 )
         for name in names:
             if name == _CURRENT_COLLECTION_RESOLVER_KEY:
@@ -992,7 +966,9 @@ class AsyncAggregationCursor:
                 **options,
             )
 
-    async def _materialize(self) -> list[Document]:
+    async def _materialize(  # noqa: PLR0915 - operation orchestration boundary
+        self,
+    ) -> list[Document]:
         _ensure_operation_executable(self._collection, self._operation)
         self._ensure_session_can_use_engine()
         deadline = operation_deadline(self._max_time_ms)
@@ -1022,6 +998,7 @@ class AsyncAggregationCursor:
                 ) = await self._materialize_leading_search_pipeline(
                     pipeline,
                     dialect=dialect,
+                    writeback=writeback_stage is not None,
                 )
             else:
                 pushdown = split_pushdown_pipeline(
@@ -1105,19 +1082,30 @@ class AsyncAggregationCursor:
                 list_sessions_resolver = lambda: deepcopy(
                     list_sessions_snapshot,
                 )
-            result = apply_pipeline(
-                documents,
-                remaining_pipeline,
-                collection_resolver=referenced_collections.get,
-                collection_stats_resolver=collection_stats_resolver,
-                index_stats_resolver=index_stats_resolver,
-                current_op_resolver=current_op_resolver,
-                plan_cache_stats_resolver=plan_cache_stats_resolver,
-                list_sessions_resolver=list_sessions_resolver,
-                variables=self._execution_variables(),
-                dialect=dialect,
-                collation=self._collation,
-                spill_policy=self._spill_policy(),
+            pipeline_kwargs = {
+                "collection_resolver": referenced_collections.get,
+                "collection_stats_resolver": collection_stats_resolver,
+                "index_stats_resolver": index_stats_resolver,
+                "current_op_resolver": current_op_resolver,
+                "plan_cache_stats_resolver": plan_cache_stats_resolver,
+                "list_sessions_resolver": list_sessions_resolver,
+                "variables": self._execution_variables(),
+                "dialect": dialect,
+                "collation": self._collation,
+                "spill_policy": self._spill_policy(),
+            }
+            result = (
+                apply_pipeline_states(
+                    documents,
+                    remaining_pipeline,
+                    **pipeline_kwargs,
+                )
+                if self._leading_search_stage() is not None
+                else apply_pipeline(
+                    documents,
+                    remaining_pipeline,
+                    **pipeline_kwargs,
+                )
             )
             enforce_deadline(deadline)
             if writeback_stage is not None:
@@ -1125,7 +1113,11 @@ class AsyncAggregationCursor:
                 await self._apply_merge_stage(result, spec)
                 return []
             return [
-                DocumentCodec.to_public(strip_search_result_metadata(document))
+                DocumentCodec.to_public(
+                    prepare_public_document(document)
+                    if isinstance(document, RuntimeDocumentState)
+                    else strip_search_result_metadata(document)
+                )
                 for document in result
             ]
 
@@ -1436,47 +1428,46 @@ class AsyncAggregationCursor:
         if self._leading_search_stage() is not None:
             operator, spec = self._leading_search_stage()
             remaining_pipeline = self._effective_pipeline()
-            result_limit_hint = self._search_result_limit_hint(
+            planning_pipeline, writeback_stage = self._split_terminal_writeback_stage(
                 remaining_pipeline,
             )
-            prefix_output_limit = self._search_prefix_output_limit(
-                remaining_pipeline,
+            optimization = self._search_optimization_plan(
+                operator,
+                spec,
+                planning_pipeline,
+                writeback=writeback_stage is not None,
             )
-            effective_limit_hint = (
-                result_limit_hint
-                if result_limit_hint is not None
-                else prefix_output_limit
-            )
-            streamable_pipeline = remaining_pipeline
+            streamable_pipeline = planning_pipeline
             pushdown_summary = {
                 "mode": "search",
                 "totalStages": len(self._pipeline),
                 "pushedDownStages": 1,
                 "remainingStages": len(remaining_pipeline),
                 "leadingSearchOperator": operator,
-                "searchResultLimitHint": effective_limit_hint,
+                "searchResultLimitHint": optimization.explain_limit_hint,
                 "searchTopKStrategy": (
-                    "direct-window"
-                    if result_limit_hint is not None
-                    else "prefix-iterative" if prefix_output_limit is not None else None
+                    None
+                    if optimization.strategy is _SearchOptimizationStrategy.FULL
+                    else optimization.strategy.value
                 ),
                 "searchTopKGrowthStrategy": (
                     "adaptive-retention"
-                    if result_limit_hint is None and prefix_output_limit is not None
+                    if optimization.strategy
+                    is _SearchOptimizationStrategy.PREFIX_ITERATIVE
                     else None
                 ),
-                "searchDownstreamFilterPrefilter": self._leading_search_downstream_filter_spec(
-                    remaining_pipeline,
-                )
-                is not None,
+                "searchDownstreamFilterPrefilter": (
+                    optimization.downstream_filter_spec is not None
+                ),
+                "searchWriteback": writeback_stage is not None,
+                "searchPlan": optimization.to_document(),
             }
             _query, request = self._build_search_request(
                 operator,
                 spec,
-                result_limit_hint=effective_limit_hint,
-                downstream_filter_spec=self._leading_search_downstream_filter_spec(
-                    remaining_pipeline,
-                ),
+                result_limit_hint=optimization.explain_limit_hint,
+                downstream_filter_spec=optimization.downstream_filter_spec,
+                pipeline_plan=optimization,
             )
             engine_plan = await adapt_engine(
                 self._collection._engine,

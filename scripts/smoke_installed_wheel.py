@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
+
+from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -37,18 +38,44 @@ def _run(command: list[str], *, cwd: Path | None = None) -> None:
 def _smoke_script() -> str:
     return """
 import asyncio
+from importlib.resources import files
 import mongoeco
 from mongoeco import AsyncMongoClient
+from mongoeco.compat import (
+    DEPRECATION_CATALOG_SCHEMA_VERSION,
+    deprecation_catalog,
+    deprecation_catalog_schema,
+    public_api_manifest,
+)
+from mongoeco.conformance import conformance_report_schema
 from mongoeco.core.collation import compare_with_collation, normalize_collation, unicode_collation_available
 from mongoeco.engines.memory import MemoryEngine
 
 async def main() -> None:
+    package_root = files("mongoeco")
+    assert package_root.joinpath("py.typed").is_file()
+    assert package_root.joinpath("compat/resources/deprecations-v1.json").is_file()
+    assert package_root.joinpath("compat/schemas/deprecations-v1.schema.json").is_file()
+    assert package_root.joinpath("conformance/schemas/conformance-report-v1.json").is_file()
+    catalog = deprecation_catalog()
+    assert catalog["schemaVersion"] == DEPRECATION_CATALOG_SCHEMA_VERSION
+    assert deprecation_catalog_schema()["$id"].endswith("deprecations-v1.schema.json")
+    assert public_api_manifest()["packageVersion"] == mongoeco.__version__
+    schema = conformance_report_schema()
+    assert (
+        schema["properties"]["schemaVersion"]["const"]
+        == "mongoeco-conformance-report/v1"
+    )
     async with AsyncMongoClient(MemoryEngine()) as client:
         collection = client.test.events
         await collection.insert_one({"_id": "1", "kind": "view", "count": 1})
         found = await collection.find_one({"$jsonSchema": {"required": ["kind"]}})
         docs = await collection.find({}, sort=[("count", 1)]).to_list()
-        spec = normalize_collation({"locale": "en", "strength": 1, "numericOrdering": True})
+        spec = normalize_collation({
+            "locale": "en",
+            "strength": 1,
+            "numericOrdering": True,
+        })
         assert unicode_collation_available()
         assert compare_with_collation("Álvaro", "alvaro", collation=spec) == 0
         assert compare_with_collation("file2", "file10", collation=spec) < 0
@@ -95,8 +122,13 @@ def main() -> int:
     distribution = _resolve_distribution(
         (
             None
-            if ((distribution_kind == "sdist" and args.sdist == "") or (distribution_kind == "wheel" and args.wheel == ""))
-            else args.sdist if distribution_kind == "sdist" else args.wheel
+            if (
+                (distribution_kind == "sdist" and args.sdist == "")
+                or (distribution_kind == "wheel" and args.wheel == "")
+            )
+            else args.sdist
+            if distribution_kind == "sdist"
+            else args.wheel
         ),
         kind=distribution_kind,
     )
@@ -104,7 +136,9 @@ def main() -> int:
         venv_root = Path(args.venv).expanduser().resolve()
         keep_venv = True
     else:
-        venv_root = Path(tempfile.mkdtemp(prefix=f"mongoeco-{distribution_kind}-smoke-"))
+        venv_root = Path(
+            tempfile.mkdtemp(prefix=f"mongoeco-{distribution_kind}-smoke-")
+        )
         keep_venv = args.keep_venv
 
     python_bin = venv_root / "bin" / "python"
@@ -115,8 +149,21 @@ def main() -> int:
             shutil.rmtree(venv_root)
         _run([sys.executable, "-m", "venv", str(venv_root)])
         _run([str(pip_bin), "install", "--upgrade", "pip"])
-        _run([str(pip_bin), "install", str(distribution)])
-        _run([str(python_bin), "-c", _smoke_script()], cwd=Path("/tmp"))
+        _run([str(pip_bin), "install", f"{distribution}[engine-testing]"])
+        external_cwd = Path(tempfile.gettempdir())
+        _run([str(python_bin), "-c", _smoke_script()], cwd=external_cwd)
+        _run(
+            [
+                str(python_bin),
+                "-m",
+                "mongoeco.conformance",
+                "mongoeco.engines:MemoryEngine",
+                "--profile",
+                "spi-v2-core",
+                "--require-success",
+            ],
+            cwd=external_cwd,
+        )
     finally:
         if not keep_venv:
             shutil.rmtree(venv_root, ignore_errors=True)

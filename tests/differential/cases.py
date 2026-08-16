@@ -224,6 +224,235 @@ def _boolean_filter_matrix_action(
     }
 
 
+def _aggregate_project_shapes(collection: Any) -> list[dict[str, Any]]:
+    return list(
+        collection.aggregate(
+            [
+                {
+                    "$project": {
+                        "_id": 1,
+                        "nestedValue": "$nested.value",
+                        "arrayValues": "$items.value",
+                        "missing": "$missing.value",
+                        "searchHighlights": 1,
+                        "__mongoeco_user_data": 1,
+                    },
+                },
+                {"$sort": {"_id": 1}},
+            ],
+        ),
+    )
+
+
+def _aggregate_set_add_fields(collection: Any) -> list[dict[str, Any]]:
+    return list(
+        collection.aggregate(
+            [
+                {"$set": {"derived": "$nested.value"}},
+                {"$addFields": {"copied": "$derived"}},
+                {"$project": {"_id": 1, "derived": 1, "copied": 1}},
+                {"$sort": {"_id": 1}},
+            ],
+        ),
+    )
+
+
+def _aggregate_unset_shapes(collection: Any) -> list[dict[str, Any]]:
+    return list(
+        collection.aggregate(
+            [
+                {"$unset": ["obsolete", "nested.remove"]},
+                {"$sort": {"_id": 1}},
+            ],
+        ),
+    )
+
+
+def _aggregate_replace_root(collection: Any) -> list[dict[str, Any]]:
+    return list(
+        collection.aggregate(
+            [
+                {"$replaceRoot": {"newRoot": "$nested"}},
+                {"$sort": {"value": 1}},
+            ],
+        ),
+    )
+
+
+def _aggregate_replace_with(collection: Any) -> list[dict[str, Any]]:
+    return list(
+        collection.aggregate(
+            [
+                {"$replaceWith": {"value": "$nested.value", "source": "$_id"}},
+                {"$sort": {"source": 1}},
+            ],
+        ),
+    )
+
+
+def _aggregate_unwind_fanout(collection: Any) -> list[dict[str, Any]]:
+    return list(
+        collection.aggregate(
+            [
+                {
+                    "$unwind": {
+                        "path": "$items",
+                        "includeArrayIndex": "itemIndex",
+                        "preserveNullAndEmptyArrays": True,
+                    },
+                },
+                {
+                    "$project": {
+                        "_id": 1,
+                        "itemIndex": 1,
+                        "itemValue": "$items.value",
+                    },
+                },
+                {"$sort": {"_id": 1, "itemIndex": 1}},
+            ],
+        ),
+    )
+
+
+def _aggregate_group_shapes(collection: Any) -> list[dict[str, Any]]:
+    return list(
+        collection.aggregate(
+            [
+                {
+                    "$group": {
+                        "_id": "$kind",
+                        "count": {"$sum": 1},
+                        "values": {"$push": "$nested.value"},
+                    },
+                },
+                {"$sort": {"_id": 1}},
+            ],
+        ),
+    )
+
+
+def _aggregate_facet_shapes(collection: Any) -> list[dict[str, Any]]:
+    return list(
+        collection.aggregate(
+            [
+                {
+                    "$facet": {
+                        "kept": [
+                            {"$match": {"kind": "keep"}},
+                            {"$sort": {"_id": 1}},
+                            {"$project": {"_id": 1}},
+                        ],
+                        "summary": [
+                            {"$group": {"_id": None, "count": {"$sum": 1}}},
+                            {"$project": {"_id": 0, "count": 1}},
+                        ],
+                    },
+                },
+            ],
+        ),
+    )
+
+
+def _seed_foreign_collection(collection: Any) -> Any:
+    foreign = collection.database.get_collection("foreign")
+    foreign.insert_many(
+        [
+            {"_id": "foreign-1", "kind": "keep", "label": "first"},
+            {"_id": "foreign-2", "kind": "other", "label": "second"},
+        ],
+    )
+    return foreign
+
+
+def _aggregate_lookup_shapes(collection: Any) -> list[dict[str, Any]]:
+    _seed_foreign_collection(collection)
+    return list(
+        collection.aggregate(
+            [
+                {
+                    "$lookup": {
+                        "from": "foreign",
+                        "localField": "kind",
+                        "foreignField": "kind",
+                        "as": "joined",
+                    },
+                },
+                {"$project": {"_id": 1, "joined._id": 1, "joined.label": 1}},
+                {"$sort": {"_id": 1}},
+            ],
+        ),
+    )
+
+
+def _aggregate_union_with_shapes(collection: Any) -> list[dict[str, Any]]:
+    _seed_foreign_collection(collection)
+    return list(
+        collection.aggregate(
+            [
+                {"$project": {"_id": 1, "kind": 1}},
+                {
+                    "$unionWith": {
+                        "coll": "foreign",
+                        "pipeline": [{"$project": {"_id": 1, "kind": 1}}],
+                    },
+                },
+                {"$sort": {"_id": 1}},
+            ],
+        ),
+    )
+
+
+def _aggregate_merge_writeback(collection: Any) -> list[dict[str, Any]]:
+    list(
+        collection.aggregate(
+            [
+                {"$match": {"kind": "keep"}},
+                {
+                    "$project": {
+                        "_id": 1,
+                        "kind": 1,
+                        "nested": 1,
+                        "searchHighlights": 1,
+                        "__mongoeco_user_data": 1,
+                    },
+                },
+                {"$merge": {"into": "archive"}},
+            ],
+        ),
+    )
+    return list(collection.database.archive.find({}, sort=[("_id", 1)]))
+
+
+_AGGREGATION_STAGE_DOCUMENTS = [
+    {
+        "_id": "local-1",
+        "kind": "keep",
+        "nested": {"value": 1, "remove": "legacy"},
+        "items": [{"value": "a"}, {"value": "b"}],
+        "obsolete": True,
+        "searchHighlights": {"caller": 1},
+        "__mongoeco_user_data": {"kept": True},
+    },
+    {
+        "_id": "local-2",
+        "kind": "drop",
+        "nested": {"value": 2, "remove": "legacy"},
+        "items": [],
+        "obsolete": True,
+        "searchHighlights": {"caller": 2},
+        "__mongoeco_user_data": {"kept": True},
+    },
+    {
+        "_id": "local-3",
+        "kind": "keep",
+        "nested": {"value": 3, "remove": "legacy"},
+        "obsolete": True,
+        "searchHighlights": {"caller": 3},
+        "__mongoeco_user_data": {"kept": True},
+    },
+]
+
+
 REAL_PARITY_CASES: tuple[RealParityCase, ...] = (
     RealParityCase(
         name="boolean_filter_matrix",
@@ -448,7 +677,67 @@ REAL_PARITY_CASES: tuple[RealParityCase, ...] = (
             ),
         ),
     ),
+    RealParityCase(
+        name="aggregate_project_shapes",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_project_shapes,
+    ),
+    RealParityCase(
+        name="aggregate_set_add_fields",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_set_add_fields,
+    ),
+    RealParityCase(
+        name="aggregate_unset_shapes",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_unset_shapes,
+    ),
+    RealParityCase(
+        name="aggregate_replace_root",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_replace_root,
+    ),
+    RealParityCase(
+        name="aggregate_replace_with",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_replace_with,
+    ),
+    RealParityCase(
+        name="aggregate_unwind_fanout",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_unwind_fanout,
+    ),
+    RealParityCase(
+        name="aggregate_group_shapes",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_group_shapes,
+    ),
+    RealParityCase(
+        name="aggregate_facet_shapes",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_facet_shapes,
+    ),
+    RealParityCase(
+        name="aggregate_lookup_shapes",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_lookup_shapes,
+    ),
+    RealParityCase(
+        name="aggregate_union_with_shapes",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_union_with_shapes,
+    ),
+    RealParityCase(
+        name="aggregate_merge_writeback",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_merge_writeback,
+    ),
 )
+
+
+# Keep this boundary explicit whenever executable cases precede a real-server
+# replay capture. Names may leave it only with their checked-in golden.
+REAL_CAPTURE_PENDING_CASES: frozenset[str] = frozenset()
 
 
 def get_real_parity_case(name: str) -> RealParityCase:

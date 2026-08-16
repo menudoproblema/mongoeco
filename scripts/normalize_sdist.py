@@ -9,6 +9,7 @@ import gzip
 import os
 import posixpath
 import tarfile
+import unicodedata
 
 from pathlib import Path
 
@@ -36,13 +37,14 @@ def normalize_sdist(path: Path, *, epoch: int) -> None:
             ) as target,
         ):
             members = sorted(source.getmembers(), key=lambda item: item.name)
+            _validate_archive_structure(path, members)
             member_names: set[str] = set()
             for member in members:
-                _validate_member(member)
-                if member.name in member_names:
-                    msg = f"duplicate sdist member path: {member.name}"
+                canonical_name = _validate_member(member)
+                if canonical_name in member_names:
+                    msg = f"duplicate sdist member path: {canonical_name}"
                     raise ValueError(msg)
-                member_names.add(member.name)
+                member_names.add(canonical_name)
                 normalized = copy.copy(member)
                 normalized.mtime = epoch
                 normalized.uid = 0
@@ -62,7 +64,7 @@ def normalize_sdist(path: Path, *, epoch: int) -> None:
         temporary.unlink(missing_ok=True)
 
 
-def _validate_member(member: tarfile.TarInfo) -> None:
+def _validate_member(member: tarfile.TarInfo) -> str:
     normalized_name = posixpath.normpath(member.name)
     if (
         not member.name
@@ -75,30 +77,47 @@ def _validate_member(member: tarfile.TarInfo) -> None:
     ):
         msg = f"unsafe sdist member path: {member.name}"
         raise ValueError(msg)
-    if not (member.isfile() or member.isdir() or member.issym() or member.islnk()):
+    if member.name != normalized_name:
+        msg = f"non-canonical sdist member path: {member.name}"
+        raise ValueError(msg)
+    if unicodedata.normalize("NFC", member.name) != member.name:
+        msg = f"non-NFC sdist member path: {member.name}"
+        raise ValueError(msg)
+    if not (member.isfile() or member.isdir()):
         msg = f"unsupported sdist member type: {member.name}"
         raise ValueError(msg)
-    if member.issym() or member.islnk():
-        linkname = member.linkname
-        base = posixpath.dirname(member.name) if member.issym() else ""
-        target = posixpath.normpath(posixpath.join(base, linkname))
-        if (
-            not linkname
-            or "\\" in linkname
-            or "\x00" in linkname
-            or linkname.startswith("/")
-            or target == ".."
-            or target.startswith("../")
-        ):
-            msg = f"unsafe sdist link target: {member.linkname}"
+    return normalized_name
+
+
+def _validate_archive_structure(
+    path: Path,
+    members: list[tarfile.TarInfo],
+) -> None:
+    expected_root = path.name.removesuffix(".tar.gz")
+    if not expected_root or expected_root == path.name:
+        msg = "sdist path must end in .tar.gz"
+        raise ValueError(msg)
+    canonical_names = [_validate_member(member) for member in members]
+    roots = {name.partition("/")[0] for name in canonical_names}
+    if roots != {expected_root}:
+        msg = f"sdist must contain only the expected root: {expected_root}"
+        raise ValueError(msg)
+    if f"{expected_root}/PKG-INFO" not in canonical_names:
+        msg = "sdist root must contain PKG-INFO"
+        raise ValueError(msg)
+    casefold_names: dict[str, str] = {}
+    for name in canonical_names:
+        folded = name.casefold()
+        previous = casefold_names.get(folded)
+        if previous is not None and previous != name:
+            msg = f"case-insensitive sdist path collision: {previous}, {name}"
             raise ValueError(msg)
+        casefold_names[folded] = name
 
 
 def _canonical_mode(member: tarfile.TarInfo) -> int:
     if member.isdir():
         return 0o755
-    if member.issym() or member.islnk():
-        return 0o777
     return 0o644
 
 

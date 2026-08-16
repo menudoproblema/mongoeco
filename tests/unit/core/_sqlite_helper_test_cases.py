@@ -54,7 +54,13 @@ from mongoeco.compat import MONGODB_DIALECT_70
 
 class SQLiteInternalHelperTests(unittest.TestCase):
     def test_sqlite_engine_module_keeps_admin_runtime_boundary(self):
-        module_path = Path(__file__).resolve().parents[3] / "src" / "mongoeco" / "engines" / "sqlite.py"
+        module_path = (
+            Path(__file__).resolve().parents[3]
+            / "src"
+            / "mongoeco"
+            / "engines"
+            / "sqlite.py"
+        )
         tree = ast.parse(module_path.read_text(encoding="utf-8"))
         imported_modules = {
             node.module
@@ -65,7 +71,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertIn("mongoeco.engines._sqlite_admin_runtime", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_explain_contract", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_index_runtime", imported_modules)
-        self.assertIn("mongoeco.engines._sqlite_read_fast_path_runtime", imported_modules)
+        self.assertIn(
+            "mongoeco.engines._sqlite_read_fast_path_runtime", imported_modules
+        )
         self.assertIn("mongoeco.engines._sqlite_read_runtime", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_search_runtime", imported_modules)
         self.assertIn("mongoeco.engines._sqlite_session_runtime", imported_modules)
@@ -91,6 +99,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 execution_lineage=(),
                 fallback_reason="Sort requires Python fallback",
                 use_sql=True,
+                sql="SELECT document FROM documents",
                 apply_python_sort=True,
             )
         )
@@ -98,27 +107,42 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertTrue(details["usesSqlRuntime"])
         self.assertTrue(details["pythonSort"])
         self.assertEqual(
-            explain_contract.sqlite_planning_issues("Sort requires Python fallback")[0].message,
+            explain_contract.sqlite_planning_issues("Sort requires Python fallback")[
+                0
+            ].message,
             "Sort requires Python fallback",
         )
         self.assertEqual(explain_contract.sqlite_planning_issues(None), ())
 
         hints = explain_contract.sqlite_pushdown_followup_hints(
-            AndCondition((RegexCondition("name", "^Ada", ""), GreaterThanCondition("score", 5))),
+            AndCondition(
+                (RegexCondition("name", "^Ada", ""), GreaterThanCondition("score", 5))
+            ),
             fallback_reason="Geospatial operators require Python query fallback",
         )
-        self.assertEqual([hint["operator"] for hint in hints], ["$regex", "range-comparison", "geo-runtime"])
+        self.assertEqual(
+            [hint["operator"] for hint in hints],
+            ["$regex", "range-comparison", "geo-runtime"],
+        )
 
         broad_hints = explain_contract.sqlite_pushdown_followup_hints(
             OrCondition(
                 (
                     GeoWithinCondition("location", "polygon", {"shape": "a"}),  # type: ignore[arg-type]
                     GeoIntersectsCondition("location", "polygon", {"shape": "b"}),  # type: ignore[arg-type]
-                    NearCondition("location", point=(0.0, 0.0), min_distance=None, max_distance=None, spherical=True),
+                    NearCondition(
+                        "location",
+                        point=(0.0, 0.0),
+                        min_distance=None,
+                        max_distance=None,
+                        spherical=True,
+                    ),
                     ModCondition("score", 2, 0),
                     SizeCondition("items", 2),
                     AllCondition("items", ("Ada",)),
-                    ElemMatchCondition("items", EqualsCondition("value", 1), wrap_value=True),
+                    ElemMatchCondition(
+                        "items", EqualsCondition("value", 1), wrap_value=True
+                    ),
                     TypeCondition("value", ("number",)),
                     BitwiseCondition("flags", "$bitsAllSet", 1),
                     ExprCondition({"$gt": ["$score", 1]}),
@@ -150,7 +174,13 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         more_hints = explain_contract.sqlite_pushdown_followup_hints(
             OrCondition(
                 (
-                    NearCondition("location", point=(0.0, 0.0), min_distance=None, max_distance=None, spherical=False),
+                    NearCondition(
+                        "location",
+                        point=(0.0, 0.0),
+                        min_distance=None,
+                        max_distance=None,
+                        spherical=False,
+                    ),
                     BitwiseCondition("flags", "$bitsAnySet", 1),
                     BitwiseCondition("flags", "$bitsAllClear", 1),
                     BitwiseCondition("flags", "$bitsAnyClear", 1),
@@ -202,9 +232,17 @@ class SQLiteInternalHelperTests(unittest.TestCase):
 
         self.assertEqual(state.valid_vectors, 2)
         self.assertEqual(state.invalid_vectors, 2)
-        self.assertEqual(vector_backend.vector_backend_stats_document(state)["backend"], "usearch")
-        self.assertEqual(vector_backend._metric_kind("dotProduct").name, vector_backend.MetricKind.IP.name)
-        self.assertEqual(vector_backend._metric_kind("euclidean").name, vector_backend.MetricKind.L2sq.name)
+        self.assertEqual(
+            vector_backend.vector_backend_stats_document(state)["backend"], "usearch"
+        )
+        self.assertEqual(
+            vector_backend._metric_kind("dotProduct").name,
+            vector_backend.MetricKind.IP.name,
+        )
+        self.assertEqual(
+            vector_backend._metric_kind("euclidean").name,
+            vector_backend.MetricKind.L2sq.name,
+        )
         self.assertEqual(vector_backend._optional_positive_int(None), None)
         self.assertEqual(vector_backend._optional_positive_int(2), 2)
         with self.assertRaisesRegex(OperationFailure, "positive integers"):
@@ -212,24 +250,45 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         with self.assertRaisesRegex(OperationFailure, "not defined on index"):
             vector_backend._require_vector_field_spec(definition, "other")
 
-        hits = vector_backend.search_sqlite_vector_backend(state, query_vector=(1.0, 0.0), count=2)
+        hits = vector_backend.search_sqlite_vector_backend(
+            state, query_vector=(1.0, 0.0), count=2
+        )
         self.assertEqual(len(hits), 2)
-        self.assertEqual(vector_backend.search_sqlite_vector_backend(state, query_vector=(1.0, 0.0), count=0), [])
+        self.assertEqual(
+            vector_backend.search_sqlite_vector_backend(
+                state, query_vector=(1.0, 0.0), count=0
+            ),
+            [],
+        )
         with self.assertRaisesRegex(OperationFailure, "dimensions do not match"):
-            vector_backend.search_sqlite_vector_backend(state, query_vector=(1.0,), count=1)
-        self.assertIsNone(vector_backend._extract_vector({"embedding": [1.0]}, path="embedding", num_dimensions=2))
-        self.assertIsNone(vector_backend._extract_vector({"embedding": [True, 1.0]}, path="embedding", num_dimensions=2))
+            vector_backend.search_sqlite_vector_backend(
+                state, query_vector=(1.0,), count=1
+            )
+        self.assertIsNone(
+            vector_backend._extract_vector(
+                {"embedding": [1.0]}, path="embedding", num_dimensions=2
+            )
+        )
+        self.assertIsNone(
+            vector_backend._extract_vector(
+                {"embedding": [True, 1.0]}, path="embedding", num_dimensions=2
+            )
+        )
 
-        filter_keys, filter_description = vector_backend.vector_filter_candidate_storage_keys(
-            state,
-            filter_spec={"kind": "keep"},
+        filter_keys, filter_description = (
+            vector_backend.vector_filter_candidate_storage_keys(
+                state,
+                filter_spec={"kind": "keep"},
+            )
         )
         self.assertEqual(filter_keys, ["1"])
         self.assertEqual(filter_description["backend"], "vector-filter-index")
         self.assertEqual(filter_description["supportedPaths"], ["kind"])
         self.assertTrue(filter_description["exact"])
 
-    def test_sqlite_vector_backend_filter_prefilter_supports_in_exists_and_reports_unsupported(self):
+    def test_sqlite_vector_backend_filter_prefilter_supports_in_exists_and_reports_unsupported(
+        self,
+    ):
         definition = SearchIndexDefinition(
             {
                 "fields": [
@@ -251,7 +310,15 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             path="embedding",
             collection_version=1,
             documents=[
-                ("1", {"embedding": [1.0, 0.0], "kind": "keep", "tags": ["a", "b"], "meta": {"rank": 1}}),
+                (
+                    "1",
+                    {
+                        "embedding": [1.0, 0.0],
+                        "kind": "keep",
+                        "tags": ["a", "b"],
+                        "meta": {"rank": 1},
+                    },
+                ),
                 ("2", {"embedding": [0.0, 1.0], "kind": "drop", "tags": ["b"]}),
                 ("3", {"embedding": [0.5, 0.5], "kind": "keep"}),
                 ("4", {"embedding": ["bad", 1.0], "kind": "keep"}),
@@ -266,23 +333,29 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertEqual(in_description["supportedOperators"], ["$in", "eq"])
         self.assertEqual(in_description["supportedClauseCount"], 2)
 
-        exists_keys, exists_description = vector_backend.vector_filter_candidate_storage_keys(
-            state,
-            filter_spec={"meta.rank": {"$exists": True}},
+        exists_keys, exists_description = (
+            vector_backend.vector_filter_candidate_storage_keys(
+                state,
+                filter_spec={"meta.rank": {"$exists": True}},
+            )
         )
         self.assertEqual(exists_keys, ["1"])
         self.assertTrue(exists_description["exact"])
 
-        missing_keys, missing_description = vector_backend.vector_filter_candidate_storage_keys(
-            state,
-            filter_spec={"meta.rank": {"$exists": False}},
+        missing_keys, missing_description = (
+            vector_backend.vector_filter_candidate_storage_keys(
+                state,
+                filter_spec={"meta.rank": {"$exists": False}},
+            )
         )
         self.assertEqual(missing_keys, ["2", "3"])
         self.assertTrue(missing_description["exact"])
 
-        unsupported_keys, unsupported_description = vector_backend.vector_filter_candidate_storage_keys(
-            state,
-            filter_spec={"kind": {"$gt": "keep"}},
+        unsupported_keys, unsupported_description = (
+            vector_backend.vector_filter_candidate_storage_keys(
+                state,
+                filter_spec={"kind": {"$gt": "keep"}},
+            )
         )
         self.assertIsNone(unsupported_keys)
         self.assertFalse(unsupported_description["candidateable"])
@@ -296,25 +369,31 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertEqual(or_description["booleanShape"], "$or")
         self.assertTrue(or_description["exact"])
 
-        partial_and_keys, partial_and_description = vector_backend.vector_filter_candidate_storage_keys(
-            state,
-            filter_spec={"$and": [{"kind": "keep"}, {"kind": {"$gt": "drop"}}]},
+        partial_and_keys, partial_and_description = (
+            vector_backend.vector_filter_candidate_storage_keys(
+                state,
+                filter_spec={"$and": [{"kind": "keep"}, {"kind": {"$gt": "drop"}}]},
+            )
         )
         self.assertEqual(partial_and_keys, ["1", "3"])
         self.assertEqual(partial_and_description["booleanShape"], "$and")
         self.assertFalse(partial_and_description["exact"])
 
-        unsupported_or_keys, unsupported_or_description = vector_backend.vector_filter_candidate_storage_keys(
-            state,
-            filter_spec={"$or": [{"kind": "keep"}, {"kind": {"$gt": "drop"}}]},
+        unsupported_or_keys, unsupported_or_description = (
+            vector_backend.vector_filter_candidate_storage_keys(
+                state,
+                filter_spec={"$or": [{"kind": "keep"}, {"kind": {"$gt": "drop"}}]},
+            )
         )
         self.assertIsNone(unsupported_or_keys)
         self.assertFalse(unsupported_or_description["candidateable"])
         self.assertEqual(unsupported_or_description["booleanShape"], "$or")
 
-        range_keys, range_description = vector_backend.vector_filter_candidate_storage_keys(
-            state,
-            filter_spec={"meta.rank": {"$gte": 1, "$lt": 2}},
+        range_keys, range_description = (
+            vector_backend.vector_filter_candidate_storage_keys(
+                state,
+                filter_spec={"meta.rank": {"$gte": 1, "$lt": 2}},
+            )
         )
         self.assertEqual(range_keys, ["1"])
         self.assertTrue(range_description["candidateable"])
@@ -322,14 +401,46 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertEqual(range_description["supportedOperators"], ["range"])
         self.assertEqual(range_description["supportedPaths"], ["meta.rank"])
 
-    def test_sqlite_search_runtime_exact_should_score_prefilter_and_vector_prefilter_helpers(self):
+    def test_sqlite_search_runtime_exact_should_score_prefilter_and_vector_prefilter_helpers(
+        self,
+    ):
         async def _run() -> None:
             engine = SQLiteEngine()
             await engine.connect()
             try:
-                await engine.put_document("db", "coll", {"_id": 1, "title": "Ada algorithms", "body": "vector algorithm", "embedding": [1.0, 0.0], "kind": "keep"})
-                await engine.put_document("db", "coll", {"_id": 2, "title": "Ada", "body": "vector vector", "embedding": [0.9, 0.1], "kind": "drop"})
-                await engine.put_document("db", "coll", {"_id": 3, "title": "Grace", "body": "algorithm", "embedding": [0.0, 1.0], "kind": "keep"})
+                await engine.put_document(
+                    "db",
+                    "coll",
+                    {
+                        "_id": 1,
+                        "title": "Ada algorithms",
+                        "body": "vector algorithm",
+                        "embedding": [1.0, 0.0],
+                        "kind": "keep",
+                    },
+                )
+                await engine.put_document(
+                    "db",
+                    "coll",
+                    {
+                        "_id": 2,
+                        "title": "Ada",
+                        "body": "vector vector",
+                        "embedding": [0.9, 0.1],
+                        "kind": "drop",
+                    },
+                )
+                await engine.put_document(
+                    "db",
+                    "coll",
+                    {
+                        "_id": 3,
+                        "title": "Grace",
+                        "body": "algorithm",
+                        "embedding": [0.0, 1.0],
+                        "kind": "keep",
+                    },
+                )
                 await engine.create_search_index(
                     "db",
                     "coll",
@@ -369,62 +480,103 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 text_definition, physical_name, _ready_at = text_rows[0]
                 conn = engine._require_connection()
                 with engine._bind_connection(conn):
-                    resolved_physical_name = search_runtime_module.ensure_search_backend_sync(
-                        engine,
-                        conn,
-                        "db",
-                        "coll",
-                        text_definition,
-                        physical_name,
+                    resolved_physical_name = (
+                        search_runtime_module.ensure_search_backend_sync(
+                            engine,
+                            conn,
+                            "db",
+                            "coll",
+                            text_definition,
+                            physical_name,
+                        )
                     )
                     query = search_runtime_module.compile_search_stage(
                         "$search",
                         {
                             "index": "by_text",
                             "compound": {
-                                "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                "must": [
+                                    {
+                                        "text": {
+                                            "query": "ada",
+                                            "path": ["title", "body"],
+                                        }
+                                    }
+                                ],
                                 "should": [
                                     {"exists": {"path": "title"}},
-                                    {"wildcard": {"query": "*algorithm*", "path": "body"}},
-                                    {"autocomplete": {"query": "alg", "path": ["title", "body"]}},
+                                    {
+                                        "wildcard": {
+                                            "query": "*algorithm*",
+                                            "path": "body",
+                                        }
+                                    },
+                                    {
+                                        "autocomplete": {
+                                            "query": "alg",
+                                            "path": ["title", "body"],
+                                        }
+                                    },
                                 ],
                                 "minimumShouldMatch": 1,
                             },
                         },
                     )
-                    candidate_keys, _backend, candidate_exact, should_candidates, _non_candidateable = search_runtime_module._sqlite_compound_candidate_state(
+                    (
+                        candidate_keys,
+                        _backend,
+                        candidate_exact,
+                        should_candidates,
+                        _non_candidateable,
+                    ) = search_runtime_module._sqlite_compound_candidate_state(
                         engine,
                         conn,
                         physical_name=resolved_physical_name,
                         definition=text_definition,
                         query=query,
                     )
-                    pruned_keys, topk_prefilter = search_runtime_module._prune_candidate_storage_keys_for_topk(
-                        engine,
-                        conn,
-                        db_name="db",
-                        coll_name="coll",
-                        physical_name=resolved_physical_name,
-                        query=query,
-                        candidate_storage_keys=candidate_keys,
-                        candidate_exact=candidate_exact,
-                        result_limit_hint=1,
-                        should_candidates=should_candidates,
+                    pruned_keys, topk_prefilter = (
+                        search_runtime_module._prune_candidate_storage_keys_for_topk(
+                            engine,
+                            conn,
+                            db_name="db",
+                            coll_name="coll",
+                            physical_name=resolved_physical_name,
+                            query=query,
+                            candidate_storage_keys=candidate_keys,
+                            candidate_exact=candidate_exact,
+                            result_limit_hint=1,
+                            should_candidates=should_candidates,
+                        )
                     )
                     self.assertEqual(pruned_keys, [engine._storage_key(1)])
-                    self.assertEqual(topk_prefilter["strategy"], "exact-should-score-tier")
+                    self.assertEqual(
+                        topk_prefilter["strategy"], "exact-should-score-tier"
+                    )
 
                     ranking_query = search_runtime_module.compile_search_stage(
                         "$search",
                         {
                             "index": "by_text",
                             "compound": {
-                                "must": [{"text": {"query": "ada", "path": ["title", "body"]}}],
+                                "must": [
+                                    {
+                                        "text": {
+                                            "query": "ada",
+                                            "path": ["title", "body"],
+                                        }
+                                    }
+                                ],
                                 "should": [
                                     {
                                         "compound": {
                                             "must": [
-                                                {"autocomplete": {"query": "alg", "path": ["title", "body"]}}
+                                                {
+                                                    "autocomplete": {
+                                                        "query": "alg",
+                                                        "path": ["title", "body"],
+                                                    }
+                                                }
                                             ]
                                         }
                                     },
@@ -434,17 +586,25 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                             },
                         },
                     )
-                    ranking_candidates, _backend, _ranking_exact, ranking_should_candidates, _non_candidateable = search_runtime_module._sqlite_compound_candidate_state(
+                    (
+                        ranking_candidates,
+                        _backend,
+                        _ranking_exact,
+                        ranking_should_candidates,
+                        _non_candidateable,
+                    ) = search_runtime_module._sqlite_compound_candidate_state(
                         engine,
                         conn,
                         physical_name=resolved_physical_name,
                         definition=text_definition,
                         query=ranking_query,
                     )
-                    ranking_pruned_keys, ranking_cutoff = search_runtime_module._prune_candidate_storage_keys_with_candidateable_ranking(
-                        ranking_candidates,
-                        ranking_should_candidates or [],
-                        result_limit_hint=1,
+                    ranking_pruned_keys, ranking_cutoff = (
+                        search_runtime_module._prune_candidate_storage_keys_with_candidateable_ranking(
+                            ranking_candidates,
+                            ranking_should_candidates or [],
+                            result_limit_hint=1,
+                        )
                     )
                     self.assertEqual(
                         ranking_pruned_keys,
@@ -452,13 +612,18 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     )
                     self.assertEqual(ranking_cutoff, 1)
 
-                    entries_by_key = search_runtime_module._load_search_entries_by_storage_key(
-                        engine,
-                        conn,
-                        db_name="db",
-                        coll_name="coll",
-                        physical_name=resolved_physical_name,
-                        storage_keys=[engine._storage_key(1), engine._storage_key(2)],
+                    entries_by_key = (
+                        search_runtime_module._load_search_entries_by_storage_key(
+                            engine,
+                            conn,
+                            db_name="db",
+                            coll_name="coll",
+                            physical_name=resolved_physical_name,
+                            storage_keys=[
+                                engine._storage_key(1),
+                                engine._storage_key(2),
+                            ],
+                        )
                     )
                     self.assertIn(engine._storage_key(1), entries_by_key)
                     prepared = search_runtime_module._materialized_search_document_from_entries(
@@ -467,23 +632,31 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     self.assertIn("title", prepared.searchable_paths)
                     self.assertIn("body", prepared.searchable_paths)
 
-                vector_rows = engine._load_search_index_rows("db", "coll", name="by_vector")
+                vector_rows = engine._load_search_index_rows(
+                    "db", "coll", name="by_vector"
+                )
                 vector_definition, vector_physical_name, _ready = vector_rows[0]
                 with engine._bind_connection(conn):
-                    vector_backend_state = search_runtime_module.ensure_vector_search_backend_sync(
-                        engine,
-                        conn,
-                        "db",
-                        "coll",
-                        vector_definition,
-                        vector_physical_name,
-                        "embedding",
+                    vector_backend_state = (
+                        search_runtime_module.ensure_vector_search_backend_sync(
+                            engine,
+                            conn,
+                            "db",
+                            "coll",
+                            vector_definition,
+                            vector_physical_name,
+                            "embedding",
+                        )
                     )
-                    filter_keys, filter_description = vector_backend.vector_filter_candidate_storage_keys(
-                        vector_backend_state,
-                        filter_spec={"kind": "keep"},
+                    filter_keys, filter_description = (
+                        vector_backend.vector_filter_candidate_storage_keys(
+                            vector_backend_state,
+                            filter_spec={"kind": "keep"},
+                        )
                     )
-                    self.assertEqual(filter_keys, [engine._storage_key(1), engine._storage_key(3)])
+                    self.assertEqual(
+                        filter_keys, [engine._storage_key(1), engine._storage_key(3)]
+                    )
                     self.assertTrue(filter_description["exact"])
                     vector_query = search_runtime_module.compile_search_stage(
                         "$vectorSearch",
@@ -548,9 +721,13 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         prefilter_storage_keys=filter_keys,
                         prefilter_exact=True,
                     )
-                    self.assertEqual([document["_id"] for document in min_score_documents], [1])
+                    self.assertEqual(
+                        [document["_id"] for document in min_score_documents], [1]
+                    )
                     self.assertEqual(min_score_filtered_by_min_score, 1)
-                    self.assertEqual(min_score_fallback_reason, "candidate-prefilter-underflow")
+                    self.assertEqual(
+                        min_score_fallback_reason, "candidate-prefilter-underflow"
+                    )
 
                     (
                         empty_documents,
@@ -570,49 +747,87 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         prefilter_exact=True,
                     )
                     self.assertEqual(empty_documents, [])
-                    self.assertEqual((empty_requested, empty_evaluated, empty_filtered), (0, 0, 0))
+                    self.assertEqual(
+                        (empty_requested, empty_evaluated, empty_filtered), (0, 0, 0)
+                    )
                     self.assertEqual(empty_filtered_by_min_score, 0)
                     self.assertIsNone(empty_reason)
 
-                    downstream_or_keys, downstream_or_description = search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(
-                        engine,
-                        conn,
-                        physical_name=resolved_physical_name,
-                        definition=text_definition,
-                        filter_spec={"$or": [{"title": "Ada algorithms"}, {"body": {"$exists": True}}]},
+                    downstream_or_keys, downstream_or_description = (
+                        search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(
+                            engine,
+                            conn,
+                            physical_name=resolved_physical_name,
+                            definition=text_definition,
+                            filter_spec={
+                                "$or": [
+                                    {"title": "Ada algorithms"},
+                                    {"body": {"$exists": True}},
+                                ]
+                            },
+                        )
                     )
                     self.assertEqual(downstream_or_description["booleanShape"], "$or")
                     self.assertTrue(downstream_or_description["candidateable"])
                     self.assertTrue(downstream_or_description["exact"])
-                    self.assertEqual(downstream_or_description["supportedClauseCount"], 2)
-                    self.assertEqual(downstream_or_description["supportedOperators"], ["eq", "$exists"])
+                    self.assertEqual(
+                        downstream_or_description["supportedClauseCount"], 2
+                    )
+                    self.assertEqual(
+                        downstream_or_description["supportedOperators"],
+                        ["eq", "$exists"],
+                    )
                     self.assertEqual(
                         downstream_or_keys,
-                        [engine._storage_key(1), engine._storage_key(2), engine._storage_key(3)],
+                        [
+                            engine._storage_key(1),
+                            engine._storage_key(2),
+                            engine._storage_key(3),
+                        ],
                     )
 
-                    downstream_partial_and_keys, downstream_partial_and_description = search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(
-                        engine,
-                        conn,
-                        physical_name=resolved_physical_name,
-                        definition=text_definition,
-                        filter_spec={"$and": [{"title": "Ada algorithms"}, {"score": {"$gt": 5}}]},
+                    downstream_partial_and_keys, downstream_partial_and_description = (
+                        search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(
+                            engine,
+                            conn,
+                            physical_name=resolved_physical_name,
+                            definition=text_definition,
+                            filter_spec={
+                                "$and": [
+                                    {"title": "Ada algorithms"},
+                                    {"score": {"$gt": 5}},
+                                ]
+                            },
+                        )
                     )
-                    self.assertEqual(downstream_partial_and_description["booleanShape"], "$and")
+                    self.assertEqual(
+                        downstream_partial_and_description["booleanShape"], "$and"
+                    )
                     self.assertTrue(downstream_partial_and_description["candidateable"])
                     self.assertFalse(downstream_partial_and_description["exact"])
-                    self.assertEqual(downstream_partial_and_keys, [engine._storage_key(1)])
+                    self.assertEqual(
+                        downstream_partial_and_keys, [engine._storage_key(1)]
+                    )
 
-                    downstream_unsupported_or_keys, downstream_unsupported_or_description = search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(
+                    (
+                        downstream_unsupported_or_keys,
+                        downstream_unsupported_or_description,
+                    ) = search_runtime_module._sqlite_candidate_storage_keys_for_downstream_filter(
                         engine,
                         conn,
                         physical_name=resolved_physical_name,
                         definition=text_definition,
-                        filter_spec={"$or": [{"title": "Ada algorithms"}, {"score": {"$gt": 5}}]},
+                        filter_spec={
+                            "$or": [{"title": "Ada algorithms"}, {"score": {"$gt": 5}}]
+                        },
                     )
                     self.assertIsNone(downstream_unsupported_or_keys)
-                    self.assertFalse(downstream_unsupported_or_description["candidateable"])
-                    self.assertEqual(downstream_unsupported_or_description["booleanShape"], "$or")
+                    self.assertFalse(
+                        downstream_unsupported_or_description["candidateable"]
+                    )
+                    self.assertEqual(
+                        downstream_unsupported_or_description["booleanShape"], "$or"
+                    )
             finally:
                 await engine.disconnect()
 
@@ -623,8 +838,30 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             engine = SQLiteEngine()
             await engine.connect()
             try:
-                await engine.put_document("db", "coll", {"_id": 1, "title": "Ada algorithms", "body": "vector algorithm", "score": 7, "kind": "note", "embedding": [1.0, 0.0]})
-                await engine.put_document("db", "coll", {"_id": 2, "title": "Grace notes", "body": "compiler vector", "score": 9, "kind": "reference", "embedding": [0.5, 0.5]})
+                await engine.put_document(
+                    "db",
+                    "coll",
+                    {
+                        "_id": 1,
+                        "title": "Ada algorithms",
+                        "body": "vector algorithm",
+                        "score": 7,
+                        "kind": "note",
+                        "embedding": [1.0, 0.0],
+                    },
+                )
+                await engine.put_document(
+                    "db",
+                    "coll",
+                    {
+                        "_id": 2,
+                        "title": "Grace notes",
+                        "body": "compiler vector",
+                        "score": 9,
+                        "kind": "reference",
+                        "embedding": [0.5, 0.5],
+                    },
+                )
                 text_definition = SearchIndexDefinition(
                     {
                         "mappings": {
@@ -640,76 +877,177 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     index_type="search",
                 )
                 vector_definition = SearchIndexDefinition(
-                    {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2}]},
+                    {
+                        "fields": [
+                            {"type": "vector", "path": "embedding", "numDimensions": 2}
+                        ]
+                    },
                     name="by_vector",
                     index_type="vectorSearch",
                 )
-                search_runtime_module.create_search_index_sync(engine, "db", "coll", text_definition, None, None)
-                search_runtime_module.create_search_index_sync(engine, "db", "coll", vector_definition, None, None)
+                search_runtime_module.create_search_index_sync(
+                    engine, "db", "coll", text_definition, None, None
+                )
+                search_runtime_module.create_search_index_sync(
+                    engine, "db", "coll", vector_definition, None, None
+                )
 
                 conn = engine._require_connection()
                 with engine._bind_connection(conn):
-                    text_rows = search_runtime_module.load_search_index_rows(engine, "db", "coll", name="by_text")
-                    self.assertEqual(len(search_runtime_module.load_search_indexes(engine, "db", "coll")), 2)
-                    self.assertIsNone(search_runtime_module.pending_search_index_ready_at(engine))
-                    self.assertTrue(search_runtime_module.search_index_is_ready_sync(None))
-                    text_definition_loaded, physical_name, _ = text_rows[0]
-                    resolved_physical = search_runtime_module.ensure_search_backend_sync(
-                        engine,
-                        conn,
-                        "db",
-                        "coll",
-                        text_definition_loaded,
-                        physical_name,
+                    text_rows = search_runtime_module.load_search_index_rows(
+                        engine, "db", "coll", name="by_text"
                     )
-                    self.assertEqual(search_runtime_module._load_candidate_documents(engine, "db", "coll", []), [])
-                    self.assertEqual(search_runtime_module._intersect_storage_key_lists([]), [])
-                    self.assertEqual(search_runtime_module._union_storage_key_lists([["a", "b"], ["b", "c"]]), ["a", "b", "c"])
                     self.assertEqual(
-                        search_runtime_module._storage_keys_with_minimum_frequency([["a", "b"], ["b", "c"], ["b"]], 2),
+                        len(
+                            search_runtime_module.load_search_indexes(
+                                engine, "db", "coll"
+                            )
+                        ),
+                        2,
+                    )
+                    self.assertIsNone(
+                        search_runtime_module.pending_search_index_ready_at(engine)
+                    )
+                    self.assertTrue(
+                        search_runtime_module.search_index_is_ready_sync(None)
+                    )
+                    text_definition_loaded, physical_name, _ = text_rows[0]
+                    resolved_physical = (
+                        search_runtime_module.ensure_search_backend_sync(
+                            engine,
+                            conn,
+                            "db",
+                            "coll",
+                            text_definition_loaded,
+                            physical_name,
+                        )
+                    )
+                    self.assertEqual(
+                        search_runtime_module._load_candidate_documents(
+                            engine, "db", "coll", []
+                        ),
+                        [],
+                    )
+                    self.assertEqual(
+                        search_runtime_module._intersect_storage_key_lists([]), []
+                    )
+                    self.assertEqual(
+                        search_runtime_module._union_storage_key_lists(
+                            [["a", "b"], ["b", "c"]]
+                        ),
+                        ["a", "b", "c"],
+                    )
+                    self.assertEqual(
+                        search_runtime_module._storage_keys_with_minimum_frequency(
+                            [["a", "b"], ["b", "c"], ["b"]], 2
+                        ),
                         ["b"],
                     )
 
-                    text_query = compile_search_stage("$search", {"index": "by_text", "text": {"query": "ada", "path": ["title", "body"]}})
-                    phrase_query = compile_search_stage("$search", {"index": "by_text", "phrase": {"query": "Ada algorithms", "path": "title"}})
-                    autocomplete_query = compile_search_stage("$search", {"index": "by_text", "autocomplete": {"query": "alg", "path": ["title", "body"]}})
-                    wildcard_query = compile_search_stage("$search", {"index": "by_text", "wildcard": {"query": "*vector*", "path": "body"}})
-                    exists_query = compile_search_stage("$search", {"index": "by_text", "exists": {"path": "title"}})
-                    near_query = compile_search_stage("$search", {"index": "by_text", "near": {"path": "score", "origin": 8, "pivot": 2}})
+                    text_query = compile_search_stage(
+                        "$search",
+                        {
+                            "index": "by_text",
+                            "text": {"query": "ada", "path": ["title", "body"]},
+                        },
+                    )
+                    phrase_query = compile_search_stage(
+                        "$search",
+                        {
+                            "index": "by_text",
+                            "phrase": {"query": "Ada algorithms", "path": "title"},
+                        },
+                    )
+                    autocomplete_query = compile_search_stage(
+                        "$search",
+                        {
+                            "index": "by_text",
+                            "autocomplete": {"query": "alg", "path": ["title", "body"]},
+                        },
+                    )
+                    wildcard_query = compile_search_stage(
+                        "$search",
+                        {
+                            "index": "by_text",
+                            "wildcard": {"query": "*vector*", "path": "body"},
+                        },
+                    )
+                    exists_query = compile_search_stage(
+                        "$search", {"index": "by_text", "exists": {"path": "title"}}
+                    )
+                    near_query = compile_search_stage(
+                        "$search",
+                        {
+                            "index": "by_text",
+                            "near": {"path": "score", "origin": 8, "pivot": 2},
+                        },
+                    )
                     compound_query = compile_search_stage(
                         "$search",
                         {
                             "index": "by_text",
                             "compound": {
-                                "must": [{"text": {"query": "vector", "path": ["title", "body"]}}],
+                                "must": [
+                                    {
+                                        "text": {
+                                            "query": "vector",
+                                            "path": ["title", "body"],
+                                        }
+                                    }
+                                ],
                                 "should": [{"exists": {"path": "title"}}],
                                 "minimumShouldMatch": 0,
                             },
                         },
                     )
 
-                    text_keys, text_backend, text_exact = search_runtime_module._sqlite_leaf_candidate_storage_keys(
-                        engine, conn, physical_name=resolved_physical, query=text_query
+                    text_keys, text_backend, text_exact = (
+                        search_runtime_module._sqlite_leaf_candidate_storage_keys(
+                            engine,
+                            conn,
+                            physical_name=resolved_physical,
+                            query=text_query,
+                        )
                     )
                     self.assertEqual(text_backend, "fts5")
                     self.assertTrue(text_exact)
                     self.assertIn(engine._storage_key(1), text_keys)
 
-                    phrase_keys, phrase_backend, phrase_exact = search_runtime_module._sqlite_leaf_candidate_storage_keys(
-                        engine, conn, physical_name=resolved_physical, query=phrase_query
+                    phrase_keys, phrase_backend, phrase_exact = (
+                        search_runtime_module._sqlite_leaf_candidate_storage_keys(
+                            engine,
+                            conn,
+                            physical_name=resolved_physical,
+                            query=phrase_query,
+                        )
                     )
                     self.assertEqual(phrase_backend, "fts5")
                     self.assertTrue(phrase_exact)
                     self.assertEqual(phrase_keys, [engine._storage_key(1)])
 
-                    autocomplete_keys, _, _ = search_runtime_module._sqlite_leaf_candidate_storage_keys(
-                        engine, conn, physical_name=resolved_physical, query=autocomplete_query
+                    autocomplete_keys, _, _ = (
+                        search_runtime_module._sqlite_leaf_candidate_storage_keys(
+                            engine,
+                            conn,
+                            physical_name=resolved_physical,
+                            query=autocomplete_query,
+                        )
                     )
-                    wildcard_keys, wildcard_backend, wildcard_exact = search_runtime_module._sqlite_leaf_candidate_storage_keys(
-                        engine, conn, physical_name=resolved_physical, query=wildcard_query
+                    wildcard_keys, wildcard_backend, wildcard_exact = (
+                        search_runtime_module._sqlite_leaf_candidate_storage_keys(
+                            engine,
+                            conn,
+                            physical_name=resolved_physical,
+                            query=wildcard_query,
+                        )
                     )
-                    exists_keys, exists_backend, exists_exact = search_runtime_module._sqlite_leaf_candidate_storage_keys(
-                        engine, conn, physical_name=resolved_physical, query=exists_query
+                    exists_keys, exists_backend, exists_exact = (
+                        search_runtime_module._sqlite_leaf_candidate_storage_keys(
+                            engine,
+                            conn,
+                            physical_name=resolved_physical,
+                            query=exists_query,
+                        )
                     )
                     self.assertTrue(autocomplete_keys)
                     self.assertEqual(wildcard_backend, "fts5-glob")
@@ -718,24 +1056,41 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     self.assertTrue(exists_exact)
                     self.assertEqual(
                         search_runtime_module._sqlite_candidate_storage_keys_for_query(
-                            engine, conn, physical_name=None, query=text_query, definition=text_definition_loaded
+                            engine,
+                            conn,
+                            physical_name=None,
+                            query=text_query,
+                            definition=text_definition_loaded,
                         ),
                         (None, None, False),
                     )
                     self.assertEqual(
                         search_runtime_module._sqlite_candidate_storage_keys_for_query(
-                            engine, conn, physical_name=resolved_physical, query=near_query, definition=text_definition_loaded
+                            engine,
+                            conn,
+                            physical_name=resolved_physical,
+                            query=near_query,
+                            definition=text_definition_loaded,
                         ),
                         (None, None, False),
                     )
                     self.assertEqual(
                         search_runtime_module._sqlite_candidate_storage_keys_for_query(
-                            engine, conn, physical_name=resolved_physical, query=compound_query
+                            engine,
+                            conn,
+                            physical_name=resolved_physical,
+                            query=compound_query,
                         ),
                         (None, None, False),
                     )
-                    compound_keys, compound_backend, _ = search_runtime_module._sqlite_candidate_storage_keys_for_query(
-                        engine, conn, physical_name=resolved_physical, query=compound_query, definition=text_definition_loaded
+                    compound_keys, compound_backend, _ = (
+                        search_runtime_module._sqlite_candidate_storage_keys_for_query(
+                            engine,
+                            conn,
+                            physical_name=resolved_physical,
+                            query=compound_query,
+                            definition=text_definition_loaded,
+                        )
                     )
                     self.assertEqual(compound_backend, "fts5-prefilter")
                     self.assertTrue(compound_keys)
@@ -752,8 +1107,23 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                                 {
                                     "index": "by_text",
                                     "compound": {
-                                        "must": [{"text": {"query": "vector", "path": ["title", "body"]}}],
-                                        "should": [{"near": {"path": "score", "origin": 8, "pivot": 2}}],
+                                        "must": [
+                                            {
+                                                "text": {
+                                                    "query": "vector",
+                                                    "path": ["title", "body"],
+                                                }
+                                            }
+                                        ],
+                                        "should": [
+                                            {
+                                                "near": {
+                                                    "path": "score",
+                                                    "origin": 8,
+                                                    "pivot": 2,
+                                                }
+                                            }
+                                        ],
                                     },
                                 },
                             ),
@@ -792,10 +1162,26 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         16,
                     )
 
-                    self.assertEqual(search_runtime_module._textual_search_field_types(SearchIndexDefinition({"mappings": "bad"}, name="x", index_type="search")), {})
-                    self.assertIsNone(search_runtime_module._flatten_downstream_filter_clauses({"$or": "bad"}))
-                    self.assertEqual(search_runtime_module._document_for_search_path("a.b", 1), {"a": {"b": 1}})
-                    self.assertEqual(search_runtime_module._clause_search_paths(near_query), None)
+                    self.assertEqual(
+                        search_runtime_module._textual_search_field_types(
+                            SearchIndexDefinition(
+                                {"mappings": "bad"}, name="x", index_type="search"
+                            )
+                        ),
+                        {},
+                    )
+                    self.assertIsNone(
+                        search_runtime_module._flatten_downstream_filter_clauses(
+                            {"$or": "bad"}
+                        )
+                    )
+                    self.assertEqual(
+                        search_runtime_module._document_for_search_path("a.b", 1),
+                        {"a": {"b": 1}},
+                    )
+                    self.assertEqual(
+                        search_runtime_module._clause_search_paths(near_query), None
+                    )
                     self.assertEqual(
                         search_runtime_module._downstream_filter_implies_clause(
                             exists_query,
@@ -814,13 +1200,23 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     )
                     self.assertEqual(
                         search_runtime_module._candidate_storage_keys_for_downstream_clause(
-                            engine, conn, resolved_physical, path="score", clause=7, field_types={"score": "number"}
+                            engine,
+                            conn,
+                            resolved_physical,
+                            path="score",
+                            clause=7,
+                            field_types={"score": "number"},
                         ),
                         (None, "eq"),
                     )
                     self.assertEqual(
                         search_runtime_module._candidate_storage_keys_for_downstream_clause(
-                            None, None, None, path="title", clause="Ada algorithms", field_types={"title": "string"}
+                            None,
+                            None,
+                            None,
+                            path="title",
+                            clause="Ada algorithms",
+                            field_types={"title": "string"},
                         ),
                         (None, "eq"),
                     )
@@ -847,7 +1243,14 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         {
                             "index": "by_text",
                             "compound": {
-                                "must": [{"text": {"query": "vector", "path": ["title", "body"]}}],
+                                "must": [
+                                    {
+                                        "text": {
+                                            "query": "vector",
+                                            "path": ["title", "body"],
+                                        }
+                                    }
+                                ],
                                 "should": [{"exists": {"path": "title"}}],
                                 "minimumShouldMatch": 0,
                             },
@@ -865,7 +1268,11 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         "db",
                         "coll",
                         engine._storage_key(1),
-                        {"_id": 1, "title": "Ada refreshed", "body": "vector refreshed"},
+                        {
+                            "_id": 1,
+                            "title": "Ada refreshed",
+                            "body": "vector refreshed",
+                        },
                     )
                     search_runtime_module.delete_search_entries_for_storage_key(
                         engine,
@@ -875,25 +1282,31 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         engine._storage_key(2),
                     )
 
-                    vector_rows = search_runtime_module.load_search_index_rows(engine, "db", "coll", name="by_vector")
-                    vector_definition_loaded, vector_physical_name, _ = vector_rows[0]
-                    vector_state = search_runtime_module.ensure_vector_search_backend_sync(
-                        engine,
-                        conn,
-                        "db",
-                        "coll",
-                        vector_definition_loaded,
-                        vector_physical_name,
-                        "embedding",
+                    vector_rows = search_runtime_module.load_search_index_rows(
+                        engine, "db", "coll", name="by_vector"
                     )
-                    cached_vector_state = search_runtime_module.ensure_vector_search_backend_sync(
-                        engine,
-                        conn,
-                        "db",
-                        "coll",
-                        vector_definition_loaded,
-                        vector_physical_name,
-                        "embedding",
+                    vector_definition_loaded, vector_physical_name, _ = vector_rows[0]
+                    vector_state = (
+                        search_runtime_module.ensure_vector_search_backend_sync(
+                            engine,
+                            conn,
+                            "db",
+                            "coll",
+                            vector_definition_loaded,
+                            vector_physical_name,
+                            "embedding",
+                        )
+                    )
+                    cached_vector_state = (
+                        search_runtime_module.ensure_vector_search_backend_sync(
+                            engine,
+                            conn,
+                            "db",
+                            "coll",
+                            vector_definition_loaded,
+                            vector_physical_name,
+                            "embedding",
+                        )
                     )
                     self.assertIs(vector_state, cached_vector_state)
                     if conn.in_transaction:
@@ -908,20 +1321,30 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     None,
                     None,
                 )
-                listed = search_runtime_module.list_search_indexes_sync(engine, "db", "coll", None, None)
+                listed = search_runtime_module.list_search_indexes_sync(
+                    engine, "db", "coll", None, None
+                )
                 self.assertEqual(len(listed), 2)
-                search_runtime_module.drop_search_index_sync(engine, "db", "coll", "by_vector", None, None)
-                listed_after_drop = search_runtime_module.list_search_indexes_sync(engine, "db", "coll", None, None)
+                search_runtime_module.drop_search_index_sync(
+                    engine, "db", "coll", "by_vector", None, None
+                )
+                listed_after_drop = search_runtime_module.list_search_indexes_sync(
+                    engine, "db", "coll", None, None
+                )
                 self.assertEqual(len(listed_after_drop), 1)
 
-                rows_after_drop = engine._load_search_index_rows("db", "coll", name="by_vector")
+                rows_after_drop = engine._load_search_index_rows(
+                    "db", "coll", name="by_vector"
+                )
                 self.assertEqual(rows_after_drop, [])
             finally:
                 await engine.disconnect()
 
         asyncio.run(_run())
 
-    def test_sqlite_search_runtime_additional_compound_and_downstream_helper_paths(self):
+    def test_sqlite_search_runtime_additional_compound_and_downstream_helper_paths(
+        self,
+    ):
         async def _run() -> None:
             engine = SQLiteEngine()
             await engine.connect()
@@ -987,20 +1410,30 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     search_runtime_module._textual_search_field_types(
-                        SearchIndexDefinition({"mappings": {"fields": []}}, name="bad", index_type="search")
+                        SearchIndexDefinition(
+                            {"mappings": {"fields": []}},
+                            name="bad",
+                            index_type="search",
+                        )
                     ),
                     {},
                 )
                 self.assertEqual(
-                    search_runtime_module._compound_clause_class({"candidateable": False}),
+                    search_runtime_module._compound_clause_class(
+                        {"candidateable": False}
+                    ),
                     "post-match-only",
                 )
                 self.assertEqual(
-                    search_runtime_module._compound_clause_class({"candidateable": True, "exact": False}),
+                    search_runtime_module._compound_clause_class(
+                        {"candidateable": True, "exact": False}
+                    ),
                     "candidateable-ranking",
                 )
                 self.assertEqual(
-                    search_runtime_module._compound_clause_class({"candidateable": True, "exact": True}),
+                    search_runtime_module._compound_clause_class(
+                        {"candidateable": True, "exact": True}
+                    ),
                     "candidateable-exact",
                 )
                 self.assertEqual(
@@ -1036,7 +1469,12 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         {
                             "$and": [
                                 {"title": "Ada algorithms"},
-                                {"$or": [{"body": {"$exists": True}}, {"kind": {"$in": ["note"]}}]},
+                                {
+                                    "$or": [
+                                        {"body": {"$exists": True}},
+                                        {"kind": {"$in": ["note"]}},
+                                    ]
+                                },
                             ]
                         }
                     ),
@@ -1050,7 +1488,10 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     search_runtime_module._downstream_filter_implies_clause(
                         compile_search_stage(
                             "$search",
-                            {"index": "by_text", "text": {"query": "ada", "path": "title"}},
+                            {
+                                "index": "by_text",
+                                "text": {"query": "ada", "path": "title"},
+                            },
                         ),
                         definition=definition,
                         filter_spec=None,
@@ -1061,7 +1502,10 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     search_runtime_module._downstream_filter_implies_clause(
                         compile_search_stage(
                             "$search",
-                            {"index": "by_text", "near": {"path": "score", "origin": 7, "pivot": 2}},
+                            {
+                                "index": "by_text",
+                                "near": {"path": "score", "origin": 7, "pivot": 2},
+                            },
                         ),
                         definition=definition,
                         filter_spec={"title": "Ada algorithms"},
@@ -1077,19 +1521,35 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         "db",
                         "coll",
                         definition,
-                        engine._load_search_index_rows("db", "coll", name="by_text")[0][1],
+                        engine._load_search_index_rows("db", "coll", name="by_text")[0][
+                            1
+                        ],
                     )
                     compound_query = compile_search_stage(
                         "$search",
                         {
                             "index": "by_text",
                             "compound": {
-                                "must": [{"text": {"query": "vector", "path": ["title", "body"]}}],
+                                "must": [
+                                    {
+                                        "text": {
+                                            "query": "vector",
+                                            "path": ["title", "body"],
+                                        }
+                                    }
+                                ],
                                 "should": [
-                                    {"phrase": {"query": "Ada algorithms", "path": "title"}},
+                                    {
+                                        "phrase": {
+                                            "query": "Ada algorithms",
+                                            "path": "title",
+                                        }
+                                    },
                                     {"wildcard": {"query": "*vector*", "path": "body"}},
                                 ],
-                                "mustNot": [{"text": {"query": "compiler", "path": "body"}}],
+                                "mustNot": [
+                                    {"text": {"query": "compiler", "path": "body"}}
+                                ],
                                 "minimumShouldMatch": 1,
                             },
                         },
@@ -1100,12 +1560,19 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                             conn,
                             physical_name=physical_name,
                             definition=definition,
-                            filter_spec={"$and": [{"title": "Ada algorithms"}, {"kind": {"$in": ["note"]}}]},
+                            filter_spec={
+                                "$and": [
+                                    {"title": "Ada algorithms"},
+                                    {"kind": {"$in": ["note"]}},
+                                ]
+                            },
                         )
                     )
                     self.assertEqual(downstream_keys, [engine._storage_key(1)])
                     self.assertTrue(downstream_description["exact"])
-                    self.assertEqual(set(downstream_description["supportedOperators"]), {"eq", "$in"})
+                    self.assertEqual(
+                        set(downstream_description["supportedOperators"]), {"eq", "$in"}
+                    )
 
                     described = search_runtime_module._describe_compound_prefilter_sync(
                         engine,
@@ -1121,23 +1588,30 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         ["candidateable-exact", "candidateable-exact"],
                     )
                     self.assertTrue(described["partialRanking"]["supported"])
-                    self.assertEqual(described["partialRanking"]["strategy"], "fts-materialized-entries")
+                    self.assertEqual(
+                        described["partialRanking"]["strategy"],
+                        "fts-materialized-entries",
+                    )
                     self.assertEqual(
                         described["should"][0]["downstreamRefinement"]["path"],
                         "title",
                     )
 
-                    compound_keys, backend, exact, should_candidates, non_candidateable = (
-                        search_runtime_module._sqlite_compound_candidate_state(
-                            engine,
-                            conn,
-                            physical_name=physical_name,
-                            definition=definition,
-                            query=compound_query,
-                            downstream_filter_storage_keys=downstream_keys,
-                            downstream_filter_spec=downstream_description["spec"],
-                            downstream_filter_exact=bool(downstream_description["exact"]),
-                        )
+                    (
+                        compound_keys,
+                        backend,
+                        exact,
+                        should_candidates,
+                        non_candidateable,
+                    ) = search_runtime_module._sqlite_compound_candidate_state(
+                        engine,
+                        conn,
+                        physical_name=physical_name,
+                        definition=definition,
+                        query=compound_query,
+                        downstream_filter_storage_keys=downstream_keys,
+                        downstream_filter_spec=downstream_description["spec"],
+                        downstream_filter_exact=bool(downstream_description["exact"]),
                     )
                     self.assertEqual(compound_keys, [engine._storage_key(1)])
                     self.assertEqual(backend, "fts5-prefilter")
@@ -1150,18 +1624,24 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         {
                             "index": "by_text",
                             "compound": {
-                                "must": [{"near": {"path": "score", "origin": 7, "pivot": 2}}],
+                                "must": [
+                                    {"near": {"path": "score", "origin": 7, "pivot": 2}}
+                                ],
                             },
                         },
                     )
-                    no_candidate_keys, no_candidate_backend, no_candidate_exact, _, _ = (
-                        search_runtime_module._sqlite_compound_candidate_state(
-                            engine,
-                            conn,
-                            physical_name=physical_name,
-                            definition=definition,
-                            query=no_candidate_query,
-                        )
+                    (
+                        no_candidate_keys,
+                        no_candidate_backend,
+                        no_candidate_exact,
+                        _,
+                        _,
+                    ) = search_runtime_module._sqlite_compound_candidate_state(
+                        engine,
+                        conn,
+                        physical_name=physical_name,
+                        definition=definition,
+                        query=no_candidate_query,
                     )
                     self.assertIsNone(no_candidate_keys)
                     self.assertIsNone(no_candidate_backend)
@@ -1176,15 +1656,26 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                             physical_name=physical_name,
                             query=compile_search_stage(
                                 "$search",
-                                {"index": "by_text", "text": {"query": "vector", "path": ["title", "body"]}},
+                                {
+                                    "index": "by_text",
+                                    "text": {
+                                        "query": "vector",
+                                        "path": ["title", "body"],
+                                    },
+                                },
                             ),
-                            candidate_storage_keys=[engine._storage_key(1), engine._storage_key(2)],
+                            candidate_storage_keys=[
+                                engine._storage_key(1),
+                                engine._storage_key(2),
+                            ],
                             candidate_exact=True,
                             result_limit_hint=1,
                         )
                     )
                     self.assertEqual(stable_prefix_keys, [engine._storage_key(1)])
-                    self.assertEqual(stable_prefix_prefilter["strategy"], "stable-prefix")
+                    self.assertEqual(
+                        stable_prefix_prefilter["strategy"], "stable-prefix"
+                    )
 
                     unresolved_query = compile_search_stage(
                         "$search",
@@ -1209,7 +1700,10 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                                 coll_name="coll",
                                 physical_name=physical_name,
                                 query=unresolved_query,
-                                candidate_storage_keys=[engine._storage_key(1), engine._storage_key(2)],
+                                candidate_storage_keys=[
+                                    engine._storage_key(1),
+                                    engine._storage_key(2),
+                                ],
                                 candidate_exact=True,
                                 result_limit_hint=1,
                                 should_candidates=[],
@@ -1284,14 +1778,24 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                                 {
                                     "index": "by_text",
                                     "compound": {
-                                        "should": [{"near": {"path": "score", "origin": 7, "pivot": 2}}],
+                                        "should": [
+                                            {
+                                                "near": {
+                                                    "path": "score",
+                                                    "origin": 7,
+                                                    "pivot": 2,
+                                                }
+                                            }
+                                        ],
                                     },
                                 },
                             ),
                             candidate_storage_keys=[engine._storage_key(1)],
                         )
                     )
-                    with patch.object(engine, "_sqlite_table_exists", return_value=False):
+                    with patch.object(
+                        engine, "_sqlite_table_exists", return_value=False
+                    ):
                         self.assertIsNone(
                             search_runtime_module._exact_candidateable_should_scores(
                                 engine,
@@ -1324,7 +1828,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
 
         asyncio.run(_run())
 
-    def test_sqlite_vector_backend_low_level_filter_helpers_cover_conservative_branches(self):
+    def test_sqlite_vector_backend_low_level_filter_helpers_cover_conservative_branches(
+        self,
+    ):
         state = SimpleNamespace(
             scalar_filter_index={
                 "score": {
@@ -1341,7 +1847,10 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             vector_backend._collect_filterable_values({"": 1, "score": [1, "x"]}),
             [("score", {("number", 1.0), ("string", "x")})],
         )
-        self.assertEqual(vector_backend._collect_filterable_values([], prefix="items"), [("items", set())])
+        self.assertEqual(
+            vector_backend._collect_filterable_values([], prefix="items"),
+            [("items", set())],
+        )
         self.assertEqual(vector_backend._filter_value_key(True), ("bool", True))
         self.assertIsNone(vector_backend._filter_value_key(float("inf")))
         scalar_filter_index: dict[str, dict[tuple[str, object], list[str]]] = {}
@@ -1451,7 +1960,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             ),
             (None, None),
         )
-        with patch.object(vector_backend, "evaluate_candidate_filter", return_value=None):
+        with patch.object(
+            vector_backend, "evaluate_candidate_filter", return_value=None
+        ):
             self.assertIsNone(
                 vector_backend._candidate_storage_keys_for_filter_node(
                     state,  # type: ignore[arg-type]
@@ -1503,7 +2014,11 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertEqual(node["keys"], {"a"})
         with self.assertRaisesRegex(OperationFailure, "top-level fields array"):
             vector_backend._require_vector_field_spec(
-                SearchIndexDefinition({"mappings": {"dynamic": True}}, name="bad", index_type="vectorSearch"),
+                SearchIndexDefinition(
+                    {"mappings": {"dynamic": True}},
+                    name="bad",
+                    index_type="vectorSearch",
+                ),
                 "embedding",
             )
 
@@ -1546,7 +2061,12 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         backend = SimpleNamespace(db_name="db", coll_name="coll", physical_name="phys")
         engine._vector_search_backends[("phys", "embedding")] = backend
         engine._search_backend_versions[("db", "coll")] = 3
-        engine._materialized_search_entry_cache[("db", "coll", "phys", 3)] = {"k1": ((), search_runtime_module._materialized_search_document_from_entries(()))}
+        engine._materialized_search_entry_cache[("db", "coll", "phys", 3)] = {
+            "k1": (
+                (),
+                search_runtime_module._materialized_search_document_from_entries(()),
+            )
+        }
         engine._compound_should_score_cache = {
             ("db", "coll", "phys", 3, "query"): {"k1": {"matchedShould": 1.0}},
             ("db", "other", "phys", 2, "query"): {"k2": {"matchedShould": 1.0}},
@@ -1564,16 +2084,31 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertEqual(engine._search_backend_versions[("db", "coll")], 4)
         self.assertNotIn(("phys", "embedding"), engine._vector_search_backends)
         self.assertEqual(engine._materialized_search_entry_cache, {})
-        self.assertNotIn(("db", "coll", "phys", 3, "query"), engine._compound_should_score_cache)
-        self.assertNotIn(("db", "coll", "phys", 3, "query"), engine._compound_rank_cache)
-        self.assertNotIn(("db", "coll", "phys", 3, "query"), engine._compound_topk_prefilter_cache)
-        self.assertIn(("db", "other", "phys", 2, "query"), engine._compound_should_score_cache)
+        self.assertNotIn(
+            ("db", "coll", "phys", 3, "query"), engine._compound_should_score_cache
+        )
+        self.assertNotIn(
+            ("db", "coll", "phys", 3, "query"), engine._compound_rank_cache
+        )
+        self.assertNotIn(
+            ("db", "coll", "phys", 3, "query"), engine._compound_topk_prefilter_cache
+        )
+        self.assertIn(
+            ("db", "other", "phys", 2, "query"), engine._compound_should_score_cache
+        )
         self.assertIn(("db", "other", "phys", 2, "query"), engine._compound_rank_cache)
-        self.assertIn(("db", "other", "phys", 2, "query"), engine._compound_topk_prefilter_cache)
+        self.assertIn(
+            ("db", "other", "phys", 2, "query"), engine._compound_topk_prefilter_cache
+        )
 
         engine._vector_search_backends[("phys", "embedding")] = backend
         engine._search_backend_versions[("db", "other")] = 2
-        engine._materialized_search_entry_cache[("db", "other", "phys", 2)] = {"k2": ((), search_runtime_module._materialized_search_document_from_entries(()))}
+        engine._materialized_search_entry_cache[("db", "other", "phys", 2)] = {
+            "k2": (
+                (),
+                search_runtime_module._materialized_search_document_from_entries(()),
+            )
+        }
         engine._clear_search_backend_state_for_database("db")
         self.assertNotIn(("db", "coll"), engine._search_backend_versions)
         self.assertNotIn(("db", "other"), engine._search_backend_versions)
@@ -1583,7 +2118,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         self.assertEqual(engine._compound_rank_cache, {})
         self.assertEqual(engine._compound_topk_prefilter_cache, {})
 
-        with patch.object(engine._admin_runtime, "clear_index_metadata_versions_for_database") as clear_mock:
+        with patch.object(
+            engine._admin_runtime, "clear_index_metadata_versions_for_database"
+        ) as clear_mock:
             engine._clear_index_metadata_versions_for_database("db")
         clear_mock.assert_called_once_with("db")
 
@@ -1599,7 +2136,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 limit=1,
                 null_matches_undefined=False,
                 lookup_collection_id=lambda _db, _coll: None,
-                multikey_signatures_for_query_value=lambda _value, _nulls: (("string", "view"),),
+                multikey_signatures_for_query_value=lambda _value, _nulls: (
+                    ("string", "view"),
+                ),
                 multikey_type_score=lambda _kind: 1,
                 quote_identifier=lambda name: name,
             )
@@ -1631,7 +2170,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 limit=None,
                 null_matches_undefined=False,
                 lookup_collection_id=lambda _db, _coll: 1,
-                multikey_signatures_for_query_value=lambda _value, _nulls: (_ for _ in ()).throw(NotImplementedError()),
+                multikey_signatures_for_query_value=lambda _value, _nulls: (
+                    _ for _ in ()
+                ).throw(NotImplementedError()),
                 multikey_type_score=lambda _kind: 1,
                 quote_identifier=lambda name: name,
             )
@@ -1645,7 +2186,11 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 index_name="idx_kind",
                 physical_name="scidx_kind",
                 limit=1,
-                can_use_scalar_range_fast_path=lambda _db, _coll, _value: ("idx", 100, "5"),
+                can_use_scalar_range_fast_path=lambda _db, _coll, _value: (
+                    "idx",
+                    100,
+                    "5",
+                ),
                 lookup_collection_id=lambda _db, _coll: None,
                 quote_identifier=lambda name: name,
             )
@@ -1660,10 +2205,17 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             find_scalar_fast_path_index=lambda _db, _coll, _field: None,
             field_is_top_level_array_in_collection=lambda _db, _coll, _field: False,
             field_contains_real_numeric_in_collection=lambda _db, _coll, _field: False,
-            field_contains_non_ascii_text_in_collection=lambda _db, _coll, _field: False,
+            field_contains_non_ascii_text_in_collection=lambda _db, _coll, _field: (
+                False
+            ),
             build_equals_sql=lambda *args, **kwargs: None,
             build_range_sql=lambda *args, **kwargs: None,
-            compile_read_plan=lambda semantics, hint: SQLiteReadExecutionPlan(semantics=semantics, strategy="python", execution_lineage=(), physical_plan=()),
+            compile_read_plan=lambda semantics, hint: SQLiteReadExecutionPlan(
+                semantics=semantics,
+                strategy="python",
+                execution_lineage=(),
+                physical_plan=(),
+            ),
         )
         self.assertEqual(mod_plan.strategy, "sql")
         self.assertIn("LIMIT 2", mod_plan.sql)
@@ -1676,15 +2228,24 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             find_scalar_fast_path_index=lambda _db, _coll, _field: None,
             field_is_top_level_array_in_collection=lambda _db, _coll, _field: False,
             field_contains_real_numeric_in_collection=lambda _db, _coll, _field: False,
-            field_contains_non_ascii_text_in_collection=lambda _db, _coll, _field: False,
+            field_contains_non_ascii_text_in_collection=lambda _db, _coll, _field: (
+                False
+            ),
             build_equals_sql=lambda *args, **kwargs: None,
             build_range_sql=lambda *args, **kwargs: None,
-            compile_read_plan=lambda semantics, hint: SQLiteReadExecutionPlan(semantics=semantics, strategy="python", execution_lineage=(), physical_plan=()),
+            compile_read_plan=lambda semantics, hint: SQLiteReadExecutionPlan(
+                semantics=semantics,
+                strategy="python",
+                execution_lineage=(),
+                physical_plan=(),
+            ),
         )
         self.assertEqual(regex_plan.strategy, "sql")
         self.assertIn("LIMIT 3", regex_plan.sql)
 
-    def test_sqlite_scalar_and_multikey_helper_branches_cover_remaining_guard_paths(self):
+    def test_sqlite_scalar_and_multikey_helper_branches_cover_remaining_guard_paths(
+        self,
+    ):
         engine = SQLiteEngine()
         engine._connection = sqlite3.connect(":memory:")
         try:
@@ -1714,17 +2275,25 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 "INSERT INTO collections (collection_id, db_name, coll_name, options_json) VALUES (?, ?, ?, ?)",
                 (0, "db", "coll", "{}"),
             )
-            self.assertIsNone(engine._can_use_scalar_range_fast_path("db", "coll", "a.b", 5))
-            with patch.object(engine, "_find_scalar_fast_path_index", return_value=None), patch.object(
-                engine,
-                "_field_is_top_level_array_in_collection",
-                return_value=False,
-            ), patch.object(
-                engine,
-                "_field_has_comparison_type_mismatch_in_collection",
-                return_value=False,
+            self.assertIsNone(
+                engine._can_use_scalar_range_fast_path("db", "coll", "a.b", 5)
+            )
+            with (
+                patch.object(engine, "_find_scalar_fast_path_index", return_value=None),
+                patch.object(
+                    engine,
+                    "_field_is_top_level_array_in_collection",
+                    return_value=False,
+                ),
+                patch.object(
+                    engine,
+                    "_field_has_comparison_type_mismatch_in_collection",
+                    return_value=False,
+                ),
             ):
-                self.assertIsNone(engine._can_use_scalar_range_fast_path("db", "coll", "value", 5))
+                self.assertIsNone(
+                    engine._can_use_scalar_range_fast_path("db", "coll", "value", 5)
+                )
 
             malformed = Mock()
             malformed.execute.return_value.fetchone.side_effect = [(None,), None]
@@ -1734,7 +2303,14 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     "db",
                     "coll",
                     [("_id", 1)],
-                    indexes=[EngineIndexRecord(name="idx_builtin", fields=["_id"], key=[("_id", 1)], unique=True)],
+                    indexes=[
+                        EngineIndexRecord(
+                            name="idx_builtin",
+                            fields=["_id"],
+                            key=[("_id", 1)],
+                            unique=True,
+                        )
+                    ],
                 )["name"],
                 "_id_",
             )
@@ -1758,16 +2334,37 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             )
             self.assertIn("type_score < ?", sql)
             numeric_score = SQLiteEngine._multikey_type_score("number")
-            self.assertEqual(params[-3:], [numeric_score, numeric_score, SQLiteEngine._normalize_multikey_number(7)])
+            self.assertEqual(
+                params[-3:],
+                [
+                    numeric_score,
+                    numeric_score,
+                    SQLiteEngine._normalize_multikey_number(7),
+                ],
+            )
 
-            engine._collection_features_cache[("db", "coll", "comparison_mismatch:value:number")] = True
+            engine._collection_features_cache[
+                ("db", "coll", "comparison_mismatch:value:number")
+            ] = True
             engine._connection.execute(
                 "INSERT INTO documents (db_name, coll_name, storage_key, document) VALUES (?, ?, ?, ?)",
                 ("db", "coll", "bool-doc", '{"value":["unexpected"]}'),
             )
-            self.assertTrue(engine._field_has_comparison_type_mismatch_in_collection("db", "coll", "value", "number"))
-            self.assertTrue(engine._field_has_scalar_or_array_element_type_mismatch_in_collection("db", "coll", "value", "object"))
-            self.assertTrue(engine._field_has_scalar_or_array_element_type_mismatch_in_collection("db", "coll", "value", "bool"))
+            self.assertTrue(
+                engine._field_has_comparison_type_mismatch_in_collection(
+                    "db", "coll", "value", "number"
+                )
+            )
+            self.assertTrue(
+                engine._field_has_scalar_or_array_element_type_mismatch_in_collection(
+                    "db", "coll", "value", "object"
+                )
+            )
+            self.assertTrue(
+                engine._field_has_scalar_or_array_element_type_mismatch_in_collection(
+                    "db", "coll", "value", "bool"
+                )
+            )
 
             translated_sql, _translated_params = engine._translate_range_with_multikey(
                 1,
@@ -1782,7 +2379,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             engine._connection.close()
             engine._connection = None
 
-    def test_sqlite_query_plan_multikey_translation_covers_match_all_fallbacks_and_range_variants(self):
+    def test_sqlite_query_plan_multikey_translation_covers_match_all_fallbacks_and_range_variants(
+        self,
+    ):
         engine = SQLiteEngine()
         engine._connection = sqlite3.connect(":memory:")
         try:
@@ -1801,36 +2400,69 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 "INSERT INTO collections (collection_id, db_name, coll_name, options_json) VALUES (?, ?, ?, ?)",
                 (1, "db", "coll", "{}"),
             )
-            self.assertEqual(engine._translate_query_plan_with_multikey("db", "coll", compile_filter({})), ("1 = 1", []))
+            self.assertEqual(
+                engine._translate_query_plan_with_multikey(
+                    "db", "coll", compile_filter({})
+                ),
+                ("1 = 1", []),
+            )
 
-            with patch.object(engine, "_find_multikey_index", return_value=None), patch.object(
-                engine,
-                "_field_is_top_level_array_in_collection",
-                return_value=False,
+            with (
+                patch.object(engine, "_find_multikey_index", return_value=None),
+                patch.object(
+                    engine,
+                    "_field_is_top_level_array_in_collection",
+                    return_value=False,
+                ),
             ):
-                sql, _ = engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"kind": "view"}))
+                sql, _ = engine._translate_query_plan_with_multikey(
+                    "db", "coll", compile_filter({"kind": "view"})
+                )
                 self.assertIn("json_type", sql)
 
-            with patch.object(engine, "_find_multikey_index", return_value=EngineIndexRecord(
-                name="idx_tags",
-                fields=["tags"],
-                key=[("tags", 1)],
-                unique=False,
-                multikey=True,
-                multikey_physical_name="mkidx_tags",
-            )), patch.object(engine, "_lookup_collection_id", return_value=None):
-                fallback_sql, _ = engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"tags": "python"}))
+            with (
+                patch.object(
+                    engine,
+                    "_find_multikey_index",
+                    return_value=EngineIndexRecord(
+                        name="idx_tags",
+                        fields=["tags"],
+                        key=[("tags", 1)],
+                        unique=False,
+                        multikey=True,
+                        multikey_physical_name="mkidx_tags",
+                    ),
+                ),
+                patch.object(engine, "_lookup_collection_id", return_value=None),
+            ):
+                fallback_sql, _ = engine._translate_query_plan_with_multikey(
+                    "db", "coll", compile_filter({"tags": "python"})
+                )
                 self.assertIn("json_each", fallback_sql)
 
-            with patch("mongoeco.engines.sqlite._translate_all_condition", side_effect=NotImplementedError()), patch(
-                "mongoeco.engines.sqlite.translate_query_plan",
-                return_value=("fallback", []),
+            with (
+                patch(
+                    "mongoeco.engines.sqlite._translate_all_condition",
+                    side_effect=NotImplementedError(),
+                ),
+                patch(
+                    "mongoeco.engines.sqlite.translate_query_plan",
+                    return_value=("fallback", []),
+                ),
             ):
-                fallback_sql, _ = engine._translate_query_plan_with_multikey("db", "coll", compile_filter({"tags": {"$all": [{"x": 1}]}}))
+                fallback_sql, _ = engine._translate_query_plan_with_multikey(
+                    "db", "coll", compile_filter({"tags": {"$all": [{"x": 1}]}})
+                )
                 self.assertEqual(fallback_sql, "fallback")
-            with patch("mongoeco.engines.sqlite._translate_elem_match_condition", side_effect=NotImplementedError()), patch(
-                "mongoeco.engines.sqlite.translate_query_plan",
-                return_value=("fallback-elem", []),
+            with (
+                patch(
+                    "mongoeco.engines.sqlite._translate_elem_match_condition",
+                    side_effect=NotImplementedError(),
+                ),
+                patch(
+                    "mongoeco.engines.sqlite.translate_query_plan",
+                    return_value=("fallback-elem", []),
+                ),
             ):
                 fallback_sql, _ = engine._translate_query_plan_with_multikey(
                     "db",
@@ -1839,14 +2471,18 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 )
                 self.assertEqual(fallback_sql, "fallback-elem")
 
-            with patch.object(engine, "_find_multikey_index", return_value=None), patch.object(
-                engine,
-                "_field_is_top_level_array_in_collection",
-                return_value=True,
-            ), patch.object(
-                engine,
-                "_field_has_scalar_or_array_element_type_mismatch_in_collection",
-                return_value=False,
+            with (
+                patch.object(engine, "_find_multikey_index", return_value=None),
+                patch.object(
+                    engine,
+                    "_field_is_top_level_array_in_collection",
+                    return_value=True,
+                ),
+                patch.object(
+                    engine,
+                    "_field_has_scalar_or_array_element_type_mismatch_in_collection",
+                    return_value=False,
+                ),
             ):
                 for filter_spec in (
                     {"value": {"$gt": 5}},
@@ -1854,13 +2490,17 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     {"value": {"$lt": 5}},
                     {"value": {"$lte": 5}},
                 ):
-                    sql, _ = engine._translate_query_plan_with_multikey("db", "coll", compile_filter(filter_spec))
+                    sql, _ = engine._translate_query_plan_with_multikey(
+                        "db", "coll", compile_filter(filter_spec)
+                    )
                     self.assertIn("json_type(document", sql)
         finally:
             engine._connection.close()
             engine._connection = None
 
-    def test_sqlite_array_comparison_and_search_entry_helpers_cover_fallback_paths(self):
+    def test_sqlite_array_comparison_and_search_entry_helpers_cover_fallback_paths(
+        self,
+    ):
         engine = SQLiteEngine()
         engine._connection = sqlite3.connect(":memory:")
         try:
@@ -1879,7 +2519,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 "INSERT INTO collections (collection_id, db_name, coll_name, options_json) VALUES (?, ?, ?, ?)",
                 (1, "db", "coll", "{}"),
             )
-            with patch.object(engine, "_field_is_top_level_array_in_collection", return_value=True):
+            with patch.object(
+                engine, "_field_is_top_level_array_in_collection", return_value=True
+            ):
                 self.assertTrue(
                     engine._plan_requires_python_for_array_comparisons(
                         "db",
@@ -1887,7 +2529,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         compile_filter({"items.value": {"$gt": 5}}),
                     )
                 )
-            with patch.object(engine, "_field_is_top_level_array_in_collection", return_value=True):
+            with patch.object(
+                engine, "_field_is_top_level_array_in_collection", return_value=True
+            ):
                 self.assertTrue(
                     engine._plan_requires_python_for_array_comparisons(
                         "db",
@@ -1896,9 +2540,20 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     )
                 )
 
-            search_definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="text", index_type="search")
+            search_definition = SearchIndexDefinition(
+                {"mappings": {"dynamic": True}}, name="text", index_type="search"
+            )
             vector_definition = SearchIndexDefinition(
-                {"fields": [{"type": "vector", "path": "embedding", "numDimensions": 2, "similarity": "cosine"}]},
+                {
+                    "fields": [
+                        {
+                            "type": "vector",
+                            "path": "embedding",
+                            "numDimensions": 2,
+                            "similarity": "cosine",
+                        }
+                    ]
+                },
                 name="vec",
                 index_type="vectorSearch",
             )
@@ -1915,9 +2570,20 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 "coll",
                 "1",
                 {"_id": "1"},
-                search_indexes=[(search_definition, None, None), (vector_definition, "vec_idx", None)],
+                search_indexes=[
+                    (search_definition, None, None),
+                    (vector_definition, "vec_idx", None),
+                ],
             )
-            self.assertIsNone(engine._ensure_search_backend_sync(engine._connection, "db", "coll", SearchIndexDefinition({}, name="hybrid", index_type="hybrid"), "x"))
+            self.assertIsNone(
+                engine._ensure_search_backend_sync(
+                    engine._connection,
+                    "db",
+                    "coll",
+                    SearchIndexDefinition({}, name="hybrid", index_type="hybrid"),
+                    "x",
+                )
+            )
         finally:
             engine._connection.close()
             engine._connection = None
@@ -1984,19 +2650,38 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 )
                 """
             )
-            plain_index = EngineIndexRecord(name="idx_plain", fields=["name"], key=[("name", 1)], unique=False)
-            self.assertEqual(engine._build_scalar_rows_for_document("1", {"_id": "1"}, [plain_index]), [])
+            plain_index = EngineIndexRecord(
+                name="idx_plain", fields=["name"], key=[("name", 1)], unique=False
+            )
+            self.assertEqual(
+                engine._build_scalar_rows_for_document(
+                    "1", {"_id": "1"}, [plain_index]
+                ),
+                [],
+            )
 
             with patch.object(engine, "_lookup_collection_id", return_value=None):
-                engine._rebuild_multikey_entries_for_document(conn, "db", "coll", "1", {"tags": ["python"]}, [plain_index])
-                engine._rebuild_scalar_entries_for_document(conn, "db", "coll", "1", {"name": "Ada"}, [plain_index])
-                engine._replace_multikey_entries_for_index_for_document(conn, "db", "coll", "1", {"tags": ["python"]}, plain_index)
-                engine._replace_scalar_entries_for_index_for_document(conn, "db", "coll", "1", {"name": "Ada"}, plain_index)
+                engine._rebuild_multikey_entries_for_document(
+                    conn, "db", "coll", "1", {"tags": ["python"]}, [plain_index]
+                )
+                engine._rebuild_scalar_entries_for_document(
+                    conn, "db", "coll", "1", {"name": "Ada"}, [plain_index]
+                )
+                engine._replace_multikey_entries_for_index_for_document(
+                    conn, "db", "coll", "1", {"tags": ["python"]}, plain_index
+                )
+                engine._replace_scalar_entries_for_index_for_document(
+                    conn, "db", "coll", "1", {"name": "Ada"}, plain_index
+                )
                 engine._backfill_scalar_indexes_sync(conn)
 
             with patch.object(engine, "_lookup_collection_id", return_value=1):
-                engine._replace_multikey_entries_for_index_for_document(conn, "db", "coll", "1", {"tags": ["python"]}, plain_index)
-                engine._replace_scalar_entries_for_index_for_document(conn, "db", "coll", "1", {"name": "Ada"}, plain_index)
+                engine._replace_multikey_entries_for_index_for_document(
+                    conn, "db", "coll", "1", {"tags": ["python"]}, plain_index
+                )
+                engine._replace_scalar_entries_for_index_for_document(
+                    conn, "db", "coll", "1", {"name": "Ada"}, plain_index
+                )
         finally:
             conn.close()
 
@@ -2015,8 +2700,12 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             conn.execute(
                 "CREATE TABLE search_indexes (db_name TEXT NOT NULL, coll_name TEXT NOT NULL, name TEXT, definition_json TEXT, physical_name TEXT, ready_at_epoch REAL)"
             )
-            conn.execute("CREATE TABLE scalar_index_entries (collection_id INTEGER, storage_key TEXT, field_path TEXT, value_type TEXT, numeric_value REAL, text_value TEXT)")
-            conn.execute("CREATE TABLE multikey_entries (collection_id INTEGER, storage_key TEXT, index_name TEXT, field_path TEXT, type_score INTEGER, text_value TEXT)")
+            conn.execute(
+                "CREATE TABLE scalar_index_entries (collection_id INTEGER, storage_key TEXT, field_path TEXT, value_type TEXT, numeric_value REAL, text_value TEXT)"
+            )
+            conn.execute(
+                "CREATE TABLE multikey_entries (collection_id INTEGER, storage_key TEXT, index_name TEXT, field_path TEXT, type_score INTEGER, text_value TEXT)"
+            )
             conn.execute(
                 "INSERT INTO collections (collection_id, db_name, coll_name, options_json) VALUES (1, 'db', 'present', '{}')"
             )
@@ -2032,7 +2721,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     profiler=None,
                     profile_collection_name="system.profile",
                     load_collection_options=lambda *_args: None,
-                    collection_exists=lambda _conn, db, coll: db == "db" and coll == "index_only",
+                    collection_exists=lambda _conn, db, coll: (
+                        db == "db" and coll == "index_only"
+                    ),
                 ),
                 {},
             )
@@ -2080,7 +2771,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     select_first_document_for_plan=lambda *_args: ("1", {"_id": "1"}),
                     load_documents=lambda *_args: [],
                     match_plan=lambda *_args: False,
-                    enforce_collection_document_validation=lambda *_args, **_kwargs: None,
+                    enforce_collection_document_validation=lambda *_args, **_kwargs: (
+                        None
+                    ),
                     validate_document_against_unique_indexes=lambda *_args: None,
                     load_indexes=lambda *_args: [],
                     load_search_index_rows=lambda *_args: [],
@@ -2090,7 +2783,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     translate_compiled_update_plan=lambda *_args: ("?", ()),
                     compiled_update_plan_type=type("Compiled", (), {}),
                     rebuild_multikey_entries_for_document=lambda *_args: None,
-                    rebuild_scalar_entries_for_document=lambda *_args: (_ for _ in ()).throw(sqlite3.IntegrityError("dup")),
+                    rebuild_scalar_entries_for_document=lambda *_args: (
+                        _ for _ in ()
+                    ).throw(sqlite3.IntegrityError("dup")),
                     replace_search_entries_for_document=lambda *_args: None,
                     serialize_document=lambda doc: json.dumps(doc),
                     storage_key_for_id=lambda value: str(value),
@@ -2104,7 +2799,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     conn=conn,
                     db_name="db",
                     begin_write=lambda _conn: None,
-                    commit_write=lambda _conn: (_ for _ in ()).throw(RuntimeError("boom")),
+                    commit_write=lambda _conn: (_ for _ in ()).throw(
+                        RuntimeError("boom")
+                    ),
                     rollback_write=rollback,
                     quote_identifier=lambda name: f'"{name}"',
                     drop_search_backend=lambda *_args: None,
@@ -2196,7 +2893,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         )
 
         multikey_conn = _FakeConnection()
-        engine._ensure_multikey_physical_indexes_sync(multikey_conn, [multikey_index, multikey_index])
+        engine._ensure_multikey_physical_indexes_sync(
+            multikey_conn, [multikey_index, multikey_index]
+        )
         self.assertEqual(multikey_conn.commits, 1)
         self.assertEqual(len(multikey_conn.executed), 1)
         engine._ensure_multikey_physical_indexes_sync(multikey_conn, [multikey_index])
@@ -2233,7 +2932,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         engine._ensured_multikey_physical_indexes.clear()
         failing_multikey_conn = _FakeConnection(fail_commit=True)
         with self.assertRaisesRegex(RuntimeError, "commit boom"):
-            engine._ensure_multikey_physical_indexes_sync(failing_multikey_conn, [multikey_index])
+            engine._ensure_multikey_physical_indexes_sync(
+                failing_multikey_conn, [multikey_index]
+            )
         self.assertNotIn("mk_physical", engine._ensured_multikey_physical_indexes)
 
     def test_sqlite_search_backend_cache_is_not_marked_when_internal_commit_fails(self):
@@ -2264,10 +2965,13 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         )
         conn = _FakeConnection()
 
-        with patch.object(engine, "_supports_fts5", return_value=True), patch.object(
-            engine,
-            "_load_documents",
-            return_value=[],
+        with (
+            patch.object(engine, "_supports_fts5", return_value=True),
+            patch.object(
+                engine,
+                "_load_documents",
+                return_value=[],
+            ),
         ):
             with self.assertRaisesRegex(RuntimeError, "commit boom"):
                 search_runtime_module.ensure_search_backend_sync(
@@ -2286,11 +2990,17 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         feature_key = ("db", "coll", "uniform_scalar_sort_type:name")
         engine._collection_features_cache[feature_key] = "string"
         self.assertEqual(
-            engine._field_has_uniform_scalar_sort_type_in_collection("db", "coll", "name"),
+            engine._field_has_uniform_scalar_sort_type_in_collection(
+                "db", "coll", "name"
+            ),
             "string",
         )
         engine._collection_features_cache[feature_key] = False
-        self.assertIsNone(engine._field_has_uniform_scalar_sort_type_in_collection("db", "coll", "name"))
+        self.assertIsNone(
+            engine._field_has_uniform_scalar_sort_type_in_collection(
+                "db", "coll", "name"
+            )
+        )
 
         sparse = EngineIndexRecord(
             name="name_sparse",
@@ -2315,16 +3025,24 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             unique=False,
             scalar_physical_name="scalar_name",
         )
-        with patch.object(engine, "_load_indexes", return_value=[sparse, partial, usable]):
+        with patch.object(
+            engine, "_load_indexes", return_value=[sparse, partial, usable]
+        ):
             self.assertIs(engine._find_scalar_sort_index("db", "coll", "name"), usable)
             self.assertIsNone(engine._find_scalar_sort_index("db", "coll", "other"))
 
-        self.assertEqual(engine._resolve_select_clause_for_scalar_sort("document"), "documents.document")
+        self.assertEqual(
+            engine._resolve_select_clause_for_scalar_sort("document"),
+            "documents.document",
+        )
         self.assertEqual(
             engine._resolve_select_clause_for_scalar_sort("storage_key, document"),
             "documents.storage_key, documents.document",
         )
-        self.assertEqual(engine._resolve_select_clause_for_scalar_sort("documents.storage_key"), "documents.storage_key")
+        self.assertEqual(
+            engine._resolve_select_clause_for_scalar_sort("documents.storage_key"),
+            "documents.storage_key",
+        )
 
         sql, params = engine._build_select_statement_with_custom_order(
             select_clause="documents.document",
@@ -2357,10 +3075,14 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             (
                 EqualsCondition("name", "Ada"),
                 NotCondition(GreaterThanCondition("score", 5)),
-                OrCondition((EqualsCondition("tier", "pro"), EqualsCondition("region", "es"))),
+                OrCondition(
+                    (EqualsCondition("tier", "pro"), EqualsCondition("region", "es"))
+                ),
             )
         )
-        self.assertEqual(SQLiteEngine._plan_fields(plan), {"name", "score", "tier", "region"})
+        self.assertEqual(
+            SQLiteEngine._plan_fields(plan), {"name", "score", "tier", "region"}
+        )
         self.assertEqual(SQLiteEngine._comparison_fields(plan), {"score"})
 
         engine = SQLiteEngine()
@@ -2387,9 +3109,17 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 ),
             )
 
-            self.assertTrue(engine._field_traverses_dbref_in_collection("db", "coll", "ref.$id"))
-            with patch.object(engine, "_require_connection", side_effect=AssertionError("cache should be used")):
-                self.assertTrue(engine._field_traverses_dbref_in_collection("db", "coll", "ref.$id"))
+            self.assertTrue(
+                engine._field_traverses_dbref_in_collection("db", "coll", "ref.$id")
+            )
+            with patch.object(
+                engine,
+                "_require_connection",
+                side_effect=AssertionError("cache should be used"),
+            ):
+                self.assertTrue(
+                    engine._field_traverses_dbref_in_collection("db", "coll", "ref.$id")
+                )
         finally:
             conn.close()
             engine._connection = None
@@ -2398,14 +3128,18 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         engine = SQLiteEngine()
         conn = self._connection()
         engine._connection = conn
-        definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="search_idx")
+        definition = SearchIndexDefinition(
+            {"mappings": {"dynamic": True}}, name="search_idx"
+        )
         try:
             with patch.object(
                 engine,
                 "_load_search_index_rows",
                 return_value=[(definition, "fts_idx", 0.0)],
             ):
-                documents = engine._list_search_indexes_sync("db", "coll", name=None, context=None)
+                documents = engine._list_search_indexes_sync(
+                    "db", "coll", name=None, context=None
+                )
             self.assertEqual(len(documents), 1)
             self.assertEqual(documents[0]["name"], "search_idx")
 
@@ -2415,21 +3149,29 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 normalized_pattern="ada*",
                 paths=("name",),
             )
-            with patch.object(engine, "_ensure_search_backend_sync", return_value="fts_idx"), patch.object(
-                engine,
-                "_supports_fts5",
-                return_value=True,
-            ), patch.object(
-                engine,
-                "_sqlite_table_exists",
-                return_value=False,
-            ), patch.object(
-                engine,
-                "_load_documents",
-                return_value=[("1", {"name": "Ada"}), ("2", {"name": "Grace"})],
-            ), patch(
-                "mongoeco.engines._sqlite_search_runtime.matches_search_query",
-                side_effect=lambda document, **_: document["name"] == "Ada",
+            with (
+                patch.object(
+                    engine, "_ensure_search_backend_sync", return_value="fts_idx"
+                ),
+                patch.object(
+                    engine,
+                    "_supports_fts5",
+                    return_value=True,
+                ),
+                patch.object(
+                    engine,
+                    "_sqlite_table_exists",
+                    return_value=False,
+                ),
+                patch.object(
+                    engine,
+                    "_load_documents",
+                    return_value=[("1", {"name": "Ada"}), ("2", {"name": "Grace"})],
+                ),
+                patch(
+                    "mongoeco.engines._sqlite_search_runtime.matches_search_query",
+                    side_effect=lambda document, **_: document["name"] == "Ada",
+                ),
             ):
                 matched = engine._execute_sqlite_search_query(
                     conn,
@@ -2448,6 +3190,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
     def test_sqlite_admin_runtime_covers_collection_existence_and_options_helpers(self):
         conn = self._connection()
         try:
+
             class _EngineStub:
                 _PROFILE_COLLECTION_NAME = "system.profile"
 
@@ -2464,10 +3207,18 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 ("db", "coll", '{"capped": true}'),
             )
             self.assertTrue(runtime.collection_exists(conn, "db", "coll"))
-            self.assertEqual(runtime.collection_options_or_empty(conn, "db", "coll"), {"capped": True})
+            self.assertEqual(
+                runtime.collection_options_or_empty(conn, "db", "coll"),
+                {"capped": True},
+            )
 
-            conn.execute("DELETE FROM collections WHERE db_name = ? AND coll_name = ?", ("db", "coll"))
-            self.assertEqual(runtime.collection_options_or_empty(conn, "db", "coll"), {})
+            conn.execute(
+                "DELETE FROM collections WHERE db_name = ? AND coll_name = ?",
+                ("db", "coll"),
+            )
+            self.assertEqual(
+                runtime.collection_options_or_empty(conn, "db", "coll"), {}
+            )
 
             conn.execute(
                 "INSERT INTO documents (db_name, coll_name, storage_key, document) VALUES (?, ?, ?, ?)",
@@ -2475,11 +3226,33 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             )
             conn.execute(
                 "INSERT INTO indexes (db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                ("db", "indexes_only", "ix", "ix_physical", '["name"]', '[["name", 1]]', 0, 0, None, None, 0, None, None),
+                (
+                    "db",
+                    "indexes_only",
+                    "ix",
+                    "ix_physical",
+                    '["name"]',
+                    '[["name", 1]]',
+                    0,
+                    0,
+                    None,
+                    None,
+                    0,
+                    None,
+                    None,
+                ),
             )
             conn.execute(
                 "INSERT INTO search_indexes (db_name, coll_name, name, index_type, definition_json, physical_name, ready_at_epoch) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                ("db", "search_only", "search_idx", "search", '{"mappings":{"dynamic":true}}', "fts_idx", 10.0),
+                (
+                    "db",
+                    "search_only",
+                    "search_idx",
+                    "search",
+                    '{"mappings":{"dynamic":true}}',
+                    "fts_idx",
+                    10.0,
+                ),
             )
 
             self.assertTrue(runtime.collection_exists(conn, "db", "docs_only"))
@@ -2539,9 +3312,12 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         runtime.clear_index_metadata_versions_for_database("db")
         self.assertEqual(engine._index_metadata_versions, {("other", "coll"): 3})
 
-    def test_sqlite_admin_runtime_delegates_namespace_entrypoints_with_engine_wiring(self):
+    def test_sqlite_admin_runtime_delegates_namespace_entrypoints_with_engine_wiring(
+        self,
+    ):
         conn = self._connection()
         try:
+
             class _EngineStub:
                 _PROFILE_COLLECTION_NAME = "system.profile"
 
@@ -2556,19 +3332,31 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     return self._connection
 
                 def _begin_write(self, current, context):
-                    self.calls.append(("begin_write", current is self._connection, context))
+                    self.calls.append(
+                        ("begin_write", current is self._connection, context)
+                    )
 
                 def _commit_write(self, current, context):
-                    self.calls.append(("commit_write", current is self._connection, context))
+                    self.calls.append(
+                        ("commit_write", current is self._connection, context)
+                    )
 
                 def _rollback_write(self, current, context):
-                    self.calls.append(("rollback_write", current is self._connection, context))
+                    self.calls.append(
+                        ("rollback_write", current is self._connection, context)
+                    )
 
                 def _quote_identifier(self, value):
                     return f'"{value}"'
 
                 def _drop_search_backend_sync(self, current, physical_name):
-                    self.calls.append(("drop_search_backend", current is self._connection, physical_name))
+                    self.calls.append(
+                        (
+                            "drop_search_backend",
+                            current is self._connection,
+                            physical_name,
+                        )
+                    )
 
                 def _invalidate_index_cache(self):
                     self.calls.append(("invalidate_index_cache",))
@@ -2587,28 +3375,46 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 "_sqlite_collection_options",
                 return_value={"capped": True},
             ) as collection_options_mock:
-                self.assertEqual(runtime.collection_options("db", "coll", context="ctx"), {"capped": True})
+                self.assertEqual(
+                    runtime.collection_options("db", "coll", context="ctx"),
+                    {"capped": True},
+                )
             collection_options_mock.assert_called_once()
             self.assertEqual(collection_options_mock.call_args.kwargs["conn"], conn)
-            self.assertEqual(collection_options_mock.call_args.kwargs["profile_collection_name"], "system.profile")
+            self.assertEqual(
+                collection_options_mock.call_args.kwargs["profile_collection_name"],
+                "system.profile",
+            )
 
-            with patch.object(admin_runtime_module, "_sqlite_drop_database") as drop_database_mock:
+            with patch.object(
+                admin_runtime_module, "_sqlite_drop_database"
+            ) as drop_database_mock:
                 runtime.drop_database("db", context="ctx")
             drop_kwargs = drop_database_mock.call_args.kwargs
             self.assertEqual(drop_kwargs["conn"], conn)
             self.assertIs(drop_kwargs["clear_profiler"].__self__, engine._profiler)
-            self.assertIs(drop_kwargs["clear_index_metadata_versions"].__self__, runtime)
+            self.assertIs(
+                drop_kwargs["clear_index_metadata_versions"].__self__, runtime
+            )
             drop_kwargs["begin_write"](conn)
             drop_kwargs["commit_write"](conn)
             drop_kwargs["rollback_write"](conn)
 
-            with patch.object(admin_runtime_module, "_sqlite_list_databases", return_value=["db"]) as list_databases_mock:
+            with patch.object(
+                admin_runtime_module, "_sqlite_list_databases", return_value=["db"]
+            ) as list_databases_mock:
                 self.assertEqual(runtime.list_databases(context="ctx"), ["db"])
             self.assertEqual(list_databases_mock.call_args.kwargs["conn"], conn)
-            self.assertIs(list_databases_mock.call_args.kwargs["profiler"], engine._profiler)
+            self.assertIs(
+                list_databases_mock.call_args.kwargs["profiler"], engine._profiler
+            )
 
-            with patch.object(admin_runtime_module, "_sqlite_list_collections", return_value=["coll"]) as list_collections_mock:
-                self.assertEqual(runtime.list_collections("db", context="ctx"), ["coll"])
+            with patch.object(
+                admin_runtime_module, "_sqlite_list_collections", return_value=["coll"]
+            ) as list_collections_mock:
+                self.assertEqual(
+                    runtime.list_collections("db", context="ctx"), ["coll"]
+                )
             self.assertEqual(list_collections_mock.call_args.kwargs["conn"], conn)
             self.assertEqual(list_collections_mock.call_args.kwargs["db_name"], "db")
             self.assertEqual(
@@ -2772,7 +3578,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     is_builtin_id_index=lambda _keys: False,
                 )
 
-            with self.assertRaisesRegex(OperationFailure, "index not found with key pattern"):
+            with self.assertRaisesRegex(
+                OperationFailure, "index not found with key pattern"
+            ):
                 index_admin.drop_index(
                     conn,
                     db_name="db",
@@ -2802,7 +3610,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     db_name="db",
                     coll_name="coll",
                     begin_write=lambda _conn: None,
-                    commit_write=lambda _conn: (_ for _ in ()).throw(RuntimeError("boom")),
+                    commit_write=lambda _conn: (_ for _ in ()).throw(
+                        RuntimeError("boom")
+                    ),
                     rollback_write=Mock(),
                     load_indexes=lambda *_args: [target],
                     lookup_collection_id=lambda *_args: 1,
@@ -2816,7 +3626,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
     def test_sqlite_search_admin_helpers_cover_documents_and_conflicts(self):
         conn = self._connection()
         try:
-            definition = SearchIndexDefinition({"mappings": {"dynamic": True}}, name="search_idx")
+            definition = SearchIndexDefinition(
+                {"mappings": {"dynamic": True}}, name="search_idx"
+            )
             backend_calls = []
             begin = Mock()
             commit = Mock()
@@ -2829,9 +3641,11 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 definition=definition,
                 deadline=None,
                 begin_write=lambda current: begin(current),
-                ensure_collection_row=lambda current, db_name, coll_name: current.execute(
-                    "INSERT INTO collections (db_name, coll_name, options_json) VALUES (?, ?, ?)",
-                    (db_name, coll_name, "{}"),
+                ensure_collection_row=lambda current, db_name, coll_name: (
+                    current.execute(
+                        "INSERT INTO collections (db_name, coll_name, options_json) VALUES (?, ?, ?)",
+                        (db_name, coll_name, "{}"),
+                    )
                 ),
                 commit_write=lambda current: commit(current),
                 rollback_write=lambda current: rollback(current),
@@ -2868,18 +3682,24 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 ensure_collection_row=lambda *_args: None,
                 commit_write=lambda _conn: None,
                 rollback_write=lambda _conn: None,
-                ensure_search_backend=lambda *_args: (_ for _ in ()).throw(AssertionError("unexpected backend rebuild")),
+                ensure_search_backend=lambda *_args: (_ for _ in ()).throw(
+                    AssertionError("unexpected backend rebuild")
+                ),
                 physical_search_index_name=lambda *_args: "fts_idx",
                 pending_ready_at=lambda: 84.0,
             )
             self.assertEqual(same_name, "search_idx")
 
-            with self.assertRaisesRegex(OperationFailure, "Conflicting search index definition"):
+            with self.assertRaisesRegex(
+                OperationFailure, "Conflicting search index definition"
+            ):
                 search_admin.create_search_index(
                     conn,
                     db_name="db",
                     coll_name="coll",
-                    definition=SearchIndexDefinition({"mappings": {"dynamic": False}}, name="search_idx"),
+                    definition=SearchIndexDefinition(
+                        {"mappings": {"dynamic": False}}, name="search_idx"
+                    ),
                     deadline=None,
                     begin_write=lambda _conn: None,
                     ensure_collection_row=lambda *_args: None,
@@ -2896,6 +3716,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
     def test_sqlite_namespace_admin_helpers_update_catalog_and_invalidate_runtime(self):
         conn = self._connection()
         try:
+
             def _collection_exists(current, db_name, coll_name):
                 row = current.execute(
                     "SELECT 1 FROM collections WHERE db_name = ? AND coll_name = ?",
@@ -2926,7 +3747,10 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     conn=conn,
                     profiler=EngineProfiler("sqlite"),
                     list_database_names=lambda current: [
-                        row[0] for row in current.execute("SELECT DISTINCT db_name FROM collections").fetchall()
+                        row[0]
+                        for row in current.execute(
+                            "SELECT DISTINCT db_name FROM collections"
+                        ).fetchall()
                     ],
                 ),
                 ["db"],
@@ -2938,11 +3762,33 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             )
             conn.execute(
                 "INSERT INTO indexes (db_name, coll_name, name, physical_name, fields, keys, unique_flag, sparse_flag, partial_filter_json, expire_after_seconds, multikey_flag, multikey_physical_name, scalar_physical_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                ("db", "coll", "idx", "idx_physical", '["name"]', '[["name", 1]]', 0, 0, None, None, 0, None, None),
+                (
+                    "db",
+                    "coll",
+                    "idx",
+                    "idx_physical",
+                    '["name"]',
+                    '[["name", 1]]',
+                    0,
+                    0,
+                    None,
+                    None,
+                    0,
+                    None,
+                    None,
+                ),
             )
             conn.execute(
                 "INSERT INTO search_indexes (db_name, coll_name, name, index_type, definition_json, physical_name, ready_at_epoch) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                ("db", "coll", "search_idx", "search", '{"mappings":{"dynamic":true}}', "fts_idx", 10.0),
+                (
+                    "db",
+                    "coll",
+                    "search_idx",
+                    "search",
+                    '{"mappings":{"dynamic":true}}',
+                    "fts_idx",
+                    10.0,
+                ),
             )
 
             invalidate_collection_id_cache = Mock()
@@ -2982,7 +3828,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 commit_write=lambda _conn: None,
                 rollback_write=lambda _conn: None,
                 quote_identifier=lambda value: f'"{value}"',
-                drop_search_backend=lambda _conn, physical_name: dropped_backends.append(physical_name),
+                drop_search_backend=lambda _conn, physical_name: (
+                    dropped_backends.append(physical_name)
+                ),
                 clear_index_metadata_versions=clear_versions,
                 invalidate_index_cache=invalidate_index_cache,
                 invalidate_collection_id_cache=invalidate_collection_id_cache,
@@ -2991,7 +3839,12 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             )
 
             self.assertEqual(dropped_backends, ["fts_idx"])
-            self.assertEqual(conn.execute("SELECT COUNT(*) FROM collections WHERE db_name = 'db'").fetchone()[0], 0)
+            self.assertEqual(
+                conn.execute(
+                    "SELECT COUNT(*) FROM collections WHERE db_name = 'db'"
+                ).fetchone()[0],
+                0,
+            )
             clear_versions.assert_called_once_with("db")
             invalidate_index_cache.assert_called_once_with()
             invalidate_collection_id_cache.assert_called_once_with()
@@ -3004,12 +3857,15 @@ class SQLiteInternalHelperTests(unittest.TestCase):
         engine = SQLiteEngine()
         engine._connection = sqlite3.connect(":memory:")
         try:
+
             class StubAdminRuntime:
                 def __init__(self):
                     self.calls = []
 
                 def collection_options(self, db_name, coll_name, *, context=None):
-                    self.calls.append(("collection_options", db_name, coll_name, context))
+                    self.calls.append(
+                        ("collection_options", db_name, coll_name, context)
+                    )
                     return {"capped": True}
 
                 def drop_database(self, db_name, *, context=None):
@@ -3044,11 +3900,15 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             stub = StubAdminRuntime()
             engine._admin_runtime = stub
 
-            self.assertEqual(engine._collection_options_sync("db", "coll"), {"capped": True})
+            self.assertEqual(
+                engine._collection_options_sync("db", "coll"), {"capped": True}
+            )
             engine._drop_database_sync("db")
             self.assertEqual(engine._list_databases_sync(), ["db"])
             self.assertEqual(engine._list_collections_sync("db"), ["coll"])
-            engine._record_profile_event("db", op="find", command={"find": "coll"}, duration_micros=10)
+            engine._record_profile_event(
+                "db", op="find", command={"find": "coll"}, duration_micros=10
+            )
             self.assertTrue(engine._is_profile_namespace("system.profile"))
             self.assertEqual(
                 engine._get_document_sync("db", "system.profile", 7, projection=None),
@@ -3113,7 +3973,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     invalidate_collection_features_cache=lambda *_args: None,
                 )
 
-            with patch("mongoeco.engines._sqlite_write_ops.enforce_collection_document_validation") as validate_doc:
+            with patch(
+                "mongoeco.engines._sqlite_write_ops.enforce_collection_document_validation"
+            ) as validate_doc:
                 results = write_ops.put_documents_bulk(
                     conn,
                     db_name="db",
@@ -3163,7 +4025,15 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     snapshot_options=None,
                     purge_expired_documents=lambda *_args: None,
                     collection_options_or_empty=lambda *_args: {},
-                    load_indexes=lambda *_args: [EngineIndexRecord(name="idx", fields=["name"], key=[("name", 1)], unique=False, multikey=True)],
+                    load_indexes=lambda *_args: [
+                        EngineIndexRecord(
+                            name="idx",
+                            fields=["name"],
+                            key=[("name", 1)],
+                            unique=False,
+                            multikey=True,
+                        )
+                    ],
                     load_search_index_rows=lambda *_args: [],
                     begin_write=lambda _conn: None,
                     ensure_collection_row=lambda *_args, **_kwargs: None,
@@ -3171,11 +4041,15 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     validate_document_against_unique_indexes=lambda *_args: None,
                     delete_multikey_entries_for_storage_key=lambda *_args: None,
                     delete_scalar_entries_for_storage_key=lambda *_args: None,
-                    build_multikey_rows_for_document=lambda *_args: [("idx", "str", 1, "built")],
+                    build_multikey_rows_for_document=lambda *_args: [
+                        ("idx", "str", 1, "built")
+                    ],
                     ensure_multikey_physical_indexes=lambda *_args: None,
                     build_scalar_rows_for_document=lambda *_args: [],
                     ensure_scalar_physical_indexes=lambda *_args: None,
-                    replace_search_entries_for_document=lambda *_args: (_ for _ in ()).throw(RuntimeError("boom")),
+                    replace_search_entries_for_document=lambda *_args: (
+                        _ for _ in ()
+                    ).throw(RuntimeError("boom")),
                     commit_write=lambda _conn: None,
                     rollback_write=rollback,
                     invalidate_collection_features_cache=lambda *_args: None,
@@ -3190,7 +4064,9 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                     coll_name="bulk2",
                     storage_key="2",
                     begin_write=lambda _conn: None,
-                    commit_write=lambda _conn: (_ for _ in ()).throw(RuntimeError("boom")),
+                    commit_write=lambda _conn: (_ for _ in ()).throw(
+                        RuntimeError("boom")
+                    ),
                     rollback_write=rollback,
                     delete_multikey_entries_for_storage_key=lambda *_args: None,
                     delete_scalar_entries_for_storage_key=lambda *_args: None,

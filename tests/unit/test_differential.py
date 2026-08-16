@@ -6,7 +6,11 @@ from unittest.mock import patch
 from scripts.run_mongodb_real_differential import main as differential_main
 
 from tests.differential._real_parity_base import MongoRealParityBase
-from tests.differential.cases import REAL_PARITY_CASES, RealParityCase
+from tests.differential.cases import (
+    REAL_CAPTURE_PENDING_CASES,
+    REAL_PARITY_CASES,
+    RealParityCase,
+)
 from tests.differential.runner import available_case_names, build_suite
 
 
@@ -75,6 +79,12 @@ class MongoRealParityBaseUnitTests(unittest.TestCase):
 
         self.assertTrue(expected_names)
         self.assertEqual(dynamic_names, expected_names)
+
+    def test_pending_capture_cases_are_real_executable_cases(self):
+        executable_names = {case.name for case in REAL_PARITY_CASES}
+
+        self.assertFalse(REAL_CAPTURE_PENDING_CASES)
+        self.assertLessEqual(REAL_CAPTURE_PENDING_CASES, executable_names)
 
     def test_available_case_names_filters_by_target_version(self):
         all_cases = available_case_names()

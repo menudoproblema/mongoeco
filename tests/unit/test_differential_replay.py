@@ -1,19 +1,20 @@
 import copy
-import json
 from pathlib import Path
 import unittest
 import uuid
+
+from bson.json_util import loads
 
 from mongoeco import MongoClient
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from tests.differential._real_parity_base import _normalize
-from tests.differential.cases import REAL_PARITY_CASES
+from tests.differential.cases import REAL_CAPTURE_PENDING_CASES, REAL_PARITY_CASES
 
 
 class DifferentialReplayGoldenTests(unittest.TestCase):
     def test_local_engines_match_replay_golden_fixture(self):
-        fixture = json.loads(
+        fixture = loads(
             Path("tests/fixtures/differential_replay_golden.json").read_text(
                 encoding="utf-8"
             )
@@ -21,15 +22,15 @@ class DifferentialReplayGoldenTests(unittest.TestCase):
         target_dialect = fixture["targetDialect"]
         expected_by_case = fixture["cases"]
         self.assertIsInstance(expected_by_case, dict)
+        captured_case_names = set(expected_by_case)
+        executable_case_names = {case.name for case in REAL_PARITY_CASES}
+        self.assertFalse(captured_case_names & REAL_CAPTURE_PENDING_CASES)
         self.assertEqual(
-            sorted(expected_by_case),
-            sorted(case.name for case in REAL_PARITY_CASES),
+            captured_case_names | REAL_CAPTURE_PENDING_CASES,
+            executable_case_names,
         )
 
-        cases = {
-            case.name: case
-            for case in REAL_PARITY_CASES
-        }
+        cases = {case.name: case for case in REAL_PARITY_CASES}
         for case_name, expected in expected_by_case.items():
             case = cases[case_name]
             for engine_name, engine_factory in (

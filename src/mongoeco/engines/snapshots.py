@@ -6,6 +6,7 @@ import uuid
 
 from collections.abc import AsyncIterable, AsyncIterator
 from contextlib import suppress
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Self
@@ -14,16 +15,16 @@ from mongoeco.types import Document
 
 
 class SnapshotPolicy(StrEnum):
-    STABLE = 'stable'
-    MATERIALIZED = 'materialized'
-    LIVE = 'live'
+    STABLE = "stable"
+    MATERIALIZED = "materialized"
+    LIVE = "live"
 
 
 class SnapshotLifecycle(StrEnum):
-    OPEN = 'open'
-    CLOSING = 'closing'
-    CLOSED = 'closed'
-    FAILED = 'failed'
+    OPEN = "open"
+    CLOSING = "closing"
+    CLOSED = "closed"
+    FAILED = "failed"
 
 
 _SUPERVISED_CLOSE_TASKS: set[asyncio.Task[None]] = set()
@@ -50,7 +51,7 @@ class ReadSnapshot(AsyncIterator[Document]):
         close_timeout_seconds: float = 5.0,
     ) -> None:
         if not isinstance(policy, SnapshotPolicy):
-            message = 'policy must be a SnapshotPolicy'
+            message = "policy must be a SnapshotPolicy"
             raise TypeError(message)
         if (
             not isinstance(close_timeout_seconds, (int, float))
@@ -58,7 +59,7 @@ class ReadSnapshot(AsyncIterator[Document]):
             or not math.isfinite(close_timeout_seconds)
             or close_timeout_seconds <= 0
         ):
-            message = 'close_timeout_seconds must be a positive finite number'
+            message = "close_timeout_seconds must be a positive finite number"
             raise ValueError(message)
         self.metadata = SnapshotMetadata(
             snapshot_id=uuid.uuid4().hex,
@@ -96,7 +97,7 @@ class ReadSnapshot(AsyncIterator[Document]):
         try:
             if self._iterator is None:
                 self._iterator = self._source.__aiter__()
-            return await self._iterator.__anext__()
+            return deepcopy(await self._iterator.__anext__())
         except StopAsyncIteration:
             await self.aclose()
             raise
@@ -135,10 +136,23 @@ class ReadSnapshot(AsyncIterator[Document]):
         except TimeoutError:
             self._supervise_close_task(close_task)
             message = (
-                'snapshot cleanup exceeded '
-                f'{self.metadata.close_timeout_seconds:g} seconds'
+                "snapshot cleanup exceeded "
+                f"{self.metadata.close_timeout_seconds:g} seconds"
             )
             raise TimeoutError(message) from None
+
+    def discard(self) -> None:
+        """Reject this snapshot without leaking its asynchronously owned source."""
+        if self._lifecycle is not SnapshotLifecycle.OPEN:
+            return
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            with suppress(BaseException):
+                asyncio.run(self.aclose())
+            return
+        close_task = self._ensure_close_task()
+        self._supervise_close_task(close_task)
 
     async def _await_close_task(self, close_task: asyncio.Task[None]) -> None:
         done, _pending = await asyncio.wait(
@@ -161,10 +175,7 @@ class ReadSnapshot(AsyncIterator[Document]):
         if close_task.done():
             consume_result(close_task)
         else:
-            while (
-                len(_SUPERVISED_CLOSE_TASKS)
-                >= _SUPERVISED_CLOSE_TASK_LIMIT
-            ):
+            while len(_SUPERVISED_CLOSE_TASKS) >= _SUPERVISED_CLOSE_TASK_LIMIT:
                 oldest = next(iter(_SUPERVISED_CLOSE_TASKS))
                 _SUPERVISED_CLOSE_TASKS.discard(oldest)
                 oldest.cancel()
@@ -174,6 +185,7 @@ class ReadSnapshot(AsyncIterator[Document]):
     @staticmethod
     def _observe_close_task(close_task: asyncio.Task[None]) -> None:
         """Compatibility helper retained for callers of the provisional API."""
+
         def consume_result(task: asyncio.Task[None]) -> None:
             with suppress(BaseException):
                 task.result()
@@ -201,14 +213,14 @@ class ReadSnapshot(AsyncIterator[Document]):
         iterator = self._iterator
         self._iterator = None
         first_error: BaseException | None = None
-        close = getattr(iterator, 'aclose', None)
+        close = getattr(iterator, "aclose", None)
         if callable(close):
             try:
                 await close()
             except BaseException as exc:
                 first_error = exc
         if iterator is not self._source:
-            close_source = getattr(self._source, 'aclose', None)
+            close_source = getattr(self._source, "aclose", None)
             if callable(close_source):
                 try:
                     await close_source()

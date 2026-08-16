@@ -1,2 +1,4 @@
 *
 !.gitignore
+!4.6.0-sqlite-pushdown-candidate-rejected.json
+!4.6.0-sqlite-pushdown-profile.json

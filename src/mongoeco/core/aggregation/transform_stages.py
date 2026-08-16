@@ -39,34 +39,34 @@ def _apply_match(
     collation: CollationSpec | None = None,
 ) -> list[Document]:
     if not isinstance(spec, dict):
-        raise OperationFailure('$match requires a document specification')
+        raise OperationFailure("$match requires a document specification")
 
     def _match_spec(document: Document, match_spec: dict[str, Any]) -> bool:
-        expr = match_spec.get('$expr', _NO_EXPR)
+        expr = match_spec.get("$expr", _NO_EXPR)
         filter_spec = {
-            key: value for key, value in match_spec.items() if key != '$expr'
+            key: value for key, value in match_spec.items() if key != "$expr"
         }
-        if '$and' in filter_spec:
+        if "$and" in filter_spec:
             clauses = require_non_empty_document_clause_list(
-                filter_spec.pop('$and'),
-                operator='$and',
-                context='$match',
+                filter_spec.pop("$and"),
+                operator="$and",
+                context="$match",
             )
             if not all(_match_spec(document, clause) for clause in clauses):
                 return False
-        if '$or' in filter_spec:
+        if "$or" in filter_spec:
             clauses = require_non_empty_document_clause_list(
-                filter_spec.pop('$or'),
-                operator='$or',
-                context='$match',
+                filter_spec.pop("$or"),
+                operator="$or",
+                context="$match",
             )
             if not any(_match_spec(document, clause) for clause in clauses):
                 return False
-        if '$nor' in filter_spec:
+        if "$nor" in filter_spec:
             clauses = require_non_empty_document_clause_list(
-                filter_spec.pop('$nor'),
-                operator='$nor',
-                context='$match',
+                filter_spec.pop("$nor"),
+                operator="$nor",
+                context="$match",
             )
             if any(_match_spec(document, clause) for clause in clauses):
                 return False
@@ -88,9 +88,7 @@ def _apply_match(
         return True
 
     if _match_spec_contains_expr(spec):
-        return [
-            document for document in documents if _match_spec(document, spec)
-        ]
+        return [document for document in documents if _match_spec(document, spec)]
 
     plan = compile_filter(spec, dialect=dialect) if spec else None
     result: list[Document] = []
@@ -115,10 +113,10 @@ def _apply_add_fields(
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> list[Document]:
     if not isinstance(spec, dict):
-        raise OperationFailure('$addFields requires a document specification')
+        raise OperationFailure("$addFields requires a document specification")
     for path in spec:
         if not isinstance(path, str):
-            raise OperationFailure('$addFields field names must be strings')
+            raise OperationFailure("$addFields field names must be strings")
     result: list[Document] = []
     for document in documents:
         enriched = deepcopy(document)
@@ -134,7 +132,11 @@ def _apply_add_fields(
                 continue
             if evaluated[path] is _MISSING:
                 continue
-            set_document_value(enriched, path, evaluated[path])
+            set_document_value(
+                enriched,
+                path,
+                deepcopy(evaluated[path]),
+            )
         result.append(enriched)
     return result
 
@@ -185,19 +187,17 @@ def _apply_project(
         for key, value in projection.items()
         if _projection_flag(value, dialect=dialect) is not None
     }
-    include_id = include_fields.get('_id', 1) != 0
+    include_id = include_fields.get("_id", 1) != 0
     result: list[Document] = []
     for document in documents:
         projected: Document = {}
         include_mode = any(
-            value == 1 for key, value in include_fields.items() if key != '_id'
+            value == 1 for key, value in include_fields.items() if key != "_id"
         )
         if include_mode:
-            projected = apply_projection(
-                document, include_fields, dialect=dialect
-            )
-        elif include_id and '_id' in document:
-            projected['_id'] = deepcopy(document['_id'])
+            projected = apply_projection(document, include_fields, dialect=dialect)
+        elif include_id and "_id" in document:
+            projected["_id"] = deepcopy(document["_id"])
         for path, expression in computed_fields.items():
             value = _evaluate_expression_with_missing(
                 document, expression, variables, dialect=dialect
@@ -207,7 +207,7 @@ def _apply_project(
                 continue
             if value is _MISSING:
                 continue
-            set_document_value(projected, path, value)
+            set_document_value(projected, path, deepcopy(value))
         result.append(projected)
     return result
 
@@ -219,14 +219,12 @@ def _apply_replace_root(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> list[Document]:
-    if not isinstance(spec, dict) or 'newRoot' not in spec:
-        raise OperationFailure('$replaceRoot requires a document with newRoot')
-    new_root_spec = spec['newRoot']
-    if new_root_spec is None or isinstance(
-        new_root_spec, (int, float, bool, list)
-    ):
+    if not isinstance(spec, dict) or "newRoot" not in spec:
+        raise OperationFailure("$replaceRoot requires a document with newRoot")
+    new_root_spec = spec["newRoot"]
+    if new_root_spec is None or isinstance(new_root_spec, (int, float, bool, list)):
         raise OperationFailure(
-            '$replaceRoot newRoot must be a document-producing expression'
+            "$replaceRoot newRoot must be a document-producing expression"
         )
     result: list[Document] = []
     for document in documents:
@@ -234,9 +232,7 @@ def _apply_replace_root(
             document, new_root_spec, variables, dialect=dialect
         )
         if not isinstance(new_root, dict):
-            raise OperationFailure(
-                '$replaceRoot newRoot must evaluate to a document'
-            )
+            raise OperationFailure("$replaceRoot newRoot must evaluate to a document")
         result.append(deepcopy(new_root))
     return result
 

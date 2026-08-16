@@ -34,12 +34,16 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Database",
     "Topic :: Software Development :: Testing",
+    "Typing :: Typed",
 ]
 
 [project.optional-dependencies]
 dev = [
     "build",
     "coverage",
+    "hypothesis>=6.165,<6.166",
+    "jsonschema>=4.26,<5",
+    "mypy>=2.3,<2.4",
     "pre-commit",
     "pytest",
     "pytest-cov",
@@ -47,6 +51,7 @@ dev = [
     "twine",
 ]
 engine-testing = [
+    "jsonschema>=4.26,<5",
     "pytest>=8,<10",
 ]
 mongodb7 = [
@@ -70,6 +75,14 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+mongoeco = [
+    "py.typed",
+    "compat/resources/*.json",
+    "compat/schemas/*.json",
+    "conformance/schemas/*.json",
+]
 
 [tool.setuptools.dynamic]
 version = {attr = "mongoeco._version.__version__"}
@@ -164,6 +177,10 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 parametrize-names-type = "list"        # @pytest.mark.parametrize(['name1', 'name2'], ...)
 parametrize-values-row-type = "tuple"  # @pytest.mark.parametrize(['name1', 'name2'], [(1, 2), (3, 4)])
 parametrize-values-type = "list"       # @pytest.mark.parametrize('name', [1, 2, 3])
+
+[tool.coverage.report]
+fail_under = 99.00
+precision = 2
 
 
 [tool.ruff.lint.pydocstyle]

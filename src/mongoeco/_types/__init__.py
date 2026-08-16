@@ -6,6 +6,7 @@ _BSON_EXPORTS = (
     "Decimal128",
     "OBJECT_ID_TYPES",
     "ObjectId",
+    "ObjectIdLike",
     "Regex",
     "SON",
     "Timestamp",

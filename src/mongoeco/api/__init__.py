@@ -1,4 +1,20 @@
 from importlib import import_module
+from typing import TYPE_CHECKING, Any
+
+
+if TYPE_CHECKING:
+    from mongoeco.api._async.client import (
+        AsyncDatabase as AsyncDatabase,
+        AsyncMongoClient as AsyncMongoClient,
+        NowFactory as NowFactory,
+    )
+    from mongoeco.api._async.collection import AsyncCollection as AsyncCollection
+    from mongoeco.api._sync.client import (
+        Database as Database,
+        MongoClient as MongoClient,
+    )
+    from mongoeco.api._sync.collection import Collection as Collection
+    from mongoeco.session import ClientSession as ClientSession
 
 __all__ = [
     "AsyncMongoClient",
@@ -23,7 +39,7 @@ _EXPORT_MODULES = {
 }
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     module_name = _EXPORT_MODULES.get(name)
     if module_name is None:
         raise AttributeError(name)

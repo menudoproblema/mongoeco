@@ -19,6 +19,7 @@ from mongoeco.core.aggregation import (
     register_aggregation_stage,
     unregister_aggregation_stage,
 )
+from mongoeco.core.bson_scalars import BsonInt64
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
     UNDEFINED,
@@ -71,6 +72,27 @@ class AggregationPipelineCoreTests(unittest.TestCase):
         )
 
         self.assertEqual(result, [{'_id': '1', 'label': '10'}])
+
+    def test_project_array_traversal_distinguishes_empty_array_from_missing_parent(
+        self,
+    ):
+        result = apply_pipeline(
+            [
+                {'_id': 'empty', 'items': []},
+                {'_id': 'missing'},
+                {'_id': 'missing-children', 'items': [{}]},
+            ],
+            [{'$project': {'values': '$items.value'}}],
+        )
+
+        self.assertEqual(
+            result,
+            [
+                {'_id': 'empty', 'values': []},
+                {'_id': 'missing'},
+                {'_id': 'missing-children', 'values': []},
+            ],
+        )
 
     def test_apply_pipeline_project_rejects_mixed_include_exclude(self):
         with self.assertRaises(OperationFailure):
@@ -1476,9 +1498,9 @@ class AggregationPipelineCoreTests(unittest.TestCase):
         self.assertEqual(
             result,
             [
-                {'_id': '1', 'tags': 'python', 'index': 0},
-                {'_id': '1', 'tags': 'mongodb', 'index': 1},
-                {'_id': '2', 'tags': [], 'index': None},
+                {'_id': '1', 'tags': 'python', 'index': BsonInt64(0)},
+                {'_id': '1', 'tags': 'mongodb', 'index': BsonInt64(1)},
+                {'_id': '2', 'index': None},
                 {'_id': '3', 'tags': None, 'index': None},
                 {'_id': '4', 'index': None},
                 {'_id': '5', 'tags': 'sqlite', 'index': None},

@@ -3,6 +3,7 @@ from __future__ import annotations
 from mongoeco._types._bson_objectid import (
     OBJECT_ID_TYPES,
     ObjectId,
+    ObjectIdLike as ObjectIdLike,  # noqa: PLC0414 - public re-export
     is_object_id_like,
     normalize_object_id,
 )

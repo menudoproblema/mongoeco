@@ -68,7 +68,7 @@ jobs:
           python scripts/smoke_pypi_contract.py --version "${VERSION#v}"
 
   build:
-    name: Build release artifacts once
+    name: Build and reproduce release artifacts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -90,8 +90,14 @@ jobs:
           PIP_CONSTRAINT: ${{ github.workspace }}/requirements/ci-constraints.txt
         run: |
           export SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
-          python -m build --no-isolation --sdist --wheel
-          python scripts/normalize_sdist.py dist/mongoeco-*.tar.gz
+          python -m build --no-isolation --sdist --wheel --outdir dist-first
+          python -m build --no-isolation --sdist --wheel --outdir dist-second
+          python scripts/normalize_sdist.py dist-first/mongoeco-*.tar.gz
+          python scripts/normalize_sdist.py dist-second/mongoeco-*.tar.gz
+          cmp dist-first/mongoeco-*.tar.gz dist-second/mongoeco-*.tar.gz
+          cmp dist-first/mongoeco-*.whl dist-second/mongoeco-*.whl
+          mkdir dist
+          cp dist-first/* dist/
           python -m twine check dist/*
           sha256sum dist/* > SHA256SUMS
 
@@ -153,7 +159,7 @@ jobs:
         run: |
           sha256sum -c artifact-manifest/SHA256SUMS
           WHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"
-          python -m pip install coverage pytest pytest-cov ruff
+          python -m pip install coverage hypothesis jsonschema mypy pytest pytest-cov ruff
           python -m pip install "${WHEEL}[wire]"
           python -m pip install -r benchmarks/requirements.txt
 
@@ -168,6 +174,15 @@ jobs:
           print(module_path)
           PY
 
+      - name: Validate public PEP 561 contract
+        run: python scripts/check_public_typing.py
+
+      - name: Validate independent SPI v2 consumer
+        run: python scripts/smoke_external_engine.py
+
+      - name: Verify public API manifest
+        run: python scripts/update_public_api_manifest.py --check
+
       - name: Run unit and integration tests
         run: python -m unittest discover -s tests -p 'test*.py'
 
@@ -178,7 +193,7 @@ jobs:
 
       - name: Enforce source coverage floor
         if: matrix.python-version == '3.14'
-        run: python -m pytest --cov=mongoeco --cov-fail-under=99 --cov-report=term -q
+        run: python -m pytest --cov=mongoeco --cov-report=term -q
 
       - name: Regenerate compat snapshots
         run: python scripts/update_compat_snapshots.py

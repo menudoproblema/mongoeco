@@ -1,0 +1,48 @@
+{
+  "database": {
+    "consumer": "bridge-durable",
+    "consumerCheckpoint": 2,
+    "documentCount": 3,
+    "namespace": "bridge.items",
+    "operationId": "mongoeco-4.5.0-bridge-operation",
+    "outboxSchemaVersion": 4,
+    "pendingSequences": [
+      3
+    ],
+    "scalarIndexes": [
+      "kind_1"
+    ],
+    "searchIndexes": [
+      "by_text"
+    ]
+  },
+  "fixture": "mongoeco-4.5.0-bridge.sqlite",
+  "fixtureSha256": "e671484cd736c42eb3c4e11dbc5ca2f5564c35072f0e1a5fcc4dded172400efe",
+  "generator": {
+    "artifact": "mongoeco-4.5.0-py3-none-any.whl",
+    "artifactSha256": "f168ab9f4172abbf1a7e35f8996c3e01463a26557b213028c83ef64d102a2fd3",
+    "constraints": "requirements/sqlite-45-fixture-constraints.txt",
+    "package": "mongoeco",
+    "payload": "scripts/_sqlite_45_fixture_payload.py",
+    "runtime": {
+      "packages": {
+        "cxp": "3.1.0",
+        "mongoeco": "4.5.0",
+        "msgspec": "0.21.1",
+        "numkong": "7.8.0",
+        "numpy": "2.5.2",
+        "pyuca": "1.2",
+        "shapely": "2.1.2",
+        "tqdm": "4.70.0",
+        "usearch": "2.26.0"
+      },
+      "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+      "python": "3.14.5",
+      "pythonImplementation": "CPython",
+      "sqlite": "3.53.2"
+    },
+    "source": "PyPI mongoeco==4.5.0",
+    "version": "4.5.0"
+  },
+  "schemaVersion": "mongoeco-sqlite-fixture/v1"
+}

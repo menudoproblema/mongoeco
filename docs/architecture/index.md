@@ -38,11 +38,14 @@ completa de verdad de la estructura interna.
 4. [storage-engines.md](storage-engines.md)
 5. [engine-spi-v2.md](engine-spi-v2.md)
 6. [search-contract-v1.md](search-contract-v1.md)
-7. [Public engine conformance](../engine-conformance.md)
-8. [driver-and-wire.md](driver-and-wire.md)
-9. [change-streams-and-collation.md](change-streams-and-collation.md)
-10. [testing-and-compatibility.md](testing-and-compatibility.md)
-11. [decisions/index.md](decisions/index.md)
+7. [Propuesta SPI v3](engine-spi-v3-proposal.md)
+8. [Propuesta search-v2](search-contract-v2-proposal.md)
+9. [Arquitectura versionada de adapters](engine-adapter-versioning.md)
+10. [Public engine conformance](../engine-conformance.md)
+11. [driver-and-wire.md](driver-and-wire.md)
+12. [change-streams-and-collation.md](change-streams-and-collation.md)
+13. [testing-and-compatibility.md](testing-and-compatibility.md)
+14. [decisions/index.md](decisions/index.md)
 
 ## Patrones principales
 
@@ -80,6 +83,12 @@ Los patrones de diseno que aparecen de forma sistematica en el codigo son:
 | [ADR-008](decisions/ADR-008-pyicu-opcional-y-pyuca-como-fallback.md) | Collation | `PyICU` es opcional y `pyuca` cubre el subset Unicode basico |
 | [ADR-009](decisions/ADR-009-parity-tests-como-politica-de-aceptacion.md) | Testing | Toda feature publica compartida entra con parity tests async/sync y cross-engine |
 | [ADR-010](decisions/ADR-010-search-v1-como-contrato-local-estable.md) | Search | La sintaxis Atlas-like soportada se ejecuta mediante un contrato local tipado, estable y honesto |
+| [ADR-011](decisions/ADR-011-provenance-runtime-fuera-del-documento-bson.md) | Provenance | La metadata runtime no forma parte del documento BSON persistible |
+| [ADR-012](decisions/ADR-012-planning-search-mediante-efectos-semanticos.md) | Search planning | Ejecucion y explain consumen un mismo plan inmutable |
+| [ADR-013](decisions/ADR-013-observabilidad-search-con-estados-y-dominios-tipados.md) | Observabilidad | Las metricas Search declaran estado, dominio, exactitud y disponibilidad |
+| [ADR-014](decisions/ADR-014-informes-de-conformidad-versionados.md) | Conformance | Los informes usan schema y estados versionados |
+| [ADR-015](decisions/ADR-015-pushdown-sqlite-sujeto-a-prueba-de-equivalencia.md) | SQLite | Solo entra pushdown exacto, equivalente y medido |
+| [ADR-016](decisions/ADR-016-transicion-cohesiva-hacia-5.0.md) | Versionado | 4.6 es bridge y 5.0 retira solo contratos con convivencia verificable |
 
 ## Limites conscientes del producto
 

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "mongoeco-conformance-report/v1",
+  "contractVersion": "spi-v2",
+  "provider": "compatibility-fixture",
+  "passed": true,
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "error": 0,
+    "not-applicable": 1
+  },
+  "checks": [
+    {
+      "id": "spi-v2-core:capabilities",
+      "profile": "spi-v2-core",
+      "name": "capabilities",
+      "status": "passed",
+      "passed": true,
+      "applicable": true,
+      "capability": "spi-v2",
+      "phase": "contract",
+      "durationMs": 0.0,
+      "detail": null,
+      "evidence": {
+        "spiVersion": 2
+      },
+      "cleanupError": null
+    },
+    {
+      "id": "search-v1:search",
+      "profile": "search-v1",
+      "name": "search",
+      "status": "not-applicable",
+      "passed": false,
+      "applicable": false,
+      "capability": "search-v1",
+      "phase": "contract",
+      "durationMs": 0.0,
+      "detail": "capability is not declared",
+      "evidence": {},
+      "cleanupError": null
+    }
+  ]
+}

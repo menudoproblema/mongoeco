@@ -4,7 +4,7 @@ import binascii
 import os
 import threading
 import time
-from typing import Any, Self
+from typing import Any, Protocol, Self, runtime_checkable
 
 try:
     from bson.errors import InvalidId as _PyMongoInvalidId
@@ -14,25 +14,47 @@ except Exception:  # pragma: no cover - optional dependency
     _PyMongoObjectId = None
 
 
+@runtime_checkable
+class ObjectIdLike(Protocol):
+    @property
+    def binary(self) -> bytes: ...
+
+
+_OBJECT_ID_BYTE_LENGTH = 12
+
+
 if _PyMongoObjectId is not None:
+
     class ObjectId(_PyMongoObjectId):
         """Wrapper compatible con PyMongo ObjectId y con el contrato historico local."""
 
         __slots__ = ()
 
-        def __init__(self, oid: str | bytes | Self | _PyMongoObjectId | None = None):
-            if oid is not None and not isinstance(oid, (str, bytes, ObjectId, _PyMongoObjectId)):
-                raise TypeError(f"ID invalido tipo {type(oid)}: {oid}")
+        def __init__(
+            self,
+            oid: str | bytes | Self | ObjectIdLike | None = None,
+        ):
+            if oid is not None and not isinstance(
+                oid, (str, bytes, ObjectId, _PyMongoObjectId)
+            ):
+                if isinstance(oid, ObjectIdLike):
+                    oid = bytes(oid.binary)
+                else:
+                    raise TypeError(f"ID invalido tipo {type(oid)}: {oid}")
             try:
                 super().__init__(oid)
             except TypeError as exc:
                 if isinstance(oid, bytes):
-                    raise ValueError(f"bytes de ObjectId deben ser de 12, no {len(oid)}") from exc
+                    raise ValueError(
+                        f"bytes de ObjectId deben ser de 12, no {len(oid)}"
+                    ) from exc
                 raise
             except _PyMongoInvalidId as exc:
                 text = str(oid)
                 if isinstance(oid, str) and len(oid) != 24:
-                    raise ValueError(f"string de ObjectId debe ser de 24 hex, no {len(oid)}") from exc
+                    raise ValueError(
+                        f"string de ObjectId debe ser de 24 hex, no {len(oid)}"
+                    ) from exc
                 raise ValueError(f"'{text}' no es un hexadecimal valido") from exc
 
         @classmethod
@@ -42,9 +64,14 @@ if _PyMongoObjectId is not None:
             return bool(_PyMongoObjectId.is_valid(oid))
 
         @property
+        def binary(self) -> bytes:
+            return bytes(super().binary)
+
+        @property
         def generation_time(self) -> int:
             return int(super().generation_time.timestamp())
 else:
+
     class ObjectId:
         """
         Implementacion nativa minima de ObjectId (BSON).
@@ -57,18 +84,31 @@ else:
 
         __slots__ = ("_oid",)
 
-        def __init__(self, oid: str | bytes | Self | None = None):
+        def __init__(
+            self,
+            oid: str | bytes | Self | ObjectIdLike | None = None,
+        ):
             if oid is None:
                 self._oid = self._generate()
             elif isinstance(oid, ObjectId):
                 self._oid = oid._oid
             elif isinstance(oid, bytes):
                 if len(oid) != 12:
-                    raise ValueError(f"bytes de ObjectId deben ser de 12, no {len(oid)}")
+                    raise ValueError(
+                        f"bytes de ObjectId deben ser de 12, no {len(oid)}"
+                    )
                 self._oid = oid
+            elif isinstance(oid, ObjectIdLike):
+                binary = bytes(oid.binary)
+                if len(binary) != _OBJECT_ID_BYTE_LENGTH:
+                    message = f"bytes de ObjectId deben ser de 12, no {len(binary)}"
+                    raise ValueError(message)
+                self._oid = binary
             elif isinstance(oid, str):
                 if len(oid) != 24:
-                    raise ValueError(f"string de ObjectId debe ser de 24 hex, no {len(oid)}")
+                    raise ValueError(
+                        f"string de ObjectId debe ser de 24 hex, no {len(oid)}"
+                    )
                 try:
                     self._oid = binascii.unhexlify(oid)
                 except binascii.Error as exc:
@@ -84,9 +124,7 @@ else:
                 counter = cls._counter
 
             return (
-                timestamp.to_bytes(4, "big")
-                + cls._random
-                + counter.to_bytes(3, "big")
+                timestamp.to_bytes(4, "big") + cls._random + counter.to_bytes(3, "big")
             )
 
         @classmethod
@@ -128,9 +166,7 @@ else:
 
 
 OBJECT_ID_TYPES = (
-    (ObjectId,)
-    if _PyMongoObjectId is None
-    else (ObjectId, _PyMongoObjectId)
+    (ObjectId,) if _PyMongoObjectId is None else (ObjectId, _PyMongoObjectId)
 )
 
 

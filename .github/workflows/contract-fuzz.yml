@@ -1,0 +1,52 @@
+name: Contract fuzzing
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 3 * * 4"
+
+permissions:
+  contents: read
+
+jobs:
+  generative-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [4600, 4601, 4602]
+    env:
+      MONGOECO_HYPOTHESIS_PROFILE: deep
+      MONGOECO_PROPERTY_SEED: ${{ matrix.seed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+
+      - name: Install project and generative tooling
+        env:
+          PIP_CONSTRAINT: ${{ github.workspace }}/requirements/ci-constraints.txt
+        run: python -m pip install ".[dev,wire]"
+
+      - name: Run deep semantic contracts
+        run: |
+          mkdir -p artifacts
+          python -m pytest -q \
+            tests/property \
+            tests/integration/api/test_search_planning_equivalence.py \
+            --junitxml=artifacts/contract-fuzz-junit.xml \
+            2>&1 | tee artifacts/contract-fuzz.log
+
+      - name: Upload generative evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: contract-fuzz-evidence-${{ matrix.seed }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14

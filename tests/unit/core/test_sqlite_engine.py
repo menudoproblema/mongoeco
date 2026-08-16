@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import mongoeco.core.search as search_module
+import mongoeco.engines.sqlite as sqlite_engine_module
 import os
 import sqlite3
 import threading
@@ -474,6 +475,65 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(RuntimeError):
             engine._require_connection()
+
+    def test_create_connection_closes_handle_when_configuration_fails(self):
+        engine = SQLiteEngine("broken.sqlite")
+        connection = Mock()
+        connection.execute.side_effect = sqlite3.OperationalError("pragma failed")
+
+        with (
+            patch("mongoeco.engines.sqlite.sqlite3.connect", return_value=connection),
+            self.assertRaisesRegex(sqlite3.OperationalError, "pragma failed"),
+        ):
+            engine._create_sqlite_connection()
+
+        connection.close.assert_called_once_with()
+
+    def test_connect_failure_closes_primary_and_delivery_connections(self):
+        fd, path = tempfile.mkstemp(suffix=".sqlite")
+        os.close(fd)
+        engine = SQLiteEngine(path)
+        created_connections: list[sqlite3.Connection] = []
+        original_create = engine._create_sqlite_connection
+        original_ensure = sqlite_engine_module.ensure_change_outbox_schema
+
+        def tracked_create() -> sqlite3.Connection:
+            connection = original_create()
+            created_connections.append(connection)
+            return connection
+
+        ensure_calls = 0
+        expected_connection_count = 2
+
+        def fail_delivery_schema(connection: sqlite3.Connection) -> None:
+            nonlocal ensure_calls
+            ensure_calls += 1
+            if ensure_calls == expected_connection_count:
+                message = "delivery schema failed"
+                raise sqlite3.DatabaseError(message)
+            original_ensure(connection)
+
+        try:
+            with (
+                patch.object(engine, "_create_sqlite_connection", tracked_create),
+                patch(
+                    "mongoeco.engines.sqlite.ensure_change_outbox_schema",
+                    side_effect=fail_delivery_schema,
+                ),
+                self.assertRaisesRegex(sqlite3.DatabaseError, "delivery schema failed"),
+            ):
+                engine._connect_sync()
+
+            self.assertEqual(len(created_connections), expected_connection_count)
+            self.assertIsNone(engine._pending_connection)
+            self.assertIsNone(engine._connection)
+            self.assertIsNone(engine._change_delivery_connection)
+            self.assertEqual(engine._connection_count, 0)
+            for connection in created_connections:
+                with self.assertRaises(sqlite3.ProgrammingError):
+                    connection.execute("SELECT 1")
+        finally:
+            Path(path).unlink(missing_ok=True)
 
     def test_plan_fields_handles_match_all_leaf_and_logical_nodes(self):
         plan = compile_filter({"$or": [{"items.name": "a"}, {"kind": "view"}]})

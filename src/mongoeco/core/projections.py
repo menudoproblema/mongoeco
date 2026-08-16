@@ -29,6 +29,17 @@ class _ParsedProjection:
     is_inclusion: bool
 
 
+@dataclass(slots=True)
+class _ProjectionPathNode:
+    include_value: bool = False
+    children: dict[str, "_ProjectionPathNode"] | None = None
+
+    def child(self, segment: str) -> "_ProjectionPathNode":
+        if self.children is None:
+            self.children = {}
+        return self.children.setdefault(segment, _ProjectionPathNode())
+
+
 def _projection_flag(value: object, *, dialect: MongoDialect) -> int | None:
     return dialect.policy.projection_flag(value)
 
@@ -68,10 +79,10 @@ def apply_projection(
         return result
 
     if parsed.is_inclusion:
-        result: Document = {}
-        for path, value in parsed.regular_fields.items():
-            if value:
-                _set_projection_value(result, doc, path)
+        result = _apply_regular_inclusion_projection(
+            doc,
+            tuple(path for path, value in parsed.regular_fields.items() if value),
+        )
         for path, spec in parsed.operator_fields.items():
             if spec.operator == "$slice":
                 _apply_slice_projection(result, doc, path, spec.value)
@@ -105,7 +116,11 @@ def apply_projection(
                 _apply_slice_projection(result, result, path, spec.value)
 
     if parsed.include_id and "_id" in doc:
-        result["_id"] = deepcopy(doc["_id"])
+        document_id = deepcopy(doc["_id"])
+        if parsed.is_inclusion:
+            result = {"_id": document_id, **result}
+        else:
+            result["_id"] = document_id
     elif not parsed.include_id and "_id" in result:
         del result["_id"]
 
@@ -385,41 +400,52 @@ def _apply_positional_projection(
             return
 
 
-def _set_projection_value(
-    target: Document,
+def _apply_regular_inclusion_projection(
     source: Document,
-    path: str,
-) -> None:
+    paths: tuple[str, ...],
+) -> Document:
+    root = _ProjectionPathNode()
+    for path in paths:
+        node = root
+        for segment in path.split("."):
+            node = node.child(segment)
+        node.include_value = True
+
+    found, projected = _project_inclusion_value(source, root)
+    if found and isinstance(projected, dict):
+        return projected
+    return {}
+
+
+def _project_inclusion_value(
+    source: Any,
+    node: _ProjectionPathNode,
+) -> tuple[bool, Any]:
+    if node.include_value:
+        return True, deepcopy(source)
+
     if isinstance(source, list):
         projected_items: list[Any] = []
         for item in source:
-            if isinstance(item, dict):
-                projected_item: Document = {}
-                _set_projection_value(projected_item, item, path)
-                if projected_item:
-                    projected_items.append(projected_item)
-            elif isinstance(item, list):
-                projected_item = []
-                _set_projection_value(projected_item, item, path)
-                projected_items.append(projected_item)
-        if isinstance(target, list):
-            target.extend(projected_items)
-        return
+            found, projected = _project_inclusion_value(item, node)
+            if found:
+                projected_items.append(projected)
+        # An existing array remains observable even when none of its elements
+        # expose one of the selected descendant paths.
+        return True, projected_items
 
-    if "." not in path:
-        if path in source:
-            target[path] = deepcopy(source[path])
-        return
+    if not isinstance(source, dict) or node.children is None:
+        return False, None
 
-    first, rest = path.split(".", 1)
-    if first in source and isinstance(source[first], dict):
-        if first not in target:
-            target[first] = {}
-        _set_projection_value(target[first], source[first], rest)
-    elif first in source and isinstance(source[first], list):
-        if first not in target:
-            target[first] = []
-        _set_projection_value(target[first], source[first], rest)
+    projected_document: Document = {}
+    for segment, source_value in source.items():
+        child = node.children.get(segment)
+        if child is None:
+            continue
+        found, projected = _project_inclusion_value(source_value, child)
+        if found:
+            projected_document[segment] = projected
+    return bool(projected_document), projected_document
 
 
 def _delete_projection_value(target: Document, path: str) -> None:

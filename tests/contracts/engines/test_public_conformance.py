@@ -1,18 +1,31 @@
 import unittest
 
+from contextlib import suppress
+from copy import deepcopy
 from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from jsonschema import Draft202012Validator
+
 from mongoeco.conformance import (
+    CONFORMANCE_REPORT_SCHEMA_VERSION,
+    ConformanceCheckResult,
+    ConformancePhase,
     ConformanceProfile,
+    ConformanceReport,
+    ConformanceStatus,
     EngineConformanceProvider,
+    conformance_report_schema,
     run_engine_conformance,
 )
 from mongoeco.conformance.pytest import assert_conformance
 from mongoeco.conformance.runner import (
     _check_atomic_mutation,
+    _check_batch_outcomes,
+    _check_capabilities,
     _check_change_delivery,
+    _check_change_delivery_recovery,
     _check_crud_outcomes,
     _check_injected_clock,
     _check_operation_context,
@@ -26,8 +39,9 @@ from mongoeco.core.search_models import (
     SearchExplainVerbosity,
     SearchMetadata,
 )
-from mongoeco.engines import MemoryEngine, SQLiteEngine
+from mongoeco.engines import EngineCapabilities, MemoryEngine, SQLiteEngine
 from mongoeco.engines.results import (
+    CommittedChange,
     DeleteOutcome,
     InsertOutcome,
     MergeOutcome,
@@ -104,6 +118,59 @@ class _SnapshotEngine:
         return self.snapshot
 
 
+class _LiveDocuments:
+    def __init__(self, documents):
+        self.documents = documents
+        self.index = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self.index >= len(self.documents):
+            raise StopAsyncIteration
+        document = self.documents[self.index]
+        self.index += 1
+        return document
+
+
+class _MutableReadSnapshot(ReadSnapshot):
+    async def __anext__(self):
+        try:
+            return await self._source.__anext__()
+        except StopAsyncIteration:
+            await self.aclose()
+            raise
+
+
+class _LiveSnapshotEngine:
+    def __init__(self, *, mutable_items=False):
+        self.documents = []
+        self.mutable_items = mutable_items
+
+    async def insert_document(self, _db, _coll, document, **_kwargs):
+        owned = deepcopy(document)
+        self.documents.append(owned)
+        return InsertOutcome(applied=True, document=owned)
+
+    def open_read_snapshot(self, *_args, **_kwargs):
+        source = _LiveDocuments(
+            list(self.documents) if self.mutable_items else self.documents,
+        )
+        snapshot_type = _MutableReadSnapshot if self.mutable_items else ReadSnapshot
+        return snapshot_type(source, policy=SnapshotPolicy.STABLE)
+
+    async def get_document(self, _db, _coll, identifier, **_kwargs):
+        return next(
+            (
+                document
+                for document in self.documents
+                if document.get("_id") == identifier
+            ),
+            None,
+        )
+
+
 class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
     def test_provider_validates_identity_and_factory(self):
         with self.assertRaisesRegex(ValueError, "provider name"):
@@ -156,6 +223,29 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(cleaned, [(engine, "temporary")])
 
+    async def test_capability_and_batch_checks_reject_false_declarations(self):
+        class _FalseCapabilityEngine:
+            capabilities = EngineCapabilities()
+
+        with self.assertRaisesRegex(AssertionError, "missing required methods"):
+            await _check_capabilities(_FalseCapabilityEngine(), "db", "items")
+        report = await run_engine_conformance(
+            EngineConformanceProvider("false-capability", _FalseCapabilityEngine),
+            profiles=(ConformanceProfile.SPI_V2_CORE,),
+        )
+        capability_check = next(
+            check for check in report.checks if check.name == "capabilities"
+        )
+        self.assertIs(capability_check.status, ConformanceStatus.FAILED)
+
+        engine = MemoryEngine()
+        incomplete = (InsertOutcome(applied=True, document={"_id": "batch-1"}),)
+        with (
+            patch.object(engine, "insert_documents", return_value=incomplete),
+            self.assertRaisesRegex(AssertionError, "cardinality is inconsistent"),
+        ):
+            await _check_batch_outcomes(engine, "db", "items")
+
     async def test_builtin_engines_pass_the_public_installed_contract(self):
         for factory in (MemoryEngine, SQLiteEngine):
             with self.subTest(engine=factory.__name__):
@@ -164,7 +254,16 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
                 )
 
                 assert_conformance(report)
+                Draft202012Validator(conformance_report_schema()).validate(
+                    report.to_document(),
+                )
                 self.assertEqual(report.contract_version, "spi-v2")
+                self.assertEqual(
+                    report.schema_version,
+                    CONFORMANCE_REPORT_SCHEMA_VERSION,
+                )
+                self.assertIn('"schemaVersion"', report.to_json(indent=None))
+                self.assertIn(factory.__name__, report.human_summary())
                 self.assertTrue(
                     any(
                         check.profile is ConformanceProfile.SEARCH_V1
@@ -192,6 +291,139 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(AssertionError, "failed conformance"):
             report.require_success()
 
+    async def test_report_with_no_selected_checks_cannot_pass_vacuously(self):
+        report = await run_engine_conformance(
+            EngineConformanceProvider("memory", MemoryEngine),
+            profiles=(),
+        )
+
+        self.assertFalse(report.passed)
+        self.assertEqual(report.checks, ())
+        with self.assertRaisesRegex(AssertionError, "no applicable"):
+            report.require_success()
+
+    async def test_report_exposes_inapplicable_partial_capabilities(self):
+        class _LegacyEngine:
+            pass
+
+        report = await run_engine_conformance(
+            EngineConformanceProvider("legacy", _LegacyEngine),
+            profiles=(ConformanceProfile.SEARCH_V1,),
+        )
+
+        self.assertFalse(report.passed)
+        self.assertEqual(len(report.inapplicable), 1)
+        self.assertIs(
+            report.inapplicable[0].status,
+            ConformanceStatus.NOT_APPLICABLE,
+        )
+        self.assertEqual(
+            report.inapplicable[0].to_document()["status"],
+            "not-applicable",
+        )
+        self.assertEqual(report.inapplicable[0].capability, "search-v1")
+
+    def test_check_result_retains_the_45_passed_constructor(self):
+        passed = ConformanceCheckResult(
+            ConformanceProfile.SPI_V2_CORE,
+            "legacy-pass",
+            passed=True,
+        )
+        failed = ConformanceCheckResult(
+            ConformanceProfile.SPI_V2_CORE,
+            "legacy-failure",
+            passed=False,
+        )
+
+        self.assertIs(passed.status, ConformanceStatus.PASSED)
+        self.assertIs(failed.status, ConformanceStatus.FAILED)
+        self.assertEqual(failed.detail, "legacy conformance check failed")
+
+    def test_check_result_rejects_contradictory_and_invalid_shapes(self):
+        valid = {
+            "profile": ConformanceProfile.SPI_V2_CORE,
+            "name": "check",
+            "status": ConformanceStatus.PASSED,
+            "capability": "core",
+        }
+        cases = (
+            (lambda: ConformanceCheckResult(valid["profile"], "check"), TypeError),
+            (
+                lambda: ConformanceCheckResult(
+                    valid["profile"],
+                    "check",
+                    passed=False,
+                    status=ConformanceStatus.PASSED,
+                ),
+                ValueError,
+            ),
+            (lambda: ConformanceCheckResult(**{**valid, "profile": "core"}), TypeError),
+            (lambda: ConformanceCheckResult(**{**valid, "name": ""}), ValueError),
+            (
+                lambda: ConformanceCheckResult(**{**valid, "status": "passed"}),
+                TypeError,
+            ),
+            (lambda: ConformanceCheckResult(**{**valid, "capability": ""}), ValueError),
+            (
+                lambda: ConformanceCheckResult(**{**valid, "phase": "contract"}),
+                TypeError,
+            ),
+            (
+                lambda: ConformanceCheckResult(**{**valid, "duration_ms": -1}),
+                ValueError,
+            ),
+            (lambda: ConformanceCheckResult(**{**valid, "detail": ""}), ValueError),
+            (lambda: ConformanceCheckResult(**{**valid, "evidence": []}), TypeError),
+            (
+                lambda: ConformanceCheckResult(**{**valid, "cleanup_error": ""}),
+                ValueError,
+            ),
+            (lambda: ConformanceCheckResult(**{**valid, "check_id": 1}), ValueError),
+            (
+                lambda: ConformanceCheckResult(**{**valid, "detail": "failure"}),
+                ValueError,
+            ),
+            (
+                lambda: ConformanceCheckResult(
+                    **{
+                        **valid,
+                        "status": ConformanceStatus.ERROR,
+                    },
+                ),
+                ValueError,
+            ),
+        )
+        for factory, error in cases:
+            with self.subTest(factory=factory), self.assertRaises(error):
+                factory()
+
+    def test_report_rejects_invalid_identity_schema_checks_and_duplicates(self):
+        check = ConformanceCheckResult(
+            ConformanceProfile.SPI_V2_CORE,
+            "check",
+            status=ConformanceStatus.PASSED,
+            capability="core",
+            phase=ConformancePhase.CONTRACT,
+        )
+        cases = (
+            lambda: ConformanceReport("", "spi-v2", (check,)),
+            lambda: ConformanceReport("engine", "", (check,)),
+            lambda: ConformanceReport(
+                "engine",
+                "spi-v2",
+                (check,),
+                schema_version="future",
+            ),
+            lambda: ConformanceReport("engine", "spi-v2", [check]),
+            lambda: ConformanceReport("engine", "spi-v2", (check, check)),
+        )
+        for factory in cases:
+            with (
+                self.subTest(factory=factory),
+                self.assertRaises((TypeError, ValueError)),
+            ):
+                factory()
+
     async def test_report_keeps_cleanup_failures_when_the_check_also_fails(self):
         async def cleanup(_engine, _db_name):
             msg = "cleanup failed"
@@ -204,8 +436,8 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(
             any(
-                check.name.endswith(":cleanup")
-                and "cleanup failed" in (check.detail or "")
+                check.cleanup_error is not None
+                and "cleanup failed" in check.cleanup_error
                 for check in report.failures
             ),
         )
@@ -335,6 +567,20 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
                 "items",
             )
 
+        with self.assertRaisesRegex(AssertionError, "owned, stable"):
+            await _check_snapshot(
+                _LiveSnapshotEngine(),
+                "db",
+                "items",
+            )
+
+        with self.assertRaisesRegex(AssertionError, "mutable engine-owned"):
+            await _check_snapshot(
+                _LiveSnapshotEngine(mutable_items=True),
+                "db",
+                "items",
+            )
+
     async def test_optional_profiles_reject_divergent_claims_and_results(self):
         with self.assertRaisesRegex(AssertionError, "sequenced mode"):
             await _check_change_delivery(object(), "db", "items")
@@ -403,6 +649,13 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(AssertionError, "must not replay"):
             await exercise(checkpoint=0, dispatch=replay, outcome=sequenced)
 
+        def duplicate(_consumer, callback):
+            callback(SimpleNamespace(sequence=1))
+            callback(SimpleNamespace(sequence=1))
+
+        with self.assertRaisesRegex(AssertionError, "monotonic and complete"):
+            await exercise(checkpoint=0, dispatch=duplicate, outcome=sequenced)
+
         checkpoint_calls = 0
 
         def stale_checkpoint(_consumer, callback):
@@ -417,6 +670,75 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
                 checkpoint=2,
                 dispatch=stale_checkpoint,
                 outcome=sequenced,
+            )
+
+    async def test_change_delivery_recovery_rejects_each_retry_violation(self):
+        async def exercise(*, insert_outcome, dispatch):
+            engine = MemoryEngine()
+            await engine.connect()
+            try:
+                with (
+                    patch.object(
+                        engine,
+                        "insert_document",
+                        **(
+                            {"side_effect": insert_outcome}
+                            if isinstance(insert_outcome, list)
+                            else {"return_value": insert_outcome}
+                        ),
+                    ),
+                    patch.object(
+                        engine,
+                        "dispatch_committed_changes",
+                        side_effect=dispatch,
+                    ),
+                ):
+                    await _check_change_delivery_recovery(engine, "db", "items")
+            finally:
+                await engine.disconnect()
+
+        missing_sequence = InsertOutcome(applied=True, document={"_id": "event"})
+        with self.assertRaisesRegex(AssertionError, "commit_sequence"):
+            await exercise(
+                insert_outcome=missing_sequence,
+                dispatch=lambda _consumer, _callback: None,
+            )
+
+        sequenced = InsertOutcome(
+            applied=True,
+            document={"_id": "event"},
+            commit_sequence=1,
+        )
+        sequenced_pair = [
+            sequenced,
+            InsertOutcome(
+                applied=True,
+                document={"_id": "event-2"},
+                commit_sequence=2,
+            ),
+        ]
+
+        def swallow_failure(_consumer, callback):
+            with suppress(RuntimeError):
+                callback(CommittedChange(1, {"_id": "event"}))
+                callback(CommittedChange(2, {"_id": "event-2"}))
+
+        with self.assertRaisesRegex(AssertionError, "propagate"):
+            await exercise(insert_outcome=sequenced_pair, dispatch=swallow_failure)
+
+        dispatch_calls = 0
+
+        def lose_failed_delivery(_consumer, callback):
+            nonlocal dispatch_calls
+            dispatch_calls += 1
+            if dispatch_calls == 1:
+                callback(CommittedChange(1, {"_id": "event"}))
+                callback(CommittedChange(2, {"_id": "event-2"}))
+
+        with self.assertRaisesRegex(AssertionError, "partial delivery"):
+            await exercise(
+                insert_outcome=sequenced_pair,
+                dispatch=lose_failed_delivery,
             )
 
     async def test_search_check_rejects_each_declared_capability_violation(self):

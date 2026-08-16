@@ -1,0 +1,1611 @@
+{
+  "sqlite-sync": {
+    "predicate_diagnostics": {
+      "predicate_eq_bool_high_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 1.2266,
+        "wall_time_median_sec": 1.2633,
+        "wall_time_min_sec": 1.1143,
+        "wall_time_max_sec": 1.3022,
+        "cpu_user_mean_sec": 1.1367,
+        "cpu_sys_mean_sec": 0.1767,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "top-level bool equality",
+          "operator_shape": "$eq",
+          "field_shape": "top-level scalar",
+          "selectivity": "high"
+        }
+      },
+      "predicate_eq_string_medium_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.384,
+        "wall_time_median_sec": 0.4098,
+        "wall_time_min_sec": 0.3311,
+        "wall_time_max_sec": 0.4111,
+        "cpu_user_mean_sec": 0.3533,
+        "cpu_sys_mean_sec": 0.0533,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/sql opaque",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": null,
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "top-level string equality",
+          "operator_shape": "$eq",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium"
+        }
+      },
+      "predicate_cmp_int_medium_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 1.0403,
+        "wall_time_median_sec": 1.0435,
+        "wall_time_min_sec": 1.0136,
+        "wall_time_max_sec": 1.0638,
+        "cpu_user_mean_sec": 0.9733,
+        "cpu_sys_mean_sec": 0.12,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "top-level int comparison",
+          "operator_shape": "$gte",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium"
+        }
+      },
+      "predicate_indexed_conjunct_residual_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.9813,
+        "wall_time_median_sec": 0.9882,
+        "wall_time_min_sec": 0.9579,
+        "wall_time_max_sec": 0.9979,
+        "cpu_user_mean_sec": 0.9233,
+        "cpu_sys_mean_sec": 0.09,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/python scan>filter",
+          "engine": "sqlite",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": "translator"
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "python",
+          "residual_required": false,
+          "filter_owner": "python",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "indexed scalar conjunct + expression residual",
+          "operator_shape": "$eq + $expr",
+          "field_shape": "top-level scalar",
+          "selectivity": "medium prefilter, lower residual",
+          "result_count": 123
+        }
+      },
+      "predicate_unindexed_conjunct_residual_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.9815,
+        "wall_time_median_sec": 1.0006,
+        "wall_time_min_sec": 0.942,
+        "wall_time_max_sec": 1.0018,
+        "cpu_user_mean_sec": 0.9233,
+        "cpu_sys_mean_sec": 0.0967,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/python scan>filter",
+          "engine": "sqlite",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": "translator"
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "python",
+          "residual_required": false,
+          "filter_owner": "python",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "unindexed scalar conjunct + expression residual",
+          "operator_shape": "$eq + $expr",
+          "field_shape": "top-level scalar",
+          "selectivity": "full Python reference"
+        }
+      }
+    },
+    "sort_shape_diagnostics": {
+      "sort_shape_top_level_limit_200": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.4281,
+        "wall_time_median_sec": 0.4307,
+        "wall_time_min_sec": 0.4173,
+        "wall_time_max_sec": 0.4362,
+        "cpu_user_mean_sec": 0.36,
+        "cpu_sys_mean_sec": 0.04,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter>sort>slice",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": 10,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "sort",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "slice",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "sql",
+          "window_owner": "sql",
+          "query_shape": "sort top-level score desc + limit 10",
+          "field_shape": "top-level scalar"
+        }
+      },
+      "sort_shape_nested_limit_200": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.4625,
+        "wall_time_median_sec": 0.4638,
+        "wall_time_min_sec": 0.4597,
+        "wall_time_max_sec": 0.4639,
+        "cpu_user_mean_sec": 0.4,
+        "cpu_sys_mean_sec": 0.0333,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter>sort>slice",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": 10,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "sort",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "slice",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "sql",
+          "window_owner": "sql",
+          "query_shape": "sort nested profile.score desc + limit 10",
+          "field_shape": "nested scalar path"
+        }
+      },
+      "sort_shape_top_level_full_50": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.945,
+        "wall_time_median_sec": 0.9484,
+        "wall_time_min_sec": 0.9346,
+        "wall_time_max_sec": 0.9521,
+        "cpu_user_mean_sec": 0.87,
+        "cpu_sys_mean_sec": 0.1633,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter>sort",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "sort",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "sql",
+          "window_owner": "none",
+          "query_shape": "sort top-level score desc",
+          "field_shape": "top-level scalar"
+        }
+      },
+      "sort_shape_nested_full_50": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.9444,
+        "wall_time_median_sec": 0.9449,
+        "wall_time_min_sec": 0.9382,
+        "wall_time_max_sec": 0.9501,
+        "cpu_user_mean_sec": 0.87,
+        "cpu_sys_mean_sec": 0.1667,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter>sort",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "sort",
+              "detail": null
+            }
+          ],
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "sql",
+          "window_owner": "none",
+          "query_shape": "sort nested profile.score desc",
+          "field_shape": "nested scalar path"
+        }
+      }
+    },
+    "search_diagnostics": {
+      "search_text_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 1.0757,
+        "wall_time_median_sec": 1.0716,
+        "wall_time_min_sec": 1.0565,
+        "wall_time_max_sec": 1.099,
+        "cpu_user_mean_sec": 1.0633,
+        "cpu_sys_mean_sec": 0.0133,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "text",
+          "backend": "fts5",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 10,
+          "candidate_count_before_topk": 250,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 250,
+            "afterCount": 10,
+            "strategy": "stable-prefix",
+            "cutoffMatchedShould": null
+          },
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.text title/body ada"
+        }
+      },
+      "search_autocomplete_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 1.0865,
+        "wall_time_median_sec": 1.0822,
+        "wall_time_min_sec": 1.0673,
+        "wall_time_max_sec": 1.1101,
+        "cpu_user_mean_sec": 1.0733,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "autocomplete",
+          "backend": "fts5",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 10,
+          "candidate_count_before_topk": 250,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 250,
+            "afterCount": 10,
+            "strategy": "stable-prefix",
+            "cutoffMatchedShould": null
+          },
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.autocomplete title/body alg"
+        }
+      },
+      "search_wildcard_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 1.085,
+        "wall_time_median_sec": 1.0947,
+        "wall_time_min_sec": 1.0651,
+        "wall_time_max_sec": 1.0952,
+        "cpu_user_mean_sec": 1.0767,
+        "cpu_sys_mean_sec": 0.0067,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "wildcard",
+          "backend": "fts5-glob",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 10,
+          "candidate_count_before_topk": 250,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 250,
+            "afterCount": 10,
+            "strategy": "stable-prefix",
+            "cutoffMatchedShould": null
+          },
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.wildcard body *vector*"
+        }
+      },
+      "search_regex_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 3.6337,
+        "wall_time_median_sec": 3.6294,
+        "wall_time_min_sec": 3.6185,
+        "wall_time_max_sec": 3.6531,
+        "cpu_user_mean_sec": 3.6067,
+        "cpu_sys_mean_sec": 0.02,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "regex",
+          "backend": "python",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": 10,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.regex title Ada.*algorithms"
+        }
+      },
+      "search_compound_hybrid_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 1.4422,
+        "wall_time_median_sec": 1.4403,
+        "wall_time_min_sec": 1.4377,
+        "wall_time_max_sec": 1.4485,
+        "cpu_user_mean_sec": 1.43,
+        "cpu_sys_mean_sec": 0.0133,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 10,
+          "candidate_count_before_topk": 250,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 250,
+            "afterCount": 10,
+            "strategy": "stable-prefix",
+            "cutoffMatchedShould": null
+          },
+          "ranking_source": null,
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              }
+            ],
+            "should": [],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "should": [],
+              "mustNot": []
+            },
+            "downstreamFilter": null,
+            "requiredCandidateableShould": 0,
+            "candidateableShouldCount": 0,
+            "candidateableShouldOperators": [],
+            "partialRanking": {
+              "supported": false,
+              "strategy": null
+            }
+          },
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.compound must(text=report 0)+filter(exists,wildcard)"
+        }
+      },
+      "search_compound_should_near_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 1.4516,
+        "wall_time_median_sec": 1.4561,
+        "wall_time_min_sec": 1.4168,
+        "wall_time_max_sec": 1.4819,
+        "cpu_user_mean_sec": 1.4367,
+        "cpu_sys_mean_sec": 0.0133,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 250,
+          "candidate_count_before_topk": 250,
+          "topk_limit_hint": 10,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              }
+            ],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "near",
+                "candidateable": false,
+                "exact": false,
+                "backend": null
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [
+                "candidateable-exact"
+              ],
+              "should": [
+                "candidateable-exact",
+                "post-match-only"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": null,
+            "requiredCandidateableShould": 1,
+            "candidateableShouldCount": 1,
+            "candidateableShouldOperators": [
+              "exists"
+            ],
+            "partialRanking": {
+              "supported": false,
+              "strategy": null
+            }
+          },
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.compound must(text=report 0)+filter(wildcard)+should(exists,near)"
+        }
+      },
+      "search_compound_candidateable_should_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.5552,
+        "wall_time_median_sec": 0.5621,
+        "wall_time_min_sec": 0.5414,
+        "wall_time_max_sec": 0.5621,
+        "cpu_user_mean_sec": 0.5433,
+        "cpu_sys_mean_sec": 0.0067,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 500,
+          "candidate_count_before_topk": 1000,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 1000,
+            "afterCount": 500,
+            "strategy": "exact-should-score-tier",
+            "cutoffMatchedShould": 1,
+            "cutoffShouldScore": 1.0,
+            "cutoffTier": {
+              "matchedShould": 1,
+              "shouldScore": 1.0
+            },
+            "candidateCountBeforePartialRanking": 1000,
+            "candidateCountAfterPartialRanking": 500,
+            "partialRanking": {
+              "strategy": "matched-should-prefilter+exact-should-score-tier",
+              "matchedShouldCutoff": 2
+            }
+          },
+          "ranking_source": "fts-materialized-entries",
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              },
+              {
+                "operator": "autocomplete",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [],
+              "should": [
+                "candidateable-exact",
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": null,
+            "requiredCandidateableShould": 1,
+            "candidateableShouldCount": 3,
+            "candidateableShouldOperators": [
+              "exists",
+              "wildcard",
+              "autocomplete"
+            ],
+            "partialRanking": {
+              "supported": true,
+              "strategy": "fts-materialized-entries"
+            }
+          },
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)"
+        }
+      },
+      "search_compound_candidateable_should_matched_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.6659,
+        "wall_time_median_sec": 0.6638,
+        "wall_time_min_sec": 0.6569,
+        "wall_time_max_sec": 0.677,
+        "cpu_user_mean_sec": 0.6533,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 2,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 332,
+          "candidate_count_before_topk": 666,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 666,
+            "afterCount": 332,
+            "strategy": "exact-should-score-tier",
+            "cutoffMatchedShould": 1,
+            "cutoffShouldScore": 1.0,
+            "cutoffTier": {
+              "matchedShould": 1,
+              "shouldScore": 1.0
+            },
+            "candidateCountBeforePartialRanking": 666,
+            "candidateCountAfterPartialRanking": 332,
+            "partialRanking": {
+              "strategy": "matched-should-prefilter+exact-should-score-tier",
+              "matchedShouldCutoff": 2
+            }
+          },
+          "ranking_source": "fts-materialized-entries",
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              },
+              {
+                "operator": "autocomplete",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [],
+              "should": [
+                "candidateable-exact",
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": {
+              "spec": {
+                "kind": "note"
+              },
+              "candidateable": true,
+              "exact": true,
+              "backend": "fts5-downstream-filter",
+              "supportedPaths": [
+                "kind"
+              ],
+              "supportedClauseCount": 1,
+              "unsupportedClauseCount": 0,
+              "supportedOperators": [
+                "eq"
+              ],
+              "booleanShape": "flat"
+            },
+            "requiredCandidateableShould": 1,
+            "candidateableShouldCount": 3,
+            "candidateableShouldOperators": [
+              "exists",
+              "wildcard",
+              "autocomplete"
+            ],
+            "partialRanking": {
+              "supported": true,
+              "strategy": "fts-materialized-entries"
+            }
+          },
+          "downstream_filter_prefilter": {
+            "kind": "note"
+          },
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "prefix-iterative",
+          "search_topk_growth_strategy": "adaptive-retention",
+          "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+match(kind=note)"
+        }
+      },
+      "search_compound_candidateable_should_title_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.6539,
+        "wall_time_median_sec": 0.6494,
+        "wall_time_min_sec": 0.6471,
+        "wall_time_max_sec": 0.6651,
+        "cpu_user_mean_sec": 0.6433,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 2,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 250,
+          "candidate_count_before_topk": 250,
+          "topk_limit_hint": 10,
+          "topk_prefilter": null,
+          "ranking_source": "fts-materialized-entries",
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path+downstream-filter",
+                "downstreamRefinement": {
+                  "applied": true,
+                  "path": "title",
+                  "valueCount": 1,
+                  "backend": "fts5-path+downstream-filter",
+                  "exact": true
+                }
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              },
+              {
+                "operator": "autocomplete",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5+downstream-filter",
+                "downstreamRefinement": {
+                  "applied": true,
+                  "path": "title",
+                  "valueCount": 1,
+                  "backend": "fts5+downstream-filter",
+                  "exact": true
+                }
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [],
+              "should": [
+                "candidateable-exact",
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": {
+              "spec": {
+                "title": "Ada algorithms"
+              },
+              "candidateable": true,
+              "exact": true,
+              "backend": "fts5-downstream-filter",
+              "supportedPaths": [
+                "title"
+              ],
+              "supportedClauseCount": 1,
+              "unsupportedClauseCount": 0,
+              "supportedOperators": [
+                "eq"
+              ],
+              "booleanShape": "flat"
+            },
+            "requiredCandidateableShould": 1,
+            "candidateableShouldCount": 3,
+            "candidateableShouldOperators": [
+              "exists",
+              "wildcard",
+              "autocomplete"
+            ],
+            "partialRanking": {
+              "supported": true,
+              "strategy": "fts-materialized-entries"
+            }
+          },
+          "downstream_filter_prefilter": {
+            "title": "Ada algorithms"
+          },
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "prefix-iterative",
+          "search_topk_growth_strategy": "adaptive-retention",
+          "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+match(title=Ada algorithms)"
+        }
+      },
+      "search_compound_candidateable_should_msm2_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.5827,
+        "wall_time_median_sec": 0.5852,
+        "wall_time_min_sec": 0.5749,
+        "wall_time_max_sec": 0.588,
+        "cpu_user_mean_sec": 0.5667,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 500,
+          "candidate_count_before_topk": 500,
+          "topk_limit_hint": 10,
+          "topk_prefilter": null,
+          "ranking_source": "fts-materialized-entries",
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              },
+              {
+                "operator": "autocomplete",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [],
+              "should": [
+                "candidateable-exact",
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": null,
+            "requiredCandidateableShould": 2,
+            "candidateableShouldCount": 3,
+            "candidateableShouldOperators": [
+              "exists",
+              "wildcard",
+              "autocomplete"
+            ],
+            "partialRanking": {
+              "supported": true,
+              "strategy": "fts-materialized-entries"
+            }
+          },
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+minimumShouldMatch(2)"
+        }
+      },
+      "search_compound_candidateable_should_tie_heavy_topk_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.5219,
+        "wall_time_median_sec": 0.5223,
+        "wall_time_min_sec": 0.5168,
+        "wall_time_max_sec": 0.5267,
+        "cpu_user_mean_sec": 0.5133,
+        "cpu_sys_mean_sec": 0.0033,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 250,
+          "candidate_count_before_topk": 250,
+          "topk_limit_hint": 10,
+          "topk_prefilter": null,
+          "ranking_source": "fts-materialized-entries",
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [],
+              "should": [
+                "candidateable-exact",
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": null,
+            "requiredCandidateableShould": 1,
+            "candidateableShouldCount": 3,
+            "candidateableShouldOperators": [
+              "exists",
+              "exists",
+              "wildcard"
+            ],
+            "partialRanking": {
+              "supported": true,
+              "strategy": "fts-materialized-entries"
+            }
+          },
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.compound must(text=vector)+should(exists(title),exists(body),wildcard(body=*vector*))"
+        }
+      }
+    },
+    "search_meta_diagnostics": {
+      "search_meta_total_50": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.0446,
+        "wall_time_median_sec": 0.0435,
+        "wall_time_min_sec": 0.0429,
+        "wall_time_max_sec": 0.0475,
+        "cpu_user_mean_sec": 0.0433,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "text",
+          "backend": "fts5",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "collector_pushdown": {
+            "backend": "sqlite",
+            "pushedDown": true,
+            "candidateExact": null,
+            "countStrategy": "runtime-exact-candidate-set",
+            "facetStrategy": "group-by-distinct-storage-key",
+            "fallbackReason": "semantic-core-when-runtime-proof-fails",
+            "requested": true,
+            "eligibleByShape": true,
+            "candidateExactness": "runtime-verified",
+            "supportedFacetTypes": [
+              "string",
+              "token"
+            ],
+            "fallback": "semantic-core"
+          },
+          "document_count": 1000
+        }
+      },
+      "search_meta_semantic_fallback_total_50": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.9314,
+        "wall_time_median_sec": 0.929,
+        "wall_time_min_sec": 0.9287,
+        "wall_time_max_sec": 0.9364,
+        "cpu_user_mean_sec": 0.9233,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "text",
+          "backend": "fts5",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "collector_pushdown": {
+            "backend": "semantic-core",
+            "pushedDown": false,
+            "candidateExact": null,
+            "countStrategy": "runtime-exact-candidate-set",
+            "facetStrategy": "group-by-distinct-storage-key",
+            "fallbackReason": "semantic-core-when-runtime-proof-fails",
+            "requested": true,
+            "eligibleByShape": true,
+            "candidateExactness": "runtime-verified",
+            "supportedFacetTypes": [
+              "string",
+              "token"
+            ],
+            "fallback": "semantic-core"
+          },
+          "document_count": 1000
+        }
+      },
+      "search_meta_lower_bound_100": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.0646,
+        "wall_time_median_sec": 0.0645,
+        "wall_time_min_sec": 0.0645,
+        "wall_time_max_sec": 0.0648,
+        "cpu_user_mean_sec": 0.06,
+        "cpu_sys_mean_sec": 0.0033,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "text",
+          "backend": "fts5",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "collector_pushdown": {
+            "backend": "sqlite",
+            "pushedDown": true,
+            "candidateExact": null,
+            "countStrategy": "runtime-exact-candidate-set",
+            "facetStrategy": "group-by-distinct-storage-key",
+            "fallbackReason": "semantic-core-when-runtime-proof-fails",
+            "requested": true,
+            "eligibleByShape": true,
+            "candidateExactness": "runtime-verified",
+            "supportedFacetTypes": [
+              "string",
+              "token"
+            ],
+            "fallback": "semantic-core"
+          },
+          "document_count": 1000
+        }
+      },
+      "search_meta_facets_20": {
+        "repetitions": 3,
+        "wall_time_mean_sec": 0.0536,
+        "wall_time_median_sec": 0.0537,
+        "wall_time_min_sec": 0.0532,
+        "wall_time_max_sec": 0.0538,
+        "cpu_user_mean_sec": 0.05,
+        "cpu_sys_mean_sec": 0.0067,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 0.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "text",
+          "backend": "fts5",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "collector_pushdown": {
+            "backend": "sqlite",
+            "pushedDown": true,
+            "candidateExact": null,
+            "countStrategy": "runtime-exact-candidate-set",
+            "facetStrategy": "group-by-distinct-storage-key",
+            "fallbackReason": "semantic-core-when-runtime-proof-fails",
+            "requested": true,
+            "eligibleByShape": true,
+            "candidateExactness": "runtime-verified",
+            "supportedFacetTypes": [
+              "string",
+              "token"
+            ],
+            "fallback": "semantic-core"
+          },
+          "document_count": 1000
+        }
+      }
+    }
+  }
+}
