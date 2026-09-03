@@ -295,14 +295,14 @@ wheels = [
 
 [[package]]
 name = "cxp"
-version = "3.1.0"
+version = "4.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "msgspec" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4c/83/9f696bd1df550feb11a7a6ff8d9c6707d5cc9b0a402fba1336801b95ac9f/cxp-3.1.0.tar.gz", hash = "sha256:71c119a0380adcda45fc78c2d9e8953eb7824ff09638bfc58e1afe6409df4b49", size = 93843, upload-time = "2026-04-08T22:30:45.146Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5b/fa/cfdf2612c361d76cdd54cd934d806652ccd4e4ba0b3fdb7862e7bdd8754c/cxp-4.0.0.tar.gz", hash = "sha256:5ea9eb553f884bc9bc4e377f90575406f5128cae77519a6e87083138e6d0988b", size = 202406, upload-time = "2026-09-03T21:32:46.922Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/8c/b77df892bb3cb86b04f506383daacdb602677a4f0308d9a6b40a69dc9f68/cxp-3.1.0-py3-none-any.whl", hash = "sha256:59c698905552016aec4fc0bb0f7ef7ea0ed6fa7b588021aec4118ff63e609fb0", size = 92976, upload-time = "2026-04-08T22:30:43.687Z" },
+    { url = "https://files.pythonhosted.org/packages/b3/ce/87926879df619b5c01fc35a51b7ef4123f5c7d2699d9d9d284c8984a3904/cxp-4.0.0-py3-none-any.whl", hash = "sha256:da5b4ff9dfed59775fa2409d4ce26889888fe1c7143cc15828079287bed3a7d8", size = 128278, upload-time = "2026-09-03T21:32:45.508Z" },
 ]
 
 [[package]]
@@ -685,7 +685,7 @@ wire = [
 requires-dist = [
     { name = "build", marker = "extra == 'dev'" },
     { name = "coverage", marker = "extra == 'dev'" },
-    { name = "cxp", specifier = ">=3.0.0" },
+    { name = "cxp", specifier = ">=4.0.0" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.165,<6.166" },
     { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.26,<5" },
     { name = "jsonschema", marker = "extra == 'engine-testing'", specifier = ">=4.26,<5" },

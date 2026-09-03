@@ -8,6 +8,13 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- La dependencia de CXP pasa a `cxp>=4.0.0` y la resolución controlada de CI
+  prueba 4.0.0. Conservamos la fachada y los contratos heredados sin requerir
+  el extra `exchange`. La fixture SQLite histórica de MongoEco 4.5.0 mantiene
+  sus dependencias originales para preservar su reproducibilidad.
+
 ## [4.6.0] - 2026-08-17
 
 ### Added
