@@ -1,6 +1,6 @@
 # Release 4.6.1
 
-Status: candidata preparada para validacion y publicacion.
+Status: publicada el 12 de septiembre de 2026.
 
 ## Resumen
 
@@ -41,20 +41,41 @@ consumidores que fijen dependencias deben permitir `cxp>=4.1.0`.
 La fixture SQLite de MongoEco 4.5.0 conserva sus dependencias y hashes
 originales para seguir siendo una evidencia historica reproducible.
 
-## Evidencia requerida antes de etiquetar
+## Evidencia de cierre
 
-- Suites completas en Python 3.13 y 3.14, cobertura global minima del 99 %,
-  typing publico, canario SPI v2, lint ratchet y snapshots de compatibilidad.
-- Repeticion intensiva de los escenarios concurrentes de cierre sin bloqueos
-  ni flakiness.
-- Property tests profundos con las semillas versionadas del workflow.
-- Matriz de perfiles PyMongo 4.9.2, 4.11.3, 4.13.2 y 4.17.0.
-- Diferenciales contra MongoDB 7.0 y 8.0.
-- Wheel y sdist reproducibles byte a byte, `twine check`, smokes desde
-  `site-packages` y conformidad de Memory, SQLite y el canario externo.
+- Las suites completas pasan en Python 3.13 y 3.14. `unittest` ejecuta 3.479
+  tests con 2 skips y pytest ejecuta 3.484 tests, 26 skips y 2.509 subtests.
+  La cobertura global es 99,04 %, por encima del minimo de 99 %.
+- Typing publico, canario SPI v2, lint ratchet, manifiesto de API y snapshots
+  de compatibilidad pasan sin deltas no explicados.
+- Los 9 escenarios concurrentes criticos de cierre pasan 20 veces: 180
+  ejecuciones sin bloqueos ni flakiness.
+- Los property tests profundos pasan con las semillas 4600, 4601 y 4602. La
+  matriz de perfiles PyMongo 4.9.2, 4.11.3, 4.13.2 y 4.17.0 coincide con la
+  fixture versionada.
+- Los diferenciales requeridos pasan contra MongoDB 7.0 y 8.0 en el
+  [workflow del tag](https://github.com/menudoproblema/mongoeco/actions/runs/34692146789).
+- El benchmark completo pasa para Memory y SQLite sync/async y para
+  mongomock. La fixture SQLite 4.5 conserva su SHA-256 y pasa lectura de
+  indices, Search y replay de outbox.
+- Wheel y sdist son reproducibles byte a byte y pasan `twine check`, smokes
+  desde `site-packages` sin constraints internas y conformidad de Memory,
+  SQLite y el canario externo.
 
 ## Publicacion
 
-La etiqueta prevista es `v4.6.1`. Los hashes finales y el resultado de PyPI se
-registraran aqui despues de publicar los artefactos construidos desde el commit
-etiquetado.
+La etiqueta anotada `v4.6.1` apunta al commit
+`11c14b868777e71b74ba280086ee63efe55c3327`. El build, los diferenciales y las
+suites del workflow del tag pasaron. El paso de Trusted Publishing no publico
+los artefactos, por lo que se uso la credencial local de fallback despues de
+confirmar que la version todavia no existia en PyPI.
+
+La version publicada esta disponible en
+[PyPI](https://pypi.org/project/mongoeco/4.6.1/) y pasa el smoke de contrato
+instalado desde el indice publico. PyPI registra los mismos SHA-256 que los
+artefactos reproducibles construidos desde el commit etiquetado:
+
+- `mongoeco-4.6.1-py3-none-any.whl`:
+  `721cc4753def8c58f183d7841d0705bcbbcc8eff0bd1ee989497e8678ebcd843`.
+- `mongoeco-4.6.1.tar.gz`:
+  `be0265ff6f5c74a62f84c096b3d785f57118b8f275edc05dbbbbd1af2f961d06`.
