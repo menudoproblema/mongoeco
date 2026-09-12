@@ -122,6 +122,71 @@ class ChangeStreamPipelineTests(unittest.TestCase):
 
 
 class ChangeStreamHubTests(unittest.TestCase):
+    def test_hub_validates_and_preserves_explicit_commit_sequences(self):
+        hub = ChangeStreamHub()
+
+        with self.assertRaisesRegex(TypeError, "next_sequence must be an integer"):
+            hub.align_commit_sequence(True)  # noqa: FBT003 - invalid input contract
+        with self.assertRaisesRegex(ValueError, "next_sequence must be positive"):
+            hub.align_commit_sequence(0)
+        with self.assertRaisesRegex(TypeError, "sequence must be an integer"):
+            hub.publish_committed("1", None)  # type: ignore[arg-type]
+        with self.assertRaisesRegex(ValueError, "sequence must be positive"):
+            hub.publish_committed(0, None)
+
+        hub.align_commit_sequence(2)
+        hub.align_commit_sequence(2)
+        hub.publish_committed(1, None)
+        hub.publish_committed(3, None)
+        hub.publish_committed(
+            5,
+            {
+                "operation_type": "insert",
+                "db_name": "alpha",
+                "coll_name": "users",
+                "document_key": {"_id": 5},
+            },
+        )
+
+        self.assertEqual(hub.state.next_token, 6)
+        next_offset, event = hub.wait_for_event(0, timeout_seconds=0)
+        self.assertEqual(next_offset, 1)
+        self.assertEqual(event.token, 5)
+        with self.assertRaisesRegex(OperationFailure, "resume token"):
+            hub.offset_after_token(4)
+
+    def test_hub_close_wakes_sync_waiters_and_rejects_new_watchers(self):
+        hub = ChangeStreamHub()
+        entered_wait = threading.Event()
+        errors: list[Exception] = []
+        original_wait = hub._condition.wait
+
+        def _observed_wait(timeout: float | None = None) -> bool:
+            entered_wait.set()
+            return original_wait(timeout)
+
+        def _wait() -> None:
+            try:
+                hub.wait_for_event(0, timeout_seconds=1)
+            except Exception as error:
+                errors.append(error)
+
+        waiter = threading.Thread(target=_wait)
+        with patch.object(hub._condition, "wait", side_effect=_observed_wait):
+            waiter.start()
+            self.assertTrue(entered_wait.wait(1))
+            hub.close()
+            hub.close()
+            waiter.join(timeout=1)
+
+        self.assertFalse(waiter.is_alive())
+        self.assertEqual(len(errors), 1)
+        self.assertIsInstance(errors[0], OperationFailure)
+        self.assertIn("closed", str(errors[0]))
+        self.assertFalse(hub.should_publish_events())
+        with self.assertRaisesRegex(OperationFailure, "closed"):
+            hub.register_watcher()
+
     def test_publication_failure_is_failure_atomic_and_survives_restart(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             journal_path = os.path.join(temp_dir, "changes.json")
@@ -664,6 +729,51 @@ class ChangeStreamJournalTests(unittest.TestCase):
 
 
 class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
+    async def test_hub_async_wait_honors_stop_before_and_after_registration(self):
+        hub = ChangeStreamHub()
+        stop_event = threading.Event()
+        stop_event.set()
+
+        self.assertEqual(
+            await hub.wait_for_event_async(
+                0,
+                timeout_seconds=None,
+                stop_event=stop_event,
+            ),
+            (0, None),
+        )
+
+        stop_event.clear()
+        pending = asyncio.create_task(
+            hub.wait_for_event_async(
+                0,
+                timeout_seconds=None,
+                stop_event=stop_event,
+            )
+        )
+        await asyncio.sleep(0)
+        stop_event.set()
+        hub.wake_waiters()
+
+        self.assertEqual(await asyncio.wait_for(pending, timeout=0.1), (0, None))
+
+    async def test_hub_discards_waiters_whose_event_loop_is_closed(self):
+        closed_message = "loop closed"
+
+        class ClosedLoop:
+            def call_soon_threadsafe(self, *_args) -> None:
+                raise RuntimeError(closed_message)
+
+        hub = ChangeStreamHub()
+        waiter = asyncio.get_running_loop().create_future()
+        registration = (ClosedLoop(), waiter)
+        hub._async_waiters.add(registration)  # type: ignore[arg-type]
+
+        hub.wake_waiters()
+
+        self.assertEqual(hub._async_waiters, set())
+        waiter.cancel()
+
     async def test_cursor_registers_and_unregisters_watcher_count(self):
         hub = ChangeStreamHub()
         cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope())

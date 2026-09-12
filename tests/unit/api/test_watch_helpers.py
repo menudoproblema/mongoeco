@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from mongoeco.api._async.client import AsyncDatabase, AsyncMongoClient
 from mongoeco.api._async.collection import AsyncCollection
@@ -26,6 +27,68 @@ class WatchHelperTests(unittest.TestCase):
 
 
 class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
+    async def test_async_client_close_aggregates_resource_failures(self):
+        disconnect_message = "disconnect failed"
+        session_message = "session close failed"
+
+        class BrokenDisconnectEngine(MemoryEngine):
+            async def disconnect(self):
+                raise RuntimeError(disconnect_message)
+
+        class BrokenSession:
+            active = True
+
+            def close(self) -> None:
+                raise RuntimeError(session_message)
+
+        client = AsyncMongoClient(BrokenDisconnectEngine())
+        await client.__aenter__()
+        client._sessions["broken"] = BrokenSession()  # type: ignore[assignment]
+
+        with (
+            patch.object(
+                client._driver_runtime,
+                "stop_topology_monitoring",
+                side_effect=RuntimeError("monitor stop failed"),
+            ),
+            patch.object(
+                client._driver_runtime,
+                "clear_connections_async",
+                side_effect=RuntimeError("connection close failed"),
+            ),
+            self.assertRaises(ExceptionGroup) as raised,
+        ):
+            await client.close()
+
+        self.assertEqual(len(raised.exception.exceptions), 4)
+        self.assertEqual(client._sessions, {})
+        self.assertTrue(client._closed)
+        self.assertFalse(client._closing)
+
+    async def test_async_client_close_restores_state_if_task_creation_fails(self):
+        client = AsyncMongoClient(MemoryEngine())
+        failure_message = "task creation failed"
+
+        def _fail_create_task(coroutine, *, name):
+            del name
+            coroutine.close()
+            raise RuntimeError(failure_message)
+
+        with patch(
+            "mongoeco.api._async.client.asyncio.create_task",
+            side_effect=_fail_create_task,
+        ), self.assertRaisesRegex(RuntimeError, "task creation failed"):
+            await client.close()
+
+        self.assertFalse(client._closing)
+        self.assertFalse(client._closed)
+        await client.close()
+        await client.close()
+        with self.assertRaisesRegex(InvalidOperation, "ya esta cerrado"):
+            await client.__aenter__()
+        with self.assertRaisesRegex(InvalidOperation, "ya esta cerrado"):
+            client.start_session()
+
     async def test_async_client_close_is_shared_and_survives_caller_cancellation(self):
         class SlowDisconnectEngine(MemoryEngine):
             def __init__(self):

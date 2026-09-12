@@ -158,6 +158,28 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             runner.close()
 
+    def test_sync_runner_inline_rewraps_driver_timeouts(self):
+        runner = _SyncRunner()
+        execution_message = "operation exceeded time limit"
+        selection_message = "no suitable servers"
+
+        async def _execution_timeout():
+            raise ExecutionTimeout(execution_message)
+
+        async def _selection_timeout():
+            raise ServerSelectionTimeoutError(selection_message)
+
+        try:
+            with self.assertRaisesRegex(ExecutionTimeout, "sync operation timed out"):
+                runner.run(_execution_timeout(), inline=True)
+            with self.assertRaisesRegex(
+                ServerSelectionTimeoutError,
+                "sync server selection timed out",
+            ):
+                runner.run(_selection_timeout(), inline=True)
+        finally:
+            runner.close()
+
     def test_sync_runner_cleanup_returns_early_when_closed(self):
         runner = _SyncRunner()
         runner._closed = True
@@ -532,6 +554,18 @@ client.close()
             runner.close()
 
         self.assertTrue(runner._closed)
+
+    def test_sync_client_close_rejects_reentry_and_is_idempotent(self):
+        client = MongoClient(MemoryEngine())
+        client._runner._runner_owner_thread_id = threading.get_ident()
+        try:
+            with self.assertRaisesRegex(InvalidOperation, "active client callback"):
+                client.close()
+        finally:
+            client._runner._runner_owner_thread_id = None
+
+        client.close()
+        client.close()
 
     def test_sync_runner_rewraps_execution_timeout_with_sync_context(self):
         runner = _SyncRunner()

@@ -612,6 +612,8 @@ class ConnectionArchitectureTests(unittest.TestCase):
         registry.clear()
 
         self.assertEqual(registry.snapshots(), ())
+        with self.assertRaisesRegex(RuntimeError, "registry is closed"):
+            registry.checkout(topology.servers[0])
 
     def test_connection_pool_clear_wakes_waiters_and_prevents_resurrection(self):
         uri = parse_mongo_uri("mongodb://db1:27017/?maxPoolSize=1")
@@ -632,6 +634,46 @@ class ConnectionArchitectureTests(unittest.TestCase):
 
         asyncio.run(_run())
         self.assertEqual(pool.snapshot().total_size, 0)
+        with self.assertRaisesRegex(RuntimeError, "pool is closed"):
+            pool.checkout(server)
+
+    def test_connection_pool_cleanup_closes_resources_best_effort(self):
+        class Writer:
+            def __init__(self, *, fail_wait: bool = False):
+                self.close_calls = 0
+                self.fail_wait = fail_wait
+
+            def close(self) -> None:
+                self.close_calls += 1
+
+            async def wait_closed(self) -> None:
+                if self.fail_wait:
+                    message = "wait failed"
+                    raise RuntimeError(message)
+
+        class Resource:
+            def __init__(self, writer: Writer):
+                self.writer = writer
+
+        uri = parse_mongo_uri("mongodb://db1:27017/")
+        server = build_local_topology_description(uri).servers[0]
+        key = ConnectionRegistry(uri).pool_key_for_server(server)
+        options = build_connection_pool_options(uri)
+
+        sync_pool = ConnectionPool(key, options)
+        sync_writer = Writer()
+        sync_connection = sync_pool.checkout(server)
+        sync_connection.attach_resource(Resource(sync_writer))
+        sync_pool.clear()
+
+        async_pool = ConnectionPool(key, options)
+        async_writer = Writer(fail_wait=True)
+        async_connection = async_pool.checkout(server)
+        async_connection.attach_resource(Resource(async_writer))
+        asyncio.run(async_pool.clear_async())
+
+        self.assertEqual(sync_writer.close_calls, 1)
+        self.assertEqual(async_writer.close_calls, 1)
 
     def test_connection_registry_prunes_idle_connections(self):
         uri = parse_mongo_uri("mongodb://db1:27017/?maxIdleTimeMS=1")
