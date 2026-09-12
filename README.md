@@ -69,7 +69,7 @@ MongoEco is a PEP 561 typed package. Wheels and source distributions include
 engine SPI v2, Search and conformance surfaces. CI checks those contracts with
 strict positive and negative consumer fixtures against the installed wheel.
 
-The base install now also includes `cxp>=3.0.0`, so `mongoeco` can expose the
+The base install now also includes `cxp>=4.1.0`, so `mongoeco` can expose the
 canonical `database/mongodb` contract directly.
 Reference:
 
