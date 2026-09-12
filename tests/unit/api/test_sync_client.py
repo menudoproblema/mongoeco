@@ -1,4 +1,7 @@
 import asyncio
+import subprocess
+import sys
+import tempfile
 import threading
 import time
 import unittest
@@ -394,6 +397,31 @@ class SyncClientUnitTests(unittest.TestCase):
                 self.assertEqual(collection.find_one({"_id": 1})["count"], 0)
         finally:
             client.close()
+
+    def test_sqlite_close_with_live_cursor_completes_in_single_worker_process(self):
+        script = """
+import sys
+
+from mongoeco.api._sync.client import MongoClient
+from mongoeco.engines.sqlite import SQLiteEngine
+
+client = MongoClient(SQLiteEngine(sys.argv[1], executor_workers=1))
+collection = client.test.values
+collection.insert_many([{"_id": value} for value in range(500)])
+cursor = iter(collection.find({}).batch_size(1))
+next(cursor)
+client.close()
+"""
+        with tempfile.NamedTemporaryFile(suffix=".sqlite") as database:
+            completed = subprocess.run(  # noqa: S603 - fixed interpreter and script
+                [sys.executable, "-c", script, database.name],
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=5,
+            )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
 
     def test_memory_sync_collection_session_disables_inline_fast_path(self):
         client = MongoClient(MemoryEngine())

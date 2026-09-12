@@ -5234,11 +5234,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 ]
         finally:
             await engine.disconnect()
-            Path(sqlite_path).unlink(missing_ok=True)
+            await asyncio.to_thread(Path(sqlite_path).unlink, missing_ok=True)
 
         self.assertEqual(seen, [])
 
-    async def test_scan_collection_file_backend_batches_queue_reads(self):
+    async def test_scan_collection_file_backend_does_not_spend_workers_on_queue_reads(
+        self,
+    ):
         with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as handle:
             sqlite_path = handle.name
         engine = SQLiteEngine(path=sqlite_path)
@@ -5272,10 +5274,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 ]
         finally:
             await engine.disconnect()
-            Path(sqlite_path).unlink(missing_ok=True)
+            await asyncio.to_thread(Path(sqlite_path).unlink, missing_ok=True)
 
         self.assertEqual(seen, documents)
-        self.assertEqual(get_call_count, 4)
+        self.assertEqual(get_call_count, 0)
 
     async def test_scan_collection_uses_sql_translation_for_scalar_not_equals_with_mixed_types(
         self,

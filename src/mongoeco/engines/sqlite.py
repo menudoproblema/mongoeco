@@ -422,6 +422,8 @@ class SQLiteEngine(AsyncStorageEngine):
         self._runtime_state = SQLiteRuntimeState()
         self._cache_state = SQLiteCacheState()
         self._lock = threading.RLock()
+        self._lifecycle_condition = threading.Condition(self._lock)
+        self._disconnecting = False
         if executor_workers is not None and executor_workers < 1:
             raise ValueError("executor_workers must be positive")
         if (
@@ -4006,7 +4008,9 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @_cleanup_failed_connect
     def _connect_sync(self) -> None:  # noqa: PLR0912, PLR0915
-        with self._lock:
+        with self._lifecycle_condition:
+            while self._disconnecting:
+                self._lifecycle_condition.wait()
             if self._connection_count == 0:
                 connection = self._create_sqlite_connection()
                 self._pending_connection = connection
@@ -4831,54 +4835,64 @@ class SQLiteEngine(AsyncStorageEngine):
         connection: sqlite3.Connection | None = None
         change_delivery_connection: sqlite3.Connection | None = None
         heartbeat_error: BaseException | None = None
-        with self._lock:
+        with self._lifecycle_condition:
             if self._connection_count == 0:
                 return
             self._connection_count -= 1
             if self._connection_count != 0:
                 return
+            self._disconnecting = True
+
+        try:
             heartbeat_error = self._stop_ephemeral_registration_heartbeat()
             with self._scan_condition:
+                for stop_event in self._runtime_state.scan_stop_events:
+                    stop_event.set()
                 while self._active_scan_count > 0:
                     self._scan_condition.wait()
-            connection = self._connection
-            change_delivery_connection = self._change_delivery_connection
-            control_connection = change_delivery_connection or connection
-            if control_connection is not None:
-                control_lock = (
-                    self._change_delivery_lock
-                    if change_delivery_connection is not None
-                    else nullcontext()
-                )
-                with control_lock:
-                    for consumer_id, durable in tuple(
-                        self._registered_change_consumers.items(),
-                    ):
-                        if not durable:
-                            _sqlite_unregister_consumer(
-                                control_connection,
-                                consumer_id,
-                                include_durable=False,
-                            )
-                    _sqlite_compact_change_outbox(
-                        control_connection,
-                        max_entries=self._change_outbox_max_entries,
+            with self._lock:
+                connection = self._connection
+                change_delivery_connection = self._change_delivery_connection
+                control_connection = change_delivery_connection or connection
+                if control_connection is not None:
+                    control_lock = (
+                        self._change_delivery_lock
+                        if change_delivery_connection is not None
+                        else nullcontext()
                     )
-                    control_connection.commit()
-            self._registered_change_consumers.clear()
-            self._change_outbox_checkpoints.clear()
-            self._connection = None
-            self._change_delivery_connection = None
-            self._transaction_owner_session_id = None
-            self._invalidate_index_cache()
-            self._invalidate_collection_id_cache()
-            self._invalidate_collection_features_cache()
-            self._ensured_search_backends.clear()
-            self._vector_search_backends.clear()
-            self._search_backend_versions.clear()
-            self._materialized_search_entry_cache.clear()
-            self._clear_compound_search_caches()
-            self._fts5_available = None
+                    with control_lock:
+                        for consumer_id, durable in tuple(
+                            self._registered_change_consumers.items(),
+                        ):
+                            if not durable:
+                                _sqlite_unregister_consumer(
+                                    control_connection,
+                                    consumer_id,
+                                    include_durable=False,
+                                )
+                        _sqlite_compact_change_outbox(
+                            control_connection,
+                            max_entries=self._change_outbox_max_entries,
+                        )
+                        control_connection.commit()
+                self._registered_change_consumers.clear()
+                self._change_outbox_checkpoints.clear()
+                self._connection = None
+                self._change_delivery_connection = None
+                self._transaction_owner_session_id = None
+                self._invalidate_index_cache()
+                self._invalidate_collection_id_cache()
+                self._invalidate_collection_features_cache()
+                self._ensured_search_backends.clear()
+                self._vector_search_backends.clear()
+                self._search_backend_versions.clear()
+                self._materialized_search_entry_cache.clear()
+                self._clear_compound_search_caches()
+                self._fts5_available = None
+        finally:
+            with self._lifecycle_condition:
+                self._disconnecting = False
+                self._lifecycle_condition.notify_all()
         if connection is not None:
             connection.close()
         if change_delivery_connection is not None:
@@ -6647,6 +6661,15 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @override
     async def disconnect(self) -> None:
+        # Signal producers before queuing disconnect on the same executor. A
+        # single-worker engine may otherwise queue shutdown behind a producer
+        # that is blocked on its bounded hand-off queue.
+        with self._lock:
+            stop_scans = self._connection_count <= 1
+        if stop_scans:
+            with self._scan_condition:
+                for stop_event in self._runtime_state.scan_stop_events:
+                    stop_event.set()
         await self._run_blocking(self._disconnect_sync)
         if self._connection_count == 0:
             self._shutdown_executor()
@@ -6973,8 +6996,13 @@ class SQLiteEngine(AsyncStorageEngine):
                 return False
 
             def _produce() -> None:
-                with self._scan_condition:
-                    self._active_scan_count += 1
+                with self._lifecycle_condition:
+                    if self._disconnecting or self._connection_count == 0:
+                        message = "SQLiteEngine is disconnecting"
+                        raise RuntimeError(message)
+                    with self._scan_condition:
+                        self._active_scan_count += 1
+                        self._runtime_state.scan_stop_events.add(stop_event)
                 batch: list[Document] = []
                 try:
                     for document in self._iter_scan_documents_sync(
@@ -7002,6 +7030,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         _enqueue(batch)
                     with self._scan_condition:
                         self._active_scan_count -= 1
+                        self._runtime_state.scan_stop_events.discard(stop_event)
                         self._scan_condition.notify_all()
                     _enqueue(sentinel)
 
@@ -7009,14 +7038,14 @@ class SQLiteEngine(AsyncStorageEngine):
             try:
                 while True:
                     try:
-                        item = await self._run_blocking(
-                            items.get,
-                            True,
-                            0.05,
-                        )
+                        item = items.get_nowait()
                     except queue.Empty:
                         if producer.done():
                             break
+                        # Do not consume a second engine executor worker merely
+                        # to wait on the producer's hand-off queue. This keeps
+                        # single-worker engines live and cancellation-capable.
+                        await asyncio.sleep(0.01)
                         continue
                     if item is sentinel:
                         break
