@@ -15,6 +15,19 @@ usa Semantic Versioning.
   el extra `exchange`. La fixture SQLite histórica de MongoEco 4.5.0 mantiene
   sus dependencias originales para preservar su reproducibilidad.
 
+### Fixed
+
+- La finalización de cursores sync ya no puede autobloquearse si el recolector
+  libera un cursor mientras se comprueba el estado del hilo auxiliar. El
+  cleanup abandonado se difiere siempre, la reentrada se rechaza de forma
+  determinista y el cierre async concurrente comparte una única transición.
+- El cierre del cliente despierta change streams y esperas de pool, aborta las
+  sesiones que posee, detiene el monitor sin autorreferencias y descarta
+  conexiones tras timeout, cancelación o respuesta wire inválida.
+- SQLite cancela los productores de scan antes de apagar su executor y deja de
+  gastar un segundo worker esperando la cola, evitando el deadlock con un solo
+  worker y un cursor todavía vivo.
+
 ## [4.6.0] - 2026-08-17
 
 ### Added
