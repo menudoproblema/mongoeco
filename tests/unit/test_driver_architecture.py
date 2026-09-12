@@ -1,7 +1,8 @@
-import asyncio
 import ast
-from pathlib import Path
+import asyncio
 import unittest
+
+from pathlib import Path
 
 from mongoeco import (
     AsyncMongoClient,
@@ -12,14 +13,13 @@ from mongoeco import (
     WriteConcern,
     parse_mongo_uri,
 )
-from mongoeco.engines.memory import MemoryEngine
-from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.driver import (
     AuthPolicy,
+    CallbackCommandTransport,
     CommandFailedEvent,
+    CommandRequest,
     CommandStartedEvent,
     CommandSucceededEvent,
-    CommandRequest,
     ConnectionCheckedInEvent,
     ConnectionCheckedOutEvent,
     ConnectionRegistry,
@@ -30,38 +30,40 @@ from mongoeco.driver import (
     RequestExecutionPlan,
     RequestExecutionResult,
     RequestExecutionTrace,
+    ServerDescription,
     ServerSelectedEvent,
     ServerSelectionFailedEvent,
-    TopologyRefreshedEvent,
-    ServerDescription,
     ServerState,
     ServerType,
     SrvResolution,
     TlsPolicy,
     TopologyDescription,
+    TopologyRefreshedEvent,
     TopologyType,
     WireProtocolCommandTransport,
     build_auth_policy,
+    build_concern_policy,
+    build_local_topology_description,
     build_read_concern_from_uri,
     build_read_preference_from_uri,
     build_retry_policy,
-    build_tls_policy,
-    build_concern_policy,
-    build_write_concern_from_uri,
-    classify_request_exception,
-    build_local_topology_description,
-    materialize_srv_uri,
-    resolve_srv_dns,
-    resolve_srv_seeds,
     build_selection_policy,
     build_timeout_policy,
+    build_tls_policy,
+    build_write_concern_from_uri,
+    classify_request_exception,
+    materialize_srv_uri,
     refresh_topology,
+    resolve_srv_dns,
+    resolve_srv_seeds,
 )
-from mongoeco.driver.connections import ConnectionPool, build_connection_pool_options
-from mongoeco.driver.execution import _is_retryable_exception
 from mongoeco.driver._runtime_attempts import RuntimeAttemptLifecycle
 from mongoeco.driver._runtime_plan_resolution import resolve_runtime_execution_plan
+from mongoeco.driver.connections import ConnectionPool, build_connection_pool_options
+from mongoeco.driver.execution import _is_retryable_exception
 from mongoeco.driver.topology_monitor import build_probe_plan
+from mongoeco.engines.memory import MemoryEngine
+from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.wire import AsyncMongoEcoProxyServer, WireAuthUser
 
 
@@ -495,6 +497,9 @@ class TopologyAndPolicyTests(unittest.TestCase):
         monitor.clear_listeners()
         self.assertEqual(monitor.history, (event,))
         self.assertEqual(seen, [event])
+        monitor.add_listener(lambda _event: (_ for _ in ()).throw(RuntimeError("boom")))
+        monitor.emit(event)
+        self.assertEqual(monitor.history[-1], event)
         monitor.clear_history()
         self.assertEqual(monitor.history, ())
 
@@ -607,6 +612,26 @@ class ConnectionArchitectureTests(unittest.TestCase):
         registry.clear()
 
         self.assertEqual(registry.snapshots(), ())
+
+    def test_connection_pool_clear_wakes_waiters_and_prevents_resurrection(self):
+        uri = parse_mongo_uri("mongodb://db1:27017/?maxPoolSize=1")
+        server = build_local_topology_description(uri).servers[0]
+        pool = ConnectionPool(
+            ConnectionRegistry(uri).pool_key_for_server(server),
+            build_connection_pool_options(uri),
+        )
+
+        async def _run() -> None:
+            held = await pool.checkout_async(server)
+            waiter = asyncio.create_task(pool.checkout_async(server))
+            await asyncio.sleep(0)
+            pool.clear()
+            with self.assertRaisesRegex(RuntimeError, "closed"):
+                await asyncio.wait_for(waiter, timeout=0.1)
+            await pool.checkin_async(held.connection_id)
+
+        asyncio.run(_run())
+        self.assertEqual(pool.snapshot().total_size, 0)
 
     def test_connection_registry_prunes_idle_connections(self):
         uri = parse_mongo_uri("mongodb://db1:27017/?maxIdleTimeMS=1")
@@ -1309,6 +1334,39 @@ class RequestExecutionPipelineTests(unittest.TestCase):
         self.assertFalse(result.outcome.ok)
         self.assertIn("socket timeout", result.outcome.error or "")
         self.assertFalse(result.outcome.retryable)
+        self.assertEqual(runtime.connection_snapshots[0].total_size, 0)
+
+    def test_topology_monitor_can_close_its_client_without_orphaning_itself(self):
+        async def _run() -> tuple[object, bool]:
+            client = AsyncMongoClient()
+            monitor_tasks: list[asyncio.Task[object]] = []
+            close_returned = asyncio.Event()
+
+            async def _close_from_monitor(execution):
+                del execution
+                task = asyncio.current_task()
+                assert task is not None
+                monitor_tasks.append(task)
+                await client.close()
+                close_returned.set()
+                return {
+                    "ok": 1.0,
+                    "isWritablePrimary": True,
+                    "minWireVersion": 0,
+                    "maxWireVersion": 20,
+                }
+
+            await client.start_topology_monitoring(
+                transport=CallbackCommandTransport(_close_from_monitor)
+            )
+            await asyncio.wait_for(close_returned.wait(), timeout=0.1)
+            await asyncio.sleep(0)
+            return client.driver_runtime._topology_monitor_task, monitor_tasks[0].done()
+
+        task_reference, original_done = asyncio.run(_run())
+
+        self.assertIsNone(task_reference)
+        self.assertTrue(original_done)
 
     def test_classify_request_exception_marks_retryable_labels(self):
         runtime = DriverRuntime(

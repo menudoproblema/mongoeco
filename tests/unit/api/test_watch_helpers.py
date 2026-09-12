@@ -1,3 +1,4 @@
+import asyncio
 import os
 import tempfile
 import unittest
@@ -25,6 +26,39 @@ class WatchHelperTests(unittest.TestCase):
 
 
 class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
+    async def test_async_client_close_is_shared_and_survives_caller_cancellation(self):
+        class SlowDisconnectEngine(MemoryEngine):
+            def __init__(self):
+                super().__init__()
+                self.disconnect_calls = 0
+                self.disconnect_started = asyncio.Event()
+                self.release_disconnect = asyncio.Event()
+
+            async def disconnect(self):
+                self.disconnect_calls += 1
+                self.disconnect_started.set()
+                await self.release_disconnect.wait()
+                await super().disconnect()
+
+        engine = SlowDisconnectEngine()
+        client = AsyncMongoClient(engine)
+        await client.__aenter__()
+
+        first_caller = asyncio.create_task(client.close())
+        await asyncio.wait_for(engine.disconnect_started.wait(), timeout=1)
+        second_caller = asyncio.create_task(client.close())
+        await asyncio.sleep(0)
+        self.assertFalse(second_caller.done())
+
+        first_caller.cancel()
+        with self.assertRaises(asyncio.CancelledError):
+            await first_caller
+        engine.release_disconnect.set()
+        await asyncio.wait_for(second_caller, timeout=1)
+
+        self.assertEqual(engine.disconnect_calls, 1)
+        self.assertTrue(client._closed)
+
     async def test_async_client_with_transaction_accepts_sync_callback(self):
         async with AsyncMongoClient(MemoryEngine()) as client:
             def _run(active):

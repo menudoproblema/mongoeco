@@ -1,10 +1,22 @@
 from __future__ import annotations
 
 import asyncio
+
 from typing import TYPE_CHECKING, Any
 
-from mongoeco.driver.connections import ConnectionLease, ConnectionPoolSnapshot, ConnectionRegistry
-from mongoeco.driver.discovery import SrvResolution, materialize_srv_uri, resolve_srv_dns, resolve_srv_seeds
+from mongoeco.driver._runtime_attempts import RuntimeAttemptLifecycle
+from mongoeco.driver._runtime_plan_resolution import resolve_runtime_execution_plan
+from mongoeco.driver._runtime_planning import build_runtime_command_plan
+from mongoeco.driver.connections import (
+    ConnectionPoolSnapshot,
+    ConnectionRegistry,
+)
+from mongoeco.driver.discovery import (
+    SrvResolution,
+    materialize_srv_uri,
+    resolve_srv_dns,
+    resolve_srv_seeds,
+)
 from mongoeco.driver.execution import (
     RequestExecutionResult,
 )
@@ -23,13 +35,21 @@ from mongoeco.driver.policies import (
     build_selection_policy,
     build_timeout_policy,
 )
-from mongoeco.driver._runtime_attempts import RuntimeAttemptLifecycle
-from mongoeco.driver._runtime_planning import build_runtime_command_plan
-from mongoeco.driver._runtime_plan_resolution import resolve_runtime_execution_plan
-from mongoeco.driver.requests import PreparedRequestExecution, RequestExecutionPlan
-from mongoeco.driver.security import AuthPolicy, TlsPolicy, build_auth_policy, build_tls_policy
+from mongoeco.driver.requests import (  # noqa: TC001 - exported annotations are introspectable
+    PreparedRequestExecution,
+    RequestExecutionPlan,
+)
+from mongoeco.driver.security import (
+    AuthPolicy,
+    TlsPolicy,
+    build_auth_policy,
+    build_tls_policy,
+)
+from mongoeco.driver.topology import (
+    TopologyDescription,
+    build_local_topology_description,
+)
 from mongoeco.driver.topology_monitor import refresh_topology
-from mongoeco.driver.topology import ServerDescription, TopologyDescription, build_local_topology_description
 from mongoeco.driver.uri import (
     MongoUri,
     MongoUriSeed,
@@ -38,8 +58,12 @@ from mongoeco.driver.uri import (
     build_write_concern_from_uri,
     parse_mongo_uri,
 )
-from mongoeco.session import ClientSession
-from mongoeco.types import ReadConcern, ReadPreference, WriteConcern
+from mongoeco.session import ClientSession  # noqa: TC001 - exported annotations are introspectable
+from mongoeco.types import (  # noqa: TC001 - exported annotations are introspectable
+    ReadConcern,
+    ReadPreference,
+    WriteConcern,
+)
 
 if TYPE_CHECKING:
     from mongoeco.driver.transports import WireProtocolCommandTransport
@@ -93,6 +117,7 @@ class DriverRuntime:
             failpoints=self._failpoints,
         )
         self._topology_monitor_task: asyncio.Task[None] | None = None
+        self._topology_stop_event: asyncio.Event | None = None
 
     def plan_command_request(
         self,
@@ -144,6 +169,9 @@ class DriverRuntime:
     def clear_connections(self) -> None:
         self._connections.clear()
 
+    async def clear_connections_async(self) -> None:
+        await self._connections.clear_async()
+
     async def execute_request(self, plan: RequestExecutionPlan, transport) -> RequestExecutionResult:
         return await self._attempts.execute(plan, transport=transport)
 
@@ -185,32 +213,57 @@ class DriverRuntime:
     ) -> None:
         if self._topology_monitor_task is not None and not self._topology_monitor_task.done():
             return
+        stop_event = asyncio.Event()
+        self._topology_stop_event = stop_event
         self._topology_monitor_task = asyncio.create_task(
-            self._topology_monitor_loop(transport=transport),
+            self._topology_monitor_loop(
+                transport=transport,
+                stop_event=stop_event,
+            ),
             name="mongoeco-driver-topology-monitor",
         )
 
-    async def stop_topology_monitoring(self) -> None:
+    async def stop_topology_monitoring(
+        self,
+        *,
+        requesting_task: asyncio.Task[object] | None = None,
+    ) -> None:
         task = self._topology_monitor_task
         if task is None:
             return
+        stop_event = self._topology_stop_event
+        if stop_event is not None:
+            stop_event.set()
+        if task is asyncio.current_task() or task is requesting_task:
+            self._topology_monitor_task = None
+            self._topology_stop_event = None
+            return
         task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
+        done, _pending = await asyncio.wait((task,), timeout=0.5)
+        if task not in done:
+            message = "topology monitor did not stop within 0.5 seconds"
+            raise TimeoutError(message)
+        if not task.cancelled():
+            task.result()
         self._topology_monitor_task = None
+        self._topology_stop_event = None
 
     async def _topology_monitor_loop(
         self,
         *,
         transport: WireProtocolCommandTransport | None = None,
+        stop_event: asyncio.Event,
     ) -> None:
         interval = self._effective_uri.options.heartbeat_frequency_ms / 1000
         active_transport = self.create_network_transport() if transport is None else transport
-        while True:
+        while not stop_event.is_set():
             await self.refresh_topology(transport=active_transport)
-            await asyncio.sleep(interval)
+            if stop_event.is_set():
+                return
+            try:
+                await asyncio.wait_for(stop_event.wait(), timeout=interval)
+            except TimeoutError:
+                continue
 
     @property
     def uri(self) -> MongoUri:

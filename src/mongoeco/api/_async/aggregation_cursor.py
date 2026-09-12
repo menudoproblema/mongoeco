@@ -1334,13 +1334,13 @@ class AsyncAggregationCursor:
     async def close(self) -> None:
         if self._closed:
             return
-        self._closed = True
         active = self._active_async_iterator
-        self._active_async_iterator = None
         if active is not None:
             close = getattr(active, "aclose", None)
             if callable(close):
                 await close()
+        self._active_async_iterator = None
+        self._closed = True
 
     async def first(self) -> Document | None:
         started_at = time.perf_counter_ns()

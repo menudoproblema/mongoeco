@@ -2,12 +2,27 @@ from __future__ import annotations
 
 import asyncio
 import time
+
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from mongoeco.driver.monitoring import CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, DriverMonitor
-from mongoeco.driver.requests import PreparedRequestExecution, RequestExecutionPlan, RequestOutcome
-from mongoeco.errors import ConnectionFailure, ExecutionTimeout, OperationFailure, PyMongoError
+from mongoeco.driver.monitoring import (
+    CommandFailedEvent,
+    CommandStartedEvent,
+    CommandSucceededEvent,
+    DriverMonitor,
+)
+from mongoeco.driver.requests import (
+    PreparedRequestExecution,
+    RequestExecutionPlan,
+    RequestOutcome,
+)
+from mongoeco.errors import (
+    ConnectionFailure,
+    ExecutionTimeout,
+    OperationFailure,
+    PyMongoError,
+)
 
 
 class AsyncCommandTransport(Protocol):
@@ -84,26 +99,30 @@ async def execute_request_pipeline(
         execution = await prepare_execution(plan, attempt_number=attempt_number)
         started_at = time.perf_counter()
         should_discard = False
-        if monitor is not None:
-            monitor.emit(
-                CommandStartedEvent(
-                    database=plan.request.database,
-                    command_name=plan.request.command_name,
-                    command=dict(plan.request.payload),
-                    server_address=execution.selected_server.address,
-                    connection_id=execution.connection.connection_id,
-                    attempt_number=execution.attempt_number,
-                    read_only=plan.request.read_only,
-                    session_id=plan.request.session_id,
-                    request_id=execution.request_id,
-                )
-            )
         try:
+            if monitor is not None:
+                monitor.emit(
+                    CommandStartedEvent(
+                        database=plan.request.database,
+                        command_name=plan.request.command_name,
+                        command=dict(plan.request.payload),
+                        server_address=execution.selected_server.address,
+                        connection_id=execution.connection.connection_id,
+                        attempt_number=execution.attempt_number,
+                        read_only=plan.request.read_only,
+                        session_id=plan.request.session_id,
+                        request_id=execution.request_id,
+                    )
+                )
             if inject_failure is not None:
                 injected_error = inject_failure(execution)
                 if injected_error is not None:
                     raise injected_error
-            response = await _send_with_timeout(transport, execution, plan=plan)
+            try:
+                response = await _send_with_timeout(transport, execution, plan=plan)
+            except (ExecutionTimeout, ConnectionFailure, asyncio.CancelledError):
+                should_discard = True
+                raise
             outcome = RequestOutcome(
                 server_address=execution.selected_server.address,
                 ok=True,
@@ -124,8 +143,10 @@ async def execute_request_pipeline(
                         request_id=execution.request_id,
                     )
                 )
-        except Exception as exc:  # noqa: BLE001
-            should_discard = isinstance(exc, ConnectionFailure)
+        except asyncio.CancelledError:
+            should_discard = True
+            raise
+        except Exception as exc:
             outcome = classify_request_exception(exc, plan=plan)
             outcome = RequestOutcome(
                 server_address=execution.selected_server.address,

@@ -68,8 +68,8 @@ class _CursorIterator:
     def close(self) -> None:
         if self._closed:
             return
-        self._closed = True
         self._cursor._close_active_iterator(self._async_iterable)
+        self._closed = True
 
     def __del__(self):
         if not finalize_best_effort(
@@ -389,26 +389,24 @@ class Cursor:
     def close(self) -> None:
         if self._closed:
             return
-        try:
-            active = self._active_async_iterable
-            if active is not None:
-                close = getattr(active, "aclose", None)
-                if callable(close):
-                    self._client._run(close())
-            close_cursor = getattr(self._async_cursor, 'close', None)
-            if callable(close_cursor):
-                awaitable = close_cursor()
-                try:
-                    self._client._run(awaitable)
-                except BaseException:
-                    close_awaitable = getattr(awaitable, 'close', None)
-                    if callable(close_awaitable):
-                        close_awaitable()
-                    raise
-        finally:
-            self._active_async_iterable = None
-            self._cache = None
-            self._closed = True
+        active = self._active_async_iterable
+        if active is not None:
+            close = getattr(active, "aclose", None)
+            if callable(close):
+                self._client._run(close())
+        close_cursor = getattr(self._async_cursor, "close", None)
+        if callable(close_cursor):
+            awaitable = close_cursor()
+            try:
+                self._client._run(awaitable)
+            except BaseException:
+                close_awaitable = getattr(awaitable, "close", None)
+                if callable(close_awaitable):
+                    close_awaitable()
+                raise
+        self._active_async_iterable = None
+        self._cache = None
+        self._closed = True
 
     def __del__(self):
         finalized = finalize_best_effort(

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import queue
+import sys
 import threading
 
 from collections.abc import Callable
@@ -37,7 +38,9 @@ from mongoeco.driver import (  # noqa: TC001 - public annotations are introspect
 from mongoeco.driver.monitoring import (  # noqa: TC001 - public annotations are introspectable
     DriverMonitor,
 )
-from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.base import (  # noqa: TC001 - public annotations are introspectable
+    AsyncStorageEngine,
+)
 from mongoeco.errors import (
     ExecutionTimeout,
     InvalidOperation,
@@ -68,21 +71,34 @@ class _SyncRunner:
     """Ejecuta la API async en un loop dedicado y estable."""
 
     def __init__(self):
-        self._runner = asyncio.Runner(debug=False)
+        # A private loop avoids installing a thread-local global event loop;
+        # the runner may legitimately execute from the helper thread.
+        self._runner = asyncio.Runner(
+            debug=False,
+            loop_factory=asyncio.new_event_loop,
+        )
         self._closed = False
         self._closing = False
         self._state_condition = threading.Condition()
         self._active_runs = 0
         self._runner_lock = threading.Lock()
-        self._helper_lock = threading.Lock()
-        self._helper_queue: queue.Queue[object] = queue.Queue()
+        self._runner_owner_thread_id: int | None = None
+        # GC finalizers may reenter defer() while helper state is inspected.
+        self._helper_lock = threading.RLock()
+        # SimpleQueue.put() is reentrant in CPython and is safe from __del__.
+        self._helper_queue: queue.SimpleQueue[object] = queue.SimpleQueue()
         self._helper_thread: threading.Thread | None = None
         self._deferred_helper_close = False
+        self._draining_helper = False
 
     def _run_direct(self, awaitable):
         try:
             with self._runner_lock:
-                return self._runner.run(awaitable)
+                self._runner_owner_thread_id = threading.get_ident()
+                try:
+                    return self._runner.run(awaitable)
+                finally:
+                    self._runner_owner_thread_id = None
         except ExecutionTimeout as exc:
             raise ExecutionTimeout(
                 f"sync operation timed out: {exc}",
@@ -96,10 +112,14 @@ class _SyncRunner:
     def _run_inline_direct(self, awaitable):
         try:
             with self._runner_lock:
+                self._runner_owner_thread_id = threading.get_ident()
                 try:
-                    awaitable.send(None)
-                except StopIteration as exc:
-                    return exc.value
+                    try:
+                        awaitable.send(None)
+                    except StopIteration as exc:
+                        return exc.value
+                finally:
+                    self._runner_owner_thread_id = None
         except ExecutionTimeout as exc:
             raise ExecutionTimeout(
                 f"sync operation timed out: {exc}",
@@ -133,8 +153,17 @@ class _SyncRunner:
 
     def _ensure_helper_thread(self) -> None:
         with self._helper_lock:
-            if self._helper_thread is not None and self._helper_thread.is_alive():
-                return
+            while self._helper_thread is not None:
+                observed = self._helper_thread
+                is_alive = observed.is_alive()
+                # A reentrant finalizer may have replaced a dead helper while
+                # is_alive() was running. Re-evaluate instead of starting a
+                # second worker and overwriting the live reference.
+                if self._helper_thread is not observed:
+                    continue
+                if is_alive:
+                    return
+                break
             worker = threading.Thread(
                 target=self._helper_worker,
                 name="mongoeco-sync-runner-helper",
@@ -162,22 +191,28 @@ class _SyncRunner:
 
     def defer(self, operation: Callable[[], object]) -> bool:
         """Queue best-effort cleanup without blocking a GC finalizer."""
-        with self._state_condition:
-            if self._closed or self._closing:
-                return False
-        self._ensure_helper_thread()
-        self._helper_queue.put((operation, None, None))
-        return True
+        # Keep admission, helper creation, and enqueue in one critical section
+        # so close() cannot strand work behind its sentinel.
+        with self._helper_lock:
+            with self._state_condition:
+                if self._closed or self._closing:
+                    return False
+            self._ensure_helper_thread()
+            self._helper_queue.put((operation, None, None))
+            return True
 
     def _stop_helper_thread(self) -> None:
-        helper_thread = self._helper_thread
-        if helper_thread is None:
-            return
-        self._helper_queue.put(None)
+        with self._helper_lock:
+            helper_thread = self._helper_thread
+            if helper_thread is None:
+                return
+            self._helper_queue.put(None)
         if threading.current_thread() is helper_thread:
             return
         helper_thread.join(timeout=1)
-        self._helper_thread = None
+        with self._helper_lock:
+            if self._helper_thread is helper_thread:
+                self._helper_thread = None
 
     def _cleanup_pending_tasks(self) -> None:
         if self._closed:
@@ -210,17 +245,37 @@ class _SyncRunner:
             self._runner.run(_drain_pending())
         shutdown_asyncgens = getattr(loop, "shutdown_asyncgens", None)
         if callable(shutdown_asyncgens):
+
+            async def _shutdown_async_generators() -> None:
+                shutdown = shutdown_asyncgens()
+                try:
+                    await asyncio.wait_for(shutdown, timeout=0.25)
+                except TimeoutError:
+                    close = getattr(shutdown, "close", None)
+                    if callable(close):
+                        close()
+
             with self._runner_lock:
-                self._runner.run(shutdown_asyncgens())
-        shutdown_default_executor = getattr(loop, "shutdown_default_executor", None)
-        if callable(shutdown_default_executor):
-            with self._runner_lock:
-                self._runner.run(shutdown_default_executor())
+                self._runner.run(_shutdown_async_generators())
 
     def run(self, awaitable, *, inline: bool = False):
+        if self._runner_owner_thread_id == threading.get_ident():
+            close = getattr(awaitable, "close", None)
+            if callable(close):
+                close()
+            message = (
+                "sync MongoClient operations cannot be re-entered "
+                "from an active callback"
+            )
+            raise InvalidOperation(message)
         with self._state_condition:
-            if self._closed or self._closing:
-                raise InvalidOperation("El cliente sincronico ya esta cerrado")
+            helper_cleanup = (
+                self._draining_helper
+                and threading.current_thread() is self._helper_thread
+            )
+            if self._closed or (self._closing and not helper_cleanup):
+                message = "El cliente sincronico ya esta cerrado"
+                raise InvalidOperation(message)
             self._active_runs += 1
 
         deferred_close = False
@@ -245,18 +300,33 @@ class _SyncRunner:
 
     def _close_runner_resources(self) -> None:
         self._cleanup_pending_tasks()
-        close_runner = getattr(self._runner, "close", None)
-        if not callable(close_runner):
+        get_loop = getattr(self._runner, "get_loop", None)
+        if not callable(get_loop):
+            close_runner = getattr(self._runner, "close", None)
+            if callable(close_runner):
+                with self._runner_lock:
+                    close_runner()
+            return
+        try:
+            loop = get_loop()
+        except Exception:
+            return
+        if loop.is_closed():
             return
         with self._runner_lock:
-            close_runner()
+            # BaseEventLoop.close() asks the default executor to stop without
+            # joining arbitrary user threads. All Mongoeco-owned blocking
+            # waits are cancelled explicitly before this point.
+            loop.close()
 
     def close(self) -> None:
-        current_thread_is_helper = threading.current_thread() is self._helper_thread
+        current_thread_owns_runner = (
+            self._runner_owner_thread_id == threading.get_ident()
+        )
         with self._state_condition:
             if self._closed:
                 return
-            if current_thread_is_helper and self._active_runs > 0:
+            if current_thread_owns_runner and self._active_runs > 0:
                 self._closing = True
                 self._deferred_helper_close = True
                 self._state_condition.notify_all()
@@ -264,6 +334,7 @@ class _SyncRunner:
             self._closing = True
             while self._active_runs > 0:
                 self._state_condition.wait()
+            self._draining_helper = True
         if not self._closed:
             try:
                 try:
@@ -274,13 +345,15 @@ class _SyncRunner:
 
                 if running_loop_active:
                     self._invoke_on_helper_thread(self._close_runner_resources)
+                    self._stop_helper_thread()
                 else:
+                    self._stop_helper_thread()
                     self._close_runner_resources()
-                self._stop_helper_thread()
             finally:
                 with self._state_condition:
                     self._closed = True
                     self._closing = False
+                    self._draining_helper = False
                     self._state_condition.notify_all()
 
     def __del__(self):
@@ -289,13 +362,16 @@ class _SyncRunner:
                 self.close()
             except Exception:
                 self._closed = True
+                self._helper_queue.put(None)
 
-        try:
-            asyncio.get_running_loop()
-        except RuntimeError:
-            finalize()
+        if sys.is_finalizing():
+            self._closed = True
             return
-        if not self.defer(finalize):
+        try:
+            accepted = self.defer(finalize)
+        except BaseException:
+            accepted = False
+        if not accepted:
             self._closed = True
 
 
@@ -609,6 +685,11 @@ class MongoClient:
     def _defer_cleanup(self, operation: Callable[[], object]) -> bool:
         return self._runner.defer(operation)
 
+    def _ensure_close_not_reentrant(self) -> None:
+        if self._runner._runner_owner_thread_id == threading.get_ident():
+            message = "MongoClient.close() cannot run from an active client callback"
+            raise InvalidOperation(message)
+
     def _ensure_connected(self) -> None:
         if self._closed:
             raise InvalidOperation("El cliente sincronico ya esta cerrado")
@@ -619,6 +700,8 @@ class MongoClient:
     def close(self) -> None:
         if self._closed:
             return
+        self._ensure_close_not_reentrant()
+        self._async_client._change_hub.close()
         try:
             if self._connected:
                 self._run(self._async_client.__aexit__(None, None, None))
@@ -636,6 +719,8 @@ class MongoClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._closed:
             return False
+        self._ensure_close_not_reentrant()
+        self._async_client._change_hub.close()
 
         try:
             if self._connected:
@@ -735,6 +820,7 @@ class MongoClient:
         default_transaction_options: TransactionOptions | None = None,
         causal_consistency: bool = True,
     ) -> ClientSession:
+        self._ensure_connected()
         return self._async_client.start_session(
             default_transaction_options=default_transaction_options,
             causal_consistency=causal_consistency,

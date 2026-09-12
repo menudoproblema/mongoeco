@@ -69,8 +69,8 @@ class _AggregationCursorIterator:
     def close(self) -> None:
         if self._closed:
             return
-        self._closed = True
         self._cursor._close_active_iterator(self._async_iterable)
+        self._closed = True
 
     def __del__(self):
         if not finalize_best_effort(
@@ -230,14 +230,12 @@ class AggregationCursor:
     def close(self) -> None:
         if self._closed:
             return
-        try:
-            active = self._active_async_iterable
-            if active is not None:
-                self._close_active_iterator(active)
-        finally:
-            self._active_async_iterable = None
-            self._cache = None
-            self._closed = True
+        active = self._active_async_iterable
+        if active is not None:
+            self._close_active_iterator(active)
+        self._active_async_iterable = None
+        self._cache = None
+        self._closed = True
 
     def __del__(self):
         finalized = finalize_best_effort(

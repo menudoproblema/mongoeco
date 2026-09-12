@@ -1,5 +1,7 @@
 import asyncio
+
 from collections.abc import Awaitable, Callable
+
 
 try:  # pragma: no cover - optional dependency
     from bson import BSON
@@ -85,9 +87,9 @@ class AsyncRawBatchCursor:
     async def close(self) -> None:
         if self._closed:
             return
-        self._closed = True
         if self._close_callback is not None:
             await self._close_callback()
+        self._closed = True
 
     async def aclose(self) -> None:
         await self.close()

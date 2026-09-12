@@ -1,20 +1,22 @@
 import asyncio
 import ssl
-from types import SimpleNamespace
 import unittest
+
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import mongoeco.driver.transports as transport_module
+
 from mongoeco.driver.connections import DriverConnection, PoolKey
 from mongoeco.driver.security import TlsPolicy
 from mongoeco.driver.topology import ServerDescription
 from mongoeco.driver.transports import (
-    _advance_session_from_response,
-    _wrap_connection_failure,
     CallbackCommandTransport,
     LocalCommandTransport,
     StreamConnectionResource,
     WireProtocolCommandTransport,
+    _advance_session_from_response,
+    _wrap_connection_failure,
 )
 from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.session import ClientSession
@@ -406,9 +408,8 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
                 payload=b"c=biws,r=client-server,p=proof",
                 expected_server_signature="sig",
             ),
-        ):
-            with self.assertRaisesRegex(OperationFailure, "integer conversationId"):
-                await transport._authenticate_resource(resource, execution)
+        ), self.assertRaisesRegex(OperationFailure, "integer conversationId"):
+            await transport._authenticate_resource(resource, execution)
 
         self.assertEqual(registry.discarded, ["lease-9"])
 
@@ -475,7 +476,11 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
 
         with patch("mongoeco.driver.transports.encode_op_msg_request", return_value=b"encoded"), patch(
             "mongoeco.driver.transports.parse_message_header",
-            return_value=SimpleNamespace(message_length=20, op_code=OP_REPLY),
+            return_value=SimpleNamespace(
+                message_length=20,
+                response_to=1,
+                op_code=OP_REPLY,
+            ),
         ), patch(
             "mongoeco.driver.transports.decode_op_reply",
             return_value=SimpleNamespace(documents=[]),
@@ -483,6 +488,37 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
             response = await transport._roundtrip(resource, {"ping": 1}, lease="lease-1")
 
         self.assertEqual(response, {"ok": 1.0})
+
+    async def test_wire_transport_discards_mismatched_response(self):
+        registry = _FakeRegistry()
+        transport = WireProtocolCommandTransport(
+            registry,
+            tls_policy=TlsPolicy(enabled=False, verify_certificates=True),
+            connect_timeout_ms=250,
+        )
+        resource = StreamConnectionResource(
+            reader=_FakeReader([b"h" * 16]),
+            writer=_FakeWriter(),
+        )
+
+        with (
+            patch(
+                "mongoeco.driver.transports.encode_op_msg_request",
+                return_value=b"encoded",
+            ),
+            patch(
+                "mongoeco.driver.transports.parse_message_header",
+                return_value=SimpleNamespace(
+                    message_length=20,
+                    response_to=999,
+                    op_code=transport_module.OP_MSG,
+                ),
+            ),
+            self.assertRaisesRegex(ConnectionFailure, "does not match"),
+        ):
+            await transport._roundtrip(resource, {"ping": 1}, lease="lease-1")
+
+        self.assertEqual(registry.discarded, ["lease-1"])
 
     async def test_wire_transport_roundtrip_rejects_unsupported_wire_opcode(self):
         transport = WireProtocolCommandTransport(
@@ -497,7 +533,11 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
 
         with patch("mongoeco.driver.transports.encode_op_msg_request", return_value=b"encoded"), patch(
             "mongoeco.driver.transports.parse_message_header",
-            return_value=SimpleNamespace(message_length=20, op_code=999),
+            return_value=SimpleNamespace(
+                message_length=20,
+                response_to=1,
+                op_code=999,
+            ),
         ):
             with self.assertRaises(OperationFailure):
                 await transport._roundtrip(resource, {"ping": 1}, lease="lease-1")
@@ -515,7 +555,11 @@ class CommandTransportTests(unittest.IsolatedAsyncioTestCase):
 
         with patch("mongoeco.driver.transports.encode_op_msg_request", return_value=b"encoded"), patch(
             "mongoeco.driver.transports.parse_message_header",
-            return_value=SimpleNamespace(message_length=20, op_code=transport_module.OP_MSG),
+            return_value=SimpleNamespace(
+                message_length=20,
+                response_to=1,
+                op_code=transport_module.OP_MSG,
+            ),
         ), patch(
             "mongoeco.driver.transports.decode_op_msg",
             return_value=SimpleNamespace(body={"ok": 1.0, "pong": 1}),

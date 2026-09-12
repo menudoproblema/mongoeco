@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import asyncio
+import time
+
 from collections import deque
+from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum
-import time
 from uuid import uuid4
 
-from mongoeco.driver.topology import ServerDescription
-from mongoeco.driver.uri import MongoUri
+from mongoeco.driver.topology import (  # noqa: TC001 - exported annotations are introspectable
+    ServerDescription,
+)
+from mongoeco.driver.uri import MongoUri  # noqa: TC001 - exported annotations are introspectable
 
 
 class ConnectionState(Enum):
@@ -101,6 +105,8 @@ class ConnectionPool:
         self._connections: dict[str, DriverConnection] = {}
         self._wait_condition = asyncio.Condition()
         self._waiters: deque[str] = deque()
+        self._closed = False
+        self._wait_loop: asyncio.AbstractEventLoop | None = None
 
     @property
     def key(self) -> PoolKey:
@@ -111,13 +117,17 @@ class ConnectionPool:
         return self._options
 
     def checkout(self, server: ServerDescription) -> DriverConnection:
+        if self._closed:
+            raise RuntimeError("connection pool is closed")
         self._prune_idle()
         connection = self._checkout_if_available(server)
         if connection is None:
-            raise RuntimeError("connection pool exhausted")
+            message = "connection pool exhausted"
+            raise RuntimeError(message)
         return connection
 
     async def checkout_async(self, server: ServerDescription) -> DriverConnection:
+        self._wait_loop = asyncio.get_running_loop()
         deadline = None
         if self._options.wait_queue_timeout_ms is not None:
             deadline = time.monotonic() + (self._options.wait_queue_timeout_ms / 1000)
@@ -125,6 +135,8 @@ class ConnectionPool:
         async with self._wait_condition:
             try:
                 while True:
+                    if self._closed:
+                        raise RuntimeError("connection pool is closed")
                     self._prune_idle()
                     should_try_checkout = waiter_id is None and not self._waiters
                     if waiter_id is not None and self._waiters and self._waiters[0] == waiter_id:
@@ -144,7 +156,8 @@ class ConnectionPool:
                         continue
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
-                        raise RuntimeError("connection pool exhausted")
+                        message = "connection pool exhausted"
+                        raise RuntimeError(message)
                     try:
                         await asyncio.wait_for(self._wait_condition.wait(), timeout=remaining)
                     except TimeoutError as exc:
@@ -168,10 +181,37 @@ class ConnectionPool:
             self._wait_condition.notify_all()
 
     def clear(self) -> None:
+        self._closed = True
         for connection in self._connections.values():
             _close_resource(connection.detach_resource())
             connection.mark_closed()
         self._connections.clear()
+        loop = self._wait_loop
+        if loop is not None and loop.is_running():
+            with suppress(RuntimeError):
+                loop.call_soon_threadsafe(
+                    lambda: asyncio.create_task(self._notify_waiters())
+                )
+
+    async def _notify_waiters(self) -> None:
+        async with self._wait_condition:
+            self._wait_condition.notify_all()
+
+    async def clear_async(self) -> None:
+        resources: list[object] = []
+        async with self._wait_condition:
+            self._closed = True
+            for connection in self._connections.values():
+                resource = connection.detach_resource()
+                if resource is not None:
+                    resources.append(resource)
+                connection.mark_closed()
+            self._connections.clear()
+            self._wait_condition.notify_all()
+        await asyncio.gather(
+            *(_close_resource_async(resource) for resource in resources),
+            return_exceptions=True,
+        )
 
     def get_connection(self, connection_id: str) -> DriverConnection | None:
         return self._connections.get(connection_id)
@@ -184,9 +224,14 @@ class ConnectionPool:
         connection.mark_closed()
 
     async def discard_async(self, connection_id: str) -> None:
+        resource = None
         async with self._wait_condition:
-            self.discard(connection_id)
+            connection = self._connections.pop(connection_id, None)
+            if connection is not None:
+                resource = connection.detach_resource()
+                connection.mark_closed()
             self._wait_condition.notify_all()
+        await _close_resource_async(resource)
 
     def _checkout_if_available(self, server: ServerDescription) -> DriverConnection | None:
         for connection in self._connections.values():
@@ -237,6 +282,7 @@ class ConnectionRegistry:
         self._uri = uri
         self._options = build_connection_pool_options(uri)
         self._pools: dict[PoolKey, ConnectionPool] = {}
+        self._closed = False
 
     def pool_key_for_server(self, server: ServerDescription) -> PoolKey:
         return PoolKey(
@@ -248,6 +294,9 @@ class ConnectionRegistry:
         )
 
     def pool_for_server(self, server: ServerDescription) -> ConnectionPool:
+        if self._closed:
+            message = "connection registry is closed"
+            raise RuntimeError(message)
         key = self.pool_key_for_server(server)
         pool = self._pools.get(key)
         if pool is None:
@@ -300,9 +349,19 @@ class ConnectionRegistry:
             await pool.discard_async(lease.connection_id)
 
     def clear(self) -> None:
+        self._closed = True
         for pool in self._pools.values():
             pool.clear()
         self._pools.clear()
+
+    async def clear_async(self) -> None:
+        self._closed = True
+        pools = tuple(self._pools.values())
+        self._pools.clear()
+        await asyncio.gather(
+            *(pool.clear_async() for pool in pools),
+            return_exceptions=True,
+        )
 
     def snapshots(self) -> tuple[ConnectionPoolSnapshot, ...]:
         return tuple(pool.snapshot() for pool in self._pools.values())
@@ -315,3 +374,20 @@ def _close_resource(resource: object | None) -> None:
     close = getattr(writer, "close", None)
     if callable(close):
         close()
+
+
+async def _close_resource_async(resource: object | None) -> None:
+    if resource is None:
+        return
+    try:
+        writer = getattr(resource, "writer", None)
+        close = getattr(writer, "close", None)
+        if callable(close):
+            close()
+        wait_closed = getattr(writer, "wait_closed", None)
+        if callable(wait_closed):
+            await asyncio.wait_for(wait_closed(), timeout=0.25)
+    except (Exception, asyncio.CancelledError):
+        # Cleanup is bounded and best-effort; it must not replace the command
+        # failure or cancellation that caused the connection to be discarded.
+        return

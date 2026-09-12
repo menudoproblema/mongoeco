@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,7 +136,12 @@ class DriverMonitor:
     def emit(self, event: DriverEvent) -> None:
         self._history.append(event)
         for listener in tuple(self._listeners):
-            listener(event)
+            try:
+                listener(event)
+            except Exception:  # noqa: S112 - listeners are an isolation boundary
+                # Observability is deliberately failure-isolated: a listener
+                # must never leak a connection lease or alter an operation.
+                continue
 
     def clear_history(self) -> None:
         self._history.clear()

@@ -11,7 +11,6 @@ from mongoeco.api.argument_validation import (
     validate_batch_size as _validate_batch_size,
     validate_hint_spec as _validate_hint_spec,
     validate_max_time_ms as _validate_max_time_ms,
-    validate_sort_spec as _validate_sort_spec,
 )
 from mongoeco.compat import MONGODB_DIALECT_70
 from mongoeco.core.expression_context import ExpressionExecutionContext
@@ -197,7 +196,6 @@ class _AsyncCursorIterator:
     async def close(self) -> None:
         if self._closed:
             return
-        self._closed = True
         close = getattr(self._source, "aclose", None)
         if callable(close):
             await close()
@@ -207,6 +205,7 @@ class _AsyncCursorIterator:
             self._cursor._active_async_iterable = None
         if self._cursor._active_async_iterable is None and self._cursor._exhausted:
             self._cursor._started = True
+        self._closed = True
 
     async def aclose(self) -> None:
         await self.close()
@@ -566,15 +565,15 @@ class AsyncCursor:
     async def close(self) -> None:
         if self._closed:
             return
-        self._closed = True
         active = self._active_async_iterable
-        self._active_async_iterable = None
-        self._exhausted = True
         if active is not None:
             await active.close()
         else:
             await self._close_batch_source()
         await self._close_retired_sources()
+        self._active_async_iterable = None
+        self._exhausted = True
+        self._closed = True
 
     async def first(self) -> Document | None:
         operation = self._as_operation()

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import asyncio
 import base64
 import json
+import threading
 import time
 import weakref
+
 from collections.abc import Callable
 
 from mongoeco.core.codec import DocumentCodec
@@ -12,7 +13,7 @@ from mongoeco.errors import OperationFailure
 from mongoeco.types import ChangeEventDocument
 
 from .hub import ChangeStreamHub
-from .models import ChangeStreamScope
+from .models import ChangeStreamScope  # noqa: TC001 - cursor signature is introspectable
 from .pipeline import (
     apply_full_document_mode,
     compile_change_stream_pipeline,
@@ -51,6 +52,7 @@ class AsyncChangeStreamCursor:
         self._full_document = normalize_full_document_mode(full_document)
         self._materialize_document = materialize_document or DocumentCodec.to_pymongo
         self._closed = False
+        self._stop_event = threading.Event()
         hub.register_watcher()
         self._watcher_finalizer = weakref.finalize(self, hub.unregister_watcher)
 
@@ -87,11 +89,12 @@ class AsyncChangeStreamCursor:
             timeout_seconds = None
             if deadline is not None:
                 timeout_seconds = max(0.0, deadline - time.monotonic())
-            next_offset, event = await asyncio.to_thread(
-                self._hub.wait_for_event,
+            next_offset, event = await self._hub.wait_for_event_async(
                 self._offset,
                 timeout_seconds=timeout_seconds,
+                stop_event=self._stop_event,
             )
+            self._ensure_open()
             self._offset = next_offset
             if event is None:
                 return None
@@ -104,11 +107,12 @@ class AsyncChangeStreamCursor:
     async def next(self) -> ChangeEventDocument:
         self._ensure_open()
         while True:
-            document = await asyncio.to_thread(
-                self._hub.wait_for_event,
+            document = await self._hub.wait_for_event_async(
                 self._offset,
                 timeout_seconds=None,
+                stop_event=self._stop_event,
             )
+            self._ensure_open()
             self._offset, event = document
             if event is None:
                 continue
@@ -129,6 +133,8 @@ class AsyncChangeStreamCursor:
         if self._closed:
             return
         self._closed = True
+        self._stop_event.set()
+        self._hub.wake_waiters()
         self._watcher_finalizer()
 
     @property

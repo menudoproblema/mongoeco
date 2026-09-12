@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
 import itertools
 import ssl
-from typing import TYPE_CHECKING, Any, Awaitable, Callable
+
+from collections.abc import Awaitable, Callable  # noqa: TC003 - exported annotations
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
+
 
 try:  # pragma: no cover - optional dependency
     from bson.binary import Binary as BsonBinary
@@ -12,15 +15,12 @@ except Exception:  # pragma: no cover - bson is optional
     BsonBinary = type("_MissingBsonBinary", (bytes,), {})
 
 from mongoeco.driver.connections import ConnectionRegistry, DriverConnection
-from mongoeco.driver.security import TlsPolicy
-from mongoeco.driver.requests import PreparedRequestExecution
+from mongoeco.driver.requests import (  # noqa: TC001 - exported annotations are introspectable
+    PreparedRequestExecution,
+)
+from mongoeco.driver.security import TlsPolicy  # noqa: TC001 - exported annotations are introspectable
 from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.types import Binary
-from mongoeco.wire.scram import (
-    build_scram_client_final,
-    build_scram_client_start,
-    verify_scram_server_final,
-)
 from mongoeco.wire.protocol import (
     OP_MSG,
     OP_REPLY,
@@ -29,9 +29,19 @@ from mongoeco.wire.protocol import (
     encode_op_msg_request,
     parse_message_header,
 )
+from mongoeco.wire.scram import (
+    build_scram_client_final,
+    build_scram_client_start,
+    verify_scram_server_final,
+)
+
 
 if TYPE_CHECKING:
     from mongoeco.api._async.client import AsyncMongoClient
+
+
+_MESSAGE_HEADER_LENGTH = 16
+_MAX_MESSAGE_LENGTH = 48_000_000
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,7 +61,7 @@ class StreamConnectionResource:
 
 
 class LocalCommandTransport:
-    def __init__(self, client: "AsyncMongoClient"):
+    def __init__(self, client: AsyncMongoClient):
         self._client = client
 
     async def send(self, execution: PreparedRequestExecution) -> dict[str, Any]:
@@ -111,7 +121,7 @@ class WireProtocolCommandTransport:
         timeout = self._connect_timeout_ms / 1000
         try:
             reader, writer = await asyncio.wait_for(connect_coro, timeout=timeout)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise _wrap_connection_failure(
                 exc,
                 f"failed to connect to {connection.server.address}",
@@ -159,7 +169,7 @@ class WireProtocolCommandTransport:
                     lease=execution.connection,
                 )
                 self._raise_if_error_document(result)
-        except Exception:  # noqa: BLE001
+        except Exception:
             self._registry.discard(execution.connection)
             raise
         resource.authenticated = True
@@ -245,23 +255,40 @@ class WireProtocolCommandTransport:
         try:
             resource.writer.write(encode_op_msg_request(request_document, request_id=request_id))
             await resource.writer.drain()
-            raw_header = await resource.reader.readexactly(16)
+            raw_header = await resource.reader.readexactly(_MESSAGE_HEADER_LENGTH)
             header = parse_message_header(raw_header)
-            payload = await resource.reader.readexactly(header.message_length - 16)
-        except Exception as exc:  # noqa: BLE001
+            if header.response_to != request_id:
+                message = "wire response does not match the active request"
+                raise ConnectionFailure(message)
+            if not (
+                _MESSAGE_HEADER_LENGTH
+                <= header.message_length
+                <= _MAX_MESSAGE_LENGTH
+            ):
+                message = "wire response has an invalid message length"
+                raise ConnectionFailure(message)
+            payload = await resource.reader.readexactly(
+                header.message_length - _MESSAGE_HEADER_LENGTH
+            )
+            if header.op_code == OP_MSG:
+                return decode_op_msg(header, payload).body
+            if header.op_code == OP_REPLY:
+                reply = decode_op_reply(header, payload)
+                return reply.documents[0] if reply.documents else {"ok": 1.0}
+            raise OperationFailure(
+                f"unsupported wire response opCode: {header.op_code}"
+            )
+        except asyncio.CancelledError:
+            self._registry.discard(lease)
+            raise
+        except Exception as exc:
             self._registry.discard(lease)
             raise _wrap_connection_failure(exc, "wire request failed") from exc
-        if header.op_code == OP_MSG:
-            return decode_op_msg(header, payload).body
-        if header.op_code == OP_REPLY:
-            reply = decode_op_reply(header, payload)
-            return reply.documents[0] if reply.documents else {"ok": 1.0}
-        raise OperationFailure(f"unsupported wire response opCode: {header.op_code}")
 
     @staticmethod
     def _raise_if_error_document(result: dict[str, Any]) -> None:
         ok = result.get("ok")
-        if ok not in {0, 0.0, False}:
+        if ok != 0:
             return
         labels = result.get("errorLabels")
         error_labels = tuple(labels) if isinstance(labels, list) else ()

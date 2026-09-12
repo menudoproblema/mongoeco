@@ -27,7 +27,7 @@ async def _value() -> str:
 
 
 class SyncClientUnitTests(unittest.TestCase):
-    def test_best_effort_finalizer_covers_deferred_and_local_cleanup(self):
+    def test_best_effort_finalizer_never_runs_cleanup_inline(self):
         calls: list[str] = []
 
         class Owner:
@@ -58,15 +58,13 @@ class SyncClientUnitTests(unittest.TestCase):
         )
 
         assert deferred is True
-        assert fallback is True
-        assert recovered is True
+        assert fallback is False
+        assert recovered is False
         assert failed is False
         assert calls == [
             "defer",
             "defer",
-            "fallback-cleanup",
             "defer",
-            "failed-defer-cleanup",
         ]
 
     def test_sync_client_exposes_and_propagates_injected_clock(self):
@@ -241,6 +239,29 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             runner.close()
 
+    def test_sync_runner_rejects_reentrant_run_without_deadlocking(self):
+        runner = _SyncRunner()
+
+        async def _outer() -> str:
+            with self.assertRaisesRegex(InvalidOperation, "cannot be re-entered"):
+                runner.run(_noop())
+            return "outer-complete"
+
+        try:
+            self.assertEqual(runner.run(_outer()), "outer-complete")
+        finally:
+            runner.close()
+
+    def test_sync_runner_defers_close_requested_by_runner_owner(self):
+        runner = _SyncRunner()
+
+        async def _close_from_owner() -> None:
+            runner.close()
+
+        runner.run(_close_from_owner())
+
+        self.assertTrue(runner._closed)
+
     def test_sync_runner_creates_persistent_helper_only_for_active_event_loop(self):
         runner = _SyncRunner()
         try:
@@ -260,6 +281,45 @@ class SyncClientUnitTests(unittest.TestCase):
         finally:
             runner.close()
         self.assertIsNone(runner._helper_thread)
+
+    def test_sync_runner_allows_finalizer_to_reenter_helper_thread_guard(self):
+        runner = _SyncRunner()
+        cleanup_done = threading.Event()
+        reentered = False
+
+        class Owner:
+            def _defer_cleanup(self, cleanup):
+                return runner.defer(cleanup)
+
+        runner._ensure_helper_thread()
+        helper_thread = runner._helper_thread
+        assert helper_thread is not None
+        original_is_alive = helper_thread.is_alive
+
+        def _is_alive_during_finalization() -> bool:
+            nonlocal reentered
+            if not reentered:
+                reentered = True
+                assert finalize_best_effort(Owner(), cleanup_done.set)
+            return original_is_alive()
+
+        completed = threading.Event()
+
+        def _ensure_helper_thread() -> None:
+            runner._ensure_helper_thread()
+            completed.set()
+
+        worker = threading.Thread(target=_ensure_helper_thread, daemon=True)
+        with patch.object(helper_thread, "is_alive", _is_alive_during_finalization):
+            worker.start()
+            worker.join(timeout=1)
+
+        self.assertTrue(
+            completed.is_set(),
+            "GC finalization deadlocked while reentering the helper-thread guard",
+        )
+        self.assertTrue(cleanup_done.wait(timeout=1))
+        runner.close()
 
     def test_sync_runner_inline_uses_helper_inside_active_event_loop(self):
         runner = _SyncRunner()
@@ -651,6 +711,20 @@ class SyncClientUnitTests(unittest.TestCase):
         client.close = broken_close
         client.__del__()
 
+    def test_client_close_aborts_owned_memory_sessions(self):
+        engine = MemoryEngine()
+        client = MongoClient(engine)
+        session = client.start_session()
+        session.start_transaction()
+        session_id = session.session_id
+
+        self.assertIn(session_id, engine._mvcc_states)
+
+        client.close()
+
+        self.assertTrue(session.has_ended)
+        self.assertNotIn(session_id, engine._mvcc_states)
+
     def test_sync_runner_del_marks_closed_when_close_fails(self):
         runner = _SyncRunner()
 
@@ -660,6 +734,9 @@ class SyncClientUnitTests(unittest.TestCase):
         runner.close = broken_close
         runner.__del__()
 
+        deadline = time.monotonic() + 1
+        while not runner._closed and time.monotonic() < deadline:
+            time.sleep(0.001)
         self.assertTrue(runner._closed)
 
     def test_sync_runner_close_waits_for_active_run_to_finish(self):

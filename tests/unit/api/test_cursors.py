@@ -187,6 +187,20 @@ class _SyncClientStub:
         return asyncio.run(awaitable)
 
 
+class _DeferredCleanupSyncClientStub(_SyncClientStub):
+    def __init__(self):
+        self.deferred_cleanup = []
+
+    def _defer_cleanup(self, operation):
+        self.deferred_cleanup.append(operation)
+        return True
+
+    def run_deferred_cleanup(self):
+        for operation in self.deferred_cleanup:
+            operation()
+        self.deferred_cleanup.clear()
+
+
 class _CountingSyncClientStub:
     def __init__(self):
         self.run_calls = 0
@@ -1138,13 +1152,16 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
     def test_sync_cursor_iteration_closes_active_async_iterator_on_early_break(self):
         collection = _StreamingAsyncCollectionStub([{"_id": "1"}, {"_id": "2"}])
-        cursor = Cursor(_SyncClientStub(), collection, {}, None)
+        client = _DeferredCleanupSyncClientStub()
+        cursor = Cursor(client, collection, {}, None)
 
         for document in cursor:
             self.assertEqual(document, {"_id": "1"})
             break
 
         self.assertEqual(collection.calls, 1)
+        self.assertEqual(collection.last_cursor.close_calls, 0)
+        client.run_deferred_cleanup()
         self.assertEqual(collection.last_cursor.close_calls, 1)
 
     def test_sync_cursor_close_closes_active_async_iterator(self):

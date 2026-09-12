@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import threading
@@ -20,6 +21,10 @@ from .models import (
     ChangeStreamHubState,
     build_hub_state_document,
 )
+
+
+_HUB_CLOSED_MESSAGE = "change stream hub is closed"
+_HISTORY_UNAVAILABLE_MESSAGE = "change stream history is no longer available"
 
 
 class ChangeStreamHub:
@@ -54,6 +59,10 @@ class ChangeStreamHub:
         ):
             raise TypeError("journal_max_log_bytes must be a positive integer or None")
         self._condition = threading.Condition()
+        self._async_waiters: set[
+            tuple[asyncio.AbstractEventLoop, asyncio.Future[None]]
+        ] = set()
+        self._closed = False
         self._events: list[ChangeEventSnapshot] = []
         self._gaps: list[tuple[int, int]] = []
         self._base_offset = 0
@@ -139,12 +148,32 @@ class ChangeStreamHub:
 
     def register_watcher(self) -> None:
         with self._condition:
+            if self._closed:
+                raise OperationFailure(_HUB_CLOSED_MESSAGE)
             self._watcher_count += 1
 
     def unregister_watcher(self) -> None:
         with self._condition:
             if self._watcher_count > 0:
                 self._watcher_count -= 1
+            self._condition.notify_all()
+            self._wake_async_waiters_locked()
+
+    def wake_waiters(self) -> None:
+        """Wake blocked readers so they can observe cursor lifecycle changes."""
+        with self._condition:
+            self._condition.notify_all()
+            self._wake_async_waiters_locked()
+
+    def close(self) -> None:
+        """Stop accepting watchers and wake every pending stream read."""
+        with self._condition:
+            if self._closed:
+                return
+            self._closed = True
+            self._watcher_count = 0
+            self._condition.notify_all()
+            self._wake_async_waiters_locked()
 
     @property
     def watcher_count(self) -> int:
@@ -153,7 +182,9 @@ class ChangeStreamHub:
 
     def should_publish_events(self) -> bool:
         with self._condition:
-            return self._journal_path is not None or self._watcher_count > 0
+            return not self._closed and (
+                self._journal_path is not None or self._watcher_count > 0
+            )
 
     def mark_gap(self) -> None:
         with self._condition:
@@ -161,6 +192,7 @@ class ChangeStreamHub:
             self._record_gap_locked(token)
             self._next_token += 1
             self._condition.notify_all()
+            self._wake_async_waiters_locked()
 
     def align_commit_sequence(self, next_sequence: int) -> None:
         if not isinstance(next_sequence, int) or isinstance(next_sequence, bool):
@@ -173,6 +205,7 @@ class ChangeStreamHub:
             self._record_gap_range_locked(self._next_token, next_sequence - 1)
             self._next_token = next_sequence
             self._condition.notify_all()
+            self._wake_async_waiters_locked()
 
     def publish_committed(
         self,
@@ -193,6 +226,7 @@ class ChangeStreamHub:
                 self._record_gap_locked(sequence)
                 self._next_token = sequence + 1
                 self._condition.notify_all()
+                self._wake_async_waiters_locked()
                 return
             event = ChangeEventSnapshot(token=sequence, **payload)
             self._append_committed_event_locked(event)
@@ -226,6 +260,7 @@ class ChangeStreamHub:
         ):
             self._compact_locked()
         self._condition.notify_all()
+        self._wake_async_waiters_locked()
 
     def mark_publish_failure(self, error: Exception) -> None:
         with self._condition:
@@ -233,6 +268,7 @@ class ChangeStreamHub:
                 self._publish_failure = error
                 self._persist_degraded_locked(error)
             self._condition.notify_all()
+            self._wake_async_waiters_locked()
 
     def _raise_if_degraded_locked(self) -> None:
         if self._publish_failure is not None:
@@ -298,12 +334,14 @@ class ChangeStreamHub:
         timeout_seconds: float | None,
     ) -> tuple[int, ChangeEventSnapshot | None]:
         with self._condition:
+            self._raise_if_closed_locked()
             self._raise_if_degraded_locked()
             if offset < self._base_offset:
                 raise OperationFailure("change stream history is no longer available")
             if timeout_seconds is None:
                 while self._end_offset_locked() <= offset:
                     self._condition.wait()
+                    self._raise_if_closed_locked()
                     self._raise_if_degraded_locked()
             else:
                 deadline = time.monotonic() + timeout_seconds
@@ -312,12 +350,76 @@ class ChangeStreamHub:
                     if remaining <= 0:
                         return offset, None
                     self._condition.wait(remaining)
+                    self._raise_if_closed_locked()
                     self._raise_if_degraded_locked()
             if offset < self._base_offset:
                 raise OperationFailure("change stream history is no longer available")
             if self._end_offset_locked() <= offset:
                 return offset, None
             return offset + 1, self._events[offset - self._base_offset]
+
+    async def wait_for_event_async(
+        self,
+        offset: int,
+        *,
+        timeout_seconds: float | None,
+        stop_event: threading.Event | None = None,
+    ) -> tuple[int, ChangeEventSnapshot | None]:
+        """Wait without occupying a worker thread and support explicit wakeup."""
+        loop = asyncio.get_running_loop()
+        waiter = loop.create_future()
+        registration = (loop, waiter)
+        with self._condition:
+            if stop_event is not None and stop_event.is_set():
+                return offset, None
+            self._raise_if_closed_locked()
+            immediate = self._event_at_offset_locked(offset)
+            if immediate is not None or self._end_offset_locked() > offset:
+                return immediate or (offset, None)
+            self._async_waiters.add(registration)
+        try:
+            if timeout_seconds is None:
+                await waiter
+            else:
+                try:
+                    await asyncio.wait_for(waiter, timeout_seconds)
+                except TimeoutError:
+                    return offset, None
+        finally:
+            with self._condition:
+                self._async_waiters.discard(registration)
+        with self._condition:
+            if stop_event is not None and stop_event.is_set():
+                return offset, None
+            self._raise_if_closed_locked()
+            return self._event_at_offset_locked(offset) or (offset, None)
+
+    def _event_at_offset_locked(
+        self,
+        offset: int,
+    ) -> tuple[int, ChangeEventSnapshot | None] | None:
+        self._raise_if_degraded_locked()
+        if offset < self._base_offset:
+            raise OperationFailure(_HISTORY_UNAVAILABLE_MESSAGE)
+        if self._end_offset_locked() <= offset:
+            return None
+        return offset + 1, self._events[offset - self._base_offset]
+
+    def _raise_if_closed_locked(self) -> None:
+        if self._closed:
+            raise OperationFailure(_HUB_CLOSED_MESSAGE)
+
+    @staticmethod
+    def _complete_async_waiter(waiter: asyncio.Future[None]) -> None:
+        if not waiter.done():
+            waiter.set_result(None)
+
+    def _wake_async_waiters_locked(self) -> None:
+        for loop, waiter in tuple(self._async_waiters):
+            try:
+                loop.call_soon_threadsafe(self._complete_async_waiter, waiter)
+            except RuntimeError:
+                self._async_waiters.discard((loop, waiter))
 
     def _end_offset_locked(self) -> int:
         return self._base_offset + len(self._events)
@@ -431,9 +533,9 @@ class ChangeStreamHub:
     def _load_journal(self) -> None:
         if self._journal_path is not None and os.path.exists(self._journal_path):
             try:
-                with open(self._journal_path, "r", encoding="utf-8") as handle:
+                with open(self._journal_path, encoding="utf-8") as handle:
                     payload = json.load(handle)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise OperationFailure("change stream journal could not be loaded") from exc
             if not isinstance(payload, dict) or payload.get("version") != 1:
                 raise OperationFailure("change stream journal could not be loaded")
@@ -457,9 +559,9 @@ class ChangeStreamHub:
         if self._journal_event_log_path is None or not os.path.exists(self._journal_event_log_path):
             return
         try:
-            with open(self._journal_event_log_path, "r", encoding="utf-8") as handle:
+            with open(self._journal_event_log_path, encoding="utf-8") as handle:
                 lines = handle.readlines()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise OperationFailure("change stream journal could not be loaded") from exc
         for index, raw_line in enumerate(lines):
             line = raw_line.strip()
@@ -467,7 +569,7 @@ class ChangeStreamHub:
                 continue
             try:
                 event = snapshot_from_log_entry(json.loads(line))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 if index == len(lines) - 1 and not raw_line.endswith("\n"):
                     break
                 raise OperationFailure("change stream journal could not be loaded") from exc
@@ -485,14 +587,14 @@ class ChangeStreamHub:
         ):
             return
         try:
-            with open(self._journal_degraded_path, "r", encoding="utf-8") as handle:
+            with open(self._journal_degraded_path, encoding="utf-8") as handle:
                 payload = json.load(handle)
             if not isinstance(payload, dict) or payload.get("version") != 1:
                 raise ValueError("invalid degraded marker")
             error = payload.get("error")
             if not isinstance(error, str) or not error:
                 raise ValueError("invalid degraded marker")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise OperationFailure(
                 "change stream degraded marker could not be loaded"
             ) from exc

@@ -6,8 +6,14 @@ import tempfile
 import threading
 import time
 import unittest
-from unittest.mock import patch
 
+from unittest.mock import AsyncMock, patch
+
+from mongoeco._change_streams import journal as journal_module
+from mongoeco._change_streams.pipeline import (
+    apply_full_document_mode,
+    normalize_full_document_mode,
+)
 from mongoeco.change_streams import (
     AsyncChangeStreamCursor,
     ChangeStreamBackendInfo,
@@ -18,12 +24,9 @@ from mongoeco.change_streams import (
     _resolve_change_stream_offset,
     compile_change_stream_pipeline,
 )
-from mongoeco._change_streams.pipeline import apply_full_document_mode, normalize_full_document_mode
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
-from mongoeco.errors import ExecutionTimeout
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import ExecutionTimeout, OperationFailure
 from mongoeco.types import ChangeEventSnapshot, encode_change_stream_token
-from mongoeco._change_streams import journal as journal_module
 
 
 class ChangeStreamPipelineTests(unittest.TestCase):
@@ -129,14 +132,13 @@ class ChangeStreamHubTests(unittest.TestCase):
                 hub,
                 "_append_journal_event_locked",
                 side_effect=failure,
-            ):
-                with self.assertRaises(OSError):
-                    hub.publish(
-                        operation_type="insert",
-                        db_name="alpha",
-                        coll_name="users",
-                        document_key={"_id": 1},
-                    )
+            ), self.assertRaises(OSError):
+                hub.publish(
+                    operation_type="insert",
+                    db_name="alpha",
+                    coll_name="users",
+                    document_key={"_id": 1},
+                )
             self.assertEqual(hub.current_offset(), 0)
             self.assertEqual(hub.state.next_token, 1)
 
@@ -283,10 +285,10 @@ class ChangeStreamHubTests(unittest.TestCase):
 
     def test_hub_journal_helpers_cover_empty_wait_and_error_paths(self):
         hub = ChangeStreamHub()
-        hub._events = []  # noqa: SLF001
+        hub._events = []
         self.assertEqual(hub.wait_for_event(0, timeout_seconds=0), (0, None))
-        hub._journal_path = None  # noqa: SLF001
-        hub._persist_locked()  # noqa: SLF001
+        hub._journal_path = None
+        hub._persist_locked()
         with patch.object(hub, "_end_offset_locked", side_effect=[1, 0]):
             self.assertEqual(hub.wait_for_event(0, timeout_seconds=0), (0, None))
 
@@ -294,9 +296,9 @@ class ChangeStreamHubTests(unittest.TestCase):
             journal_path = os.path.join(temp_dir, "changes.json")
             log_path = f"{journal_path}.events"
             hub = ChangeStreamHub(journal_path=journal_path)
-            hub._journal_event_log_path = log_path  # noqa: SLF001
-            hub._compact_locked()  # noqa: SLF001
-            hub._compact_locked()  # noqa: SLF001
+            hub._journal_event_log_path = log_path
+            hub._compact_locked()
+            hub._compact_locked()
 
             with open(journal_path, "w", encoding="utf-8") as handle:
                 json.dump({"version": 0}, handle)
@@ -869,6 +871,24 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(StopAsyncIteration):
             await iterator.__anext__()
 
+    async def test_cursor_close_wakes_pending_next_without_delivering_later_event(self):
+        hub = ChangeStreamHub()
+        cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope())
+        pending = asyncio.create_task(cursor.next())
+        await asyncio.sleep(0)
+
+        cursor.close()
+
+        with self.assertRaisesRegex(OperationFailure, "closed"):
+            await asyncio.wait_for(pending, timeout=0.1)
+        hub.publish(
+            operation_type="insert",
+            db_name="alpha",
+            coll_name="users",
+            document_key={"_id": 1},
+        )
+        self.assertTrue(pending.done())
+
     async def test_cursor_closes_after_invalidate_event(self):
         hub = ChangeStreamHub()
         cursor = AsyncChangeStreamCursor(hub, scope=ChangeStreamScope())
@@ -940,9 +960,10 @@ class AsyncChangeStreamCursorTests(unittest.IsolatedAsyncioTestCase):
             full_document={"_id": 1},
         )
 
-        with patch(
-            "mongoeco.change_streams.asyncio.to_thread",
-            side_effect=[(0, None), (1, event)],
+        with patch.object(
+            hub,
+            "wait_for_event_async",
+            new=AsyncMock(side_effect=[(0, None), (1, event)]),
         ):
             document = await cursor.next()
 

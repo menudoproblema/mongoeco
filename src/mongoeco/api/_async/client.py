@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import asyncio
 import inspect
+
 from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
-from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.api._async.database_commands import build_info_document
+from mongoeco.api.public_api import ARG_UNSET
 from mongoeco.change_streams import (
     AsyncChangeStreamCursor,
     ChangeStreamHub,
@@ -22,6 +24,8 @@ from mongoeco.compat import (
     resolve_mongodb_dialect_resolution,
     resolve_pymongo_profile_resolution,
 )
+from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.driver import (
     AsyncCommandTransport,
     AuthPolicy,
@@ -29,28 +33,27 @@ from mongoeco.driver import (
     DriverRuntime,
     MongoUri,
     PreparedRequestExecution,
-    RequestExecutionResult,
     RequestExecutionPlan,
+    RequestExecutionResult,
+    RetryPolicy,
     SelectionPolicy,
     SrvResolution,
-    sdam_capabilities_info,
-    TlsPolicy,
     TimeoutPolicy,
+    TlsPolicy,
     TopologyDescription,
-    RetryPolicy,
+    sdam_capabilities_info,
 )
 from mongoeco.driver.monitoring import DriverMonitor
-from mongoeco.engines.base import AsyncStorageEngine
+from mongoeco.engines.base import (  # noqa: TC001 - public annotations are introspectable
+    AsyncStorageEngine,
+)
 from mongoeco.engines.capabilities import resolve_engine_capabilities
-from mongoeco.core.codec import DocumentCodec
-from mongoeco.core.bson_scalars import normalize_utc_bson_datetime, utc_bson_now
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
 from mongoeco.types import (
     BuildInfoDocument,
     CodecOptions,
     CollectionValidationDocument,
-    Document,
     Filter,
     ReadConcern,
     ReadPreference,
@@ -62,6 +65,7 @@ from mongoeco.types import (
     normalize_transaction_options,
     normalize_write_concern,
 )
+
 
 if TYPE_CHECKING:
     from mongoeco.driver.transports import WireProtocolCommandTransport
@@ -404,8 +408,7 @@ class AsyncDatabase:
 
 
 class AsyncMongoClient:
-    """
-    Cliente principal para mongoeco.
+    """Cliente principal para mongoeco.
     """
 
     def __init__(
@@ -466,6 +469,11 @@ class AsyncMongoClient:
             journal_fsync=change_stream_journal_fsync,
             journal_max_log_bytes=change_stream_journal_max_bytes,
         )
+        self._sessions: dict[str, ClientSession] = {}
+        self._connected = False
+        self._closing = False
+        self._closed = False
+        self._close_task: asyncio.Task[None] | None = None
 
     @staticmethod
     def _create_default_engine() -> AsyncStorageEngine:
@@ -474,16 +482,75 @@ class AsyncMongoClient:
         return MemoryEngine()
 
     async def __aenter__(self):
-        await self._engine.connect()
+        if self._closed or self._closing:
+            message = "El cliente asincrono ya esta cerrado"
+            raise InvalidOperation(message)
+        if not self._connected:
+            await self._engine.connect()
+            self._connected = True
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self._driver_runtime.stop_topology_monitoring()
-        self._driver_runtime.clear_connections()
-        await self._engine.disconnect()
+        del exc_type, exc_val, exc_tb
+        await self.close()
+
+    async def _close_resources(
+        self,
+        requesting_task: asyncio.Task[object] | None,
+    ) -> None:
+        errors: list[Exception] = []
+        try:
+            self._change_hub.close()
+            for session in tuple(self._sessions.values()):
+                try:
+                    session.close()
+                except Exception as error:
+                    errors.append(error)
+            self._sessions.clear()
+            try:
+                await self._driver_runtime.stop_topology_monitoring(
+                    requesting_task=requesting_task,
+                )
+            except Exception as error:
+                errors.append(error)
+            try:
+                await self._driver_runtime.clear_connections_async()
+            except Exception as error:
+                errors.append(error)
+            if self._connected:
+                try:
+                    await self._engine.disconnect()
+                except Exception as error:
+                    errors.append(error)
+                else:
+                    self._connected = False
+        finally:
+            self._closing = False
+            self._closed = True
+        if errors:
+            message = "errors while closing AsyncMongoClient"
+            raise ExceptionGroup(message, errors)
 
     async def close(self) -> None:
-        await self.__aexit__(None, None, None)
+        close_task = self._close_task
+        if close_task is None:
+            if self._closed:
+                return
+            # Publish the state transition before scheduling cleanup so a
+            # concurrent operation cannot slip between close() and its task.
+            self._closing = True
+            try:
+                close_task = asyncio.create_task(
+                    self._close_resources(asyncio.current_task()),
+                    name="mongoeco-async-client-close",
+                )
+            except BaseException:
+                self._closing = False
+                raise
+            self._close_task = close_task
+        # Cancellation belongs to the caller, not to shared client cleanup.
+        # Every concurrent close waits for the same terminal transition.
+        await asyncio.shield(close_task)
 
     @property
     def now_factory(self) -> NowFactory | None:
@@ -582,6 +649,14 @@ class AsyncMongoClient:
         default_transaction_options: TransactionOptions | None = None,
         causal_consistency: bool = True,
     ) -> ClientSession:
+        if self._closed or self._closing:
+            message = "El cliente asincrono ya esta cerrado"
+            raise InvalidOperation(message)
+        self._sessions = {
+            session_id: active
+            for session_id, active in self._sessions.items()
+            if active.active
+        }
         session = ClientSession(
             default_transaction_options=(
                 self._transaction_options
@@ -591,6 +666,7 @@ class AsyncMongoClient:
             causal_consistency=causal_consistency,
         )
         self._engine.create_session_state(session)
+        self._sessions[session.session_id] = session
         return session
 
     async def with_transaction(

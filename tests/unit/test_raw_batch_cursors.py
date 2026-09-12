@@ -1,5 +1,6 @@
 import asyncio
 import unittest
+
 from unittest.mock import patch
 
 from bson import BSON
@@ -83,6 +84,30 @@ class AsyncRawBatchCursorTests(unittest.TestCase):
         asyncio.run(_exercise())
         self.assertEqual(closed, [True])
 
+    def test_async_raw_batch_cursor_can_retry_failed_close(self):
+        close_calls = 0
+
+        async def fetch_batch(_batch_size: int):
+            return []
+
+        async def close():
+            nonlocal close_calls
+            close_calls += 1
+            if close_calls == 1:
+                message = "transient close failure"
+                raise RuntimeError(message)
+
+        cursor = AsyncRawBatchCursor(fetch_batch, close=close)
+
+        with self.assertRaisesRegex(RuntimeError, "transient close failure"):
+            asyncio.run(cursor.close())
+        self.assertTrue(cursor.alive)
+
+        asyncio.run(cursor.close())
+
+        self.assertFalse(cursor.alive)
+        self.assertEqual(close_calls, 2)
+
     def test_provider_error_survives_close_error(self):
         async def fetch_batch(_batch_size: int):
             raise RuntimeError('provider failed')
@@ -107,9 +132,8 @@ class AsyncRawBatchCursorTests(unittest.TestCase):
         with patch(
             'mongoeco.api._async.raw_batch_cursor._encode_batch',
             side_effect=RuntimeError('encode failed'),
-        ):
-            with self.assertRaisesRegex(RuntimeError, 'encode failed'):
-                asyncio.run(cursor.__anext__())
+        ), self.assertRaisesRegex(RuntimeError, 'encode failed'):
+            asyncio.run(cursor.__anext__())
 
 
 class _SyncClient:
