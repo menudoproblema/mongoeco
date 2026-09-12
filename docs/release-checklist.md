@@ -7,7 +7,7 @@ Esta lista prepara una release sin obligar a publicar nada.
 - revisar [README.md](../README.md) para que el
   alcance embebido/local y sus limites sean explicitos;
 - preparar o revisar la nota de release y la guía de migración de la versión
-  objetivo (para 4.6, [release-4.6.0.md](release-4.6.0.md)) para
+  objetivo (para 4.6.1, [release-4.6.1.md](release-4.6.1.md)) para
   confirmar que la narrativa y los cambios incompatibles son explícitos;
 - revisar [COMPATIBILITY.md](../COMPATIBILITY.md)
   y confirmar que runtime, compat catalog, docs y tests cuentan la misma

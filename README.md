@@ -509,7 +509,7 @@ remains available but deprecated until its planned removal in 5.0.0.
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
-* [docs/release-4.6.0.md](docs/release-4.6.0.md)
+* [docs/release-4.6.1.md](docs/release-4.6.1.md)
 * [docs/migrating-to-5.0.md](docs/migrating-to-5.0.md)
 * [docs/roadmap-5.0.md](docs/roadmap-5.0.md)
 * [TODO.md](TODO.md)

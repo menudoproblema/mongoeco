@@ -8,6 +8,8 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.6.1] - 2026-09-12
+
 ### Changed
 
 - La dependencia de CXP pasa a `cxp>=4.1.0` y la resolución controlada de CI
