@@ -197,6 +197,61 @@ class _CursorPageSource:
             await close_iterator()
 
 
+class _DeferredAggregationStream:
+    """Select one physical stream without nesting async-generator owners."""
+
+    def __init__(self, cursor: "AsyncAggregationCursor") -> None:
+        self._cursor = cursor
+        self._delegate: AsyncIterator[Document] | None = None
+        self._opening = False
+        self._closed = False
+
+    def __aiter__(self) -> AsyncIterator[Document]:
+        return self
+
+    async def __anext__(self) -> Document:
+        if self._closed:
+            raise StopAsyncIteration
+        if self._delegate is None:
+            if self._opening:
+                message = "aggregation stream cannot be opened concurrently"
+                raise RuntimeError(message)
+            self._opening = True
+            try:
+                delegate = await self._cursor._open_batch_stream()
+            except BaseException:
+                self._closed = True
+                raise
+            finally:
+                self._opening = False
+            if self._closed:
+                close = getattr(delegate, "aclose", None)
+                if callable(close):
+                    await close()
+                raise StopAsyncIteration
+            self._delegate = delegate
+        try:
+            return await self._delegate.__anext__()
+        except StopAsyncIteration:
+            await self.aclose()
+            raise
+        except BaseException:
+            await self.aclose()
+            raise
+
+    async def aclose(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        delegate = self._delegate
+        self._delegate = None
+        if delegate is None:
+            return
+        close = getattr(delegate, "aclose", None)
+        if callable(close):
+            await close()
+
+
 _SearchOptimizationStrategy = SearchPipelineStrategy
 _SearchOptimizationPlan = SearchPipelinePlan
 _LOCAL_STREAM_PREFIX_OPERATORS = frozenset(
@@ -1711,7 +1766,7 @@ class AsyncAggregationCursor:
             output_spool.close()
             group_spool.close()
 
-    async def _stream_incremental_group(
+    async def _open_incremental_group_stream(
         self,
         plan: _IncrementalGroupPlan,
         *,
@@ -1736,58 +1791,53 @@ class AsyncAggregationCursor:
             if streaming_sort is None
             else None
         )
+        if streaming_sort is not None:
+            return self._stream_sorted_group_result(
+                result,
+                streaming_sort,
+                spill_policy=spill_policy,
+                dialect=dialect,
+                deadline=deadline,
+            )
+        if streaming_suffix is not None:
+            return self._stream_group_result(
+                result,
+                streaming_suffix,
+                spill_policy=spill_policy,
+                dialect=dialect,
+                deadline=deadline,
+            )
+        if plan.suffix:
+            referenced_collections = await self._load_referenced_collections()
+            result = apply_pipeline(
+                result,
+                plan.suffix,
+                collection_resolver=referenced_collections.get,
+                variables=self._execution_variables(),
+                dialect=dialect,
+                collation=self._collation,
+                spill_policy=spill_policy,
+                lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                deadline=deadline,
+            )
+        return self._stream_group_documents(result)
+
+    async def _stream_group_documents(
+        self,
+        documents: Iterable[Document],
+    ) -> AsyncIterator[Document]:
+        source = iter(documents)
         try:
-            if streaming_sort is not None:
-                output = self._stream_sorted_group_result(
-                    result,
-                    streaming_sort,
-                    spill_policy=spill_policy,
-                    dialect=dialect,
-                    deadline=deadline,
-                )
-                try:
-                    async for document in output:
-                        yield document
-                finally:
-                    await output.aclose()
-                return
-            if streaming_suffix is not None:
-                output = self._stream_group_result(
-                    result,
-                    streaming_suffix,
-                    spill_policy=spill_policy,
-                    dialect=dialect,
-                    deadline=deadline,
-                )
-                try:
-                    async for document in output:
-                        yield document
-                finally:
-                    await output.aclose()
-                return
-            if plan.suffix:
-                referenced_collections = await self._load_referenced_collections()
-                result = apply_pipeline(
-                    result,
-                    plan.suffix,
-                    collection_resolver=referenced_collections.get,
-                    variables=self._execution_variables(),
-                    dialect=dialect,
-                    collation=self._collation,
-                    spill_policy=spill_policy,
-                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
-                    deadline=deadline,
-                )
-            for document in result:
+            for document in source:
                 yield self._materialize_document(
                     DocumentCodec.to_public(
                         strip_search_result_metadata(document),
                     ),
                 )
         finally:
-            close_result = getattr(result, "close", None)
-            if callable(close_result):
-                close_result()
+            close_source = getattr(source, "close", None)
+            if callable(close_source):
+                close_source()
 
     async def _stream_group_result(
         self,
@@ -2030,20 +2080,31 @@ class AsyncAggregationCursor:
         finally:
             await source.aclose()
 
-    async def _stream_batches(self) -> AsyncIterator[Document]:
+    async def _stream_materialized_documents(
+        self,
+        documents: Iterable[Document],
+    ) -> AsyncIterator[Document]:
+        for document in documents:
+            yield self._materialize_document(document)
+
+    def _stream_batches(self) -> AsyncIterator[Document]:
+        return _DeferredAggregationStream(self)
+
+    async def _open_batch_stream(self) -> AsyncIterator[Document]:
         _ensure_operation_executable(self._collection, self._operation)
         self._ensure_session_can_use_engine()
-        if self._leading_search_stage() is not None:
-            for document in await self._materialize():
-                yield self._materialize_document(document)
-            return
-        effective_pipeline, writeback_stage = self._split_terminal_writeback_stage(
-            self._effective_pipeline(),
-        )
-        if writeback_stage is not None:
-            for document in await self._materialize():
-                yield self._materialize_document(document)
-            return
+        leading_search = self._leading_search_stage() is not None
+        if leading_search:
+            effective_pipeline = []
+            writeback_stage = None
+        else:
+            effective_pipeline, writeback_stage = (
+                self._split_terminal_writeback_stage(
+                    self._effective_pipeline(),
+                )
+            )
+        if leading_search or writeback_stage is not None:
+            return self._stream_materialized_documents(await self._materialize())
 
         deadline = operation_deadline(self._max_time_ms)
         dialect = getattr(
@@ -2057,17 +2118,11 @@ class AsyncAggregationCursor:
             dialect=dialect,
         )
         if incremental_group is not None:
-            output = self._stream_incremental_group(
+            return await self._open_incremental_group_stream(
                 incremental_group,
                 dialect=dialect,
                 deadline=deadline,
             )
-            try:
-                async for document in output:
-                    yield document
-            finally:
-                await output.aclose()
-            return
         spill_policy = self._spill_policy()
         incremental_sort = (
             self._split_incremental_sort_pipeline(
@@ -2078,40 +2133,25 @@ class AsyncAggregationCursor:
             else None
         )
         if incremental_sort is not None:
-            output = self._stream_incremental_sort(
+            return self._stream_incremental_sort(
                 incremental_sort,
                 spill_policy=spill_policy,
                 dialect=dialect,
                 deadline=deadline,
             )
-            try:
-                async for document in output:
-                    yield document
-            finally:
-                await output.aclose()
-            return
         if self._batch_size in (None, 0):
-            for document in await self._materialize():
-                yield self._materialize_document(document)
-            return
+            return self._stream_materialized_documents(await self._materialize())
         stream_plan = self._split_streamable_pipeline(
             pushdown.remaining_pipeline,
             dialect=dialect,
         )
         if stream_plan is None:
-            for document in await self._materialize():
-                yield self._materialize_document(document)
-            return
-        output = self._stream_windowed_pipeline(
+            return self._stream_materialized_documents(await self._materialize())
+        return self._stream_windowed_pipeline(
             stream_plan,
             dialect=dialect,
             deadline=deadline,
         )
-        try:
-            async for document in output:
-                yield document
-        finally:
-            await output.aclose()
 
     async def to_list(
         self,

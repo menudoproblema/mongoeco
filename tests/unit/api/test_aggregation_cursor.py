@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import tempfile
 import unittest
@@ -1243,6 +1244,92 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         await cursor.close()
         await cursor.close()
         self.assertEqual(await cursor.to_list(), [])
+
+    async def test_deferred_stream_closes_delegate_opened_during_close(self):
+        class Delegate:
+            def __init__(self):
+                self.close_calls = 0
+
+            async def __anext__(self):
+                return {"_id": 1}
+
+            async def aclose(self):
+                self.close_calls += 1
+
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [])
+        delegate = Delegate()
+        opening = asyncio.Event()
+        release = asyncio.Event()
+
+        async def open_stream():
+            opening.set()
+            await release.wait()
+            return delegate
+
+        with patch.object(cursor, "_open_batch_stream", side_effect=open_stream):
+            stream = cursor._stream_batches()
+            pull = asyncio.create_task(stream.__anext__())
+            await opening.wait()
+            await stream.aclose()
+            release.set()
+            with self.assertRaises(StopAsyncIteration):
+                await pull
+            await stream.aclose()
+
+        self.assertEqual(delegate.close_calls, 1)
+
+    async def test_deferred_stream_rejects_concurrent_open(self):
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [])
+        stream = cursor._stream_batches()
+        stream._opening = True
+
+        with self.assertRaisesRegex(RuntimeError, "cannot be opened concurrently"):
+            await stream.__anext__()
+
+        stream._opening = False
+        await stream.aclose()
+
+    async def test_deferred_stream_closes_after_open_or_pull_failure(self):
+        class FailingDelegate:
+            def __init__(self):
+                self.close_calls = 0
+
+            async def __anext__(self):
+                message = "pull failed"
+                raise RuntimeError(message)
+
+            async def aclose(self):
+                self.close_calls += 1
+
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [])
+        failing_delegate = FailingDelegate()
+
+        with patch.object(
+            cursor,
+            "_open_batch_stream",
+            return_value=failing_delegate,
+        ):
+            stream = cursor._stream_batches()
+            with self.assertRaisesRegex(RuntimeError, "pull failed"):
+                await stream.__anext__()
+            with self.assertRaises(StopAsyncIteration):
+                await stream.__anext__()
+
+        self.assertEqual(failing_delegate.close_calls, 1)
+
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [])
+        with patch.object(
+            cursor,
+            "_open_batch_stream",
+            side_effect=RuntimeError("open failed"),
+        ) as open_stream:
+            stream = cursor._stream_batches()
+            with self.assertRaisesRegex(RuntimeError, "open failed"):
+                await stream.__anext__()
+            with self.assertRaises(StopAsyncIteration):
+                await stream.__anext__()
+
+        open_stream.assert_awaited_once()
 
     async def test_split_streamable_pipeline_returns_none_after_trailing_window_and_accumulates_skip_limit(
         self,

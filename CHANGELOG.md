@@ -157,6 +157,11 @@ usa Semantic Versioning.
 
 ### Fixed
 
+- El cursor de agregacion selecciona un unico stream fisico mediante un
+  iterador diferido no-generador. Abandonar una lectura parcial ya no deja dos
+  generadores async compitiendo por cerrar el mismo stream durante
+  `shutdown_asyncgens()`; el cierre durante la apertura conserva un solo owner
+  y libera el delegate exactamente una vez.
 - Las claves internas de indices normalizan datetimes a UTC y precision BSON.
   Memory retira la membresia anterior de un indice partial aunque una expresion
   temporal ya no sea verdadera, evitando buckets obsoletos al reemplazar o
