@@ -135,6 +135,14 @@ python -m benchmarks.run \
   --format json
 ```
 
+El JSON debe usar `mongoeco-benchmark-report/v2`. Una comparacion acreditada
+se ejecuta con `--baseline-json` y un umbral calibrado mediante
+`--max-wall-regression-percent`; el comando rechaza escenarios ausentes y
+artefactos con dataset, harness, engines o entorno incompatibles. Un informe
+historico sin schema se conserva como referencia, no como gate porcentual. El
+pico RSS se muestrea durante la operacion y el informe declara su resolucion;
+no se infiere de dos lecturas al inicio y al final.
+
 ## 5. Decision final
 
 - solo entonces decidir si compensa:

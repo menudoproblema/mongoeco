@@ -8,6 +8,165 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- Los indices TTL Memory mantienen vencimientos en una agenda persistente
+  ordenada y ligada al mismo root MVCC que sus buckets. Una purga sin fechas
+  vencidas no visita documentos; arrays, aplazamientos, eliminacion del campo,
+  filtros parciales variables y rollback conservan revalidacion y aislamiento.
+- SQLite mantiene una agenda TTL persistente y versionada que selecciona solo
+  vencimientos debidos. Escrituras y DDL la actualizan atomicamente; bases
+  anteriores se reconstruyen al conectar y una version futura se rechaza sin
+  mutar el fichero. Los filtros parciales se revalidan bajo el scope de
+  escritura, por lo que su dependencia temporal no queda congelada en la
+  agenda.
+- Memory representa documentos, orden de insercion y buckets secundarios con
+  raices persistentes compartidas. Abrir una transaccion deja de copiar las
+  filas y pertenencias de indice; cada mutacion reemplaza solo los caminos y
+  buckets afectados. El commit prepara y publica exclusivamente las bases y
+  namespaces de su write-set; `rename` conserva ambos nombres como una sola
+  publicacion y un fallo de preparacion no sustituye ningun root vivo. SPI v2
+  no cambia. La propuesta SPI v3 incorpora la
+  retencion de lecturas, agregaciones y transacciones bajo leases tipados por
+  proposito, sin exponer la estructura interna del engine.
+- Los snapshots de lectura Memory capturan versiones estables y materializan
+  resultados por demanda fuera del lock. La proyeccion precede a la copia
+  publica, los decoders personalizados conservan una salida propia y cerrar,
+  agotar o cancelar libera las referencias retenidas; el sort bloqueante sigue
+  reuniendo sus candidatos antes de la primera fila.
+- La materializacion publica comun construye contenedores una sola vez cuando
+  usa dict sin decoders personalizados. Conserva la conversion BSON completa
+  antes de los efectos de codec, la propiedad de resultados y el fallback de
+  dos fases para clases/registros personalizados y BSON opcional ausente.
+- Los cursores conservan la operacion de lectura ligada y evitan preparar su
+  semantica dos veces en el scan normal. Cada stream reutiliza la proyeccion
+  y sus rutas compiladas, manteniendo errores diferidos, contexto y propiedad
+  independiente de los resultados, sin cambiar SPI v2.
+- SQLite reutiliza catalogos internos de solo lectura por conexion y conserva
+  copias publicas mutables. Detecta cambios de indices desde otros clientes o
+  procesos; planificacion y lectura comparten una vista SQLite para no usar
+  indices eliminados entre ambas fases. Las transacciones de usuario conservan
+  su ownership y los valores BSON no compartibles mantienen copia defensiva.
+- Memory selecciona candidatos de indices secundarios antes de enumerar la
+  coleccion en scan, count, update y delete. Conserva el orden de insercion
+  mediante raices ordenadas persistentes ligadas a cada bucket y a la vista de
+  almacenamiento, incluidos rollback, transacciones, TTL y rename. Una
+  igualdad con limite obtiene solo el prefijo natural necesario sin ordenar
+  todos los candidatos; los filtros residuales siguen aplicandose.
+- El cliente conserva un unico adapter SPI validado y lo propaga a sus bases,
+  colecciones y clones internos. Evita validar el mismo engine y registrar el
+  mismo consumidor de cambios por cada wrapper; dos clientes siguen teniendo
+  lifecycles independientes y SPI v2 no cambia. La propuesta SPI v3 convierte
+  este ownership en `EngineRuntime` y bindings de namespace explicitos.
+- Las mutaciones documentales Memory reemplazan el snapshot completo de
+  rollback por un journal de entradas y pertenencias de indice modificadas. Los
+  fallos restauran storage, buckets, ordinales y alta de coleccion sin repetir
+  el helper fallido; DDL y el inicio MVCC conservan su estrategia anterior.
+- Memory reutiliza normas de coseno y selecciona top-k vectorial antes de
+  materializar resultados, conservando el desempate publico y la busqueda
+  exacta. La cache compartida de consultas tiene admision por bytes estimados;
+  un hit del indice evita volver a decodificar la coleccion completa. Los
+  commits transaccionales invalidan solo las bases y colecciones de su
+  write-set, conservando calientes los indices materializados ajenos. Otra LRU
+  acota por bytes estimados los indices vectoriales completos; si no admite o
+  expulsa uno, la consulta lo reconstruye sin cambiar su resultado. Los top-k
+  grandes puntuan la matriz por bloques y conservan solo los ganadores, con
+  fallback compatible para scores NaN.
+- SQLite prepara los bulk por bloques de documentos y bytes estimados, con un
+  solo trabajo de preparacion en vuelo por operacion. Elimina las tareas por
+  documento, conserva contexto y precedencia de validacion, y permite progreso
+  de otras operaciones entre bloques sin introducir commits parciales nuevos.
+  Una admision FIFO compartida por executor acota los trabajos fisicos al
+  numero de workers y mantiene el permiso tras cancelar hasta que termina la
+  llamada ya enviada.
+- La estimacion de bytes de lotes SQLite visita una sola vez los contenedores
+  compartidos o ciclicos, pero no mantiene identidades para escalares
+  inmutables. Conserva una estimacion conservadora y reduce el coste por fila
+  sin convertir el objetivo de lote en un limite publico.
+- Las agregaciones bloqueantes sin spill comprueban el limite documental
+  existente leyendo como maximo `limite + 1` filas. Un rechazo cierra el cursor
+  fuente y ocurre antes de cargar colecciones referenciadas; el error y la
+  semantica publica de `allowDiskUse` no cambian.
+- `$lookup` simple usa un indice hash efimero y acotado por la politica de
+  materializacion para evitar el producto local por foreign. Conserva igualdad
+  BSON, orden y duplicados observables; collation, pipelines, dialectos
+  personalizados, tipos no cubiertos y saturacion degradan al nested loop
+  existente. La construccion y comparacion comprueban el deadline por bloques;
+  `explain()` publica la estrategia candidata y su fallback.
+- El deadline de aggregation alcanza ahora los bucles internos de los runtimes
+  compilado e interpretado, sort/top-k, spill, group/bucket/window,
+  transformaciones y stages expansivos. Los checkpoints cooperativos acotan a
+  256 pasos el trabajo Python adicional entre comprobaciones, sin presentar las
+  primitivas indivisibles ni el budget documental existente como limites duros
+  de tiempo o memoria.
+- El sort externo limita cada fusion a 32 runs de lectura y usa pasadas
+  intermedias cuando hay mas temporales. Evita abrir un fichero por chunk a la
+  vez y limpia runs originales e intermedios ante exito o fallo; la entrada y
+  salida completas siguen materializadas y no se presentan como memoria total
+  acotada.
+- Los informes de benchmark usan un schema v2 con commit/dirty, hashes del
+  harness y dataset, configuracion y versiones efectivas del entorno. El
+  comparador rechaza escenarios ausentes, metricas invalidas y bases
+  incompatibles, y puede fallar ante una regresion wall-time por encima de un
+  umbral calibrado. Cada tarea incorpora la huella incremental de su resultado;
+  las repeticiones, los adapters sync/async y el baseline deben conservarla.
+  Los workloads exactos fijan toda la salida ordenada; ANN declara un oraculo
+  mas estrecho de cardinalidad, shape y unicidad sin congelar vecinos
+  aproximados validos. El pico RSS se muestrea durante cada operacion en vez de
+  inferirse solo de sus extremos, con resolucion declarada en el artefacto.
+
+### Fixed
+
+- Las claves internas de indices normalizan datetimes a UTC y precision BSON.
+  Memory retira la membresia anterior de un indice partial aunque una expresion
+  temporal ya no sea verdadera, evitando buckets obsoletos al reemplazar o
+  borrar documentos que entraron con otra representacion o reloj.
+- El supervisor de snapshots deja de cancelar un cleanup activo cuando supera
+  su umbral interno: conserva la obligacion hasta cierre o fallo y registra la
+  presion. Los snapshots Memory usan una transicion terminal inmediata sin
+  crear una tarea por cierre; las fuentes async externas mantienen timeout,
+  supervision y primer error. SPI v3 documenta una futura admision por leases.
+- SQLite revalida documentos e indices TTL antes de borrar candidatos y
+  restaura documentos e indices cuando falla una purga. `count_documents`
+  purga tambien fuera de transacciones y respeta el reloj de la operacion.
+- Los scopes de escritura SQLite conservan ownership por conexion, incluidos
+  los savepoints de mantenimiento anidado. Un rollback fallido impide confirmar
+  estado parcialmente restaurado; los errores de cleanup no sustituyen al
+  error original. El cierre no confirma escrituras inconclusas mediante el
+  mantenimiento administrativo de la misma conexion.
+- SQLite reutiliza consumidores de outbox vigentes sin reescribir su registro
+  antes de cada operacion. Evita que un cambio de segundo del reloj invalide
+  el snapshot de una transaccion y provoque `SQLITE_BUSY_SNAPSHOT` al escribir.
+  La comprobacion sigue leyendo checkpoint, owner, durabilidad y caducidad
+  persistidos; las altas o cambios reales y el heartbeat conservan su ruta.
+- Memory comprueba las clausulas residuales de un prefiltro vectorial parcial
+  antes de seleccionar resultados. `explain()` conserva esa misma comprobacion
+  y deja de contar como coincidencias los documentos que no pasan el filtro.
+- SQLite entrega scans mediante trabajos de lectura por lote, sin polling de
+  10 ms ni workers retenidos mientras el consumidor esta pausado. Cada trabajo
+  restaura el binding de conexion y conserva el contexto del scan. La limpieza
+  fisica sigue siendo responsabilidad del lector tras cancelar la espera.
+  Disconnect no bloquea el event loop esperando el lock de un fetch activo.
+  Los fallbacks sin ordenacion ceden capacidad tras examinar como maximo 256
+  filas aunque no produzcan resultados, y los planes hibridos ejecutan solo el
+  residual Python declarado despues de su prefiltro SQL.
+- Las lecturas SQLite sin ordenacion conservan su vista ante writes posteriores
+  en una conexion compartida, tanto en `:memory:` como en transacciones. Los
+  diagnosticos exponen la retencion de esas capturas y los fallos de cierre;
+  la captura inicial no se presenta como memoria total acotada.
+- Los cursores sync comparten posicion y buffer entre iteracion, `first()` y
+  `to_list(length=...)`, sin saltar documentos ya precargados. El consumo con
+  longitud usa lotes y deja de cruzar el runner una vez por documento.
+- Memory preserva las escrituras ordinarias reconocidas al confirmar otra
+  transacción. Los commits de solo lectura no reinstalan snapshots; CRUD,
+  administración de namespaces e índices y purgas TTL participan en la misma
+  generación de publicación, independientemente de la emisión de eventos.
+- Memory prepara el sucesor del outbox antes de confirmar documentos, índices
+  y secuencias. Los fallos de preparación revierten la mutación, y los callbacks
+  de entrega se ejecutan fuera de esa frontera. Se rechazan las vistas de
+  publicación desancladas o mezcladas y la reentrada transaccional durante una
+  publicación parcial.
+
 ## [4.6.1] - 2026-09-12
 
 ### Changed

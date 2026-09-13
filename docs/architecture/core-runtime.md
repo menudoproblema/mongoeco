@@ -33,6 +33,67 @@ Esto aparece en:
 - `AggregateOperation` -> pipeline y planning de aggregation;
 - validadores de coleccion -> `CompiledCollectionValidator`.
 
+El cliente selecciona y valida una vez su adapter SPI v2. Las bases,
+colecciones y clones de opciones creados desde ese cliente reutilizan el mismo
+adapter, por lo que no vuelven a validar el contrato del engine ni a registrar
+el mismo consumidor de cambios por cada wrapper. El ownership sigue siendo del
+cliente: construir directamente una `AsyncCollection` mantiene el fallback de
+adaptacion propio y dos clientes no comparten estado por recibir la misma
+instancia de engine. La propuesta SPI v3 formaliza esta separacion como
+`EngineContract`, `EngineRuntime` y `BoundEngineNamespace`; 4.x no expone esos
+tipos ni cambia SPI v2.
+
+### Preparacion de lecturas y proyecciones
+
+La coleccion entrega al cursor la misma `FindOperation` normalizada y ligada
+que ha preparado. Los mutadores permitidos invalidan su preparacion; no se
+reconstruye la operacion al cruzar cada capa. El scan normal compila su
+`EngineFindSemantics` en el coordinador de coleccion; la ruta de fallback del
+cursor conserva su propia preparacion para engines adaptados.
+
+Cada stream de resultados proyectados conserva un programa privado de
+proyeccion, incluidos operandos propios y el arbol de rutas inclusivas. Se
+prepara en la primera fila efectivamente proyectada, no por documento. Esto
+conserva el momento de validacion: una consulta vacia o cuyas filas se omiten
+con `skip` no empieza a rechazar una proyeccion que nunca llega a ejecutar.
+Las aplicaciones sucesivas producen resultados mutables independientes. La
+proyeccion de un unico documento no necesita retener/copiar sus operandos.
+
+El programa no es una cache global de sesiones, reloj o resultados. El contexto
+ligado conserva identidad, variables y reloj durante la ejecucion; `clone`
+crea un contexto nuevo y `rewind` conserva el contexto del cursor original.
+Los matchers dependientes del documento siguen evaluandose por documento.
+Esta preparacion interna no modifica SPI v2 ni elimina las fronteras de copia
+defensiva, conversion BSON y codecs de la salida publica.
+
+### Materializacion publica y orden de codecs
+
+La salida de coleccion comparte un materializador privado para lecturas,
+agregacion, informacion de indices y change streams. Con `document_class=dict`
+y sin decoders personalizados, construye los contenedores dict/list comunes
+una sola vez. Conserva una lista de ubicaciones que necesitan conversion de
+codec posterior, como fechas, UUID y subarboles tuple o de clases especiales.
+Esas conversiones se ejecutan solo despues de completar toda la conversion
+BSON; un fallo BSON posterior no dispara prematuramente efectos de timezone
+o decoders de un campo anterior.
+
+Las subclases de opciones, las clases de documento y registros de tipos
+personalizados, la ausencia de BSON opcional y la ausencia de opciones
+mantienen la ruta de dos fases previa.
+No se cambia el orden de callbacks ni se aplican codecs recursivamente dentro
+de un BSON `Code` o `DBRef` que antes se trataba como escalar. La lista diferida
+crece con los valores que requieren trabajo de codec, no constituye una cota
+global de memoria. Los contenedores publicos siguen siendo propios; esta fusion
+no elimina las fronteras defensivas de snapshots ni autoriza a los engines
+externos a entregar buffers prestados.
+
+Memory aplica el programa de proyeccion sobre su documento interno antes de
+construir los contenedores publicos que sobreviven a ella. La copia publica se
+hace por demanda al consumir cada lote; no se construyen N documentos publicos
+para entregar la primera fila. Esta regla no convierte en streaming operadores
+bloqueantes: una ordenacion sin acceso ya ordenado debe reunir y ordenar sus
+candidatos antes de producir el primero, aunque difiere su proyeccion y copia.
+
 ## Query planning y filtering
 
 `query_plan.py` compila filtros a un arbol de nodos semanticos. `filtering.py`
@@ -182,11 +243,62 @@ una semantica local consistente y suficientemente honesta sobre:
 - que gaps existen;
 - cuando un pipeline puede o no ejecutarse.
 
+Cuando el limite existente `max_materialized_documents` aplica a una pipeline
+bloqueante y no hay spill disponible, el cursor lee como maximo `limite + 1`
+documentos de la fuente. Ese ultimo documento basta para conservar el mismo
+rechazo y el mismo error sin materializar el resto ni cargar colecciones
+referenciadas; el cursor fuente se cierra tambien si falla esa admision. Una
+fuente con exactamente el limite se consume completa y se acepta.
+
+Esta optimizacion solo acredita la admision inicial de la fuente. El limite
+vigente cuenta documentos, no bytes, y todavia no suma foreign collections,
+expansion de stages, acumuladores ni buffers de sort/spill. Tampoco convierte
+el round-trip generico a disco en memoria acotada. Esa contabilidad compuesta y
+los algoritmos externos por operador permanecen dentro de P7/P8.
+
+El sort con spill divide la entrada en runs de como maximo el umbral y los
+fusiona en varias pasadas con un fan-in maximo de 32 runs de lectura. Cada
+pasada mantiene un documento decodificado por run y elimina sus temporales al
+terminar; error, deadline o cancelacion limpian tambien runs originales e
+intermedios. Esto acota descriptores y heap de fusion, no la memoria total: la
+interfaz vigente recibe la entrada ya materializada y devuelve otra lista
+completa. Convertir esas dos fronteras en streams y sumar sus bytes al budget
+compuesto sigue pendiente.
+
+El `$lookup` simple por `localField`/`foreignField` puede construir un indice
+hash efimero sobre la coleccion foreign. Su admision reutiliza
+`max_materialized_documents` como maximo de asociaciones y, cuando existe una
+politica de spill, toma tambien su umbral como techo. Si una ruta multikey
+supera esa capacidad, o si intervienen collation, pipeline correlacionada,
+tipos no cubiertos o un dialecto personalizado, se conserva el nested loop
+canonico. El indice solo selecciona candidatos: cada par se revalida con la
+igualdad BSON existente, conserva el orden foreign y elimina duplicados por
+documento antes de copiar el resultado.
+
+Este limite hace acotada la estructura auxiliar, pero no acredita todavia un
+budget global: la lista foreign y el resultado pueden seguir creciendo. El
+acceso foreign mediante consulta estable y la contabilidad compuesta permanecen
+en P7/P8.
+
+El deadline de la operacion se propaga por los runtimes compilado e interpretado
+y se comprueba dentro de los bucles Python de transformacion, unwind, sort y
+top-k, spill, group/bucket/window, joins, facet/union, densify/fill/geo y stages
+informativos. Entre dos comprobaciones de una misma iteracion o comparador se
+ejecutan como maximo 256 pasos; los caminos que expanden resultados reutilizan
+la misma primitiva de control. Esto es cancelacion cooperativa, no una garantia
+hard real-time: una evaluacion de expresion, comparacion BSON, operacion del
+codec, llamada a una extension o primitiva de I/O puede ser indivisible. El
+budget compuesto de bytes, el streaming de entrada/salida del sort externo y
+los algoritmos externos de group siguen pendientes.
+
 En la superficie publica, `aggregate().explain()` ya deja visible ademas un
 resumen estructurado de pushdown (`mode`, stages empujados, stages restantes y
 si la pipeline puede ejecutarse en streaming por batches). Eso evita depender
 solo de `remaining_pipeline` para inferir como se repartio la ejecucion entre
-engine y core.
+engine y core. `pushdown.lookupPlans` informa si cada join es candidato al hash
+acotado o requiere nested loop, junto con el motivo y la capacidad. Es una
+decision de planning: la saturacion observada al construir el indice puede
+degradar a nested loop sin cambiar resultados ni errores publicos.
 
 La pipeline materializada soporta tambien ya stages analiticos locales como
 `$densify` y `$fill`, y stages con side effects locales como `$merge`. En este

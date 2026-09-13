@@ -21,7 +21,8 @@ ejecute, 4.6 no esta recomendada para publicacion.
 
 | Gate | Evidencia | Responsable | Bloqueo |
 | --- | --- | --- | --- |
-| SPI v3 opt-in | protocolos, typing y canario externo | maintainer SPI | mutacion silenciosa de SPI v2 |
+| SPI v3 opt-in | protocolos, typing, canario externo, conformidad de admision/leases por lectura, agregacion y transaccion, y vista estable multi-namespace | maintainer SPI | mutacion silenciosa de SPI v2, retencion compartida contada como cero o por tamaño logico duplicado, o consultas foreign que mezclan generaciones |
+| Control de trabajo aggregation | checkpoints internos, limpieza de spill, pruebas de progreso y presupuesto compuesto | maintainer core | bucle incorporado sin deadline, temporal retenido o limite presentado con una unidad que no contabiliza |
 | `search-v2` opt-in | schema, fixtures y dual conformance | maintainer Search | mezcla de shapes v1/v2 |
 | Adapters versionados | ratchets de imports y validators comunes | maintainer core | ramas versionadas distribuidas |
 | Telemetria de deprecacion | warnings y catalogo actualizado | maintainer de API | uso legacy no observable |
