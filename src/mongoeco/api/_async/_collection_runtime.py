@@ -14,7 +14,7 @@ from mongoeco.api.operations import (
 )
 from mongoeco.core.identity import materialize_replacement_document
 from mongoeco.core.operation_context import resolve_operation_session
-from mongoeco.engines.adapter import adapt_engine
+from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import OperationFailure, WriteError
 from mongoeco.session import ClientSession, EngineTransactionContext
 from mongoeco.types import (
@@ -51,7 +51,9 @@ class CollectionRuntimeCoordinator:
         self._collection = collection
         self._engine_spi = getattr(collection, "_validated_engine_spi", None)
         if self._engine_spi is None:
-            self._engine_spi = adapt_engine(getattr(collection, "_engine", object()))
+            self._engine_spi = EngineSpiAdapter(
+                getattr(collection, "_engine", object())
+            )
         try:
             self._engine_spi.prepare_change_delivery(
                 getattr(collection, "_change_hub", None)
@@ -465,7 +467,6 @@ class CollectionRuntimeCoordinator:
                 upsert=upsert,
                 upsert_seed=upsert_seed,
                 selector_filter=selector_filter,
-                dialect=self._collection._mongodb_dialect,
                 operation_context=operation.context,
                 bypass_document_validation=bypass_document_validation,
                 replacement_document=replacement_document,
@@ -623,7 +624,6 @@ class CollectionRuntimeCoordinator:
                 self._collection._collection_name,
                 operation,
                 selector_filter=selector_filter,
-                dialect=self._collection._mongodb_dialect,
                 operation_context=operation.context,
                 on_commit=(
                     lambda captured: (

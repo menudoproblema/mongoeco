@@ -79,7 +79,7 @@ from mongoeco.core.search_planning import (
     search_result_limit_hint,
 )
 from mongoeco.cxp import build_mongodb_explain_projection
-from mongoeco.engines.adapter import adapt_engine
+from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.session_guards import ensure_session_can_use_engine
@@ -642,7 +642,7 @@ class AsyncAggregationCursor:
             downstream_filter_spec=downstream_filter_spec,
             pipeline_plan=pipeline_plan,
         )
-        outcome = await adapt_engine(
+        outcome = await EngineSpiAdapter(
             self._collection._engine,
         ).execute_search(
             self._collection._db_name,
@@ -1150,7 +1150,7 @@ class AsyncAggregationCursor:
             dialect=dialect,
             variables=self._execution_variables(),
         )
-        return adapt_engine(engine).open_read_snapshot(
+        return EngineSpiAdapter(engine).open_read_snapshot(
             self._collection._db_name,
             collection_name,
             semantics,
@@ -2332,7 +2332,7 @@ class AsyncAggregationCursor:
                 downstream_filter_spec=optimization.downstream_filter_spec,
                 pipeline_plan=optimization,
             )
-            engine_plan = await adapt_engine(
+            engine_plan = await EngineSpiAdapter(
                 self._collection._engine,
             ).explain_search(
                 self._collection._db_name,

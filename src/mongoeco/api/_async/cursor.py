@@ -20,7 +20,7 @@ from mongoeco.core.operation_context import (
 )
 from mongoeco.core.query_plan import QueryNode
 from mongoeco.cxp import build_mongodb_explain_projection
-from mongoeco.engines.adapter import adapt_engine
+from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -268,6 +268,25 @@ class AsyncCursor:
         self._batch_size = batch_size
         self._let = let
         self._execution_variables = execution_variables
+        if operation_context is None:
+            context_factory = getattr(collection, "_new_operation_context", None)
+            if callable(context_factory):
+                operation_context = context_factory(
+                    session=session,
+                    collation=collation,
+                    bindings=let,
+                )
+            else:
+                operation_context = OperationContext.create(
+                    dialect=getattr(
+                        collection,
+                        "mongodb_dialect",
+                        MONGODB_DIALECT_70,
+                    ),
+                    session=session,
+                    collation=collation,
+                    bindings=let,
+                )
         self._operation_context = operation_context
         self._session = resolve_operation_session(operation_context, session)
         self._apply_codec_options = apply_codec_options
@@ -366,7 +385,7 @@ class AsyncCursor:
         stream = (
             open_snapshot(operation, session=self._session)
             if callable(open_snapshot)
-            else adapt_engine(engine).open_read_snapshot(
+            else EngineSpiAdapter(engine).open_read_snapshot(
                 self._collection._db_name,
                 self._collection._collection_name,
                 self._semantics_with_overrides(limit=operation.limit),
@@ -404,7 +423,7 @@ class AsyncCursor:
             source = (
                 open_snapshot(operation, session=self._session)
                 if callable(open_snapshot)
-                else adapt_engine(engine).open_read_snapshot(
+                else EngineSpiAdapter(engine).open_read_snapshot(
                     self._collection._db_name,
                     self._collection._collection_name,
                     self._semantics_with_overrides(

@@ -50,7 +50,7 @@ from mongoeco.engines.base import (  # noqa: TC001 - public annotations are intr
     AsyncStorageEngine,
 )
 from mongoeco.engines.capabilities import resolve_engine_capabilities
-from mongoeco.engines.adapter import adapt_engine
+from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -466,7 +466,7 @@ class AsyncMongoClient:
         now_factory: NowFactory | None = None,
     ):
         self._engine = engine or self._create_default_engine()
-        self._validated_engine_spi = adapt_engine(self._engine)
+        self._validated_engine_spi = EngineSpiAdapter(self._engine)
         _validate_now_factory(now_factory)
         if (
             now_factory is not None
