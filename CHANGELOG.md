@@ -104,6 +104,16 @@ usa Semantic Versioning.
   acumuladores. El prefijo streamable conserva ventanas globales, el caso sin
   spill sigue leyendo como maximo `limite + 1` y el cursor se cierra al agotar,
   fallar o alcanzar un limite; ya no se retiene la lista completa de entrada.
+  Con spill configurado, el estado pasa a un hash externo recursivo solo cuando
+  los grupos vivos superan el umbral; entradas grandes de baja cardinalidad no
+  pagan I/O. Cada particion limita sus claves distintas y una salida ordenada
+  por primera aparicion se entrega por demanda. Preserva acumuladores sensibles
+  al orden y limpia todos los temporales tras exito, error, cancelacion o
+  consumo parcial. Los acumuladores cuyo propio resultado crece siguen fuera de
+  una cota de bytes.
+  SQLite incorpora el mismo opt-in `aggregation_spill_threshold` de Memory y
+  los adapters de benchmark lo propagan realmente; el valor por defecto sigue
+  siendo `None`.
 - `$lookup` simple usa un indice hash efimero y acotado por la politica de
   materializacion para evitar el producto local por foreign. Conserva igualdad
   BSON, orden y duplicados observables; collation, pipelines, dialectos
@@ -124,8 +134,9 @@ usa Semantic Versioning.
   todos los runs sin construir otra lista completa de salida. Cuando `$sort` es
   el primer bloqueante elegible, el cursor alimenta ese spool directamente por
   paginas y cada run mantiene como maximo el umbral configurado, incluso sin un
-  `batchSize` publico. El estado de grupos, la expansion dentro de una pagina y
-  otras fronteras bloqueantes no se presentan como memoria total acotada.
+  `batchSize` publico. La expansion dentro de una pagina, los valores crecientes
+  de acumuladores y otras fronteras bloqueantes no se presentan como memoria
+  total acotada.
 - Los informes de benchmark usan un schema v2 con commit/dirty, hashes del
   harness y dataset, configuracion y versiones efectivas del entorno. El
   comparador rechaza escenarios ausentes, metricas invalidas y bases

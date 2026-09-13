@@ -291,17 +291,21 @@ class MongoecoMemoryAsyncEngine(_MongoecoAsyncEngine):
 
 
 class MongoecoSQLiteAsyncEngine(_MongoecoAsyncEngine):
-    def __init__(self) -> None:
+    def __init__(self, spill_threshold: int = 10000) -> None:
         super().__init__()
         self.db_fd: int | None = None
         self.db_path: str | None = None
+        self.spill_threshold = spill_threshold
 
     def _build_engine(self):
         from mongoeco.engines.sqlite import SQLiteEngine
 
         self.db_fd, self.db_path = tempfile.mkstemp(suffix=".sqlite")
         os.close(self.db_fd)
-        return SQLiteEngine(path=self.db_path)
+        return SQLiteEngine(
+            path=self.db_path,
+            aggregation_spill_threshold=self.spill_threshold,
+        )
 
     def teardown(self) -> None:
         super().teardown()

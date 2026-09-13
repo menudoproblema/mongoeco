@@ -4,6 +4,8 @@ from copy import deepcopy
 from unittest.mock import Mock, patch
 
 from benchmarks.contracts import REPORT_SCHEMA, compare_reports, validate_report
+from benchmarks.engines.mongoeco_async import MongoecoSQLiteAsyncEngine
+from benchmarks.engines.mongoeco_sql import MongoecoSQLEngine
 from benchmarks.report import main as report_main, render_markdown_report
 from benchmarks.run import (
     SKIPPED_WORKLOADS_KEY,
@@ -17,6 +19,7 @@ from benchmarks.runners.workloads import (
     _ann_outcome_contract,
     _augment_search_documents,
     _outcome_sha256,
+    _summarize_aggregate_explain,
 )
 
 
@@ -142,6 +145,49 @@ class BenchmarkHarnessTests(unittest.TestCase):
 
         self.assertEqual(_outcome_sha256(first), _outcome_sha256(second))
         self.assertNotEqual(_outcome_sha256(first), _outcome_sha256({"a": [2, 1]}))
+
+    def test_aggregate_summary_retains_bounded_execution_evidence(self):
+        summary = _summarize_aggregate_explain(
+            {
+                "engine_plan": {"engine": "memory", "strategy": "scan"},
+                "remaining_pipeline": [{"$group": {"_id": "$kind"}}],
+                "pushdown": {
+                    "incrementalGroupInput": True,
+                    "partitionedGroupStateCandidate": True,
+                    "streamingGroupOutputCandidate": True,
+                    "incrementalSortInput": False,
+                    "streamingSortOutput": True,
+                },
+            }
+        )
+
+        self.assertTrue(summary["incremental_group_input"])
+        self.assertTrue(summary["partitioned_group_state_candidate"])
+        self.assertTrue(summary["streaming_group_output_candidate"])
+        self.assertFalse(summary["incremental_sort_input"])
+        self.assertTrue(summary["streaming_sort_output"])
+
+    def test_sqlite_benchmark_adapters_propagate_spill_threshold(self):
+        sync_adapter = MongoecoSQLEngine(spill_threshold=17)
+        with (
+            patch("mongoeco.engines.sqlite.SQLiteEngine") as sync_engine,
+            patch("benchmarks.engines.mongoeco_sql.MongoClient"),
+        ):
+            sync_adapter.setup()
+            sync_engine.assert_called_once_with(
+                path=sync_adapter.db_path,
+                aggregation_spill_threshold=17,
+            )
+        sync_adapter.teardown()
+
+        async_adapter = MongoecoSQLiteAsyncEngine(spill_threshold=23)
+        with patch("mongoeco.engines.sqlite.SQLiteEngine") as async_engine:
+            async_adapter._build_engine()
+            async_engine.assert_called_once_with(
+                path=async_adapter.db_path,
+                aggregation_spill_threshold=23,
+            )
+        async_adapter.teardown()
 
     def test_ann_oracle_allows_candidate_variation_but_rejects_duplicates(self):
         first = [[{"_id": 1, "score": 1.0}, {"_id": 2, "score": 0.9}]]

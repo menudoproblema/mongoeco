@@ -9,6 +9,7 @@ import pytest
 from mongoeco import AsyncMongoClient
 from mongoeco.api._async.cursor import AsyncCursor
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import OperationFailure
 
 
@@ -106,5 +107,57 @@ def test_group_reads_source_by_batch_without_using_find_to_list():
                 {"_id": 1, "count": 167},
                 {"_id": 2, "count": 166},
             ]
+
+    asyncio.run(exercise())
+
+
+def test_partitioned_group_matches_in_memory_group_on_builtin_engines():
+    async def exercise():
+        documents = [
+            {
+                "_id": value,
+                "group": value % 7,
+                "value": value,
+                "tag": value % 3,
+                "fragment": {str(value % 4): value},
+            }
+            for value in range(70)
+        ]
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$group",
+                    "count": {"$sum": 1},
+                    "average": {"$avg": "$value"},
+                    "minimum": {"$min": "$value"},
+                    "maximum": {"$max": "$value"},
+                    "first": {"$first": "$value"},
+                    "last": {"$last": "$value"},
+                    "tags": {"$addToSet": "$tag"},
+                    "merged": {"$mergeObjects": "$fragment"},
+                }
+            }
+        ]
+
+        for engine in (
+            MemoryEngine(aggregation_spill_threshold=2),
+            SQLiteEngine(aggregation_spill_threshold=2),
+        ):
+            async with AsyncMongoClient(engine) as client:
+                collection = client.test.records
+                await collection.insert_many(documents)
+
+                in_memory = await collection.aggregate(
+                    pipeline,
+                    allow_disk_use=False,
+                    batch_size=5,
+                ).to_list()
+                partitioned = await collection.aggregate(
+                    pipeline,
+                    allow_disk_use=True,
+                    batch_size=5,
+                ).to_list()
+
+                assert partitioned == in_memory
 
     asyncio.run(exercise())

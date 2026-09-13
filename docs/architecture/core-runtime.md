@@ -272,11 +272,9 @@ terminar; error, deadline o cancelacion limpian tambien runs originales e
 intermedios. El primitivo de merge acepta un iterable y entrega otro: no
 construye una lista de salida, y cerrar tras consumo parcial elimina todos los
 runs. El cursor usa ya esa salida demand-driven para `$group -> $sort` y stages
-streamables posteriores. El resultado del group sigue siendo la entrada
-materializada inevitable de esa frontera, y el API sincrono de `apply_pipeline`
-conserva su retorno en lista por compatibilidad. Convertir las restantes
-entradas bloqueantes en streams y sumar sus bytes al budget compuesto sigue
-pendiente.
+streamables posteriores. El API sincrono de `apply_pipeline` conserva su
+retorno en lista por compatibilidad. Convertir las restantes entradas
+bloqueantes en streams y sumar sus bytes al budget compuesto sigue pendiente.
 
 El `$lookup` simple por `localField`/`foreignField` puede construir un indice
 hash efimero sobre la coleccion foreign. Su admision reutiliza
@@ -302,7 +300,7 @@ la misma primitiva de control. Esto es cancelacion cooperativa, no una garantia
 hard real-time: una evaluacion de expresion, comparacion BSON, operacion del
 codec, llamada a una extension o primitiva de I/O puede ser indivisible. El
 budget compuesto de bytes, el streaming desde las entradas bloqueantes no
-elegibles y la particion externa de estados de group siguen pendientes.
+elegibles y los acumuladores cuyo propio valor crece siguen pendientes.
 
 Cuando el primer operador bloqueante que queda despues del pushdown es
 `$group`, el cursor alimenta un estado acumulador incremental desde trabajos de
@@ -310,9 +308,28 @@ lectura finitos. Respeta el `batchSize` solicitado o usa bloques internos de
 256 documentos, aplica antes el prefijo streamable y conserva globalmente sus
 `$skip`/`$limit`. Sin spill, la admision existente sigue deteniendose
 exactamente en `limite + 1`; con spill disponible no se retiene la entrada
-completa. La memoria del acumulador depende del numero de grupos y de
-acumuladores cuyo resultado crece (`$push`, `$addToSet`, etc.), que es salida
-inevitable y no se presenta como O(1).
+completa. Si el conjunto vivo de grupos supera el umbral configurado, un hash
+externo conserva los buckets ya calculados, evalua el `_id` una sola vez para
+los documentos posteriores, los divide en ficheros y vuelve a partir cualquier
+fichero que exceda el numero permitido de claves distintas. Una entrada grande
+de baja cardinalidad no abre el spool ni paga I/O de disco.
+Cada particion se reduce por separado; otro sort externo por el ordinal de la
+primera aparicion recompone el orden observable y entrega el resultado por
+demanda. El mismo owner elimina input, particiones recursivas y runs de salida
+al agotar, fallar, cancelar o cerrar parcialmente.
+
+Esta cota es documental, no de bytes. Limita documentos antes del primer spill,
+claves de grupo simultaneas por particion, fan-out y runs de ordenacion, pero un
+unico grupo con `$push`, `$addToSet`, `$percentile` u otro acumulador cuyo
+resultado crece puede seguir necesitando memoria proporcional a su propia
+salida. Tampoco convierte el codec o una operacion de fichero en primitivas
+interrumpibles. Esas dimensiones pertenecen al futuro budget compuesto, no se
+presentan como O(1). Memory y SQLite exponen el mismo opt-in
+`aggregation_spill_threshold`; `None` mantiene desactivada la politica y no
+cambia la aceptacion por defecto. Si un valor producido por un codec
+personalizado no permite serializar el bucket privado, el runtime conserva la
+ejecucion en memoria: no introduce un error publico nuevo ni presenta ese caso
+como spill efectivo.
 
 Cuando el primer bloqueante elegible es `$sort`, su entrada se consume tambien
 en paginas finitas despues del prefijo streamable. Un spool propietario forma
@@ -323,10 +340,10 @@ una pagina y las primitivas sincronas de sort, codec e I/O conservan los
 checkpoints cooperativos existentes, pero no se presentan como operaciones
 interrumpibles a mitad de llamada.
 
-El resultado de grupos y los stages bloqueantes posteriores salvo los sorts
-elegibles aun usan la frontera materializada vigente. Particionar estado de
-acumuladores a disco requiere el budget compuesto; sigue pendiente y no se
-oculta bajo las mejoras de entrada incremental.
+Los stages bloqueantes posteriores salvo los sorts elegibles aun usan la
+frontera materializada vigente. Un sufijo streamable o ausente conserva la
+salida demand-driven de `$group`; otro bloqueante vuelve a materializarla de
+forma explicita.
 
 En la superficie publica, `aggregate().explain()` ya deja visible ademas un
 resumen estructurado de pushdown (`mode`, stages empujados, stages restantes y
@@ -337,9 +354,12 @@ acotado o requiere nested loop, junto con el motivo y la capacidad. Es una
 decision de planning: la saturacion observada al construir el indice puede
 degradar a nested loop sin cambiar resultados ni errores publicos.
 `incrementalGroupInput` distingue el acumulador alimentado por lotes y
+`partitionedGroupStateCandidate` que ese hash externo puede activarse cuando
+existe politica de spill; `streamingGroupOutputCandidate` que un sufijo
+ausente, streamable o de sort externo permite conservar entrega por demanda;
 `incrementalSortInput` el spool alimentado por paginas de una pipeline
 completamente materializada. `sourceBatchExecution` agrupa ambas rutas y el
-streaming completo sin afirmar que la salida de `$group` sea incremental.
+streaming completo sin afirmar que cualquier sufijo de `$group` sea incremental.
 `streamingSortOutput` indica especificamente que el merge externo entrega por
 demanda y mantiene cleanup propietario.
 

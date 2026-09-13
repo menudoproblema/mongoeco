@@ -946,6 +946,16 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "executor_workers must be positive"):
             SQLiteEngine(executor_workers=0)
 
+    def test_constructor_configures_optional_aggregation_spill_policy(self):
+        disabled = SQLiteEngine()
+        configured = SQLiteEngine(aggregation_spill_threshold=17)
+
+        self.assertIsNone(disabled.aggregation_spill_policy)
+        self.assertEqual(configured.aggregation_spill_policy.threshold, 17)
+
+        with self.assertRaisesRegex(ValueError, "spill threshold must be > 0"):
+            SQLiteEngine(aggregation_spill_threshold=0)
+
     def test_shutdown_sqlite_shared_executors_closes_registered_pools(self):
         executor = Mock()
         _SQLITE_SHARED_EXECUTORS[99] = executor

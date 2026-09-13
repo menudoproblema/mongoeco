@@ -35,6 +35,7 @@ from mongoeco.compat import (
     MongoDialect80,
 )
 from mongoeco.core.aggregation.cost import AggregationCostPolicy
+from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.bson_ordering import (
     SQLITE_SORT_BUCKET_WEIGHTS,
     bson_engine_key,
@@ -434,6 +435,8 @@ class SQLiteEngine(AsyncStorageEngine):
         aggregation_materialization_limit: int | None = 50_000,
         simulate_search_index_latency: float = 0.0,
         change_outbox_max_entries: int = 10_000,
+        *,
+        aggregation_spill_threshold: int | None = None,
     ):
         self._path = path
         self._codec = codec
@@ -483,6 +486,14 @@ class SQLiteEngine(AsyncStorageEngine):
             else AggregationCostPolicy(
                 max_materialized_documents=aggregation_materialization_limit,
                 require_spill_for_blocking_stages=True,
+            )
+        )
+        self.aggregation_spill_policy = (
+            None
+            if aggregation_spill_threshold is None
+            else AggregationSpillPolicy(
+                threshold=aggregation_spill_threshold,
+                codec=codec,
             )
         )
         self._simulate_search_index_latency = max(

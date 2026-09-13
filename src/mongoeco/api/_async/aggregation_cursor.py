@@ -2,7 +2,7 @@ import datetime
 import math
 import time
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterable
 from copy import deepcopy
 from dataclasses import dataclass
 from itertools import islice
@@ -38,6 +38,7 @@ from mongoeco.core.aggregation.lookup_physical import (
 )
 from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
+from mongoeco.core.aggregation.spill import _AggregationGroupStateSerializationError
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
@@ -213,6 +214,8 @@ _LOCAL_STREAM_PREFIX_OPERATORS = frozenset(
         "$limit",
     }
 )
+_GROUP_OUTPUT_ORDER_FIELD = "__mongoeco_internal_group_order__"
+_GROUP_OUTPUT_DOCUMENT_FIELD = "__mongoeco_internal_group_document__"
 
 
 class AsyncAggregationCursor:
@@ -1468,7 +1471,7 @@ class AsyncAggregationCursor:
         cost_policy: AggregationCostPolicy | None,
         dialect,
         deadline: float | None,
-    ) -> list[Document]:
+    ) -> Iterable[Document]:
         probe_maximum = (
             cost_policy.max_materialized_documents
             if cost_policy is not None and spill_policy is None
@@ -1482,69 +1485,231 @@ class AsyncAggregationCursor:
             collation=self._collation,
             deadline=deadline,
         )
+        group_spool = None
+        try:
+            group_spool = await self._consume_incremental_group_pages(
+                plan,
+                accumulator=accumulator,
+                page_size=page_size,
+                probe_maximum=probe_maximum,
+                cost_policy=cost_policy,
+                spill_policy=spill_policy,
+                dialect=dialect,
+                deadline=deadline,
+            )
+            if group_spool is None:
+                return accumulator.finish()
+            return self._iter_partitioned_group_output(
+                group_spool,
+                plan,
+                spill_policy=spill_policy,
+                dialect=dialect,
+                deadline=deadline,
+            )
+        except BaseException:
+            if group_spool is not None:
+                group_spool.close()
+            raise
+
+    async def _consume_incremental_group_pages(  # noqa: PLR0913
+        self,
+        plan: _IncrementalGroupPlan,
+        *,
+        accumulator,
+        page_size: int,
+        probe_maximum: int | None,
+        cost_policy: AggregationCostPolicy | None,
+        spill_policy: AggregationSpillPolicy | None,
+        dialect,
+        deadline: float | None,
+    ):
         remaining_skip = plan.prefix_skip
         remaining_limit = plan.prefix_limit
+        if remaining_limit == 0:
+            return None
+        source_batch_size = (
+            page_size if probe_maximum is None else min(page_size, probe_maximum + 1)
+        )
+        source = _CursorPageSource(
+            self._build_pushdown_cursor(
+                self._pushdown_find_operation(batch_size=source_batch_size),
+            )
+        )
         source_count = 0
-        if remaining_limit != 0:
-            source_batch_size = (
-                page_size
-                if probe_maximum is None
-                else min(page_size, probe_maximum + 1)
-            )
-            source = _CursorPageSource(
-                self._build_pushdown_cursor(
-                    self._pushdown_find_operation(batch_size=source_batch_size),
+        group_position = 0
+        group_spool = None
+        spill_allowed = spill_policy is not None
+        try:
+            await source.prepare()
+            while remaining_limit != 0:
+                requested = page_size
+                if probe_maximum is not None:
+                    requested = min(
+                        requested,
+                        probe_maximum + 1 - source_count,
+                    )
+                page = await source.pull(requested)
+                if not page:
+                    break
+                source_count += len(page)
+                if (
+                    cost_policy is not None
+                    and probe_maximum is not None
+                    and source_count > probe_maximum
+                ):
+                    cost_policy.enforce_budget(
+                        document_count=source_count,
+                        has_materializing_stage=True,
+                        spill_available=False,
+                    )
+                enforce_deadline(deadline)
+                transformed = apply_pipeline(
+                    page,
+                    plan.prefix,
+                    variables=self._execution_variables(),
+                    dialect=dialect,
+                    collation=self._collation,
+                    spill_policy=spill_policy,
+                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                    deadline=deadline,
                 )
-            )
-            try:
-                await source.prepare()
-                while remaining_limit != 0:
-                    requested = page_size
-                    if probe_maximum is not None:
-                        requested = min(
-                            requested,
-                            probe_maximum + 1 - source_count,
-                        )
-                    page = await source.pull(requested)
-                    if not page:
-                        break
-                    source_count += len(page)
-                    if (
-                        cost_policy is not None
-                        and probe_maximum is not None
-                        and source_count > probe_maximum
-                    ):
-                        cost_policy.enforce_budget(
-                            document_count=source_count,
-                            has_materializing_stage=True,
-                            spill_available=False,
-                        )
-                    enforce_deadline(deadline)
-                    transformed = apply_pipeline(
-                        page,
-                        plan.prefix,
-                        variables=self._execution_variables(),
-                        dialect=dialect,
-                        collation=self._collation,
+                if remaining_skip:
+                    if len(transformed) <= remaining_skip:
+                        remaining_skip -= len(transformed)
+                        continue
+                    transformed = transformed[remaining_skip:]
+                    remaining_skip = 0
+                if remaining_limit is not None:
+                    transformed = transformed[:remaining_limit]
+                    remaining_limit -= len(transformed)
+                group_spool, spill_allowed, group_position = (
+                    self._accumulate_or_spill_group_page(
+                        transformed,
+                        accumulator=accumulator,
+                        group_spool=group_spool,
+                        spill_allowed=spill_allowed,
                         spill_policy=spill_policy,
-                        lookup_hash_max_associations=(
-                            self._lookup_hash_max_associations()
-                        ),
+                        group_position=group_position,
                         deadline=deadline,
                     )
-                    if remaining_skip:
-                        if len(transformed) <= remaining_skip:
-                            remaining_skip -= len(transformed)
-                            continue
-                        transformed = transformed[remaining_skip:]
-                        remaining_skip = 0
-                    if remaining_limit is not None:
-                        transformed = transformed[:remaining_limit]
-                        remaining_limit -= len(transformed)
-                    accumulator.consume(transformed)
-            finally:
-                await source.aclose()
-        return accumulator.finish()
+                )
+        except BaseException:
+            if group_spool is not None:
+                group_spool.close()
+            raise
+        finally:
+            await source.aclose()
+        return group_spool
+
+    def _accumulate_or_spill_group_page(  # noqa: PLR0913
+        self,
+        documents: list[Document],
+        *,
+        accumulator,
+        group_spool,
+        spill_allowed: bool,
+        spill_policy: AggregationSpillPolicy | None,
+        group_position: int,
+        deadline: float | None,
+    ):
+        if group_spool is not None:
+            group_spool.add(documents)
+            return group_spool, spill_allowed, group_position
+        for index, document in enumerate(documents):
+            accumulator.consume_document(document, position=group_position)
+            group_position += 1
+            if (
+                not spill_allowed
+                or spill_policy is None
+                or accumulator.group_count <= spill_policy.threshold
+            ):
+                continue
+            group_spool = spill_policy.open_group_spool(
+                group_id_for_document=accumulator.group_id,
+                group_key_for_id=accumulator.group_key,
+                deadline=deadline,
+            )
+            buckets = accumulator.release_buckets()
+            try:
+                group_spool.seed(
+                    buckets,
+                    next_sequence=group_position,
+                )
+            except _AggregationGroupStateSerializationError:
+                group_spool = None
+                spill_allowed = False
+                for group_key, bucket, first_position in buckets:
+                    accumulator.adopt_bucket(
+                        group_key,
+                        bucket,
+                        first_position=first_position,
+                    )
+                continue
+            group_spool.add(documents[index + 1 :])
+            break
+        return group_spool, spill_allowed, group_position
+
+    def _iter_partitioned_group_output(
+        self,
+        group_spool,
+        plan: _IncrementalGroupPlan,
+        *,
+        spill_policy: AggregationSpillPolicy,
+        dialect,
+        deadline: float | None,
+    ) -> Iterable[Document]:
+        output_spool = spill_policy.open_sort_spool(
+            [(_GROUP_OUTPUT_ORDER_FIELD, 1)],
+            dialect=dialect,
+            deadline=deadline,
+        )
+        partitions = group_spool.iter_partitions()
+        sorted_output = None
+        try:
+            for partition in partitions:
+                accumulator = _IncrementalGroup(
+                    plan.group_spec,
+                    self._execution_variables(),
+                    dialect=dialect,
+                    collation=self._collation,
+                    deadline=deadline,
+                )
+                for record in partition:
+                    if record[0] == "state":
+                        _kind, group_key, bucket, first_position, _digest = record
+                        accumulator.adopt_bucket(
+                            group_key,
+                            bucket,
+                            first_position=first_position,
+                        )
+                        continue
+                    _kind, sequence, group_id, document, _digest = record
+                    accumulator.consume_document(
+                        document,
+                        group_id=group_id,
+                        position=sequence,
+                    )
+                output_spool.add(
+                    {
+                        _GROUP_OUTPUT_ORDER_FIELD: first_position,
+                        _GROUP_OUTPUT_DOCUMENT_FIELD: document,
+                    }
+                    for first_position, _group_key, document in (
+                        accumulator.finish_positioned_items()
+                    )
+                )
+            sorted_output = output_spool.finish()
+            for wrapped in sorted_output:
+                yield wrapped[_GROUP_OUTPUT_DOCUMENT_FIELD]
+        finally:
+            close_output = getattr(sorted_output, "close", None)
+            if callable(close_output):
+                close_output()
+            close_partitions = getattr(partitions, "close", None)
+            if callable(close_partitions):
+                close_partitions()
+            output_spool.close()
+            group_spool.close()
 
     async def _stream_incremental_group(
         self,
@@ -1566,43 +1731,116 @@ class AsyncAggregationCursor:
             if spill_policy is not None
             else None
         )
-        if streaming_sort is not None:
-            output = self._stream_sorted_group_result(
-                result,
-                streaming_sort,
-                spill_policy=spill_policy,
-                dialect=dialect,
-                deadline=deadline,
-            )
-            try:
-                async for document in output:
-                    yield document
-            finally:
-                await output.aclose()
+        streaming_suffix = (
+            self._split_streamable_pipeline(plan.suffix, dialect=dialect)
+            if streaming_sort is None
+            else None
+        )
+        try:
+            if streaming_sort is not None:
+                output = self._stream_sorted_group_result(
+                    result,
+                    streaming_sort,
+                    spill_policy=spill_policy,
+                    dialect=dialect,
+                    deadline=deadline,
+                )
+                try:
+                    async for document in output:
+                        yield document
+                finally:
+                    await output.aclose()
+                return
+            if streaming_suffix is not None:
+                output = self._stream_group_result(
+                    result,
+                    streaming_suffix,
+                    spill_policy=spill_policy,
+                    dialect=dialect,
+                    deadline=deadline,
+                )
+                try:
+                    async for document in output:
+                        yield document
+                finally:
+                    await output.aclose()
+                return
+            if plan.suffix:
+                referenced_collections = await self._load_referenced_collections()
+                result = apply_pipeline(
+                    result,
+                    plan.suffix,
+                    collection_resolver=referenced_collections.get,
+                    variables=self._execution_variables(),
+                    dialect=dialect,
+                    collation=self._collation,
+                    spill_policy=spill_policy,
+                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                    deadline=deadline,
+                )
+            for document in result:
+                yield self._materialize_document(
+                    DocumentCodec.to_public(
+                        strip_search_result_metadata(document),
+                    ),
+                )
+        finally:
+            close_result = getattr(result, "close", None)
+            if callable(close_result):
+                close_result()
+
+    async def _stream_group_result(
+        self,
+        documents: Iterable[Document],
+        stream_plan: tuple[Pipeline, int, int | None],
+        *,
+        spill_policy: AggregationSpillPolicy | None,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
+        pipeline, remaining_skip, remaining_limit = stream_plan
+        if remaining_limit == 0:
             return
-        if plan.suffix:
-            referenced_collections = await self._load_referenced_collections()
-            result = apply_pipeline(
-                result,
-                plan.suffix,
-                collection_resolver=referenced_collections.get,
-                variables=self._execution_variables(),
-                dialect=dialect,
-                collation=self._collation,
-                spill_policy=spill_policy,
-                lookup_hash_max_associations=self._lookup_hash_max_associations(),
-                deadline=deadline,
-            )
-        for document in result:
-            yield self._materialize_document(
-                DocumentCodec.to_public(
-                    strip_search_result_metadata(document),
-                ),
-            )
+        page_size = self._batch_size or 256
+        source = iter(documents)
+        try:
+            while remaining_limit != 0:
+                page = list(islice(source, page_size))
+                if not page:
+                    break
+                transformed = apply_pipeline(
+                    page,
+                    pipeline,
+                    variables=self._execution_variables(),
+                    dialect=dialect,
+                    collation=self._collation,
+                    spill_policy=spill_policy,
+                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                    deadline=deadline,
+                )
+                if remaining_skip:
+                    if len(transformed) <= remaining_skip:
+                        remaining_skip -= len(transformed)
+                        continue
+                    transformed = transformed[remaining_skip:]
+                    remaining_skip = 0
+                if remaining_limit is not None:
+                    transformed = transformed[:remaining_limit]
+                    remaining_limit -= len(transformed)
+                for document in transformed:
+                    yield self._materialize_document(
+                        DocumentCodec.to_public(
+                            strip_search_result_metadata(document),
+                        ),
+                    )
+        finally:
+            close_source = getattr(source, "close", None)
+            if callable(close_source):
+                close_source()
 
     async def _stream_sorted_group_result(
         self,
-        documents: list[Document],
+        documents: Iterable[Document],
         plan: _StreamingSortPlan,
         *,
         spill_policy: AggregationSpillPolicy,
@@ -2120,6 +2358,27 @@ class AsyncAggregationCursor:
             )
         )
         pushdown_summary["incrementalGroupInput"] = incremental_group_plan is not None
+        pushdown_summary["partitionedGroupStateCandidate"] = bool(
+            incremental_group_plan is not None and spill_policy is not None
+        )
+        pushdown_summary["streamingGroupOutputCandidate"] = bool(
+            incremental_group_plan is not None
+            and (
+                self._split_streamable_pipeline(
+                    incremental_group_plan.suffix,
+                    dialect=dialect,
+                )
+                is not None
+                or (
+                    spill_policy is not None
+                    and self._split_streaming_sort_suffix(
+                        incremental_group_plan.suffix,
+                        dialect=dialect,
+                    )
+                    is not None
+                )
+            )
+        )
         pushdown_summary["incrementalSortInput"] = incremental_sort_plan is not None
         pushdown_summary["streamingSortOutput"] = bool(
             incremental_sort_plan is not None

@@ -18,7 +18,10 @@ class MongoecoSQLEngine(BenchmarkEngine):
         self.db_fd, self.db_path = tempfile.mkstemp(suffix=".sqlite")
         os.close(self.db_fd)
 
-        engine = SQLiteEngine(path=self.db_path)
+        engine = SQLiteEngine(
+            path=self.db_path,
+            aggregation_spill_threshold=self.spill_threshold,
+        )
         self.client = MongoClient(engine=engine)
 
     def teardown(self) -> None:

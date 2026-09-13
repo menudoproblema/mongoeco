@@ -31450,6 +31450,16 @@
                 "kind": "positional_or_keyword",
                 "name": "change_outbox_max_entries",
                 "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": true,
+                  "rendered": "int | None"
+                },
+                "default": "None",
+                "kind": "keyword_only",
+                "name": "aggregation_spill_threshold",
+                "required": false
               }
             ],
             "return": {

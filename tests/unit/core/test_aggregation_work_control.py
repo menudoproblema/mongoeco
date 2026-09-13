@@ -7,9 +7,12 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from mongoeco.core.aggregation.compiled_pipeline import compile_pipeline
-from mongoeco.core.aggregation.grouping_stages import _apply_group
+from mongoeco.core.aggregation.grouping_stages import _apply_group, _IncrementalGroup
 from mongoeco.core.aggregation.runtime import AggregationStageContext
-from mongoeco.core.aggregation.spill import AggregationSpillPolicy
+from mongoeco.core.aggregation.spill import (
+    AggregationSpillPolicy,
+    _AggregationGroupStateSerializationError,
+)
 from mongoeco.core.aggregation.stages import _stage_densify
 from mongoeco.core.sorting import sort_documents
 from mongoeco.core.work_control import DEADLINE_CHECK_INTERVAL, iter_with_deadline
@@ -271,3 +274,91 @@ class AggregationWorkControlTests(TestCase):
         output.close()
 
         self.assertEqual(set(temp_root.glob("*.mongoeco-aggsort")), before)
+
+    def test_group_spool_recursively_bounds_partition_key_sets(self):
+        policy = AggregationSpillPolicy(threshold=2)
+        accumulator = _IncrementalGroup({"_id": "$group", "count": {"$sum": 1}})
+        for position in range(67):
+            accumulator.consume_document(
+                {"_id": position, "group": position},
+                position=position,
+            )
+        spool = policy.open_group_spool(
+            group_id_for_document=accumulator.group_id,
+            group_key_for_id=accumulator.group_key,
+        )
+        temp_root = Path(tempfile.gettempdir())
+        before = set(temp_root.glob("*.mongoeco-agggroup"))
+        spool.seed(accumulator.release_buckets(), next_sequence=67)
+        spool.add({"_id": index, "group": index % 67} for index in range(67, 67 * 3))
+
+        seen = []
+        partitions = spool.iter_partitions()
+        for partition in partitions:
+            records = list(partition)
+            keys = {
+                record[1] if record[0] == "state" else accumulator.group_key(record[2])
+                for record in records
+            }
+            self.assertLessEqual(
+                len(keys),
+                policy.threshold,
+            )
+            seen.extend(records)
+
+        self.assertEqual(len(seen), 67 * 3)
+        self.assertEqual(
+            sorted(record[3] if record[0] == "state" else record[1] for record in seen),
+            list(range(67 * 3)),
+        )
+        self.assertEqual(set(temp_root.glob("*.mongoeco-agggroup")), before)
+
+    def test_group_spool_cleans_all_partitions_after_partial_consumption(self):
+        policy = AggregationSpillPolicy(threshold=1)
+        accumulator = _IncrementalGroup({"_id": "$group", "count": {"$sum": 1}})
+        for position in range(40):
+            accumulator.consume_document(
+                {"_id": position, "group": position},
+                position=position,
+            )
+        spool = policy.open_group_spool(
+            group_id_for_document=accumulator.group_id,
+            group_key_for_id=accumulator.group_key,
+        )
+        temp_root = Path(tempfile.gettempdir())
+        before = set(temp_root.glob("*.mongoeco-agggroup"))
+        spool.seed(accumulator.release_buckets(), next_sequence=40)
+        partitions = spool.iter_partitions()
+
+        first_partition = next(partitions)
+        next(first_partition)
+        self.assertGreater(
+            len(set(temp_root.glob("*.mongoeco-agggroup"))),
+            len(before),
+        )
+        partitions.close()
+
+        self.assertEqual(set(temp_root.glob("*.mongoeco-agggroup")), before)
+
+    def test_group_spool_reports_unserializable_private_state_without_leaking(self):
+        policy = AggregationSpillPolicy(threshold=1)
+        accumulator = _IncrementalGroup(
+            {"_id": "$group", "first": {"$first": "$value"}}
+        )
+        accumulator.consume(
+            [
+                {"group": 1, "value": lambda: None},
+                {"group": 2, "value": lambda: None},
+            ]
+        )
+        spool = policy.open_group_spool(
+            group_id_for_document=accumulator.group_id,
+            group_key_for_id=accumulator.group_key,
+        )
+        temp_root = Path(tempfile.gettempdir())
+        before = set(temp_root.glob("*.mongoeco-agggroup"))
+
+        with self.assertRaises(_AggregationGroupStateSerializationError):
+            spool.seed(accumulator.release_buckets(), next_sequence=2)
+
+        self.assertEqual(set(temp_root.glob("*.mongoeco-agggroup")), before)

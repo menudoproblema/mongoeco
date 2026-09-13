@@ -7,26 +7,29 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from mongoeco import AsyncMongoClient, MongoClient
-from mongoeco.api._async.client import AsyncDatabase
 from mongoeco.api._async.aggregation_cursor import (
     AsyncAggregationCursor,
     _SearchOptimizationPlan,
     _SearchOptimizationStrategy,
 )
+from mongoeco.api._async.client import AsyncDatabase
+from mongoeco.api._sync.aggregation_cursor import (
+    AggregationCursor,
+    _AggregationCursorIterator,
+)
 from mongoeco.api.operations import compile_aggregate_operation
 from mongoeco.compat import MONGODB_DIALECT_70
-from mongoeco.api._sync.aggregation_cursor import AggregationCursor
-from mongoeco.api._sync.aggregation_cursor import _AggregationCursorIterator
 from mongoeco.core.aggregation import (
+    _CURRENT_COLLECTION_RESOLVER_KEY,
     AggregationCostPolicy,
     AggregationSpillPolicy,
     register_aggregation_stage,
     unregister_aggregation_stage,
 )
+from mongoeco.core.aggregation.spill import _AggregationGroupStateSerializationError
 from mongoeco.core.bson_scalars import BsonInt32
-from mongoeco.core.aggregation import _CURRENT_COLLECTION_RESOLVER_KEY
-from mongoeco.core.projections import apply_projection
 from mongoeco.core.operation_context import OperationContext
+from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.memory import MemoryEngine
@@ -43,6 +46,10 @@ from mongoeco.types import PlanningIssue, PlanningMode, SearchIndexModel
 
 def _aggregation_sort_temp_paths() -> set[Path]:
     return set(Path(tempfile.gettempdir()).glob("*.mongoeco-aggsort"))
+
+
+def _aggregation_group_temp_paths() -> set[Path]:
+    return set(Path(tempfile.gettempdir()).glob("*.mongoeco-agggroup"))
 
 
 class _FakeAsyncFindCursor:
@@ -1675,6 +1682,110 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         await cursor.close()
 
         self.assertEqual(_aggregation_sort_temp_paths(), before)
+
+    async def test_partitioned_group_preserves_accumulators_and_first_seen_order(self):
+        group_count = 17
+        documents = [
+            {"_id": index, "kind": index % group_count, "value": index}
+            for index in range(group_count * 3)
+        ]
+        collection = _FakeCollection(documents)
+        cursor = AsyncAggregationCursor(
+            collection,
+            [
+                {
+                    "$group": {
+                        "_id": "$kind",
+                        "count": {"$sum": 1},
+                        "first": {"$first": "$value"},
+                        "last": {"$last": "$value"},
+                        "values": {"$push": "$value"},
+                    }
+                }
+            ],
+            batch_size=3,
+            allow_disk_use=True,
+        )
+
+        result = await cursor.to_list()
+
+        self.assertEqual([document["_id"] for document in result], list(range(17)))
+        for group_id, document in enumerate(result):
+            expected_values = [group_id, group_id + 17, group_id + 34]
+            self.assertEqual(document["count"], 3)
+            self.assertEqual(document["first"], expected_values[0])
+            self.assertEqual(document["last"], expected_values[-1])
+            self.assertEqual(document["values"], expected_values)
+        explanation = await cursor.explain()
+        self.assertTrue(explanation["pushdown"]["partitionedGroupStateCandidate"])
+        self.assertTrue(explanation["pushdown"]["streamingGroupOutputCandidate"])
+
+    async def test_low_cardinality_group_does_not_open_partition_spool(self):
+        collection = _FakeCollection(
+            [{"_id": index, "kind": "same"} for index in range(100)]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
+            batch_size=3,
+            allow_disk_use=True,
+        )
+
+        with patch(
+            "mongoeco.core.aggregation.spill.AggregationSpillPolicy.open_group_spool",
+            side_effect=AssertionError("low-cardinality group must stay in memory"),
+        ):
+            result = await cursor.to_list()
+
+        self.assertEqual(result, [{"_id": "same", "count": 100}])
+
+    async def test_unserializable_group_state_falls_back_without_new_error(self):
+        collection = _FakeCollection(
+            [{"_id": index, "kind": index} for index in range(3)]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
+            allow_disk_use=True,
+        )
+
+        with patch(
+            "mongoeco.core.aggregation.spill.AggregationGroupSpool.seed",
+            side_effect=_AggregationGroupStateSerializationError("unsupported"),
+        ):
+            result = await cursor.to_list()
+
+        self.assertEqual(
+            result,
+            [
+                {"_id": 0, "count": 1},
+                {"_id": 1, "count": 1},
+                {"_id": 2, "count": 1},
+            ],
+        )
+
+    async def test_partial_partitioned_group_output_cleans_owned_temporaries(self):
+        collection = _FakeCollection(
+            [{"_id": index, "kind": index} for index in range(70)]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
+            batch_size=2,
+            allow_disk_use=True,
+        )
+        before_groups = _aggregation_group_temp_paths()
+        before_sorts = _aggregation_sort_temp_paths()
+
+        self.assertEqual((await anext(cursor))["_id"], 0)
+        self.assertTrue(
+            len(_aggregation_group_temp_paths()) > len(before_groups)
+            or len(_aggregation_sort_temp_paths()) > len(before_sorts)
+        )
+        await cursor.close()
+
+        self.assertEqual(_aggregation_group_temp_paths(), before_groups)
+        self.assertEqual(_aggregation_sort_temp_paths(), before_sorts)
 
     async def test_sort_consumes_finite_source_pages_and_preserves_global_windows(
         self,

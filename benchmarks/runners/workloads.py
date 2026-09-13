@@ -75,6 +75,8 @@ def _summarize_aggregate_explain(explain: dict[str, Any]) -> dict[str, Any]:
     engine_plan = explain.get("engine_plan")
     plan = engine_plan if isinstance(engine_plan, dict) else explain
     remaining_pipeline = explain.get("remaining_pipeline")
+    pushdown = explain.get("pushdown")
+    pushdown = pushdown if isinstance(pushdown, dict) else {}
     return {
         "summary": _operation_summary(plan),
         "engine": plan.get("engine"),
@@ -84,6 +86,15 @@ def _summarize_aggregate_explain(explain: dict[str, Any]) -> dict[str, Any]:
             plan.get("planning_mode"),
         ),
         "streaming_batch_execution": explain.get("streaming_batch_execution"),
+        "incremental_group_input": pushdown.get("incrementalGroupInput"),
+        "partitioned_group_state_candidate": pushdown.get(
+            "partitionedGroupStateCandidate"
+        ),
+        "streaming_group_output_candidate": pushdown.get(
+            "streamingGroupOutputCandidate"
+        ),
+        "incremental_sort_input": pushdown.get("incrementalSortInput"),
+        "streaming_sort_output": pushdown.get("streamingSortOutput"),
         "remaining_stage_count": (
             len(remaining_pipeline) if isinstance(remaining_pipeline, list) else None
         ),

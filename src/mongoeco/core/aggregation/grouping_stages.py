@@ -39,6 +39,9 @@ from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
 
 
+_UNEVALUATED_GROUP_ID = object()
+
+
 def _copy_if_mutable(value: Any) -> Any:
     if isinstance(value, (dict, list, set)):
         return deepcopy(value)
@@ -514,42 +517,106 @@ class _IncrementalGroup:
             unsupported_message="Unsupported $group accumulator",
         )
         self._groups: dict[Any, _AccumulatorBucket] = {}
+        self._first_positions: dict[Any, int] = {}
+        self._next_position = 0
+
+    @property
+    def group_count(self) -> int:
+        return len(self._groups)
+
+    def group_id(self, document: Document) -> Any:
+        return evaluate_expression(
+            document,
+            self._id_expression,
+            self._variables,
+            dialect=self._dialect,
+        )
+
+    @staticmethod
+    def group_key(group_id: Any) -> Any:
+        return _aggregation_key(group_id)
 
     def consume(self, documents: Iterable[Document]) -> None:
         for document in iter_with_deadline(documents, self._deadline):
-            group_id = evaluate_expression(
-                document,
-                self._id_expression,
-                self._variables,
-                dialect=self._dialect,
-            )
-            group_key = _aggregation_key(group_id)
-            if group_key not in self._groups:
-                self._groups[group_key] = _AccumulatorBucket(
-                    bucket_id=_copy_if_mutable(group_id),
-                    values=_create_accumulator_state(
-                        self._prepared,
-                        unsupported_message="Unsupported $group accumulator",
-                    ),
-                )
-            _apply_accumulators(
-                self._groups[group_key],
-                self._prepared,
-                document,
-                self._variables,
-                dialect=self._dialect,
-                collation=self._collation,
-                **self._runtime,
-            )
+            self.consume_document(document)
 
-    def finish(self) -> list[Document]:
+    def consume_document(
+        self,
+        document: Document,
+        *,
+        group_id: Any = _UNEVALUATED_GROUP_ID,
+        position: int | None = None,
+    ) -> Any:
+        if position is None:
+            position = self._next_position
+        self._next_position = max(self._next_position, position + 1)
+        if group_id is _UNEVALUATED_GROUP_ID:
+            group_id = self.group_id(document)
+        group_key = self.group_key(group_id)
+        if group_key not in self._groups:
+            self._groups[group_key] = _AccumulatorBucket(
+                bucket_id=_copy_if_mutable(group_id),
+                values=_create_accumulator_state(
+                    self._prepared,
+                    unsupported_message="Unsupported $group accumulator",
+                ),
+            )
+            self._first_positions[group_key] = position
+        _apply_accumulators(
+            self._groups[group_key],
+            self._prepared,
+            document,
+            self._variables,
+            dialect=self._dialect,
+            collation=self._collation,
+            **self._runtime,
+        )
+        return group_key
+
+    def release_buckets(self) -> list[tuple[Any, _AccumulatorBucket, int]]:
+        buckets = [
+            (group_key, bucket, self._first_positions[group_key])
+            for group_key, bucket in self._groups.items()
+        ]
+        self._groups = {}
+        self._first_positions = {}
+        return buckets
+
+    def adopt_bucket(
+        self,
+        group_key: Any,
+        bucket: _AccumulatorBucket,
+        *,
+        first_position: int,
+    ) -> None:
+        if group_key in self._groups:
+            message = "partition contains duplicate initial group state"
+            raise RuntimeError(message)
+        self._groups[group_key] = bucket
+        self._first_positions[group_key] = first_position
+        self._next_position = max(self._next_position, first_position + 1)
+
+    def finish_positioned_items(self) -> list[tuple[int, Any, Document]]:
         return [
-            _finalize_accumulators(bucket)
-            for bucket in iter_with_deadline(
-                self._groups.values(),
+            (
+                self._first_positions[group_key],
+                group_key,
+                _finalize_accumulators(bucket),
+            )
+            for group_key, bucket in iter_with_deadline(
+                self._groups.items(),
                 self._deadline,
             )
         ]
+
+    def finish_items(self) -> list[tuple[Any, Document]]:
+        return [
+            (group_key, document)
+            for _position, group_key, document in self.finish_positioned_items()
+        ]
+
+    def finish(self) -> list[Document]:
+        return [document for _group_key, document in self.finish_items()]
 
 
 def _apply_bucket(  # noqa: PLR0913

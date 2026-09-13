@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import heapq
+import hashlib
 import os
+import pickle
 import tempfile
 
 from contextlib import ExitStack, suppress
@@ -35,6 +37,224 @@ BLOCKING_AGGREGATION_STAGES = frozenset(
     }
 )
 _MAX_SORT_MERGE_FAN_IN = 32
+_GROUP_PARTITION_FAN_OUT = 32
+_GROUP_PARTITION_DIGEST_BITS = 256
+
+
+class _AggregationGroupStateSerializationError(TypeError):
+    pass
+
+
+class AggregationGroupSpool:
+    """Partition accumulator state after its live group set crosses a threshold."""
+
+    def __init__(
+        self,
+        *,
+        threshold: int,
+        codec: type[DocumentCodec],
+        group_id_for_document,
+        group_key_for_id,
+        deadline: float | None,
+    ) -> None:
+        self._threshold = threshold
+        self._codec = codec
+        self._group_id_for_document = group_id_for_document
+        self._group_key_for_id = group_key_for_id
+        self._deadline = deadline
+        self._checkpoint = DeadlineCheckpoint(deadline)
+        self._writers = {}
+        self._partition_paths = {}
+        self._temporary_paths: set[str] = set()
+        self._sequence = 0
+        self._finished = False
+        self._closed = False
+
+    @property
+    def spilled(self) -> bool:
+        return bool(self._partition_paths)
+
+    @property
+    def partition_count(self) -> int:
+        return len(self._partition_paths)
+
+    def seed(self, buckets, *, next_sequence: int) -> None:
+        if self._writers or self._finished or self._closed:
+            message = "aggregation group spool was already seeded"
+            raise RuntimeError(message)
+        self._sequence = next_sequence
+        try:
+            for group_key, bucket, first_position in buckets:
+                digest = self._group_digest(bucket.bucket_id)
+                self._write_partition_record(
+                    ("state", group_key, bucket, first_position, digest),
+                    depth=0,
+                )
+        except (pickle.PickleError, TypeError, AttributeError) as exc:
+            self.close()
+            message = "aggregation group state cannot be serialized internally"
+            raise _AggregationGroupStateSerializationError(message) from exc
+        except BaseException:
+            self.close()
+            raise
+
+    def add(self, documents: Iterable[Document]) -> None:
+        if not self._writers or self._finished or self._closed:
+            message = "aggregation group spool no longer accepts input"
+            raise RuntimeError(message)
+        try:
+            for document in iter_with_deadline(documents, self._deadline):
+                group_id = self._group_id_for_document(document)
+                group_key = self._group_key_for_id(group_id)
+                digest = self._group_digest(group_id)
+                encoded = self._codec.encode(
+                    {"groupId": group_id, "document": document}
+                )
+                record = ("document", self._sequence, group_key, encoded, digest)
+                self._sequence += 1
+                self._write_partition_record(record, depth=0)
+        except BaseException:
+            self.close()
+            raise
+
+    def iter_partitions(self):
+        if self._finished or self._closed:
+            message = "aggregation group spool was already finished"
+            raise RuntimeError(message)
+        self._finished = True
+        self._close_writers()
+
+        def owned_partitions():
+            try:
+                initial_paths = list(self._partition_paths.values())
+                self._partition_paths.clear()
+                for path in initial_paths:
+                    for bounded_path in self._bounded_partition_paths(path, depth=1):
+                        try:
+                            yield self._read_public_records(bounded_path)
+                        finally:
+                            self._unlink(bounded_path)
+            finally:
+                self.close()
+
+        return owned_partitions()
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        self._close_writers()
+        self._partition_paths.clear()
+        for path in tuple(self._temporary_paths):
+            self._unlink(path)
+
+    def _write_partition_record(self, record, *, depth: int) -> None:
+        partition = self._partition_index(record[4], depth)
+        writer = self._writers.get(partition)
+        if writer is None:
+            writer, path = self._open_temporary_partition()
+            self._writers[partition] = writer
+            self._partition_paths[partition] = path
+        self._write_record(writer, record)
+
+    def _open_temporary_partition(self):
+        # The spool owns this handle across multiple bounded `add()` calls.
+        handle = tempfile.NamedTemporaryFile(  # noqa: SIM115
+            mode="wb",
+            suffix=".mongoeco-agggroup",
+            delete=False,
+        )
+        self._temporary_paths.add(handle.name)
+        return handle, handle.name
+
+    def _write_record(self, handle, record) -> None:
+        pickle.dump(record, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def _read_records(self, path: str):
+        with Path(path).open("rb") as spilled:
+            while True:
+                self._checkpoint()
+                try:
+                    # Files are private, same-process artifacts owned by this spool.
+                    yield pickle.load(spilled)  # noqa: S301
+                except EOFError:
+                    return
+
+    def _read_public_records(self, path: str):
+        for record in self._read_records(path):
+            if record[0] == "state":
+                yield record
+                continue
+            payload = self._codec.decode(
+                record[3],
+                preserve_bson_wrappers=True,
+            )
+            yield (
+                "document",
+                record[1],
+                payload["groupId"],
+                payload["document"],
+                record[4],
+            )
+
+    def _bounded_partition_paths(self, path: str, *, depth: int):
+        keys = set()
+        for record in self._read_records(path):
+            keys.add(self._record_group_key(record))
+            if len(keys) > self._threshold:
+                break
+        if len(keys) <= self._threshold or depth * 5 >= _GROUP_PARTITION_DIGEST_BITS:
+            yield path
+            return
+
+        writers = {}
+        child_paths = {}
+        try:
+            for record in self._read_records(path):
+                partition = self._partition_index(record[4], depth)
+                writer = writers.get(partition)
+                if writer is None:
+                    writer, child_path = self._open_temporary_partition()
+                    writers[partition] = writer
+                    child_paths[partition] = child_path
+                self._write_record(writer, record)
+        except BaseException:
+            for writer in writers.values():
+                writer.close()
+            raise
+        for writer in writers.values():
+            writer.close()
+        self._unlink(path)
+        for child_path in child_paths.values():
+            yield from self._bounded_partition_paths(child_path, depth=depth + 1)
+
+    def _group_digest(self, group_id: object) -> str:
+        payload = json_dumps_compact(
+            self._codec.encode({"_id": group_id}),
+            sort_keys=False,
+        )
+        return hashlib.sha256(payload.encode()).hexdigest()
+
+    def _record_group_key(self, record):
+        if record[0] == "state":
+            return record[1]
+        return record[2]
+
+    @staticmethod
+    def _partition_index(digest: str, depth: int) -> int:
+        shift = depth * 5
+        return (int(digest, 16) >> shift) & (_GROUP_PARTITION_FAN_OUT - 1)
+
+    def _close_writers(self) -> None:
+        writers = self._writers
+        self._writers = {}
+        for writer in writers.values():
+            writer.close()
+
+    def _unlink(self, path: str) -> None:
+        with suppress(FileNotFoundError):
+            Path(path).unlink()
+        self._temporary_paths.discard(path)
 
 
 class AggregationSortSpool:
@@ -319,6 +539,21 @@ class AggregationSpillPolicy:
             sort=sort,
             dialect=dialect,
             collation=collation,
+            deadline=deadline,
+        )
+
+    def open_group_spool(
+        self,
+        *,
+        group_id_for_document,
+        group_key_for_id,
+        deadline: float | None = None,
+    ) -> AggregationGroupSpool:
+        return AggregationGroupSpool(
+            threshold=self.threshold,
+            codec=self.codec,
+            group_id_for_document=group_id_for_document,
+            group_key_for_id=group_key_for_id,
             deadline=deadline,
         )
 
