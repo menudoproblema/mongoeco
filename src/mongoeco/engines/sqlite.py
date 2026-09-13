@@ -13,7 +13,7 @@ import threading
 import time
 import uuid
 
-from collections.abc import AsyncIterable, Callable, Mapping
+from collections.abc import AsyncIterable, Callable, Iterable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, nullcontext, suppress
 from copy import deepcopy
@@ -193,7 +193,11 @@ from mongoeco.engines._sqlite_read_runtime import (
     explain_query_plan_sync as _sqlite_runtime_explain_query_plan_sync,
     plan_find_semantics_sync as _sqlite_runtime_plan_find_semantics_sync,
 )
-from mongoeco.engines._sqlite_reader import SQLiteScanReader, _owned_document_size
+from mongoeco.engines._sqlite_reader import (
+    SQLiteScanReader,
+    _owned_document_size,
+    _serialized_document_size_estimate,
+)
 from mongoeco.engines._sqlite_runtime import (
     SQLiteCacheState,
     SQLiteRuntimeState,
@@ -730,6 +734,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 "closeFailures": self._runtime_state.scan_close_failures,
                 "batchDocumentLimit": _ASYNC_SCAN_QUEUE_BATCH_SIZE,
                 "batchByteTarget": _ASYNC_SCAN_BATCH_BYTES,
+                "batchByteEstimateKind": "serialized-upper-bound-or-structural",
                 "batchExaminedLimit": self._scan_examined_limit,
                 "executorAdmission": executor_admission_stats(self._executor),
             }
@@ -6104,10 +6109,11 @@ class SQLiteEngine(AsyncStorageEngine):
         if not reader.owns_connection and semantics.limit != 1:
             rows = self._capture_shared_read_source(cursor, reader, payloads=True)
             cursor.close()
-        source = (self._deserialize_document(payload) for (payload,) in rows)
         if execution_plan.apply_python_sort:
+            source = (self._deserialize_document(payload) for (payload,) in rows)
             return iter(finalize_documents(source, semantics))
         if execution_plan.apply_python_residual:
+            source = (self._deserialize_document(payload) for (payload,) in rows)
             residual_query_plan = execution_plan.residual_query_plan
             if residual_query_plan is None:
                 message = "SQLite residual plan is missing its query plan"
@@ -6118,11 +6124,30 @@ class SQLiteEngine(AsyncStorageEngine):
                 compiled_query=None,
             )
             return FiniteDocumentScan(source, residual_semantics)
+        return self._project_sql_scan_rows(rows, semantics, reader)
+
+    def _project_sql_scan_rows(
+        self,
+        rows: Iterable[tuple[str]],
+        semantics: EngineFindSemantics,
+        reader: SQLiteScanReader,
+    ) -> Iterator[Document]:
+        if semantics.projection is None:
+            if self._codec is DocumentCodec:
+                return (
+                    reader.attach_size_hint(
+                        self._deserialize_document(payload),
+                        _serialized_document_size_estimate(payload),
+                    )
+                    for (payload,) in rows
+                )
+            return (self._deserialize_document(payload) for (payload,) in rows)
         project = _ProjectionExecutor(
             semantics.projection,
             selector_filter=semantics.filter_spec,
             dialect=semantics.dialect,
         )
+        source = (self._deserialize_document(payload) for (payload,) in rows)
         return (project(document) for document in source)
 
     @staticmethod

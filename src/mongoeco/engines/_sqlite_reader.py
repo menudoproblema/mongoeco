@@ -24,6 +24,9 @@ if TYPE_CHECKING:
     from mongoeco.types import Document
 
 
+_SERIALIZED_TREE_SIZE_FACTOR = 64
+
+
 def _owned_document_size(document: Document) -> int:
     """Conservative Python-container cost, not RSS or a native allocation limit."""
     pending: list[object] = [document]
@@ -45,6 +48,11 @@ def _owned_document_size(document: Document) -> int:
         elif is_sequence:
             pending.extend(value)
     return size
+
+
+def _serialized_document_size_estimate(payload: str | bytes) -> int:
+    """Cheap conservative target for trees decoded by the built-in JSON codec."""
+    return sys.getsizeof(payload) * _SERIALIZED_TREE_SIZE_FACTOR
 
 
 @dataclass(slots=True)
@@ -95,11 +103,20 @@ class SQLiteScanReader:
         self._lock = threading.RLock()
         self._documents: Iterator[Document] | None = None
         self._resources: list[object] = []
+        self._document_size_hints: dict[int, int] = {}
         self._delivered = 0
 
     def own(self, resource: object) -> None:
         """Retain physical cursors even when iterator adapters do not close them."""
         self._resources.append(resource)
+
+    def attach_size_hint(self, document: Document, estimated_bytes: int) -> Document:
+        """Carry a one-use size estimate without changing the public document."""
+        self._document_size_hints[id(document)] = estimated_bytes
+        return document
+
+    def _take_size_hint(self, document: Document) -> int | None:
+        return self._document_size_hints.pop(id(document), None)
 
     def _binding(self):
         if self.connection is None:
@@ -225,7 +242,12 @@ class SQLiteScanReader:
                     batch.exhausted = True
                     break
                 batch.documents.append(document)
-                batch.estimated_bytes += _owned_document_size(document)
+                size_hint = self._take_size_hint(document)
+                batch.estimated_bytes += (
+                    size_hint
+                    if size_hint is not None
+                    else _owned_document_size(document)
+                )
                 self._delivered += 1
                 if self.semantics.limit and self._delivered >= self.semantics.limit:
                     batch.exhausted = True
@@ -249,6 +271,7 @@ class SQLiteScanReader:
             with self._connection_guard(), self._binding():
                 resources = self._resources
                 self._resources = []
+                self._document_size_hints.clear()
                 if self._documents is not None:
                     resources.append(self._documents)
                     self._documents = None

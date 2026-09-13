@@ -376,6 +376,15 @@ estructurales del planner (`sort`, `collation`, `array-comparison`,
 como backlog tecnico observable y no solo como diagnostico de una query
 concreta.
 
+El lector SQLite ejecuta apertura, fetch y cierre como trabajos finitos. Para
+la ruta SQL sin proyeccion y con el codec JSON propio, el target interno de
+bytes reutiliza el tamaño del payload serializado con un multiplicador
+conservador; evita volver a recorrer todos los contenedores justo despues de
+deserializarlos. Proyecciones, fallbacks y codecs personalizados conservan la
+estimacion estructural. Ambas son estimaciones de admision de lote, no limites
+publicos ni medidas de RSS; el limite de documentos y el cierre propietario no
+cambian.
+
 ## Schema validation
 
 La validacion de coleccion se compila desde las opciones de la coleccion y se

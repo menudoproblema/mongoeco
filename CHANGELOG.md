@@ -86,7 +86,10 @@ usa Semantic Versioning.
 - La estimacion de bytes de lotes SQLite visita una sola vez los contenedores
   compartidos o ciclicos, pero no mantiene identidades para escalares
   inmutables. Conserva una estimacion conservadora y reduce el coste por fila
-  sin convertir el objetivo de lote en un limite publico.
+  sin convertir el objetivo de lote en un limite publico. Los scans SQL sin
+  proyeccion que usan el codec propio derivan esa reserva del payload ya leido
+  y evitan un segundo recorrido completo; fallbacks y codecs personalizados
+  conservan el calculo estructural.
 - Las agregaciones bloqueantes sin spill comprueban el limite documental
   existente leyendo como maximo `limite + 1` filas. Un rechazo cierra el cursor
   fuente y ocurre antes de cargar colecciones referenciadas; el error y la

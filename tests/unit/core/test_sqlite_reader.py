@@ -2,6 +2,7 @@
 
 import asyncio
 import contextvars
+import json
 import sqlite3
 import subprocess
 import sys
@@ -13,7 +14,11 @@ from unittest.mock import patch
 import pytest
 
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.engines._sqlite_reader import SQLiteScanReader, _owned_document_size
+from mongoeco.engines._sqlite_reader import (
+    SQLiteScanReader,
+    _owned_document_size,
+    _serialized_document_size_estimate,
+)
 from mongoeco.engines.semantic_core import FiniteDocumentScan, compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine, _observe_scan_completion
 from mongoeco.engines.sqlite_planner import SQLiteReadExecutionPlan
@@ -47,6 +52,23 @@ def test_estimated_container_cost_handles_aliases_and_cycles():
     assert _owned_document_size(document) > len(shared[0])
 
 
+@pytest.mark.parametrize(
+    "document",
+    [
+        {},
+        {"items": [{} for _ in range(100)]},
+        {"nested": [[[[[0]]]]]},
+        {"values": [None, True, False, 0, "x"] * 20},
+    ],
+)
+def test_serialized_size_hint_conservatively_bounds_builtin_json_trees(document):
+    payload = json.dumps(document, separators=(",", ":"))
+
+    assert _serialized_document_size_estimate(payload) >= _owned_document_size(
+        document
+    )
+
+
 @pytest.mark.parametrize(["max_documents", "max_bytes"], [(0, 1), (1, 0), (-1, 1)])
 def test_batch_limits_must_be_positive_without_opening(
     engine, max_documents, max_bytes
@@ -75,6 +97,43 @@ def test_row_and_byte_targets_release_the_job_not_the_snapshot(engine):
         assert reader.fetch(1, 1).documents == []
     finally:
         reader.close()
+
+
+def test_default_sql_scan_reuses_payload_size_without_walking_document(engine):
+    reader = make_reader(engine)
+    try:
+        with patch(
+            "mongoeco.engines._sqlite_reader._owned_document_size",
+            side_effect=AssertionError("unexpected structural size walk"),
+        ):
+            batch = reader.fetch(64, 1024 * 1024)
+    finally:
+        reader.close()
+
+    assert batch.documents == [{"_id": str(index)} for index in range(5)]
+    assert batch.estimated_bytes > 0
+    assert batch.exhausted
+
+
+def test_fallback_scan_keeps_structural_size_estimation(engine, monkeypatch):
+    semantics = compile_find_semantics({})
+    monkeypatch.setattr(
+        engine,
+        "_open_scan_documents_sync",
+        lambda _reader: iter(({"_id": "fallback"},)),
+    )
+    reader = SQLiteScanReader(engine, "test", "records", semantics)
+    try:
+        with patch(
+            "mongoeco.engines._sqlite_reader._owned_document_size",
+            wraps=_owned_document_size,
+        ) as estimate:
+            batch = reader.fetch(64, 1024 * 1024)
+    finally:
+        reader.close()
+
+    assert batch.documents == [{"_id": "fallback"}]
+    estimate.assert_called_once_with(batch.documents[0])
 
 
 def test_empty_fallback_batches_stop_at_examined_row_quota(engine, monkeypatch):
