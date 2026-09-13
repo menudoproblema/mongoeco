@@ -91,6 +91,11 @@ usa Semantic Versioning.
   existente leyendo como maximo `limite + 1` filas. Un rechazo cierra el cursor
   fuente y ocurre antes de cargar colecciones referenciadas; el error y la
   semantica publica de `allowDiskUse` no cambian.
+- Cuando `$group` es el primer stage bloqueante tras el pushdown, aggregation
+  consume la fuente por lotes finitos y actualiza directamente su estado de
+  acumuladores. El prefijo streamable conserva ventanas globales, el caso sin
+  spill sigue leyendo como maximo `limite + 1` y el cursor se cierra al agotar,
+  fallar o alcanzar un limite; ya no se retiene la lista completa de entrada.
 - `$lookup` simple usa un indice hash efimero y acotado por la politica de
   materializacion para evitar el producto local por foreign. Conserva igualdad
   BSON, orden y duplicados observables; collation, pipelines, dialectos

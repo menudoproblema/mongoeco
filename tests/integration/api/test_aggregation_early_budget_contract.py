@@ -2,9 +2,12 @@
 
 import asyncio
 
+from unittest.mock import patch
+
 import pytest
 
 from mongoeco import AsyncMongoClient
+from mongoeco.api._async.cursor import AsyncCursor
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import OperationFailure
 
@@ -68,5 +71,40 @@ def test_blocking_pipeline_accepts_source_exactly_at_existing_limit():
                 {"_id": 1, "count": 2},
             ]
             assert engine.scanned_documents == _MATERIALIZATION_LIMIT
+
+    asyncio.run(exercise())
+
+
+def test_group_reads_source_by_batch_without_using_find_to_list():
+    async def exercise():
+        engine = MemoryEngine(aggregation_materialization_limit=None)
+        async with AsyncMongoClient(engine) as client:
+            collection = client.test.records
+            await collection.insert_many(
+                [{"_id": value, "group": value % 3} for value in range(_DOCUMENT_COUNT)]
+            )
+            with patch.object(
+                AsyncCursor,
+                "to_list",
+                side_effect=AssertionError("group source must be pulled by batch"),
+            ):
+                result = await collection.aggregate(
+                    [
+                        {
+                            "$group": {
+                                "_id": "$group",
+                                "count": {"$sum": 1},
+                            }
+                        },
+                        {"$sort": {"_id": 1}},
+                    ],
+                    batch_size=17,
+                ).to_list()
+
+            assert result == [
+                {"_id": 0, "count": 167},
+                {"_id": 1, "count": 167},
+                {"_id": 2, "count": 166},
+            ]
 
     asyncio.run(exercise())

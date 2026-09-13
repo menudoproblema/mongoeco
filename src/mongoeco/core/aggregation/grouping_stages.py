@@ -1,7 +1,8 @@
-from functools import cmp_to_key
-from copy import deepcopy
 import datetime
 import math
+from collections.abc import Iterable
+from copy import deepcopy
+from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -452,7 +453,7 @@ def _precompute_window_ranks(
 
 
 def _apply_group(  # noqa: PLR0913
-    documents: list[Document],
+    documents: Iterable[Document],
     spec: object,
     variables: dict[str, Any] | None = None,
     *,
@@ -470,47 +471,85 @@ def _apply_group(  # noqa: PLR0913
         except (OperationFailure, SyntaxError, TypeError, ValueError):
             pass
 
-    accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
-    accumulator_runtime = _build_accumulator_runtime(
-        dialect=dialect, collation=collation
-    )
-    prepared_accumulators = _prepare_accumulator_specs(
-        accumulator_specs,
+    accumulator = _IncrementalGroup(
+        spec,
+        variables,
         dialect=dialect,
-        support_checker=dialect.supports_group_accumulator,
-        unsupported_message="Unsupported $group accumulator",
+        collation=collation,
+        deadline=deadline,
     )
-    groups: dict[Any, _AccumulatorBucket] = {}
+    accumulator.consume(documents)
+    return accumulator.finish()
 
-    for document in iter_with_deadline(documents, deadline):
-        group_id = evaluate_expression(
-            document, spec["_id"], variables, dialect=dialect
-        )
-        group_key = _aggregation_key(group_id)
-        if group_key not in groups:
-            groups[group_key] = _AccumulatorBucket(
-                bucket_id=_copy_if_mutable(group_id),
-                values=_create_accumulator_state(
-                    prepared_accumulators,
-                    unsupported_message="Unsupported $group accumulator",
-                ),
-            )
 
-        bucket = groups[group_key]
-        _apply_accumulators(
-            bucket,
-            prepared_accumulators,
-            document,
-            variables,
+class _IncrementalGroup:
+    """Own group accumulator state without retaining its input documents."""
+
+    def __init__(
+        self,
+        spec: object,
+        variables: dict[str, Any] | None = None,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
+        deadline: float | None = None,
+    ) -> None:
+        if not isinstance(spec, dict) or "_id" not in spec:
+            message = "$group requires a document specification with _id"
+            raise OperationFailure(message)
+        self._id_expression = spec["_id"]
+        self._variables = variables
+        self._dialect = dialect
+        self._collation = collation
+        self._deadline = deadline
+        accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
+        self._runtime = _build_accumulator_runtime(
             dialect=dialect,
             collation=collation,
-            **accumulator_runtime,
         )
+        self._prepared = _prepare_accumulator_specs(
+            accumulator_specs,
+            dialect=dialect,
+            support_checker=dialect.supports_group_accumulator,
+            unsupported_message="Unsupported $group accumulator",
+        )
+        self._groups: dict[Any, _AccumulatorBucket] = {}
 
-    return [
-        _finalize_accumulators(bucket)
-        for bucket in iter_with_deadline(groups.values(), deadline)
-    ]
+    def consume(self, documents: Iterable[Document]) -> None:
+        for document in iter_with_deadline(documents, self._deadline):
+            group_id = evaluate_expression(
+                document,
+                self._id_expression,
+                self._variables,
+                dialect=self._dialect,
+            )
+            group_key = _aggregation_key(group_id)
+            if group_key not in self._groups:
+                self._groups[group_key] = _AccumulatorBucket(
+                    bucket_id=_copy_if_mutable(group_id),
+                    values=_create_accumulator_state(
+                        self._prepared,
+                        unsupported_message="Unsupported $group accumulator",
+                    ),
+                )
+            _apply_accumulators(
+                self._groups[group_key],
+                self._prepared,
+                document,
+                self._variables,
+                dialect=self._dialect,
+                collation=self._collation,
+                **self._runtime,
+            )
+
+    def finish(self) -> list[Document]:
+        return [
+            _finalize_accumulators(bucket)
+            for bucket in iter_with_deadline(
+                self._groups.values(),
+                self._deadline,
+            )
+        ]
 
 
 def _apply_bucket(  # noqa: PLR0913

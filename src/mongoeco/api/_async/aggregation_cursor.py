@@ -31,6 +31,7 @@ from mongoeco.core.aggregation import (
     is_streamable_aggregation_stage,
     split_pushdown_pipeline,
 )
+from mongoeco.core.aggregation.grouping_stages import _IncrementalGroup
 from mongoeco.core.aggregation.lookup_physical import (
     explain_lookup_physical_plans,
 )
@@ -108,6 +109,48 @@ class _StreamWindow:
         if self.end is None:
             return self.start, None
         return self.start, max(self.end - self.start, 0)
+
+
+@dataclass(frozen=True, slots=True)
+class _IncrementalGroupPlan:
+    prefix: Pipeline
+    prefix_skip: int
+    prefix_limit: int | None
+    group_spec: object
+    suffix: Pipeline
+
+
+class _CursorPageSource:
+    """Own a cursor iterator and expose one finite pull operation at a time."""
+
+    def __init__(self, cursor) -> None:
+        self._cursor = cursor
+        iterator_factory = getattr(cursor, "__aiter__", None)
+        self._iterator = iterator_factory() if callable(iterator_factory) else None
+        self._pull_chunk = getattr(self._iterator, "pull_chunk", None)
+        self._materialized: list[Document] | None = None
+        self._offset = 0
+
+    async def prepare(self) -> None:
+        if not callable(self._pull_chunk):
+            self._materialized = list(await self._cursor.to_list())
+
+    async def pull(self, maximum: int) -> list[Document]:
+        if callable(self._pull_chunk):
+            return list(await self._pull_chunk(maximum))
+        materialized = self._materialized or []
+        page = materialized[self._offset : self._offset + maximum]
+        self._offset += len(page)
+        return page
+
+    async def aclose(self) -> None:
+        close_cursor = getattr(self._cursor, "close", None)
+        if callable(close_cursor):
+            await close_cursor()
+            return
+        close_iterator = getattr(self._iterator, "aclose", None)
+        if callable(close_iterator):
+            await close_iterator()
 
 
 _SearchOptimizationStrategy = SearchPipelineStrategy
@@ -639,6 +682,49 @@ class AsyncAggregationCursor:
 
         trailing_skip, trailing_limit = trailing_window.as_skip_limit()
         return streamable_pipeline, trailing_skip, trailing_limit
+
+    @classmethod
+    def _split_incremental_group_pipeline(
+        cls,
+        pipeline: Pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+    ) -> _IncrementalGroupPlan | None:
+        local_prefix_operators = {
+            "$match",
+            "$project",
+            "$unset",
+            "$addFields",
+            "$set",
+            "$unwind",
+            "$replaceRoot",
+            "$replaceWith",
+            "$redact",
+            "$skip",
+            "$limit",
+        }
+        for index, stage in enumerate(pipeline):
+            if not isinstance(stage, dict) or len(stage) != 1:
+                return None
+            operator, spec = next(iter(stage.items()))
+            if operator == "$group":
+                prefix_split = cls._split_streamable_pipeline(
+                    pipeline[:index],
+                    dialect=dialect,
+                )
+                if prefix_split is None:
+                    return None
+                prefix, prefix_skip, prefix_limit = prefix_split
+                return _IncrementalGroupPlan(
+                    prefix=prefix,
+                    prefix_skip=prefix_skip,
+                    prefix_limit=prefix_limit,
+                    group_spec=spec,
+                    suffix=pipeline[index + 1 :],
+                )
+            if operator not in local_prefix_operators:
+                return None
+        return None
 
     def _collect_collection_names(self, pipeline: Pipeline) -> set[str]:
         names: set[str] = set()
@@ -1266,70 +1352,138 @@ class AsyncAggregationCursor:
             return applier(document)
         return document
 
-    async def _stream_batches(self) -> AsyncIterator[Document]:
-        _ensure_operation_executable(self._collection, self._operation)
-        self._ensure_session_can_use_engine()
-        if self._leading_search_stage() is not None:
-            for document in await self._materialize():
-                yield self._materialize_document(document)
-            return
-        effective_pipeline, writeback_stage = self._split_terminal_writeback_stage(
-            self._effective_pipeline(),
+    async def _stream_incremental_group(
+        self,
+        plan: _IncrementalGroupPlan,
+        *,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
+        spill_policy = self._spill_policy()
+        cost_policy = self._cost_policy()
+        probe_maximum = (
+            cost_policy.max_materialized_documents
+            if cost_policy is not None and spill_policy is None
+            else None
         )
-        if writeback_stage is not None:
-            for document in await self._materialize():
-                yield self._materialize_document(document)
-            return
-        if self._batch_size in (None, 0):
-            for document in await self._materialize():
-                yield self._materialize_document(document)
-            return
-
-        deadline = operation_deadline(self._max_time_ms)
-        dialect = getattr(
-            self._collection,
-            "mongodb_dialect",
-            MONGODB_DIALECT_70,
-        )
-        pushdown = split_pushdown_pipeline(effective_pipeline, dialect=dialect)
-        stream_plan = self._split_streamable_pipeline(
-            pushdown.remaining_pipeline,
+        page_size = self._batch_size or 256
+        accumulator = _IncrementalGroup(
+            plan.group_spec,
+            self._execution_variables(),
             dialect=dialect,
+            collation=self._collation,
+            deadline=deadline,
         )
-        if stream_plan is None:
-            for document in await self._materialize():
-                yield self._materialize_document(document)
-            return
+        remaining_skip = plan.prefix_skip
+        remaining_limit = plan.prefix_limit
+        source_count = 0
+        if remaining_limit != 0:
+            source_batch_size = (
+                page_size
+                if probe_maximum is None
+                else min(page_size, probe_maximum + 1)
+            )
+            source = _CursorPageSource(
+                self._build_pushdown_cursor(
+                    self._pushdown_find_operation(batch_size=source_batch_size),
+                )
+            )
+            try:
+                await source.prepare()
+                while remaining_limit != 0:
+                    requested = page_size
+                    if probe_maximum is not None:
+                        requested = min(
+                            requested,
+                            probe_maximum + 1 - source_count,
+                        )
+                    page = await source.pull(requested)
+                    if not page:
+                        break
+                    source_count += len(page)
+                    if (
+                        cost_policy is not None
+                        and probe_maximum is not None
+                        and source_count > probe_maximum
+                    ):
+                        cost_policy.enforce_budget(
+                            document_count=source_count,
+                            has_materializing_stage=True,
+                            spill_available=False,
+                        )
+                    enforce_deadline(deadline)
+                    transformed = apply_pipeline(
+                        page,
+                        plan.prefix,
+                        variables=self._execution_variables(),
+                        dialect=dialect,
+                        collation=self._collation,
+                        spill_policy=spill_policy,
+                        lookup_hash_max_associations=(
+                            self._lookup_hash_max_associations()
+                        ),
+                        deadline=deadline,
+                    )
+                    if remaining_skip:
+                        if len(transformed) <= remaining_skip:
+                            remaining_skip -= len(transformed)
+                            continue
+                        transformed = transformed[remaining_skip:]
+                        remaining_skip = 0
+                    if remaining_limit is not None:
+                        transformed = transformed[:remaining_limit]
+                        remaining_limit -= len(transformed)
+                    accumulator.consume(transformed)
+            finally:
+                await source.aclose()
 
+        result = accumulator.finish()
+        if plan.suffix:
+            referenced_collections = await self._load_referenced_collections()
+            result = apply_pipeline(
+                result,
+                plan.suffix,
+                collection_resolver=referenced_collections.get,
+                variables=self._execution_variables(),
+                dialect=dialect,
+                collation=self._collation,
+                spill_policy=spill_policy,
+                lookup_hash_max_associations=self._lookup_hash_max_associations(),
+                deadline=deadline,
+            )
+        for document in result:
+            yield self._materialize_document(
+                DocumentCodec.to_public(
+                    strip_search_result_metadata(document),
+                ),
+            )
+
+    async def _stream_windowed_pipeline(
+        self,
+        stream_plan: tuple[Pipeline, int, int | None],
+        *,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
         streamable_pipeline, trailing_skip, remaining_limit = stream_plan
         if remaining_limit == 0:
             return
-        source_cursor = None
-        source_iterator = None
+        page_size = self._batch_size
+        if page_size is None or page_size <= 0:
+            message = "windowed pipeline requires a positive batch size"
+            raise RuntimeError(message)
+        referenced_collections = await self._load_referenced_collections()
+        source = _CursorPageSource(
+            self._build_pushdown_cursor(
+                self._pushdown_find_operation(batch_size=page_size),
+            )
+        )
         try:
-            referenced_collections = await self._load_referenced_collections()
-            source_cursor = self._build_pushdown_cursor(
-                self._pushdown_find_operation(batch_size=self._batch_size),
-            )
-            source_iterator_factory = getattr(source_cursor, "__aiter__", None)
-            source_iterator = (
-                source_iterator_factory() if callable(source_iterator_factory) else None
-            )
-            pull_chunk = getattr(source_iterator, "pull_chunk", None)
-            materialized_source = (
-                None if callable(pull_chunk) else await source_cursor.to_list()
-            )
-            source_offset = 0
+            await source.prepare()
             while remaining_limit != 0:
-                if callable(pull_chunk):
-                    page = await pull_chunk(self._batch_size)
-                else:
-                    page = materialized_source[
-                        source_offset : source_offset + self._batch_size
-                    ]
-                    source_offset += len(page)
+                page = await source.pull(page_size)
                 if not page:
-                    return
+                    break
                 enforce_deadline(deadline)
                 transformed = apply_pipeline(
                     page,
@@ -1358,13 +1512,60 @@ class AsyncAggregationCursor:
                         ),
                     )
         finally:
-            close_source = getattr(source_cursor, "close", None)
-            if callable(close_source):
-                await close_source()
-            else:
-                close_iterator = getattr(source_iterator, "aclose", None)
-                if callable(close_iterator):
-                    await close_iterator()
+            await source.aclose()
+
+    async def _stream_batches(self) -> AsyncIterator[Document]:
+        _ensure_operation_executable(self._collection, self._operation)
+        self._ensure_session_can_use_engine()
+        if self._leading_search_stage() is not None:
+            for document in await self._materialize():
+                yield self._materialize_document(document)
+            return
+        effective_pipeline, writeback_stage = self._split_terminal_writeback_stage(
+            self._effective_pipeline(),
+        )
+        if writeback_stage is not None:
+            for document in await self._materialize():
+                yield self._materialize_document(document)
+            return
+
+        deadline = operation_deadline(self._max_time_ms)
+        dialect = getattr(
+            self._collection,
+            "mongodb_dialect",
+            MONGODB_DIALECT_70,
+        )
+        pushdown = split_pushdown_pipeline(effective_pipeline, dialect=dialect)
+        incremental_group = self._split_incremental_group_pipeline(
+            pushdown.remaining_pipeline,
+            dialect=dialect,
+        )
+        if incremental_group is not None:
+            async for document in self._stream_incremental_group(
+                incremental_group,
+                dialect=dialect,
+                deadline=deadline,
+            ):
+                yield document
+            return
+        if self._batch_size in (None, 0):
+            for document in await self._materialize():
+                yield self._materialize_document(document)
+            return
+        stream_plan = self._split_streamable_pipeline(
+            pushdown.remaining_pipeline,
+            dialect=dialect,
+        )
+        if stream_plan is None:
+            for document in await self._materialize():
+                yield self._materialize_document(document)
+            return
+        async for document in self._stream_windowed_pipeline(
+            stream_plan,
+            dialect=dialect,
+            deadline=deadline,
+        ):
+            yield document
 
     async def to_list(
         self,
@@ -1592,6 +1793,19 @@ class AsyncAggregationCursor:
         )
         pushdown_summary["streamingEligible"] = (
             self._batch_size not in (None, 0) and streaming_split is not None
+        )
+        incremental_group_plan = (
+            None
+            if self._leading_search_stage() is not None
+            else self._split_incremental_group_pipeline(
+                streamable_pipeline,
+                dialect=dialect,
+            )
+        )
+        pushdown_summary["incrementalGroupInput"] = incremental_group_plan is not None
+        pushdown_summary["sourceBatchExecution"] = bool(
+            pushdown_summary["streamingEligible"]
+            or pushdown_summary["incrementalGroupInput"]
         )
         pushdown_summary["streamableStageCount"] = (
             len(streaming_split[0]) if streaming_split is not None else 0

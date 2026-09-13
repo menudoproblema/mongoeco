@@ -41,9 +41,20 @@ from mongoeco.types import PlanningIssue, PlanningMode, SearchIndexModel
 class _FakeAsyncFindCursor:
     def __init__(self, documents):
         self._documents = documents
+        self._offset = 0
         self._plan = MatchAll()
         self.to_list_lengths = []
+        self.pull_chunk_sizes = []
         self.close_calls = 0
+
+    def __aiter__(self):
+        return self
+
+    async def pull_chunk(self, length):
+        self.pull_chunk_sizes.append(length)
+        page = self._documents[self._offset : self._offset + length]
+        self._offset += len(page)
+        return list(page)
 
     async def to_list(self, length=None):
         self.to_list_lengths.append(length)
@@ -1549,8 +1560,17 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         ):
             await cursor.to_list()
 
-        self.assertEqual(collection.last_find_cursor.to_list_lengths, [2])
+        self.assertEqual(collection.last_find_cursor.pull_chunk_sizes, [2])
+        self.assertEqual(collection.last_find_cursor.to_list_lengths, [])
         self.assertEqual(collection.last_find_cursor.close_calls, 1)
+
+        explanation = await AsyncAggregationCursor(
+            collection,
+            [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
+        ).explain()
+        self.assertTrue(explanation["pushdown"]["incrementalGroupInput"])
+        self.assertTrue(explanation["pushdown"]["sourceBatchExecution"])
+        self.assertFalse(explanation["pushdown"]["streamingEligible"])
         referenced_loader.assert_not_awaited()
 
     async def test_materialize_allows_large_blocking_pipeline_when_spill_is_available(
@@ -1571,6 +1591,69 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(await cursor.to_list(), [{"_id": "a", "count": 2}])
+
+    async def test_group_consumes_finite_source_pages_without_materializing_input(
+        self,
+    ):
+        collection = _FakeCollection(
+            [{"_id": index, "kind": index % 2} for index in range(5)]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [
+                {"$group": {"_id": "$kind", "count": {"$sum": 1}}},
+                {"$sort": {"_id": 1}},
+            ],
+            batch_size=2,
+        )
+
+        self.assertEqual(
+            await cursor.to_list(),
+            [{"_id": 0, "count": 3}, {"_id": 1, "count": 2}],
+        )
+        self.assertEqual(collection.last_find_cursor.to_list_lengths, [])
+        self.assertEqual(
+            collection.last_find_cursor.pull_chunk_sizes,
+            [2, 2, 2, 2],
+        )
+        self.assertEqual(collection.last_find_cursor.close_calls, 1)
+
+    async def test_unbatched_group_uses_bounded_internal_source_pages(self):
+        collection = _FakeCollection(
+            [{"_id": index, "kind": "same"} for index in range(300)]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$group": {"_id": "$kind", "count": {"$sum": 1}}}],
+        )
+
+        self.assertEqual(
+            await cursor.to_list(),
+            [{"_id": "same", "count": 300}],
+        )
+        self.assertEqual(collection.last_find_cursor.to_list_lengths, [])
+        self.assertEqual(
+            collection.last_find_cursor.pull_chunk_sizes,
+            [256, 256, 256],
+        )
+
+    def test_incremental_group_split_preserves_global_prefix_window(self):
+        plan = AsyncAggregationCursor._split_incremental_group_pipeline(
+            [
+                {"$project": {"kind": 1}},
+                {"$skip": 3},
+                {"$limit": 4},
+                {"$group": {"_id": "$kind", "count": {"$sum": 1}}},
+                {"$sort": {"_id": 1}},
+            ]
+        )
+
+        self.assertIsNotNone(plan)
+        self.assertEqual(plan.prefix, [{"$project": {"kind": 1}}])
+        self.assertEqual(plan.prefix_skip, 3)
+        self.assertEqual(plan.prefix_limit, 4)
+        self.assertEqual(plan.group_spec["_id"], "$kind")
+        self.assertEqual(plan.suffix, [{"$sort": {"_id": 1}}])
 
     async def test_aggregation_cursor_merge_helpers_cover_validation_and_target_paths(
         self,
