@@ -1,6 +1,6 @@
 # Release 4.7.0
 
-Status: candidata local preparada; no publicada ni etiquetada.
+Status: publicada el 13 de septiembre de 2026.
 
 ## Resumen
 
@@ -67,12 +67,23 @@ mediana; su peor delta es +6.34%, tambien dentro del umbral. Los smokes Search
 y vectorSearch de Memory/SQLite terminan correctamente.
 
 Los informes locales viven en `/tmp/mongoeco-470-spi-v2-only-*.{json,md}` y
-no forman parte del artefacto. Los servicios MongoDB 7.0/8.0 no estaban
-disponibles localmente: el diferencial real requerido para publicar un tag
-debe ejecutarse en CI. Los gates remotos y la publicacion requieren
-autorizacion posterior.
+no forman parte del artefacto. El
+[workflow de la etiqueta](https://github.com/menudoproblema/mongoeco/actions/runs/34754773839)
+acredita el build reproducible, imports minimos, suites instaladas en Python
+3.13 y 3.14 y los diferenciales requeridos contra MongoDB 7.0 y 8.0.
 
 ## Publicacion
 
-No se ha creado tag, release remota ni artefacto publicado. La publicacion solo
-puede realizarse tras revisar los commits y recibir autorizacion explicita.
+La etiqueta anotada `v4.7.0` apunta al commit
+`d16cd8dc1bc510d45416c978741358e04d893f2f`.
+
+El job de Trusted Publishing fallo despues de que todos los gates del tag
+pasaran. Los mismos artefactos reproducibles se publicaron mediante la
+credencial local de fallback, y el smoke de contrato se ejecuto desde PyPI en
+un entorno limpio. La version esta disponible en
+[PyPI](https://pypi.org/project/mongoeco/4.7.0/) con los hashes verificados:
+
+- `mongoeco-4.7.0-py3-none-any.whl`:
+  `155a585a437e99e9fa6c1a04b14a6b3aaa057ebc525b04b6dcb7f93a87946a47`.
+- `mongoeco-4.7.0.tar.gz`:
+  `e74f6a7a625a76dcc3e8fbf33586894cef75a5622f1c2c584ae4786865432642`.
