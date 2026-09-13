@@ -10,6 +10,7 @@ from mongoeco.engines._vector_index_cache import (
 
 
 _ENTRY_SIZE = 4
+_REPLACEMENT_SIZE = 5
 
 
 def test_vector_index_cache_evicts_lru_entries_by_shared_byte_capacity():
@@ -61,10 +62,10 @@ def test_vector_index_cache_rejects_negative_budgets_and_replaces_entries():
         size_of=lambda value, _limit: value,
     )
     cache["same"] = 3
-    cache["same"] = 5
+    cache["same"] = _REPLACEMENT_SIZE
 
-    assert cache["same"] == 5
-    assert cache.stats()["estimatedBytes"] == 5
+    assert cache["same"] == _REPLACEMENT_SIZE
+    assert cache.stats()["estimatedBytes"] == _REPLACEMENT_SIZE
 
 
 def test_materialized_index_estimator_counts_known_graphs_and_native_arrays():

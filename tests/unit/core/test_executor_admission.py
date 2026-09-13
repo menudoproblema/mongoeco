@@ -192,7 +192,8 @@ def test_release_skips_cancelled_closed_and_unwakeupable_waiters():
 
         @staticmethod
         def call_soon_threadsafe(*_args):
-            raise RuntimeError("loop stopped")
+            message = "loop stopped"
+            raise RuntimeError(message)
 
     async def exercise():
         admission = ExecutorAdmission(1)

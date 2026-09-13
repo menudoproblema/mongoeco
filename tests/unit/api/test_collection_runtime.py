@@ -22,7 +22,8 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         class AdapterStub:
             @staticmethod
             def prepare_change_delivery(_sink):
-                raise RuntimeError("engine is not connected")
+                message = "engine is not connected"
+                raise RuntimeError(message)
 
         collection = SimpleNamespace(
             _validated_engine_spi=AdapterStub(),
