@@ -133,6 +133,15 @@ python -m benchmarks.run \
   --workload search_diagnostics \
   --workload vector_search_diagnostics \
   --format json
+
+python -m benchmarks.report \
+  --engine all \
+  --size 100000 \
+  --warmup 1 \
+  --repetitions 5 \
+  --workload aggregation_spill_diagnostics \
+  --output-json benchmarks/reports/pre-release-spill-100000.json \
+  --output-markdown benchmarks/reports/pre-release-spill-100000.md
 ```
 
 El JSON debe usar `mongoeco-benchmark-report/v2`. Una comparacion acreditada
@@ -142,6 +151,10 @@ artefactos con dataset, harness, engines o entorno incompatibles. Un informe
 historico sin schema se conserva como referencia, no como gate porcentual. El
 pico RSS se muestrea durante la operacion y el informe declara su resolucion;
 no se infiere de dos lecturas al inicio y al final.
+El diagnostico de spill debe usar un `--size` estrictamente mayor que el umbral
+configurado (10.000 en los adapters propios por defecto); el caso de baja
+cardinalidad acredita que una entrada grande no activa I/O y el de alta
+cardinalidad acredita el camino particionado y la entrega de la primera fila.
 
 ## 5. Decision final
 

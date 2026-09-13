@@ -27,6 +27,7 @@ from benchmarks.engines.mongoeco_mem import MongoecoMemoryEngine
 from benchmarks.engines.mongoeco_sql import MongoecoSQLEngine
 from benchmarks.runners.metrics import summarize
 from benchmarks.runners.workloads import (
+    aggregation_spill_diagnostics,
     cursor_consumption,
     filter_selectivity,
     materializing_aggregation,
@@ -65,6 +66,7 @@ WORKLOADS = {
     "secondary_lookup_diagnostics": secondary_lookup_diagnostics,
     "simple_aggregation": simple_aggregation,
     "materializing_aggregation": materializing_aggregation,
+    "aggregation_spill_diagnostics": aggregation_spill_diagnostics,
     "sort_limit": sort_limit,
     "cursor_consumption": cursor_consumption,
     "filter_selectivity": filter_selectivity,
@@ -89,6 +91,7 @@ WORKLOAD_ORDER = (
     "secondary_lookup_diagnostics",
     "simple_aggregation",
     "materializing_aggregation",
+    "aggregation_spill_diagnostics",
     "sort_limit",
     "cursor_consumption",
     "filter_selectivity",

@@ -572,6 +572,87 @@ def materializing_aggregation(
         engine.teardown()
 
 
+def aggregation_spill_diagnostics(
+    engine: BenchmarkEngine,
+    count: int,
+) -> dict[str, Any]:
+    """Separate low-cardinality state from a high-cardinality spill candidate."""
+    db_name, coll_name, docs = _load_users(engine, count)
+    spill_threshold = getattr(engine, "spill_threshold", None)
+    low_group_count = len({document.get("city") for document in docs})
+    low_cardinality = [
+        {"$group": {"_id": "$city", "count": {"$sum": 1}}},
+    ]
+    high_cardinality = [
+        {"$group": {"_id": "$_id", "count": {"$sum": 1}}},
+    ]
+    try:
+        low_metadata = _summarize_aggregate_explain(
+            engine.explain_aggregate(
+                db_name,
+                coll_name,
+                low_cardinality,
+                allow_disk_use=True,
+            )
+        )
+        low_metadata.update(
+            {
+                "pipeline_shape": "group-low-cardinality-first",
+                "expected_group_cardinality": low_group_count,
+                "spill_threshold": spill_threshold,
+                "spill_expected": (
+                    low_group_count > spill_threshold
+                    if isinstance(spill_threshold, int)
+                    else None
+                ),
+            }
+        )
+        high_metadata = _summarize_aggregate_explain(
+            engine.explain_aggregate(
+                db_name,
+                coll_name,
+                high_cardinality,
+                allow_disk_use=True,
+            )
+        )
+        high_metadata.update(
+            {
+                "pipeline_shape": "group-high-cardinality-first",
+                "expected_group_cardinality": count,
+                "spill_threshold": spill_threshold,
+                "spill_expected": (
+                    count > spill_threshold
+                    if isinstance(spill_threshold, int)
+                    else None
+                ),
+            }
+        )
+        return {
+            "group_low_cardinality_first": _measure_single_task(
+                [],
+                callback=lambda: engine.aggregate_first(
+                    db_name,
+                    coll_name,
+                    low_cardinality,
+                    allow_disk_use=True,
+                ),
+                metadata=low_metadata,
+            ),
+            "group_high_cardinality_first": _measure_single_task(
+                [],
+                callback=lambda: engine.aggregate_first(
+                    db_name,
+                    coll_name,
+                    high_cardinality,
+                    allow_disk_use=True,
+                ),
+                metadata=high_metadata,
+            ),
+        }
+    finally:
+        engine.teardown()
+
+
 def sort_limit(engine: BenchmarkEngine, count: int) -> dict[str, Any]:
     """Compara sort+limit con y sin indice sobre el campo de ordenacion."""
     indexed_metrics: list[Metrics] = []

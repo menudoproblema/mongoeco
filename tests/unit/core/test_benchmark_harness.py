@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 from benchmarks.contracts import REPORT_SCHEMA, compare_reports, validate_report
 from benchmarks.engines.mongoeco_async import MongoecoSQLiteAsyncEngine
+from benchmarks.engines.mongoeco_mem import MongoecoMemoryEngine
 from benchmarks.engines.mongoeco_sql import MongoecoSQLEngine
 from benchmarks.report import main as report_main, render_markdown_report
 from benchmarks.run import (
@@ -20,6 +21,7 @@ from benchmarks.runners.workloads import (
     _augment_search_documents,
     _outcome_sha256,
     _summarize_aggregate_explain,
+    aggregation_spill_diagnostics,
 )
 
 
@@ -189,6 +191,23 @@ class BenchmarkHarnessTests(unittest.TestCase):
             )
         async_adapter.teardown()
 
+    def test_aggregation_spill_diagnostics_crosses_only_high_cardinality_limit(self):
+        results = aggregation_spill_diagnostics(
+            MongoecoMemoryEngine(spill_threshold=10),
+            12,
+        )
+
+        low_metadata = results["group_low_cardinality_first"]["metadata"]
+        high_metadata = results["group_high_cardinality_first"]["metadata"]
+        self.assertFalse(low_metadata["spill_expected"])
+        self.assertTrue(high_metadata["spill_expected"])
+        self.assertLessEqual(low_metadata["expected_group_cardinality"], 10)
+        self.assertEqual(high_metadata["expected_group_cardinality"], 12)
+        self.assertEqual(
+            low_metadata["outcome_oracle"],
+            high_metadata["outcome_oracle"],
+        )
+
     def test_ann_oracle_allows_candidate_variation_but_rejects_duplicates(self):
         first = [[{"_id": 1, "score": 1.0}, {"_id": 2, "score": 0.9}]]
         second = [[{"_id": 3, "score": 0.8}, {"_id": 4, "score": 0.7}]]
@@ -269,6 +288,12 @@ class BenchmarkHarnessTests(unittest.TestCase):
         self.assertEqual(
             resolve_workload_names(["search_diagnostics", "vector_search_diagnostics"]),
             ("search_diagnostics", "vector_search_diagnostics"),
+        )
+
+    def test_resolve_workload_names_supports_aggregation_spill_diagnostics(self):
+        self.assertEqual(
+            resolve_workload_names(["aggregation_spill_diagnostics"]),
+            ("aggregation_spill_diagnostics",),
         )
 
     def test_render_markdown_report_can_limit_output_to_selected_workloads(self):

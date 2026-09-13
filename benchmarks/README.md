@@ -21,6 +21,7 @@ The suite currently covers these workload groups:
 - `secondary_lookup_diagnostics`
 - `simple_aggregation`
 - `materializing_aggregation`
+- `aggregation_spill_diagnostics`
 - `sort_limit`
 - `cursor_consumption`
 - `filter_selectivity`
@@ -39,6 +40,11 @@ Each group is designed to answer a specific question:
 - sort diagnostics separate `limit` top-k behavior from full sort behavior
 - aggregation workloads distinguish mostly-streamable pipelines from clearly
   materializing pipelines
+- aggregation spill diagnostics contrast a large low-cardinality group with a
+  high-cardinality group, consume only `first()`, and record the configured
+  threshold, whether spill is expected, and the partition/output candidates
+  reported by `explain()`; use a dataset larger than the configured threshold
+  to exercise the spill path (the built-in adapters default to `10_000`)
 - search diagnostics isolate local `$search` operators and surface the real
   backend (`fts5`, materialized prefilter paths or Python fallback), including
   hybrid `compound` and `compound+near` shapes

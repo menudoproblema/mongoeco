@@ -146,7 +146,10 @@ usa Semantic Versioning.
   Los workloads exactos fijan toda la salida ordenada; ANN declara un oraculo
   mas estrecho de cardinalidad, shape y unicidad sin congelar vecinos
   aproximados validos. El pico RSS se muestrea durante cada operacion en vez de
-  inferirse solo de sus extremos, con resolucion declarada en el artefacto.
+  inferirse solo de sus extremos, con resolucion declarada en el artefacto. Un
+  diagnostico de agregacion separa grupos de baja y alta cardinalidad, consume
+  solo la primera fila y registra umbral, expectativa de spill y candidatos de
+  plan para medir coste y memoria del camino particionado.
 
 ### Fixed
 
