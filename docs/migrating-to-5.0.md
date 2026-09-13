@@ -2,8 +2,10 @@
 
 ## Estado
 
-Esta guia prepara la migracion, pero 5.0 y sus contratos sucesores aun no se
-han publicado. En 4.6 siguen operativos SPI v1, SPI v2 y `search-v1`.
+MongoEco 5.0 y sus contratos no se han publicado. La linea 4.7 expone SPI v2
+como unico engine SPI estable y mantiene `search-v1`. Los engines anteriores se
+migran mediante la [guia de 4.7](migrating-to-4.7.md), no mediante una futura
+release.
 
 ## Inventario previo
 
@@ -22,56 +24,9 @@ Conserva el manifest de tu version actual y comparalo durante la actualizacion:
 python scripts/update_public_api_manifest.py --compare path/to/baseline.json
 ```
 
-## SPI v1 a SPI v2
-
-1. declara `EngineCapabilities(spi_version=2, ...)`;
-2. sustituye `put_document` y `put_documents_bulk` por
-   `insert_document`/`insert_documents`;
-3. acepta `OperationContext` en cada primitiva;
-4. devuelve `InsertOutcome`, `MutationOutcome`, `DeleteOutcome` y
-   `MergeOutcome`;
-5. implementa snapshot estable o declara el fallback v2;
-6. declara change delivery y sus primitivas;
-7. elimina flags `capture_document(s)` y callbacks `on_commit` de la semantica
-   nativa.
-
-Verificacion:
-
-```bash
-python -m mongoeco.conformance package.engine:factory \
-  --format json \
-  --output conformance-spi-v2.json \
-  --require-success
-```
-
-## SPI v2 a SPI v3
-
-Cuando SPI v3 exista, no cambies una clase v2 in place. Publica una factory v3
-que:
-
-- reciba solo `BoundFindOperation`, `BoundUpdateOperation` y
-  `BoundAggregateOperation`;
-- use exclusivamente el `OperationContext` ligado;
-- no normalice BSON ni recapture el reloj;
-- mantenga outcomes tipados y devuelva `ReadSnapshotV3`, sin heredar ni
-  modificar `ReadSnapshot` de SPI v2;
-- entregue la liberacion a un unico `SnapshotRelease` propiedad del runtime;
-  un finalizador solo solicita cierre y nunca ejecuta cleanup externo inline;
-- declare capabilities v3.
-
-Ejecuta perfiles v2 y v3 por separado hasta retirar deliberadamente la factory
-antigua. Una instancia no debe negociar version metodo por metodo.
-
-## Escrituras, outcomes y snapshots
-
-Los booleanos o documentos opcionales de SPI v1 deben convertirse en outcomes
-al cruzar el adapter, no dentro del consumidor. Captura before/after dentro de
-la misma seccion atomica. Un no-match no lleva secuencia ni evento.
-
-Todo cursor v2 debe cerrar el snapshot que posee. En v3 solicita cierre al
-`SnapshotRelease` y puede esperar su resultado, pero no se convierte en owner
-del cleanup. No conserves iteradores del engine fuera del snapshot versionado
-ni reconstruyas identidad de operacion.
+No anticipes contratos de engine no publicados. Una evolucion posterior debe
+tener decision, tipos, conformance y ventana de migracion propios sin cambiar
+silenciosamente el significado de SPI v2.
 
 ## Search v1 a v2
 
@@ -111,7 +66,7 @@ installs.
 ## Checklist de salida
 
 - catalogo revisado sin elementos `decision-pending` relevantes;
-- conformance de cada SPI/Search declarada;
+- conformance de cada contrato declarado;
 - diff de API aprobado;
 - base SQLite copiada y verificada;
 - ausencia de warnings deprecados durante la suite consumidora;

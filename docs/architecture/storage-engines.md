@@ -23,8 +23,8 @@ Esto hace que el contrato se describa por capacidades y no por herencia forzada.
 La API no inspecciona ya cada engine con flags privados. `EngineCapabilities`
 declara la version del SPI, snapshots y estrategia de entrega de cambios. Los
 engines v2 retornan siempre `MutationOutcome`, `DeleteOutcome`, `InsertOutcome`
-o `MergeOutcome`; `LegacyEngineAdapter` concentra la compatibilidad con
-retornos union, callbacks y `put_document` del SPI v1.
+o `MergeOutcome`. Desde MongoEco 4.7, una declaracion ausente o distinta de v2
+falla al construir la frontera del engine.
 
 Toda operacion CRUD o lectura compilada del SPI v2 recibe un
 `OperationContext` inmutable creado en el borde publico. Ese objeto captura una
@@ -55,8 +55,7 @@ El supervisor conserva todas las obligaciones async que siguen activas y las
 retira al terminar; superar su umbral diagnostico registra presion, pero no
 cancela el unico cleanup responsable de un recurso. Ese conjunto puede crecer
 con fuentes externas atascadas: SPI v2 no declara admision de snapshots y no se
-presenta el umbral como cota real. La propuesta SPI v3 liga esa cota a un lease
-adquirido antes del recurso.
+presenta el umbral como cota real.
 
 ## `MemoryEngine`
 

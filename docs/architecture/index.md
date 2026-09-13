@@ -38,14 +38,13 @@ completa de verdad de la estructura interna.
 4. [storage-engines.md](storage-engines.md)
 5. [engine-spi-v2.md](engine-spi-v2.md)
 6. [search-contract-v1.md](search-contract-v1.md)
-7. [Propuesta SPI v3](engine-spi-v3-proposal.md)
+7. [Frontera del Engine SPI](engine-adapter-versioning.md)
 8. [Propuesta search-v2](search-contract-v2-proposal.md)
-9. [Arquitectura versionada de adapters](engine-adapter-versioning.md)
-10. [Public engine conformance](../engine-conformance.md)
-11. [driver-and-wire.md](driver-and-wire.md)
-12. [change-streams-and-collation.md](change-streams-and-collation.md)
-13. [testing-and-compatibility.md](testing-and-compatibility.md)
-14. [decisions/index.md](decisions/index.md)
+9. [Public engine conformance](../engine-conformance.md)
+10. [driver-and-wire.md](driver-and-wire.md)
+11. [change-streams-and-collation.md](change-streams-and-collation.md)
+12. [testing-and-compatibility.md](testing-and-compatibility.md)
+13. [decisions/index.md](decisions/index.md)
 
 ## Patrones principales
 
@@ -88,7 +87,8 @@ Los patrones de diseno que aparecen de forma sistematica en el codigo son:
 | [ADR-013](decisions/ADR-013-observabilidad-search-con-estados-y-dominios-tipados.md) | Observabilidad | Las metricas Search declaran estado, dominio, exactitud y disponibilidad |
 | [ADR-014](decisions/ADR-014-informes-de-conformidad-versionados.md) | Conformance | Los informes usan schema y estados versionados |
 | [ADR-015](decisions/ADR-015-pushdown-sqlite-sujeto-a-prueba-de-equivalencia.md) | SQLite | Solo entra pushdown exacto, equivalente y medido |
-| [ADR-016](decisions/ADR-016-transicion-cohesiva-hacia-5.0.md) | Versionado | 4.6 es bridge y 5.0 retira solo contratos con convivencia verificable |
+| [ADR-016](decisions/ADR-016-transicion-cohesiva-hacia-5.0.md) | Versionado historico | Sustituido por ADR-017 para el calendario del engine SPI |
+| [ADR-017](decisions/ADR-017-spi-v2-exclusivo-en-4.7.md) | Engine SPI | 4.7 publica exclusivamente SPI v2 y elimina la inferencia y compatibilidad anterior |
 
 ## Limites conscientes del producto
 

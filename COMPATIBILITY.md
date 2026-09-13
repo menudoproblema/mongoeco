@@ -171,16 +171,13 @@ caducan.
 
 Los cursores de coleccion consumen snapshots `STABLE` con ownership y cierre
 explicitos. `MATERIALIZED` y `LIVE` existen como politicas declarables del SPI,
-pero los engines integrados no las usan para scans ordinarios. Un engine
-externo v1 se adapta mediante `LegacyEngineAdapter`; el SPI v2 exige
-`EngineCapabilities`, outcomes tipados y `OperationContext`. Un engine v2
+pero los engines integrados no las usan para scans ordinarios. El SPI v2 exige
+`EngineCapabilities`, outcomes tipados y `OperationContext`. Un engine
 puede declarar `explicit_read_snapshots=True` e implementar
 `open_read_snapshot`, o conservar el fallback compatible de 4.3.0 mediante
 `scan_find_semantics`; el adaptador envuelve este ultimo en un snapshot estable
-con la identidad de la operacion. Los flags heredados del SPI v1 no
-sobrescriben capabilities v2 declaradas. El adaptador v1 queda deprecado en
-4.3.0, emite
-`DeprecationWarning` y se retirara en 5.0.0.
+con la identidad de la operacion. Desde 4.7 no se infieren capabilities por
+shape ni existe una ruta de compatibilidad para otro SPI de engine.
 Los engines v2 pueden declarar `batch_inserts=False`; en ese caso MongoEco
 degrada a inserciones individuales sin exigir una primitiva batch inexistente.
 Las lecturas ordinarias rechazan snapshots que no sean `STABLE` o cuyo
@@ -223,9 +220,8 @@ TTL. No afecta a telemetría, handshakes, perfiles ni `ObjectId`.
 
 El contrato solo esta disponible en engines SPI v2 cuya
 `EngineCapabilities.injected_clock` sea `True`; Memory y SQLite lo soportan.
-Los flags privados de SPI v1 se interpretan exclusivamente dentro del adapter
-de compatibilidad 4.x. Un backend externo o real sin la capability lo rechaza
-al construir el cliente, para no ofrecer una falsa sensacion de determinismo.
+Un backend externo o real sin la capability lo rechaza al construir el cliente,
+para no ofrecer una falsa sensacion de determinismo.
 
 ## 1.1 Baseline soportado
 

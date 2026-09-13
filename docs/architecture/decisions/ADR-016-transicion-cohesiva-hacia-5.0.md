@@ -2,8 +2,10 @@
 
 ## Estado
 
-Aceptada como direccion de diseno. SPI v3 y `search-v2` siguen siendo
-propuestas y no forman parte del contrato ejecutable de 4.6.
+Sustituida parcialmente por
+[ADR-017](ADR-017-spi-v2-exclusivo-en-4.7.md) en lo relativo al engine SPI v1 y
+al calendario de su retirada. El resto conserva valor historico para la
+planificacion de Search y 5.0.
 
 ## Contexto
 

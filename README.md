@@ -163,8 +163,10 @@ Import guidance by layer:
 Custom storage engines should implement the versioned SPI v2 contract. The
 public capability, outcome, operation-context and snapshot types are exported
 from `mongoeco.engines`; see the
-[SPI v2 migration guide](docs/architecture/engine-spi-v2.md). SPI v1 remains a
-deprecated compatibility path until 5.0.0 and emits `DeprecationWarning`.
+[SPI v2 contract](docs/architecture/engine-spi-v2.md) and the
+[MongoEco 4.7 migration guide](docs/migrating-to-4.7.md). Starting with 4.7,
+SPI v2 is the only stable engine SPI and engine capabilities must be declared
+explicitly.
 
 ## Public Surface Stability (4.x)
 
@@ -503,13 +505,16 @@ numbers into docs.
 ## Project Status
 
 MongoEco 4.x is a stable package line governed by Semantic Versioning. The
-public API and engine SPI v2 are supported contracts; the legacy engine SPI v1
-remains available but deprecated until its planned removal in 5.0.0.
+public API and engine SPI v2 are supported contracts. MongoEco 4.7 deliberately
+removes the deprecated engine SPI v1 within a minor release; this documented
+exception to Semantic Versioning is a product decision, not an inferred
+compatibility guarantee.
 
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
-* [docs/release-4.6.1.md](docs/release-4.6.1.md)
+* [docs/release-4.7.0.md](docs/release-4.7.0.md)
+* [docs/migrating-to-4.7.md](docs/migrating-to-4.7.md)
 * [docs/migrating-to-5.0.md](docs/migrating-to-5.0.md)
 * [docs/roadmap-5.0.md](docs/roadmap-5.0.md)
 * [TODO.md](TODO.md)

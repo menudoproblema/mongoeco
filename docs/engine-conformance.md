@@ -81,8 +81,8 @@ mutable or duplicate events, cleanup failure, persisted Search metadata and
 execution/explain divergence. A declared capability that violates its contract
 is `failed`; `error` is reserved for runner or infrastructure failures.
 
-SPI v1 remains available only through the compatibility adapter during 4.x; it
-is intentionally outside this kit and cannot pass the SPI v2 core profile.
+Starting with MongoEco 4.7, SPI v2 is the only stable engine SPI. Engines with
+no explicit v2 declaration are rejected before this kit executes a profile.
 
 ## CLI
 

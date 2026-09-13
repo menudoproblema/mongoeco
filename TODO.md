@@ -74,7 +74,7 @@ Pendientes:
 ## 4. Publicacion y producto
 
 Objetivo: mantener releases publicas reproducibles y una politica de evolucion
-coherente despues de `4.6.0`.
+coherente despues de `4.7.0`.
 
 Pendientes:
 
@@ -83,9 +83,8 @@ Pendientes:
   publicacion OIDC falla con `invalid-publisher` y exige el fallback manual;
 * seguir revisando packaging y metadatos en cada release;
 * mantener documentacion publica de uso, alcance y posicionamiento;
-* ejecutar el roadmap verificable de `docs/roadmap-5.0.md`: 4.6 como bridge,
-  una minor opt-in para SPI v3/`search-v2` si es necesaria y retirada en 5.0
-  solo tras conformance y migracion observables;
+* ejecutar el roadmap verificable de `docs/roadmap-5.0.md` sin ampliar el
+  contrato publico de engines fuera de una decision arquitectonica aceptada;
 * decidir si compensa publicar un adaptador CXP live opcional para `mongoeco`
   ahora que:
   * capabilities, operations y profiles ya salen del catálogo canónico
@@ -188,7 +187,8 @@ con ampliaciones compatibles del subset local.
 
 Líneas a vigilar:
 
-* validar una minor opt-in de SPI v3 y `search-v2` antes de retirar contratos;
+* validar cualquier contrato sucesor de forma opt-in antes de retirar contratos
+  estables;
 * evaluar si `$search` y `vectorSearch` pasan de subset util a superficie de
   producto claramente diferenciada;
 * decidir si un provider CXP live opcional merece vivir como adaptador externo

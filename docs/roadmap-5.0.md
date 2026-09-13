@@ -17,24 +17,23 @@ convierte en verde por documentacion o por paridad local indirecta.
 Publicar requiere autorizacion humana posterior. Mientras MongoDB real no se
 ejecute, 4.6 no esta recomendada para publicacion.
 
-## Minor 4.x de transicion
+## 4.7.0 - SPI v2 exclusivo
 
 | Gate | Evidencia | Responsable | Bloqueo |
 | --- | --- | --- | --- |
-| SPI v3 opt-in | contratos `ReadSnapshotV3`/`SnapshotRelease`, protocolos, typing, canario externo, conformidad de reentrada y admision/leases por lectura, agregacion y transaccion, y vista estable multi-namespace | maintainer SPI | mutacion silenciosa o herencia de SPI v2, cleanup externo ejecutado inline por un finalizador, mas de un owner de liberacion, retencion compartida contada como cero o por tamaño logico duplicado, o consultas foreign que mezclan generaciones |
+| Retirada engine SPI v1 | adapter y primitivas eliminados, manifest `[2]`, guia de migracion y busqueda residual clasificada | maintainer SPI | consumidor sin ruta v2, shim encubierto o conformance v2 rojo |
 | Control de trabajo aggregation | checkpoints internos, limpieza de spill, pruebas de progreso y presupuesto compuesto | maintainer core | bucle incorporado sin deadline, temporal retenido o limite presentado con una unidad que no contabiliza |
 | `search-v2` opt-in | schema, fixtures y dual conformance | maintainer Search | mezcla de shapes v1/v2 |
-| Adapters versionados | ratchets de imports y validators comunes | maintainer core | ramas versionadas distribuidas |
-| Telemetria de deprecacion | warnings y catalogo actualizado | maintainer de API | uso legacy no observable |
+| Frontera SPI v2 | declaracion explicita, validators comunes y canario externo | maintainer core | ramas versionadas distribuidas o inferencia por shape |
 | Datos 4.x | migraciones ensayadas sobre fixtures | maintainer SQLite | perdida o migracion no atomica |
 
-La minor mantiene SPI v2 y `search-v1` estables. No cambia defaults.
+La minor mantiene SPI v2 y `search-v1` estables. La retirada del engine SPI v1
+es una ruptura deliberada aprobada para 4.7; no publica un SPI sucesor.
 
 ## 5.0.0rc1
 
 | Gate | Evidencia | Responsable | Bloqueo |
 | --- | --- | --- | --- |
-| Retirada SPI v1 | adapter eliminado y diff API esperado | maintainer SPI | dependencia no allowlisted o consumidor sin ruta v2 |
 | Search v2 default | matrices duales y guia ejecutada | maintainer Search | aliases mezclados o provenance incompleta |
 | SQLite | fixture 4.5 y ultima 4.x migradas | maintainer SQLite | schema ilegible o rollback incompleto |
 | API 4.x/5.0 | manifest semantico aprobado | maintainer de API | ruptura no inventariada |

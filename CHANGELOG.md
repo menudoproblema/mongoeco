@@ -8,6 +8,18 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.7.0] - 2026-09-13
+
+### Removed
+
+- **Ruptura deliberada:** MongoEco elimina por completo el engine SPI v1 en
+  una version minor. Desaparecen la deteccion por shape, el adapter legacy, sus
+  primitivas CRUD/Search, flags, callbacks, fallbacks, exports y entradas del
+  catalogo de deprecaciones. Los engines deben declarar y cumplir SPI v2; no
+  existe shim de compatibilidad.
+- SPI v2 es el unico engine SPI publico estable. Esta release no publica otro
+  contrato de engine.
+
 ### Changed
 
 - Los informes de benchmark ahora fallan si `--subject-root` no es el paquete
@@ -31,9 +43,7 @@ usa Semantic Versioning.
   buckets afectados. El commit prepara y publica exclusivamente las bases y
   namespaces de su write-set; `rename` conserva ambos nombres como una sola
   publicacion y un fallo de preparacion no sustituye ningun root vivo. SPI v2
-  no cambia. La propuesta SPI v3 incorpora la
-  retencion de lecturas, agregaciones y transacciones bajo leases tipados por
-  proposito, sin exponer la estructura interna del engine.
+  no cambia.
 - Los snapshots de lectura Memory capturan versiones estables y materializan
   resultados por demanda fuera del lock. La proyeccion precede a la copia
   publica, los decoders personalizados conservan una salida propia y cerrar,
@@ -70,12 +80,7 @@ usa Semantic Versioning.
 - El cliente conserva un unico adapter SPI validado y lo propaga a sus bases,
   colecciones y clones internos. Evita validar el mismo engine y registrar el
   mismo consumidor de cambios por cada wrapper; dos clientes siguen teniendo
-  lifecycles independientes y SPI v2 no cambia. La propuesta SPI v3 convierte
-  este ownership en `EngineRuntime` y bindings de namespace explicitos.
-- La propuesta SPI v3 versiona tambien la frontera de lectura como
-  `ReadSnapshotV3` y separa `SnapshotRelease` del lease de admision. Cursores,
-  finalizadores y cierre de cliente solicitan una unica liberacion propiedad
-  del runtime; SPI v2 conserva intacta su clase `ReadSnapshot`.
+  lifecycles independientes y SPI v2 no cambia.
 - Las mutaciones documentales Memory reemplazan el snapshot completo de
   rollback por un journal de entradas y pertenencias de indice modificadas. Los
   fallos restauran storage, buckets, ordinales y alta de coleccion sin repetir
@@ -175,7 +180,7 @@ usa Semantic Versioning.
   su umbral interno: conserva la obligacion hasta cierre o fallo y registra la
   presion. Los snapshots Memory usan una transicion terminal inmediata sin
   crear una tarea por cierre; las fuentes async externas mantienen timeout,
-  supervision y primer error. SPI v3 documenta una futura admision por leases.
+  supervision y primer error.
 - SQLite revalida documentos e indices TTL antes de borrar candidatos y
   restaura documentos e indices cuando falla una purga. `count_documents`
   purga tambien fuera de transacciones y respeta el reloj de la operacion.

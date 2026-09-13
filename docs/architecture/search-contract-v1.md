@@ -11,7 +11,7 @@ La fuente de verdad de operadores sigue siendo
 depender del backend fisico.
 
 La propuesta [search-v2](search-contract-v2-proposal.md) no altera este
-contrato ni esta activa en 4.6. Una futura minor debera ofrecer convivencia
+contrato ni esta activa en 4.7. Una futura minor debera ofrecer convivencia
 opt-in antes de que 5.0 pueda retirar aliases v1.
 
 ## Frontera de ejecucion
@@ -93,9 +93,9 @@ materializan solo los valores que producen. `$merge` descarta el alias
 generado, conserva una sobrescritura real y persiste una copia explicita bajo
 otro nombre. `$unset` elimina tambien el campo virtual.
 
-El namespace privado con NUL solo permanece en el adapter SPI v1 deprecado. Se
-convierte al entrar y salir de esa frontera y nunca es la representacion
-canonica del runtime ni alcanza persistencia.
+El namespace privado con NUL solo se usa como ruta interna para resolver
+expresiones `$meta`; nunca es la representacion canonica del runtime, no se
+serializa a traves del SPI de engine y no alcanza persistencia.
 
 ## Orden y optimizaciones
 

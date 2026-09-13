@@ -47,13 +47,10 @@ desde 4.3.0; el adaptador lo envuelve en un `ReadSnapshot` estable. Una
 declaracion incoherente falla al adaptar el engine. Una estrategia
 `commit-sequence` o
 `transactional-outbox` exige registrar, despachar y retirar consumidores.
-Solo se aceptan las versiones SPI publicadas `1` y `2`; una version futura no
-se interpreta por compatibilidad optimista.
-
-Los flags heredados de v1 no alteran una declaracion v2. En particular,
-`supports_injected_clock` deja de ser una segunda fuente de verdad: cualquier
-subclase que cambie esa capacidad debe declarar un nuevo
-`EngineCapabilities`.
+Solo se acepta `spi_version=2`; una declaracion ausente o distinta no se
+interpreta por compatibilidad optimista. `EngineCapabilities` es la unica
+fuente de verdad: cualquier subclase que cambie una capacidad debe declarar un
+nuevo valor.
 
 ## Contexto de operacion
 
@@ -139,10 +136,9 @@ esten cubiertos por esa matriz.
 
 Los outcomes Search del SPI v2 transportan documentos BSON y `RuntimeMetadata`
 separados mediante `SearchHit`. Un engine no debe insertar campos privados para
-scores o highlights. El adapter legacy puede traducir temporalmente el sidecar
-4.x con NUL en su frontera, pero la representacion canonica es
-`RuntimeDocumentState` y `persistence_document()` siempre descarta metadata no
-materializada. El `SearchRequest` transporta tambien el plan semantico
+scores o highlights. La representacion canonica es `RuntimeDocumentState` y
+`persistence_document()` siempre descarta metadata no materializada. El
+`SearchRequest` transporta tambien el plan semantico
 inmutable compilado por el cursor; engine y `explain()` no pueden reconstruir
 reglas distintas a partir de hints sueltos.
 
@@ -188,29 +184,8 @@ El esquema de outbox evoluciona mediante migraciones consecutivas y atomicas.
 Abrir una base creada por una version futura falla explicitamente y nunca
 rebaja el numero registrado.
 
-## Migracion desde SPI v1
+## Migracion a 4.7
 
-SPI v1 sigue operativo durante 4.x mediante `LegacyEngineAdapter`, pero desde
-4.3.0 emite un `DeprecationWarning` por clase de engine y se retirara en 5.0.0.
-La migracion recomendada es:
-
-1. declarar `EngineCapabilities(spi_version=2, ...)`;
-2. reemplazar `put_document` y `put_documents_bulk` por outcomes de insert;
-3. aceptar un unico `OperationContext` en las primitivas de mutacion;
-4. retornar outcomes tipados, sin booleanos ni unions contextuales;
-5. implementar `ReadSnapshot` estable e identificado o conservar
-   `scan_find_semantics` declarando `explicit_read_snapshots=False`;
-6. declarar una estrategia de cambios y sus primitivas de consumidor;
-7. ejecutar `tests/contracts/engines/test_storage_engine_v2_contract.py`
-   contra el engine.
-8. ejecutar `mongoeco.conformance.run_engine_conformance()` y conservar el
-   informe versionado, incluidas capabilities no aplicables.
-
-No se debe silenciar la advertencia como sustituto de la migracion. Un engine
-puede mantener wrappers v1 propios mientras sus primitivas v2 sean la unica
-implementacion semantica.
-
-La propuesta sucesora se documenta en
-[engine-spi-v3-proposal.md](engine-spi-v3-proposal.md). No modifica este
-contrato: SPI v2 sigue estable y su eventual retirada requiere una decision y
-una ventana de deprecacion posteriores.
+MongoEco 4.7 elimina deliberadamente el engine SPI v1. La
+[guia de migracion](../migrating-to-4.7.md) enumera las sustituciones y el gate
+de conformidad. SPI v2 es el unico SPI estable publicado por esta version.

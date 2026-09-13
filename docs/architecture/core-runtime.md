@@ -39,9 +39,8 @@ adapter, por lo que no vuelven a validar el contrato del engine ni a registrar
 el mismo consumidor de cambios por cada wrapper. El ownership sigue siendo del
 cliente: construir directamente una `AsyncCollection` mantiene el fallback de
 adaptacion propio y dos clientes no comparten estado por recibir la misma
-instancia de engine. La propuesta SPI v3 formaliza esta separacion como
-`EngineContract`, `EngineRuntime` y `BoundEngineNamespace`; 4.x no expone esos
-tipos ni cambia SPI v2.
+instancia de engine. Esta separacion es interna y no amplia el contrato
+publico de SPI v2.
 
 ### Preparacion de lecturas y proyecciones
 

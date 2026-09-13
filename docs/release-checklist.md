@@ -7,7 +7,8 @@ Esta lista prepara una release sin obligar a publicar nada.
 - revisar [README.md](../README.md) para que el
   alcance embebido/local y sus limites sean explicitos;
 - preparar o revisar la nota de release y la guía de migración de la versión
-  objetivo (para 4.6.1, [release-4.6.1.md](release-4.6.1.md)) para
+  objetivo (para 4.7.0, [release-4.7.0.md](release-4.7.0.md) y
+  [migrating-to-4.7.md](migrating-to-4.7.md)) para
   confirmar que la narrativa y los cambios incompatibles son explícitos;
 - revisar [COMPATIBILITY.md](../COMPATIBILITY.md)
   y confirmar que runtime, compat catalog, docs y tests cuentan la misma
@@ -17,7 +18,7 @@ Esta lista prepara una release sin obligar a publicar nada.
   backlog de producto con deuda arquitectonica cerrada.
 - actualizar la versión en `src/mongoeco/_version.py`, fechar la sección
   correspondiente de `CHANGELOG.md` y comprobar que la guía de migración
-  describe todos los cambios incompatibles de la major.
+  describe todos los cambios incompatibles de la release.
 
 ## 2. Packaging y artefactos
 
@@ -88,7 +89,7 @@ Esta lista prepara una release sin obligar a publicar nada.
   disponibles; para valores temporales, comprobar invariantes y no timestamps
   exactos. Ningun caso puede salir de `REAL_CAPTURE_PENDING_CASES` sin golden
   capturado de un servidor real.
-- para 4.6, no recomendar publicacion si los 25 casos por version no se han
+- para 4.7, no recomendar publicacion si los 25 casos por version no se han
   ejecutado contra servidores reales; el listado y workflow verdes no
   sustituyen ese gate.
 

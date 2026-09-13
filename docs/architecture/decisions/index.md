@@ -30,3 +30,4 @@ decisiones que siguen vivas y explican la arquitectura actual.
 - [ADR-014 - Informes de conformidad versionados](ADR-014-informes-de-conformidad-versionados.md)
 - [ADR-015 - Pushdown SQLite sujeto a prueba de equivalencia](ADR-015-pushdown-sqlite-sujeto-a-prueba-de-equivalencia.md)
 - [ADR-016 - Transicion cohesiva y observable hacia 5.0](ADR-016-transicion-cohesiva-hacia-5.0.md)
+- [ADR-017 - SPI v2 exclusivo en MongoEco 4.7](ADR-017-spi-v2-exclusivo-en-4.7.md)
