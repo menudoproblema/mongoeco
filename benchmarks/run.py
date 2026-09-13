@@ -190,6 +190,14 @@ def _summarize_task_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
     from benchmarks.runners.metrics import Metrics
 
     metadata = samples[0].get("metadata") if samples else None
+    outcome_digests = {
+        sample_metadata.get("outcome_sha256")
+        for sample in samples
+        if isinstance((sample_metadata := sample.get("metadata")), dict)
+    }
+    if len(outcome_digests) != 1 or None in outcome_digests:
+        message = "benchmark outcome changed or was not recorded across repetitions"
+        raise RuntimeError(message)
     metrics = [
         Metrics(
             wall_time_sec=float(sample["wall_time_sec"]),
@@ -259,7 +267,18 @@ def _render_table(
                 skipped = engine_result.get(SKIPPED_WORKLOADS_KEY, {})
                 if workload in skipped:
                     table.append(
-                        [engine_name, "SKIPPED", "-", "-", "-", "-", "-", "-", "-", "-"],
+                        [
+                            engine_name,
+                            "SKIPPED",
+                            "-",
+                            "-",
+                            "-",
+                            "-",
+                            "-",
+                            "-",
+                            "-",
+                            "-",
+                        ],
                     )
                     continue
                 metrics = engine_result.get(workload, {}).get(task)

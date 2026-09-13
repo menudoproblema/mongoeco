@@ -1,7 +1,8 @@
 import datetime
+import hashlib
 import random
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 
 from benchmarks.data.generator import generate_users
@@ -156,8 +157,95 @@ def _measure_single_task(
     metadata: dict[str, Any] | None = None,
 ) -> MetricDocument:
     with measure(metric_store):
-        callback()
-    return _metrics_with_metadata(metric_store[0], metadata=metadata)
+        outcome = callback()
+    outcome_metadata = dict(metadata or {})
+    if outcome_metadata.get("mode") == "ann":
+        outcome_for_digest = _ann_outcome_contract(outcome)
+        outcome_metadata["outcome_oracle"] = "ann-result-shape"
+    else:
+        outcome_for_digest = outcome
+        outcome_metadata["outcome_oracle"] = "exact-output"
+    outcome_metadata["outcome_sha256"] = _outcome_sha256(outcome_for_digest)
+    outcome_metadata["outcome_items"] = (
+        len(outcome) if isinstance(outcome, list | tuple | dict) else None
+    )
+    return _metrics_with_metadata(metric_store[0], metadata=outcome_metadata)
+
+
+def _ann_outcome_contract(outcome: object) -> object:
+    if not isinstance(outcome, list):
+        raise ValueError("ANN benchmark outcome must be a list of query results")
+    result_shapes = []
+    for result in outcome:
+        if not isinstance(result, list):
+            raise ValueError("ANN benchmark query result must be a document list")
+        identities = []
+        document_shapes = set()
+        for document in result:
+            if not isinstance(document, Mapping) or "_id" not in document:
+                raise ValueError(
+                    "ANN benchmark result must contain document identities"
+                )
+            identities.append((type(document["_id"]).__name__, repr(document["_id"])))
+            document_shapes.add(
+                tuple(
+                    sorted(
+                        (str(key), type(value).__name__)
+                        for key, value in document.items()
+                    )
+                )
+            )
+        if len(identities) != len(set(identities)):
+            raise ValueError("ANN benchmark result contains duplicate identities")
+        result_shapes.append((len(result), tuple(sorted(document_shapes))))
+    return result_shapes
+
+
+def _outcome_sha256(value: object) -> str:
+    digest = hashlib.sha256()
+    active: set[int] = set()
+
+    def visit(current: object) -> None:
+        if isinstance(current, Mapping):
+            identity = id(current)
+            if identity in active:
+                raise ValueError("benchmark outcomes cannot contain cycles")
+            active.add(identity)
+            digest.update(b"mapping{")
+            for key in sorted(
+                current, key=lambda item: (type(item).__name__, repr(item))
+            ):
+                visit(key)
+                visit(current[key])
+            digest.update(b"}")
+            active.remove(identity)
+            return
+        if isinstance(current, list | tuple):
+            identity = id(current)
+            if identity in active:
+                raise ValueError("benchmark outcomes cannot contain cycles")
+            active.add(identity)
+            digest.update(type(current).__name__.encode())
+            digest.update(b"[")
+            for item in current:
+                visit(item)
+            digest.update(b"]")
+            active.remove(identity)
+            return
+        if isinstance(current, set | frozenset):
+            digest.update(type(current).__name__.encode())
+            for item in sorted(
+                current, key=lambda item: (type(item).__name__, repr(item))
+            ):
+                visit(item)
+            return
+        digest.update(type(current).__qualname__.encode())
+        digest.update(b":")
+        digest.update(repr(current).encode("utf-8", errors="backslashreplace"))
+        digest.update(b";")
+
+    visit(value)
+    return f"sha256:{digest.hexdigest()}"
 
 
 def _augment_search_documents(docs: list[dict[str, Any]]) -> None:

@@ -63,11 +63,27 @@ For that reason:
   - `generate_orders(..., seed=43)`
 - the report includes Python version, platform, selected workloads, git
   revision and whether the worktree is dirty
+- JSON reports use `mongoeco-benchmark-report/v2` and include hashes of the
+  harness and deterministic dataset generator, effective dependency versions,
+  SQLite, the JSON backend and RSS sampling resolution
 - benchmark outputs are local artifacts and are ignored by git
 - workloads can be selected explicitly with repeated `--workload` flags so a
   discussion can focus on one subsystem without rerunning the whole suite
 - adapters declare benchmark capabilities; unsupported workloads are reported
   as `SKIPPED` and remain distinct from execution errors
+- comparisons reject legacy/unversioned reports, missing workloads or tasks,
+  engine/skip-set drift, invalid metrics and different datasets, harnesses or
+  execution environments
+- every measured task records an incremental SHA-256 of its result; repetitions
+  must agree, sync/async adapters of the same engine must agree, and comparison
+  with a baseline fails if the outcome changes
+
+Exact workloads hash the complete ordered output. ANN vector workloads use a
+narrower declared oracle: result cardinality, document shape and uniqueness of
+identities. Candidate membership is intentionally not frozen because the
+approximate backend may choose different valid neighbours; recall/exactness
+continues to be validated by the vector contract suites, not inferred from a
+stable hash of one ANN run.
 
 ## Installation
 
@@ -97,6 +113,35 @@ For results that are worth sharing:
    - git revision
    - machine / OS / Python version
    - whether `mongomock`, `psutil` and `orjson` were installed
+
+To enforce a calibrated wall-time ceiling against a report produced with the
+same harness and environment:
+
+```bash
+python -m benchmarks.report \
+  --engine all \
+  --size 1000 \
+  --warmup 1 \
+  --repetitions 5 \
+  --baseline-json benchmarks/reports/baseline-1000.json \
+  --max-wall-regression-percent 10 \
+  --output-json benchmarks/reports/candidate-1000.json \
+  --output-markdown benchmarks/reports/candidate-1000.md
+```
+
+The threshold is runner-specific. Historical raw JSON remains useful as
+reference data but cannot pass the v2 comparison contract; regenerate both
+revisions with the same harness before making a percentage claim. `RSS peak`
+is sampled every 5 ms when `psutil` is available (reported as unavailable with
+a 0 ms interval otherwise), so it is observed process RSS rather than a hard
+accounting limit for native or very short-lived peaks.
+
+To rerun an older Mongoeco checkout with the current harness, put its `src`
+directory first on `PYTHONPATH` and pass that checkout through `--subject-root`.
+The artifact then records the imported `mongoeco.__version__` and the subject
+revision while retaining the current harness hash. Do not point
+`--subject-root` at unrelated code or omit the matching `PYTHONPATH`; both are
+part of the evidence, not a package-selection mechanism.
 
 Suggested commands:
 
