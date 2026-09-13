@@ -7,6 +7,12 @@ from unittest.mock import Mock, patch
 
 from benchmarks._subject import require_imported_subject, resolve_subject_root
 from benchmarks.contracts import REPORT_SCHEMA, compare_reports, validate_report
+from benchmarks.engines._compat import (
+    SPILL_DIAGNOSTICS_CAPABILITY,
+    benchmark_capabilities_for,
+    spill_threshold_options,
+    supports_keyword,
+)
 from benchmarks.engines.mongoeco_async import MongoecoSQLiteAsyncEngine
 from benchmarks.engines.mongoeco_mem import MongoecoMemoryEngine
 from benchmarks.engines.mongoeco_sql import MongoecoSQLEngine
@@ -232,6 +238,41 @@ class BenchmarkHarnessTests(unittest.TestCase):
                 aggregation_spill_threshold=23,
             )
         async_adapter.teardown()
+
+    def test_historical_engine_without_spill_tuning_is_not_misrepresented(self):
+        class HistoricalEngine:
+            def __init__(self, path: str = ":memory:") -> None:
+                self.path = path
+
+        capabilities = frozenset({"crud", SPILL_DIAGNOSTICS_CAPABILITY})
+
+        self.assertFalse(
+            supports_keyword(HistoricalEngine, "aggregation_spill_threshold")
+        )
+        self.assertEqual(spill_threshold_options(HistoricalEngine, 17), {})
+        self.assertEqual(
+            benchmark_capabilities_for(HistoricalEngine, capabilities),
+            frozenset({"crud"}),
+        )
+
+    def test_engine_with_keyword_options_keeps_spill_diagnostics(self):
+        class ConfigurableEngine:
+            def __init__(self, **options: object) -> None:
+                self.options = options
+
+        capabilities = frozenset({"crud", SPILL_DIAGNOSTICS_CAPABILITY})
+
+        self.assertTrue(
+            supports_keyword(ConfigurableEngine, "aggregation_spill_threshold")
+        )
+        self.assertEqual(
+            spill_threshold_options(ConfigurableEngine, 23),
+            {"aggregation_spill_threshold": 23},
+        )
+        self.assertEqual(
+            benchmark_capabilities_for(ConfigurableEngine, capabilities),
+            capabilities,
+        )
 
     def test_aggregation_spill_diagnostics_crosses_only_high_cardinality_limit(self):
         results = aggregation_spill_diagnostics(

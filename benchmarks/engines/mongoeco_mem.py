@@ -1,17 +1,30 @@
 from typing import Any
 
+from benchmarks.engines._compat import (
+    benchmark_capabilities_for,
+    spill_threshold_options,
+)
 from benchmarks.engines.base import BenchmarkEngine
 from mongoeco import MongoClient, SearchIndexModel
 
 
 class MongoecoMemoryEngine(BenchmarkEngine):
     def __init__(self, spill_threshold: int = 10000):
+        from mongoeco.engines.memory import MemoryEngine
+
         self.client = None
         self.spill_threshold = spill_threshold
+        self.benchmark_capabilities = benchmark_capabilities_for(
+            MemoryEngine,
+            BenchmarkEngine.benchmark_capabilities,
+        )
 
     def setup(self) -> None:
         from mongoeco.engines.memory import MemoryEngine
-        engine = MemoryEngine(aggregation_spill_threshold=self.spill_threshold)
+
+        engine = MemoryEngine(
+            **spill_threshold_options(MemoryEngine, self.spill_threshold)
+        )
         self.client = MongoClient(engine=engine)
 
     def teardown(self) -> None:

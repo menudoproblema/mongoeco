@@ -12,7 +12,9 @@ usa Semantic Versioning.
 
 - Los informes de benchmark ahora fallan si `--subject-root` no es el paquete
   Mongoeco realmente importado, registran el origen de ese modulo y omiten el
-  diagnostico de spill en adapters que no acreditan esa capacidad propia.
+  diagnostico de spill en adapters que no acreditan esa capacidad propia. Las
+  opciones de tuning se adaptan a la firma real del engine historico sin
+  atribuirle capacidades que no puede controlar.
 - Los indices TTL Memory mantienen vencimientos en una agenda persistente
   ordenada y ligada al mismo root MVCC que sus buckets. Una purga sin fechas
   vencidas no visita documentos; arrays, aplazamientos, eliminacion del campo,

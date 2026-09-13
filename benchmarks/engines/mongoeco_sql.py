@@ -2,16 +2,26 @@ import tempfile
 import os
 from typing import Any
 
+from benchmarks.engines._compat import (
+    benchmark_capabilities_for,
+    spill_threshold_options,
+)
 from benchmarks.engines.base import BenchmarkEngine
 from mongoeco import MongoClient, SearchIndexModel
 
 
 class MongoecoSQLEngine(BenchmarkEngine):
     def __init__(self, spill_threshold: int = 10000):
+        from mongoeco.engines.sqlite import SQLiteEngine
+
         self.client = None
         self.db_fd = None
         self.db_path = None
         self.spill_threshold = spill_threshold
+        self.benchmark_capabilities = benchmark_capabilities_for(
+            SQLiteEngine,
+            BenchmarkEngine.benchmark_capabilities,
+        )
 
     def setup(self) -> None:
         from mongoeco.engines.sqlite import SQLiteEngine
@@ -20,7 +30,7 @@ class MongoecoSQLEngine(BenchmarkEngine):
 
         engine = SQLiteEngine(
             path=self.db_path,
-            aggregation_spill_threshold=self.spill_threshold,
+            **spill_threshold_options(SQLiteEngine, self.spill_threshold),
         )
         self.client = MongoClient(engine=engine)
 

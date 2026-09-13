@@ -3,6 +3,10 @@ import os
 import tempfile
 from typing import Any
 
+from benchmarks.engines._compat import (
+    benchmark_capabilities_for,
+    spill_threshold_options,
+)
 from benchmarks.engines.base import BenchmarkEngine
 from mongoeco import AsyncMongoClient, SearchIndexModel
 
@@ -277,13 +281,21 @@ class _MongoecoAsyncEngine(BenchmarkEngine):
 
 class MongoecoMemoryAsyncEngine(_MongoecoAsyncEngine):
     def __init__(self, spill_threshold: int = 10000) -> None:
+        from mongoeco.engines.memory import MemoryEngine
+
         super().__init__()
         self.spill_threshold = spill_threshold
+        self.benchmark_capabilities = benchmark_capabilities_for(
+            MemoryEngine,
+            BenchmarkEngine.benchmark_capabilities,
+        )
 
     def _build_engine(self):
         from mongoeco.engines.memory import MemoryEngine
 
-        return MemoryEngine(aggregation_spill_threshold=self.spill_threshold)
+        return MemoryEngine(
+            **spill_threshold_options(MemoryEngine, self.spill_threshold)
+        )
 
     @property
     def label(self) -> str:
@@ -292,10 +304,16 @@ class MongoecoMemoryAsyncEngine(_MongoecoAsyncEngine):
 
 class MongoecoSQLiteAsyncEngine(_MongoecoAsyncEngine):
     def __init__(self, spill_threshold: int = 10000) -> None:
+        from mongoeco.engines.sqlite import SQLiteEngine
+
         super().__init__()
         self.db_fd: int | None = None
         self.db_path: str | None = None
         self.spill_threshold = spill_threshold
+        self.benchmark_capabilities = benchmark_capabilities_for(
+            SQLiteEngine,
+            BenchmarkEngine.benchmark_capabilities,
+        )
 
     def _build_engine(self):
         from mongoeco.engines.sqlite import SQLiteEngine
@@ -304,7 +322,7 @@ class MongoecoSQLiteAsyncEngine(_MongoecoAsyncEngine):
         os.close(self.db_fd)
         return SQLiteEngine(
             path=self.db_path,
-            aggregation_spill_threshold=self.spill_threshold,
+            **spill_threshold_options(SQLiteEngine, self.spill_threshold),
         )
 
     def teardown(self) -> None:
