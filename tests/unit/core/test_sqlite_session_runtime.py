@@ -35,7 +35,9 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
 
             session.start_transaction()
             self.assertEqual(engine._transaction_owner_session_id, session.session_id)
-            self.assertTrue(session.get_engine_context(engine._engine_key()).transaction_active)
+            self.assertTrue(
+                session.get_engine_context(engine._engine_key()).transaction_active
+            )
 
             with self.assertRaisesRegex(InvalidOperation, "another session"):
                 runtime.require_connection(other)
@@ -46,7 +48,9 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
 
             session.commit_transaction()
             self.assertIsNone(engine._transaction_owner_session_id)
-            self.assertFalse(session.get_engine_context(engine._engine_key()).transaction_active)
+            self.assertFalse(
+                session.get_engine_context(engine._engine_key()).transaction_active
+            )
         finally:
             asyncio.run(engine.disconnect())
 
@@ -65,14 +69,18 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
 
         self.assertTrue(session.in_transaction)
         self.assertEqual(engine._transaction_owner_session_id, session.session_id)
-        self.assertTrue(session.get_engine_context(engine._engine_key()).transaction_active)
+        self.assertTrue(
+            session.get_engine_context(engine._engine_key()).transaction_active
+        )
 
         session.abort_transaction()
 
         conn.rollback.assert_called_once_with()
         self.assertFalse(session.in_transaction)
         self.assertIsNone(engine._transaction_owner_session_id)
-        self.assertFalse(session.get_engine_context(engine._engine_key()).transaction_active)
+        self.assertFalse(
+            session.get_engine_context(engine._engine_key()).transaction_active
+        )
 
     def test_failed_session_abort_keeps_owner_until_retry(self):
         engine = SQLiteEngine()
@@ -89,14 +97,18 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
 
         self.assertTrue(session.in_transaction)
         self.assertEqual(engine._transaction_owner_session_id, session.session_id)
-        self.assertTrue(session.get_engine_context(engine._engine_key()).transaction_active)
+        self.assertTrue(
+            session.get_engine_context(engine._engine_key()).transaction_active
+        )
 
         session.abort_transaction()
 
         self.assertEqual(conn.rollback.call_count, 2)
         self.assertFalse(session.in_transaction)
         self.assertIsNone(engine._transaction_owner_session_id)
-        self.assertFalse(session.get_engine_context(engine._engine_key()).transaction_active)
+        self.assertFalse(
+            session.get_engine_context(engine._engine_key()).transaction_active
+        )
 
     def test_failed_close_abort_keeps_session_retryable(self):
         engine = SQLiteEngine()
@@ -162,14 +174,14 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
         finally:
             asyncio.run(engine.disconnect())
 
-    def test_failed_savepoint_rollback_preserves_stack_and_clears_caches(self):
+    def test_failed_savepoint_rollback_requires_abort_and_clears_caches(self):
         engine = SQLiteEngine()
         runtime = engine._session_runtime
         engine._connection = Mock()
         session = ClientSession()
         runtime.create_session_state(session)
         session.start_transaction()
-        conn = Mock()
+        conn = engine._connection
 
         runtime.begin_write(conn, session)
         engine._ensured_multikey_physical_indexes.add("mkidx")
@@ -179,12 +191,13 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "rollback to boom"):
             runtime.rollback_write(conn, session)
 
-        self.assertEqual(runtime._write_savepoint_stack(), ["mongoeco_write_1"])
+        self.assertEqual(runtime._write_states[conn].frames, [])
+        self.assertTrue(runtime._write_states[conn].rollback_required)
         self.assertNotIn("mkidx", engine._ensured_multikey_physical_indexes)
 
         session.abort_transaction()
 
-        self.assertEqual(runtime._write_savepoint_stack(), [])
+        self.assertEqual(runtime._write_states, {})
         self.assertFalse(session.in_transaction)
         self.assertIsNone(engine._transaction_owner_session_id)
 
@@ -236,16 +249,23 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
                     purge_expired_documents=lambda *_args: None,
                     collection_options_or_empty=lambda *_args: {},
                     dialect_requires_python_fallback=lambda _dialect: False,
-                    select_first_document_for_plan=lambda *_args: ("1", {"_id": "1", "kind": "view"}),
+                    select_first_document_for_plan=lambda *_args: (
+                        "1",
+                        {"_id": "1", "kind": "view"},
+                    ),
                     load_documents=lambda *_args: [],
                     match_plan=lambda *_args: False,
-                    enforce_collection_document_validation=lambda *_args, **_kwargs: None,
+                    enforce_collection_document_validation=lambda *_args, **_kwargs: (
+                        None
+                    ),
                     validate_document_against_unique_indexes=lambda *_args: None,
                     load_indexes=lambda *_args: [],
                     load_search_index_rows=lambda *_args: [],
                     begin_write=lambda current: runtime.begin_write(current, session),
                     commit_write=lambda current: runtime.commit_write(current, session),
-                    rollback_write=lambda current: runtime.rollback_write(current, session),
+                    rollback_write=lambda current: runtime.rollback_write(
+                        current, session
+                    ),
                     translate_compiled_update_plan=lambda *_args: (
                         "?",
                         ("{'_id': '1', 'kind': 'note'}",),
@@ -253,7 +273,9 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
                     compiled_update_plan_type=_CompiledPlan,
                     rebuild_multikey_entries_for_document=lambda *_args: None,
                     rebuild_scalar_entries_for_document=lambda *_args: None,
-                    replace_search_entries_for_document=lambda *_args: (_ for _ in ()).throw(OperationFailure("boom")),
+                    replace_search_entries_for_document=lambda *_args: (
+                        _ for _ in ()
+                    ).throw(OperationFailure("boom")),
                     serialize_document=lambda document: str(document),
                     storage_key_for_id=lambda value: str(value),
                     new_object_id=lambda: "new-id",
@@ -299,7 +321,9 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
                     serialized_document="{'_id': '1'}",
                     purge_expired_documents=lambda *_args: None,
                     begin_write=lambda current: runtime.begin_write(current, session),
-                    rollback_write=lambda current: runtime.rollback_write(current, session),
+                    rollback_write=lambda current: runtime.rollback_write(
+                        current, session
+                    ),
                     commit_write=lambda current: runtime.commit_write(current, session),
                     collection_options_or_empty=lambda *_args: {},
                     load_existing_document_for_storage_key=lambda *_args: None,
@@ -311,7 +335,9 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
                     rebuild_scalar_entries_for_document=lambda *_args: None,
                     load_search_index_rows=lambda *_args: [],
                     replace_search_entries_for_document=lambda *_args: None,
-                    invalidate_collection_features_cache=lambda *_args: (_ for _ in ()).throw(RuntimeError("cache boom")),
+                    invalidate_collection_features_cache=lambda *_args: (
+                        _ for _ in ()
+                    ).throw(RuntimeError("cache boom")),
                 )
 
             self.assertTrue(conn.in_transaction)
@@ -363,7 +389,9 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
                 begin_write=lambda current: runtime.begin_write(current, session),
                 commit_write=lambda current: runtime.commit_write(current, session),
                 rollback_write=lambda current: runtime.rollback_write(current, session),
-                purge_expired_documents=lambda *_args: (_ for _ in ()).throw(RuntimeError("purge boom")),
+                purge_expired_documents=lambda *_args: (_ for _ in ()).throw(
+                    RuntimeError("purge boom")
+                ),
                 mark_index_metadata_changed=lambda *_args: None,
                 invalidate_collection_features_cache=lambda *_args: None,
                 load_indexes=lambda *_args: [],
@@ -430,13 +458,17 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
 
             self.assertNotIn("mkidx_tags", engine._ensured_multikey_physical_indexes)
             self.assertEqual(engine._compound_rank_cache, {})
-            self.assertEqual(conn.execute("PRAGMA index_list(multikey_entries)").fetchall(), [])
+            self.assertEqual(
+                conn.execute("PRAGMA index_list(multikey_entries)").fetchall(), []
+            )
 
             engine._ensure_multikey_physical_indexes_sync(conn, [index])
             self.assertIn("mkidx_tags", engine._ensured_multikey_physical_indexes)
             index_names = {
                 row[1]
-                for row in conn.execute("PRAGMA index_list(multikey_entries)").fetchall()
+                for row in conn.execute(
+                    "PRAGMA index_list(multikey_entries)"
+                ).fetchall()
             }
             self.assertIn("mkidx_tags", index_names)
         finally:
@@ -455,7 +487,9 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
             runtime.create_session_state(session)
             session.start_transaction()
 
-            collection_id = engine._lookup_collection_id(conn, "db", "coll", create=True)
+            collection_id = engine._lookup_collection_id(
+                conn, "db", "coll", create=True
+            )
             self.assertEqual(engine._collection_id_cache[("db", "coll")], collection_id)
             engine._compound_should_score_cache = {
                 ("db", "coll", "phys", 0, "query"): {"1": {"matchedShould": 1.0}}
@@ -469,7 +503,9 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
             self.assertNotIn(("db", "coll"), engine._collection_id_cache)
             self.assertEqual(engine._compound_should_score_cache, {})
             self.assertEqual(engine._compound_topk_prefilter_cache, {})
-            self.assertIsNone(engine._lookup_collection_id(conn, "db", "coll", create=False))
+            self.assertIsNone(
+                engine._lookup_collection_id(conn, "db", "coll", create=False)
+            )
         finally:
             if session is not None and engine._transaction_owner_session_id is not None:
                 session.abort_transaction()

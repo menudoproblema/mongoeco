@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-import sqlite3
-from types import TracebackType
-from typing import Self
+from typing import TYPE_CHECKING, Self
+
+
+if TYPE_CHECKING:
+    import sqlite3
+
+    from collections.abc import Callable
+    from types import TracebackType
 
 
 class SQLiteWriteScope:
@@ -35,7 +39,10 @@ class SQLiteWriteScope:
         if not self._active:
             return False
         if exc_type is not None:
-            self.rollback()
+            if exc is not None:
+                self._rollback_preserving_error(exc)
+            else:
+                self.rollback()
             return False
         self.commit()
         return False
@@ -45,10 +52,16 @@ class SQLiteWriteScope:
             return
         try:
             self._commit_write(self._conn)
-        except Exception:
-            self.rollback()
+        except BaseException as error:
+            self._rollback_preserving_error(error)
             raise
         self._active = False
+
+    def _rollback_preserving_error(self, error: BaseException) -> None:
+        try:
+            self.rollback()
+        except BaseException as cleanup_error:
+            error.add_note(f"SQLite write scope cleanup failed: {cleanup_error}")
 
     def rollback(self) -> None:
         if not self._active:

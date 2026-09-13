@@ -9,6 +9,10 @@ from dataclasses import dataclass, field
 from mongoeco.core.search import (  # noqa: TC001 - dataclass annotations are introspectable
     MaterializedSearchDocument,
 )
+from mongoeco.engines._sqlite_index_catalog import SQLiteCatalogPool
+from mongoeco.engines._sqlite_reader import (
+    SQLiteScanReader,  # noqa: TC001 - introspectable
+)
 from mongoeco.engines._sqlite_vector_backend import (  # noqa: TC001 - introspectable
     SQLiteVectorBackendState,
 )
@@ -23,6 +27,8 @@ class SQLiteRuntimeState:
     scan_condition: threading.Condition = field(default_factory=threading.Condition)
     active_scan_count: int = 0
     scan_stop_events: set[threading.Event] = field(default_factory=set)
+    scan_readers: set[SQLiteScanReader] = field(default_factory=set)
+    scan_close_failures: int = 0
     thread_local: threading.local = field(default_factory=threading.local)
     executor: ThreadPoolExecutor | None = None
     owns_executor: bool = False
@@ -31,13 +37,20 @@ class SQLiteRuntimeState:
 
 @dataclass(slots=True)
 class SQLiteCacheState:
-    index_cache: dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]] = field(default_factory=dict)
+    index_catalog_pool: SQLiteCatalogPool = field(default_factory=SQLiteCatalogPool)
+    index_cache: dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]] = field(
+        default_factory=dict
+    )
     index_metadata_versions: dict[tuple[str, str], int] = field(default_factory=dict)
     collection_id_cache: dict[tuple[str, str], int] = field(default_factory=dict)
-    collection_features_cache: dict[tuple[str, str, str], bool | str] = field(default_factory=dict)
+    collection_features_cache: dict[tuple[str, str, str], bool | str] = field(
+        default_factory=dict
+    )
     ensured_multikey_physical_indexes: set[str] = field(default_factory=set)
     ensured_search_backends: set[str] = field(default_factory=set)
-    vector_search_backends: dict[tuple[str, str], SQLiteVectorBackendState] = field(default_factory=dict)
+    vector_search_backends: dict[tuple[str, str], SQLiteVectorBackendState] = field(
+        default_factory=dict
+    )
     search_backend_versions: dict[tuple[str, str], int] = field(default_factory=dict)
     materialized_search_entry_cache: dict[
         tuple[str, str, str, int],

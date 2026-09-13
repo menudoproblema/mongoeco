@@ -7,8 +7,8 @@ import inspect
 import json
 import math
 import os
-import queue
 import sqlite3
+import sys
 import threading
 import time
 import uuid
@@ -17,7 +17,7 @@ from collections.abc import AsyncIterable, Callable, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, nullcontext, suppress
 from copy import deepcopy
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from decimal import Decimal
 from functools import partial, wraps
 from pathlib import Path
@@ -65,7 +65,7 @@ from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.operators import CompiledUpdatePlan
 from mongoeco.core.paths import get_document_value
-from mongoeco.core.projections import apply_projection
+from mongoeco.core.projections import _ProjectionExecutor, apply_projection
 from mongoeco.core.query_plan import (
     AllCondition,
     AndCondition,
@@ -102,15 +102,21 @@ from mongoeco.core.search_models import (
     SearchExecutionTrace,
     SearchExplainVerbosity,
 )
-from mongoeco.core.sorting import sort_documents
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
 from mongoeco.engines._change_dispatch import ConsumerDispatchCoordinator
+from mongoeco.engines._executor_admission import (
+    executor_admission,
+    executor_admission_stats,
+)
 from mongoeco.engines._runtime_metrics import LocalRuntimeMetrics
 from mongoeco.engines._shared_ttl import (
     coerce_ttl_datetime,
     document_expired_by_ttl,
+    ttl_expiration_datetime,
 )
 from mongoeco.engines._sqlite_admin_runtime import SQLiteAdminRuntime
+from mongoeco.engines._sqlite_bulk import SQLiteBulkPreparation
+from mongoeco.engines._sqlite_connection import SQLiteConnection, sqlite_read_scope
 from mongoeco.engines._sqlite_explain_contract import (
     sqlite_planning_issues,
     sqlite_pushdown_details,
@@ -127,6 +133,7 @@ from mongoeco.engines._sqlite_index_admin import (
     drop_index as _sqlite_drop_index,
     list_index_documents as _sqlite_list_index_documents,
 )
+from mongoeco.engines._sqlite_index_catalog import SQLiteIndexCatalog
 from mongoeco.engines._sqlite_index_runtime import (
     backfill_scalar_indexes_sync as _sqlite_runtime_backfill_scalar_indexes_sync,
     ensure_multikey_physical_indexes_sync as _sqlite_runtime_ensure_multikey_physical_indexes_sync,
@@ -159,6 +166,7 @@ from mongoeco.engines._sqlite_outbox import (
     release_consumer_lease as _sqlite_release_consumer_lease,
     renew_consumer_lease as _sqlite_renew_consumer_lease,
     renew_ephemeral_consumers as _sqlite_renew_ephemeral_consumers,
+    reusable_consumer_checkpoint as _sqlite_reusable_consumer_checkpoint,
     unregister_consumer as _sqlite_unregister_consumer,
 )
 from mongoeco.engines._sqlite_plan_heuristics import (
@@ -185,6 +193,7 @@ from mongoeco.engines._sqlite_read_runtime import (
     explain_query_plan_sync as _sqlite_runtime_explain_query_plan_sync,
     plan_find_semantics_sync as _sqlite_runtime_plan_find_semantics_sync,
 )
+from mongoeco.engines._sqlite_reader import SQLiteScanReader, _owned_document_size
 from mongoeco.engines._sqlite_runtime import (
     SQLiteCacheState,
     SQLiteRuntimeState,
@@ -237,12 +246,12 @@ from mongoeco.engines.results import (
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
     EngineReadExecutionPlan,
+    FiniteDocumentScan,
     build_query_plan_explanation,
     compile_find_semantics,
     compile_find_semantics_from_operation,
     compile_update_semantics,
     enforce_collection_document_validation,
-    filter_documents,
     finalize_documents,
     iter_filtered_documents,
     stream_finalize_documents,
@@ -310,6 +319,8 @@ _SQLITE_SHARED_EXECUTOR_LOCK = threading.Lock()
 _SQLITE_SHARED_EXECUTORS: dict[int, ThreadPoolExecutor] = {}
 _SQLITE_CHANGE_DISPATCH = ConsumerDispatchCoordinator()
 _ASYNC_SCAN_QUEUE_BATCH_SIZE = 64
+_ASYNC_SCAN_BATCH_BYTES = 1024 * 1024
+_ASYNC_SCAN_EXAMINED_LIMIT = 256
 _CHANGE_DISPATCH_LEASE_TTL_SECONDS = 30.0
 _CHANGE_DISPATCH_HEARTBEAT_SECONDS = 10.0
 _CHANGE_DISPATCH_RETRY_SECONDS = 0.01
@@ -318,9 +329,11 @@ _EPHEMERAL_CHANGE_CONSUMER_HEARTBEAT_SECONDS = 60.0
 _EPHEMERAL_CHANGE_CONSUMER_STOP_TIMEOUT_SECONDS = 6.0
 
 
-@dataclass(frozen=True, slots=True)
-class _ScanProducerError:
-    error: BaseException
+def _observe_scan_completion(future: asyncio.Future) -> None:
+    # Awaiters still receive errors; abandoned waits must not leave an
+    # unobserved task exception after the reader has released its resources.
+    if not future.cancelled():
+        future.exception()
 
 
 class _ChangeDispatchHeartbeat:
@@ -407,6 +420,7 @@ class SQLiteEngine(AsyncStorageEngine):
     """Motor SQLite async-first usando la stdlib como backend persistente."""
 
     _PROFILE_COLLECTION_NAME = "system.profile"
+    _scan_examined_limit = _ASYNC_SCAN_EXAMINED_LIMIT
 
     def __init__(
         self,
@@ -541,6 +555,11 @@ class SQLiteEngine(AsyncStorageEngine):
     def _index_cache(
         self,
     ) -> dict[tuple[str, str], tuple[int, list[EngineIndexRecord]]]:
+        connection = getattr(self._thread_local, "connection", None)
+        if connection is None:
+            connection = self._connection
+        if isinstance(connection, SQLiteConnection):
+            return connection.index_catalogs
         return self._cache_state.index_cache
 
     @property
@@ -700,7 +719,22 @@ class SQLiteEngine(AsyncStorageEngine):
             vector_backend_stats_document(state)
             for state in self._vector_search_backends.values()
         )
+        with self._scan_condition:
+            readers = tuple(self._runtime_state.scan_readers)
+            read_resources = {
+                "openReaders": len(readers),
+                "dedicatedReaders": sum(reader.owns_connection for reader in readers),
+                "retainedSnapshotBytes": sum(
+                    reader.retained_snapshot_bytes for reader in readers
+                ),
+                "closeFailures": self._runtime_state.scan_close_failures,
+                "batchDocumentLimit": _ASYNC_SCAN_QUEUE_BATCH_SIZE,
+                "batchByteTarget": _ASYNC_SCAN_BATCH_BYTES,
+                "batchExaminedLimit": self._scan_examined_limit,
+                "executorAdmission": executor_admission_stats(self._executor),
+            }
         return {
+            "readResources": read_resources,
             "planner": {
                 "engine": "sqlite",
                 "pushdownModes": ["sql", "hybrid", "python"],
@@ -779,11 +813,25 @@ class SQLiteEngine(AsyncStorageEngine):
         # do not cross that boundary implicitly, so copy the command context
         # (notably the injected clock) for each submitted job.
         context = contextvars.copy_context()
-        return await loop.run_in_executor(
-            self._ensure_executor(),
-            context.run,
-            partial(func, *args, **kwargs),
-        )
+        executor = self._ensure_executor()
+        admission = executor_admission(executor, self._executor_workers)
+        await admission.acquire()
+        release_on_exit = True
+        try:
+            physical = executor.submit(
+                context.run,
+                partial(func, *args, **kwargs),
+            )
+            submitted = asyncio.wrap_future(physical, loop=loop)
+            try:
+                return await asyncio.shield(submitted)
+            except asyncio.CancelledError:
+                physical.add_done_callback(lambda _future: admission.release())
+                release_on_exit = False
+                raise
+        finally:
+            if release_on_exit:
+                admission.release()
 
     def _engine_key(self) -> str:
         return f"sqlite:{id(self)}"
@@ -795,8 +843,10 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> None:
         if db_name is None or coll_name is None:
             self._index_cache.clear()
+            self._cache_state.index_catalog_pool.clear()
             return
         self._index_cache.pop((db_name, coll_name), None)
+        self._cache_state.index_catalog_pool.clear((db_name, coll_name))
 
     def _invalidate_collection_id_cache(
         self,
@@ -1074,29 +1124,35 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> int:
         self._ensure_session_can_use_engine(context)
         try:
-            ttl_indexes = [
-                index
-                for index in self._load_indexes(db_name, coll_name)
-                if index.expire_after_seconds is not None
-            ]
+            catalog = self._load_indexes(db_name, coll_name)
+            ttl_indexes = (
+                catalog.ttl_indexes
+                if isinstance(catalog, SQLiteIndexCatalog)
+                else tuple(
+                    index for index in catalog if index.expire_after_seconds is not None
+                )
+            )
         except (RuntimeError, TypeError, ValueError, AttributeError):
             return 0
         if not ttl_indexes:
             return 0
-        expired: list[tuple[str, Document]] = []
-        for storage_key, document in self._load_documents(db_name, coll_name):
-            if any(
-                self._document_expired_by_ttl(document, index, now=now)
-                for index in ttl_indexes
-            ):
-                assert_document_matches_storage_key(
-                    document,
-                    storage_key,
-                    storage_key_for_id=self._storage_key,
-                )
-                expired.append((storage_key, document))
-        if not expired:
+        collection_id = self._lookup_collection_id(conn, db_name, coll_name)
+        if collection_id is None:
             return 0
+        cutoff = int(now.timestamp() * 1_000)
+        candidate_rows = conn.execute(
+            """
+            SELECT storage_key
+            FROM ttl_index_entries
+            WHERE collection_id = ? AND expires_at_epoch_ms <= ?
+            ORDER BY expires_at_epoch_ms, index_name, storage_key
+            """,
+            (collection_id, cutoff),
+        )
+        candidate_storage_keys = list(dict.fromkeys(row[0] for row in candidate_rows))
+        if not candidate_storage_keys:
+            return 0
+        removed = 0
         with sqlite_write_scope(
             conn,
             begin_write=lambda current: self._begin_write(current, context),
@@ -1106,7 +1162,29 @@ class SQLiteEngine(AsyncStorageEngine):
                 context,
             ),
         ):
-            for storage_key, _document in expired:
+            current_indexes = self._load_indexes(db_name, coll_name)
+            current_ttl = tuple(
+                index
+                for index in current_indexes
+                if index.expire_after_seconds is not None
+            )
+            for storage_key in candidate_storage_keys:
+                document = self._load_existing_document_for_storage_key(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                )
+                if document is None or not any(
+                    self._document_expired_by_ttl(document, index, now=now)
+                    for index in current_ttl
+                ):
+                    continue
+                assert_document_matches_storage_key(
+                    document,
+                    storage_key,
+                    storage_key_for_id=self._storage_key,
+                )
                 conn.execute(
                     """
                     DELETE FROM documents
@@ -1132,8 +1210,10 @@ class SQLiteEngine(AsyncStorageEngine):
                     coll_name,
                     storage_key,
                 )
-        self._invalidate_collection_features_cache(db_name, coll_name)
-        return len(expired)
+                removed += 1
+        if removed:
+            self._invalidate_collection_features_cache(db_name, coll_name)
+        return removed
 
     def _assert_expired_documents_have_stable_identity_sync(
         self,
@@ -3176,7 +3256,7 @@ class SQLiteEngine(AsyncStorageEngine):
         context: ClientSession | None = None,
     ) -> tuple[str, Document] | None:
         conn = self._require_connection(context)
-        with self._bind_connection(conn):
+        with self._bind_connection(conn), sqlite_read_scope(conn):
             return _sqlite_runtime_select_first_document_for_plan(
                 self,
                 db_name,
@@ -3378,12 +3458,16 @@ class SQLiteEngine(AsyncStorageEngine):
         db_name: str,
         coll_name: str,
     ) -> list[EngineIndexRecord]:
+        conn = self._require_connection()
+        if isinstance(conn, SQLiteConnection):
+            conn.refresh_catalog_validity()
         cache_key = (db_name, coll_name)
         cached = self._index_cache.get(cache_key)
         cache_version = self._index_cache_version(db_name, coll_name)
         if cached is not None and cached[0] == cache_version:
+            if isinstance(cached[1], SQLiteIndexCatalog):
+                return cached[1]
             return deepcopy(cached[1])
-        conn = self._require_connection()
         cursor = conn.execute(
             """
             SELECT name, physical_name, fields, keys, unique_flag, sparse_flag, hidden_flag, collation_json, partial_filter_json, expire_after_seconds, text_weights_json, default_language, language_override, min_value, max_value, bucket_size, multikey_flag, multikey_physical_name, scalar_physical_name
@@ -3393,8 +3477,14 @@ class SQLiteEngine(AsyncStorageEngine):
             """,
             (db_name, coll_name),
         )
+        rows = tuple(tuple(row) for row in cursor.fetchall())
+        catalog = self._cache_state.index_catalog_pool.find(cache_key, rows)
+        if catalog is not None:
+            self._ensure_multikey_physical_indexes_sync(conn, catalog)
+            self._index_cache[cache_key] = (cache_version, catalog)
+            return catalog
         indexes: list[EngineIndexRecord] = []
-        for row in cursor.fetchall():
+        for row in rows:
             if len(row) == 9:
                 (
                     name,
@@ -3680,6 +3770,11 @@ class SQLiteEngine(AsyncStorageEngine):
                 ),
             )
         self._ensure_multikey_physical_indexes_sync(conn, indexes)
+        catalog = SQLiteIndexCatalog.from_records(indexes)
+        if catalog is not None:
+            self._cache_state.index_catalog_pool.remember(cache_key, rows, catalog)
+            self._index_cache[cache_key] = (cache_version, catalog)
+            return catalog
         self._index_cache[cache_key] = (cache_version, deepcopy(indexes))
         return indexes
 
@@ -3894,6 +3989,89 @@ class SQLiteEngine(AsyncStorageEngine):
             """,
             (collection_id, storage_key),
         )
+        conn.execute(
+            """
+            DELETE FROM ttl_index_entries
+            WHERE collection_id = ? AND storage_key = ?
+            """,
+            (collection_id, storage_key),
+        )
+
+    @staticmethod
+    def _ttl_expiration_epoch_ms(
+        document: Document,
+        index: EngineIndexRecord,
+    ) -> int | None:
+        expiration = ttl_expiration_datetime(
+            QueryEngine.extract_values(document, index.fields[0]),
+            expire_after_seconds=index.expire_after_seconds,
+        )
+        return None if expiration is None else int(expiration.timestamp() * 1_000)
+
+    def _replace_ttl_entries_for_document(  # noqa: PLR0913, PLR0917
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        storage_key: str,
+        document: Document,
+        indexes: list[EngineIndexRecord],
+    ) -> None:
+        collection_id = self._lookup_collection_id(conn, db_name, coll_name)
+        if collection_id is None:
+            return
+        conn.execute(
+            "DELETE FROM ttl_index_entries WHERE collection_id = ? AND storage_key = ?",
+            (collection_id, storage_key),
+        )
+        rows = []
+        for index in indexes:
+            if index.expire_after_seconds is None:
+                continue
+            expiration = self._ttl_expiration_epoch_ms(document, index)
+            if expiration is not None:
+                rows.append((collection_id, index.name, storage_key, expiration))
+        if rows:
+            conn.executemany(
+                """
+                INSERT INTO ttl_index_entries (
+                    collection_id, index_name, storage_key, expires_at_epoch_ms
+                ) VALUES (?, ?, ?, ?)
+                """,
+                rows,
+            )
+
+    def _replace_ttl_entry_for_index_for_document(  # noqa: PLR0913, PLR0917
+        self,
+        conn: sqlite3.Connection,
+        db_name: str,
+        coll_name: str,
+        storage_key: str,
+        document: Document,
+        index: EngineIndexRecord,
+    ) -> None:
+        collection_id = self._lookup_collection_id(conn, db_name, coll_name)
+        if collection_id is None:
+            return
+        conn.execute(
+            """
+            DELETE FROM ttl_index_entries
+            WHERE collection_id = ? AND index_name = ? AND storage_key = ?
+            """,
+            (collection_id, index.name, storage_key),
+        )
+        if index.expire_after_seconds is None:
+            return
+        expiration = self._ttl_expiration_epoch_ms(document, index)
+        if expiration is not None:
+            conn.execute(
+                """
+                INSERT INTO ttl_index_entries (
+                    collection_id, index_name, storage_key, expires_at_epoch_ms
+                ) VALUES (?, ?, ?, ?)
+                """,
+                (collection_id, index.name, storage_key, expiration),
+            )
 
     def _rebuild_multikey_entries_for_document(
         self,
@@ -3925,6 +4103,14 @@ class SQLiteEngine(AsyncStorageEngine):
     ) -> None:
         _sqlite_runtime_rebuild_scalar_entries_for_document(
             self,
+            conn,
+            db_name,
+            coll_name,
+            storage_key,
+            document,
+            indexes,
+        )
+        self._replace_ttl_entries_for_document(
             conn,
             db_name,
             coll_name,
@@ -3970,10 +4156,56 @@ class SQLiteEngine(AsyncStorageEngine):
             document,
             index,
         )
+        self._replace_ttl_entry_for_index_for_document(
+            conn,
+            db_name,
+            coll_name,
+            storage_key,
+            document,
+            index,
+        )
         self._mark_search_backend_changed(db_name, coll_name)
 
     def _backfill_scalar_indexes_sync(self, conn: sqlite3.Connection) -> None:
         _sqlite_runtime_backfill_scalar_indexes_sync(self, conn)
+
+    def _ensure_ttl_index_entries_sync(self, conn: sqlite3.Connection) -> None:
+        component = "ttl_index_entries"
+        row = conn.execute(
+            "SELECT version FROM mongoeco_schema_migrations WHERE component = ?",
+            (component,),
+        ).fetchone()
+        if row is not None:
+            if int(row[0]) != 1:
+                message = f"unsupported TTL index schema version {row[0]}"
+                raise OperationFailure(message)
+            return
+        conn.execute("DELETE FROM ttl_index_entries")
+        namespaces = conn.execute(
+            """
+            SELECT DISTINCT db_name, coll_name
+            FROM indexes
+            WHERE expire_after_seconds IS NOT NULL
+            """,
+        ).fetchall()
+        for db_name, coll_name in namespaces:
+            indexes = self._load_indexes(db_name, coll_name)
+            for storage_key, document in self._load_documents(db_name, coll_name):
+                self._replace_ttl_entries_for_document(
+                    conn,
+                    db_name,
+                    coll_name,
+                    storage_key,
+                    document,
+                    indexes,
+                )
+        conn.execute(
+            """
+            INSERT INTO mongoeco_schema_migrations (component, version)
+            VALUES (?, 1)
+            """,
+            (component,),
+        )
 
     def _abort_failed_connect_sync(self) -> None:
         with self._lock:
@@ -4101,6 +4333,29 @@ class SQLiteEngine(AsyncStorageEngine):
                     """,
                 )
                 ensure_change_outbox_schema(connection)
+                ttl_schema_row = connection.execute(
+                    """
+                    SELECT version
+                    FROM mongoeco_schema_migrations
+                    WHERE component = 'ttl_index_entries'
+                    """,
+                ).fetchone()
+                if ttl_schema_row is not None and int(ttl_schema_row[0]) != 1:
+                    message = (
+                        f"unsupported TTL index schema version {ttl_schema_row[0]}"
+                    )
+                    raise OperationFailure(message)
+                connection.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS ttl_index_entries (
+                        collection_id INTEGER NOT NULL,
+                        index_name TEXT NOT NULL,
+                        storage_key TEXT NOT NULL,
+                        expires_at_epoch_ms INTEGER NOT NULL,
+                        PRIMARY KEY (collection_id, index_name, storage_key)
+                    ) WITHOUT ROWID
+                    """,
+                )
                 _sqlite_expire_ephemeral_consumers(connection)
                 collection_columns = {
                     row[1]
@@ -4374,6 +4629,14 @@ class SQLiteEngine(AsyncStorageEngine):
                     ON scalar_index_entries (collection_id, storage_key)
                     """,
                 )
+                connection.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_ttl_index_entries_expiration
+                    ON ttl_index_entries (
+                        collection_id, expires_at_epoch_ms, index_name, storage_key
+                    )
+                    """,
+                )
                 search_index_rows = connection.execute(
                     """
                     SELECT db_name, coll_name, name
@@ -4402,6 +4665,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._connection = connection
                 with self._bind_connection(connection):
                     self._backfill_scalar_indexes_sync(connection)
+                    self._ensure_ttl_index_entries_sync(connection)
                 connection.commit()
                 if self._path != ":memory:":
                     change_delivery_connection = self._create_sqlite_connection()
@@ -4427,7 +4691,11 @@ class SQLiteEngine(AsyncStorageEngine):
             self._connection_count += 1
 
     def _create_sqlite_connection(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self._path, check_same_thread=False)
+        connection = sqlite3.connect(
+            self._path,
+            check_same_thread=False,
+            factory=SQLiteConnection,
+        )
         try:
             if self._path != ":memory:":
                 connection.execute("PRAGMA journal_mode=WAL")
@@ -4476,18 +4744,26 @@ class SQLiteEngine(AsyncStorageEngine):
             allow_transactional_registration=True,
         ) as conn:
             was_in_transaction = conn.in_transaction
-            checkpoint = _sqlite_register_consumer(
+            checkpoint = _sqlite_reusable_consumer_checkpoint(
                 conn,
                 consumer_id,
                 initial_checkpoint=initial_checkpoint,
                 durable=durable,
-                owner_instance=(None if durable else self._change_dispatch_owner),
-                ephemeral_ttl_seconds=(
-                    None if durable else _EPHEMERAL_CHANGE_CONSUMER_TTL_SECONDS
-                ),
+                owner_instance=self._change_dispatch_owner,
             )
-            if not was_in_transaction:
-                conn.commit()
+            if checkpoint is None:
+                checkpoint = _sqlite_register_consumer(
+                    conn,
+                    consumer_id,
+                    initial_checkpoint=initial_checkpoint,
+                    durable=durable,
+                    owner_instance=(None if durable else self._change_dispatch_owner),
+                    ephemeral_ttl_seconds=(
+                        None if durable else _EPHEMERAL_CHANGE_CONSUMER_TTL_SECONDS
+                    ),
+                )
+                if not was_in_transaction:
+                    conn.commit()
         with self._lock:
             self._change_outbox_checkpoints[consumer_id] = checkpoint
             self._registered_change_consumers[consumer_id] = durable
@@ -4831,6 +5107,19 @@ class SQLiteEngine(AsyncStorageEngine):
             return None
         return self._deserialize_document(row[0])
 
+    def _close_scan_readers_sync(self) -> BaseException | None:
+        with self._scan_condition:
+            for stop_event in self._runtime_state.scan_stop_events:
+                stop_event.set()
+            readers = tuple(self._runtime_state.scan_readers)
+        error: BaseException | None = None
+        for reader in readers:
+            try:
+                reader.close()
+            except BaseException as close_error:
+                error = error or close_error
+        return error
+
     def _disconnect_sync(self) -> None:
         connection: sqlite3.Connection | None = None
         change_delivery_connection: sqlite3.Connection | None = None
@@ -4845,15 +5134,17 @@ class SQLiteEngine(AsyncStorageEngine):
 
         try:
             heartbeat_error = self._stop_ephemeral_registration_heartbeat()
-            with self._scan_condition:
-                for stop_event in self._runtime_state.scan_stop_events:
-                    stop_event.set()
-                while self._active_scan_count > 0:
-                    self._scan_condition.wait()
+            scan_error = self._close_scan_readers_sync()
             with self._lock:
                 connection = self._connection
                 change_delivery_connection = self._change_delivery_connection
-                control_connection = change_delivery_connection or connection
+                # Closing storage rolls back an unfinished write. Control
+                # maintenance must not commit it as a side effect of close.
+                control_connection = change_delivery_connection or (
+                    connection
+                    if connection is None or connection.in_transaction is not True
+                    else None
+                )
                 if control_connection is not None:
                     control_lock = (
                         self._change_delivery_lock
@@ -4880,6 +5171,7 @@ class SQLiteEngine(AsyncStorageEngine):
                 self._connection = None
                 self._change_delivery_connection = None
                 self._transaction_owner_session_id = None
+                self._session_runtime.clear_write_states()
                 self._invalidate_index_cache()
                 self._invalidate_collection_id_cache()
                 self._invalidate_collection_features_cache()
@@ -4899,6 +5191,8 @@ class SQLiteEngine(AsyncStorageEngine):
             change_delivery_connection.close()
         if heartbeat_error is not None:
             raise heartbeat_error
+        if scan_error is not None:
+            raise scan_error
 
     def _profile_documents(self, db_name: str) -> list[Document]:
         profile_documents = getattr(
@@ -5387,6 +5681,18 @@ class SQLiteEngine(AsyncStorageEngine):
                         rollback_write=lambda current: None,
                         invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                     )
+                    current_indexes = self._load_indexes(db_name, coll_name)
+                    for document, applied in zip(documents, results, strict=False):
+                        if not applied:
+                            continue
+                        self._replace_ttl_entries_for_document(
+                            conn,
+                            db_name,
+                            coll_name,
+                            self._storage_key(document.get("_id")),
+                            document,
+                            current_indexes,
+                        )
                     outcomes: list[InsertOutcome] = []
                     for event_index, (document, applied) in enumerate(
                         zip(documents, results, strict=False),
@@ -5656,7 +5962,7 @@ class SQLiteEngine(AsyncStorageEngine):
         max_time_ms: int | None = None,
         dialect: MongoDialect | None = None,
     ):
-        self._ensure_session_can_use_engine(context)
+        """Synchronous adapter over the same finite, explicitly owned reader."""
         semantics = (
             semantics_or_filter_spec
             if isinstance(semantics_or_filter_spec, EngineFindSemantics)
@@ -5672,60 +5978,50 @@ class SQLiteEngine(AsyncStorageEngine):
                 dialect=dialect,
             )
         )
+        reader = SQLiteScanReader(
+            self,
+            db_name,
+            coll_name,
+            semantics,
+            context=context,
+            stop_event=stop_event,
+            tracked=False,
+        )
+        try:
+            while True:
+                batch = reader.fetch(1, _ASYNC_SCAN_BATCH_BYTES)
+                yield from batch.documents
+                if batch.error is not None:
+                    raise batch.error
+                if batch.exhausted:
+                    return
+        finally:
+            reader.close()
+
+    def _open_scan_documents_sync(
+        self,
+        reader: SQLiteScanReader,
+    ):
+        """Prepare iteration with binding scoped to the calling reader job.
+
+        Returned iterators MUST NOT keep connection bindings or locks across
+        yield. The reader owns physical cursors, including those hidden behind
+        Python filtering/projection adapters, and rebinds on each fetch/close.
+        """
+        db_name, coll_name = reader.db_name, reader.coll_name
+        semantics, context = reader.semantics, reader.context
         python_semantics = replace(semantics, compiled_query=None)
-        deadline = semantics.deadline
         if self._is_profile_namespace(coll_name):
-            documents_iter = self._iter_documents_for_classic_text_query_sync(
+            source = self._iter_documents_for_classic_text_query_sync(
                 db_name,
                 coll_name,
                 iter(self._profile_documents(db_name)),
                 semantics=python_semantics,
                 context=context,
             )
-            if python_semantics.sort is None:
-                for document in stream_finalize_documents(
-                    iter_filtered_documents(documents_iter, python_semantics),
-                    python_semantics,
-                ):
-                    enforce_deadline(deadline)
-                    if stop_event is not None and stop_event.is_set():
-                        break
-                    yield document
-                return
-            documents = filter_documents(documents_iter, python_semantics)
-            documents = sort_documents(
-                documents,
-                python_semantics.sort,
-                dialect=python_semantics.dialect,
-                collation=python_semantics.collation,
-            )
-            documents = finalize_documents(
-                documents,
-                python_semantics,
-                apply_sort_phase=False,
-            )
-            for document in documents:
-                enforce_deadline(deadline)
-                if stop_event is not None and stop_event.is_set():
-                    break
-                yield document
-            return
-        with self._lock:
-            try:
-                purge_connection = self._require_connection(context)
-            except RuntimeError:
-                purge_connection = None
-            if purge_connection is not None:
-                with self._bind_connection(purge_connection):
-                    self._purge_expired_documents_sync(
-                        purge_connection,
-                        db_name,
-                        coll_name,
-                        context=context,
-                        now=semantics.variables.now.replace(
-                            tzinfo=datetime.UTC,
-                        ),
-                    )
+            reader.own(source)
+            return self._finalize_scan_source(source, python_semantics)
+
         if (
             semantics.text_query is None
             and semantics.sort is None
@@ -5740,148 +6036,137 @@ class SQLiteEngine(AsyncStorageEngine):
                     db_name,
                     coll_name,
                     semantics.query_plan,
-                    hint=hint,
+                    hint=semantics.hint,
                     context=context,
                 )
             except NotImplementedError:
                 selected = None
-            if selected is None:
-                pass
-            else:
+            if selected is not None:
                 _storage_key, document = selected
-                yield apply_projection(
-                    document,
-                    semantics.projection,
-                    selector_filter=semantics.filter_spec,
-                    dialect=semantics.dialect,
-                )
-                return
-        shared_connection: sqlite3.Connection | None = None
-        dedicated_reader: sqlite3.Connection | None = None
-        if self._session_owns_transaction(context):
-            with self._lock:
-                shared_connection = self._require_connection(context)
-        elif self._can_use_dedicated_reader(context):
-            dedicated_reader = self._create_sqlite_connection()
-
-        active_connection = dedicated_reader or shared_connection
-        try:
-            with (
-                self._bind_connection(active_connection)
-                if active_connection is not None
-                else nullcontext()
-            ):
-                try:
-                    if shared_connection is None:
-                        enforce_deadline(deadline)
-                        execution_plan = self._compile_read_execution_plan(
-                            db_name,
-                            coll_name,
-                            semantics,
-                            hint=hint,
-                        )
-                    else:
-                        with self._lock:
-                            enforce_deadline(deadline)
-                            execution_plan = self._compile_read_execution_plan(
-                                db_name,
-                                coll_name,
-                                semantics,
-                                hint=hint,
-                            )
-                    self._runtime_metrics.record_planner(
-                        execution_plan.mode.value,
-                        fallback_reason=execution_plan.fallback_reason,
-                    )
-                    sql, sql_params = _sqlite_require_sql_execution_plan(
-                        execution_plan,
-                    )
-                    if active_connection is None:
-                        with self._lock:
-                            active_connection = self._require_connection(
-                                context,
-                            )
-                    cursor = active_connection.execute(sql, tuple(sql_params))
-                    try:
-                        if (
-                            execution_plan.apply_python_sort
-                            or execution_plan.apply_python_residual
-                        ):
-                            documents = finalize_documents(
-                                (
-                                    self._deserialize_document(payload)
-                                    for (payload,) in cursor
-                                ),
-                                semantics,
-                            )
-                            for document in documents:
-                                enforce_deadline(deadline)
-                                if stop_event is not None and stop_event.is_set():
-                                    break
-                                yield document
-                            return
-                        for (payload,) in cursor:
-                            enforce_deadline(deadline)
-                            if stop_event is not None and stop_event.is_set():
-                                break
-                            yield apply_projection(
-                                self._deserialize_document(payload),
-                                semantics.projection,
-                                selector_filter=semantics.filter_spec,
-                                dialect=semantics.dialect,
-                            )
-                    finally:
-                        try:
-                            cursor.close()
-                        except sqlite3.ProgrammingError:
-                            # El consumidor puede cerrar la conexión antes de drenar el generador.
-                            pass
-                    return
-                except (NotImplementedError, TypeError):
-                    documents_iter = self._iter_documents_for_classic_text_query_sync(
-                        db_name,
-                        coll_name,
-                        (
-                            document
-                            for _, document in self._load_documents(
-                                db_name,
-                                coll_name,
-                            )
+                return iter(
+                    (
+                        apply_projection(
+                            document,
+                            semantics.projection,
+                            selector_filter=semantics.filter_spec,
+                            dialect=semantics.dialect,
                         ),
-                        semantics=python_semantics,
-                        context=context,
                     )
-                    try:
-                        if python_semantics.sort is None:
-                            for document in stream_finalize_documents(
-                                iter_filtered_documents(
-                                    documents_iter,
-                                    python_semantics,
-                                ),
-                                python_semantics,
-                            ):
-                                if stop_event is not None and stop_event.is_set():
-                                    break
-                                yield document
-                            return
+                )
 
-                        documents = finalize_documents(
-                            filter_documents(documents_iter, python_semantics),
-                            python_semantics,
-                        )
-                    finally:
-                        close = getattr(documents_iter, "close", None)
-                        if callable(close):
-                            close()
-        finally:
-            if dedicated_reader is not None:
-                dedicated_reader.close()
+        try:
+            enforce_deadline(semantics.deadline)
+            execution_plan = self._compile_read_execution_plan(
+                db_name,
+                coll_name,
+                semantics,
+                hint=semantics.hint,
+            )
+            self._runtime_metrics.record_planner(
+                execution_plan.mode.value,
+                fallback_reason=execution_plan.fallback_reason,
+            )
+            sql, sql_params = _sqlite_require_sql_execution_plan(execution_plan)
+        except (NotImplementedError, TypeError):
+            source_rows = self._load_documents(db_name, coll_name)
+            reader.own(source_rows)
+            if not reader.owns_connection and semantics.limit != 1:
+                source_rows = self._capture_shared_read_source(
+                    source_rows,
+                    reader,
+                    payloads=False,
+                )
+            raw_documents = (document for _, document in source_rows)
+            if semantics.text_query is None and semantics.sort is None:
+                fallback_documents = FiniteDocumentScan(
+                    raw_documents,
+                    python_semantics,
+                )
+            else:
+                source = self._iter_documents_for_classic_text_query_sync(
+                    db_name,
+                    coll_name,
+                    raw_documents,
+                    semantics=python_semantics,
+                    context=context,
+                )
+                reader.own(source)
+                fallback_documents = self._finalize_scan_source(
+                    source,
+                    python_semantics,
+                )
+            return fallback_documents
 
-        for document in documents:
-            enforce_deadline(deadline)
-            if stop_event is not None and stop_event.is_set():
-                break
-            yield document
+        connection = self._require_connection(context)
+        cursor = connection.execute(sql, tuple(sql_params))
+        reader.own(cursor)
+        rows = cursor
+        if not reader.owns_connection and semantics.limit != 1:
+            rows = self._capture_shared_read_source(cursor, reader, payloads=True)
+            cursor.close()
+        source = (self._deserialize_document(payload) for (payload,) in rows)
+        if execution_plan.apply_python_sort:
+            return iter(finalize_documents(source, semantics))
+        if execution_plan.apply_python_residual:
+            residual_query_plan = execution_plan.residual_query_plan
+            if residual_query_plan is None:
+                message = "SQLite residual plan is missing its query plan"
+                raise RuntimeError(message)
+            residual_semantics = replace(
+                semantics,
+                query_plan=residual_query_plan,
+                compiled_query=None,
+            )
+            return FiniteDocumentScan(source, residual_semantics)
+        project = _ProjectionExecutor(
+            semantics.projection,
+            selector_filter=semantics.filter_spec,
+            dialect=semantics.dialect,
+        )
+        return (project(document) for document in source)
+
+    @staticmethod
+    def _capture_shared_read_source(
+        source,
+        reader: SQLiteScanReader,
+        *,
+        payloads: bool,
+    ):
+        # SQLite does not isolate an active SELECT from later writes made on
+        # the very same connection. Capture its selected rows under the shared
+        # connection guard before returning control to that connection's owner.
+        # File-backed dedicated readers instead retain their SQLite snapshot.
+        rows = []
+        retained_bytes = 0
+        error: Exception | None = None
+        try:
+            for row in source:
+                enforce_deadline(reader.semantics.deadline)
+                if reader.stop_event.is_set():
+                    break
+                rows.append(row)
+                retained_bytes += (
+                    sys.getsizeof(row[0]) if payloads else _owned_document_size(row[1])
+                ) + sys.getsizeof(row)
+        except Exception as source_error:
+            error = source_error
+        with reader.engine._scan_condition:
+            reader.retained_snapshot_bytes = retained_bytes + sys.getsizeof(rows)
+        if error is None:
+            return rows
+        return SQLiteEngine._rows_before_read_error(rows, error)
+
+    @staticmethod
+    def _rows_before_read_error(rows, error: Exception):
+        yield from rows
+        raise error
+
+    @staticmethod
+    def _finalize_scan_source(source, semantics: EngineFindSemantics):
+        filtered = iter_filtered_documents(source, semantics)
+        if semantics.sort is None:
+            return iter(stream_finalize_documents(filtered, semantics))
+        return iter(finalize_documents(list(filtered), semantics))
 
     def _update_matching_document_sync(
         self,
@@ -6088,47 +6373,43 @@ class SQLiteEngine(AsyncStorageEngine):
         )
         effective_dialect = semantics.dialect
         with self._lock:
-            conn: sqlite3.Connection | None = None
-            if self._session_owns_transaction(context):
-                conn = self._require_connection(context)
-            with self._bind_connection(conn) if conn is not None else nullcontext():
-                if conn is not None:
-                    self._purge_expired_documents_sync(
-                        conn,
-                        db_name,
-                        coll_name,
-                        context=context,
-                        now=self._ttl_now(),
-                    )
-                try:
-                    execution_plan = self._compile_read_execution_plan(
-                        db_name,
-                        coll_name,
-                        semantics,
-                    )
-                    sql, params = execution_plan.require_sql()
-                    if conn is None:
-                        conn = self._require_connection(context)
-                    row = conn.execute(
-                        f"SELECT COUNT(*) FROM ({sql})",
-                        tuple(params),
-                    ).fetchone()
-                    return int(row[0])
-                except (NotImplementedError, TypeError):
-                    return sum(
-                        1
-                        for _, document in self._load_documents(
+            conn = self._require_connection(context)
+            with self._bind_connection(conn):
+                self._purge_expired_documents_sync(
+                    conn,
+                    db_name,
+                    coll_name,
+                    context=context,
+                    now=semantics.variables.now.replace(tzinfo=datetime.UTC),
+                )
+                with sqlite_read_scope(conn):
+                    try:
+                        execution_plan = self._compile_read_execution_plan(
                             db_name,
                             coll_name,
+                            semantics,
                         )
-                        if QueryEngine.match_plan(
-                            document,
-                            semantics.query_plan,
-                            dialect=effective_dialect,
-                            collation=semantics.collation,
-                            variables=semantics.variables,
+                        sql, params = execution_plan.require_sql()
+                        row = conn.execute(
+                            f"SELECT COUNT(*) FROM ({sql})",
+                            tuple(params),
+                        ).fetchone()
+                        return int(row[0])
+                    except (NotImplementedError, TypeError):
+                        return sum(
+                            1
+                            for _, document in self._load_documents(
+                                db_name,
+                                coll_name,
+                            )
+                            if QueryEngine.match_plan(
+                                document,
+                                semantics.query_plan,
+                                dialect=effective_dialect,
+                                collation=semantics.collation,
+                                variables=semantics.variables,
+                            )
                         )
-                    )
 
     def _create_index_sync(
         self,
@@ -6661,18 +6942,15 @@ class SQLiteEngine(AsyncStorageEngine):
 
     @override
     async def disconnect(self) -> None:
-        # Signal producers before queuing disconnect on the same executor. A
-        # single-worker engine may otherwise queue shutdown behind a producer
-        # that is blocked on its bounded hand-off queue.
-        with self._lock:
-            stop_scans = self._connection_count <= 1
-        if stop_scans:
-            with self._scan_condition:
-                for stop_event in self._runtime_state.scan_stop_events:
-                    stop_event.set()
-        await self._run_blocking(self._disconnect_sync)
-        if self._connection_count == 0:
-            self._shutdown_executor()
+        # Finite fetch jobs no longer wait for consumer demand. Refcount,
+        # signalling and physical close all run in the worker, in that order.
+        # Never acquire its connection lock on the event-loop thread: a
+        # running fetch may hold it until that same loop signals cancellation.
+        try:
+            await self._run_blocking(self._disconnect_sync)
+        finally:
+            if self._connection_count == 0 and self._connection is None:
+                self._shutdown_executor()
 
     @override
     async def set_profiling_level(
@@ -6839,7 +7117,6 @@ class SQLiteEngine(AsyncStorageEngine):
             if operation_context is not None
             else MONGODB_DIALECT_70
         )
-        loop = asyncio.get_running_loop()
         if not bypass_document_validation or documents:
             snapshot_options, snapshot_indexes = await self._run_blocking(
                 self._snapshot_bulk_insert_preparation_sync,
@@ -6847,42 +7124,44 @@ class SQLiteEngine(AsyncStorageEngine):
                 coll_name,
                 context,
             )
-        if not bypass_document_validation:
-            validations = [
-                loop.run_in_executor(
-                    self._ensure_executor(),
-                    contextvars.copy_context().run,
-                    partial(
-                        enforce_collection_document_validation,
-                        document,
-                        options=snapshot_options,
-                        original_document=None,
-                        dialect=effective_dialect,
-                    ),
-                )
-                for document in documents
-            ]
-            await asyncio.gather(*validations)
-        prepared_documents = await asyncio.gather(
-            *[
-                loop.run_in_executor(
-                    self._ensure_executor(),
-                    contextvars.copy_context().run,
-                    partial(
-                        self._prepare_bulk_document_with_indexes_sync,
-                        document,
-                        snapshot_indexes,
-                    ),
-                )
-                for document in documents
-            ],
+        validator = None
+        if (
+            not bypass_document_validation
+            and snapshot_options is not None
+            and snapshot_options.get("validator") is not None
+        ):
+            validator = partial(
+                enforce_collection_document_validation,
+                options=snapshot_options,
+                original_document=None,
+                dialect=effective_dialect,
+            )
+        preparation = SQLiteBulkPreparation(
+            documents,
+            partial(
+                self._prepare_bulk_document_with_indexes_sync,
+                indexes=snapshot_indexes,
+            ),
+            validator,
         )
+        try:
+            while preparation.position < len(documents):
+                # Only one step is submitted at a time, not N tasks gated by
+                # a semaphore. Each completion returns admission to the pool.
+                await self._run_blocking(preparation.step)
+            if preparation.preparation_error is not None:
+                raise preparation.preparation_error
+        finally:
+            # Cancellation of an await cannot stop an already-running native
+            # call. The preparation job holds no connection and cannot publish;
+            # its cooperative stop prevents processing the rest of the block.
+            preparation.stop_event.set()
         return await self._run_blocking(
             self._insert_documents_sync,
             db_name,
             coll_name,
             documents,
-            list(prepared_documents),
+            preparation.rows,
             snapshot_indexes,
             context=context,
             bypass_document_validation=bypass_document_validation,
@@ -6961,7 +7240,6 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None = None,
     ) -> AsyncIterable[Document]:
-
         async def _scan() -> AsyncIterable[Document]:
             self._record_operation_metadata(
                 context,
@@ -6970,92 +7248,62 @@ class SQLiteEngine(AsyncStorageEngine):
                 max_time_ms=semantics.max_time_ms,
                 hint=semantics.hint,
             )
-
-            if self._path == ":memory:":
-                for document in self._iter_scan_documents_sync(
-                    db_name,
-                    coll_name,
-                    semantics,
-                    context=context,
-                    hint=semantics.hint,
-                ):
-                    yield document
-                return
-
-            items: queue.Queue[object] = queue.Queue(maxsize=2)
-            sentinel = object()
-            stop_event = threading.Event()
-
-            def _enqueue(item: object) -> bool:
-                while not stop_event.is_set():
-                    try:
-                        items.put(item, timeout=0.05)
-                        return True
-                    except queue.Full:
-                        continue
-                return False
-
-            def _produce() -> None:
-                with self._lifecycle_condition:
-                    if self._disconnecting or self._connection_count == 0:
-                        message = "SQLiteEngine is disconnecting"
-                        raise RuntimeError(message)
-                    with self._scan_condition:
-                        self._active_scan_count += 1
-                        self._runtime_state.scan_stop_events.add(stop_event)
-                batch: list[Document] = []
-                try:
-                    for document in self._iter_scan_documents_sync(
-                        db_name,
-                        coll_name,
-                        semantics,
-                        context=context,
-                        hint=semantics.hint,
-                        stop_event=stop_event,
-                    ):
-                        if stop_event.is_set():
-                            break
-                        batch.append(document)
-                        if len(batch) >= _ASYNC_SCAN_QUEUE_BATCH_SIZE:
-                            if not _enqueue(batch):
-                                break
-                            batch = []
-                except Exception as exc:
-                    if batch:
-                        _enqueue(batch)
-                        batch = []
-                    _enqueue(_ScanProducerError(exc))
-                finally:
-                    if batch:
-                        _enqueue(batch)
-                    with self._scan_condition:
-                        self._active_scan_count -= 1
-                        self._runtime_state.scan_stop_events.discard(stop_event)
-                        self._scan_condition.notify_all()
-                    _enqueue(sentinel)
-
-            producer = asyncio.create_task(self._run_blocking(_produce))
+            reader = SQLiteScanReader(
+                self,
+                db_name,
+                coll_name,
+                semantics,
+                context=context,
+            )
+            read_context = contextvars.copy_context()
             try:
-                while True:
-                    try:
-                        item = items.get_nowait()
-                    except queue.Empty:
-                        if producer.done():
-                            break
-                        # Do not consume a second engine executor worker merely
-                        # to wait on the producer's hand-off queue. This keeps
-                        # single-worker engines live and cancellation-capable.
-                        await asyncio.sleep(0.01)
-                        continue
-                    if item is sentinel:
-                        break
-                    if isinstance(item, _ScanProducerError):
-                        raise item.error
-                    for document in item:
+                while not reader.stop_event.is_set():
+                    # Shield only the physical job, not the consumer. On
+                    # cancellation its stop signal and queued close retain
+                    # ownership until the running fetch has actually finished.
+                    pending = asyncio.create_task(
+                        self._run_blocking(
+                            reader.fetch,
+                            _ASYNC_SCAN_QUEUE_BATCH_SIZE,
+                            _ASYNC_SCAN_BATCH_BYTES,
+                        ),
+                        context=read_context.copy(),
+                    )
+                    pending.add_done_callback(_observe_scan_completion)
+                    batch = await asyncio.shield(pending)
+                    for document in batch.documents:
+                        if reader.stop_event.is_set():
+                            return
                         yield document
+                    if batch.error is not None:
+                        raise batch.error
+                    if batch.exhausted:
+                        return
             finally:
-                stop_event.set()
-                await producer
+                reader.stop_event.set()
+                if not reader.close_completed.is_set():
+                    # Submit before awaiting: repeated cancellation cannot
+                    # remove the close obligation. No consumer waits in a
+                    # worker; reader.close serializes against an active fetch.
+                    loop = asyncio.get_running_loop()
+                    close_context = read_context.copy()
+                    try:
+                        closing = loop.run_in_executor(
+                            self._executor,
+                            close_context.run,
+                            reader.close,
+                        )
+                    except RuntimeError:
+                        # The owner may already have shut down its executor.
+                        # Do not recreate an engine pool merely to close an
+                        # unopened/cancelled or concurrently released reader.
+                        closing = loop.run_in_executor(
+                            None,
+                            close_context.run,
+                            reader.close,
+                        )
+                    closing.add_done_callback(_observe_scan_completion)
+                    await asyncio.shield(closing)
 
         return _scan()
 

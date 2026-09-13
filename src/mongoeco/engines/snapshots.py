@@ -28,7 +28,8 @@ class SnapshotLifecycle(StrEnum):
 
 
 _SUPERVISED_CLOSE_TASKS: set[asyncio.Task[None]] = set()
-_SUPERVISED_CLOSE_TASK_LIMIT = 256
+_SUPERVISED_CLOSE_TASK_PRESSURE_THRESHOLD = 256
+_SUPERVISED_CLOSE_TASK_PRESSURE = {"events": 0}
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,11 +175,12 @@ class ReadSnapshot(AsyncIterator[Document]):
 
         if close_task.done():
             consume_result(close_task)
-        else:
-            while len(_SUPERVISED_CLOSE_TASKS) >= _SUPERVISED_CLOSE_TASK_LIMIT:
-                oldest = next(iter(_SUPERVISED_CLOSE_TASKS))
-                _SUPERVISED_CLOSE_TASKS.discard(oldest)
-                oldest.cancel()
+        elif close_task not in _SUPERVISED_CLOSE_TASKS:
+            if (
+                len(_SUPERVISED_CLOSE_TASKS)
+                >= _SUPERVISED_CLOSE_TASK_PRESSURE_THRESHOLD
+            ):
+                _SUPERVISED_CLOSE_TASK_PRESSURE["events"] += 1
             _SUPERVISED_CLOSE_TASKS.add(close_task)
             close_task.add_done_callback(consume_result)
 
@@ -251,3 +253,25 @@ class ReadSnapshot(AsyncIterator[Document]):
     @property
     def close_error(self) -> BaseException | None:
         return self._close_error
+
+
+class _ImmediateReadSnapshot(ReadSnapshot):
+    """Read snapshot whose owned source is guaranteed to close without yielding.
+
+    This is an internal optimization contract. Sources that may suspend during
+    cleanup must use ReadSnapshot so timeout and cancellation supervision remain
+    active.
+    """
+
+    async def aclose(self) -> None:
+        if self._lifecycle is SnapshotLifecycle.CLOSED:
+            return
+        if self._lifecycle is SnapshotLifecycle.FAILED:
+            if self._close_error is not None:
+                raise self._close_error
+            return
+        if self._close_task is not None:
+            await super().aclose()
+            return
+        self._lifecycle = SnapshotLifecycle.CLOSING
+        await self._close_owned_resources()

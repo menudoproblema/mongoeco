@@ -8,7 +8,10 @@ from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.json_compat import json_dumps_compact
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.sqlite_query import index_expressions_sql
-from mongoeco.engines.virtual_indexes import document_in_virtual_index, normalize_partial_filter_expression
+from mongoeco.engines.virtual_indexes import (
+    document_in_virtual_index,
+    normalize_partial_filter_expression,
+)
 from mongoeco.errors import DuplicateKeyError, OperationFailure
 from mongoeco.types import (
     Document,
@@ -26,6 +29,8 @@ from mongoeco.types import (
     normalize_index_keys,
     special_index_directions,
 )
+
+
 def list_index_documents(indexes: Iterable[EngineIndexRecord]) -> list[IndexDocument]:
     result = [default_id_index_definition().to_list_document()]
     result.extend(index.to_definition().to_list_document() for index in indexes)
@@ -69,13 +74,20 @@ def create_index(
     physical_multikey_index_name: Callable[[str, str, str], str],
     physical_scalar_index_name: Callable[[str, str, str], str],
     is_builtin_id_index: Callable[[IndexKeySpec], bool],
-    replace_multikey_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, EngineIndexRecord], None],
-    replace_scalar_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, EngineIndexRecord], None],
+    replace_multikey_entries_for_document: Callable[
+        [sqlite3.Connection, str, str, str, Document, EngineIndexRecord], None
+    ],
+    replace_scalar_entries_for_document: Callable[
+        [sqlite3.Connection, str, str, str, Document, EngineIndexRecord], None
+    ],
     load_documents: Callable[[str, str], Iterable[tuple[str, Document]]],
     validate_compound_multikey_document: Callable[[Document, EngineIndexRecord], None],
-    unique_index_conflict: Callable[[Document, Document, EngineIndexRecord], tuple[object, ...] | None],
+    unique_index_conflict: Callable[
+        [Document, Document, EngineIndexRecord], tuple[object, ...] | None
+    ],
     quote_identifier: Callable[[str], str],
-    validate_ttl_index_candidates: Callable[[list[EngineIndexRecord]], None] | None = None,
+    validate_ttl_index_candidates: Callable[[list[EngineIndexRecord]], None]
+    | None = None,
     weights: dict[str, int] | None = None,
     default_language: str | None = None,
     language_override: str | None = None,
@@ -84,7 +96,9 @@ def create_index(
     bucket_size: float | int | None = None,
 ) -> str:
     normalized_keys = normalize_index_keys(keys)
-    partial_filter_expression = normalize_partial_filter_expression(partial_filter_expression)
+    partial_filter_expression = normalize_partial_filter_expression(
+        partial_filter_expression
+    )
     index_name = name or default_index_name(normalized_keys)
     try:
         definition = IndexDefinition(
@@ -125,9 +139,13 @@ def create_index(
     if special_directions:
         if not all(direction == "text" for direction in special_directions):
             if len(normalized_keys) != 1:
-                raise OperationFailure("special index types currently require a single-field key pattern")
+                raise OperationFailure(
+                    "special index types currently require a single-field key pattern"
+                )
         if unique:
-            raise OperationFailure(f"{special_directions[0]} indexes do not support unique")
+            raise OperationFailure(
+                f"{special_directions[0]} indexes do not support unique"
+            )
     if is_builtin_id_index(normalized_keys):
         if (
             name not in (None, "_id_")
@@ -149,7 +167,9 @@ def create_index(
     if index_name == "_id_":
         raise OperationFailure("Conflicting index definition for '_id_'")
     ordered_index = is_ordered_index_spec(normalized_keys)
-    physical_name = physical_index_name(db_name, coll_name, index_name) if ordered_index else None
+    physical_name = (
+        physical_index_name(db_name, coll_name, index_name) if ordered_index else None
+    )
     multikey = ordered_index and supports_multikey_index(fields, unique)
     multikey_physical_name = (
         physical_multikey_index_name(db_name, coll_name, index_name)
@@ -182,7 +202,9 @@ def create_index(
                 or index.get("max_value") != definition.max_value
                 or index.get("bucket_size") != definition.bucket_size
             ):
-                raise OperationFailure(f"Conflicting index definition for '{index_name}'")
+                raise OperationFailure(
+                    f"Conflicting index definition for '{index_name}'"
+                )
             return index_name
         if index["key"] == normalized_keys:
             if (
@@ -216,7 +238,7 @@ def create_index(
                     for expression in index_expressions_sql(field)
                 ],
             ]
-    )
+        )
     index_metadata = EngineIndexRecord(
         name=index_name,
         physical_name=physical_name,
@@ -240,9 +262,7 @@ def create_index(
     )
     if validate_ttl_index_candidates is not None:
         ttl_indexes = [
-            index
-            for index in indexes
-            if index.expire_after_seconds is not None
+            index for index in indexes if index.expire_after_seconds is not None
         ]
         if index_metadata.expire_after_seconds is not None:
             ttl_indexes.append(index_metadata)
@@ -256,7 +276,9 @@ def create_index(
         validate_compound_multikey_document(document, index_metadata)
         if unique:
             for existing_document in seen_documents:
-                duplicate_key = unique_index_conflict(document, existing_document, index_metadata)
+                duplicate_key = unique_index_conflict(
+                    document, existing_document, index_metadata
+                )
                 if duplicate_key is None:
                     continue
                 raise DuplicateKeyError(
@@ -316,7 +338,9 @@ def create_index(
                         else None
                     ),
                     expire_after_seconds,
-                    json_dumps_compact(definition.weights) if definition.weights is not None else None,
+                    json_dumps_compact(definition.weights)
+                    if definition.weights is not None
+                    else None,
                     definition.default_language,
                     definition.language_override,
                     definition.min_value,
@@ -442,7 +466,9 @@ def drop_index(
     if normalized_keys is not None:
         matches = [index for index in indexes if index["key"] == normalized_keys]
         if not matches:
-            raise OperationFailure(f"index not found with key pattern {normalized_keys!r}")
+            raise OperationFailure(
+                f"index not found with key pattern {normalized_keys!r}"
+            )
         if len(matches) > 1:
             raise OperationFailure(
                 f"multiple indexes found with key pattern {normalized_keys!r}; drop by name instead"
@@ -489,6 +515,13 @@ def drop_index(
                 """,
                 (collection_id, target["name"]),
             )
+        conn.execute(
+            """
+            DELETE FROM ttl_index_entries
+            WHERE collection_id = ? AND index_name = ?
+            """,
+            (collection_id, target["name"]),
+        )
         conn.execute(
             """
             DELETE FROM indexes
@@ -544,6 +577,13 @@ def drop_all_indexes(
         conn.execute(
             """
             DELETE FROM multikey_entries
+            WHERE collection_id = ?
+            """,
+            (collection_id,),
+        )
+        conn.execute(
+            """
+            DELETE FROM ttl_index_entries
             WHERE collection_id = ?
             """,
             (collection_id,),

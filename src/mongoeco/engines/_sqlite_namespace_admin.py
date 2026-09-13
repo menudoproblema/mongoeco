@@ -2,16 +2,18 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from mongoeco.errors import CollectionInvalid
-from mongoeco.types import SearchIndexDefinition
-
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines._shared_namespace_admin import (
     merge_profile_collection_names,
     merge_profile_database_names,
     profile_namespace_options,
 )
+
+if TYPE_CHECKING:
+    from mongoeco.types import SearchIndexDefinition
 
 
 def collection_options(
@@ -20,7 +22,9 @@ def collection_options(
     coll_name: str,
     profiler,
     profile_collection_name: str,
-    load_collection_options: Callable[[sqlite3.Connection, str, str], dict[str, object] | None],
+    load_collection_options: Callable[
+        [sqlite3.Connection, str, str], dict[str, object] | None
+    ],
     collection_exists: Callable[[sqlite3.Connection, str, str], bool],
     conn: sqlite3.Connection,
 ) -> dict[str, object]:
@@ -140,7 +144,9 @@ def drop_collection(
     commit_write: Callable[[sqlite3.Connection], None],
     rollback_write: Callable[[sqlite3.Connection], None],
     load_indexes: Callable[[str, str], list[dict[str, object]]],
-    load_search_index_rows: Callable[[str, str], list[tuple[SearchIndexDefinition, str | None, float | None]]],
+    load_search_index_rows: Callable[
+        [str, str], list[tuple[SearchIndexDefinition, str | None, float | None]]
+    ],
     lookup_collection_id: Callable[[sqlite3.Connection, str, str], int | None],
     quote_identifier: Callable[[str], str],
     drop_search_backend: Callable[[sqlite3.Connection, str | None], None],
@@ -158,7 +164,9 @@ def drop_collection(
     ):
         collection_id = lookup_collection_id(conn, db_name, coll_name)
         for index in indexes:
-            conn.execute(f"DROP INDEX IF EXISTS {quote_identifier(str(index['physical_name']))}")
+            conn.execute(
+                f"DROP INDEX IF EXISTS {quote_identifier(str(index['physical_name']))}"
+            )
             if index.get("scalar_physical_name"):
                 conn.execute(
                     f"DROP INDEX IF EXISTS {quote_identifier(str(index['scalar_physical_name']))}"
@@ -187,6 +195,13 @@ def drop_collection(
             conn.execute(
                 """
                 DELETE FROM multikey_entries
+                WHERE collection_id = ?
+                """,
+                (collection_id,),
+            )
+            conn.execute(
+                """
+                DELETE FROM ttl_index_entries
                 WHERE collection_id = ?
                 """,
                 (collection_id,),
@@ -281,6 +296,15 @@ def drop_database(
         conn.execute(
             """
             DELETE FROM multikey_entries
+            WHERE collection_id IN (
+                SELECT collection_id FROM collections WHERE db_name = ?
+            )
+            """,
+            (db_name,),
+        )
+        conn.execute(
+            """
+            DELETE FROM ttl_index_entries
             WHERE collection_id IN (
                 SELECT collection_id FROM collections WHERE db_name = ?
             )

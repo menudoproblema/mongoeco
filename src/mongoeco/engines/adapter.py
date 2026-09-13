@@ -141,6 +141,10 @@ class EngineSpiAdapter:
         self.engine = engine
         self.capabilities = resolve_engine_capabilities(engine)
         validate_engine_contract(engine, self.capabilities)
+        # Registration may allocate and trigger a cursor finalizer on the same
+        # thread; keep this tiny state guard reentrant like the close path.
+        self._change_delivery_lock = threading.RLock()
+        self._prepared_change_sink: object | None = None
 
     async def execute_search(
         self,
@@ -374,28 +378,33 @@ class EngineSpiAdapter:
             or sink is None
         ):
             return
-        register = _require_callable(
-            self.engine,
-            "register_change_consumer",
-            message=(
-                "transactional-outbox engine must implement register_change_consumer"
-            ),
-        )
-        journal_path = getattr(sink, "journal_path", None)
-        initial_checkpoint = None
-        if journal_path is not None:
-            state = getattr(sink, "state", None)
-            next_token = getattr(state, "next_token", None)
-            if isinstance(next_token, int):
-                initial_checkpoint = next_token - 1
-        checkpoint = register(
-            self._change_consumer_id(sink),
-            initial_checkpoint=initial_checkpoint,
-            durable=journal_path is not None,
-        )
-        align = getattr(sink, "align_commit_sequence", None)
-        if callable(align):
-            align(int(checkpoint) + 1)
+        with self._change_delivery_lock:
+            if self._prepared_change_sink is sink:
+                return
+            register = _require_callable(
+                self.engine,
+                "register_change_consumer",
+                message=(
+                    "transactional-outbox engine must implement "
+                    "register_change_consumer"
+                ),
+            )
+            journal_path = getattr(sink, "journal_path", None)
+            initial_checkpoint = None
+            if journal_path is not None:
+                state = getattr(sink, "state", None)
+                next_token = getattr(state, "next_token", None)
+                if isinstance(next_token, int):
+                    initial_checkpoint = next_token - 1
+            checkpoint = register(
+                self._change_consumer_id(sink),
+                initial_checkpoint=initial_checkpoint,
+                durable=journal_path is not None,
+            )
+            align = getattr(sink, "align_commit_sequence", None)
+            if callable(align):
+                align(int(checkpoint) + 1)
+            self._prepared_change_sink = sink
 
     def dispatch_committed_changes(self, sink: object | None) -> None:
         if (
@@ -431,6 +440,9 @@ class EngineSpiAdapter:
             ),
         )
         unregister(self._change_consumer_id(sink))
+        with self._change_delivery_lock:
+            if self._prepared_change_sink is sink:
+                self._prepared_change_sink = None
 
     @staticmethod
     def _change_consumer_id(sink: object) -> str:

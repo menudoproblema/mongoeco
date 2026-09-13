@@ -2650,6 +2650,16 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 )
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE ttl_index_entries (
+                    collection_id INTEGER NOT NULL,
+                    index_name TEXT NOT NULL,
+                    storage_key TEXT NOT NULL,
+                    expires_at_epoch_ms INTEGER NOT NULL
+                )
+                """
+            )
             plain_index = EngineIndexRecord(
                 name="idx_plain", fields=["name"], key=[("name", 1)], unique=False
             )
@@ -2705,6 +2715,16 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             )
             conn.execute(
                 "CREATE TABLE multikey_entries (collection_id INTEGER, storage_key TEXT, index_name TEXT, field_path TEXT, type_score INTEGER, text_value TEXT)"
+            )
+            conn.execute(
+                """
+                CREATE TABLE ttl_index_entries (
+                    collection_id INTEGER,
+                    index_name TEXT,
+                    storage_key TEXT,
+                    expires_at_epoch_ms INTEGER
+                )
+                """
             )
             conn.execute(
                 "INSERT INTO collections (collection_id, db_name, coll_name, options_json) VALUES (1, 'db', 'present', '{}')"
@@ -3515,6 +3535,17 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 element_type TEXT,
                 type_score INTEGER,
                 element_key TEXT
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE ttl_index_entries (
+                collection_id INTEGER,
+                index_name TEXT,
+                storage_key TEXT,
+                expires_at_epoch_ms INTEGER,
+                PRIMARY KEY (collection_id, index_name, storage_key)
             )
             """
         )

@@ -349,6 +349,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             pass
 
         engine = SQLiteEngine()
+        engine._connection = Mock()
         engine._load_documents = Mock(
             return_value=[
                 ("1", {"kind": "match"}),
@@ -581,7 +582,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         try:
             with patch.object(
-                engine, "_iter_scan_documents_sync", side_effect=blocked_iter
+                engine, "_open_scan_documents_sync", side_effect=blocked_iter
             ):
                 iterator = self._scan(engine, "db", "coll").__aiter__()
                 next_task = asyncio.create_task(iterator.__anext__())
@@ -637,7 +638,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         try:
             with patch.object(
-                engine, "_iter_scan_documents_sync", side_effect=broken_iter
+                engine, "_open_scan_documents_sync", side_effect=broken_iter
             ):
                 with self.assertRaisesRegex(RuntimeError, "boom"):
                     async for document in self._scan(engine, "db", "coll"):
@@ -5215,16 +5216,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
 
         def _wrapped(*args, **kwargs):
-            stop_event = kwargs.get("stop_event")
-            if stop_event is None and args and isinstance(args[-1], threading.Event):
-                stop_event = args[-1]
-            if stop_event is not None:
-                stop_event.set()
+            reader = args[0]
+            reader.stop_event.set()
             yield {"_id": "1", "kind": "view"}
 
         try:
             with patch.object(
-                engine, "_iter_scan_documents_sync", side_effect=_wrapped
+                engine, "_open_scan_documents_sync", side_effect=_wrapped
             ):
                 seen = [
                     document
@@ -5264,7 +5262,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 patch.object(
                     engine, "_run_blocking", side_effect=_counting_run_blocking
                 ),
-                patch.object(engine, "_iter_scan_documents_sync", side_effect=_wrapped),
+                patch.object(engine, "_open_scan_documents_sync", side_effect=_wrapped),
             ):
                 seen = [
                     document

@@ -9,9 +9,12 @@ from mongoeco.engines._memory_vector_runtime import (
     _candidate_rows_for_vector_filter_clause,
     candidate_rows_for_vector_filter,
 )
+from mongoeco.engines._vector_index_cache import VectorIndexCache
 from mongoeco.api.operations import compile_update_operation
 from mongoeco.compat import MONGODB_DIALECT_70, MONGODB_DIALECT_80
+from mongoeco.core import filtering as filtering_module
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.paths import get_document_value
 from mongoeco.core.search import (
     TEXT_SCORE_FIELD,
@@ -769,6 +772,21 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
                     await engine.get_document("db", "ttl", "expired")
 
             self.assertIn(engine._storage_key("expired"), engine._storage["db"]["ttl"])
+
+            with (
+                patch.object(
+                    engine,
+                    "_delete_storage_document_locked",
+                    side_effect=RuntimeError("ttl storage boom"),
+                ),
+                self.assertRaisesRegex(RuntimeError, "ttl storage boom"),
+            ):
+                await engine.get_document("db", "ttl", "expired")
+
+            index_map = engine._index_data["db"]["ttl"]["expires_at_1"]
+            self.assertEqual(index_map.expiration_count, 1)
+            self.assertIsNone(await engine.get_document("db", "ttl", "expired"))
+            self.assertEqual(index_map.expiration_count, 0)
         finally:
             await engine.disconnect()
 
@@ -1714,6 +1732,233 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             ],
         )
 
+    async def test_ttl_with_no_due_candidates_visits_zero_documents(self):
+        engine = MemoryEngine()
+        future = datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=1)
+        await engine.connect()
+        try:
+            await engine.insert_documents(
+                "db",
+                "coll",
+                [
+                    {"_id": str(position), "expires_at": future}
+                    for position in range(100)
+                ],
+            )
+            await engine.create_index(
+                "db",
+                "coll",
+                ["expires_at"],
+                expire_after_seconds=0,
+            )
+            with patch.object(
+                engine,
+                "_borrow_storage_document",
+                wraps=engine._borrow_storage_document,
+            ) as borrow:
+                found = await engine.get_document("db", "coll", "42")
+            self.assertEqual(found["_id"], "42")
+            self.assertEqual(borrow.call_count, 1)
+        finally:
+            await engine.disconnect()
+
+    async def test_ttl_schedule_tracks_arrays_postponement_and_removal(self):
+        engine = MemoryEngine()
+        now = datetime.datetime.now(datetime.UTC)
+        past = now - datetime.timedelta(hours=2)
+        not_yet_expired = now - datetime.timedelta(minutes=1)
+        future = now + datetime.timedelta(days=1)
+        await engine.connect()
+        try:
+            await engine.create_index(
+                "db",
+                "coll",
+                ["expires_at"],
+                expire_after_seconds=3600,
+                partial_filter_expression={"active": True},
+            )
+            await engine.put_document(
+                "db",
+                "coll",
+                {
+                    "_id": "array",
+                    "active": True,
+                    "expires_at": [future, past],
+                },
+            )
+            await engine.put_document(
+                "db",
+                "coll",
+                {
+                    "_id": "postponed",
+                    "active": True,
+                    "expires_at": not_yet_expired,
+                },
+            )
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "postponed", "active": True, "expires_at": future},
+            )
+            await engine.put_document(
+                "db",
+                "coll",
+                {
+                    "_id": "removed",
+                    "active": True,
+                    "expires_at": not_yet_expired,
+                },
+            )
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "removed", "active": True},
+            )
+
+            self.assertIsNone(await engine.get_document("db", "coll", "array"))
+            self.assertIsNotNone(await engine.get_document("db", "coll", "postponed"))
+            self.assertIsNotNone(await engine.get_document("db", "coll", "removed"))
+            index_map = engine._index_data["db"]["coll"]["expires_at_1"]
+            self.assertEqual(index_map.expiration_count, 1)
+        finally:
+            await engine.disconnect()
+
+    async def test_partial_ttl_keeps_due_candidate_until_it_becomes_eligible(self):
+        engine = MemoryEngine()
+        past = datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=1)
+        await engine.connect()
+        try:
+            await engine.create_index(
+                "db",
+                "coll",
+                ["expires_at"],
+                expire_after_seconds=0,
+                partial_filter_expression={"active": True},
+            )
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "candidate", "active": False, "expires_at": past},
+            )
+            self.assertIsNotNone(await engine.get_document("db", "coll", "candidate"))
+            index_map = engine._index_data["db"]["coll"]["expires_at_1"]
+            self.assertEqual(index_map.expiration_count, 1)
+
+            await engine.put_document(
+                "db",
+                "coll",
+                {"_id": "candidate", "active": True, "expires_at": past},
+            )
+            self.assertIsNone(await engine.get_document("db", "coll", "candidate"))
+            self.assertEqual(index_map.expiration_count, 0)
+        finally:
+            await engine.disconnect()
+
+    async def test_partial_ttl_with_now_keeps_due_candidate_for_later_operation(self):
+        engine = MemoryEngine()
+        initial_now = datetime.datetime(
+            2026,
+            1,
+            1,
+            tzinfo=datetime.UTC,
+        ).replace(tzinfo=None)
+        later_now = initial_now + datetime.timedelta(days=2)
+        await engine.connect()
+        try:
+            with (
+                patch.object(memory_module, "utc_bson_now", return_value=initial_now),
+                patch.object(
+                    filtering_module,
+                    "ensure_expression_context",
+                    return_value=ExpressionExecutionContext(now=initial_now),
+                ),
+            ):
+                await engine.create_index(
+                    "db",
+                    "coll",
+                    ["expires_at"],
+                    expire_after_seconds=0,
+                    partial_filter_expression={
+                        "$expr": {"$lte": ["$eligible_after", "$$NOW"]}
+                    },
+                )
+                await engine.put_document(
+                    "db",
+                    "coll",
+                    {
+                        "_id": "candidate",
+                        "expires_at": initial_now - datetime.timedelta(days=1),
+                        "eligible_after": initial_now + datetime.timedelta(days=1),
+                    },
+                )
+                self.assertIsNotNone(
+                    await engine.get_document("db", "coll", "candidate")
+                )
+
+            with (
+                patch.object(memory_module, "utc_bson_now", return_value=later_now),
+                patch.object(
+                    filtering_module,
+                    "ensure_expression_context",
+                    return_value=ExpressionExecutionContext(now=later_now),
+                ),
+            ):
+                self.assertIsNone(await engine.get_document("db", "coll", "candidate"))
+        finally:
+            await engine.disconnect()
+
+    async def test_partial_ttl_update_removes_membership_that_became_ineligible(self):
+        engine = MemoryEngine()
+        initial_now = datetime.datetime(
+            2026,
+            1,
+            1,
+            tzinfo=datetime.UTC,
+        ).replace(tzinfo=None)
+        later_now = initial_now + datetime.timedelta(days=2)
+        document = {
+            "_id": "candidate",
+            "expires_at": datetime.datetime(2030, 1, 1, tzinfo=datetime.UTC),
+            "active_until": initial_now + datetime.timedelta(days=1),
+        }
+        await engine.connect()
+        try:
+            with (
+                patch.object(memory_module, "utc_bson_now", return_value=initial_now),
+                patch.object(
+                    filtering_module,
+                    "ensure_expression_context",
+                    return_value=ExpressionExecutionContext(now=initial_now),
+                ),
+            ):
+                await engine.create_index(
+                    "db",
+                    "coll",
+                    ["expires_at"],
+                    expire_after_seconds=0,
+                    partial_filter_expression={
+                        "$expr": {"$gte": ["$active_until", "$$NOW"]}
+                    },
+                )
+                await engine.put_document("db", "coll", document)
+            index_map = engine._index_data["db"]["coll"]["expires_at_1"]
+            self.assertEqual(len(index_map), 1)
+
+            with (
+                patch.object(memory_module, "utc_bson_now", return_value=later_now),
+                patch.object(
+                    filtering_module,
+                    "ensure_expression_context",
+                    return_value=ExpressionExecutionContext(now=later_now),
+                ),
+            ):
+                await engine.put_document("db", "coll", {**document, "value": 1})
+
+            self.assertEqual(len(index_map), 0)
+            self.assertEqual(index_map.expiration_count, 1)
+        finally:
+            await engine.disconnect()
+
     def test_ttl_helpers_cover_invalid_values_naive_datetimes_and_empty_collections(
         self,
     ):
@@ -1738,6 +1983,28 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             engine._coerce_ttl_datetime(datetime.datetime(2026, 4, 1, 12, 0)),
             datetime.datetime(2026, 4, 1, 12, 0, tzinfo=datetime.timezone.utc),
+        )
+        self.assertEqual(
+            engine._coerce_ttl_datetime(
+                datetime.datetime(
+                    2026,
+                    4,
+                    1,
+                    12,
+                    0,
+                    0,
+                    999,
+                    tzinfo=datetime.UTC,
+                )
+            ),
+            datetime.datetime(2026, 4, 1, 12, 0, tzinfo=datetime.UTC),
+        )
+        self.assertFalse(
+            engine._document_expired_by_ttl(
+                {"expires_at": datetime.datetime.max.replace(tzinfo=datetime.UTC)},
+                ttl_index,
+                now=now,
+            )
         )
         self.assertFalse(
             engine._document_expired_by_ttl(
@@ -2699,6 +2966,9 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_rename_collection_rolls_back_memory_state_on_later_failure(self):
         engine = MemoryEngine(simulate_search_index_latency=60.0)
+        engine._vector_document_cache = VectorIndexCache(
+            size_of=lambda _value, _limit: 1,
+        )
         await engine.connect()
         try:
             await engine.create_collection("db", "events", options={"capped": True})
@@ -3135,6 +3405,10 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
 
         session.start_transaction()
         self.assertIsNotNone(engine._active_mvcc_state(session))
+        diagnostics = engine._runtime_diagnostics_info()["mvcc"]
+        self.assertEqual(diagnostics["activeSnapshots"], 1)
+        self.assertEqual(diagnostics["writeSnapshots"], 0)
+        self.assertIsNone(diagnostics["retainedBytes"])
         with self.assertRaisesRegex(
             InvalidOperation, "not created by this MemoryEngine"
         ):
@@ -3143,10 +3417,24 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(engine._active_mvcc_state(other))
 
         snapshot = engine._mvcc_states[session.session_id]
-        snapshot.storage.setdefault("db", {}).setdefault("coll", {})["1"] = {"_id": "1"}
+        with engine._publication_scope(
+            snapshot.storage,
+            touched_namespaces={("db", "coll")},
+        ):
+            snapshot.storage.setdefault("db", {}).setdefault("coll", {})["1"] = {
+                "_id": "1"
+            }
+        self.assertEqual(
+            engine._runtime_diagnostics_info()["mvcc"]["writeSnapshots"],
+            1,
+        )
         session.commit_transaction()
         self.assertEqual(engine._storage["db"]["coll"]["1"], {"_id": "1"})
         self.assertIsNone(engine._active_mvcc_state(session))
+        self.assertEqual(
+            engine._runtime_diagnostics_info()["mvcc"]["activeSnapshots"],
+            0,
+        )
 
         session.start_transaction()
         session.abort_transaction()
@@ -3170,6 +3458,48 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
             "db", "coll", "1", {"_id": "1", "kind": "view"}, action="delete"
         )
         self.assertEqual(engine._index_data["db"]["coll"]["kind_1"], {})
+
+    def test_plain_dict_index_membership_fallback_keeps_legacy_shape_coherent(self):
+        index_map = {}
+
+        memory_module._add_index_membership(index_map, ("blue",), "one")
+        memory_module._add_index_membership(index_map, ("blue",), "two")
+        memory_module._discard_index_membership(index_map, ("missing",), "one")
+        memory_module._discard_index_membership(index_map, ("blue",), "one")
+        self.assertEqual(index_map, {("blue",): {"two"}})
+        memory_module._discard_index_membership(index_map, ("blue",), "two")
+        self.assertEqual(index_map, {})
+
+    def test_plain_dict_document_journal_restores_updates_and_insertions(self):
+        engine = MemoryEngine()
+        engine._storage = {"db": {"coll": {"old": 1}}}
+        engine._indexes = {}
+        engine._index_data = {}
+        engine._search_indexes = {}
+        engine._collections = {"db": {"coll"}}
+        engine._collection_options = {}
+        collection = engine._storage["db"]["coll"]
+        failure = RuntimeError("rollback")
+
+        with (
+            self.assertRaisesRegex(RuntimeError, "rollback"),
+            engine._document_state_rollback_locked(
+                "db",
+                "coll",
+                storage=engine._storage,
+                indexes=engine._indexes,
+                index_data=engine._index_data,
+                search_indexes=engine._search_indexes,
+                collections=engine._collections,
+                options=engine._collection_options,
+            ),
+        ):
+            engine._set_storage_document_locked(collection, "old", 2)
+            engine._set_storage_document_locked(collection, "new", 3)
+            engine._set_storage_document_locked(collection, "new", 4)
+            raise failure
+
+        self.assertEqual(engine._storage, {"db": {"coll": {"old": 1}}})
 
     async def test_memory_hint_resolution_by_key_pattern_rejects_unusable_index(self):
         engine = MemoryEngine()

@@ -4,14 +4,12 @@ import unittest
 from unittest.mock import patch
 
 from mongoeco.engines import snapshots as snapshots_module
-
-# unittest is the repository's established async contract-test harness.
-# ruff: noqa: PT027
 from mongoeco.engines.adapter import adapt_engine
 from mongoeco.engines.snapshots import (
     ReadSnapshot,
     SnapshotLifecycle,
     SnapshotPolicy,
+    _ImmediateReadSnapshot,
 )
 
 
@@ -86,11 +84,16 @@ class _SlowCloseSource(_Source):
         self.close_started = asyncio.Event()
         self.allow_close = asyncio.Event()
         self.close_completed = False
+        self.close_cancelled = False
 
     async def aclose(self):
         self.close_calls += 1
         self.close_started.set()
-        await self.allow_close.wait()
+        try:
+            await self.allow_close.wait()
+        except asyncio.CancelledError:
+            self.close_cancelled = True
+            raise
         self.close_completed = True
 
 
@@ -348,32 +351,75 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(0)
         assert snapshot.lifecycle is SnapshotLifecycle.CLOSED
 
-    async def test_supervised_cleanup_registry_is_bounded(self):
-        blockers = [asyncio.Event() for _ in range(3)]
+    async def test_supervision_never_cancels_cleanup_under_registry_pressure(self):
+        sources = [_SlowCloseSource() for _ in range(3)]
         snapshots = [
-            ReadSnapshot(_Source(), policy=SnapshotPolicy.STABLE) for _ in blockers
+            ReadSnapshot(source, policy=SnapshotPolicy.STABLE) for source in sources
         ]
-        tasks = [asyncio.create_task(blocker.wait()) for blocker in blockers]
         supervisor_limit = 2
         try:
-            with patch.object(
-                snapshots_module,
-                "_SUPERVISED_CLOSE_TASK_LIMIT",
-                supervisor_limit,
+            with (
+                patch.object(
+                    snapshots_module,
+                    "_SUPERVISED_CLOSE_TASK_PRESSURE_THRESHOLD",
+                    supervisor_limit,
+                ),
+                patch.object(
+                    snapshots_module,
+                    "_SUPERVISED_CLOSE_TASK_PRESSURE",
+                    {"events": 0},
+                ),
             ):
-                for snapshot, task in zip(snapshots, tasks, strict=True):
-                    snapshot._close_task = task
-                    snapshot._lifecycle = SnapshotLifecycle.CLOSING
-                    snapshot._supervise_close_task(task)
-
-                assert len(snapshots_module._SUPERVISED_CLOSE_TASKS) <= supervisor_limit
-                assert sum(task.cancelled() for task in tasks) <= 1
+                for snapshot in snapshots:
+                    snapshot.discard()
+                    await asyncio.sleep(0)
+                await asyncio.gather(
+                    *(source.close_started.wait() for source in sources)
+                )
                 await asyncio.sleep(0)
-                assert sum(task.cancelled() for task in tasks) == 1
+                assert len(snapshots_module._SUPERVISED_CLOSE_TASKS) == len(sources)
+                assert not any(source.close_cancelled for source in sources)
+                assert snapshots_module._SUPERVISED_CLOSE_TASK_PRESSURE["events"] == 1
         finally:
-            for blocker in blockers:
-                blocker.set()
-            await asyncio.gather(*tasks, return_exceptions=True)
+            for source in sources:
+                source.allow_close.set()
+            await asyncio.gather(
+                *(snapshot._close_task for snapshot in snapshots),
+                return_exceptions=True,
+            )
+        assert all(source.close_completed for source in sources)
+        assert all(
+            snapshot.lifecycle is SnapshotLifecycle.CLOSED for snapshot in snapshots
+        )
+        assert not snapshots_module._SUPERVISED_CLOSE_TASKS
+
+    async def test_immediate_snapshot_joins_existing_supervised_close(self):
+        source = _SlowCloseSource()
+        snapshot = _ImmediateReadSnapshot(source, policy=SnapshotPolicy.STABLE)
+        close_task = snapshot._ensure_close_task()
+        await source.close_started.wait()
+
+        repeated_close = asyncio.create_task(snapshot.aclose())
+        await asyncio.sleep(0)
+        assert not repeated_close.done()
+        source.allow_close.set()
+        await asyncio.gather(close_task, repeated_close)
+
+        assert snapshot.lifecycle is SnapshotLifecycle.CLOSED
+        assert source.close_calls == 1
+
+    async def test_immediate_snapshot_does_not_retry_failed_cleanup(self):
+        source = _FailingSource()
+        snapshot = _ImmediateReadSnapshot(source, policy=SnapshotPolicy.STABLE)
+
+        with self.assertRaisesRegex(RuntimeError, _CLOSE_FAILED):
+            await snapshot.aclose()
+        with self.assertRaisesRegex(RuntimeError, _CLOSE_FAILED):
+            await snapshot.aclose()
+
+        assert snapshot.lifecycle is SnapshotLifecycle.FAILED
+        assert snapshot.close_error is not None
+        assert source.close_calls == 1
 
     async def test_late_cleanup_failure_is_supervised_and_observable(self):
         source = _SlowFailCloseSource()

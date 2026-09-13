@@ -2,17 +2,18 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from mongoeco.types import Document, EngineIndexRecord
+from mongoeco.core.bson_scalars import normalize_utc_bson_datetime
+
+if TYPE_CHECKING:
+    from mongoeco.types import Document, EngineIndexRecord
 
 
 def coerce_ttl_datetime(value: object) -> datetime.datetime | None:
     if not isinstance(value, datetime.datetime):
         return None
-    if value.tzinfo is None:
-        return value.replace(tzinfo=datetime.timezone.utc)
-    return value.astimezone(datetime.timezone.utc)
+    return normalize_utc_bson_datetime(value).replace(tzinfo=datetime.UTC)
 
 
 def ttl_expiration_datetime(
@@ -29,7 +30,10 @@ def ttl_expiration_datetime(
     ]
     if not ttl_candidates:
         return None
-    return min(ttl_candidates) + datetime.timedelta(seconds=expire_after_seconds)
+    try:
+        return min(ttl_candidates) + datetime.timedelta(seconds=expire_after_seconds)
+    except OverflowError:
+        return datetime.datetime.max.replace(tzinfo=datetime.UTC)
 
 
 def document_expired_by_ttl(

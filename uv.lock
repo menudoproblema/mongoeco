@@ -644,6 +644,7 @@ source = { editable = "." }
 dependencies = [
     { name = "cxp" },
     { name = "pyuca" },
+    { name = "rpds-py" },
     { name = "shapely" },
     { name = "usearch" },
 ]
@@ -700,6 +701,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'engine-testing'", specifier = ">=8,<10" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "pyuca", specifier = ">=1.2,<2" },
+    { name = "rpds-py", specifier = ">=0.27,<2027" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.16.2" },
     { name = "shapely", specifier = ">=2.1,<3" },
     { name = "twine", marker = "extra == 'dev'" },

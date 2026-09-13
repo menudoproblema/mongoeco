@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
-from mongoeco.types import Document, EngineIndexRecord, SearchIndexDefinition
+from mongoeco.engines._memory_collection import MemoryIndexMap
+
+
+if TYPE_CHECKING:
+    from mongoeco.types import Document, EngineIndexRecord, SearchIndexDefinition
 
 
 @dataclass(slots=True)
@@ -17,6 +20,9 @@ class MemoryMvccState:
     collections: dict[str, set[str]]
     collection_options: dict[str, dict[str, Document]]
     pending_changes: list[Document | None] = field(default_factory=list)
+    touched_namespaces: set[tuple[str, str]] = field(default_factory=set)
+    touched_databases: set[str] = field(default_factory=set)
+    has_writes: bool = False
 
     @classmethod
     def capture(
@@ -29,7 +35,7 @@ class MemoryMvccState:
         search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]],
         collections: dict[str, set[str]],
         collection_options: dict[str, dict[str, Document]],
-    ) -> "MemoryMvccState":
+    ) -> MemoryMvccState:
         # Optimizamos evitando deepcopy de todo el almacenamiento.
         # Solo copiamos las estructuras de contenedores (dict/list/set).
         # Los documentos individuales (valores en storage) no se copian
@@ -47,7 +53,16 @@ class MemoryMvccState:
             index_data={
                 db: {
                     coll: {
-                        idx_name: {k: v.copy() for k, v in idx_map.items()}
+                        idx_name: (
+                            cast(
+                                "dict[tuple[Any, ...], set[Any]]",
+                                idx_map.copy(),
+                            )
+                            if isinstance(idx_map, MemoryIndexMap)
+                            else {
+                                key: members.copy() for key, members in idx_map.items()
+                            }
+                        )
                         for idx_name, idx_map in coll_idxs.items()
                     }
                     for coll, coll_idxs in db_colls.items()

@@ -8,7 +8,7 @@ import time
 
 from contextlib import AsyncExitStack, contextmanager
 from copy import deepcopy
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field as dataclass_field, replace
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -83,6 +83,7 @@ from mongoeco.core.search_models import (
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines._active_operations import LocalActiveOperationRegistry
 from mongoeco.engines._change_dispatch import ConsumerDispatchCoordinator
+from mongoeco.engines._memory_collection import MemoryCollection, MemoryIndexMap
 from mongoeco.engines._memory_search_runtime import (
     execute_search_documents as _execute_memory_search_documents,
     explain_search_documents as _explain_memory_search_documents,
@@ -110,6 +111,7 @@ from mongoeco.engines._shared_search_admin import (
 from mongoeco.engines._shared_ttl import (
     coerce_ttl_datetime,
     document_expired_by_ttl,
+    ttl_expiration_datetime,
 )
 from mongoeco.engines.base import AsyncStorageEngine
 from mongoeco.engines.capabilities import (
@@ -117,6 +119,11 @@ from mongoeco.engines.capabilities import (
     SearchEngineCapabilities,
 )
 from mongoeco.engines.mvcc import MemoryMvccState
+from mongoeco.engines._vector_query_cache import VectorQueryCacheBudget
+from mongoeco.engines._vector_index_cache import (
+    VectorIndexCache,
+    estimate_materialized_index_bytes,
+)
 from mongoeco.engines.profiling import EngineProfiler
 from mongoeco.engines.results import (
     CommittedChange,
@@ -126,6 +133,7 @@ from mongoeco.engines.results import (
     MutationOutcome,
 )
 from mongoeco.engines.semantic_core import (
+    _iter_finalize_documents,
     EngineFindSemantics,
     EngineReadExecutionPlan,
     build_query_plan_explanation,
@@ -137,7 +145,11 @@ from mongoeco.engines.semantic_core import (
     iter_filtered_documents,
     stream_finalize_documents,
 )
-from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
+from mongoeco.engines.snapshots import (
+    _ImmediateReadSnapshot,
+    ReadSnapshot,
+    SnapshotPolicy,
+)
 from mongoeco.engines.virtual_indexes import (
     describe_virtual_index_usage,
     document_in_virtual_index,
@@ -227,6 +239,44 @@ class _MemoryCollectionSnapshot:
 
 
 @dataclass(slots=True)
+class _MemoryDocumentUndo:
+    db_name: str
+    coll_name: str
+    storage: dict[str, dict[str, dict[Any, Any]]]
+    index_data: dict[
+        str,
+        dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]],
+    ]
+    collections: dict[str, set[str]]
+    options: dict[str, dict[str, Document]]
+    initial_collection: object
+    initial_index_data: object
+    collection_registered: bool
+    initial_options: object
+    collection: dict[Any, Any] | None = None
+    storage_changes: dict[Any, tuple[object, object]] = dataclass_field(
+        default_factory=dict,
+    )
+    index_changes: dict[
+        tuple[str, tuple[Any, ...], Any],
+        tuple[bool, bool, bool, int | None],
+    ] = dataclass_field(default_factory=dict)
+    index_states: dict[
+        int, tuple[str, MemoryIndexMap[Any], tuple[object, ...], bool]
+    ] = dataclass_field(default_factory=dict)
+    initial_collection_state: tuple[object, ...] | None = None
+
+
+@dataclass(slots=True)
+class _MemoryPublication:
+    storage: object
+    state: MemoryMvccState | None
+    changes: list[Document | None] = dataclass_field(default_factory=list)
+    touched_namespaces: set[tuple[str, str]] = dataclass_field(default_factory=set)
+    touched_databases: set[str] = dataclass_field(default_factory=set)
+
+
+@dataclass(slots=True)
 class _MemorySearchRuntimeSnapshot:
     ready_at: dict[tuple[str, str, str], object]
     search_cache: dict[tuple[str, str, str], object]
@@ -236,12 +286,56 @@ class _MemorySearchRuntimeSnapshot:
 type _FilterValueKey = tuple[str, object]
 
 
+def _add_index_membership(
+    index_map: dict[tuple[Any, ...], set[Any]] | MemoryIndexMap[Any],
+    key: tuple[Any, ...],
+    storage_key: Any,
+    *,
+    ordinal: int | None = None,
+) -> None:
+    if isinstance(index_map, MemoryIndexMap):
+        index_map.add(key, storage_key, ordinal=ordinal)
+        return
+    index_map.setdefault(key, set()).add(storage_key)
+
+
+def _discard_index_membership(
+    index_map: dict[tuple[Any, ...], set[Any]] | MemoryIndexMap[Any],
+    key: tuple[Any, ...],
+    storage_key: Any,
+) -> None:
+    if isinstance(index_map, MemoryIndexMap):
+        index_map.discard(key, storage_key)
+        return
+    bucket = index_map.get(key)
+    if bucket is None:
+        return
+    bucket.discard(storage_key)
+    if not bucket:
+        del index_map[key]
+
+
 @dataclass(frozen=True, slots=True)
 class _MaterializedVectorDocument:
     document: Document
     vectors_by_path: dict[str, tuple[float, ...]]
     exists_paths: frozenset[str]
     scalar_values: dict[str, tuple[_FilterValueKey, ...]]
+
+
+@dataclass(frozen=True, slots=True)
+class _MemoryIndexedCandidates:
+    storage_keys: Any
+    index_map: MemoryIndexMap[Any] | None = None
+    index_key: tuple[Any, ...] | None = None
+
+    def ordered_keys(self, *, limit: int | None = None):
+        if self.index_map is not None and self.index_key is not None:
+            return self.index_map.ordered_storage_keys(
+                self.index_key,
+                limit=limit,
+            )
+        return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -393,13 +487,21 @@ class MemoryEngine(AsyncStorageEngine):
                 list[tuple[Document, MaterializedSearchDocument]],
             ],
         ] = {}
-        self._vector_document_cache: dict[
+        self._vector_document_cache: VectorIndexCache[
             tuple[str, str, str],
             tuple[SearchIndexDefinition, _MaterializedVectorIndex],
-        ] = {}
+        ] = VectorIndexCache(
+            size_of=lambda value, limit: estimate_materialized_index_bytes(
+                value[1],
+                limit,
+            ),
+        )
+        self._vector_query_cache_budget = VectorQueryCacheBudget()
         self._collections: dict[str, set[str]] = {}
         self._collection_options: dict[str, dict[str, Document]] = {}
-        self._meta_lock = threading.Lock()
+        self._meta_lock = threading.RLock()
+        self._publication_stack: list[_MemoryPublication] = []
+        self._document_undo_stack: list[_MemoryDocumentUndo] = []
         self._connection_count = 0
         self._codec = codec
         self._decode_signature_cache: tuple[object, object, bool] | None = None
@@ -556,6 +658,11 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         context: ClientSession | None,
     ) -> _RuntimeMaterializedVectorIndex:
+        cache_key = (db_name, coll_name, definition.name)
+        if context is None:
+            cached = self._vector_document_cache.get(cache_key)
+            if cached is not None and cached[0] == definition:
+                return cached[1]
         documents = [
             self._decode_storage_document(payload)
             for payload in self._storage_view(context)
@@ -563,14 +670,13 @@ class MemoryEngine(AsyncStorageEngine):
             .get(coll_name, {})
             .values()
         ]
-        if context is not None:
-            return _build_memory_vector_index(documents, definition)
-        cache_key = (db_name, coll_name, definition.name)
-        cached = self._vector_document_cache.get(cache_key)
-        if cached is not None and cached[0] == definition:
-            return cached[1]
-        materialized = _build_memory_vector_index(documents, definition)
-        self._vector_document_cache[cache_key] = (definition, materialized)
+        materialized = _build_memory_vector_index(
+            documents,
+            definition,
+            query_cache_budget=self._vector_query_cache_budget,
+        )
+        if context is None:
+            self._vector_document_cache[cache_key] = (definition, materialized)
         return materialized
 
     def _runtime_diagnostics_info(self) -> dict[str, object]:
@@ -587,6 +693,17 @@ class MemoryEngine(AsyncStorageEngine):
         )
         index_data_collection_count = sum(
             len(collections) for collections in self._index_data.values()
+        )
+        transaction_collection_roots = sum(
+            len(collections)
+            for snapshot in self._mvcc_states.values()
+            for collections in snapshot.storage.values()
+        )
+        transaction_index_roots = sum(
+            len(indexes)
+            for snapshot in self._mvcc_states.values()
+            for collections in snapshot.index_data.values()
+            for indexes in collections.values()
         )
         return {
             "planner": {
@@ -605,6 +722,17 @@ class MemoryEngine(AsyncStorageEngine):
                 "trackedCollections": tracked_collection_count,
                 "collectionOptionNamespaces": collection_option_namespace_count,
                 "indexDataCollections": index_data_collection_count,
+                "vectorQueries": self._vector_query_cache_budget.stats(),
+                "vectorIndexes": self._vector_document_cache.stats(),
+            },
+            "mvcc": {
+                "activeSnapshots": len(self._mvcc_states),
+                "writeSnapshots": sum(
+                    snapshot.has_writes for snapshot in self._mvcc_states.values()
+                ),
+                "retainedCollectionRoots": transaction_collection_roots,
+                "retainedIndexRoots": transaction_index_roots,
+                "retainedBytes": None,
             },
             "changeDelivery": {
                 "maxEntries": self._change_log_max_entries,
@@ -680,8 +808,25 @@ class MemoryEngine(AsyncStorageEngine):
         coll = storage_source.get(db_name, {}).get(coll_name, {})
         if not coll:
             return 0
+        candidate_storage_keys: set[Any] = set()
+        proportional_candidates = True
+        coll_index_data = index_data_source.get(db_name, {}).get(coll_name, {})
+        for index in ttl_indexes:
+            index_map = coll_index_data.get(str(index.name))
+            if not isinstance(index_map, MemoryIndexMap):
+                proportional_candidates = False
+                break
+            candidate_storage_keys.update(index_map.expired_storage_keys(now))
+        candidates = (
+            coll.ordered_keys(candidate_storage_keys)
+            if proportional_candidates and isinstance(coll, MemoryCollection)
+            else list(coll)
+        )
         expired_storage_keys: list[Any] = []
-        for storage_key, data in coll.items():
+        for storage_key in candidates:
+            data = coll.get(storage_key, _MISSING)
+            if data is _MISSING:
+                continue
             document = self._borrow_storage_document(data)
             if any(
                 self._document_expired_by_ttl(document, index, now=now)
@@ -695,7 +840,7 @@ class MemoryEngine(AsyncStorageEngine):
                 expired_storage_keys.append(storage_key)
         if not expired_storage_keys:
             return 0
-        with self._collection_state_rollback_locked(
+        with self._document_state_rollback_locked(
             db_name,
             coll_name,
             storage=storage_source,
@@ -716,7 +861,7 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=index_data_source,
                     indexes_view=indexes_source,
                 )
-                del coll[storage_key]
+                self._delete_storage_document_locked(coll, storage_key)
         return len(expired_storage_keys)
 
     def _assert_expired_documents_have_stable_identity_locked(
@@ -787,6 +932,10 @@ class MemoryEngine(AsyncStorageEngine):
             preserve_bson_wrappers=preserve_bson_wrappers,
         )
         if isinstance(payload, _StoredDocument) and preserve_bson_wrappers:
+            # A custom decoder may reuse its output buffer on the next call.
+            # Cached versions must own that output before another decode runs.
+            if self._codec is not DocumentCodec:
+                decoded = deepcopy(decoded)
             payload.decoded_wrapped = decoded
         return decoded
 
@@ -891,6 +1040,7 @@ class MemoryEngine(AsyncStorageEngine):
 
     def _start_session_transaction(self, session: ClientSession) -> None:
         with self._meta_lock:
+            self._ensure_publication_boundary()
             snapshot = MemoryMvccState.capture(
                 snapshot_version=self._mvcc_version,
                 storage=self._storage,
@@ -909,35 +1059,175 @@ class MemoryEngine(AsyncStorageEngine):
 
     def _commit_session_transaction(self, session: ClientSession) -> None:
         with self._meta_lock:
+            self._ensure_publication_boundary()
             snapshot = self._mvcc_states.get(session.session_id)
             if snapshot is not None:
+                if not snapshot.has_writes:
+                    self._mvcc_states.pop(session.session_id)
+                    self._sync_session_state(
+                        session,
+                        transaction_active=False,
+                        snapshot_version=self._mvcc_version,
+                    )
+                    return
                 if snapshot.snapshot_version != self._mvcc_version:
                     raise OperationFailure(
                         "Write conflict during transaction commit",
                     )
-                self._mvcc_states.pop(session.session_id, None)
-                self._storage = snapshot.storage
-                self._indexes = snapshot.indexes
-                self._index_data = snapshot.index_data
-                self._search_indexes = snapshot.search_indexes
-                self._collections = snapshot.collections
-                self._collection_options = snapshot.collection_options
-                for payload in snapshot.pending_changes:
-                    self._commit_sequence += 1
-                    self._committed_changes.append(
-                        CommittedChange(
-                            sequence=self._commit_sequence,
-                            payload=deepcopy(payload),
-                        ),
+                sequence, changes, pruned_through = (
+                    self._prepare_committed_changes_locked(
+                        snapshot.pending_changes,
                     )
-                self._prune_committed_changes_locked()
+                )
+                roots = self._prepare_transaction_write_set_locked(snapshot)
+                (
+                    self._storage,
+                    self._indexes,
+                    self._index_data,
+                    self._search_indexes,
+                    self._collections,
+                    self._collection_options,
+                ) = roots
+                self._mvcc_states.pop(session.session_id, None)
+                self._commit_sequence = sequence
+                self._committed_changes = changes
+                self._change_pruned_through = pruned_through
                 self._mvcc_version += 1
-                self._clear_search_runtime_cache()
+                self._invalidate_transaction_search_runtime_cache(snapshot)
         self._sync_session_state(
             session,
             transaction_active=False,
             snapshot_version=self._mvcc_version,
         )
+
+    @staticmethod
+    def _prepare_transaction_nested_root[V](
+        live: dict[str, dict[str, V]],
+        transaction: dict[str, dict[str, V]],
+        *,
+        touched_namespaces: set[tuple[str, str]],
+        touched_databases: set[str],
+    ) -> dict[str, dict[str, V]]:
+        prepared = live.copy()
+        for db_name in touched_databases:
+            if db_name in transaction:
+                prepared[db_name] = transaction[db_name]
+            else:
+                prepared.pop(db_name, None)
+        namespaces_by_database: dict[str, set[str]] = {}
+        for db_name, coll_name in touched_namespaces:
+            if db_name in touched_databases:
+                continue
+            namespaces_by_database.setdefault(db_name, set()).add(coll_name)
+        for db_name, coll_names in namespaces_by_database.items():
+            prepared_db = live.get(db_name, {}).copy()
+            transaction_db = transaction.get(db_name)
+            for coll_name in coll_names:
+                if transaction_db is not None and coll_name in transaction_db:
+                    prepared_db[coll_name] = transaction_db[coll_name]
+                else:
+                    prepared_db.pop(coll_name, None)
+            if prepared_db:
+                prepared[db_name] = prepared_db
+            else:
+                prepared.pop(db_name, None)
+        return prepared
+
+    @staticmethod
+    def _prepare_transaction_collection_root(
+        live: dict[str, set[str]],
+        transaction: dict[str, set[str]],
+        *,
+        touched_namespaces: set[tuple[str, str]],
+        touched_databases: set[str],
+    ) -> dict[str, set[str]]:
+        prepared = live.copy()
+        for db_name in touched_databases:
+            if db_name in transaction:
+                prepared[db_name] = transaction[db_name]
+            else:
+                prepared.pop(db_name, None)
+        namespaces_by_database: dict[str, set[str]] = {}
+        for db_name, coll_name in touched_namespaces:
+            if db_name in touched_databases:
+                continue
+            namespaces_by_database.setdefault(db_name, set()).add(coll_name)
+        for db_name, coll_names in namespaces_by_database.items():
+            prepared_db = live.get(db_name, set()).copy()
+            transaction_db = transaction.get(db_name, set())
+            for coll_name in coll_names:
+                if coll_name in transaction_db:
+                    prepared_db.add(coll_name)
+                else:
+                    prepared_db.discard(coll_name)
+            if prepared_db:
+                prepared[db_name] = prepared_db
+            else:
+                prepared.pop(db_name, None)
+        return prepared
+
+    def _prepare_transaction_write_set_locked(
+        self,
+        snapshot: MemoryMvccState,
+    ) -> tuple[
+        dict[str, dict[str, dict[Any, Any]]],
+        dict[str, dict[str, list[EngineIndexRecord]]],
+        dict[str, dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]]],
+        dict[str, dict[str, list[SearchIndexDefinition]]],
+        dict[str, set[str]],
+        dict[str, dict[str, Document]],
+    ]:
+        scope = {
+            "touched_namespaces": snapshot.touched_namespaces,
+            "touched_databases": snapshot.touched_databases,
+        }
+        return (
+            self._prepare_transaction_nested_root(
+                self._storage,
+                snapshot.storage,
+                **scope,
+            ),
+            self._prepare_transaction_nested_root(
+                self._indexes,
+                snapshot.indexes,
+                **scope,
+            ),
+            self._prepare_transaction_nested_root(
+                self._index_data,
+                snapshot.index_data,
+                **scope,
+            ),
+            self._prepare_transaction_nested_root(
+                self._search_indexes,
+                snapshot.search_indexes,
+                **scope,
+            ),
+            self._prepare_transaction_collection_root(
+                self._collections,
+                snapshot.collections,
+                **scope,
+            ),
+            self._prepare_transaction_nested_root(
+                self._collection_options,
+                snapshot.collection_options,
+                **scope,
+            ),
+        )
+
+    def _invalidate_transaction_search_runtime_cache(
+        self,
+        snapshot: MemoryMvccState,
+    ) -> None:
+        for db_name in snapshot.touched_databases:
+            for cache in (
+                self._search_document_cache,
+                self._vector_document_cache,
+            ):
+                for key in [key for key in cache if key[0] == db_name]:
+                    cache.pop(key, None)
+        for db_name, coll_name in snapshot.touched_namespaces:
+            if db_name not in snapshot.touched_databases:
+                self._invalidate_search_runtime_cache(db_name, coll_name)
 
     def register_change_consumer(
         self,
@@ -1036,23 +1326,50 @@ class MemoryEngine(AsyncStorageEngine):
             else deepcopy(payload)
         )
         with self._meta_lock:
-            if context.session is not None and context.session.in_transaction:
-                state = self._mvcc_states.get(context.session.session_id)
-                if state is None:
-                    raise InvalidOperation(
-                        "This session does not own an active MemoryEngine transaction",
-                    )
-                state.pending_changes.append(committed_payload)
+            if not self._publication_stack:
+                message = "change recording requires an active publication scope"
+                raise InvalidOperation(message)
+            publication = self._publication_stack[-1]
+            if publication.state is not self._active_mvcc_state(context.session):
+                message = "change publication belongs to another storage view"
+                raise InvalidOperation(message)
+            publication.changes.append(committed_payload)
+            if publication.state is not None:
                 return None
-            self._commit_sequence += 1
-            self._committed_changes.append(
-                CommittedChange(
-                    sequence=self._commit_sequence,
-                    payload=committed_payload,
-                ),
+            return self._commit_sequence + sum(
+                len(frame.changes) for frame in self._publication_stack
             )
-            self._prune_committed_changes_locked()
-            return self._commit_sequence
+
+    def _prepare_committed_changes_locked(
+        self,
+        payloads: list[Document | None],
+    ) -> tuple[int, list[CommittedChange], int]:
+        """Build the complete outbox successor before installing any state."""
+        if not payloads:
+            return (
+                self._commit_sequence,
+                self._committed_changes,
+                self._change_pruned_through,
+            )
+        sequence = self._commit_sequence + len(payloads)
+        changes = self._committed_changes + [
+            CommittedChange(
+                sequence=self._commit_sequence + ordinal,
+                payload=deepcopy(payload),
+            )
+            for ordinal, payload in enumerate(payloads, start=1)
+        ]
+        floor = max(
+            self._change_pruned_through,
+            min(self._change_checkpoints.values(), default=sequence),
+            0,
+            sequence - self._change_log_max_entries,
+        )
+        return (
+            sequence,
+            [change for change in changes if change.sequence > floor],
+            floor,
+        )
 
     @staticmethod
     def _change_payload(
@@ -1074,6 +1391,7 @@ class MemoryEngine(AsyncStorageEngine):
 
     def _abort_session_transaction(self, session: ClientSession) -> None:
         with self._meta_lock:
+            self._ensure_publication_boundary()
             self._mvcc_states.pop(session.session_id, None)
         self._sync_session_state(
             session,
@@ -1157,16 +1475,32 @@ class MemoryEngine(AsyncStorageEngine):
 
         db_data = index_data_view.setdefault(db_name, {})
         coll_data = db_data.setdefault(coll_name, {})
-        index_map = coll_data.setdefault(index["name"], {})
-        index_map.clear()
+        index_map = MemoryIndexMap()
+        coll_data[index["name"]] = index_map
 
         coll_storage = storage_view.get(db_name, {}).get(coll_name, {})
         for storage_key, data in coll_storage.items():
             doc = self._borrow_storage_document(data)
+            if index.expire_after_seconds is not None:
+                index_map.set_expiration(
+                    storage_key,
+                    ttl_expiration_datetime(
+                        QueryEngine.extract_values(doc, index.fields[0]),
+                        expire_after_seconds=index.expire_after_seconds,
+                    ),
+                )
             if not document_in_virtual_index(doc, index):
                 continue
             for key in self._index_keys(doc, index["fields"]):
-                index_map.setdefault(key, set()).add(storage_key)
+                index_map.add(
+                    key,
+                    storage_key,
+                    ordinal=(
+                        coll_storage.ordinal_for(storage_key)
+                        if isinstance(coll_storage, MemoryCollection)
+                        else None
+                    ),
+                )
 
     def _update_indexes_locked(
         self,
@@ -1190,18 +1524,67 @@ class MemoryEngine(AsyncStorageEngine):
 
         db_data = index_data_view.setdefault(db_name, {})
         coll_data = db_data.setdefault(coll_name, {})
+        publication_storage = (
+            self._publication_stack[-1].storage
+            if self._publication_stack
+            else self._storage
+        )
+        publication_collection = publication_storage.get(db_name, {}).get(
+            coll_name,
+            {},
+        )
+        natural_ordinal = (
+            publication_collection.ordinal_for(storage_key)
+            if (
+                isinstance(publication_collection, MemoryCollection)
+                and storage_key in publication_collection
+            )
+            else None
+        )
 
         for index in indexes:
-            if not document_in_virtual_index(document, index):
+            existing_index_map = coll_data.get(index.name)
+            index_map = coll_data.setdefault(index.name, MemoryIndexMap())
+            if index.expire_after_seconds is not None and isinstance(
+                index_map,
+                MemoryIndexMap,
+            ):
+                self._record_index_state_undo_locked(
+                    (db_name, coll_name),
+                    str(index.name),
+                    index_map,
+                    index_data=index_data_view,
+                    remove_on_rollback=existing_index_map is None,
+                )
+                index_map.set_expiration(
+                    storage_key,
+                    None
+                    if action == "delete"
+                    else ttl_expiration_datetime(
+                        QueryEngine.extract_values(document, index.fields[0]),
+                        expire_after_seconds=index.expire_after_seconds,
+                    ),
+                )
+            if action == "insert" and not document_in_virtual_index(document, index):
                 continue
-            index_map = coll_data.setdefault(index["name"], {})
             for key in self._index_keys(document, index["fields"]):
+                self._record_index_membership_undo_locked(
+                    db_name,
+                    coll_name,
+                    str(index["name"]),
+                    key,
+                    storage_key,
+                    index_data=index_data_view,
+                )
                 if action == "insert":
-                    index_map.setdefault(key, set()).add(storage_key)
+                    _add_index_membership(
+                        index_map,
+                        key,
+                        storage_key,
+                        ordinal=natural_ordinal,
+                    )
                 elif key in index_map:
-                    index_map[key].discard(storage_key)
-                    if not index_map[key]:
-                        del index_map[key]
+                    _discard_index_membership(index_map, key, storage_key)
 
     def _collection_options_view(
         self,
@@ -1504,14 +1887,19 @@ class MemoryEngine(AsyncStorageEngine):
             value: dict[str, dict[tuple[Any, ...], set[Any]]],
         ) -> dict[str, dict[tuple[Any, ...], set[Any]]]:
             return {
-                index_name: {
-                    key: document_ids.copy() for key, document_ids in index_map.items()
-                }
+                index_name: (
+                    index_map.copy()
+                    if isinstance(index_map, MemoryIndexMap)
+                    else {
+                        key: document_ids.copy()
+                        for key, document_ids in index_map.items()
+                    }
+                )
                 for index_name, index_map in value.items()
             }
 
         return _MemoryCollectionSnapshot(
-            storage=_copy_entry(storage, dict.copy),
+            storage=_copy_entry(storage, lambda value: value.copy()),
             indexes=_copy_entry(indexes, list.copy),
             index_data=_copy_entry(index_data, _copy_index_data),
             search_indexes=_copy_entry(search_indexes, list.copy),
@@ -1591,6 +1979,111 @@ class MemoryEngine(AsyncStorageEngine):
             snapshot.options,
         )
 
+    def _ensure_publication_boundary(self) -> None:
+        if self._publication_stack:
+            message = "Write conflict: publication is in progress"
+            raise OperationFailure(message)
+
+    @contextmanager
+    def _publication_scope(
+        self,
+        storage: dict[str, dict[str, dict[Any, Any]]],
+        *,
+        views: tuple[object, ...] | None = None,
+        touched_namespaces: set[tuple[str, str]] | None = None,
+        touched_databases: set[str] | None = None,
+    ) -> Iterator[None]:
+        """Publish a state mutation in the same critical section as its version.
+
+        Event delivery is independent of this generation: disabled publication
+        still changes data. A view captured before another transaction installed
+        its roots must never be used to acknowledge a write to detached storage.
+        Collection locks precede this guard; the body must not suspend or deliver
+        user callbacks. Nested namespace journals (rename) share the guard.
+        """
+        with self._meta_lock:
+            state = None
+            if storage is not self._storage:
+                state = next(
+                    (
+                        candidate
+                        for candidate in self._mvcc_states.values()
+                        if candidate.storage is storage
+                    ),
+                    None,
+                )
+                if state is None:
+                    message = "Write conflict: detached storage view"
+                    raise OperationFailure(message)
+            if views is not None:
+                expected = (
+                    (
+                        self._indexes,
+                        self._index_data,
+                        self._search_indexes,
+                        self._collections,
+                        self._collection_options,
+                    )
+                    if state is None
+                    else (
+                        state.indexes,
+                        state.index_data,
+                        state.search_indexes,
+                        state.collections,
+                        state.collection_options,
+                    )
+                )
+                if any(
+                    view is not root for view, root in zip(views, expected, strict=True)
+                ):
+                    message = "Write conflict: inconsistent publication views"
+                    raise OperationFailure(message)
+            if (
+                self._publication_stack
+                and self._publication_stack[-1].storage is not storage
+            ):
+                message = "Write conflict: nested publication changes storage view"
+                raise OperationFailure(message)
+            if state is not None and not touched_namespaces and not touched_databases:
+                message = "Transaction publication requires an ownership scope"
+                raise OperationFailure(message)
+            publication = _MemoryPublication(
+                storage,
+                state,
+                touched_namespaces=(
+                    set() if touched_namespaces is None else touched_namespaces.copy()
+                ),
+                touched_databases=(
+                    set() if touched_databases is None else touched_databases.copy()
+                ),
+            )
+            self._publication_stack.append(publication)
+            try:
+                yield
+                if len(self._publication_stack) > 1:
+                    parent = self._publication_stack[-2]
+                    parent.changes.extend(publication.changes)
+                    parent.touched_namespaces.update(publication.touched_namespaces)
+                    parent.touched_databases.update(publication.touched_databases)
+                elif state is None:
+                    if publication.changes:
+                        sequence, changes, floor = (
+                            self._prepare_committed_changes_locked(
+                                publication.changes,
+                            )
+                        )
+                        self._commit_sequence = sequence
+                        self._committed_changes = changes
+                        self._change_pruned_through = floor
+                    self._mvcc_version += 1
+                else:
+                    state.pending_changes = state.pending_changes + publication.changes
+                    state.touched_namespaces.update(publication.touched_namespaces)
+                    state.touched_databases.update(publication.touched_databases)
+                    state.has_writes = True
+            finally:
+                self._publication_stack.pop()
+
     @contextmanager
     def _collection_state_rollback_locked(
         self,
@@ -1607,23 +2100,10 @@ class MemoryEngine(AsyncStorageEngine):
         collections: dict[str, set[str]],
         options: dict[str, dict[str, Document]],
     ) -> Iterator[_MemoryCollectionSnapshot]:
-        snapshot = self._snapshot_collection_state_locked(
-            db_name,
-            coll_name,
-            storage=storage,
-            indexes=indexes,
-            index_data=index_data,
-            search_indexes=search_indexes,
-            collections=collections,
-            options=options,
-        )
-        try:
-            yield snapshot
-        except Exception:
-            self._restore_collection_state_locked(
+        with self._meta_lock:
+            snapshot = self._snapshot_collection_state_locked(
                 db_name,
                 coll_name,
-                snapshot,
                 storage=storage,
                 indexes=indexes,
                 index_data=index_data,
@@ -1631,7 +2111,311 @@ class MemoryEngine(AsyncStorageEngine):
                 collections=collections,
                 options=options,
             )
-            raise
+            try:
+                with self._publication_scope(
+                    storage,
+                    views=(indexes, index_data, search_indexes, collections, options),
+                    touched_namespaces={(db_name, coll_name)},
+                ):
+                    yield snapshot
+            except BaseException:
+                self._restore_collection_state_locked(
+                    db_name,
+                    coll_name,
+                    snapshot,
+                    storage=storage,
+                    indexes=indexes,
+                    index_data=index_data,
+                    search_indexes=search_indexes,
+                    collections=collections,
+                    options=options,
+                )
+                raise
+
+    def _record_storage_undo_locked(
+        self,
+        collection: dict[Any, Any],
+        storage_key: Any,
+    ) -> None:
+        if isinstance(collection, MemoryCollection):
+            return
+        for journal in self._document_undo_stack:
+            active_collection = journal.storage.get(journal.db_name, {}).get(
+                journal.coll_name,
+            )
+            if active_collection is not collection:
+                continue
+            if journal.collection is None:
+                journal.collection = collection
+            if journal.collection is not collection:
+                continue
+            if storage_key in journal.storage_changes:
+                continue
+            previous = collection.get(storage_key, _MISSING)
+            journal.storage_changes[storage_key] = (previous, _MISSING)
+
+    def _set_storage_document_locked(
+        self,
+        collection: dict[Any, Any],
+        storage_key: Any,
+        document: Any,
+    ) -> None:
+        self._record_storage_undo_locked(collection, storage_key)
+        collection[storage_key] = document
+
+    def _delete_storage_document_locked(
+        self,
+        collection: dict[Any, Any],
+        storage_key: Any,
+    ) -> None:
+        self._record_storage_undo_locked(collection, storage_key)
+        del collection[storage_key]
+
+    def _record_index_membership_undo_locked(  # noqa: PLR0913
+        self,
+        db_name: str,
+        coll_name: str,
+        index_name: str,
+        key: tuple[Any, ...],
+        storage_key: Any,
+        *,
+        index_data: dict[
+            str,
+            dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]],
+        ],
+    ) -> None:
+        index_map = index_data.get(db_name, {}).get(coll_name, {}).get(index_name)
+        bucket = None if index_map is None else index_map.get(key)
+        token = (index_name, key, storage_key)
+        for journal in self._document_undo_stack:
+            if (
+                journal.db_name != db_name
+                or journal.coll_name != coll_name
+                or journal.index_data is not index_data
+                or token in journal.index_changes
+            ):
+                continue
+            journal.index_changes[token] = (
+                bucket is not None and storage_key in bucket,
+                bucket is not None,
+                index_map is not None,
+                (
+                    index_map.ordinal_for(key, storage_key)
+                    if isinstance(index_map, MemoryIndexMap)
+                    else None
+                ),
+            )
+
+    def _record_index_state_undo_locked(
+        self,
+        namespace: tuple[str, str],
+        index_name: str,
+        index_map: MemoryIndexMap[Any],
+        *,
+        index_data: dict[
+            str,
+            dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]],
+        ],
+        remove_on_rollback: bool,
+    ) -> None:
+        db_name, coll_name = namespace
+        for journal in self._document_undo_stack:
+            if (
+                journal.db_name != db_name
+                or journal.coll_name != coll_name
+                or journal.index_data is not index_data
+                or id(index_map) in journal.index_states
+            ):
+                continue
+            journal.index_states[id(index_map)] = (
+                index_name,
+                index_map,
+                index_map._snapshot_state(),
+                remove_on_rollback,
+            )
+
+    @staticmethod
+    def _rollback_document_storage_locked(
+        journal: _MemoryDocumentUndo,
+    ) -> None:
+        if journal.initial_collection is _MISSING:
+            db_storage = journal.storage.get(journal.db_name)
+            if db_storage is not None:
+                db_storage.pop(journal.coll_name, None)
+                if not db_storage:
+                    journal.storage.pop(journal.db_name, None)
+            return
+
+        collection = journal.storage.get(journal.db_name, {}).get(journal.coll_name)
+        if isinstance(journal.initial_collection, MemoryCollection):
+            state = journal.initial_collection_state
+            if state is None:
+                message = "document rollback lost persistent collection state"
+                raise RuntimeError(message)
+            journal.initial_collection._restore_state(state)
+            journal.storage.setdefault(journal.db_name, {})[journal.coll_name] = (
+                journal.initial_collection
+            )
+            return
+        if collection is not journal.initial_collection:
+            journal.storage.setdefault(journal.db_name, {})[journal.coll_name] = (
+                journal.initial_collection
+            )
+            return
+        if not isinstance(collection, dict):
+            message = "document rollback collection changed type"
+            raise RuntimeError(message)
+        for storage_key, (previous, _previous_ordinal) in reversed(
+            journal.storage_changes.items(),
+        ):
+            if previous is _MISSING:
+                dict.pop(collection, storage_key, None)
+            else:
+                dict.__setitem__(collection, storage_key, previous)
+
+    @staticmethod
+    def _rollback_document_indexes_locked(  # noqa: PLR0912
+        journal: _MemoryDocumentUndo,
+    ) -> None:
+        for (
+            index_name,
+            key,
+            storage_key,
+        ), (
+            was_member,
+            _bucket_existed,
+            index_map_existed,
+            membership_ordinal,
+        ) in reversed(journal.index_changes.items()):
+            coll_data = journal.index_data.get(journal.db_name, {}).get(
+                journal.coll_name,
+            )
+            index_map = None if coll_data is None else coll_data.get(index_name)
+            if (
+                isinstance(index_map, MemoryIndexMap)
+                and id(index_map) in journal.index_states
+            ):
+                continue
+            if was_member:
+                if coll_data is None:
+                    coll_data = journal.index_data.setdefault(
+                        journal.db_name,
+                        {},
+                    ).setdefault(journal.coll_name, {})
+                if index_map is None:
+                    index_map = coll_data.setdefault(index_name, MemoryIndexMap())
+                _add_index_membership(
+                    index_map,
+                    key,
+                    storage_key,
+                    ordinal=membership_ordinal,
+                )
+                continue
+            if index_map is None:
+                continue
+            bucket = index_map.get(key)
+            if bucket is not None:
+                _discard_index_membership(index_map, key, storage_key)
+            if not index_map and not index_map_existed:
+                coll_data.pop(index_name, None)
+
+        if journal.initial_index_data is _MISSING:
+            db_data = journal.index_data.get(journal.db_name)
+            if db_data is not None:
+                coll_data = db_data.get(journal.coll_name)
+                if not coll_data:
+                    db_data.pop(journal.coll_name, None)
+                if not db_data:
+                    journal.index_data.pop(journal.db_name, None)
+
+        for index_name, index_map, state, remove in journal.index_states.values():
+            if remove:
+                coll_data = journal.index_data.get(journal.db_name, {}).get(
+                    journal.coll_name,
+                )
+                if coll_data is not None and coll_data.get(index_name) is index_map:
+                    coll_data.pop(index_name, None)
+                continue
+            index_map._restore_state(state)
+
+    def _rollback_document_metadata_locked(
+        self,
+        journal: _MemoryDocumentUndo,
+    ) -> None:
+        if journal.collection_registered:
+            journal.collections.setdefault(journal.db_name, set()).add(
+                journal.coll_name,
+            )
+        else:
+            db_collections = journal.collections.get(journal.db_name)
+            if db_collections is not None:
+                db_collections.discard(journal.coll_name)
+                if not db_collections:
+                    journal.collections.pop(journal.db_name, None)
+        self._restore_nested_mapping_entry(
+            journal.options,
+            journal.db_name,
+            journal.coll_name,
+            journal.initial_options,
+        )
+
+    @contextmanager
+    def _document_state_rollback_locked(  # noqa: PLR0913
+        self,
+        db_name: str,
+        coll_name: str,
+        *,
+        storage: dict[str, dict[str, dict[Any, Any]]],
+        indexes: dict[str, dict[str, list[EngineIndexRecord]]],
+        index_data: dict[
+            str,
+            dict[str, dict[str, dict[tuple[Any, ...], set[Any]]]],
+        ],
+        search_indexes: dict[str, dict[str, list[SearchIndexDefinition]]],
+        collections: dict[str, set[str]],
+        options: dict[str, dict[str, Document]],
+    ) -> Iterator[_MemoryDocumentUndo]:
+        with self._meta_lock:
+            initial_collection = storage.get(db_name, {}).get(coll_name, _MISSING)
+            collection = initial_collection
+            if not isinstance(collection, dict):
+                collection = None
+            journal = _MemoryDocumentUndo(
+                db_name=db_name,
+                coll_name=coll_name,
+                storage=storage,
+                index_data=index_data,
+                collections=collections,
+                options=options,
+                initial_collection=initial_collection,
+                initial_index_data=index_data.get(db_name, {}).get(
+                    coll_name,
+                    _MISSING,
+                ),
+                collection_registered=coll_name in collections.get(db_name, set()),
+                initial_options=options.get(db_name, {}).get(coll_name, _MISSING),
+                collection=collection,
+                initial_collection_state=(
+                    collection._snapshot_state()
+                    if isinstance(collection, MemoryCollection)
+                    else None
+                ),
+            )
+            self._document_undo_stack.append(journal)
+            try:
+                with self._publication_scope(
+                    storage,
+                    views=(indexes, index_data, search_indexes, collections, options),
+                    touched_namespaces={(db_name, coll_name)},
+                ):
+                    yield journal
+            except BaseException:
+                self._rollback_document_indexes_locked(journal)
+                self._rollback_document_storage_locked(journal)
+                self._rollback_document_metadata_locked(journal)
+                raise
+            finally:
+                self._document_undo_stack.remove(journal)
 
     def _snapshot_search_runtime_state_locked(
         self,
@@ -2063,27 +2847,51 @@ class MemoryEngine(AsyncStorageEngine):
                     return clause.value
         return None
 
-    def _candidate_items_for_plan_locked(
+    def _candidate_items_for_plan_locked(  # noqa: PLR0913
         self,
         coll: dict[Any, Any],
         query_plan: QueryNode,
         *,
         dialect: MongoDialect,
+        indexes: list[EngineIndexRecord],
+        index_data: dict[str, dict[tuple[Any, ...], set[Any]]],
+        collation: CollationDocument | None,
+        natural_order_limit: int | None = None,
     ) -> list[tuple[Any, Any]]:
         id_lookup = self._direct_id_lookup_from_plan(query_plan)
-        if id_lookup is None:
-            return list(coll.items())
-        storage_key = self._storage_key(id_lookup)
-        data = coll.get(storage_key)
-        if data is None:
-            return list(coll.items())
-        document = self._borrow_storage_document(data)
-        if document_matches_root_id_lookup(
-            DocumentCodec.to_public(document),
-            id_lookup,
+        if id_lookup is not None:
+            storage_key = self._storage_key(id_lookup)
+            data = coll.get(storage_key)
+            if data is not None and document_matches_root_id_lookup(
+                DocumentCodec.to_public(self._borrow_storage_document(data)),
+                id_lookup,
+                dialect=dialect,
+            ):
+                return [(storage_key, data)]
+        indexed_candidates = self._indexed_candidate_storage_keys_for_plan_locked(
+            indexes,
+            index_data,
+            query_plan,
             dialect=dialect,
-        ):
-            return [(storage_key, data)]
+            collation=collation,
+        )
+        if indexed_candidates is not None:
+            storage_keys = indexed_candidates.storage_keys
+            if isinstance(coll, MemoryCollection):
+                ordered_keys = indexed_candidates.ordered_keys(
+                    limit=natural_order_limit,
+                )
+                if ordered_keys is None:
+                    ordered_keys = coll.ordered_keys(
+                        storage_keys,
+                        limit=natural_order_limit,
+                    )
+            elif len(storage_keys) <= 1:
+                ordered_keys = [key for key in storage_keys if key in coll]
+            else:
+                # Defensive compatibility for manually supplied private storage.
+                ordered_keys = [key for key in coll if key in storage_keys]
+            return [(key, coll[key]) for key in ordered_keys]
         return list(coll.items())
 
     def _indexed_candidate_storage_keys_for_plan_locked(
@@ -2094,11 +2902,13 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         dialect: MongoDialect,
         collation: CollationDocument | None,
-    ) -> set[Any] | None:
+    ) -> _MemoryIndexedCandidates | None:
         if collation is not None:
             return None
 
-        def find_usable_index(node: QueryNode) -> set[Any] | None:
+        def find_usable_index(
+            node: QueryNode,
+        ) -> _MemoryIndexedCandidates | None:
             if isinstance(node, EqualsCondition) and not node.null_matches_undefined:
                 for index in indexes:
                     if index["key"] != [(node.field, 1)]:
@@ -2113,9 +2923,13 @@ class MemoryEngine(AsyncStorageEngine):
                     index_map = index_data.get(index["name"])
                     if index_map is None:
                         continue
-                    return index_map.get(
-                        (self._index_equality_key(node.value),),
-                        set(),
+                    index_key = (self._index_equality_key(node.value),)
+                    return _MemoryIndexedCandidates(
+                        index_map.get(index_key, set()),
+                        index_map=(
+                            index_map if isinstance(index_map, MemoryIndexMap) else None
+                        ),
+                        index_key=index_key,
                     )
             elif isinstance(node, AndCondition):
                 for clause in node.clauses:
@@ -2176,7 +2990,8 @@ class MemoryEngine(AsyncStorageEngine):
     ) -> InsertOutcome:
         if operation_context is not None:
             context = operation_context.session
-        results = await self._put_documents_bulk_impl(
+        outcomes: list[InsertOutcome] = []
+        await self._put_documents_bulk_impl(
             db_name,
             coll_name,
             [document],
@@ -2184,25 +2999,9 @@ class MemoryEngine(AsyncStorageEngine):
             context=context,
             bypass_document_validation=bypass_document_validation,
             operation_context=operation_context,
+            insert_outcomes=outcomes,
         )
-        applied = results[0]
-        commit_sequence = None
-        if applied and "_id" in document:
-            commit_sequence = self._record_committed_change(
-                operation_context,
-                self._change_payload(
-                    operation_type="insert",
-                    db_name=db_name,
-                    coll_name=coll_name,
-                    document_key={"_id": document["_id"]},
-                    full_document=document,
-                ),
-            )
-        outcome = InsertOutcome(
-            applied=applied,
-            document=deepcopy(document) if applied else None,
-            commit_sequence=commit_sequence,
-        )
+        outcome = outcomes[0]
         if outcome and on_commit is not None:
             on_commit(outcome)
         return outcome
@@ -2220,34 +3019,17 @@ class MemoryEngine(AsyncStorageEngine):
     ) -> tuple[InsertOutcome, ...]:
         if operation_context is not None:
             context = operation_context.session
-        results = await self._put_documents_bulk_impl(
+        outcomes: list[InsertOutcome] = []
+        await self._put_documents_bulk_impl(
             db_name,
             coll_name,
             documents,
             context=context,
             bypass_document_validation=bypass_document_validation,
             operation_context=operation_context,
+            insert_outcomes=outcomes,
         )
-        outcomes: list[InsertOutcome] = []
-        for document, applied in zip(documents, results, strict=False):
-            commit_sequence = None
-            if applied and "_id" in document:
-                commit_sequence = self._record_committed_change(
-                    operation_context,
-                    self._change_payload(
-                        operation_type="insert",
-                        db_name=db_name,
-                        coll_name=coll_name,
-                        document_key={"_id": document["_id"]},
-                        full_document=document,
-                    ),
-                )
-            outcome = InsertOutcome(
-                applied=applied,
-                document=deepcopy(document) if applied else None,
-                commit_sequence=commit_sequence,
-            )
-            outcomes.append(outcome)
+        for outcome in outcomes:
             if outcome and on_commit is not None:
                 on_commit(outcome)
         return tuple(outcomes)
@@ -2311,6 +3093,7 @@ class MemoryEngine(AsyncStorageEngine):
         bypass_document_validation: bool = False,
         on_commit: Callable[[Document], None] | None = None,
         operation_context: OperationContext | None = None,
+        insert_outcomes: list[InsertOutcome] | None = None,
     ) -> list[bool]:
         if operation_context is not None:
             context = operation_context.session
@@ -2341,7 +3124,7 @@ class MemoryEngine(AsyncStorageEngine):
                     )
                 ),
             )
-            with self._collection_state_rollback_locked(
+            with self._document_state_rollback_locked(
                 db_name,
                 coll_name,
                 storage=storage,
@@ -2353,7 +3136,7 @@ class MemoryEngine(AsyncStorageEngine):
             ):
                 with self._meta_lock:
                     db = storage.setdefault(db_name, {})
-                    coll = db.setdefault(coll_name, {})
+                    coll = db.setdefault(coll_name, MemoryCollection())
                     self._register_collection_locked(
                         db_name,
                         coll_name,
@@ -2436,7 +3219,11 @@ class MemoryEngine(AsyncStorageEngine):
                             indexes_view=indexes_view,
                         )
 
-                    coll[storage_key] = self._encode_storage_document(document)
+                    self._set_storage_document_locked(
+                        coll,
+                        storage_key,
+                        self._encode_storage_document(document),
+                    )
                     self._update_indexes_locked(
                         db_name,
                         coll_name,
@@ -2448,6 +3235,27 @@ class MemoryEngine(AsyncStorageEngine):
                     )
                     results.append(True)
                     modified_any = True
+                if insert_outcomes is not None:
+                    for document, applied in zip(documents, results, strict=False):
+                        commit_sequence = None
+                        if applied and "_id" in document:
+                            commit_sequence = self._record_committed_change(
+                                operation_context,
+                                self._change_payload(
+                                    operation_type="insert",
+                                    db_name=db_name,
+                                    coll_name=coll_name,
+                                    document_key={"_id": document["_id"]},
+                                    full_document=document,
+                                ),
+                            )
+                        insert_outcomes.append(
+                            InsertOutcome(
+                                applied=applied,
+                                document=deepcopy(document) if applied else None,
+                                commit_sequence=commit_sequence,
+                            )
+                        )
             if on_commit is not None:
                 for committed_document, success in zip(
                     documents,
@@ -2506,10 +3314,7 @@ class MemoryEngine(AsyncStorageEngine):
                 ),
             )
             with self._meta_lock:
-                coll = storage.setdefault(db_name, {}).setdefault(
-                    coll_name,
-                    {},
-                )
+                coll = storage.get(db_name, {}).get(coll_name, {})
                 storage_key = self._storage_key(document["_id"])
                 stored = coll.get(storage_key)
                 collection_options = self._collection_options_snapshot_locked(
@@ -2610,7 +3415,7 @@ class MemoryEngine(AsyncStorageEngine):
                 scan_payload_id=True,
             )
 
-            with self._collection_state_rollback_locked(
+            with self._document_state_rollback_locked(
                 db_name,
                 coll_name,
                 storage=storage,
@@ -2620,6 +3425,10 @@ class MemoryEngine(AsyncStorageEngine):
                 collections=collections,
                 options=option_store,
             ):
+                coll = storage.setdefault(db_name, {}).setdefault(
+                    coll_name,
+                    MemoryCollection(),
+                )
                 self._register_collection_locked(
                     db_name,
                     coll_name,
@@ -2637,8 +3446,10 @@ class MemoryEngine(AsyncStorageEngine):
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
-                coll[storage_key] = self._encode_storage_document(
-                    next_document,
+                self._set_storage_document_locked(
+                    coll,
+                    storage_key,
+                    self._encode_storage_document(next_document),
                 )
                 self._update_indexes_locked(
                     db_name,
@@ -2650,24 +3461,24 @@ class MemoryEngine(AsyncStorageEngine):
                     indexes_view=indexes_view,
                 )
 
-            outcome = MergeOutcome(
-                matched=original_document is not None,
-                applied=True,
-                operation_type=operation_type,
-                before_document=deepcopy(original_document),
-                after_document=deepcopy(next_document),
-            )
-            commit_sequence = self._record_committed_change(
-                operation_context,
-                self._change_payload(
+                outcome = MergeOutcome(
+                    matched=original_document is not None,
+                    applied=True,
                     operation_type=operation_type,
-                    db_name=db_name,
-                    coll_name=coll_name,
-                    document_key={"_id": next_document["_id"]},
-                    full_document=next_document,
-                ),
-            )
-            outcome = replace(outcome, commit_sequence=commit_sequence)
+                    before_document=deepcopy(original_document),
+                    after_document=deepcopy(next_document),
+                )
+                commit_sequence = self._record_committed_change(
+                    operation_context,
+                    self._change_payload(
+                        operation_type=operation_type,
+                        db_name=db_name,
+                        coll_name=coll_name,
+                        document_key={"_id": next_document["_id"]},
+                        full_document=next_document,
+                    ),
+                )
+                outcome = replace(outcome, commit_sequence=commit_sequence)
             if on_commit is not None:
                 on_commit(outcome)
             return outcome
@@ -2779,7 +3590,7 @@ class MemoryEngine(AsyncStorageEngine):
                     dialect=MONGODB_DIALECT_70,
                 ):
                     return False
-                with self._collection_state_rollback_locked(
+                with self._document_state_rollback_locked(
                     db_name,
                     coll_name,
                     storage=storage_view,
@@ -2799,7 +3610,7 @@ class MemoryEngine(AsyncStorageEngine):
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
-                    del coll[storage_key]
+                    self._delete_storage_document_locked(coll, storage_key)
                 return True
             return False
 
@@ -2812,7 +3623,7 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         operation_context: OperationContext,
     ) -> ReadSnapshot:
-        return ReadSnapshot(
+        return _ImmediateReadSnapshot(
             self.scan_find_semantics(
                 db_name,
                 coll_name,
@@ -2895,79 +3706,67 @@ class MemoryEngine(AsyncStorageEngine):
                     coll,
                     semantics.query_plan,
                     dialect=semantics.dialect,
-                )
-                if len(candidate_items) < len(coll):
-                    document_source = (
-                        self._borrow_storage_document(data)
-                        for _storage_key, data in candidate_items
-                    )
-                else:
-                    storage_keys = self._indexed_candidate_storage_keys_for_plan_locked(
-                        indexes,
-                        index_data,
-                        semantics.query_plan,
-                        dialect=semantics.dialect,
-                        collation=semantics.collation,
-                    )
-                    if storage_keys is not None:
-                        if len(storage_keys) <= 1:
-                            document_source = (
-                                self._borrow_storage_document(coll[sk])
-                                for sk in storage_keys
-                                if sk in coll
+                    indexes=indexes,
+                    index_data=index_data,
+                    collation=semantics.collation,
+                    natural_order_limit=(
+                        semantics.skip + semantics.limit
+                        if (
+                            not semantics.sort
+                            and semantics.limit is not None
+                            and isinstance(
+                                semantics.query_plan,
+                                EqualsCondition,
                             )
-                        else:
-                            document_source = (
-                                self._borrow_storage_document(data)
-                                for sk, data in coll.items()
-                                if sk in storage_keys
-                            )
-                    else:
-                        # Scan completo (lento)
-                        enforce_deadline(deadline)
-                        document_source = (
-                            self._borrow_storage_document(data)
-                            for _storage_key, data in candidate_items
                         )
+                        else None
+                    ),
+                )
+                # Writes replace _StoredDocument versions. Retaining candidates
+                # pins that view; custom decoder output is made owned when first
+                # cached, so decoding and projection can stay demand-driven.
+                document_source = (
+                    self._borrow_storage_document(data)
+                    for _storage_key, data in candidate_items
+                )
 
                 # Pipeline de procesamiento perezoso (streaming)
                 document_source = self._iter_documents_for_classic_text_query(
                     document_source,
-                    indexes=indexes,
+                    indexes=deepcopy(indexes)
+                    if semantics.text_query is not None
+                    else [],
                     semantics=semantics,
                 )
                 filtered = iter_filtered_documents(document_source, semantics)
 
-                # Si no hay ordenación, podemos hacer streaming real y parar tras el limit.
+                # Projection runs before constructing the public fields that
+                # survive it; neither stream keeps the collection lock at yield.
                 if not semantics.sort:
-                    documents = list(
-                        stream_finalize_documents(
-                            (
-                                self._copy_document_containers(
-                                    DocumentCodec.to_public(document),
-                                )
-                                for document in filtered
-                            ),
-                            semantics,
-                            emit_public_documents=False,
-                        ),
+                    documents = stream_finalize_documents(
+                        filtered,
+                        semantics,
+                        emit_public_documents=False,
                     )
                 else:
-                    documents = [
-                        self._copy_document_containers(
-                            DocumentCodec.to_public(document),
-                        )
-                        for document in finalize_documents(
-                            filtered,
-                            semantics,
-                            apply_sort_phase=True,
-                            emit_public_documents=False,
-                        )
-                    ]
+                    documents = _iter_finalize_documents(
+                        filtered,
+                        semantics,
+                        emit_public_documents=False,
+                    )
+                # Do not pin unrelated rows/index buckets through generator locals.
+                del coll, indexes, index_data, candidate_items
 
-            for document in documents:
-                enforce_deadline(deadline)
-                yield document
+            try:
+                for document in documents:
+                    enforce_deadline(deadline)
+                    yield self._copy_document_containers(
+                        DocumentCodec.to_public(document),
+                    )
+            finally:
+                close = getattr(documents, "close", None)
+                if close is not None:
+                    close()
 
         return _scan()
 
@@ -3039,6 +3838,9 @@ class MemoryEngine(AsyncStorageEngine):
                     coll,
                     semantics.query_plan,
                     dialect=semantics.dialect,
+                    indexes=indexes,
+                    index_data=index_data_view.get(db_name, {}).get(coll_name, {}),
+                    collation=semantics.collation,
                 ),
             )
             if semantics.sort:
@@ -3147,7 +3949,7 @@ class MemoryEngine(AsyncStorageEngine):
                     check_id_storage=True,
                     scan_payload_id=False,
                 )
-                with self._collection_state_rollback_locked(
+                with self._document_state_rollback_locked(
                     db_name,
                     coll_name,
                     storage=storage_view,
@@ -3167,7 +3969,11 @@ class MemoryEngine(AsyncStorageEngine):
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
-                    coll[storage_key] = self._encode_storage_document(document)
+                    self._set_storage_document_locked(
+                        coll,
+                        storage_key,
+                        self._encode_storage_document(document),
+                    )
                     self._update_indexes_locked(
                         db_name,
                         coll_name,
@@ -3177,40 +3983,43 @@ class MemoryEngine(AsyncStorageEngine):
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
-                result = UpdateResult(
-                    matched_count=1,
-                    modified_count=1 if modified else 0,
-                )
-                captured = MutationOutcome(
-                    result=result,
-                    before_document=original_document,
-                    after_document=deepcopy(document),
-                )
-                if modified:
-                    change_context = operation_context
-                    if change_context is not None and "_id" not in document:
-                        change_context = change_context.for_unpublishable_change()
-                    commit_sequence = self._record_committed_change(
-                        change_context,
-                        self._change_payload(
-                            operation_type=(
-                                operation_context.change_operation_type
-                                if operation_context is not None
-                                and operation_context.change_operation_type is not None
-                                else "update"
-                            ),
-                            db_name=db_name,
-                            coll_name=coll_name,
-                            document_key=(
-                                {"_id": document["_id"]} if "_id" in document else {}
-                            ),
-                            full_document=document,
-                        ),
+                    result = UpdateResult(
+                        matched_count=1,
+                        modified_count=1 if modified else 0,
                     )
-                    captured = replace(
-                        captured,
-                        commit_sequence=commit_sequence,
+                    captured = MutationOutcome(
+                        result=result,
+                        before_document=original_document,
+                        after_document=deepcopy(document),
                     )
+                    if modified:
+                        change_context = operation_context
+                        if change_context is not None and "_id" not in document:
+                            change_context = change_context.for_unpublishable_change()
+                        commit_sequence = self._record_committed_change(
+                            change_context,
+                            self._change_payload(
+                                operation_type=(
+                                    operation_context.change_operation_type
+                                    if operation_context is not None
+                                    and operation_context.change_operation_type
+                                    is not None
+                                    else "update"
+                                ),
+                                db_name=db_name,
+                                coll_name=coll_name,
+                                document_key=(
+                                    {"_id": document["_id"]}
+                                    if "_id" in document
+                                    else {}
+                                ),
+                                full_document=document,
+                            ),
+                        )
+                        captured = replace(
+                            captured,
+                            commit_sequence=commit_sequence,
+                        )
                 if on_commit is not None:
                     on_commit(captured)
                 return captured
@@ -3247,7 +4056,7 @@ class MemoryEngine(AsyncStorageEngine):
                     dialect=semantics.dialect,
                 )
 
-            with self._collection_state_rollback_locked(
+            with self._document_state_rollback_locked(
                 db_name,
                 coll_name,
                 storage=storage_view,
@@ -3259,7 +4068,7 @@ class MemoryEngine(AsyncStorageEngine):
             ):
                 with self._meta_lock:
                     db = storage_view.setdefault(db_name, {})
-                    coll = db.setdefault(coll_name, {})
+                    coll = db.setdefault(coll_name, MemoryCollection())
                     self._register_collection_locked(
                         db_name,
                         coll_name,
@@ -3284,7 +4093,11 @@ class MemoryEngine(AsyncStorageEngine):
                     scan_payload_id=False,
                 )
                 self._invalidate_search_runtime_cache(db_name, coll_name)
-                coll[storage_key] = self._encode_storage_document(new_doc)
+                self._set_storage_document_locked(
+                    coll,
+                    storage_key,
+                    self._encode_storage_document(new_doc),
+                )
                 self._update_indexes_locked(
                     db_name,
                     coll_name,
@@ -3294,26 +4107,26 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=index_data_view,
                     indexes_view=indexes_view,
                 )
-            result = UpdateResult(
-                matched_count=0,
-                modified_count=0,
-                upserted_id=new_doc["_id"],
-            )
-            captured = MutationOutcome(
-                result=result,
-                after_document=deepcopy(new_doc),
-            )
-            commit_sequence = self._record_committed_change(
-                operation_context,
-                self._change_payload(
-                    operation_type="insert",
-                    db_name=db_name,
-                    coll_name=coll_name,
-                    document_key={"_id": new_doc["_id"]},
-                    full_document=new_doc,
-                ),
-            )
-            captured = replace(captured, commit_sequence=commit_sequence)
+                result = UpdateResult(
+                    matched_count=0,
+                    modified_count=0,
+                    upserted_id=new_doc["_id"],
+                )
+                captured = MutationOutcome(
+                    result=result,
+                    after_document=deepcopy(new_doc),
+                )
+                commit_sequence = self._record_committed_change(
+                    operation_context,
+                    self._change_payload(
+                        operation_type="insert",
+                        db_name=db_name,
+                        coll_name=coll_name,
+                        document_key={"_id": new_doc["_id"]},
+                        full_document=new_doc,
+                    ),
+                )
+                captured = replace(captured, commit_sequence=commit_sequence)
             if on_commit is not None:
                 on_commit(captured)
             return captured
@@ -3395,6 +4208,9 @@ class MemoryEngine(AsyncStorageEngine):
                     coll,
                     query_plan,
                     dialect=effective_dialect,
+                    indexes=indexes,
+                    index_data=index_data_view.get(db_name, {}).get(coll_name, {}),
+                    collation=effective_collation,
                 ),
             )
             if operation.sort:
@@ -3451,7 +4267,7 @@ class MemoryEngine(AsyncStorageEngine):
                     storage_key,
                     storage_key_for_id=self._storage_key,
                 )
-                with self._collection_state_rollback_locked(
+                with self._document_state_rollback_locked(
                     db_name,
                     coll_name,
                     storage=storage_view,
@@ -3471,31 +4287,33 @@ class MemoryEngine(AsyncStorageEngine):
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
-                    del coll[storage_key]
-                result = DeleteResult(deleted_count=1)
-                captured = DeleteOutcome(
-                    result=result,
-                    deleted_document=deepcopy(document),
-                )
-                change_context = operation_context
-                if change_context is not None and "_id" not in document:
-                    change_context = change_context.for_unpublishable_change()
-                if result.deleted_count > 0:
-                    commit_sequence = self._record_committed_change(
-                        change_context,
-                        self._change_payload(
-                            operation_type="delete",
-                            db_name=db_name,
-                            coll_name=coll_name,
-                            document_key=(
-                                {"_id": document["_id"]} if "_id" in document else {}
+                    self._delete_storage_document_locked(coll, storage_key)
+                    result = DeleteResult(deleted_count=1)
+                    captured = DeleteOutcome(
+                        result=result,
+                        deleted_document=deepcopy(document),
+                    )
+                    change_context = operation_context
+                    if change_context is not None and "_id" not in document:
+                        change_context = change_context.for_unpublishable_change()
+                    if result.deleted_count > 0:
+                        commit_sequence = self._record_committed_change(
+                            change_context,
+                            self._change_payload(
+                                operation_type="delete",
+                                db_name=db_name,
+                                coll_name=coll_name,
+                                document_key=(
+                                    {"_id": document["_id"]}
+                                    if "_id" in document
+                                    else {}
+                                ),
                             ),
-                        ),
-                    )
-                    captured = replace(
-                        captured,
-                        commit_sequence=commit_sequence,
-                    )
+                        )
+                        captured = replace(
+                            captured,
+                            commit_sequence=commit_sequence,
+                        )
                 if on_commit is not None:
                     on_commit(captured)
                 return captured
@@ -3575,38 +4393,14 @@ class MemoryEngine(AsyncStorageEngine):
                 coll,
                 semantics.query_plan,
                 dialect=semantics.dialect,
+                indexes=indexes,
+                index_data=index_data,
+                collation=semantics.collation,
             )
-            if len(candidate_items) < len(coll):
-                document_source = (
-                    self._borrow_storage_document(data)
-                    for _storage_key, data in candidate_items
-                )
-            else:
-                storage_keys = self._indexed_candidate_storage_keys_for_plan_locked(
-                    indexes,
-                    index_data,
-                    semantics.query_plan,
-                    dialect=semantics.dialect,
-                    collation=semantics.collation,
-                )
-                if storage_keys is not None:
-                    if len(storage_keys) <= 1:
-                        document_source = (
-                            self._borrow_storage_document(coll[sk])
-                            for sk in storage_keys
-                            if sk in coll
-                        )
-                    else:
-                        document_source = (
-                            self._borrow_storage_document(data)
-                            for sk, data in coll.items()
-                            if sk in storage_keys
-                        )
-                else:
-                    document_source = (
-                        self._borrow_storage_document(data)
-                        for _storage_key, data in candidate_items
-                    )
+            document_source = (
+                self._borrow_storage_document(data)
+                for _storage_key, data in candidate_items
+            )
 
             document_source = self._iter_documents_for_classic_text_query(
                 document_source,
@@ -4016,7 +4810,11 @@ class MemoryEngine(AsyncStorageEngine):
             search_indexes = self._search_indexes_view(context)
             collections = self._collections_view(context)
             options = self._collection_options_view(context)
-            with self._meta_lock:
+            with self._publication_scope(
+                storage,
+                views=(indexes, index_data, search_indexes, collections, options),
+                touched_databases={db_name},
+            ):
                 storage.pop(db_name, None)
                 indexes.pop(db_name, None)
                 index_data.pop(db_name, None)
@@ -4814,9 +5612,14 @@ class MemoryEngine(AsyncStorageEngine):
             collections = self._collections_view(context)
             storage = self._storage_view(context)
             indexes = self._indexes_view(context)
+            index_data = self._index_data_view(context)
             search_indexes = self._search_indexes_view(context)
             option_store = self._collection_options_view(context)
-            with self._meta_lock:
+            with self._publication_scope(
+                storage,
+                views=(indexes, index_data, search_indexes, collections, option_store),
+                touched_namespaces={(db_name, coll_name)},
+            ):
                 if (
                     coll_name in collections.get(db_name, set())
                     or coll_name in storage.get(db_name, {})

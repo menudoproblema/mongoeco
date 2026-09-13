@@ -1119,6 +1119,7 @@ class EngineSpiV2ContractTests(unittest.TestCase):
         adapter = EngineSpiAdapter(engine)
 
         adapter.prepare_change_delivery(sink)
+        adapter.prepare_change_delivery(sink)
         adapter.dispatch_committed_changes(sink)
         adapter.unregister_change_delivery(sink)
         adapter.unregister_change_delivery(None)
@@ -1126,6 +1127,7 @@ class EngineSpiV2ContractTests(unittest.TestCase):
         assert sink.gaps == 1
         assert sink.events == [{"operation_type": "delete"}]
         assert sink.aligned == [1, 2, 3]
+        assert len(engine.registered) == 1
         assert len(engine.unregistered) == 1
 
 

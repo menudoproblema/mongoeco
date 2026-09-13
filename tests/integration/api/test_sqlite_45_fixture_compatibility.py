@@ -181,3 +181,29 @@ class SQLite45FixtureCompatibilityTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(engine._connection)
             self.assertEqual(engine._connection_count, 0)
             self.assertEqual(_sha256(database), before)
+
+    async def test_future_ttl_schema_rejection_does_not_mutate_fixture_copy(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = _copy_fixture(directory)
+            connection = sqlite3.connect(database)
+            try:
+                connection.execute(
+                    "INSERT INTO mongoeco_schema_migrations (component, version) "
+                    "VALUES ('ttl_index_entries', 99)"
+                )
+                connection.commit()
+            finally:
+                connection.close()
+            before = _sha256(database)
+            engine = SQLiteEngine(str(database))
+            with self.assertRaisesRegex(
+                OperationFailure,
+                "unsupported TTL index schema version 99",
+            ):
+                await engine.connect()
+            self.assertIsNone(engine._pending_connection)
+            self.assertIsNone(engine._connection)
+            self.assertEqual(engine._connection_count, 0)
+            self.assertEqual(_sha256(database), before)

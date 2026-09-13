@@ -41,6 +41,7 @@ from mongoeco.engines._shared_search_admin import (
     ensure_search_index_query_supported,
     search_index_not_found,
 )
+from mongoeco.engines._vector_ranking import top_scored_rows
 from mongoeco.types import (
     Document,
     QueryPlanExplanation,
@@ -466,11 +467,15 @@ async def execute_search_documents(
                 query.index_name,
             ),
         )
-        materialized_documents = engine._materialized_search_documents(
-            db_name,
-            coll_name,
-            definition,
-            context=context,
+        materialized_documents = (
+            []
+            if isinstance(query, SearchVectorQuery)
+            else engine._materialized_search_documents(
+                db_name,
+                coll_name,
+                definition,
+                context=context,
+            )
         )
         vector_index = (
             engine._materialized_vector_index(
@@ -674,29 +679,34 @@ async def execute_search_documents(
         candidate_rows = [
             row_index for row_index in candidate_rows if row_index in allowed
         ]
-    scored_rows = vector_scores_for_rows(
-        vector_index,
-        query=query,
-        candidate_rows=candidate_rows,
-        limit=None,
-    )
-    query_requires_postfilter = (
-        query.filter_spec is not None and query_filter_rows is None
-    )
-    downstream_requires_postfilter = (
-        downstream_filter_spec is not None and downstream_filter_rows is None
-    )
+    query_requires_postfilter = query.filter_spec is not None and not (
+        _query_filter_description or {}
+    ).get("exact", False)
+    downstream_requires_postfilter = downstream_filter_spec is not None and not (
+        _downstream_filter_description or {}
+    ).get("exact", False)
     if not query_requires_postfilter and not downstream_requires_postfilter:
-        vector_documents = [
+        scored_rows = vector_scores_for_rows(
+            vector_index,
+            query=query,
+            candidate_rows=candidate_rows,
+            limit=effective_vector_limit,
+            public_order=True,
+        )
+        return [
             attach_vector_search_score(
                 vector_index.documents[path_positions[row_index]].document,
                 vector_score,
             )
             for vector_score, row_index in scored_rows
         ]
-        _sort_vector_scored_documents(vector_documents)
-        return vector_documents[:effective_vector_limit]
-    vector_hits: list[Document] = []
+    scored_rows = vector_scores_for_rows(
+        vector_index,
+        query=query,
+        candidate_rows=candidate_rows,
+        limit=None,
+    )
+    vector_hits: list[tuple[float, int]] = []
     for score, row_index in scored_rows:
         prepared = vector_index.documents[path_positions[row_index]]
         if downstream_requires_postfilter:
@@ -735,11 +745,19 @@ async def execute_search_documents(
                 operation_context=operation_context,
             ):
                 continue
-        vector_hits.append(
-            attach_vector_search_score(prepared.document, score),
+        vector_hits.append((score, row_index))
+    selected_hits = top_scored_rows(
+        vector_hits,
+        effective_vector_limit,
+        vector_index.vector_row_tie_keys[query.path],
+    )
+    return [
+        attach_vector_search_score(
+            vector_index.documents[path_positions[row_index]].document,
+            score,
         )
-    _sort_vector_scored_documents(vector_hits)
-    return vector_hits[:effective_vector_limit]
+        for score, row_index in selected_hits
+    ]
 
 
 async def explain_search_documents(
@@ -900,12 +918,12 @@ async def explain_search_documents(
                 0,
                 len(raw_scored_rows) - len(scored_rows),
             )
-        query_requires_postfilter = (
-            query.filter_spec is not None and query_filter_rows is None
-        )
-        downstream_requires_postfilter = (
-            downstream_filter_spec is not None and downstream_filter_rows is None
-        )
+        query_requires_postfilter = query.filter_spec is not None and not (
+            vector_filter_description or {}
+        ).get("exact", False)
+        downstream_requires_postfilter = downstream_filter_spec is not None and not (
+            downstream_filter_description or {}
+        ).get("exact", False)
         vector_filter_mode = _vector_filter_mode(
             query.filter_spec,
             vector_filter_description,
