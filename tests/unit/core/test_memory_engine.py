@@ -3407,8 +3407,16 @@ class MemoryEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(engine._active_mvcc_state(session))
         diagnostics = engine._runtime_diagnostics_info()["mvcc"]
         self.assertEqual(diagnostics["activeSnapshots"], 1)
+        self.assertEqual(diagnostics["activeReadSnapshots"], 0)
         self.assertEqual(diagnostics["writeSnapshots"], 0)
-        self.assertIsNone(diagnostics["retainedBytes"])
+        self.assertEqual(diagnostics["retainedReferences"], 0)
+        self.assertEqual(diagnostics["retainedDocumentVersions"], 0)
+        self.assertEqual(diagnostics["supersededDocumentVersions"], 0)
+        self.assertGreater(diagnostics["retainedBytes"], 0)
+        self.assertEqual(
+            diagnostics["retainedBytesEstimateKind"],
+            "python-lower-bound",
+        )
         with self.assertRaisesRegex(
             InvalidOperation, "not created by this MemoryEngine"
         ):

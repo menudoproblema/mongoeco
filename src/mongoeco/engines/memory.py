@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 import inspect
+import sys
 import threading
 import time
 
@@ -223,6 +224,38 @@ class _StoredDocument:
         self.payload = payload
         self.decoded_wrapped: Document | None = None
         self.decoded_public: Document | None = None
+
+
+def _estimate_retained_python_bytes(*roots: object) -> int:
+    """Return a de-duplicated lower bound for retained Python-owned objects.
+
+    Persistent HAMT/native allocations and opaque codec payload referents are
+    intentionally not guessed. Their shallow Python owner is still counted,
+    while diagnostics label the result as a lower bound rather than a hard
+    capacity measurement.
+    """
+    pending = list(roots)
+    visited: set[int] = set()
+    total = 0
+    while pending:
+        item = pending.pop()
+        identity = id(item)
+        if identity in visited:
+            continue
+        visited.add(identity)
+        total += sys.getsizeof(item)
+        if isinstance(item, _StoredDocument):
+            pending.append(item.payload)
+            if item.decoded_wrapped is not None:
+                pending.append(item.decoded_wrapped)
+            if item.decoded_public is not None:
+                pending.append(item.decoded_public)
+        elif isinstance(item, dict):
+            pending.extend(item.keys())
+            pending.extend(item.values())
+        elif isinstance(item, (tuple, list, set, frozenset)):
+            pending.extend(item)
+    return total
 
 
 _MISSING = object()
@@ -510,6 +543,7 @@ class MemoryEngine(AsyncStorageEngine):
         self._active_operations = LocalActiveOperationRegistry()
         self._mvcc_version = 0
         self._mvcc_states: dict[str, MemoryMvccState] = {}
+        self._active_read_views: dict[object, list[tuple[Any, Any]]] = {}
         self._commit_sequence = 0
         self._committed_changes: list[CommittedChange] = []
         self._change_checkpoints: dict[str, int] = {}
@@ -680,6 +714,14 @@ class MemoryEngine(AsyncStorageEngine):
         return materialized
 
     def _runtime_diagnostics_info(self) -> dict[str, object]:
+        with self._meta_lock:
+            mvcc_snapshots = tuple(self._mvcc_states.values())
+            read_views = tuple(self._active_read_views.values())
+            live_collections = tuple(
+                collection
+                for collections in self._storage.values()
+                for collection in collections.values()
+            )
         declared_search_index_count = sum(
             len(indexes)
             for collections in self._search_indexes.values()
@@ -696,15 +738,41 @@ class MemoryEngine(AsyncStorageEngine):
         )
         transaction_collection_roots = sum(
             len(collections)
-            for snapshot in self._mvcc_states.values()
+            for snapshot in mvcc_snapshots
             for collections in snapshot.storage.values()
         )
         transaction_index_roots = sum(
             len(indexes)
-            for snapshot in self._mvcc_states.values()
+            for snapshot in mvcc_snapshots
             for collections in snapshot.index_data.values()
             for indexes in collections.values()
         )
+        retained_roots: list[object] = []
+        retained_document_ids: set[int] = set()
+        retained_reference_count = 0
+        for snapshot in mvcc_snapshots:
+            retained_roots.extend(
+                (
+                    snapshot.storage,
+                    snapshot.indexes,
+                    snapshot.index_data,
+                    snapshot.search_indexes,
+                    snapshot.collections,
+                    snapshot.collection_options,
+                )
+            )
+            for collections in snapshot.storage.values():
+                for collection in collections.values():
+                    retained_reference_count += len(collection)
+                    retained_document_ids.update(map(id, collection.values()))
+        for candidate_items in read_views:
+            retained_roots.append(candidate_items)
+            retained_reference_count += len(candidate_items)
+            retained_document_ids.update(id(data) for _key, data in candidate_items)
+
+        live_document_ids = {
+            id(data) for collection in live_collections for data in collection.values()
+        }
         return {
             "planner": {
                 "engine": "python",
@@ -726,13 +794,20 @@ class MemoryEngine(AsyncStorageEngine):
                 "vectorIndexes": self._vector_document_cache.stats(),
             },
             "mvcc": {
-                "activeSnapshots": len(self._mvcc_states),
+                "activeSnapshots": len(mvcc_snapshots),
+                "activeReadSnapshots": len(read_views),
                 "writeSnapshots": sum(
-                    snapshot.has_writes for snapshot in self._mvcc_states.values()
+                    snapshot.has_writes for snapshot in mvcc_snapshots
                 ),
                 "retainedCollectionRoots": transaction_collection_roots,
                 "retainedIndexRoots": transaction_index_roots,
-                "retainedBytes": None,
+                "retainedReferences": retained_reference_count,
+                "retainedDocumentVersions": len(retained_document_ids),
+                "supersededDocumentVersions": len(
+                    retained_document_ids - live_document_ids
+                ),
+                "retainedBytes": _estimate_retained_python_bytes(*retained_roots),
+                "retainedBytesEstimateKind": "python-lower-bound",
             },
             "changeDelivery": {
                 "maxEntries": self._change_log_max_entries,
@@ -2958,6 +3033,7 @@ class MemoryEngine(AsyncStorageEngine):
             self._collection_options.clear()
             self._locks.clear()
             self._mvcc_states.clear()
+            self._active_read_views.clear()
             self._commit_sequence = 0
             self._committed_changes.clear()
             self._change_checkpoints.clear()
@@ -3754,6 +3830,9 @@ class MemoryEngine(AsyncStorageEngine):
                         semantics,
                         emit_public_documents=False,
                     )
+                read_view_token = object()
+                with self._meta_lock:
+                    self._active_read_views[read_view_token] = candidate_items
                 # Do not pin unrelated rows/index buckets through generator locals.
                 del coll, indexes, index_data, candidate_items
 
@@ -3767,6 +3846,8 @@ class MemoryEngine(AsyncStorageEngine):
                 close = getattr(documents, "close", None)
                 if close is not None:
                     close()
+                with self._meta_lock:
+                    self._active_read_views.pop(read_view_token, None)
 
         return _scan()
 

@@ -140,6 +140,41 @@ def test_snapshot_releases_lazy_source_frame_on_terminal_state(finish):
     asyncio.run(exercise())
 
 
+def test_snapshot_diagnostics_account_for_retained_versions_until_close():
+    async def exercise():
+        engine = MemoryEngine()
+        async with AsyncMongoClient(engine) as client:
+            collection = client.test.records
+            document_count = 3
+            await collection.insert_many(
+                [{"_id": i, "value": i} for i in range(document_count)]
+            )
+            cursor = collection.find({}, batch_size=1)
+            iterator = aiter(cursor)
+            assert await anext(iterator) == {"_id": 0, "value": 0}
+
+            retained = engine._runtime_diagnostics_info()["mvcc"]
+            assert retained["activeReadSnapshots"] == 1
+            assert retained["retainedReferences"] == document_count
+            assert retained["retainedDocumentVersions"] == document_count
+            assert retained["supersededDocumentVersions"] == 0
+            assert retained["retainedBytes"] > 0
+
+            await collection.update_one({"_id": 1}, {"$set": {"value": 10}})
+            retained = engine._runtime_diagnostics_info()["mvcc"]
+            assert retained["supersededDocumentVersions"] == 1
+
+            await cursor.close()
+            released = engine._runtime_diagnostics_info()["mvcc"]
+            assert released["activeReadSnapshots"] == 0
+            assert released["retainedReferences"] == 0
+            assert released["retainedDocumentVersions"] == 0
+            assert released["supersededDocumentVersions"] == 0
+            assert released["retainedBytes"] == 0
+
+    asyncio.run(exercise())
+
+
 def test_cancelled_snapshot_releases_lazy_source_frame():
     async def exercise():
         engine = MemoryEngine()

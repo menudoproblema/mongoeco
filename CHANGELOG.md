@@ -34,6 +34,10 @@ usa Semantic Versioning.
   publica, los decoders personalizados conservan una salida propia y cerrar,
   agotar o cancelar libera las referencias retenidas; el sort bloqueante sigue
   reuniendo sus candidatos antes de la primera fila.
+- Los diagnosticos MVCC Memory contabilizan transacciones y lecturas activas,
+  referencias, versiones sustituidas y una estimacion deduplicada del suelo de
+  bytes Python retenidos. La metrica declara que excluye HAMT, buffers nativos
+  y payloads opacos, y vuelve a cero tras liberar la ultima vista.
 - La materializacion publica comun construye contenedores una sola vez cuando
   usa dict sin decoders personalizados. Conserva la conversion BSON completa
   antes de los efectos de codec, la propiedad de resultados y el fallback de

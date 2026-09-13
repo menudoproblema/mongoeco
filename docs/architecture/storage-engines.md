@@ -168,10 +168,14 @@ las raices antiguas se reclaman cuando dejan de estar referenciadas por
 transacciones, cursores o scopes de rollback. `rpds-py` es un detalle interno
 del engine y no forma parte de SPI v2.
 
-Los diagnosticos MVCC exponen snapshots activos/escritores y raices de
-coleccion/indice retenidas. `retainedBytes=None` declara que el engine aun no
-acredita una estimacion por bytes; no significa coste cero. Esta garantia
-tampoco incorpora admision por presion. El commit publica el write-set de
+Los diagnosticos MVCC exponen por separado transacciones y snapshots de lectura
+activos, referencias y versiones documentales retenidas, versiones ya
+sustituidas en el root vivo y raices de coleccion/indice. `retainedBytes` es una
+estimacion deduplicada de los owners Python alcanzables por esas vistas;
+`retainedBytesEstimateKind="python-lower-bound"` hace explicito que no incluye
+los nodos HAMT ni buffers nativos u opacos. La metrica vuelve a cero cuando la
+ultima vista cierra, pero no constituye un limite de admision ni una medida de
+RSS. El commit publica el write-set de
 namespaces sobre roots preparados, pero conserva el conflicto global de P1:
 una transaccion incompatible falla antes de instalar su vista. Los scans no
 selectivos y las
