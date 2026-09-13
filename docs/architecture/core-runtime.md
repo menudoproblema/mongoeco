@@ -260,10 +260,14 @@ El sort con spill divide la entrada en runs de como maximo el umbral y los
 fusiona en varias pasadas con un fan-in maximo de 32 runs de lectura. Cada
 pasada mantiene un documento decodificado por run y elimina sus temporales al
 terminar; error, deadline o cancelacion limpian tambien runs originales e
-intermedios. Esto acota descriptores y heap de fusion, no la memoria total: la
-interfaz vigente recibe la entrada ya materializada y devuelve otra lista
-completa. Convertir esas dos fronteras en streams y sumar sus bytes al budget
-compuesto sigue pendiente.
+intermedios. El primitivo de merge acepta un iterable y entrega otro: no
+construye una lista de salida, y cerrar tras consumo parcial elimina todos los
+runs. El cursor usa ya esa salida demand-driven para `$group -> $sort` y stages
+streamables posteriores. El resultado del group sigue siendo la entrada
+materializada inevitable de esa frontera, y el API sincrono de `apply_pipeline`
+conserva su retorno en lista por compatibilidad. Convertir las restantes
+entradas bloqueantes en streams y sumar sus bytes al budget compuesto sigue
+pendiente.
 
 El `$lookup` simple por `localField`/`foreignField` puede construir un indice
 hash efimero sobre la coleccion foreign. Su admision reutiliza
@@ -288,8 +292,8 @@ ejecutan como maximo 256 pasos; los caminos que expanden resultados reutilizan
 la misma primitiva de control. Esto es cancelacion cooperativa, no una garantia
 hard real-time: una evaluacion de expresion, comparacion BSON, operacion del
 codec, llamada a una extension o primitiva de I/O puede ser indivisible. El
-budget compuesto de bytes, el streaming de entrada/salida del sort externo y
-los algoritmos externos de group siguen pendientes.
+budget compuesto de bytes, el streaming desde las restantes entradas
+bloqueantes y la particion externa de estados de group siguen pendientes.
 
 Cuando el primer operador bloqueante que queda despues del pushdown es
 `$group`, el cursor alimenta un estado acumulador incremental desde trabajos de
@@ -301,10 +305,10 @@ completa. La memoria del acumulador depende del numero de grupos y de
 acumuladores cuyo resultado crece (`$push`, `$addToSet`, etc.), que es salida
 inevitable y no se presenta como O(1).
 
-El resultado de grupos y los stages bloqueantes posteriores aun usan la
-frontera materializada vigente. Particionar estado de acumuladores a disco y
-convertir la salida del sort externo en stream requieren el budget compuesto;
-siguen pendientes y no se ocultan bajo la mejora de entrada incremental.
+El resultado de grupos y los stages bloqueantes posteriores salvo el sort
+elegible aun usan la frontera materializada vigente. Particionar estado de
+acumuladores a disco requiere el budget compuesto; sigue pendiente y no se
+oculta bajo la mejora de entrada incremental.
 
 En la superficie publica, `aggregate().explain()` ya deja visible ademas un
 resumen estructurado de pushdown (`mode`, stages empujados, stages restantes y
@@ -317,6 +321,8 @@ degradar a nested loop sin cambiar resultados ni errores publicos.
 `incrementalGroupInput` distingue el acumulador alimentado por lotes de una
 pipeline completamente materializada; `sourceBatchExecution` agrupa esa ruta y
 el streaming completo sin afirmar que la salida de `$group` sea incremental.
+`streamingSortOutput` indica especificamente que el merge externo posterior
+entrega por demanda y mantiene cleanup propietario.
 
 La pipeline materializada soporta tambien ya stages analiticos locales como
 `$densify` y `$fill`, y stages con side effects locales como `$merge`. En este

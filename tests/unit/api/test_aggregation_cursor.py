@@ -1,5 +1,8 @@
 import datetime
+import tempfile
 import unittest
+
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -36,6 +39,10 @@ from mongoeco.errors import (
 )
 from mongoeco.session import ClientSession
 from mongoeco.types import PlanningIssue, PlanningMode, SearchIndexModel
+
+
+def _aggregation_sort_temp_paths() -> set[Path]:
+    return set(Path(tempfile.gettempdir()).glob("*.mongoeco-aggsort"))
 
 
 class _FakeAsyncFindCursor:
@@ -1571,6 +1578,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(explanation["pushdown"]["incrementalGroupInput"])
         self.assertTrue(explanation["pushdown"]["sourceBatchExecution"])
         self.assertFalse(explanation["pushdown"]["streamingEligible"])
+        self.assertFalse(explanation["pushdown"]["streamingSortOutput"])
         referenced_loader.assert_not_awaited()
 
     async def test_materialize_allows_large_blocking_pipeline_when_spill_is_available(
@@ -1618,6 +1626,15 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(collection.last_find_cursor.close_calls, 1)
 
+        explanation = await AsyncAggregationCursor(
+            collection,
+            [
+                {"$group": {"_id": "$kind", "count": {"$sum": 1}}},
+                {"$sort": {"_id": 1}},
+            ],
+        ).explain()
+        self.assertTrue(explanation["pushdown"]["streamingSortOutput"])
+
     async def test_unbatched_group_uses_bounded_internal_source_pages(self):
         collection = _FakeCollection(
             [{"_id": index, "kind": "same"} for index in range(300)]
@@ -1636,6 +1653,28 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             collection.last_find_cursor.pull_chunk_sizes,
             [256, 256, 256],
         )
+
+    async def test_partial_group_sort_closes_streamed_spill_output(self):
+        group_count = 70
+        collection = _FakeCollection(
+            [{"_id": index, "kind": index} for index in range(group_count)]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [
+                {"$group": {"_id": "$kind", "count": {"$sum": 1}}},
+                {"$sort": {"_id": -1}},
+            ],
+            batch_size=2,
+            allow_disk_use=True,
+        )
+        before = _aggregation_sort_temp_paths()
+
+        self.assertEqual((await anext(cursor))["_id"], group_count - 1)
+        self.assertGreater(len(_aggregation_sort_temp_paths()), len(before))
+        await cursor.close()
+
+        self.assertEqual(_aggregation_sort_temp_paths(), before)
 
     def test_incremental_group_split_preserves_global_prefix_window(self):
         plan = AsyncAggregationCursor._split_incremental_group_pipeline(

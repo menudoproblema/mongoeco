@@ -6,6 +6,7 @@ import tempfile
 
 from contextlib import ExitStack, suppress
 from dataclasses import dataclass
+from itertools import chain, islice
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -17,7 +18,7 @@ from mongoeco.core.work_control import DeadlineCheckpoint, iter_with_deadline
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterable, Iterator
 
     from mongoeco.core.collation import CollationSpec
     from mongoeco.types import Document
@@ -72,16 +73,41 @@ class AggregationSpillPolicy:
         collation: CollationSpec | None = None,
         deadline: float | None = None,
     ) -> list[Document]:
-        if not self.should_spill("$sort", documents):
-            return sort_documents(
+        return list(
+            self.iter_sort_with_spill(
                 documents,
                 sort,
                 dialect=dialect,
                 collation=collation,
                 deadline=deadline,
             )
-        return self._external_sort(
-            documents,
+        )
+
+    def iter_sort_with_spill(
+        self,
+        documents: Iterable[Document],
+        sort: object,
+        *,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+        collation: CollationSpec | None = None,
+        deadline: float | None = None,
+    ) -> Iterator[Document]:
+        """Sort an iterable while keeping the merged output demand-driven."""
+        iterator = iter(documents)
+        prefix = list(
+            islice(iter_with_deadline(iterator, deadline), self.threshold + 1)
+        )
+        if len(prefix) <= self.threshold:
+            yield from sort_documents(
+                prefix,
+                sort,
+                dialect=dialect,
+                collation=collation,
+                deadline=deadline,
+            )
+            return
+        yield from self._external_sort(
+            chain(prefix, iterator),
             sort,
             dialect=dialect,
             collation=collation,
@@ -128,13 +154,13 @@ class AggregationSpillPolicy:
 
     def _external_sort(
         self,
-        documents: list[Document],
+        documents: Iterable[Document],
         sort: object,
         *,
         dialect: MongoDialect,
         collation: CollationSpec | None,
         deadline: float | None = None,
-    ) -> list[Document]:
+    ) -> Iterator[Document]:
         temporary_paths: set[str] = set()
         checkpoint = DeadlineCheckpoint(deadline)
 
@@ -206,9 +232,9 @@ class AggregationSpillPolicy:
 
         try:
             active_paths: list[str] = []
-            for start in range(0, len(documents), self.threshold):
+            document_iterator = iter(iter_with_deadline(documents, deadline))
+            while chunk_documents := list(islice(document_iterator, self.threshold)):
                 checkpoint()
-                chunk_documents = documents[start : start + self.threshold]
                 chunk = (
                     sort_documents(
                         chunk_documents,
@@ -238,7 +264,7 @@ class AggregationSpillPolicy:
                         temporary_paths.remove(path)
                 active_paths = next_paths
 
-            return list(merged_documents(active_paths))
+            yield from merged_documents(active_paths)
         finally:
             for path in temporary_paths:
                 with suppress(FileNotFoundError):

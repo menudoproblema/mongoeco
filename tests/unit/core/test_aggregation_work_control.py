@@ -218,3 +218,35 @@ class AggregationWorkControlTests(TestCase):
             policy.sort_with_spill(documents, [("rank", 1)])
 
         self.assertEqual(set(temp_root.glob("*.mongoeco-aggsort")), before)
+
+    def test_external_sort_stream_closes_temporaries_after_partial_consumption(self):
+        policy = AggregationSpillPolicy(threshold=2)
+        documents = ({"_id": index, "rank": -index} for index in range(10))
+        temp_root = Path(tempfile.gettempdir())
+        before = set(temp_root.glob("*.mongoeco-aggsort"))
+
+        stream = policy.iter_sort_with_spill(documents, [("rank", 1)])
+        self.assertEqual(next(stream)["rank"], -9)
+        self.assertGreater(len(set(temp_root.glob("*.mongoeco-aggsort"))), len(before))
+        stream.close()
+
+        self.assertEqual(set(temp_root.glob("*.mongoeco-aggsort")), before)
+
+    def test_external_sort_never_builds_a_run_above_its_threshold(self):
+        policy = AggregationSpillPolicy(threshold=3)
+        documents = ({"_id": index, "rank": -index} for index in range(17))
+
+        with patch(
+            "mongoeco.core.aggregation.spill.sort_documents",
+            wraps=sort_documents,
+        ) as sorter:
+            result = list(policy.iter_sort_with_spill(documents, [("rank", 1)]))
+
+        self.assertEqual(
+            [document["rank"] for document in result],
+            sorted(document["rank"] for document in result),
+        )
+        self.assertLessEqual(
+            max(len(call.args[0]) for call in sorter.call_args_list),
+            policy.threshold,
+        )

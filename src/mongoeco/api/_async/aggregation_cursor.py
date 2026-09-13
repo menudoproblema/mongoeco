@@ -5,6 +5,7 @@ import time
 from collections.abc import AsyncIterator
 from copy import deepcopy
 from dataclasses import dataclass
+from itertools import islice
 
 from mongoeco.api._async._active_operations import track_active_operation
 from mongoeco.api._async.cursor import (
@@ -35,6 +36,7 @@ from mongoeco.core.aggregation.grouping_stages import _IncrementalGroup
 from mongoeco.core.aggregation.lookup_physical import (
     explain_lookup_physical_plans,
 )
+from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.codec import DocumentCodec
@@ -118,6 +120,14 @@ class _IncrementalGroupPlan:
     prefix_limit: int | None
     group_spec: object
     suffix: Pipeline
+
+
+@dataclass(frozen=True, slots=True)
+class _StreamingSortPlan:
+    sort_spec: object
+    suffix: Pipeline
+    suffix_skip: int
+    suffix_limit: int | None
 
 
 class _CursorPageSource:
@@ -725,6 +735,32 @@ class AsyncAggregationCursor:
             if operator not in local_prefix_operators:
                 return None
         return None
+
+    @classmethod
+    def _split_streaming_sort_suffix(
+        cls,
+        pipeline: Pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+    ) -> _StreamingSortPlan | None:
+        if not pipeline:
+            return None
+        first = pipeline[0]
+        if not isinstance(first, dict) or len(first) != 1 or "$sort" not in first:
+            return None
+        suffix_split = cls._split_streamable_pipeline(
+            pipeline[1:],
+            dialect=dialect,
+        )
+        if suffix_split is None:
+            return None
+        suffix, suffix_skip, suffix_limit = suffix_split
+        return _StreamingSortPlan(
+            sort_spec=first["$sort"],
+            suffix=suffix,
+            suffix_skip=suffix_skip,
+            suffix_limit=suffix_limit,
+        )
 
     def _collect_collection_names(self, pipeline: Pipeline) -> set[str]:
         names: set[str] = set()
@@ -1352,15 +1388,15 @@ class AsyncAggregationCursor:
             return applier(document)
         return document
 
-    async def _stream_incremental_group(
+    async def _accumulate_group_source(
         self,
         plan: _IncrementalGroupPlan,
         *,
+        spill_policy: AggregationSpillPolicy | None,
+        cost_policy: AggregationCostPolicy | None,
         dialect,
         deadline: float | None,
-    ) -> AsyncIterator[Document]:
-        spill_policy = self._spill_policy()
-        cost_policy = self._cost_policy()
+    ) -> list[Document]:
         probe_maximum = (
             cost_policy.max_materialized_documents
             if cost_policy is not None and spill_policy is None
@@ -1436,8 +1472,42 @@ class AsyncAggregationCursor:
                     accumulator.consume(transformed)
             finally:
                 await source.aclose()
+        return accumulator.finish()
 
-        result = accumulator.finish()
+    async def _stream_incremental_group(
+        self,
+        plan: _IncrementalGroupPlan,
+        *,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
+        spill_policy = self._spill_policy()
+        result = await self._accumulate_group_source(
+            plan,
+            spill_policy=spill_policy,
+            cost_policy=self._cost_policy(),
+            dialect=dialect,
+            deadline=deadline,
+        )
+        streaming_sort = (
+            self._split_streaming_sort_suffix(plan.suffix, dialect=dialect)
+            if spill_policy is not None
+            else None
+        )
+        if streaming_sort is not None:
+            output = self._stream_sorted_group_result(
+                result,
+                streaming_sort,
+                spill_policy=spill_policy,
+                dialect=dialect,
+                deadline=deadline,
+            )
+            try:
+                async for document in output:
+                    yield document
+            finally:
+                await output.aclose()
+            return
         if plan.suffix:
             referenced_collections = await self._load_referenced_collections()
             result = apply_pipeline(
@@ -1457,6 +1527,64 @@ class AsyncAggregationCursor:
                     strip_search_result_metadata(document),
                 ),
             )
+
+    async def _stream_sorted_group_result(
+        self,
+        documents: list[Document],
+        plan: _StreamingSortPlan,
+        *,
+        spill_policy: AggregationSpillPolicy,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
+        if plan.suffix_limit == 0:
+            return
+        referenced_collections = (
+            await self._load_referenced_collections() if plan.suffix else {}
+        )
+        page_size = self._batch_size or 256
+        remaining_skip = plan.suffix_skip
+        remaining_limit = plan.suffix_limit
+        sorted_documents = spill_policy.iter_sort_with_spill(
+            documents,
+            _require_sort(plan.sort_spec),
+            dialect=dialect,
+            collation=self._collation,
+            deadline=deadline,
+        )
+        try:
+            while remaining_limit != 0:
+                page = list(islice(sorted_documents, page_size))
+                if not page:
+                    break
+                transformed = apply_pipeline(
+                    page,
+                    plan.suffix,
+                    collection_resolver=referenced_collections.get,
+                    variables=self._execution_variables(),
+                    dialect=dialect,
+                    collation=self._collation,
+                    spill_policy=spill_policy,
+                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                    deadline=deadline,
+                )
+                if remaining_skip:
+                    if len(transformed) <= remaining_skip:
+                        remaining_skip -= len(transformed)
+                        continue
+                    transformed = transformed[remaining_skip:]
+                    remaining_skip = 0
+                if remaining_limit is not None:
+                    transformed = transformed[:remaining_limit]
+                    remaining_limit -= len(transformed)
+                for document in transformed:
+                    yield self._materialize_document(
+                        DocumentCodec.to_public(
+                            strip_search_result_metadata(document),
+                        ),
+                    )
+        finally:
+            sorted_documents.close()
 
     async def _stream_windowed_pipeline(
         self,
@@ -1541,12 +1669,16 @@ class AsyncAggregationCursor:
             dialect=dialect,
         )
         if incremental_group is not None:
-            async for document in self._stream_incremental_group(
+            output = self._stream_incremental_group(
                 incremental_group,
                 dialect=dialect,
                 deadline=deadline,
-            ):
-                yield document
+            )
+            try:
+                async for document in output:
+                    yield document
+            finally:
+                await output.aclose()
             return
         if self._batch_size in (None, 0):
             for document in await self._materialize():
@@ -1560,12 +1692,16 @@ class AsyncAggregationCursor:
             for document in await self._materialize():
                 yield self._materialize_document(document)
             return
-        async for document in self._stream_windowed_pipeline(
+        output = self._stream_windowed_pipeline(
             stream_plan,
             dialect=dialect,
             deadline=deadline,
-        ):
-            yield document
+        )
+        try:
+            async for document in output:
+                yield document
+        finally:
+            await output.aclose()
 
     async def to_list(
         self,
@@ -1803,6 +1939,15 @@ class AsyncAggregationCursor:
             )
         )
         pushdown_summary["incrementalGroupInput"] = incremental_group_plan is not None
+        pushdown_summary["streamingSortOutput"] = bool(
+            incremental_group_plan is not None
+            and self._spill_policy() is not None
+            and self._split_streaming_sort_suffix(
+                incremental_group_plan.suffix,
+                dialect=dialect,
+            )
+            is not None
+        )
         pushdown_summary["sourceBatchExecution"] = bool(
             pushdown_summary["streamingEligible"]
             or pushdown_summary["incrementalGroupInput"]

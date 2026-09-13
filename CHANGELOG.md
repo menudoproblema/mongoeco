@@ -110,8 +110,11 @@ usa Semantic Versioning.
   de tiempo o memoria.
 - El sort externo limita cada fusion a 32 runs de lectura y usa pasadas
   intermedias cuando hay mas temporales. Evita abrir un fichero por chunk a la
-  vez y limpia runs originales e intermedios ante exito o fallo; la entrada y
-  salida completas siguen materializadas y no se presentan como memoria total
+  vez y limpia runs originales e intermedios ante exito o fallo. Su merge
+  entrega un iterador y el cursor lo consume directamente despues de `$group`,
+  incluidos stages streamables posteriores; cerrar un resultado parcial libera
+  todos los runs sin construir otra lista completa de salida. El estado de
+  grupos y otras fronteras bloqueantes no se presentan como memoria total
   acotada.
 - Los informes de benchmark usan un schema v2 con commit/dirty, hashes del
   harness y dataset, configuracion y versiones efectivas del entorno. El
