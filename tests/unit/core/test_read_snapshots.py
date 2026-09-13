@@ -120,6 +120,28 @@ class _SourceOnlyCloseFailure(_FailingSource):
 
 
 class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
+    def test_snapshot_close_can_complete_without_a_running_loop(self):
+        source = _Source()
+        snapshot = ReadSnapshot(source, policy=SnapshotPolicy.STABLE)
+        close = snapshot.aclose()
+
+        with self.assertRaises(StopIteration):
+            close.send(None)
+
+        assert snapshot.closed
+        assert source.close_calls == 1
+
+    async def test_immediate_snapshot_preserves_failed_state_without_error(self):
+        snapshot = _ImmediateReadSnapshot(
+            _Source(),
+            policy=SnapshotPolicy.STABLE,
+        )
+        snapshot._lifecycle = SnapshotLifecycle.FAILED
+
+        await snapshot.aclose()
+
+        assert snapshot.lifecycle is SnapshotLifecycle.FAILED
+
     async def test_snapshot_rejects_undeclared_policy(self):
         with self.assertRaisesRegex(TypeError, "SnapshotPolicy"):
             ReadSnapshot(_Source(), policy="stable")

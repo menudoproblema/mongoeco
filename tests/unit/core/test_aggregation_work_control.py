@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import tempfile
+import time
 
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
 from mongoeco.core.aggregation.compiled_pipeline import compile_pipeline
-from mongoeco.core.aggregation.grouping_stages import _apply_group, _IncrementalGroup
+from mongoeco.core.aggregation.grouping_stages import (
+    _apply_bucket_auto,
+    _apply_group,
+    _IncrementalGroup,
+)
 from mongoeco.core.aggregation.runtime import AggregationStageContext
 from mongoeco.core.aggregation.spill import (
     AggregationSpillPolicy,
@@ -40,6 +45,26 @@ def _fail_on_check(check_number: int):
 
 
 class AggregationWorkControlTests(TestCase):
+    def test_incremental_group_rejects_invalid_spec_and_duplicate_seed_state(self):
+        with self.assertRaisesRegex(OperationFailure, "requires a document"):
+            _IncrementalGroup([])
+
+        source = _IncrementalGroup({"_id": "$group", "count": {"$sum": 1}})
+        source.consume([{"group": 1}])
+        group_key, bucket, first_position = source.release_buckets()[0]
+        target = _IncrementalGroup({"_id": "$group", "count": {"$sum": 1}})
+        target.adopt_bucket(
+            group_key,
+            bucket,
+            first_position=first_position,
+        )
+        with self.assertRaisesRegex(RuntimeError, "duplicate initial group state"):
+            target.adopt_bucket(
+                group_key,
+                bucket,
+                first_position=first_position,
+            )
+
     def test_checkpointed_iterator_bounds_work_between_checks(self):
         values = list(range(DEADLINE_CHECK_INTERVAL + 1))
 
@@ -86,6 +111,15 @@ class AggregationWorkControlTests(TestCase):
                 [("rank", 1)],
                 deadline=_DEADLINE,
             )
+
+    def test_bucket_auto_checks_deadline_during_sort_comparisons(self):
+        result = _apply_bucket_auto(
+            [{"value": 2}, {"value": 1}],
+            {"groupBy": "$value", "buckets": 1},
+            deadline=time.monotonic() + 10,
+        )
+
+        self.assertEqual(result, [{"_id": {"min": 1, "max": 2}, "count": 2}])
 
     def test_compiled_stream_block_checks_deadline_after_materialization(self):
         plan = compile_pipeline([{"$project": {"value": 1}}])
@@ -362,3 +396,133 @@ class AggregationWorkControlTests(TestCase):
             spool.seed(accumulator.release_buckets(), next_sequence=2)
 
         self.assertEqual(set(temp_root.glob("*.mongoeco-agggroup")), before)
+
+    def test_group_spool_exposes_capacity_and_rejects_terminal_reuse(self):
+        policy = AggregationSpillPolicy(threshold=1)
+        accumulator = _IncrementalGroup({"_id": "$group", "count": {"$sum": 1}})
+        accumulator.consume([{"group": 1}, {"group": 2}])
+        spool = policy.open_group_spool(
+            group_id_for_document=accumulator.group_id,
+            group_key_for_id=accumulator.group_key,
+        )
+
+        self.assertFalse(spool.spilled)
+        self.assertEqual(spool.partition_count, 0)
+        with self.assertRaisesRegex(RuntimeError, "no longer accepts input"):
+            spool.add([{"group": 3}])
+
+        buckets = accumulator.release_buckets()
+        spool.seed(buckets, next_sequence=2)
+        self.assertTrue(spool.spilled)
+        self.assertGreater(spool.partition_count, 0)
+        with self.assertRaisesRegex(RuntimeError, "already seeded"):
+            spool.seed(buckets, next_sequence=2)
+
+        partitions = spool.iter_partitions()
+        with self.assertRaisesRegex(RuntimeError, "already finished"):
+            spool.iter_partitions()
+        list(partitions)
+        with self.assertRaisesRegex(RuntimeError, "no longer accepts input"):
+            spool.add([{"group": 3}])
+
+    def test_group_spool_closes_after_unexpected_seed_or_add_failure(self):
+        policy = AggregationSpillPolicy(threshold=1)
+        accumulator = _IncrementalGroup({"_id": "$group", "count": {"$sum": 1}})
+        accumulator.consume([{"group": 1}, {"group": 2}])
+        buckets = accumulator.release_buckets()
+        temp_root = Path(tempfile.gettempdir())
+        before = set(temp_root.glob("*.mongoeco-agggroup"))
+
+        failed_seed = policy.open_group_spool(
+            group_id_for_document=accumulator.group_id,
+            group_key_for_id=accumulator.group_key,
+        )
+        with (
+            patch.object(
+                failed_seed,
+                "_write_partition_record",
+                side_effect=RuntimeError("seed failure"),
+            ),
+            self.assertRaisesRegex(RuntimeError, "seed failure"),
+        ):
+            failed_seed.seed(buckets, next_sequence=2)
+
+        accumulator = _IncrementalGroup({"_id": "$group", "count": {"$sum": 1}})
+        accumulator.consume([{"group": 1}, {"group": 2}])
+        failed_add = policy.open_group_spool(
+            group_id_for_document=accumulator.group_id,
+            group_key_for_id=accumulator.group_key,
+        )
+        failed_add.seed(accumulator.release_buckets(), next_sequence=2)
+        with (
+            patch.object(
+                policy.codec,
+                "encode",
+                side_effect=RuntimeError("encode failure"),
+            ),
+            self.assertRaisesRegex(RuntimeError, "encode failure"),
+        ):
+            failed_add.add([{"group": 3}])
+
+        self.assertEqual(set(temp_root.glob("*.mongoeco-agggroup")), before)
+
+    def test_group_spool_closes_child_writers_after_repartition_failure(self):
+        policy = AggregationSpillPolicy(threshold=1)
+        accumulator = _IncrementalGroup({"_id": "$group", "count": {"$sum": 1}})
+        accumulator.consume({"group": group} for group in range(8))
+        spool = policy.open_group_spool(
+            group_id_for_document=accumulator.group_id,
+            group_key_for_id=accumulator.group_key,
+        )
+        spool.seed(accumulator.release_buckets(), next_sequence=8)
+        temp_root = Path(tempfile.gettempdir())
+        before_iteration = set(temp_root.glob("*.mongoeco-agggroup"))
+        partitions = spool.iter_partitions()
+
+        with (
+            patch.object(
+                spool,
+                "_write_record",
+                side_effect=RuntimeError("repartition failure"),
+            ),
+            self.assertRaisesRegex(RuntimeError, "repartition failure"),
+        ):
+            list(partitions)
+
+        self.assertLessEqual(
+            len(set(temp_root.glob("*.mongoeco-agggroup"))),
+            len(before_iteration),
+        )
+        spool.close()
+
+    def test_sort_spool_rejects_reuse_and_closes_after_input_failure(self):
+        policy = AggregationSpillPolicy(threshold=2)
+        spool = policy.open_sort_spool([("rank", 1)])
+        output = spool.finish()
+        self.assertEqual(list(output), [])
+        with self.assertRaisesRegex(RuntimeError, "no longer accepts input"):
+            spool.add([{"rank": 1}])
+        with self.assertRaisesRegex(RuntimeError, "already finished"):
+            spool.finish()
+
+        failed = policy.open_sort_spool([("rank", 1)])
+
+        def broken_documents():
+            yield {"rank": 1}
+            message = "input failure"
+            raise RuntimeError(message)
+
+        with self.assertRaisesRegex(RuntimeError, "input failure"):
+            failed.add(broken_documents())
+        self.assertEqual(failed.buffered_documents, 0)
+
+    def test_sort_spool_forwards_active_deadline_to_in_memory_sort(self):
+        policy = AggregationSpillPolicy(threshold=10)
+        deadline = time.monotonic() + 10
+        spool = policy.open_sort_spool([("rank", 1)], deadline=deadline)
+        spool.add([{"rank": 2}, {"rank": 1}])
+
+        self.assertEqual(
+            [document["rank"] for document in spool.finish()],
+            [1, 2],
+        )

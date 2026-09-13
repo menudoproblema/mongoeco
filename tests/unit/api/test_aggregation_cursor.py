@@ -9,6 +9,8 @@ from unittest.mock import AsyncMock, patch
 from mongoeco import AsyncMongoClient, MongoClient
 from mongoeco.api._async.aggregation_cursor import (
     AsyncAggregationCursor,
+    _CursorPageSource,
+    _RemainingWindow,
     _SearchOptimizationPlan,
     _SearchOptimizationStrategy,
 )
@@ -249,6 +251,45 @@ class _FailingAsyncAggregationCursorStub(_AsyncAggregationCursorStub):
 
 
 class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
+    def test_remaining_window_consumes_whole_pages_before_partial_page(self):
+        window = _RemainingWindow(skip=3, limit=2)
+
+        self.assertEqual(window.apply([{"_id": 1}, {"_id": 2}]), [])
+        self.assertEqual(
+            window.apply([{"_id": 3}, {"_id": 4}, {"_id": 5}]),
+            [{"_id": 4}, {"_id": 5}],
+        )
+        self.assertFalse(window.open)
+
+    async def test_cursor_page_source_falls_back_to_materialization_and_iterator_close(
+        self,
+    ):
+        class Iterator:
+            def __init__(self):
+                self.closed = False
+
+            async def aclose(self):
+                self.closed = True
+
+        class Cursor:
+            def __init__(self):
+                self.iterator = Iterator()
+
+            def __aiter__(self):
+                return self.iterator
+
+            async def to_list(self):
+                return [{"_id": 1}, {"_id": 2}, {"_id": 3}]
+
+        cursor = Cursor()
+        source = _CursorPageSource(cursor)
+        await source.prepare()
+
+        self.assertEqual(await source.pull(2), [{"_id": 1}, {"_id": 2}])
+        self.assertEqual(await source.pull(2), [{"_id": 3}])
+        await source.aclose()
+        self.assertTrue(cursor.iterator.closed)
+
     def test_bound_operation_context_crosses_cursor_boundary_by_identity(self):
         context = OperationContext.create(dialect=MONGODB_DIALECT_70)
         operation = compile_aggregate_operation([]).bind(context)
@@ -1019,6 +1060,189 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             unregister_aggregation_stage("$future")
 
         self.assertEqual(stream_plan, ([{"$match": {"x": 1}}, {"$future": {}}], 0, 1))
+
+    def test_incremental_group_and_sort_splitters_reject_unstreamable_shapes(self):
+        self.assertIsNone(
+            AsyncAggregationCursor._split_incremental_group_pipeline(["invalid"])
+        )
+        self.assertIsNone(
+            AsyncAggregationCursor._split_incremental_group_pipeline(
+                [
+                    {"$limit": 1},
+                    {"$match": {"kind": "view"}},
+                    {"$group": {"_id": "$kind"}},
+                ]
+            )
+        )
+        self.assertIsNone(
+            AsyncAggregationCursor._split_streaming_sort_suffix(
+                [{"$match": {"kind": "view"}}]
+            )
+        )
+        self.assertIsNone(
+            AsyncAggregationCursor._split_streaming_sort_suffix(
+                [
+                    {"$sort": {"rank": 1}},
+                    {"$limit": 1},
+                    {"$match": {"kind": "view"}},
+                ]
+            )
+        )
+        self.assertIsNone(
+            AsyncAggregationCursor._split_incremental_sort_pipeline(["invalid"])
+        )
+        self.assertIsNone(
+            AsyncAggregationCursor._split_incremental_sort_pipeline(
+                [
+                    {"$limit": 1},
+                    {"$match": {"kind": "view"}},
+                    {"$sort": {"rank": 1}},
+                ]
+            )
+        )
+
+    def test_pushdown_cursor_does_not_mask_unrelated_type_error(self):
+        class BrokenCollection:
+            _engine = _FakeEngine()
+            _db_name = "db"
+            _collection_name = "coll"
+
+            def find(self, *_args, **_kwargs):
+                message = "unrelated failure"
+                raise TypeError(message)
+
+        cursor = AsyncAggregationCursor(BrokenCollection(), [])
+        operation = cursor._pushdown_find_operation()
+
+        with self.assertRaisesRegex(TypeError, "unrelated failure"):
+            cursor._build_pushdown_cursor(operation)
+
+    async def test_source_materialization_preserves_primary_and_cleanup_errors(self):
+        class BrokenSource:
+            async def to_list(self, length=None):
+                del length
+                message = "read failure"
+                raise RuntimeError(message)
+
+            async def close(self):
+                message = "close failure"
+                raise RuntimeError(message)
+
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [])
+        with (
+            patch.object(cursor, "_build_pushdown_cursor", return_value=BrokenSource()),
+            self.assertRaisesRegex(RuntimeError, "read failure") as context,
+        ):
+            await cursor._load_pushdown_source_documents(
+                [],
+                dialect=MONGODB_DIALECT_70,
+            )
+
+        self.assertIn(
+            "source cursor cleanup failed: close failure", context.exception.__notes__
+        )
+
+    async def test_source_materialization_enforces_existing_document_budget_early(self):
+        collection = _FakeCollection([{"_id": 1}, {"_id": 2}, {"_id": 3}])
+        collection._engine.aggregation_spill_policy = None
+        collection._engine.aggregation_cost_policy = AggregationCostPolicy(
+            max_materialized_documents=1
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$group": {"_id": None, "count": {"$sum": 1}}}],
+        )
+
+        with self.assertRaisesRegex(OperationFailure, "materialization budget"):
+            await cursor._load_pushdown_source_documents(
+                cursor._effective_pipeline(),
+                dialect=MONGODB_DIALECT_70,
+            )
+
+        self.assertEqual(collection.last_find_cursor.to_list_lengths, [2])
+        self.assertEqual(collection.last_find_cursor.close_calls, 1)
+
+    async def test_incremental_group_with_empty_prefix_limit_skips_source(self):
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [], batch_size=2)
+
+        result = await cursor._consume_incremental_group_pages(
+            SimpleNamespace(prefix_skip=0, prefix_limit=0),
+            accumulator=None,
+            page_size=2,
+            probe_maximum=None,
+            cost_policy=None,
+            spill_policy=None,
+            dialect=MONGODB_DIALECT_70,
+            deadline=None,
+        )
+
+        self.assertIsNone(result)
+
+    async def test_stream_helpers_short_circuit_zero_limit_and_require_batch(self):
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [])
+
+        self.assertEqual(
+            [
+                document
+                async for document in cursor._stream_group_result(
+                    [],
+                    ([], 0, 0),
+                    spill_policy=None,
+                    dialect=MONGODB_DIALECT_70,
+                    deadline=None,
+                )
+            ],
+            [],
+        )
+        self.assertEqual(
+            [
+                document
+                async for document in cursor._stream_sorted_group_result(
+                    [],
+                    SimpleNamespace(suffix_limit=0),
+                    spill_policy=AggregationSpillPolicy(threshold=1),
+                    dialect=MONGODB_DIALECT_70,
+                    deadline=None,
+                )
+            ],
+            [],
+        )
+        with self.assertRaisesRegex(RuntimeError, "positive batch size"):
+            async for _document in cursor._stream_windowed_pipeline(
+                ([], 0, None),
+                dialect=MONGODB_DIALECT_70,
+                deadline=None,
+            ):
+                pass
+
+    async def test_stream_group_result_preserves_skip_across_pages_and_limit(self):
+        cursor = AsyncAggregationCursor(_FakeCollection([]), [], batch_size=2)
+
+        result = [
+            document
+            async for document in cursor._stream_group_result(
+                ({"_id": index} for index in range(5)),
+                ([], 3, 1),
+                spill_policy=None,
+                dialect=MONGODB_DIALECT_70,
+                deadline=None,
+            )
+        ]
+
+        self.assertEqual(result, [{"_id": 3}])
+
+    async def test_cursor_terminal_and_profiled_first_paths(self):
+        collection = _FakeCollection([{"_id": 1}])
+        collection._profile_operation = AsyncMock()
+        cursor = AsyncAggregationCursor(collection, [])
+
+        with self.assertRaisesRegex(ValueError, "non-negative"):
+            await cursor.to_list(length=-1)
+        self.assertEqual(await cursor.first(), {"_id": 1})
+        collection._profile_operation.assert_awaited_once()
+        await cursor.close()
+        await cursor.close()
+        self.assertEqual(await cursor.to_list(), [])
 
     async def test_split_streamable_pipeline_returns_none_after_trailing_window_and_accumulates_skip_limit(
         self,

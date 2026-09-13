@@ -263,6 +263,46 @@ def test_source_error_preserves_prefix_and_releases_reader(engine, monkeypatch):
     assert engine._active_scan_count == 0
 
 
+def test_fetch_reports_automatic_cleanup_failure(engine, monkeypatch):
+    class BrokenResource:
+        def close(self):
+            message = "automatic cleanup failed"
+            raise ValueError(message)
+
+    monkeypatch.setattr(engine, "_open_scan_documents_sync", lambda _reader: iter(()))
+    reader = make_reader(engine)
+    reader.own(BrokenResource())
+
+    batch = reader.fetch(1, 1024)
+
+    assert isinstance(batch.error, ValueError)
+    assert str(batch.error) == "automatic cleanup failed"
+    assert batch.exhausted
+
+
+def test_owned_connection_close_failure_is_recorded(engine):
+    class BrokenConnection:
+        def close(self):
+            message = "connection close failed"
+            raise ValueError(message)
+
+    reader = SQLiteScanReader(
+        engine,
+        "test",
+        "records",
+        compile_find_semantics({}),
+        tracked=False,
+    )
+    reader.connection = BrokenConnection()
+    reader.owns_connection = True
+
+    with pytest.raises(ValueError, match="connection close failed"):
+        reader.close()
+
+    assert isinstance(reader.close_error, ValueError)
+    assert reader.close_completed.is_set()
+
+
 def test_matched_prefilter_row_must_contain_a_document(engine, monkeypatch):
     class InvalidPrefilterSource:
         def __iter__(self):
