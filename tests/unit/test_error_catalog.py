@@ -37,7 +37,7 @@ def _load_errors_module_without_pymongo():
     module_name = "mongoeco_errors_no_pymongo_test"
     if module_name in sys.modules:
         del sys.modules[module_name]
-    module_path = Path(__file__).resolve().parents[2] / "src" / "mongoeco" / "errors.py"
+    module_path = Path(errors_module.__file__).resolve()
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:  # pragma: no cover - defensive guard
         raise AssertionError("could not load mongoeco.errors module spec")
