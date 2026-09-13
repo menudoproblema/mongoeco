@@ -15,6 +15,9 @@ from mongoeco.core.aggregation.grouping_stages import (
     _apply_set_window_fields,
     _apply_sort_by_count,
 )
+from mongoeco.core.aggregation.lookup_physical import (
+    build_bounded_lookup_hash_plan,
+)
 from mongoeco.core.aggregation.planning import (
     Pipeline,
     _projection_flag,
@@ -47,7 +50,9 @@ from mongoeco.core.aggregation.transform_stages import (
     _apply_replace_root,
     _apply_unset,
 )
+from mongoeco.core.work_control import iter_with_deadline
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.operation_limits import enforce_deadline
 from mongoeco.core.paths import (
     delete_document_value,
     get_document_value,
@@ -136,17 +141,19 @@ def _apply_preserving_stage(  # noqa: PLR0913
     variables: dict[str, Any] | None,
     dialect: MongoDialect,
     collation: CollationSpec | None,
+    deadline: float | None = None,
 ) -> list[RuntimeDocumentState]:
     if operator == "$match":
         return [
             state
-            for state in states
+            for state in iter_with_deadline(states, deadline)
             if _apply_match(
                 [state.public_document()],
                 spec,
                 variables,
                 dialect=dialect,
                 collation=collation,
+                deadline=deadline,
             )
         ]
     if operator == "$skip":
@@ -157,13 +164,14 @@ def _apply_preserving_stage(  # noqa: PLR0913
         size = _require_sample_spec(spec)
         return random.sample(states, min(size, len(states))) if size else []
 
-    views = [state.public_document() for state in states]
+    views = [state.public_document() for state in iter_with_deadline(states, deadline)]
     owners = {id(view): state for view, state in zip(views, states, strict=True)}
     sorted_views = sort_documents(
         views,
         _require_sort(spec),
         dialect=dialect,
         collation=collation,
+        deadline=deadline,
     )
     return [owners[id(view)] for view in sorted_views]
 
@@ -174,6 +182,7 @@ def _apply_project_states(
     variables: dict[str, Any] | None,
     *,
     dialect: MongoDialect,
+    deadline: float | None = None,
 ) -> list[RuntimeDocumentState]:
     projection = _require_projection_for_dialect(spec, dialect=dialect)
     flags = {
@@ -189,12 +198,13 @@ def _apply_project_states(
     }
     inclusion = bool(include_paths or computed_paths)
     result: list[RuntimeDocumentState] = []
-    for state in states:
+    for state in iter_with_deadline(states, deadline):
         output = _apply_project(
             [state.public_document()],
             projection,
             variables,
             dialect=dialect,
+            deadline=deadline,
         )[0]
         for path in computed_paths:
             value = _evaluate_expression_with_missing(
@@ -233,17 +243,25 @@ def _apply_add_fields_states(
     variables: dict[str, Any] | None,
     *,
     dialect: MongoDialect,
+    deadline: float | None = None,
 ) -> list[RuntimeDocumentState]:
     if not isinstance(spec, dict):
-        return _apply_add_fields([], spec, variables, dialect=dialect)
+        return _apply_add_fields(
+            [],
+            spec,
+            variables,
+            dialect=dialect,
+            deadline=deadline,
+        )
     destinations = {path for path in spec if isinstance(path, str)}
     result: list[RuntimeDocumentState] = []
-    for state in states:
+    for state in iter_with_deadline(states, deadline):
         output = _apply_add_fields(
             [state.public_document()],
             spec,
             variables,
             dialect=dialect,
+            deadline=deadline,
         )[0]
         for path, expression in spec.items():
             value = _evaluate_expression_with_missing(
@@ -269,11 +287,17 @@ def _apply_add_fields_states(
 def _apply_unset_states(
     states: list[RuntimeDocumentState],
     spec: object,
+    *,
+    deadline: float | None = None,
 ) -> list[RuntimeDocumentState]:
     excluded = set(_require_unset_spec(spec))
     result: list[RuntimeDocumentState] = []
-    for state in states:
-        output = _apply_unset([state.public_document()], spec)[0]
+    for state in iter_with_deadline(states, deadline):
+        output = _apply_unset(
+            [state.public_document()],
+            spec,
+            deadline=deadline,
+        )[0]
         result.append(
             _preserve_unshadowed_virtuals(
                 state,
@@ -290,15 +314,17 @@ def _apply_replace_root_states(
     variables: dict[str, Any] | None,
     *,
     dialect: MongoDialect,
+    deadline: float | None = None,
 ) -> list[RuntimeDocumentState]:
     new_root_spec = spec.get("newRoot") if isinstance(spec, dict) else None
     result: list[RuntimeDocumentState] = []
-    for state in states:
+    for state in iter_with_deadline(states, deadline):
         output = _apply_replace_root(
             [state.public_document()],
             spec,
             variables,
             dialect=dialect,
+            deadline=deadline,
         )[0]
         if isinstance(new_root_spec, str) and new_root_spec in {
             "$$ROOT",
@@ -378,14 +404,22 @@ def _expression_virtual_mappings(
 def _apply_unwind_states(
     states: list[RuntimeDocumentState],
     spec: object,
+    *,
+    deadline: float | None = None,
 ) -> list[RuntimeDocumentState]:
     path, _preserve, _include_array_index = _require_unwind_spec(spec)
     result: list[RuntimeDocumentState] = []
-    for state in states:
-        outputs = _apply_unwind([state.public_document()], spec)
+    for state in iter_with_deadline(states, deadline):
+        outputs = _apply_unwind(
+            [state.public_document()],
+            spec,
+            deadline=deadline,
+        )
         found, source_value = state.resolve(path)
         source_is_array = found and isinstance(source_value, list)
-        for output_index, output in enumerate(outputs):
+        for output_index, output in enumerate(
+            iter_with_deadline(outputs, deadline),
+        ):
             mappings: list[tuple[str, RuntimeVirtualField]] = []
             for field in state.metadata.virtual_fields:
                 if _field_is_shadowed(state, field.path):
@@ -405,12 +439,17 @@ def _apply_unwind_states(
 
 def _nested_branch_state(
     fields: dict[str, list[RuntimeDocumentState]],
+    *,
+    deadline: float | None = None,
 ) -> RuntimeDocumentState:
     document: dict[str, Any] = {}
     virtuals: list[RuntimeVirtualField] = []
-    for field_name, states in fields.items():
-        document[field_name] = [state.persistence_document() for state in states]
-        for index, state in enumerate(states):
+    for field_name, states in iter_with_deadline(fields.items(), deadline):
+        document[field_name] = [
+            state.persistence_document()
+            for state in iter_with_deadline(states, deadline)
+        ]
+        for index, state in enumerate(iter_with_deadline(states, deadline)):
             virtuals.extend(
                 (
                     RuntimeVirtualField(
@@ -437,16 +476,17 @@ def _apply_facet_states(
         message = "$facet requires a document specification"
         raise OperationFailure(message)
     branches: dict[str, list[RuntimeDocumentState]] = {}
+    deadline = kwargs.get("deadline")
     for field_name, pipeline in spec.items():
         if not isinstance(field_name, str):
             message = "$facet field names must be strings"
             raise OperationFailure(message)
         branches[field_name] = apply_pipeline_states(
-            [deepcopy(state) for state in states],
+            [deepcopy(state) for state in iter_with_deadline(states, deadline)],
             _require_pipeline_spec("$facet", pipeline),
             **kwargs,
         )
-    return [_nested_branch_state(branches)]
+    return [_nested_branch_state(branches, deadline=deadline)]
 
 
 def _apply_lookup_states(  # noqa: PLR0913
@@ -458,6 +498,8 @@ def _apply_lookup_states(  # noqa: PLR0913
     dialect: MongoDialect,
     collation: CollationSpec | None,
     spill_policy,
+    lookup_hash_max_associations: int | None,
+    deadline: float | None,
     **_kwargs,
 ) -> list[RuntimeDocumentState]:
     lookup = _require_lookup_spec(spec)
@@ -466,19 +508,37 @@ def _apply_lookup_states(  # noqa: PLR0913
         raise OperationFailure(message)
     foreign_states = [
         ensure_runtime_state(document)
-        for document in (collection_resolver(lookup["from"]) or [])
+        for document in iter_with_deadline(
+            collection_resolver(lookup["from"]) or [],
+            deadline,
+        )
     ]
+    hash_plan = None
+    if "pipeline" not in lookup:
+        hash_plan = build_bounded_lookup_hash_plan(
+            foreign_states,
+            lookup["foreignField"],
+            document_getter=lambda state: state.public_document(),
+            dialect=dialect,
+            collation=collation,
+            max_associations=lookup_hash_max_associations,
+            deadline=deadline,
+        )
     result: list[RuntimeDocumentState] = []
-    for state in states:
+    for state in iter_with_deadline(states, deadline):
         candidates = foreign_states
         if "localField" in lookup and "foreignField" in lookup:
             local_values = QueryEngine.extract_values(
                 state.public_document(),
                 lookup["localField"],
             )
+            if hash_plan is not None:
+                candidate_indices = hash_plan.candidate_indices(local_values)
+                if candidate_indices is not None:
+                    candidates = [foreign_states[index] for index in candidate_indices]
             candidates = [
                 candidate
-                for candidate in candidates
+                for candidate in iter_with_deadline(candidates, deadline)
                 if _lookup_matches(
                     local_values,
                     QueryEngine.extract_values(
@@ -506,17 +566,28 @@ def _apply_lookup_states(  # noqa: PLR0913
                 dialect=dialect,
                 collation=collation,
                 spill_policy=spill_policy,
+                lookup_hash_max_associations=lookup_hash_max_associations,
+                deadline=deadline,
             )
         else:
-            matches = [deepcopy(candidate) for candidate in candidates]
+            matches = [
+                deepcopy(candidate)
+                for candidate in iter_with_deadline(candidates, deadline)
+            ]
         document = state.persistence_document()
-        document[lookup["as"]] = [match.persistence_document() for match in matches]
+        document[lookup["as"]] = [
+            match.persistence_document()
+            for match in iter_with_deadline(matches, deadline)
+        ]
         virtuals = [
             virtual
-            for virtual in state.metadata.virtual_fields
+            for virtual in iter_with_deadline(
+                state.metadata.virtual_fields,
+                deadline,
+            )
             if not _paths_overlap(virtual.path, lookup["as"])
         ]
-        for index, match in enumerate(matches):
+        for index, match in enumerate(iter_with_deadline(matches, deadline)):
             virtuals.extend(
                 RuntimeVirtualField(
                     f"{lookup['as']}.{index}.{virtual.path}",
@@ -524,7 +595,10 @@ def _apply_lookup_states(  # noqa: PLR0913
                     virtual.source,
                     virtual.policy,
                 )
-                for virtual in match.metadata.virtual_fields
+                for virtual in iter_with_deadline(
+                    match.metadata.virtual_fields,
+                    deadline,
+                )
             )
         result.append(
             RuntimeDocumentState(
@@ -543,6 +617,7 @@ def _apply_union_states(
     spec: object,
     *,
     collection_resolver,
+    deadline: float | None,
     **kwargs,
 ) -> list[RuntimeDocumentState]:
     union = _require_union_with_spec(spec)
@@ -552,18 +627,22 @@ def _apply_union_states(
     resolver_key = union["coll"] or _CURRENT_COLLECTION_RESOLVER_KEY
     resolved = collection_resolver(resolver_key)
     foreign = (
-        [deepcopy(state) for state in states]
+        [deepcopy(state) for state in iter_with_deadline(states, deadline)]
         if resolved is None
-        else [ensure_runtime_state(document) for document in resolved]
+        else [
+            ensure_runtime_state(document)
+            for document in iter_with_deadline(resolved, deadline)
+        ]
     )
     if union["pipeline"]:
         foreign = apply_pipeline_states(
             foreign,
             union["pipeline"],
             collection_resolver=collection_resolver,
+            deadline=deadline,
             **kwargs,
         )
-    return [deepcopy(state) for state in states] + foreign
+    return [deepcopy(state) for state in iter_with_deadline(states, deadline)] + foreign
 
 
 def apply_pipeline_states(  # noqa: PLR0912, PLR0913
@@ -580,9 +659,14 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
     spill_policy=None,
+    lookup_hash_max_associations: int | None = None,
+    deadline: float | None = None,
 ) -> list[RuntimeDocumentState]:
     """Execute a pipeline while keeping runtime provenance outside BSON values."""
-    states = [ensure_runtime_state(document) for document in documents]
+    states = [
+        ensure_runtime_state(document)
+        for document in iter_with_deadline(documents, deadline)
+    ]
     common = {
         "collection_resolver": collection_resolver,
         "collection_stats_resolver": collection_stats_resolver,
@@ -594,8 +678,11 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
         "dialect": dialect,
         "collation": collation,
         "spill_policy": spill_policy,
+        "lookup_hash_max_associations": lookup_hash_max_associations,
+        "deadline": deadline,
     }
     for stage in pipeline:
+        enforce_deadline(deadline)
         operator, spec = _require_stage(stage)
         if operator in _PRESERVING_STAGES:
             states = _apply_preserving_stage(
@@ -605,19 +692,36 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
                 variables=variables,
                 dialect=dialect,
                 collation=collation,
+                deadline=deadline,
             )
         elif operator == "$documents":
             states = [
-                RuntimeDocumentState(item) for item in _require_documents_stage(spec)
+                RuntimeDocumentState(item)
+                for item in iter_with_deadline(
+                    _require_documents_stage(spec),
+                    deadline,
+                )
             ]
         elif operator == "$project":
-            states = _apply_project_states(states, spec, variables, dialect=dialect)
+            states = _apply_project_states(
+                states,
+                spec,
+                variables,
+                dialect=dialect,
+                deadline=deadline,
+            )
         elif operator in {"$set", "$addFields"}:
-            states = _apply_add_fields_states(states, spec, variables, dialect=dialect)
+            states = _apply_add_fields_states(
+                states,
+                spec,
+                variables,
+                dialect=dialect,
+                deadline=deadline,
+            )
         elif operator == "$unset":
-            states = _apply_unset_states(states, spec)
+            states = _apply_unset_states(states, spec, deadline=deadline)
         elif operator == "$unwind":
-            states = _apply_unwind_states(states, spec)
+            states = _apply_unwind_states(states, spec, deadline=deadline)
         elif operator in {"$replaceRoot", "$replaceWith"}:
             normalized = spec if operator == "$replaceRoot" else {"newRoot": spec}
             states = _apply_replace_root_states(
@@ -625,6 +729,7 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
                 normalized,
                 variables,
                 dialect=dialect,
+                deadline=deadline,
             )
         elif operator == "$facet":
             states = _apply_facet_states(states, spec, **common)
@@ -647,6 +752,7 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
                     variables,
                     dialect=dialect,
                     collation=collation,
+                    deadline=deadline,
                 )
             elif operator == "$bucket":
                 output = _apply_bucket(
@@ -655,6 +761,7 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
                     variables,
                     dialect=dialect,
                     collation=collation,
+                    deadline=deadline,
                 )
             elif operator == "$bucketAuto":
                 output = _apply_bucket_auto(
@@ -663,6 +770,7 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
                     variables,
                     dialect=dialect,
                     collation=collation,
+                    deadline=deadline,
                 )
             elif operator == "$count":
                 output = _apply_count(states, spec)
@@ -672,22 +780,34 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
                     spec,
                     variables,
                     dialect=dialect,
+                    deadline=deadline,
                 )
             else:
-                plain = [state.public_document() for state in states]
+                plain = [
+                    state.public_document()
+                    for state in iter_with_deadline(states, deadline)
+                ]
                 output = _apply_set_window_fields(
                     plain,
                     spec,
                     variables,
                     dialect=dialect,
                     collation=collation,
+                    deadline=deadline,
                 )
-            states = [RuntimeDocumentState(item) for item in output]
+            states = [
+                RuntimeDocumentState(item)
+                for item in iter_with_deadline(output, deadline)
+            ]
         else:
             output = apply_pipeline(
                 [state.persistence_document() for state in states],
                 [stage],
                 **common,
             )
-            states = [RuntimeDocumentState(item) for item in output]
+            states = [
+                RuntimeDocumentState(item)
+                for item in iter_with_deadline(output, deadline)
+            ]
+    enforce_deadline(deadline)
     return states

@@ -6,8 +6,18 @@ import math
 import uuid
 from typing import Any
 
-from mongoeco.core.bson_scalars import is_bson_numeric, wrap_bson_numeric
-from mongoeco.types import Binary, Regex, Timestamp, is_object_id_like, normalize_object_id
+from mongoeco.core.bson_scalars import (
+    is_bson_numeric,
+    normalize_utc_bson_datetime,
+    wrap_bson_numeric,
+)
+from mongoeco.types import (
+    Binary,
+    Regex,
+    Timestamp,
+    is_object_id_like,
+    normalize_object_id,
+)
 
 
 SQLITE_SORT_BUCKET_WEIGHTS: dict[str, int] = {
@@ -53,13 +63,16 @@ def bson_engine_key(value: Any) -> Any:
     if is_object_id_like(value):
         return ("objectid", normalize_object_id(value))
     if isinstance(value, datetime.datetime):
-        return ("datetime", value)
+        return ("datetime", normalize_utc_bson_datetime(value))
     if isinstance(value, Timestamp):
         return ("timestamp", value.time, value.inc)
     if isinstance(value, Regex):
         return ("regex", value.pattern, value.flags)
     if isinstance(value, dict):
-        return ("dict", tuple((key, bson_engine_key(item)) for key, item in value.items()))
+        return (
+            "dict",
+            tuple((key, bson_engine_key(item)) for key, item in value.items()),
+        )
     if isinstance(value, list):
         return ("list", tuple(bson_engine_key(item) for item in value))
     try:
@@ -118,7 +131,9 @@ def bson_numeric_index_key(value: int | float | Decimal) -> str:
 
     decimal = Decimal(str(value))
     if not decimal.is_finite():
-        raise NotImplementedError("NaN and infinity are not supported in SQLite multikey indexes")
+        raise NotImplementedError(
+            "NaN and infinity are not supported in SQLite multikey indexes"
+        )
     normalized = decimal.normalize()
     if normalized == 0:
         return "1|0|!"

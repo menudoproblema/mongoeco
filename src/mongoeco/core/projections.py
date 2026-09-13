@@ -61,51 +61,99 @@ def apply_projection(
 ) -> Document:
     if projection is None:
         return doc
+    # Single-document callers do not retain operands beyond this call.
     parsed = _parse_projection_spec(projection, dialect=dialect)
+    return _apply_parsed_projection(
+        doc,
+        parsed,
+        _projection_inclusion_root(parsed),
+        selector_filter=selector_filter,
+        dialect=dialect,
+    )
 
-    if not parsed.regular_fields and not parsed.operator_fields:
-        if projection:
-            result = (
-                {"_id": deepcopy(doc["_id"])}
-                if parsed.include_id and "_id" in doc
-                else {}
+
+class _ProjectionExecutor:
+    """Execution-owned projection program, reused for every projected row.
+
+    Prepare on the first projected row to preserve error timing for empty or
+    skipped results. The private parsed operands/path tree are read-only after
+    preparation and then never borrow mutable caller operands. No global cache holds
+    a selector, dialect or execution context beyond this stream's lifetime.
+    """
+
+    __slots__ = ("_dialect", "_parsed", "_projection", "_root", "_selector")
+
+    def __init__(
+        self,
+        projection: Projection | None,
+        *,
+        selector_filter: Filter | None = None,
+        dialect: MongoDialect = MONGODB_DIALECT_70,
+    ) -> None:
+        self._projection = projection
+        self._selector = selector_filter
+        self._dialect = dialect
+        self._parsed: _ParsedProjection | None = None
+        self._root: _ProjectionPathNode | None = None
+
+    def __call__(self, doc: Document) -> Document:
+        if self._projection is None:
+            return doc
+        if self._parsed is None:
+            parsed = _parse_projection_spec(
+                deepcopy(self._projection), dialect=self._dialect
             )
-            if not parsed.include_id:
-                result = deepcopy(doc)
-                if "_id" in result:
-                    del result["_id"]
-            return result
-        result = deepcopy(doc)
-        return result
+            self._root = _projection_inclusion_root(parsed)
+            # Only positional projection consumes the selector. Do not copy a
+            # potentially large filter for ordinary inclusion/exclusion.
+            self._selector = (
+                deepcopy(self._selector)
+                if any(
+                    spec.operator == "$positional"
+                    for spec in parsed.operator_fields.values()
+                )
+                else None
+            )
+            self._projection = parsed.projection
+            self._parsed = parsed
+        return _apply_parsed_projection(
+            doc,
+            self._parsed,
+            self._root,
+            selector_filter=self._selector,
+            dialect=self._dialect,
+        )
+
+
+def _projection_inclusion_root(
+    parsed: _ParsedProjection,
+) -> _ProjectionPathNode | None:
+    if not parsed.is_inclusion:
+        return None
+    return _compile_inclusion_paths(
+        tuple(path for path, value in parsed.regular_fields.items() if value)
+    )
+
+
+def _apply_parsed_projection(
+    doc: Document,
+    parsed: _ParsedProjection,
+    inclusion_root: _ProjectionPathNode | None,
+    *,
+    selector_filter: Filter | None,
+    dialect: MongoDialect,
+) -> Document:
+    if not parsed.regular_fields and not parsed.operator_fields:
+        return _apply_id_only_projection(doc, parsed)
 
     if parsed.is_inclusion:
-        result = _apply_regular_inclusion_projection(
+        result = _apply_inclusion_projection(
             doc,
-            tuple(path for path, value in parsed.regular_fields.items() if value),
+            parsed,
+            inclusion_root,
+            selector_filter=selector_filter,
+            dialect=dialect,
         )
-        for path, spec in parsed.operator_fields.items():
-            if spec.operator == "$slice":
-                _apply_slice_projection(result, doc, path, spec.value)
-            elif spec.operator == "$positional":
-                _apply_positional_projection(
-                    result,
-                    doc,
-                    path,
-                    selector_filter=selector_filter,
-                    dialect=dialect,
-                )
-            elif spec.operator == "$meta":
-                _apply_meta_projection(result, doc, path, spec.value)
-        # MongoDB returns $elemMatch projected fields after the other inclusions.
-        for path, spec in parsed.operator_fields.items():
-            if spec.operator == "$elemMatch":
-                _apply_elem_match_projection(
-                    result,
-                    doc,
-                    path,
-                    spec.value,
-                    dialect=dialect,
-                )
     else:
         result = deepcopy(doc)
         for path, value in parsed.regular_fields.items():
@@ -124,6 +172,51 @@ def apply_projection(
     elif not parsed.include_id and "_id" in result:
         del result["_id"]
 
+    return result
+
+
+def _apply_id_only_projection(doc: Document, parsed: _ParsedProjection) -> Document:
+    if not parsed.projection:
+        return deepcopy(doc)
+    if parsed.include_id:
+        return {"_id": deepcopy(doc["_id"])} if "_id" in doc else {}
+    result = deepcopy(doc)
+    result.pop("_id", None)
+    return result
+
+
+def _apply_inclusion_projection(
+    doc: Document,
+    parsed: _ParsedProjection,
+    inclusion_root: _ProjectionPathNode | None,
+    *,
+    selector_filter: Filter | None,
+    dialect: MongoDialect,
+) -> Document:
+    result = _apply_inclusion_tree(doc, inclusion_root)
+    for path, spec in parsed.operator_fields.items():
+        if spec.operator == "$slice":
+            _apply_slice_projection(result, doc, path, spec.value)
+        elif spec.operator == "$positional":
+            _apply_positional_projection(
+                result,
+                doc,
+                path,
+                selector_filter=selector_filter,
+                dialect=dialect,
+            )
+        elif spec.operator == "$meta":
+            _apply_meta_projection(result, doc, path, spec.value)
+    # MongoDB returns $elemMatch projected fields after the other inclusions.
+    for path, spec in parsed.operator_fields.items():
+        if spec.operator == "$elemMatch":
+            _apply_elem_match_projection(
+                result,
+                doc,
+                path,
+                spec.value,
+                dialect=dialect,
+            )
     return result
 
 
@@ -400,17 +493,24 @@ def _apply_positional_projection(
             return
 
 
-def _apply_regular_inclusion_projection(
-    source: Document,
+def _compile_inclusion_paths(
     paths: tuple[str, ...],
-) -> Document:
+) -> _ProjectionPathNode:
     root = _ProjectionPathNode()
     for path in paths:
         node = root
         for segment in path.split("."):
             node = node.child(segment)
         node.include_value = True
+    return root
 
+
+def _apply_inclusion_tree(
+    source: Document,
+    root: _ProjectionPathNode | None,
+) -> Document:
+    if root is None:
+        return {}
     found, projected = _project_inclusion_value(source, root)
     if found and isinstance(projected, dict):
         return projected

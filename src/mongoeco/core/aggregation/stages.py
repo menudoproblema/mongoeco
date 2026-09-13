@@ -1,23 +1,26 @@
 from __future__ import annotations
 
+import datetime
+
 from collections.abc import Callable, Iterable
 from copy import deepcopy
 from dataclasses import dataclass
-import datetime
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation.compiled_pipeline import (
+    CompiledPipelinePlan,
+    compile_pipeline,
+)
 from mongoeco.core.aggregation.evaluation_environment import (
     EvaluationEnvironment,
     environment_for_document,
     scoped_environment,
 )
-from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.geo import parse_geo_geometry, parse_geo_point, planar_distance_to_geometry
-from mongoeco.core.sorting import sort_documents, sort_documents_window
-from mongoeco.errors import OperationFailure
-from mongoeco.types import Document
-
+from mongoeco.core.aggregation.extensions import (
+    AggregationStageExecutionMode,
+    get_registered_aggregation_stage_registration,
+)
 from mongoeco.core.aggregation.grouping_stages import (
     _apply_bucket,
     _apply_bucket_auto,
@@ -26,16 +29,11 @@ from mongoeco.core.aggregation.grouping_stages import (
     _apply_set_window_fields,
     _apply_sort_by_count,
 )
-from mongoeco.core.aggregation.extensions import (
-    AggregationStageExecutionMode,
-    get_registered_aggregation_stage_registration,
-)
 from mongoeco.core.aggregation.join_stages import (
     _apply_facet,
     _apply_lookup,
     _apply_union_with,
 )
-from mongoeco.core.aggregation.compiled_pipeline import compile_pipeline
 from mongoeco.core.aggregation.planning import (
     Pipeline,
     _require_documents_stage,
@@ -48,8 +46,7 @@ from mongoeco.core.aggregation.runtime import (
     _apply_unwind,
     evaluate_expression,
 )
-from mongoeco.core.expression_context import ensure_expression_context
-from mongoeco.core.paths import get_document_value, set_document_value
+from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.aggregation.transform_stages import (
     _apply_add_fields,
     _apply_match,
@@ -58,13 +55,28 @@ from mongoeco.core.aggregation.transform_stages import (
     _apply_sample,
     _apply_unset,
 )
+from mongoeco.core.expression_context import ensure_expression_context
+from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.geo import (
+    parse_geo_geometry,
+    parse_geo_point,
+    planar_distance_to_geometry,
+)
+from mongoeco.core.operation_limits import enforce_deadline
+from mongoeco.core.paths import get_document_value, set_document_value
+from mongoeco.core.sorting import sort_documents, sort_documents_window
+from mongoeco.core.work_control import DeadlineCheckpoint, iter_with_deadline
+from mongoeco.errors import OperationFailure
+from mongoeco.types import Document
+
 
 if TYPE_CHECKING:
-    from mongoeco.core.aggregation.spill import AggregationSpillPolicy
     from mongoeco.core.collation import CollationSpec
 
 
-type AggregationStageHandler = Callable[[list[Document], object, AggregationStageContext], list[Document]]
+type AggregationStageHandler = Callable[
+    [list[Document], object, AggregationStageContext], list[Document]
+]
 
 _REDACT_KEEP = "$$KEEP"
 _REDACT_PRUNE = "$$PRUNE"
@@ -104,6 +116,7 @@ def _stage_match(
         context.variables,
         dialect=context.dialect,
         collation=context.collation,
+        deadline=context.deadline,
     )
 
 
@@ -112,14 +125,24 @@ def _stage_project(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
-    return _apply_project(documents, spec, context.variables, dialect=context.dialect)
+    return _apply_project(
+        documents,
+        spec,
+        context.variables,
+        dialect=context.dialect,
+        deadline=context.deadline,
+    )
 
 
-def _stage_unset(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
-    return _apply_unset(documents, spec)
+def _stage_unset(
+    documents: list[Document], spec: object, context: AggregationStageContext
+) -> list[Document]:
+    return _apply_unset(documents, spec, deadline=context.deadline)
 
 
-def _stage_sample(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
+def _stage_sample(
+    documents: list[Document], spec: object, _context: AggregationStageContext
+) -> list[Document]:
     return _apply_sample(documents, spec)
 
 
@@ -131,6 +154,14 @@ def _stage_sort(
     sort_spec = _require_sort(spec)
     sort_with_spill = getattr(context.spill_policy, "sort_with_spill", None)
     if callable(sort_with_spill):
+        if isinstance(context.spill_policy, AggregationSpillPolicy):
+            return sort_with_spill(
+                documents,
+                sort_spec,
+                dialect=context.dialect,
+                collation=context.collation,
+                deadline=context.deadline,
+            )
         return sort_with_spill(
             documents,
             sort_spec,
@@ -142,15 +173,20 @@ def _stage_sort(
         sort_spec,
         dialect=context.dialect,
         collation=context.collation,
+        deadline=context.deadline,
     )
 
 
-def _stage_skip(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
-    return documents[_require_non_negative_int("$skip", spec):]
+def _stage_skip(
+    documents: list[Document], spec: object, _context: AggregationStageContext
+) -> list[Document]:
+    return documents[_require_non_negative_int("$skip", spec) :]
 
 
-def _stage_limit(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
-    return documents[:_require_non_negative_int("$limit", spec)]
+def _stage_limit(
+    documents: list[Document], spec: object, _context: AggregationStageContext
+) -> list[Document]:
+    return documents[: _require_non_negative_int("$limit", spec)]
 
 
 def _stage_add_fields(
@@ -158,11 +194,19 @@ def _stage_add_fields(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
-    return _apply_add_fields(documents, spec, context.variables, dialect=context.dialect)
+    return _apply_add_fields(
+        documents,
+        spec,
+        context.variables,
+        dialect=context.dialect,
+        deadline=context.deadline,
+    )
 
 
-def _stage_unwind(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
-    return _apply_unwind(documents, spec)
+def _stage_unwind(
+    documents: list[Document], spec: object, context: AggregationStageContext
+) -> list[Document]:
+    return _apply_unwind(documents, spec, deadline=context.deadline)
 
 
 def _stage_group(
@@ -176,6 +220,7 @@ def _stage_group(
         context.variables,
         dialect=context.dialect,
         collation=context.collation,
+        deadline=context.deadline,
     )
 
 
@@ -190,6 +235,7 @@ def _stage_bucket(
         context.variables,
         dialect=context.dialect,
         collation=context.collation,
+        deadline=context.deadline,
     )
 
 
@@ -204,6 +250,7 @@ def _stage_bucket_auto(
         context.variables,
         dialect=context.dialect,
         collation=context.collation,
+        deadline=context.deadline,
     )
 
 
@@ -220,6 +267,8 @@ def _stage_lookup(
         dialect=context.dialect,
         collation=context.collation,
         spill_policy=context.spill_policy,
+        lookup_hash_max_associations=context.lookup_hash_max_associations,
+        deadline=context.deadline,
     )
 
 
@@ -236,6 +285,8 @@ def _stage_union_with(
         dialect=context.dialect,
         collation=context.collation,
         spill_policy=context.spill_policy,
+        lookup_hash_max_associations=context.lookup_hash_max_associations,
+        deadline=context.deadline,
     )
 
 
@@ -244,7 +295,13 @@ def _stage_replace_root(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
-    return _apply_replace_root(documents, spec, context.variables, dialect=context.dialect)
+    return _apply_replace_root(
+        documents,
+        spec,
+        context.variables,
+        dialect=context.dialect,
+        deadline=context.deadline,
+    )
 
 
 def _stage_replace_with(
@@ -257,6 +314,7 @@ def _stage_replace_with(
         {"newRoot": spec},
         context.variables,
         dialect=context.dialect,
+        deadline=context.deadline,
     )
 
 
@@ -266,12 +324,13 @@ def _stage_redact(
     context: AggregationStageContext,
 ) -> list[Document]:
     result: list[Document] = []
-    for document in documents:
+    for document in iter_with_deadline(documents, context.deadline):
         redacted = _redact_document(
             document,
             spec,
             context.variables,
             dialect=context.dialect,
+            deadline=context.deadline,
         )
         if redacted is _REDACT_PRUNED:
             continue
@@ -292,10 +351,14 @@ def _stage_facet(
         dialect=context.dialect,
         collation=context.collation,
         spill_policy=context.spill_policy,
+        lookup_hash_max_associations=context.lookup_hash_max_associations,
+        deadline=context.deadline,
     )
 
 
-def _stage_count(documents: list[Document], spec: object, _context: AggregationStageContext) -> list[Document]:
+def _stage_count(
+    documents: list[Document], spec: object, _context: AggregationStageContext
+) -> list[Document]:
     return _apply_count(documents, spec)
 
 
@@ -304,7 +367,13 @@ def _stage_sort_by_count(
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
-    return _apply_sort_by_count(documents, spec, context.variables, dialect=context.dialect)
+    return _apply_sort_by_count(
+        documents,
+        spec,
+        context.variables,
+        dialect=context.dialect,
+        deadline=context.deadline,
+    )
 
 
 def _stage_set_window_fields(
@@ -318,13 +387,14 @@ def _stage_set_window_fields(
         context.variables,
         dialect=context.dialect,
         collation=context.collation,
+        deadline=context.deadline,
     )
 
 
 def _stage_densify(
     documents: list[Document],
     spec: object,
-    _context: AggregationStageContext,
+    context: AggregationStageContext,
 ) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$densify requires a document specification")
@@ -334,8 +404,12 @@ def _stage_densify(
     partition_by_fields = spec.get("partitionByFields", [])
     if partition_by_fields is None:
         partition_by_fields = []
-    if not isinstance(partition_by_fields, list) or not all(isinstance(item, str) and item for item in partition_by_fields):
-        raise OperationFailure("$densify partitionByFields must be a list of non-empty strings")
+    if not isinstance(partition_by_fields, list) or not all(
+        isinstance(item, str) and item for item in partition_by_fields
+    ):
+        raise OperationFailure(
+            "$densify partitionByFields must be a list of non-empty strings"
+        )
     range_spec = spec.get("range")
     if not isinstance(range_spec, dict):
         raise OperationFailure("$densify range must be a document")
@@ -348,30 +422,42 @@ def _stage_densify(
         raise OperationFailure("$densify range.unit must be a string")
 
     grouped: dict[tuple[object, ...], list[Document]] = {}
-    for document in documents:
+    checkpoint = DeadlineCheckpoint(context.deadline)
+    for document in iter_with_deadline(documents, context.deadline):
         key = tuple(_partition_value(document, path) for path in partition_by_fields)
         grouped.setdefault(key, []).append(document)
 
     result: list[Document] = []
-    for partition_key, partition_documents in grouped.items():
+    for partition_key, partition_documents in iter_with_deadline(
+        grouped.items(),
+        context.deadline,
+    ):
+
+        def _densify_sort_key(document: Document) -> object:
+            checkpoint()
+            return _require_densify_value(document, field)
+
         ordered = sorted(
             partition_documents,
-            key=lambda document: _require_densify_value(document, field),
+            key=_densify_sort_key,
         )
         present_values = {
             _require_densify_value(document, field): document
-            for document in ordered
+            for document in iter_with_deadline(ordered, context.deadline)
         }
         ordered_values = list(present_values)
         lower, upper = _resolve_densify_bounds(bounds, ordered_values)
         current = lower
         while _densify_value_leq(current, upper):
+            checkpoint()
             existing = present_values.get(current)
             if existing is not None:
                 result.append(existing)
             else:
                 synthetic: Document = {}
-                for path, value in zip(partition_by_fields, partition_key, strict=False):
+                for path, value in zip(
+                    partition_by_fields, partition_key, strict=False
+                ):
                     if value is not None:
                         set_document_value(synthetic, path, deepcopy(value))
                 set_document_value(synthetic, field, current)
@@ -383,7 +469,7 @@ def _stage_densify(
 def _stage_fill(
     documents: list[Document],
     spec: object,
-    _context: AggregationStageContext,
+    context: AggregationStageContext,
 ) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$fill requires a document specification")
@@ -396,26 +482,45 @@ def _stage_fill(
     partition_by_fields = spec.get("partitionByFields", [])
     if partition_by_fields is None:
         partition_by_fields = []
-    if not isinstance(partition_by_fields, list) or not all(isinstance(item, str) and item for item in partition_by_fields):
-        raise OperationFailure("$fill partitionByFields must be a list of non-empty strings")
+    if not isinstance(partition_by_fields, list) or not all(
+        isinstance(item, str) and item for item in partition_by_fields
+    ):
+        raise OperationFailure(
+            "$fill partitionByFields must be a list of non-empty strings"
+        )
     output = spec.get("output")
     if not isinstance(output, dict) or not output:
         raise OperationFailure("$fill output must be a non-empty document")
 
     grouped: dict[tuple[object, ...], list[Document]] = {}
-    for document in documents:
+    checkpoint = DeadlineCheckpoint(context.deadline)
+    for document in iter_with_deadline(documents, context.deadline):
         key = tuple(_partition_value(document, path) for path in partition_by_fields)
         grouped.setdefault(key, []).append(deepcopy(document))
 
     result: list[Document] = []
-    for partition_documents in grouped.values():
+    for partition_documents in iter_with_deadline(
+        grouped.values(),
+        context.deadline,
+    ):
+
+        def _fill_sort_key(document: Document) -> object | None:
+            checkpoint()
+            return _partition_value(document, sort_field)
+
         ordered = sorted(
             partition_documents,
-            key=lambda document: _partition_value(document, sort_field),
+            key=_fill_sort_key,
             reverse=sort_direction == -1,
         )
         for field, field_spec in output.items():
-            _apply_fill_output(ordered, field, field_spec)
+            checkpoint()
+            _apply_fill_output(
+                ordered,
+                field,
+                field_spec,
+                deadline=context.deadline,
+            )
         result.extend(ordered)
     return result
 
@@ -436,26 +541,35 @@ def _stage_geo_near(
         raise OperationFailure("$geoNear distanceField must be a non-empty string")
     key = spec.get("key")
     if not isinstance(key, str) or not key:
-        raise OperationFailure("$geoNear key must be a non-empty string in the local runtime")
+        raise OperationFailure(
+            "$geoNear key must be a non-empty string in the local runtime"
+        )
     query_spec = spec.get("query", {})
     if not isinstance(query_spec, dict):
         raise OperationFailure("$geoNear query must be a document")
     include_locs = spec.get("includeLocs")
-    if include_locs is not None and (not isinstance(include_locs, str) or not include_locs):
+    if include_locs is not None and (
+        not isinstance(include_locs, str) or not include_locs
+    ):
         raise OperationFailure("$geoNear includeLocs must be a non-empty string")
     min_distance = spec.get("minDistance")
     if min_distance is not None and (
-        not isinstance(min_distance, (int, float)) or isinstance(min_distance, bool) or min_distance < 0
+        not isinstance(min_distance, (int, float))
+        or isinstance(min_distance, bool)
+        or min_distance < 0
     ):
         raise OperationFailure("$geoNear minDistance must be a non-negative number")
     max_distance = spec.get("maxDistance")
     if max_distance is not None and (
-        not isinstance(max_distance, (int, float)) or isinstance(max_distance, bool) or max_distance < 0
+        not isinstance(max_distance, (int, float))
+        or isinstance(max_distance, bool)
+        or max_distance < 0
     ):
         raise OperationFailure("$geoNear maxDistance must be a non-negative number")
 
     matches: list[tuple[float, Document]] = []
-    for document in documents:
+    checkpoint = DeadlineCheckpoint(context.deadline)
+    for document in iter_with_deadline(documents, context.deadline):
         if query_spec and not QueryEngine.match(
             document,
             query_spec,
@@ -468,7 +582,9 @@ def _stage_geo_near(
         if not found:
             continue
         try:
-            _geometry_kind, geometry = parse_geo_geometry(location, label=f"$geoNear key {key}")
+            _geometry_kind, geometry = parse_geo_geometry(
+                location, label=f"$geoNear key {key}"
+            )
         except OperationFailure:
             continue
         distance = planar_distance_to_geometry(near_point, geometry)
@@ -481,8 +597,19 @@ def _stage_geo_near(
         if include_locs is not None:
             set_document_value(enriched, include_locs, deepcopy(location))
         matches.append((distance, enriched))
-    matches.sort(key=lambda item: (item[0], item[1].get("_id")))
-    return [document for _distance, document in matches]
+
+    def _geo_sort_key(item: tuple[float, Document]) -> tuple[float, object]:
+        checkpoint()
+        return item[0], item[1].get("_id")
+
+    matches.sort(key=_geo_sort_key)
+    return [
+        document
+        for _distance, document in iter_with_deadline(
+            matches,
+            context.deadline,
+        )
+    ]
 
 
 def _stage_coll_stats(
@@ -493,7 +620,9 @@ def _stage_coll_stats(
     if context.stage_index != 0:
         raise OperationFailure("$collStats is only valid as the first pipeline stage")
     if context.collection_stats_resolver is None:
-        raise OperationFailure("$collStats requires a collection stats resolver in the local runtime")
+        raise OperationFailure(
+            "$collStats requires a collection stats resolver in the local runtime"
+        )
     if not isinstance(spec, dict):
         raise OperationFailure("$collStats requires a document specification")
     unsupported = sorted(set(spec) - {"count", "storageStats"})
@@ -503,7 +632,9 @@ def _stage_coll_stats(
             + ", ".join(unsupported)
         )
     if not spec:
-        raise OperationFailure("$collStats requires at least one of count or storageStats")
+        raise OperationFailure(
+            "$collStats requires at least one of count or storageStats"
+        )
 
     include_count = False
     scale = 1
@@ -523,8 +654,14 @@ def _stage_coll_stats(
                 + ", ".join(unsupported_storage)
             )
         scale_value = storage_spec.get("scale", 1)
-        if not isinstance(scale_value, int) or isinstance(scale_value, bool) or scale_value <= 0:
-            raise OperationFailure("$collStats.storageStats.scale must be a positive integer")
+        if (
+            not isinstance(scale_value, int)
+            or isinstance(scale_value, bool)
+            or scale_value <= 0
+        ):
+            raise OperationFailure(
+                "$collStats.storageStats.scale must be a positive integer"
+            )
         scale = scale_value
 
     snapshot = context.collection_stats_resolver(scale)
@@ -546,13 +683,23 @@ def _stage_index_stats(
     if context.stage_index != 0:
         raise OperationFailure("$indexStats is only valid as the first pipeline stage")
     if context.index_stats_resolver is None:
-        raise OperationFailure("$indexStats requires an index stats resolver in the local runtime")
+        raise OperationFailure(
+            "$indexStats requires an index stats resolver in the local runtime"
+        )
     if not isinstance(spec, dict):
         raise OperationFailure("$indexStats requires a document specification")
     if spec:
-        raise OperationFailure("$indexStats local runtime supports only an empty document")
+        raise OperationFailure(
+            "$indexStats local runtime supports only an empty document"
+        )
 
-    return [deepcopy(document) for document in context.index_stats_resolver()]
+    return [
+        deepcopy(document)
+        for document in iter_with_deadline(
+            context.index_stats_resolver(),
+            context.deadline,
+        )
+    ]
 
 
 def _stage_current_op(
@@ -563,15 +710,22 @@ def _stage_current_op(
     if context.stage_index != 0:
         raise OperationFailure("$currentOp is only valid as the first pipeline stage")
     if context.current_op_resolver is None:
-        raise OperationFailure("$currentOp requires a current operation resolver in the local runtime")
+        raise OperationFailure(
+            "$currentOp requires a current operation resolver in the local runtime"
+        )
     if not isinstance(spec, dict):
         raise OperationFailure("$currentOp requires a document specification")
     if spec:
-        raise OperationFailure("$currentOp local runtime supports only an empty document")
+        raise OperationFailure(
+            "$currentOp local runtime supports only an empty document"
+        )
 
     return [
         deepcopy(document)
-        for document in context.current_op_resolver()
+        for document in iter_with_deadline(
+            context.current_op_resolver(),
+            context.deadline,
+        )
         if document.get("command") != "currentOp"
     ]
 
@@ -582,15 +736,27 @@ def _stage_plan_cache_stats(
     context: AggregationStageContext,
 ) -> list[Document]:
     if context.stage_index != 0:
-        raise OperationFailure("$planCacheStats is only valid as the first pipeline stage")
+        raise OperationFailure(
+            "$planCacheStats is only valid as the first pipeline stage"
+        )
     if context.plan_cache_stats_resolver is None:
-        raise OperationFailure("$planCacheStats requires a plan cache stats resolver in the local runtime")
+        raise OperationFailure(
+            "$planCacheStats requires a plan cache stats resolver in the local runtime"
+        )
     if not isinstance(spec, dict):
         raise OperationFailure("$planCacheStats requires a document specification")
     if spec:
-        raise OperationFailure("$planCacheStats local runtime supports only an empty document")
+        raise OperationFailure(
+            "$planCacheStats local runtime supports only an empty document"
+        )
 
-    return [deepcopy(document) for document in context.plan_cache_stats_resolver()]
+    return [
+        deepcopy(document)
+        for document in iter_with_deadline(
+            context.plan_cache_stats_resolver(),
+            context.deadline,
+        )
+    ]
 
 
 def _stage_list_sessions(
@@ -599,15 +765,27 @@ def _stage_list_sessions(
     context: AggregationStageContext,
 ) -> list[Document]:
     if context.stage_index != 0:
-        raise OperationFailure("$listSessions is only valid as the first pipeline stage")
+        raise OperationFailure(
+            "$listSessions is only valid as the first pipeline stage"
+        )
     if context.list_sessions_resolver is None:
-        raise OperationFailure("$listSessions requires a list sessions resolver in the local runtime")
+        raise OperationFailure(
+            "$listSessions requires a list sessions resolver in the local runtime"
+        )
     if not isinstance(spec, dict):
         raise OperationFailure("$listSessions requires a document specification")
     if spec:
-        raise OperationFailure("$listSessions local runtime supports only an empty document")
+        raise OperationFailure(
+            "$listSessions local runtime supports only an empty document"
+        )
 
-    return [deepcopy(document) for document in context.list_sessions_resolver()]
+    return [
+        deepcopy(document)
+        for document in iter_with_deadline(
+            context.list_sessions_resolver(),
+            context.deadline,
+        )
+    ]
 
 
 def _evaluate_redact_action(
@@ -622,7 +800,9 @@ def _evaluate_redact_action(
     action = evaluate_expression(document, spec, redact_variables, dialect=dialect)
     if action in {_REDACT_KEEP, _REDACT_PRUNE, _REDACT_DESCEND}:
         return action
-    raise OperationFailure("$redact expression must evaluate to $$KEEP, $$PRUNE or $$DESCEND")
+    raise OperationFailure(
+        "$redact expression must evaluate to $$KEEP, $$PRUNE or $$DESCEND"
+    )
 
 
 def _redact_document(
@@ -631,6 +811,7 @@ def _redact_document(
     variables: dict[str, Any] | EvaluationEnvironment | None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    deadline: float | None = None,
 ) -> Document | object:
     environment = (
         variables
@@ -648,12 +829,13 @@ def _redact_document(
     if action == _REDACT_PRUNE:
         return _REDACT_PRUNED
     redacted: Document = {}
-    for key, value in document.items():
+    for key, value in iter_with_deadline(document.items(), deadline):
         redacted_value = _redact_descended_value(
             value,
             spec,
             environment,
             dialect=dialect,
+            deadline=deadline,
         )
         if redacted_value is _REDACT_PRUNED:
             continue
@@ -667,6 +849,7 @@ def _redact_descended_value(
     variables: EvaluationEnvironment,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    deadline: float | None = None,
 ) -> object:
     if isinstance(value, dict):
         return _redact_document(
@@ -674,15 +857,17 @@ def _redact_descended_value(
             spec,
             variables.with_current(value),
             dialect=dialect,
+            deadline=deadline,
         )
     if isinstance(value, list):
         redacted_items: list[object] = []
-        for item in value:
+        for item in iter_with_deadline(value, deadline):
             redacted_item = _redact_descended_value(
                 item,
                 spec,
                 variables,
                 dialect=dialect,
+                deadline=deadline,
             )
             if redacted_item is _REDACT_PRUNED:
                 continue
@@ -699,21 +884,33 @@ def _partition_value(document: Document, path: str) -> object | None:
 def _require_densify_value(document: Document, field: str) -> object:
     found, value = get_document_value(document, field)
     if not found:
-        raise OperationFailure("$densify requires the densified field to exist in all input documents")
-    if not isinstance(value, (int, float, datetime.datetime)) or isinstance(value, bool):
-        raise OperationFailure("$densify currently supports numeric or date values only")
+        raise OperationFailure(
+            "$densify requires the densified field to exist in all input documents"
+        )
+    if not isinstance(value, (int, float, datetime.datetime)) or isinstance(
+        value, bool
+    ):
+        raise OperationFailure(
+            "$densify currently supports numeric or date values only"
+        )
     return value
 
 
-def _resolve_densify_bounds(bounds: object, values: list[object]) -> tuple[object, object]:
+def _resolve_densify_bounds(
+    bounds: object, values: list[object]
+) -> tuple[object, object]:
     if bounds == "full":
         return values[0], values[-1]
     if isinstance(bounds, list) and len(bounds) == 2:
         return bounds[0], bounds[1]
-    raise OperationFailure("$densify range.bounds must be 'full' or a [lower, upper] pair")
+    raise OperationFailure(
+        "$densify range.bounds must be 'full' or a [lower, upper] pair"
+    )
 
 
-def _advance_densify_value(value: object, step: int | float, unit: str | None) -> object:
+def _advance_densify_value(
+    value: object, step: int | float, unit: str | None
+) -> object:
     if isinstance(value, datetime.datetime):
         delta = _densify_datetime_delta(step, unit)
         return value + delta
@@ -733,19 +930,27 @@ def _densify_datetime_delta(step: int | float, unit: str | None) -> datetime.tim
         return datetime.timedelta(hours=step)
     if unit == "day":
         return datetime.timedelta(days=step)
-    raise OperationFailure("$densify currently supports millisecond/second/minute/hour/day units")
+    raise OperationFailure(
+        "$densify currently supports millisecond/second/minute/hour/day units"
+    )
 
 
 def _densify_value_leq(left: object, right: object) -> bool:
     return bool(left <= right)
 
 
-def _apply_fill_output(documents: list[Document], field: str, field_spec: object) -> None:
+def _apply_fill_output(
+    documents: list[Document],
+    field: str,
+    field_spec: object,
+    *,
+    deadline: float | None = None,
+) -> None:
     if not isinstance(field_spec, dict):
         raise OperationFailure("$fill output fields must be documents")
     if "value" in field_spec:
         replacement = field_spec["value"]
-        for document in documents:
+        for document in iter_with_deadline(documents, deadline):
             found, current = get_document_value(document, field)
             if not found or current is None:
                 set_document_value(document, field, deepcopy(replacement))
@@ -753,7 +958,7 @@ def _apply_fill_output(documents: list[Document], field: str, field_spec: object
     method = field_spec.get("method")
     if method == "locf":
         previous: object | None = None
-        for document in documents:
+        for document in iter_with_deadline(documents, deadline):
             found, current = get_document_value(document, field)
             if found and current is not None:
                 previous = current
@@ -762,36 +967,53 @@ def _apply_fill_output(documents: list[Document], field: str, field_spec: object
                 set_document_value(document, field, deepcopy(previous))
         return
     if method == "linear":
-        _apply_linear_fill(documents, field)
+        _apply_linear_fill(documents, field, deadline=deadline)
         return
     raise OperationFailure("$fill output supports only value, locf or linear")
 
 
-def _apply_linear_fill(documents: list[Document], field: str) -> None:
+def _apply_linear_fill(
+    documents: list[Document],
+    field: str,
+    *,
+    deadline: float | None = None,
+) -> None:
     known_points: list[tuple[int, object]] = []
-    for index, document in enumerate(documents):
+    for index, document in enumerate(iter_with_deadline(documents, deadline)):
         found, current = get_document_value(document, field)
         if found and current is not None:
             known_points.append((index, current))
+    checkpoint = DeadlineCheckpoint(deadline)
     for point_index, (left_index, left_value) in enumerate(known_points[:-1]):
+        checkpoint()
         right_index, right_value = known_points[point_index + 1]
         gap = right_index - left_index
         if gap <= 1:
             continue
-        if isinstance(left_value, datetime.datetime) and isinstance(right_value, datetime.datetime):
+        if isinstance(left_value, datetime.datetime) and isinstance(
+            right_value, datetime.datetime
+        ):
             total = (right_value - left_value).total_seconds()
             for offset in range(1, gap):
+                checkpoint()
                 set_document_value(
                     documents[left_index + offset],
                     field,
                     left_value + datetime.timedelta(seconds=(total * offset) / gap),
                 )
             continue
-        if not isinstance(left_value, (int, float)) or not isinstance(right_value, (int, float)):
-            raise OperationFailure("$fill linear currently supports only numeric or date values")
+        if not isinstance(left_value, (int, float)) or not isinstance(
+            right_value, (int, float)
+        ):
+            raise OperationFailure(
+                "$fill linear currently supports only numeric or date values"
+            )
         step = (right_value - left_value) / gap
         for offset in range(1, gap):
-            set_document_value(documents[left_index + offset], field, left_value + (step * offset))
+            checkpoint()
+            set_document_value(
+                documents[left_index + offset], field, left_value + (step * offset)
+            )
 
 
 AGGREGATION_STAGE_SPECS: dict[str, AggregationStageSpec] = {
@@ -857,7 +1079,10 @@ def is_streamable_aggregation_stage(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> bool:
-    return get_aggregation_stage_spec(operator, dialect=dialect).execution_mode == "streamable"
+    return (
+        get_aggregation_stage_spec(operator, dialect=dialect).execution_mode
+        == "streamable"
+    )
 
 
 def has_materializing_aggregation_stage(
@@ -885,6 +1110,8 @@ def apply_pipeline(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
     spill_policy: AggregationSpillPolicy | None = None,
+    lookup_hash_max_associations: int | None = None,
+    deadline: float | None = None,
 ) -> list[Document]:
     variables = ensure_expression_context(variables)
     compiled_plan = compile_pipeline(
@@ -894,15 +1121,29 @@ def apply_pipeline(
         spill_policy=spill_policy,
     )
     if compiled_plan is not None:
-        return compiled_plan.execute(
-            documents,
-            variables=variables,
-            collection_resolver=collection_resolver,
-            spill_policy=spill_policy,
+        enforce_deadline(deadline)
+        compiled_result = (
+            compiled_plan.execute(
+                documents,
+                variables=variables,
+                collection_resolver=collection_resolver,
+                spill_policy=spill_policy,
+                deadline=deadline,
+            )
+            if isinstance(compiled_plan, CompiledPipelinePlan)
+            else compiled_plan.execute(
+                documents,
+                variables=variables,
+                collection_resolver=collection_resolver,
+                spill_policy=spill_policy,
+            )
         )
+        enforce_deadline(deadline)
+        return compiled_result
 
-    result = list(documents)
+    result = list(iter_with_deadline(documents, deadline))
     for index, stage in enumerate(pipeline):
+        enforce_deadline(deadline)
         operator, spec = _require_stage(stage)
         stage_spec = get_aggregation_stage_spec(operator, dialect=dialect)
         if operator == "$sort":
@@ -914,9 +1155,18 @@ def apply_pipeline(
                     window=optimized_window,
                     dialect=dialect,
                     collation=collation,
+                    deadline=deadline,
                 )
                 if spill_policy is not None:
-                    result = spill_policy.maybe_spill(operator, result)
+                    result = (
+                        spill_policy.maybe_spill(
+                            operator,
+                            result,
+                            deadline=deadline,
+                        )
+                        if isinstance(spill_policy, AggregationSpillPolicy)
+                        else spill_policy.maybe_spill(operator, result)
+                    )
                 continue
         result = stage_spec.handler(
             result,
@@ -933,14 +1183,23 @@ def apply_pipeline(
                 dialect=dialect,
                 collation=collation,
                 spill_policy=spill_policy,
+                lookup_hash_max_associations=lookup_hash_max_associations,
+                deadline=deadline,
             ),
         )
         if spill_policy is not None:
-            result = spill_policy.maybe_spill(operator, result)
+            result = (
+                spill_policy.maybe_spill(operator, result, deadline=deadline)
+                if isinstance(spill_policy, AggregationSpillPolicy)
+                else spill_policy.maybe_spill(operator, result)
+            )
+    enforce_deadline(deadline)
     return result
 
 
-def _sort_window_for_following_slices(pipeline: Pipeline, stage_index: int) -> int | None:
+def _sort_window_for_following_slices(
+    pipeline: Pipeline, stage_index: int
+) -> int | None:
     remaining_skip = 0
     limit: int | None = None
     seen_slice = False

@@ -8,6 +8,7 @@ import uuid
 from mongoeco.core.bson_ordering import (
     SQLITE_SORT_BUCKET_WEIGHTS,
     bson_engine_key,
+    bson_equality_key,
     bson_numeric_index_key,
 )
 from mongoeco.types import Binary, Regex, Timestamp
@@ -42,7 +43,13 @@ class BsonOrderingTests(unittest.TestCase):
         )
         self.assertEqual(
             bson_engine_key(
-                {"payload": [Binary(b"x", subtype=4), Timestamp(2, 1), Regex("a", "im")]}
+                {
+                    "payload": [
+                        Binary(b"x", subtype=4),
+                        Timestamp(2, 1),
+                        Regex("a", "im"),
+                    ]
+                }
             ),
             (
                 "dict",
@@ -81,6 +88,14 @@ class BsonOrderingTests(unittest.TestCase):
             bson_numeric_index_key(Decimal("NaN"))
         with self.assertRaises(NotImplementedError):
             bson_numeric_index_key(Decimal("Infinity"))
+
+    def test_bson_equality_key_canonicalizes_non_finite_numeric_values(self):
+        self.assertEqual(bson_equality_key(float("nan")), ("number", "nan"))
+        self.assertEqual(bson_equality_key(float("inf")), ("number", "+inf"))
+        self.assertEqual(bson_equality_key(float("-inf")), ("number", "-inf"))
+        self.assertEqual(bson_equality_key(Decimal("NaN")), ("number", "nan"))
+        self.assertEqual(bson_equality_key(Decimal("Infinity")), ("number", "+inf"))
+        self.assertEqual(bson_equality_key(Decimal("-Infinity")), ("number", "-inf"))
 
 
 if __name__ == "__main__":

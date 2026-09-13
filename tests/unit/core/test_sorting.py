@@ -138,7 +138,45 @@ class SortingHelpersTests(unittest.TestCase):
         ]
 
         self.assertEqual(
-            [document["_id"] for document in sort_documents_window(documents, [("rank", 1)], window=2)],
+            [
+                document["_id"]
+                for document in sort_documents_window(
+                    documents, [("rank", 1)], window=2
+                )
+            ],
+            ["1", "2"],
+        )
+
+    def test_sort_deadline_checkpoints_preserve_full_and_topk_order(self):
+        documents = [
+            {"_id": "3", "rank": 3},
+            {"_id": "1", "rank": 1},
+            {"_id": "4", "rank": 4},
+            {"_id": "2", "rank": 2},
+        ]
+        deadline = float("inf")
+
+        self.assertEqual(
+            [
+                document["_id"]
+                for document in sort_documents(
+                    documents.copy(),
+                    [("rank", 1)],
+                    deadline=deadline,
+                )
+            ],
+            ["1", "2", "3", "4"],
+        )
+        self.assertEqual(
+            [
+                document["_id"]
+                for document in sort_documents_window(
+                    documents,
+                    [("rank", 1)],
+                    window=2,
+                    deadline=deadline,
+                )
+            ],
             ["1", "2"],
         )
 
@@ -151,7 +189,9 @@ class SortingHelpersTests(unittest.TestCase):
 
         expected = [
             document["_id"]
-            for document in sort_documents(documents, [("scores.value", 1), ("rank", -1)])[:2]
+            for document in sort_documents(
+                documents, [("scores.value", 1), ("rank", -1)]
+            )[:2]
         ]
 
         self.assertEqual(
@@ -166,7 +206,9 @@ class SortingHelpersTests(unittest.TestCase):
             expected,
         )
 
-    def test_sort_documents_window_matches_full_sort_prefix_for_single_key_with_ties(self):
+    def test_sort_documents_window_matches_full_sort_prefix_for_single_key_with_ties(
+        self,
+    ):
         documents = [
             {"_id": "0", "other": 4},
             {"_id": "1", "other": 3},
@@ -209,16 +251,25 @@ class SortingHelpersTests(unittest.TestCase):
         ]
 
         self.assertEqual(
-            [document["_id"] for document in sort_documents_limited(documents, [("rank", 1)], skip=1, limit=2)],
+            [
+                document["_id"]
+                for document in sort_documents_limited(
+                    documents, [("rank", 1)], skip=1, limit=2
+                )
+            ],
             ["2", "3"],
         )
 
-    def test_sort_value_with_multiple_nested_arrays_picks_minimum_across_all_candidates(self):
+    def test_sort_value_with_multiple_nested_arrays_picks_minimum_across_all_candidates(
+        self,
+    ):
         document = {"scores": [{"values": [10, 1, 5]}, {"values": [3, 8]}]}
 
         self.assertEqual(sort_value(document, "scores.values", 1), 1)
 
-    def test_sort_value_returns_none_when_path_does_not_exist_at_any_array_element(self):
+    def test_sort_value_returns_none_when_path_does_not_exist_at_any_array_element(
+        self,
+    ):
         document = {"items": [{"rank": 1}, {"rank": 2}]}
 
         self.assertIsNone(sort_value(document, "items.value", 1))
@@ -231,7 +282,11 @@ class SortingHelpersTests(unittest.TestCase):
         self.assertEqual(_compare_native_sort_scalars(1.0, 2.0), -1)
         self.assertEqual(_compare_native_sort_scalars(float("2.0"), float("2.0")), 0)
         self.assertIsNone(_compare_native_sort_scalars("a", 1))
-        self.assertIsNone(_compare_native_sort_scalars(datetime.datetime.now(), datetime.datetime.now()))
+        self.assertIsNone(
+            _compare_native_sort_scalars(
+                datetime.datetime.now(), datetime.datetime.now()
+            )
+        )
         self.assertEqual(_compare_native_sort_scalars(math.nan, math.nan), 0)
         self.assertEqual(_compare_native_sort_scalars(math.nan, 1.0), -1)
         self.assertEqual(_compare_native_sort_scalars(1.0, math.nan), 1)
@@ -244,11 +299,15 @@ class SortingHelpersTests(unittest.TestCase):
         self.assertEqual(sort_value({"scores": [{"value": 7}]}, "scores.value", 1), 7)
         self.assertEqual(sort_value({"scores": [{"value": []}]}, "scores.value", 1), [])
 
-    def test_sort_documents_window_handles_unsorted_documents_and_non_positive_windows(self):
+    def test_sort_documents_window_handles_unsorted_documents_and_non_positive_windows(
+        self,
+    ):
         documents = [{"_id": "2"}, {"_id": "1"}]
 
         self.assertEqual(sort_documents_window(documents, None, window=None), documents)
-        self.assertEqual(sort_documents_window(documents, None, window=1), [{"_id": "2"}])
+        self.assertEqual(
+            sort_documents_window(documents, None, window=1), [{"_id": "2"}]
+        )
         self.assertEqual(sort_documents_window(documents, [("_id", 1)], window=0), [])
 
     def test_compare_documents_returns_zero_when_all_sort_keys_tie(self):
@@ -276,6 +335,11 @@ class SortingHelpersTests(unittest.TestCase):
         documents = [{"_id": "1", "rank": 1}, {"_id": "2", "rank": 1}]
 
         self.assertEqual(
-            [document["_id"] for document in sort_documents_window(documents, [("rank", 1)], window=2)],
+            [
+                document["_id"]
+                for document in sort_documents_window(
+                    documents, [("rank", 1)], window=2
+                )
+            ],
             ["1", "2"],
         )

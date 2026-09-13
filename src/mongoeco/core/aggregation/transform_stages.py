@@ -11,6 +11,7 @@ from mongoeco.core.query_operators import (
     require_non_empty_document_clause_list,
 )
 from mongoeco.core.query_plan import compile_filter
+from mongoeco.core.work_control import iter_with_deadline
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
 
@@ -30,13 +31,14 @@ from mongoeco.core.aggregation.planning import (
 _NO_EXPR = object()
 
 
-def _apply_match(
+def _apply_match(  # noqa: PLR0913
     documents: list[Document],
     spec: object,
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
+    deadline: float | None = None,
 ) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$match requires a document specification")
@@ -88,11 +90,15 @@ def _apply_match(
         return True
 
     if _match_spec_contains_expr(spec):
-        return [document for document in documents if _match_spec(document, spec)]
+        return [
+            document
+            for document in iter_with_deadline(documents, deadline)
+            if _match_spec(document, spec)
+        ]
 
     plan = compile_filter(spec, dialect=dialect) if spec else None
     result: list[Document] = []
-    for document in documents:
+    for document in iter_with_deadline(documents, deadline):
         if plan is not None and not QueryEngine.match_plan(
             document,
             plan,
@@ -111,6 +117,7 @@ def _apply_add_fields(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    deadline: float | None = None,
 ) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$addFields requires a document specification")
@@ -118,7 +125,7 @@ def _apply_add_fields(
         if not isinstance(path, str):
             raise OperationFailure("$addFields field names must be strings")
     result: list[Document] = []
-    for document in documents:
+    for document in iter_with_deadline(documents, deadline):
         enriched = deepcopy(document)
         evaluated = {
             path: _evaluate_expression_with_missing(
@@ -144,10 +151,12 @@ def _apply_add_fields(
 def _apply_unset(
     documents: list[Document],
     spec: object,
+    *,
+    deadline: float | None = None,
 ) -> list[Document]:
     fields = _require_unset_spec(spec)
     result: list[Document] = []
-    for document in documents:
+    for document in iter_with_deadline(documents, deadline):
         trimmed = deepcopy(document)
         for field in fields:
             delete_document_value(trimmed, field)
@@ -169,6 +178,7 @@ def _apply_project(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    deadline: float | None = None,
 ) -> list[Document]:
     projection = _require_projection_for_dialect(spec, dialect=dialect)
     computed_fields = {
@@ -179,7 +189,7 @@ def _apply_project(
     if not computed_fields:
         return [
             apply_projection(document, projection, dialect=dialect)
-            for document in documents
+            for document in iter_with_deadline(documents, deadline)
         ]
 
     include_fields = {
@@ -189,7 +199,7 @@ def _apply_project(
     }
     include_id = include_fields.get("_id", 1) != 0
     result: list[Document] = []
-    for document in documents:
+    for document in iter_with_deadline(documents, deadline):
         projected: Document = {}
         include_mode = any(
             value == 1 for key, value in include_fields.items() if key != "_id"
@@ -218,6 +228,7 @@ def _apply_replace_root(
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    deadline: float | None = None,
 ) -> list[Document]:
     if not isinstance(spec, dict) or "newRoot" not in spec:
         raise OperationFailure("$replaceRoot requires a document with newRoot")
@@ -227,7 +238,7 @@ def _apply_replace_root(
             "$replaceRoot newRoot must be a document-producing expression"
         )
     result: list[Document] = []
-    for document in documents:
+    for document in iter_with_deadline(documents, deadline):
         new_root = evaluate_expression(
             document, new_root_spec, variables, dialect=dialect
         )

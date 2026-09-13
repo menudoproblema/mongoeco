@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.compiled_query import CompiledQuery
 from mongoeco.core.expression_context import ensure_expression_context
-from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage_registration
+from mongoeco.core.aggregation.extensions import (
+    get_registered_aggregation_stage_registration,
+)
 from mongoeco.core.aggregation.planning import (
     Pipeline,
     _match_spec_contains_expr,
@@ -16,7 +18,6 @@ from mongoeco.core.aggregation.planning import (
     _require_sort,
     _require_stage,
 )
-from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.aggregation.transform_stages import (
     _apply_add_fields,
     _apply_match,
@@ -25,13 +26,24 @@ from mongoeco.core.aggregation.transform_stages import (
 )
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.sorting import sort_documents, sort_documents_window
+from mongoeco.core.work_control import iter_with_deadline
 from mongoeco.types import Document
 
 
-type _CompiledDocumentStep = Callable[[Document, dict[str, Any] | None], Document | None]
+if TYPE_CHECKING:
+    from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 
-_STREAMABLE_COMPILED_OPERATORS = frozenset({"$match", "$project", "$addFields", "$set", "$unset"})
-_COMPILED_OPERATORS = _STREAMABLE_COMPILED_OPERATORS | frozenset({"$sort", "$skip", "$limit"})
+
+type _CompiledDocumentStep = Callable[
+    [Document, dict[str, Any] | None], Document | None
+]
+
+_STREAMABLE_COMPILED_OPERATORS = frozenset(
+    {"$match", "$project", "$addFields", "$set", "$unset"}
+)
+_COMPILED_OPERATORS = _STREAMABLE_COMPILED_OPERATORS | frozenset(
+    {"$sort", "$skip", "$limit"}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,9 +56,10 @@ class _CompiledStreamBlock:
         documents: list[Document],
         *,
         variables: dict[str, Any] | None = None,
+        deadline: float | None = None,
     ) -> list[Document]:
         result: list[Document] = []
-        for document in documents:
+        for document in iter_with_deadline(documents, deadline):
             current: Document | None = document
             for step in self.steps:
                 if current is None:
@@ -66,7 +79,12 @@ class _CompiledSortStage:
     window: int | None
     dialect: MongoDialect
 
-    def apply(self, documents: list[Document]) -> list[Document]:
+    def apply(
+        self,
+        documents: list[Document],
+        *,
+        deadline: float | None = None,
+    ) -> list[Document]:
         if self.window is not None:
             return sort_documents_window(
                 documents,
@@ -74,12 +92,14 @@ class _CompiledSortStage:
                 window=self.window,
                 dialect=self.dialect,
                 collation=None,
+                deadline=deadline,
             )
         return sort_documents(
             documents,
             self.sort_spec,
             dialect=self.dialect,
             collation=None,
+            deadline=deadline,
         )
 
     def explain(self) -> dict[str, Any]:
@@ -94,7 +114,13 @@ class _CompiledSortStage:
 class _CompiledSkipStage:
     value: int
 
-    def apply(self, documents: list[Document]) -> list[Document]:
+    def apply(
+        self,
+        documents: list[Document],
+        *,
+        deadline: float | None = None,
+    ) -> list[Document]:
+        del deadline
         return documents[self.value :]
 
     def explain(self) -> dict[str, Any]:
@@ -105,14 +131,22 @@ class _CompiledSkipStage:
 class _CompiledLimitStage:
     value: int
 
-    def apply(self, documents: list[Document]) -> list[Document]:
+    def apply(
+        self,
+        documents: list[Document],
+        *,
+        deadline: float | None = None,
+    ) -> list[Document]:
+        del deadline
         return documents[: self.value]
 
     def explain(self) -> dict[str, Any]:
         return {"kind": "limit", "value": self.value}
 
 
-type _CompiledPipelineNode = _CompiledStreamBlock | _CompiledSortStage | _CompiledSkipStage | _CompiledLimitStage
+type _CompiledPipelineNode = (
+    _CompiledStreamBlock | _CompiledSortStage | _CompiledSkipStage | _CompiledLimitStage
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,12 +165,15 @@ class CompiledPipelinePlan:
         spill_policy: AggregationSpillPolicy | None = None,
     ) -> bool:
         try:
-            return compile_pipeline(
-                pipeline,
-                dialect=dialect,
-                collation=collation,
-                spill_policy=spill_policy,
-            ) is not None
+            return (
+                compile_pipeline(
+                    pipeline,
+                    dialect=dialect,
+                    collation=collation,
+                    spill_policy=spill_policy,
+                )
+                is not None
+            )
         except Exception:
             return False
 
@@ -147,14 +184,19 @@ class CompiledPipelinePlan:
         variables: dict[str, Any] | None = None,
         collection_resolver: Callable[[str], list[Document]] | None = None,
         spill_policy: AggregationSpillPolicy | None = None,
+        deadline: float | None = None,
     ) -> list[Document]:
         del collection_resolver
         del spill_policy
         variables = ensure_expression_context(variables)
 
-        result = list(documents)
+        result = list(iter_with_deadline(documents, deadline))
         for node in self.nodes:
-            result = node.apply(result, variables=variables) if isinstance(node, _CompiledStreamBlock) else node.apply(result)
+            result = (
+                node.apply(result, variables=variables, deadline=deadline)
+                if isinstance(node, _CompiledStreamBlock)
+                else node.apply(result, deadline=deadline)
+            )
         return result
 
     def explain(self) -> dict[str, Any]:
@@ -221,7 +263,9 @@ def compile_pipeline(
         nodes.append(_CompiledLimitStage(_require_non_negative_int("$limit", spec)))
 
     _flush_stream_block()
-    return CompiledPipelinePlan(pipeline=list(pipeline), nodes=tuple(nodes), dialect=dialect)
+    return CompiledPipelinePlan(
+        pipeline=list(pipeline), nodes=tuple(nodes), dialect=dialect
+    )
 
 
 def _compile_document_step(
@@ -235,21 +279,27 @@ def _compile_document_step(
     if operator == "$project":
         _apply_project([], spec, None, dialect=dialect)
 
-        def _project_step(document: Document, variables: dict[str, Any] | None) -> Document:
+        def _project_step(
+            document: Document, variables: dict[str, Any] | None
+        ) -> Document:
             return _apply_project([document], spec, variables, dialect=dialect)[0]
 
         return _project_step
     if operator in {"$addFields", "$set"}:
         _apply_add_fields([], spec, None, dialect=dialect)
 
-        def _add_fields_step(document: Document, variables: dict[str, Any] | None) -> Document:
+        def _add_fields_step(
+            document: Document, variables: dict[str, Any] | None
+        ) -> Document:
             return _apply_add_fields([document], spec, variables, dialect=dialect)[0]
 
         return _add_fields_step
     if operator == "$unset":
         _apply_unset([], spec)
 
-        def _unset_step(document: Document, _variables: dict[str, Any] | None) -> Document:
+        def _unset_step(
+            document: Document, _variables: dict[str, Any] | None
+        ) -> Document:
             return _apply_unset([document], spec)[0]
 
         return _unset_step
@@ -267,7 +317,10 @@ def _compile_match_step(
         raise AssertionError("unreachable")
 
     if _match_spec_contains_expr(spec):
-        def _expr_match_step(document: Document, variables: dict[str, Any] | None) -> Document | None:
+
+        def _expr_match_step(
+            document: Document, variables: dict[str, Any] | None
+        ) -> Document | None:
             matched = _apply_match([document], spec, variables, dialect=dialect)
             return document if matched else None
 
@@ -276,7 +329,9 @@ def _compile_match_step(
     plan = compile_filter(spec, dialect=dialect) if spec else None
     matcher = CompiledQuery(plan, dialect=dialect) if plan is not None else None
 
-    def _match_step(document: Document, _variables: dict[str, Any] | None) -> Document | None:
+    def _match_step(
+        document: Document, _variables: dict[str, Any] | None
+    ) -> Document | None:
         if matcher is None or matcher.match(document):
             return document
         return None
@@ -284,7 +339,9 @@ def _compile_match_step(
     return _match_step
 
 
-def _sort_window_for_following_slices(pipeline: Pipeline, stage_index: int) -> int | None:
+def _sort_window_for_following_slices(
+    pipeline: Pipeline, stage_index: int
+) -> int | None:
     remaining_skip = 0
     limit: int | None = None
     seen_slice = False

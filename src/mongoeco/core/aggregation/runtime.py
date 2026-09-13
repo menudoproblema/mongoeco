@@ -62,6 +62,7 @@ from mongoeco.core.search import (
     TEXT_SCORE_FIELD,
     VECTOR_SEARCH_SCORE_FIELD,
 )
+from mongoeco.core.work_control import DeadlineCheckpoint
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
     Binary,
@@ -139,6 +140,8 @@ class AggregationStageContext:
     dialect: MongoDialect = MONGODB_DIALECT_70
     collation: CollationSpec | None = None
     spill_policy: AggregationSpillPolicy | None = None
+    lookup_hash_max_associations: int | None = None
+    deadline: float | None = None
 
 
 def _require_unwind_spec(spec: object) -> tuple[str, bool, str | None]:
@@ -289,10 +292,17 @@ def _require_pipeline_spec(operator: str, spec: object) -> Pipeline:
     return spec
 
 
-def _apply_unwind(documents: list[Document], spec: object) -> list[Document]:
+def _apply_unwind(
+    documents: list[Document],
+    spec: object,
+    *,
+    deadline: float | None = None,
+) -> list[Document]:
     path, preserve, include_array_index = _require_unwind_spec(spec)
     result: list[Document] = []
+    checkpoint = DeadlineCheckpoint(deadline)
     for document in documents:
+        checkpoint()
         found, value = get_document_value(document, path)
         if not found or value is None:
             if preserve:
@@ -312,6 +322,7 @@ def _apply_unwind(documents: list[Document], spec: object) -> list[Document]:
                     result.append(preserved)
                 continue
             for index, item in enumerate(value):
+                checkpoint()
                 unwound = deepcopy(document)
                 set_document_value(unwound, path, item)
                 if include_array_index is not None:

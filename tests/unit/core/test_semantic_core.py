@@ -1,8 +1,8 @@
 import unittest
 
+
 # unittest is the established contract harness for this module.
 # ruff: noqa: PT027
-
 from dataclasses import replace
 from unittest.mock import patch
 
@@ -15,6 +15,7 @@ from mongoeco.core.query_plan import compile_filter
 from mongoeco.engines import semantic_core
 from mongoeco.engines.semantic_core import (
     EngineFindSemantics,
+    FiniteDocumentScan,
     build_query_plan_explanation,
     compile_find_semantics,
     compile_update_semantics,
@@ -37,7 +38,13 @@ class _RenderedIssue:
 
 
 class _ValidationResult:
-    def __init__(self, *, valid: bool, first_message: str = "", issues: list[object] | None = None):
+    def __init__(
+        self,
+        *,
+        valid: bool,
+        first_message: str = "",
+        issues: list[object] | None = None,
+    ):
         self.valid = valid
         self.first_message = first_message
         self.issues = issues or []
@@ -55,40 +62,92 @@ class _ValidatorStub:
 
 
 class SemanticCoreUnitTests(unittest.TestCase):
+    def test_finite_document_scan_accounts_one_source_row_per_step(self):
+        class ClosableRows:
+            def __init__(self):
+                self.rows = iter(
+                    [
+                        {"_id": "0", "keep": False},
+                        {"_id": "1", "keep": True},
+                        {"_id": "2", "keep": True},
+                        {"_id": "3", "keep": True},
+                    ]
+                )
+                self.examined = 0
+                self.closed = False
+
+            def __iter__(self):
+                return self
+
+            def __next__(self):
+                self.examined += 1
+                return next(self.rows)
+
+            def close(self):
+                self.closed = True
+
+        rows = ClosableRows()
+        scan = FiniteDocumentScan(
+            rows,
+            compile_find_semantics(
+                {"keep": True},
+                projection={"_id": 1},
+                skip=1,
+                limit=1,
+            ),
+        )
+
+        self.assertEqual(scan.next_examined(), (False, None))
+        self.assertEqual(scan.next_examined(), (False, None))
+        self.assertEqual(scan.next_examined(), (True, {"_id": "2"}))
+        with self.assertRaises(StopIteration):
+            scan.next_examined()
+        self.assertEqual(rows.examined, 3)
+        scan.close()
+        self.assertTrue(rows.closed)
+
+    def test_finite_document_scan_rejects_blocking_sort(self):
+        with self.assertRaisesRegex(ValueError, "blocking sort"):
+            FiniteDocumentScan([], compile_find_semantics({}, sort=[("_id", 1)]))
+
     def test_bound_read_semantics_reject_every_duplicate_authority(self):
         context = OperationContext.create(dialect=MONGODB_DIALECT_70)
         semantics = compile_find_semantics({}, operation_context=context)
 
-        with self.assertRaisesRegex(ValueError, 'dialect diverges'):
+        with self.assertRaisesRegex(ValueError, "dialect diverges"):
             replace(semantics, dialect=MONGODB_DIALECT_80)
-        with self.assertRaisesRegex(ValueError, 'collation diverges'):
+        with self.assertRaisesRegex(ValueError, "collation diverges"):
             replace(
                 semantics,
-                collation=normalize_collation({'locale': 'simple'}),
+                collation=normalize_collation({"locale": "simple"}),
             )
-        with self.assertRaisesRegex(ValueError, 'variables diverge'):
+        with self.assertRaisesRegex(ValueError, "variables diverge"):
             replace(semantics, variables=ExpressionExecutionContext())
 
     def test_bound_update_semantics_reject_every_duplicate_authority(self):
         context = OperationContext.create(dialect=MONGODB_DIALECT_70)
         operation = compile_update_operation(
             {},
-            update_spec={'$set': {'value': 1}},
+            update_spec={"$set": {"value": 1}},
         ).with_overrides(context=context)
         semantics = compile_update_semantics(operation)
 
-        with self.assertRaisesRegex(ValueError, 'dialect diverges'):
+        with self.assertRaisesRegex(ValueError, "dialect diverges"):
             replace(semantics, dialect=MONGODB_DIALECT_80)
-        with self.assertRaisesRegex(ValueError, 'collation diverges'):
+        with self.assertRaisesRegex(ValueError, "collation diverges"):
             replace(
                 semantics,
-                collation=normalize_collation({'locale': 'simple'}),
+                collation=normalize_collation({"locale": "simple"}),
             )
-        with self.assertRaisesRegex(ValueError, 'variables diverge'):
+        with self.assertRaisesRegex(ValueError, "variables diverge"):
             replace(semantics, variables=ExpressionExecutionContext())
 
-    def test_validate_collection_document_returns_valid_result_when_no_validator_exists(self):
-        with patch.object(semantic_core, "compile_collection_validation_semantics", return_value=None):
+    def test_validate_collection_document_returns_valid_result_when_no_validator_exists(
+        self,
+    ):
+        with patch.object(
+            semantic_core, "compile_collection_validation_semantics", return_value=None
+        ):
             result = validate_collection_document({"_id": "1"}, options=None)
 
         self.assertTrue(result.valid)
@@ -96,7 +155,11 @@ class SemanticCoreUnitTests(unittest.TestCase):
     def test_validate_collection_document_delegates_to_compiled_validator(self):
         validator = _ValidatorStub(_ValidationResult(valid=True))
 
-        with patch.object(semantic_core, "compile_collection_validation_semantics", return_value=validator):
+        with patch.object(
+            semantic_core,
+            "compile_collection_validation_semantics",
+            return_value=validator,
+        ):
             result = validate_collection_document(
                 {"_id": "1"},
                 options={"validator": {}},
@@ -119,10 +182,21 @@ class SemanticCoreUnitTests(unittest.TestCase):
             ],
         )
 
-    def test_enforce_collection_document_validation_respects_warn_mode_and_raises_with_details(self):
-        warn_validator = _ValidatorStub(_ValidationResult(valid=False, first_message="warned"), validation_action="warn")
-        with patch.object(semantic_core, "compile_collection_validation_semantics", return_value=warn_validator):
-            enforce_collection_document_validation({"_id": "1"}, options={"validator": {}})
+    def test_enforce_collection_document_validation_respects_warn_mode_and_raises_with_details(
+        self,
+    ):
+        warn_validator = _ValidatorStub(
+            _ValidationResult(valid=False, first_message="warned"),
+            validation_action="warn",
+        )
+        with patch.object(
+            semantic_core,
+            "compile_collection_validation_semantics",
+            return_value=warn_validator,
+        ):
+            enforce_collection_document_validation(
+                {"_id": "1"}, options={"validator": {}}
+            )
 
         failing_validator = _ValidatorStub(
             _ValidationResult(
@@ -131,16 +205,24 @@ class SemanticCoreUnitTests(unittest.TestCase):
                 issues=[_RenderedIssue("field is required")],
             )
         )
-        with patch.object(semantic_core, "compile_collection_validation_semantics", return_value=failing_validator):
+        with patch.object(
+            semantic_core,
+            "compile_collection_validation_semantics",
+            return_value=failing_validator,
+        ):
             with self.assertRaises(DocumentValidationFailure) as context:
-                enforce_collection_document_validation({"_id": "1"}, options={"validator": {}})
+                enforce_collection_document_validation(
+                    {"_id": "1"}, options={"validator": {}}
+                )
 
         self.assertEqual(context.exception.details["failingDocumentId"], "1")
         self.assertEqual(
             context.exception.details["schemaRulesNotSatisfied"],
             [{"description": "field is required"}],
         )
-        self.assertEqual(context.exception.details["codeName"], "DocumentValidationFailure")
+        self.assertEqual(
+            context.exception.details["codeName"], "DocumentValidationFailure"
+        )
 
     def test_compile_update_semantics_requires_compiled_plans(self):
         operation = compile_update_operation({"name": "Ada"})
@@ -148,7 +230,9 @@ class SemanticCoreUnitTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "compiled update plans"):
             compile_update_semantics(operation)
 
-    def test_iter_filtered_documents_uses_query_engine_when_compiled_query_is_missing_and_deadline_present(self):
+    def test_iter_filtered_documents_uses_query_engine_when_compiled_query_is_missing_and_deadline_present(
+        self,
+    ):
         semantics = EngineFindSemantics(
             filter_spec={"name": "Ada"},
             selector_filter={"name": "Ada"},
@@ -169,7 +253,9 @@ class SemanticCoreUnitTests(unittest.TestCase):
 
         with (
             patch.object(semantic_core, "enforce_deadline") as enforce_deadline,
-            patch.object(semantic_core.QueryEngine, "match_plan", side_effect=[True, False]) as match_plan,
+            patch.object(
+                semantic_core.QueryEngine, "match_plan", side_effect=[True, False]
+            ) as match_plan,
         ):
             result = list(iter_filtered_documents(documents, semantics))
 
@@ -191,7 +277,9 @@ class SemanticCoreUnitTests(unittest.TestCase):
 
         self.assertEqual(result, [{"_id": "2"}])
 
-    def test_compile_find_semantics_validates_negative_skip_and_limit_and_respects_explicit_compiled_query(self):
+    def test_compile_find_semantics_validates_negative_skip_and_limit_and_respects_explicit_compiled_query(
+        self,
+    ):
         compiled_query = object()
 
         with self.assertRaisesRegex(ValueError, "skip must be >= 0"):
@@ -203,7 +291,9 @@ class SemanticCoreUnitTests(unittest.TestCase):
 
         self.assertIs(semantics.compiled_query, compiled_query)
 
-    def test_iter_filtered_documents_covers_match_all_and_compiled_query_deadline_paths(self):
+    def test_iter_filtered_documents_covers_match_all_and_compiled_query_deadline_paths(
+        self,
+    ):
         match_all_semantics = compile_find_semantics({}, max_time_ms=1)
         compiled = type(
             "Compiled",
@@ -229,13 +319,17 @@ class SemanticCoreUnitTests(unittest.TestCase):
         documents: list[Document] = [{"_id": "1"}, {"_id": "2"}]
 
         with patch.object(semantic_core, "enforce_deadline") as enforce_deadline:
-            match_all_result = list(iter_filtered_documents(documents, match_all_semantics))
+            match_all_result = list(
+                iter_filtered_documents(documents, match_all_semantics)
+            )
 
         self.assertEqual(match_all_result, documents)
         self.assertEqual(enforce_deadline.call_count, 3)
 
         with patch.object(semantic_core, "enforce_deadline") as enforce_deadline:
-            compiled_result = list(iter_filtered_documents(documents, compiled_semantics))
+            compiled_result = list(
+                iter_filtered_documents(documents, compiled_semantics)
+            )
 
         self.assertEqual(compiled_result, [{"_id": "2"}])
         self.assertEqual(enforce_deadline.call_count, 3)

@@ -3,12 +3,21 @@ from __future__ import annotations
 from functools import cmp_to_key
 import heapq
 import math
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any, Iterable
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core.filtering import BSONComparator, QueryEngine
-from mongoeco.types import Document, SortSpec
+from mongoeco.core.operation_limits import enforce_deadline
+from mongoeco.core.work_control import (
+    DEADLINE_CHECK_INTERVAL,
+    DeadlineCheckpoint,
+    iter_with_deadline,
+)
+
+
+if TYPE_CHECKING:
+    from mongoeco.types import Document, SortSpec
 
 
 def _document_sort_keys(
@@ -194,6 +203,7 @@ def sort_documents(
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
+    deadline: float | None = None,
 ) -> list[Document]:
     if not sort:
         return documents
@@ -204,10 +214,12 @@ def sort_documents(
             _document_sort_keys(doc, sort, dialect=dialect, collation=collation),
             doc,
         )
-        for doc in documents
+        for doc in iter_with_deadline(documents, deadline)
     ]
 
-    def _compare_decorated(left_tuple: tuple[list[Any], Document], right_tuple: tuple[list[Any], Document]) -> int:
+    def _compare_decorated(
+        left_tuple: tuple[list[Any], Document], right_tuple: tuple[list[Any], Document]
+    ) -> int:
         left_keys, _ = left_tuple
         right_keys, _ = right_tuple
         return _compare_sort_keys(
@@ -218,23 +230,47 @@ def sort_documents(
             collation=collation,
         )
 
-    decorated.sort(key=cmp_to_key(_compare_decorated))
-    return [doc for _keys, doc in decorated]
+    if deadline is None:
+        comparator = _compare_decorated
+    else:
+        comparison_iterations = 0
+
+        def _compare_decorated_with_deadline(
+            left_tuple: tuple[list[Any], Document],
+            right_tuple: tuple[list[Any], Document],
+        ) -> int:
+            nonlocal comparison_iterations
+            if comparison_iterations % DEADLINE_CHECK_INTERVAL == 0:
+                enforce_deadline(deadline)
+            comparison_iterations += 1
+            return _compare_decorated(left_tuple, right_tuple)
+
+        comparator = _compare_decorated_with_deadline
+
+    decorated.sort(key=cmp_to_key(comparator))
+    return [doc for _keys, doc in iter_with_deadline(decorated, deadline)]
 
 
-def sort_documents_window(
+def sort_documents_window(  # noqa: PLR0913
     documents: Iterable[Document],
     sort: SortSpec | None,
     *,
     window: int | None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
+    deadline: float | None = None,
 ) -> list[Document]:
     if not sort:
-        result = list(documents)
+        result = list(iter_with_deadline(documents, deadline))
         return result if window is None else result[:window]
     if window is None:
-        return sort_documents(list(documents), sort, dialect=dialect, collation=collation)
+        return sort_documents(
+            list(iter_with_deadline(documents, deadline)),
+            sort,
+            dialect=dialect,
+            collation=collation,
+            deadline=deadline,
+        )
     if window <= 0:
         return []
 
@@ -259,6 +295,8 @@ def sort_documents_window(
             return result
         return (left_index > right_index) - (left_index < right_index)
 
+    comparison_checkpoint = DeadlineCheckpoint(deadline)
+
     class _HeapItem:
         __slots__ = ("keys", "doc", "index")
 
@@ -268,18 +306,23 @@ def sort_documents_window(
             self.index = index
 
         def __lt__(self, other: "_HeapItem") -> bool:
-            return _compare_decorated_values(
-                self.keys,
-                other.keys,
-                self.index,
-                other.index,
-                sort,
-                dialect=dialect,
-                collation=collation,
-            ) > 0
+            if deadline is not None:
+                comparison_checkpoint()
+            return (
+                _compare_decorated_values(
+                    self.keys,
+                    other.keys,
+                    self.index,
+                    other.index,
+                    sort,
+                    dialect=dialect,
+                    collation=collation,
+                )
+                > 0
+            )
 
     heap: list[_HeapItem] = []
-    for index, doc in enumerate(documents):
+    for index, doc in enumerate(iter_with_deadline(documents, deadline)):
         item = _HeapItem(
             _document_sort_keys(doc, sort, dialect=dialect, collation=collation),
             doc,
@@ -288,32 +331,40 @@ def sort_documents_window(
         if len(heap) < window:
             heapq.heappush(heap, item)
             continue
-        if _compare_decorated_values(
-            item.keys,
-            heap[0].keys,
-            item.index,
-            heap[0].index,
-            sort,
-            dialect=dialect,
-            collation=collation,
-        ) < 0:
-            heapq.heapreplace(heap, item)
-
-    ordered = sorted(
-        heap,
-        key=cmp_to_key(
-            lambda left, right: _compare_decorated_values(
-                left.keys,
-                right.keys,
-                left.index,
-                right.index,
+        if deadline is not None:
+            comparison_checkpoint()
+        if (
+            _compare_decorated_values(
+                item.keys,
+                heap[0].keys,
+                item.index,
+                heap[0].index,
                 sort,
                 dialect=dialect,
                 collation=collation,
             )
-        ),
+            < 0
+        ):
+            heapq.heapreplace(heap, item)
+
+    def _compare_heap_items(left: _HeapItem, right: _HeapItem) -> int:
+        if deadline is not None:
+            comparison_checkpoint()
+        return _compare_decorated_values(
+            left.keys,
+            right.keys,
+            left.index,
+            right.index,
+            sort,
+            dialect=dialect,
+            collation=collation,
+        )
+
+    ordered = sorted(
+        heap,
+        key=cmp_to_key(_compare_heap_items),
     )
-    return [item.doc for item in ordered]
+    return [item.doc for item in iter_with_deadline(ordered, deadline)]
 
 
 def sort_documents_limited(
@@ -324,6 +375,7 @@ def sort_documents_limited(
     limit: int | None = None,
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
+    deadline: float | None = None,
 ) -> list[Document]:
     window = None if limit is None else skip + limit
     result = sort_documents_window(
@@ -332,6 +384,7 @@ def sort_documents_limited(
         window=window,
         dialect=dialect,
         collation=collation,
+        deadline=deadline,
     )
     if skip:
         result = result[skip:]
