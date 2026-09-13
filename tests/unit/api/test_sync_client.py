@@ -19,6 +19,7 @@ from mongoeco.errors import (
     InvalidOperation,
     ServerSelectionTimeoutError,
 )
+from mongoeco.types import PlanningMode
 
 
 async def _noop() -> None:
@@ -30,6 +31,45 @@ async def _value() -> str:
 
 
 class SyncClientUnitTests(unittest.TestCase):
+    def test_sync_collection_reuses_its_async_runtime(self):
+        client = MongoClient(MemoryEngine())
+        try:
+            collection = client.get_database("alpha").get_collection("events")
+
+            first = collection._async_collection()
+            second = collection._async_collection()
+            sibling = client["alpha"]["other"]._async_collection()
+
+            self.assertIs(second, first)
+            self.assertIs(first.planning_mode, PlanningMode.STRICT)
+            self.assertIs(
+                first._runtime._engine_spi,
+                client._async_client._validated_engine_spi,
+            )
+            self.assertIs(
+                sibling._runtime._engine_spi,
+                client._async_client._validated_engine_spi,
+            )
+        finally:
+            client.close()
+
+    def test_sync_collection_cache_preserves_non_default_planning_mode(self):
+        client = MongoClient(MemoryEngine())
+        try:
+            collection = (
+                client.get_database("alpha")
+                .get_collection("events")
+                .with_options(planning_mode=PlanningMode.RELAXED)
+            )
+
+            first = collection._async_collection()
+            second = collection._async_collection()
+
+            self.assertIs(second, first)
+            self.assertIs(first.planning_mode, PlanningMode.RELAXED)
+        finally:
+            client.close()
+
     def test_best_effort_finalizer_never_runs_cleanup_inline(self):
         calls: list[str] = []
 
@@ -83,9 +123,13 @@ class SyncClientUnitTests(unittest.TestCase):
                 collection = database.values.with_options()
                 self.assertIs(database.now_factory, factory)
                 self.assertIs(collection.now_factory, factory)
-                collection.insert_one({'_id': 1})
-                document = list(collection.aggregate([{'$project': {'now': '$$NOW'}}]))[0]
-                self.assertEqual(document['now'], datetime(2026, 1, 2, 3, 4, 5, 123_000))
+                collection.insert_one({"_id": 1})
+                document = list(collection.aggregate([{"$project": {"now": "$$NOW"}}]))[
+                    0
+                ]
+                self.assertEqual(
+                    document["now"], datetime(2026, 1, 2, 3, 4, 5, 123_000)
+                )
             finally:
                 derived.close()
         finally:
@@ -94,6 +138,7 @@ class SyncClientUnitTests(unittest.TestCase):
     def test_sync_client_with_transaction_accepts_async_callback(self):
         client = MongoClient(MemoryEngine())
         try:
+
             async def _run(active):
                 del active
                 return "ok"
@@ -119,7 +164,11 @@ class SyncClientUnitTests(unittest.TestCase):
 
         try:
             self.assertEqual(runner.run(_spawn_background()), "ok")
-            pending = [task for task in asyncio.all_tasks(runner._runner.get_loop()) if not task.done()]
+            pending = [
+                task
+                for task in asyncio.all_tasks(runner._runner.get_loop())
+                if not task.done()
+            ]
             self.assertNotEqual(pending, [])
             runner.close()
             self.assertEqual(runner._closed, True)
@@ -140,7 +189,9 @@ class SyncClientUnitTests(unittest.TestCase):
     def test_sync_runner_inline_completes_without_asyncio_runner(self):
         runner = _SyncRunner()
         try:
-            with patch.object(runner._runner, "run", side_effect=AssertionError("runner used")):
+            with patch.object(
+                runner._runner, "run", side_effect=AssertionError("runner used")
+            ):
                 self.assertEqual(runner.run(_value(), inline=True), "ok")
         finally:
             runner.close()
@@ -233,7 +284,9 @@ class SyncClientUnitTests(unittest.TestCase):
             async def _timeout(*_args, **_kwargs):
                 raise TimeoutError
 
-            with patch("mongoeco.api._sync.client.asyncio.wait_for", side_effect=_timeout):
+            with patch(
+                "mongoeco.api._sync.client.asyncio.wait_for", side_effect=_timeout
+            ):
                 runner._cleanup_pending_tasks()
         finally:
             runner.close()
@@ -349,6 +402,7 @@ class SyncClientUnitTests(unittest.TestCase):
     def test_sync_runner_inline_uses_helper_inside_active_event_loop(self):
         runner = _SyncRunner()
         try:
+
             async def _exercise() -> None:
                 self.assertEqual(runner.run(_value(), inline=True), "ok")
                 self.assertIsNotNone(runner._helper_thread)
@@ -365,7 +419,9 @@ class SyncClientUnitTests(unittest.TestCase):
             async def _exercise() -> None:
                 try:
                     captured.append(runner.run(_noop()))
-                except BaseException as exc:  # pragma: no cover - assertion follows on captured type
+                except (
+                    BaseException
+                ) as exc:  # pragma: no cover - assertion follows on captured type
                     captured.append(type(exc))
 
             asyncio.run(_exercise())
@@ -571,7 +627,11 @@ client.close()
         runner = _SyncRunner()
         awaitable = _noop()
         try:
-            with patch.object(runner._runner, "run", side_effect=ExecutionTimeout("operation exceeded time limit")):
+            with patch.object(
+                runner._runner,
+                "run",
+                side_effect=ExecutionTimeout("operation exceeded time limit"),
+            ):
                 with self.assertRaises(ExecutionTimeout) as raised:
                     runner.run(awaitable)
         finally:
@@ -585,7 +645,11 @@ client.close()
         runner = _SyncRunner()
         awaitable = _noop()
         try:
-            with patch.object(runner._runner, "run", side_effect=ServerSelectionTimeoutError("no suitable servers")):
+            with patch.object(
+                runner._runner,
+                "run",
+                side_effect=ServerSelectionTimeoutError("no suitable servers"),
+            ):
                 with self.assertRaises(ServerSelectionTimeoutError) as raised:
                     runner.run(awaitable)
         finally:
@@ -609,10 +673,17 @@ client.close()
             client.close()
 
     def test_client_preserves_configured_change_stream_journal_path(self):
-        client = MongoClient(MemoryEngine(), change_stream_journal_path="/tmp/mongoeco-changes.json")
+        client = MongoClient(
+            MemoryEngine(), change_stream_journal_path="/tmp/mongoeco-changes.json"
+        )
         try:
-            self.assertEqual(client.change_stream_journal_path, "/tmp/mongoeco-changes.json")
-            self.assertEqual(client.with_options().change_stream_journal_path, "/tmp/mongoeco-changes.json")
+            self.assertEqual(
+                client.change_stream_journal_path, "/tmp/mongoeco-changes.json"
+            )
+            self.assertEqual(
+                client.with_options().change_stream_journal_path,
+                "/tmp/mongoeco-changes.json",
+            )
         finally:
             client.close()
 
@@ -642,7 +713,9 @@ client.close()
         try:
             database = client.get_database("alpha")
             self.assertEqual(database.change_stream_history_size, 321)
-            self.assertEqual(database.change_stream_journal_path, "/tmp/mongoeco-db-changes.json")
+            self.assertEqual(
+                database.change_stream_journal_path, "/tmp/mongoeco-db-changes.json"
+            )
             self.assertTrue(database.change_stream_journal_fsync)
             self.assertEqual(database.change_stream_journal_max_bytes, 8192)
         finally:
@@ -659,13 +732,18 @@ client.close()
         try:
             collection = client.get_database("alpha").get_collection("events")
             self.assertEqual(collection.change_stream_history_size, 321)
-            self.assertEqual(collection.change_stream_journal_path, "/tmp/mongoeco-collection-changes.json")
+            self.assertEqual(
+                collection.change_stream_journal_path,
+                "/tmp/mongoeco-collection-changes.json",
+            )
             self.assertTrue(collection.change_stream_journal_fsync)
             self.assertEqual(collection.change_stream_journal_max_bytes, 8192)
         finally:
             client.close()
 
-    def test_sync_database_and_collection_public_properties_do_not_fall_through_getattr(self):
+    def test_sync_database_and_collection_public_properties_do_not_fall_through_getattr(
+        self,
+    ):
         client = MongoClient(
             MemoryEngine(),
             change_stream_history_size=321,
@@ -677,11 +755,15 @@ client.close()
             database = client.get_database("alpha")
             collection = database.get_collection("events")
             self.assertEqual(database.change_stream_history_size, 321)
-            self.assertEqual(database.change_stream_journal_path, "/tmp/mongoeco-sync-surface.json")
+            self.assertEqual(
+                database.change_stream_journal_path, "/tmp/mongoeco-sync-surface.json"
+            )
             self.assertTrue(database.change_stream_journal_fsync)
             self.assertEqual(database.change_stream_journal_max_bytes, 8192)
             self.assertEqual(collection.change_stream_history_size, 321)
-            self.assertEqual(collection.change_stream_journal_path, "/tmp/mongoeco-sync-surface.json")
+            self.assertEqual(
+                collection.change_stream_journal_path, "/tmp/mongoeco-sync-surface.json"
+            )
             self.assertTrue(collection.change_stream_journal_fsync)
             self.assertEqual(collection.change_stream_journal_max_bytes, 8192)
         finally:
@@ -719,7 +801,9 @@ client.close()
             self.assertEqual(collection.logs.name, "events.logs")
             self.assertEqual(collection["audit"].name, "events.audit")
             self.assertEqual(collection.change_stream_state()["retainedEvents"], 0)
-            self.assertEqual(collection.change_stream_backend_info()["implementation"], "local")
+            self.assertEqual(
+                collection.change_stream_backend_info()["implementation"], "local"
+            )
             with self.assertRaises(AttributeError):
                 _ = collection._private
             with self.assertRaises(TypeError):
@@ -761,7 +845,9 @@ client.close()
         finally:
             client.close()
 
-        self.assertEqual(client._async_client._engine.fast_drop_calls, [("alpha", None)])
+        self.assertEqual(
+            client._async_client._engine.fast_drop_calls, [("alpha", None)]
+        )
         self.assertEqual(client._async_client._engine.fallback_calls, [])
 
     def test_client_del_suppresses_close_errors(self):
@@ -846,39 +932,49 @@ client.close()
     def test_client_exposes_resolved_dialect_and_profile(self):
         client = MongoClient(
             MemoryEngine(),
-            mongodb_dialect='8.0',
-            pymongo_profile='4.17',
+            mongodb_dialect="8.0",
+            pymongo_profile="4.17",
         )
 
         self.assertEqual(client.mongodb_dialect, MongoDialect80())
-        self.assertEqual(client.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
+        self.assertEqual(
+            client.mongodb_dialect_resolution.resolution_mode, "explicit-alias"
+        )
         self.assertEqual(client.pymongo_profile, PyMongoProfile417())
-        self.assertEqual(client.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
-        self.assertEqual(client.get_database('alpha').mongodb_dialect, MongoDialect80())
         self.assertEqual(
-            client.get_database('alpha').mongodb_dialect_resolution.resolution_mode,
-            'explicit-alias',
+            client.pymongo_profile_resolution.resolution_mode, "explicit-alias"
         )
-        self.assertEqual(client.get_database('alpha').pymongo_profile, PyMongoProfile417())
+        self.assertEqual(client.get_database("alpha").mongodb_dialect, MongoDialect80())
         self.assertEqual(
-            client.get_database('alpha').pymongo_profile_resolution.resolution_mode,
-            'explicit-alias',
+            client.get_database("alpha").mongodb_dialect_resolution.resolution_mode,
+            "explicit-alias",
         )
         self.assertEqual(
-            client.get_database('alpha').get_collection('users').mongodb_dialect,
+            client.get_database("alpha").pymongo_profile, PyMongoProfile417()
+        )
+        self.assertEqual(
+            client.get_database("alpha").pymongo_profile_resolution.resolution_mode,
+            "explicit-alias",
+        )
+        self.assertEqual(
+            client.get_database("alpha").get_collection("users").mongodb_dialect,
             MongoDialect80(),
         )
         self.assertEqual(
-            client.get_database('alpha').get_collection('users').mongodb_dialect_resolution.resolution_mode,
-            'explicit-alias',
+            client.get_database("alpha")
+            .get_collection("users")
+            .mongodb_dialect_resolution.resolution_mode,
+            "explicit-alias",
         )
         self.assertEqual(
-            client.get_database('alpha').get_collection('users').pymongo_profile,
+            client.get_database("alpha").get_collection("users").pymongo_profile,
             PyMongoProfile417(),
         )
         self.assertEqual(
-            client.get_database('alpha').get_collection('users').pymongo_profile_resolution.resolution_mode,
-            'explicit-alias',
+            client.get_database("alpha")
+            .get_collection("users")
+            .pymongo_profile_resolution.resolution_mode,
+            "explicit-alias",
         )
 
         client.close()
@@ -886,19 +982,27 @@ client.close()
     def test_sync_collection_resolution_metadata_does_not_force_connection(self):
         client = MongoClient(
             MemoryEngine(),
-            mongodb_dialect='8.0',
-            pymongo_profile='4.17',
+            mongodb_dialect="8.0",
+            pymongo_profile="4.17",
         )
-        collection = client.get_database('alpha').get_collection('users')
+        collection = client.get_database("alpha").get_collection("users")
 
         self.assertFalse(client._connected)
-        self.assertEqual(collection.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
-        self.assertEqual(collection.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
+        self.assertEqual(
+            collection.mongodb_dialect_resolution.resolution_mode, "explicit-alias"
+        )
+        self.assertEqual(
+            collection.pymongo_profile_resolution.resolution_mode, "explicit-alias"
+        )
         self.assertFalse(client._connected)
 
         client.close()
-        self.assertEqual(collection.mongodb_dialect_resolution.resolution_mode, 'explicit-alias')
-        self.assertEqual(collection.pymongo_profile_resolution.resolution_mode, 'explicit-alias')
+        self.assertEqual(
+            collection.mongodb_dialect_resolution.resolution_mode, "explicit-alias"
+        )
+        self.assertEqual(
+            collection.pymongo_profile_resolution.resolution_mode, "explicit-alias"
+        )
 
     def test_sync_client_runtime_properties_and_wrappers_delegate_to_async_client(self):
         client = MongoClient(MemoryEngine(), uri="mongodb://localhost:27017/")

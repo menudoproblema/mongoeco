@@ -43,11 +43,14 @@ from mongoeco.driver import (
     TopologyDescription,
     sdam_capabilities_info,
 )
-from mongoeco.driver.monitoring import DriverMonitor
+from mongoeco.driver.monitoring import (  # noqa: TC001 - public annotations are introspectable
+    DriverMonitor,
+)
 from mongoeco.engines.base import (  # noqa: TC001 - public annotations are introspectable
     AsyncStorageEngine,
 )
 from mongoeco.engines.capabilities import resolve_engine_capabilities
+from mongoeco.engines.adapter import adapt_engine
 from mongoeco.errors import InvalidOperation
 from mongoeco.session import ClientSession
 from mongoeco.types import (
@@ -83,7 +86,9 @@ def _materialize_change_document(
         codec_options=codec_options,
     )
     if not isinstance(materialized, dict):
-        raise TypeError('codec_options.document_class must produce dict-compatible documents')
+        raise TypeError(
+            "codec_options.document_class must produce dict-compatible documents"
+        )
     return materialized
 
 
@@ -91,12 +96,16 @@ def _validate_now_factory(now_factory: NowFactory | None) -> None:
     if now_factory is None:
         return
     if not callable(now_factory):
-        raise TypeError('now_factory must be callable')
+        raise TypeError("now_factory must be callable")
     normalize_utc_bson_datetime(now_factory())
 
 
 def _resolve_now(now_factory: NowFactory | None) -> datetime:
-    return utc_bson_now() if now_factory is None else normalize_utc_bson_datetime(now_factory())
+    return (
+        utc_bson_now()
+        if now_factory is None
+        else normalize_utc_bson_datetime(now_factory())
+    )
 
 
 def _validate_watch_session(session: ClientSession | None) -> None:
@@ -168,6 +177,7 @@ class AsyncDatabase:
             else change_hub
         )
         self._admin = AsyncDatabaseAdminService(self)
+        self._validated_engine_spi = None
 
     def _new_execution_context(self):
         from mongoeco.core.expression_context import ExpressionExecutionContext
@@ -194,24 +204,43 @@ class AsyncDatabase:
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
     ) -> AsyncCollection:
-        return AsyncCollection(
+        collection_kwargs = {
+            "mongodb_dialect": self._mongodb_dialect,
+            "mongodb_dialect_resolution": self._mongodb_dialect_resolution,
+            "pymongo_profile": self._pymongo_profile,
+            "pymongo_profile_resolution": self._pymongo_profile_resolution,
+            "write_concern": (
+                self._write_concern if write_concern is None else write_concern
+            ),
+            "read_concern": (
+                self._read_concern if read_concern is None else read_concern
+            ),
+            "read_preference": (
+                self._read_preference if read_preference is None else read_preference
+            ),
+            "codec_options": (
+                self._codec_options if codec_options is None else codec_options
+            ),
+            "change_hub": self._change_hub,
+            "change_stream_history_size": self._change_stream_history_size,
+            "change_stream_journal_path": self._change_stream_journal_path,
+            "change_stream_journal_fsync": self._change_stream_journal_fsync,
+            "change_stream_journal_max_bytes": (self._change_stream_journal_max_bytes),
+            "now_factory": self._now_factory,
+        }
+        if self._validated_engine_spi is None:
+            return AsyncCollection(
+                self._engine,
+                self._db_name,
+                name,
+                **collection_kwargs,
+            )
+        return AsyncCollection._from_validated_engine(
+            self._validated_engine_spi,
             self._engine,
             self._db_name,
             name,
-            mongodb_dialect=self._mongodb_dialect,
-            mongodb_dialect_resolution=self._mongodb_dialect_resolution,
-            pymongo_profile=self._pymongo_profile,
-            pymongo_profile_resolution=self._pymongo_profile_resolution,
-            write_concern=self._write_concern if write_concern is None else write_concern,
-            read_concern=self._read_concern if read_concern is None else read_concern,
-            read_preference=self._read_preference if read_preference is None else read_preference,
-            codec_options=self._codec_options if codec_options is None else codec_options,
-            change_hub=self._change_hub,
-            change_stream_history_size=self._change_stream_history_size,
-            change_stream_journal_path=self._change_stream_journal_path,
-            change_stream_journal_fsync=self._change_stream_journal_fsync,
-            change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
-            now_factory=self._now_factory,
+            **collection_kwargs,
         )
 
     def with_options(
@@ -222,17 +251,23 @@ class AsyncDatabase:
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
     ) -> "AsyncDatabase":
-        return type(self)(
+        database = type(self)(
             self._engine,
             self._db_name,
             mongodb_dialect=self._mongodb_dialect,
             mongodb_dialect_resolution=self._mongodb_dialect_resolution,
             pymongo_profile=self._pymongo_profile,
             pymongo_profile_resolution=self._pymongo_profile_resolution,
-            write_concern=self._write_concern if write_concern is None else write_concern,
+            write_concern=self._write_concern
+            if write_concern is None
+            else write_concern,
             read_concern=self._read_concern if read_concern is None else read_concern,
-            read_preference=self._read_preference if read_preference is None else read_preference,
-            codec_options=self._codec_options if codec_options is None else codec_options,
+            read_preference=self._read_preference
+            if read_preference is None
+            else read_preference,
+            codec_options=self._codec_options
+            if codec_options is None
+            else codec_options,
             change_hub=self._change_hub,
             change_stream_history_size=self._change_stream_history_size,
             change_stream_journal_path=self._change_stream_journal_path,
@@ -240,6 +275,8 @@ class AsyncDatabase:
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
             now_factory=self._now_factory,
         )
+        database._validated_engine_spi = self._validated_engine_spi
+        return database
 
     async def list_collection_names(
         self,
@@ -408,8 +445,7 @@ class AsyncDatabase:
 
 
 class AsyncMongoClient:
-    """Cliente principal para mongoeco.
-    """
+    """Cliente principal para mongoeco."""
 
     def __init__(
         self,
@@ -430,12 +466,15 @@ class AsyncMongoClient:
         now_factory: NowFactory | None = None,
     ):
         self._engine = engine or self._create_default_engine()
+        self._validated_engine_spi = adapt_engine(self._engine)
         _validate_now_factory(now_factory)
         if (
             now_factory is not None
             and not resolve_engine_capabilities(self._engine).injected_clock
         ):
-            raise ValueError('now_factory requires an engine that supports injected clocks')
+            raise ValueError(
+                "now_factory requires an engine that supports injected clocks"
+            )
         self._now_factory = now_factory
         self._mongodb_dialect_resolution = resolve_mongodb_dialect_resolution(
             mongodb_dialect
@@ -573,16 +612,22 @@ class AsyncMongoClient:
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
         transaction_options: TransactionOptions | None = None,
-        ) -> "AsyncMongoClient":
+    ) -> "AsyncMongoClient":
         return type(self)(
             self._engine,
             uri=self.client_uri.original,
             mongodb_dialect=self._mongodb_dialect,
             pymongo_profile=self._pymongo_profile,
-            write_concern=self._write_concern if write_concern is None else write_concern,
+            write_concern=self._write_concern
+            if write_concern is None
+            else write_concern,
             read_concern=self._read_concern if read_concern is None else read_concern,
-            read_preference=self._read_preference if read_preference is None else read_preference,
-            codec_options=self._codec_options if codec_options is None else codec_options,
+            read_preference=self._read_preference
+            if read_preference is None
+            else read_preference,
+            codec_options=self._codec_options
+            if codec_options is None
+            else codec_options,
             transaction_options=(
                 self._transaction_options
                 if transaction_options is None
@@ -604,17 +649,23 @@ class AsyncMongoClient:
         read_preference: ReadPreference | None = None,
         codec_options: CodecOptions | None = None,
     ) -> AsyncDatabase:
-        return AsyncDatabase(
+        database = AsyncDatabase(
             self._engine,
             name,
             mongodb_dialect=self._mongodb_dialect,
             mongodb_dialect_resolution=self._mongodb_dialect_resolution,
             pymongo_profile=self._pymongo_profile,
             pymongo_profile_resolution=self._pymongo_profile_resolution,
-            write_concern=self._write_concern if write_concern is None else write_concern,
+            write_concern=self._write_concern
+            if write_concern is None
+            else write_concern,
             read_concern=self._read_concern if read_concern is None else read_concern,
-            read_preference=self._read_preference if read_preference is None else read_preference,
-            codec_options=self._codec_options if codec_options is None else codec_options,
+            read_preference=self._read_preference
+            if read_preference is None
+            else read_preference,
+            codec_options=self._codec_options
+            if codec_options is None
+            else codec_options,
             change_hub=self._change_hub,
             change_stream_history_size=self._change_stream_history_size,
             change_stream_journal_path=self._change_stream_journal_path,
@@ -622,6 +673,8 @@ class AsyncMongoClient:
             change_stream_journal_max_bytes=self._change_stream_journal_max_bytes,
             now_factory=self._now_factory,
         )
+        database._validated_engine_spi = self._validated_engine_spi
+        return database
 
     def get_default_database(
         self,
@@ -722,7 +775,9 @@ class AsyncMongoClient:
             return
         database = self.get_database(name)
         while True:
-            collection_names = await self._engine.list_collections(name, context=session)
+            collection_names = await self._engine.list_collections(
+                name, context=session
+            )
             if not collection_names:
                 return
             for collection_name in collection_names:
@@ -766,7 +821,9 @@ class AsyncMongoClient:
         )
         return await self._driver_runtime.prepare_request_execution(plan)
 
-    async def complete_command_request_execution(self, execution: PreparedRequestExecution) -> None:
+    async def complete_command_request_execution(
+        self, execution: PreparedRequestExecution
+    ) -> None:
         await self._driver_runtime.complete_request_execution(execution)
 
     async def execute_driver_command(
@@ -812,10 +869,14 @@ class AsyncMongoClient:
         )
         return await self._driver_runtime.execute_request(
             plan,
-            self._driver_runtime.create_network_transport() if transport is None else transport,
+            self._driver_runtime.create_network_transport()
+            if transport is None
+            else transport,
         )
 
-    async def refresh_topology(self, *, transport: WireProtocolCommandTransport | None = None) -> TopologyDescription:
+    async def refresh_topology(
+        self, *, transport: WireProtocolCommandTransport | None = None
+    ) -> TopologyDescription:
         return await self._driver_runtime.refresh_topology(transport=transport)
 
     async def start_topology_monitoring(

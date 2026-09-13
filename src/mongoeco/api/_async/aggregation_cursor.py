@@ -31,6 +31,9 @@ from mongoeco.core.aggregation import (
     is_streamable_aggregation_stage,
     split_pushdown_pipeline,
 )
+from mongoeco.core.aggregation.lookup_physical import (
+    explain_lookup_physical_plans,
+)
 from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
 from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.codec import DocumentCodec
@@ -553,6 +556,7 @@ class AsyncAggregationCursor:
         pipeline: Pipeline,
         *,
         dialect,
+        deadline: float | None = None,
         writeback: bool = False,
     ) -> tuple[list[RuntimeDocumentState], Pipeline]:
         leading_search = self._leading_search_stage()
@@ -593,6 +597,8 @@ class AsyncAggregationCursor:
                 dialect=dialect,
                 collation=self._collation,
                 spill_policy=self._spill_policy(),
+                lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                deadline=deadline,
             )
             if len(transformed) >= output_limit:
                 return transformed, []
@@ -966,7 +972,61 @@ class AsyncAggregationCursor:
                 **options,
             )
 
-    async def _materialize(  # noqa: PLR0915 - operation orchestration boundary
+    def _source_materialization_probe(
+        self,
+        pipeline: Pipeline,
+        *,
+        dialect,
+    ) -> tuple[AggregationCostPolicy, int] | None:
+        policy = self._cost_policy()
+        if (
+            policy is None
+            or self._spill_policy() is not None
+            or not has_materializing_aggregation_stage(
+                pipeline,
+                dialect=dialect,
+            )
+        ):
+            return None
+        return policy, policy.max_materialized_documents + 1
+
+    async def _load_pushdown_source_documents(
+        self,
+        pipeline: Pipeline,
+        *,
+        dialect,
+    ) -> list[Document]:
+        source_cursor = self._build_pushdown_cursor(
+            self._pushdown_find_operation(),
+        )
+        probe = self._source_materialization_probe(
+            pipeline,
+            dialect=dialect,
+        )
+        try:
+            if probe is None:
+                return await source_cursor.to_list()
+            policy, read_limit = probe
+            documents = await source_cursor.to_list(length=read_limit)
+            if len(documents) >= read_limit:
+                policy.enforce_budget(
+                    document_count=len(documents),
+                    has_materializing_stage=True,
+                    spill_available=False,
+                )
+            return documents
+        except BaseException as primary_error:
+            close = getattr(source_cursor, "close", None)
+            if callable(close):
+                try:
+                    await close()
+                except BaseException as close_error:
+                    primary_error.add_note(
+                        f"source cursor cleanup failed: {close_error}",
+                    )
+            raise
+
+    async def _materialize(
         self,
     ) -> list[Document]:
         _ensure_operation_executable(self._collection, self._operation)
@@ -998,6 +1058,7 @@ class AsyncAggregationCursor:
                 ) = await self._materialize_leading_search_pipeline(
                     pipeline,
                     dialect=dialect,
+                    deadline=deadline,
                     writeback=writeback_stage is not None,
                 )
             else:
@@ -1019,9 +1080,15 @@ class AsyncAggregationCursor:
                 ):
                     documents = []
                 else:
-                    documents = await self._build_pushdown_cursor(
-                        self._pushdown_find_operation(),
-                    ).to_list()
+                    documents = await self._load_pushdown_source_documents(
+                        remaining_pipeline,
+                        dialect=dialect,
+                    )
+            self._enforce_materialization_budget(
+                len(documents),
+                remaining_pipeline,
+                dialect=dialect,
+            )
             referenced_collections = await self._load_referenced_collections()
             collstats_snapshots = await self._load_collstats_snapshots(
                 remaining_pipeline,
@@ -1052,12 +1119,6 @@ class AsyncAggregationCursor:
                 else []
             )
             enforce_deadline(deadline)
-            enforce_deadline(deadline)
-            self._enforce_materialization_budget(
-                len(documents),
-                remaining_pipeline,
-                dialect=dialect,
-            )
             collection_stats_resolver = None
             if collstats_snapshots:
                 default_collstats_snapshot = next(
@@ -1093,6 +1154,8 @@ class AsyncAggregationCursor:
                 "dialect": dialect,
                 "collation": self._collation,
                 "spill_policy": self._spill_policy(),
+                "lookup_hash_max_associations": (self._lookup_hash_max_associations()),
+                "deadline": deadline,
             }
             result = (
                 apply_pipeline_states(
@@ -1130,6 +1193,17 @@ class AsyncAggregationCursor:
         if isinstance(policy, AggregationCostPolicy):
             return policy
         return None
+
+    def _lookup_hash_max_associations(self) -> int | None:
+        """Bound lookup acceleration without changing admission semantics."""
+        policy = self._cost_policy()
+        if policy is None:
+            return None
+        maximum = policy.max_materialized_documents
+        spill_policy = self._spill_policy()
+        if spill_policy is not None:
+            maximum = min(maximum, spill_policy.threshold)
+        return maximum
 
     def _enforce_materialization_budget(
         self,
@@ -1265,6 +1339,8 @@ class AsyncAggregationCursor:
                     dialect=dialect,
                     collation=self._collation,
                     spill_policy=self._spill_policy(),
+                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                    deadline=deadline,
                 )
                 if trailing_skip:
                     if len(transformed) <= trailing_skip:
@@ -1519,6 +1595,12 @@ class AsyncAggregationCursor:
         )
         pushdown_summary["streamableStageCount"] = (
             len(streaming_split[0]) if streaming_split is not None else 0
+        )
+        pushdown_summary["lookupPlans"] = explain_lookup_physical_plans(
+            self._effective_pipeline(),
+            dialect=dialect,
+            collation=self._collation,
+            max_associations=self._lookup_hash_max_associations(),
         )
         explanation = AggregateExplanation(
             engine_plan=engine_plan,

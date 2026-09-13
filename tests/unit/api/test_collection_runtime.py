@@ -4,6 +4,7 @@ import unittest
 
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.api._async._collection_runtime import CollectionRuntimeCoordinator
+from mongoeco.api.operations import compile_find_operation
 from mongoeco.engines.capabilities import EngineCapabilities
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.results import (
@@ -12,11 +13,25 @@ from mongoeco.engines.results import (
     MutationOutcome,
 )
 from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
-from mongoeco.session import ClientSession
+from mongoeco.session import ClientSession, EngineTransactionContext
 from mongoeco.types import DeleteResult, UpdateResult
 
 
 class CollectionRuntimeCoordinatorTests(unittest.TestCase):
+    def test_runtime_defers_change_registration_failures_until_a_write(self):
+        class AdapterStub:
+            @staticmethod
+            def prepare_change_delivery(_sink):
+                raise RuntimeError("engine is not connected")
+
+        collection = SimpleNamespace(
+            _validated_engine_spi=AdapterStub(),
+            _engine=object(),
+            _change_hub=object(),
+        )
+
+        CollectionRuntimeCoordinator(collection)
+
     def test_v2_document_lookup_does_not_leak_legacy_dialect_keyword(self):
         class StrictGetEngine(MemoryEngine):
             async def get_document(
@@ -35,30 +50,30 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
                     projection,
                     operation_context,
                 )
-                return {'_id': doc_id}
+                return {"_id": doc_id}
 
         engine = StrictGetEngine()
-        collection = AsyncCollection(engine, 'db', 'coll')
+        collection = AsyncCollection(engine, "db", "coll")
 
-        result = asyncio.run(collection._runtime.document_by_id('value'))
+        result = asyncio.run(collection._runtime.document_by_id("value"))
 
-        assert result == {'_id': 'value'}
-        assert engine.lookup[:4] == ('db', 'coll', 'value', None)
+        assert result == {"_id": "value"}
+        assert engine.lookup[:4] == ("db", "coll", "value", None)
 
     def test_document_by_id_crosses_adapter_with_operation_context(self):
         class EngineStub:
             async def get_document(self, *args, **kwargs):
                 self.args = args
                 self.kwargs = kwargs
-                return {'_id': args[2]}
+                return {"_id": args[2]}
 
         engine = EngineStub()
-        collection = AsyncCollection(engine, 'db', 'coll')
+        collection = AsyncCollection(engine, "db", "coll")
 
-        result = asyncio.run(collection._runtime.document_by_id('value'))
+        result = asyncio.run(collection._runtime.document_by_id("value"))
 
-        self.assertEqual(result, {'_id': 'value'})
-        self.assertEqual(engine.kwargs['context'], None)
+        self.assertEqual(result, {"_id": "value"})
+        self.assertEqual(engine.kwargs["context"], None)
 
     def test_profile_operation_tolerates_profiler_and_planner_failures(self):
         class EngineStub:
@@ -66,30 +81,30 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
                 self.records = []
 
             def _profile_is_active(self, *_args, **_kwargs):
-                raise RuntimeError('profile state failed')
+                raise RuntimeError("profile state failed")
 
             async def plan_find_execution(self, *_args, **_kwargs):
-                raise RuntimeError('planner failed')
+                raise RuntimeError("planner failed")
 
             def _record_profile_event(self, *args, **kwargs):
                 self.records.append((args, kwargs))
 
         engine = EngineStub()
-        collection = AsyncCollection(engine, 'db', 'coll')
-        operation = collection.find({'kind': 'event'})._base_operation()
+        collection = AsyncCollection(engine, "db", "coll")
+        operation = collection.find({"kind": "event"})._base_operation()
 
         asyncio.run(
             collection._runtime.profile_operation(
-                op='query',
-                command_factory=lambda: {'find': 'coll'},
+                op="query",
+                command_factory=lambda: {"find": "coll"},
                 duration_ns=2_000,
                 operation=operation,
             )
         )
 
         self.assertEqual(len(engine.records), 1)
-        self.assertEqual(engine.records[0][1]['command'], {'find': 'coll'})
-        self.assertEqual(engine.records[0][1]['execution_lineage'], ())
+        self.assertEqual(engine.records[0][1]["command"], {"find": "coll"})
+        self.assertEqual(engine.records[0][1]["execution_lineage"], ())
 
     def test_profile_operation_inactive_and_recorder_failures_are_nonfatal(self):
         class EngineStub:
@@ -97,24 +112,24 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
                 return False
 
             def _record_profile_event(self, *_args, **_kwargs):
-                raise RuntimeError('recorder failed')
+                raise RuntimeError("recorder failed")
 
-        collection = AsyncCollection(EngineStub(), 'db', 'coll')
+        collection = AsyncCollection(EngineStub(), "db", "coll")
 
         asyncio.run(
             collection._runtime.profile_operation(
-                op='query',
+                op="query",
                 duration_ns=1,
-                errmsg='failed',
+                errmsg="failed",
             )
         )
 
     def test_profile_operation_skips_profile_namespace_and_missing_recorder(self):
-        for name in ('system.profile', 'ordinary'):
-            collection = AsyncCollection(object(), 'db', name)
+        for name in ("system.profile", "ordinary"):
+            collection = AsyncCollection(object(), "db", name)
             asyncio.run(
                 collection._runtime.profile_operation(
-                    op='query',
+                    op="query",
                     duration_ns=1,
                 )
             )
@@ -170,9 +185,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
             session=None,
             apply_codec_options=True,
         ):
-            calls.append(
-                (operation.filter_spec, session, apply_codec_options)
-            )
+            calls.append((operation.filter_spec, session, apply_codec_options))
             return CursorStub()
 
         collection._build_cursor = _build_cursor  # type: ignore[method-assign]
@@ -236,6 +249,38 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
             document_key={"_id": "1"},
         )
 
+    def test_change_helpers_are_noops_without_a_hub(self):
+        collection = SimpleNamespace(
+            _change_hub=None,
+            _db_name="db",
+            _collection_name="coll",
+        )
+        runtime = CollectionRuntimeCoordinator(collection)
+
+        self.assertFalse(runtime.should_publish_change_events())
+        self.assertEqual(
+            runtime._pending_transaction_change_events(ClientSession()), []
+        )
+        runtime._publish_change_payload({"operation_type": "insert"})
+
+    def test_pending_change_events_repairs_invalid_session_metadata(self):
+        hub = SimpleNamespace(should_publish_events=lambda: True)
+        collection = AsyncCollection(object(), "db", "coll", change_hub=hub)
+        runtime = collection._runtime
+        session = ClientSession()
+        engine_key = f"change_stream_hub:{id(hub)}"
+        context = EngineTransactionContext(
+            engine_key=engine_key,
+            connected=True,
+            metadata={"pending_change_events": object()},
+        )
+        session.bind_engine_context(context)
+
+        pending = runtime._pending_transaction_change_events(session)
+
+        self.assertEqual(pending, [])
+        self.assertIs(context.metadata["pending_change_events"], pending)
+
     def test_change_events_queue_until_commit_and_discard_on_abort(self):
         class Hub:
             def __init__(self):
@@ -252,15 +297,15 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
                 self.gaps += 1
 
         hub = Hub()
-        collection = AsyncCollection(object(), 'db', 'coll', change_hub=hub)
+        collection = AsyncCollection(object(), "db", "coll", change_hub=hub)
         session = ClientSession()
 
         session.start_transaction()
         collection._runtime.publish_change_event(
-            operation_type='insert',
-            document_key={'_id': 1},
-            full_document={'_id': 1},
-            update_description={'updatedFields': {}},
+            operation_type="insert",
+            document_key={"_id": 1},
+            full_document={"_id": 1},
+            update_description={"updatedFields": {}},
             session=session,
         )
         self.assertEqual(hub.events, [])
@@ -269,8 +314,8 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
 
         session.start_transaction()
         collection._runtime.publish_change_event(
-            operation_type='delete',
-            document_key={'_id': 1},
+            operation_type="delete",
+            document_key={"_id": 1},
             session=session,
         )
         session.abort_transaction()
@@ -280,23 +325,21 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         failures = []
         hub = SimpleNamespace(
             should_publish_events=lambda: False,
-            mark_gap=lambda: failures.append('gap'),
+            mark_gap=lambda: failures.append("gap"),
             publish=lambda **_payload: (_ for _ in ()).throw(
-                RuntimeError('publish failed')
+                RuntimeError("publish failed")
             ),
             mark_publish_failure=failures.append,
         )
-        collection = AsyncCollection(object(), 'db', 'coll', change_hub=hub)
+        collection = AsyncCollection(object(), "db", "coll", change_hub=hub)
 
         collection._runtime.publish_change_event(
-            operation_type='insert',
-            document_key={'_id': 1},
+            operation_type="insert",
+            document_key={"_id": 1},
         )
-        collection._runtime._publish_change_payload(
-            {'operation_type': 'insert'}
-        )
+        collection._runtime._publish_change_payload({"operation_type": "insert"})
 
-        self.assertEqual(failures[0], 'gap')
+        self.assertEqual(failures[0], "gap")
         self.assertIsInstance(failures[1], RuntimeError)
 
     def test_change_event_helpers_cover_noop_and_captured_outcomes(self):
@@ -304,24 +347,24 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         hub = SimpleNamespace(
             should_publish_events=lambda: True,
             publish=lambda **payload: events.append(payload),
-            mark_gap=lambda: events.append('gap'),
+            mark_gap=lambda: events.append("gap"),
         )
-        collection = AsyncCollection(object(), 'db', 'coll', change_hub=hub)
+        collection = AsyncCollection(object(), "db", "coll", change_hub=hub)
         runtime = collection._runtime
 
         self.assertTrue(runtime.should_publish_change_events())
         runtime.mark_change_event_gap()
         runtime._publish_captured_update_event(
             MutationOutcome(result=UpdateResult(0, 0)),
-            matched_operation_type='update',
+            matched_operation_type="update",
             session=None,
         )
         runtime._publish_captured_update_event(
             MutationOutcome(
-                result=UpdateResult(0, 0, upserted_id='new'),
-                after_document={'_id': 'new'},
+                result=UpdateResult(0, 0, upserted_id="new"),
+                after_document={"_id": "new"},
             ),
-            matched_operation_type='update',
+            matched_operation_type="update",
             session=None,
         )
         runtime._publish_captured_delete_event(
@@ -331,14 +374,27 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         runtime._publish_captured_delete_event(
             DeleteOutcome(
                 result=DeleteResult(1),
-                deleted_document={'_id': 'new'},
+                deleted_document={"_id": "new"},
             ),
             session=None,
         )
 
-        self.assertEqual(events[0], 'gap')
-        self.assertEqual(events[1]['operation_type'], 'insert')
-        self.assertEqual(events[2]['operation_type'], 'delete')
+        self.assertEqual(events[0], "gap")
+        self.assertEqual(events[1]["operation_type"], "insert")
+        self.assertEqual(events[2]["operation_type"], "delete")
+
+        runtime._publish_merge_event(
+            MergeOutcome(matched=False, applied=False),
+            session=None,
+        )
+        self.assertEqual(len(events), 3)
+
+    def test_open_read_snapshot_rejects_an_unbound_operation(self):
+        collection = AsyncCollection(object(), "db", "coll")
+        operation = compile_find_operation({})
+
+        with self.assertRaisesRegex(TypeError, "missing OperationContext"):
+            collection._runtime.engine_scan_with_operation(operation)
 
     def test_merge_publishes_outcome_for_v2_engine_without_native_delivery(
         self,
@@ -354,11 +410,11 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
             capabilities = EngineCapabilities(
                 batch_inserts=False,
                 explicit_read_snapshots=True,
-                change_delivery='none',
+                change_delivery="none",
             )
 
             async def insert_document(self, *_args, **_kwargs):
-                message = 'not used'
+                message = "not used"
                 raise AssertionError(message)
 
             async def get_document(self, *_args, **_kwargs):
@@ -377,8 +433,8 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
                 return MergeOutcome(
                     matched=False,
                     applied=True,
-                    operation_type='insert',
-                    after_document={'_id': 'merged', 'value': 1},
+                    operation_type="insert",
+                    after_document={"_id": "merged", "value": 1},
                 )
 
             def open_read_snapshot(self, *_args, **_kwargs):
@@ -392,19 +448,19 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
             should_publish_events=lambda: True,
             publish=lambda **payload: events.append(payload),
         )
-        collection = AsyncCollection(Engine(), 'db', 'coll', change_hub=hub)
+        collection = AsyncCollection(Engine(), "db", "coll", change_hub=hub)
         operation_context = collection._new_operation_context()
 
         outcome = asyncio.run(
             collection._runtime.engine_merge_document(
-                {'_id': 'merged', 'value': 1},
-                when_matched='merge',
-                when_not_matched='insert',
+                {"_id": "merged", "value": 1},
+                when_matched="merge",
+                when_not_matched="insert",
                 operation_context=operation_context,
             ),
         )
 
         assert outcome.applied
         assert len(events) == 1
-        assert events[0]['operation_type'] == 'insert'
-        assert events[0]['document_key'] == {'_id': 'merged'}
+        assert events[0]["operation_type"] == "insert"
+        assert events[0]["document_key"] == {"_id": "merged"}

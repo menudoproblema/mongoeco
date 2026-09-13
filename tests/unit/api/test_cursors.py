@@ -56,7 +56,7 @@ class _AsyncCollectionStub:
                 filter_spec,
                 planning_mode=getattr(
                     self,
-                    'planning_mode',
+                    "planning_mode",
                     PlanningMode.STRICT,
                 ),
             ),
@@ -79,7 +79,9 @@ class _PlanningIssueCollectionStub(_AsyncCollectionStub):
 
     def _ensure_operation_executable(self, operation):
         if operation.planning_issues:
-            raise OperationFailure(async_cursor_module._operation_issue_message(operation))
+            raise OperationFailure(
+                async_cursor_module._operation_issue_message(operation)
+            )
 
 
 class _UnsupportedExplainEngineStub(_AsyncEngineStub):
@@ -169,7 +171,9 @@ class _AsyncCursorFactoryStub:
 
     def find(self, *args, **kwargs):
         self.calls += 1
-        cursor = AsyncCursor(_AsyncCollectionStub(self._documents), {}, MatchAll(), None)
+        cursor = AsyncCursor(
+            _AsyncCollectionStub(self._documents), {}, MatchAll(), None
+        )
         original_first = cursor.first
 
         async def _first():
@@ -267,7 +271,9 @@ class _FailingStreamingAsyncCollectionStub(_StreamingAsyncCollectionStub):
 
 
 class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
-    async def test_async_cursor_private_helpers_cover_issue_messages_and_planning_mode_resolution(self):
+    async def test_async_cursor_private_helpers_cover_issue_messages_and_planning_mode_resolution(
+        self,
+    ):
         operation = type(
             "Operation",
             (),
@@ -353,14 +359,20 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             def _ensure_operation_executable(self, candidate):
                 checker_calls.append(candidate)
 
-        async_cursor_module._ensure_operation_executable(_CollectionWithChecker(), operation)
+        async_cursor_module._ensure_operation_executable(
+            _CollectionWithChecker(), operation
+        )
         self.assertEqual(checker_calls, [operation])
         self.assertEqual(
-            async_cursor_module._resolve_planning_mode(type("Collection", (), {"planning_mode": PlanningMode.RELAXED})()),
+            async_cursor_module._resolve_planning_mode(
+                type("Collection", (), {"planning_mode": PlanningMode.RELAXED})()
+            ),
             PlanningMode.RELAXED,
         )
         self.assertEqual(
-            async_cursor_module._resolve_planning_mode(type("Collection", (), {"_planning_mode": PlanningMode.RELAXED})()),
+            async_cursor_module._resolve_planning_mode(
+                type("Collection", (), {"_planning_mode": PlanningMode.RELAXED})()
+            ),
             PlanningMode.RELAXED,
         )
         self.assertEqual(
@@ -368,8 +380,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             PlanningMode.STRICT,
         )
 
-    async def test_async_cursor_private_helpers_cover_sort_normalization_and_serialization_errors(self):
-        self.assertEqual(async_cursor_module._normalize_sort_spec(("_id", 1)), [("_id", 1)])
+    async def test_async_cursor_private_helpers_cover_sort_normalization_and_serialization_errors(
+        self,
+    ):
+        self.assertEqual(
+            async_cursor_module._normalize_sort_spec(("_id", 1)), [("_id", 1)]
+        )
         self.assertEqual(
             async_cursor_module._normalize_sort_spec((("name", 1),)),
             [("name", 1)],
@@ -377,14 +393,20 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(TypeError):
             async_cursor_module._serialize_explanation(object())
 
-    async def test_async_cursor_private_helpers_accept_to_document_and_cover_limit_exhaustion(self):
+    async def test_async_cursor_private_helpers_accept_to_document_and_cover_limit_exhaustion(
+        self,
+    ):
         class _ExplainStub:
             def to_document(self):
                 return {"ok": 1}
 
-        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None, limit=1)
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None, limit=1
+        )
 
-        self.assertEqual(async_cursor_module._serialize_explanation(_ExplainStub()), {"ok": 1})
+        self.assertEqual(
+            async_cursor_module._serialize_explanation(_ExplainStub()), {"ok": 1}
+        )
         self.assertEqual(await cursor._fetch_batch(1, 5), [])
         self.assertIs(cursor.collection, cursor._collection)
 
@@ -448,7 +470,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             ],
         )
 
-    async def test_async_search_index_cursor_supports_first_to_list_rewind_clone_and_close(self):
+    async def test_async_search_index_cursor_supports_first_to_list_rewind_clone_and_close(
+        self,
+    ):
         cursor = AsyncSearchIndexCursor(
             lambda: self._load_indexes_async(
                 [
@@ -516,13 +540,17 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         cursor.rewind()
         self.assertTrue(cursor.alive)
         clone = cursor.clone()
-        self.assertEqual(await clone.to_list(), [{"name": "events", "type": "collection"}])
+        self.assertEqual(
+            await clone.to_list(), [{"name": "events", "type": "collection"}]
+        )
         cursor.close()
         self.assertFalse(cursor.alive)
         with self.assertRaises(InvalidOperation):
             await cursor.to_list()
 
-    async def test_async_cursor_rejects_negative_skip_and_limit_and_returns_none_first(self):
+    async def test_async_cursor_rejects_negative_skip_and_limit_and_returns_none_first(
+        self,
+    ):
         cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None)
 
         with self.assertRaises(ValueError):
@@ -558,7 +586,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             cursor.hint("")
 
     async def test_async_cursor_first_does_not_mutate_limit(self):
-        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}]), {}, MatchAll(), None)
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}]), {}, MatchAll(), None
+        )
 
         first = await cursor.first()
         documents = await cursor.to_list()
@@ -575,13 +605,17 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(factory.first_calls, 1)
 
     async def test_async_cursor_first_respects_zero_limit(self):
-        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None).limit(0)
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None
+        ).limit(0)
 
         self.assertIsNone(await cursor.first())
         self.assertEqual(await cursor.to_list(), [])
 
     async def test_async_cursor_rejects_mutation_after_iteration_starts(self):
-        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}]), {}, MatchAll(), None)
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}]), {}, MatchAll(), None
+        )
 
         iterator = cursor.__aiter__()
         first = await iterator.__anext__()
@@ -597,7 +631,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             cursor.batch_size(10)
 
     async def test_async_cursor_batch_size_prefetches_local_batches(self):
-        collection = _BatchTrackingCollectionStub([{"_id": "1"}, {"_id": "2"}, {"_id": "3"}])
+        collection = _BatchTrackingCollectionStub(
+            [{"_id": "1"}, {"_id": "2"}, {"_id": "3"}]
+        )
         cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=2)
 
         iterator = cursor.__aiter__()
@@ -622,9 +658,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(collection._engine.created_scans), 1)
 
     async def test_async_cursor_close_closes_active_batch_source(self):
-        collection = _BatchTrackingCollectionStub(
-            [{"_id": "1"}, {"_id": "2"}]
-        )
+        collection = _BatchTrackingCollectionStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=1)
 
         self.assertEqual(await cursor.__aiter__().__anext__(), {"_id": "1"})
@@ -677,9 +711,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await cursor._fetch_batch(2, 2), [])
 
     async def test_async_cursor_rewind_retires_source_before_next_iteration(self):
-        collection = _BatchTrackingCollectionStub(
-            [{"_id": "1"}, {"_id": "2"}]
-        )
+        collection = _BatchTrackingCollectionStub([{"_id": "1"}, {"_id": "2"}])
         cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=1)
 
         self.assertEqual(await cursor.__aiter__().__anext__(), {"_id": "1"})
@@ -699,8 +731,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(await iterator.pull_chunk(1), [])
 
-    async def test_async_cursor_batch_iterator_closes_when_fetch_batch_returns_no_documents(self):
-        cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None, batch_size=1)
+    async def test_async_cursor_batch_iterator_closes_when_fetch_batch_returns_no_documents(
+        self,
+    ):
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([]), {}, MatchAll(), None, batch_size=1
+        )
         iterator = cursor._iter()
 
         self.assertEqual(await iterator.pull_chunk(1), [])
@@ -714,17 +750,25 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(cursor._active_async_iterable)
 
     async def test_async_cursor_uses_local_prefetch_when_batch_size_is_none(self):
-        documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
+        documents = [
+            {"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)
+        ]
         collection = _BatchTrackingCollectionStub(documents)
         cursor = AsyncCursor(collection, {}, MatchAll(), None)
 
         self.assertEqual(await cursor.to_list(), documents)
         self.assertEqual(len(collection._engine.created_scans), 1)
-        self.assertEqual(collection._engine.created_scans[0].yield_count, len(documents))
+        self.assertEqual(
+            collection._engine.created_scans[0].yield_count, len(documents)
+        )
         self.assertIsNone(cursor._as_operation().batch_size)
 
-    async def test_async_cursor_uses_default_prefetch_size_when_batch_size_is_zero(self):
-        documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
+    async def test_async_cursor_uses_default_prefetch_size_when_batch_size_is_zero(
+        self,
+    ):
+        documents = [
+            {"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)
+        ]
         collection = _BatchTrackingCollectionStub(documents)
         cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=0)
 
@@ -736,7 +780,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_async_cursor_reuses_compiled_semantics_across_local_batches(self):
-        documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
+        documents = [
+            {"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)
+        ]
         collection = _BatchTrackingCollectionStub(documents)
         cursor = AsyncCursor(collection, {}, MatchAll(), None, batch_size=0)
 
@@ -752,7 +798,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(compile_semantics.call_count, 1)
 
     async def test_async_cursor_stays_exhausted_until_rewind(self):
-        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}]), {}, MatchAll(), None)
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([{"_id": "1"}, {"_id": "2"}]), {}, MatchAll(), None
+        )
 
         self.assertEqual(await cursor.to_list(), [{"_id": "1"}, {"_id": "2"}])
         self.assertEqual(await cursor.to_list(), [])
@@ -815,7 +863,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cursor._sort, [("_id", 1)])
         self.assertEqual(cursor._hint, [("name", 1)])
 
-    async def test_async_cursor_comment_batch_size_and_max_time_ms_mutators_invalidate_caches(self):
+    async def test_async_cursor_comment_batch_size_and_max_time_ms_mutators_invalidate_caches(
+        self,
+    ):
         cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None)
         cursor._operation_cache = object()
         cursor._semantics_cache = object()
@@ -840,21 +890,29 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(cursor._semantics_cache)
 
     async def test_async_cursor_iterator_stops_when_replaced_or_closed(self):
-        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None, batch_size=1)
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None, batch_size=1
+        )
         iterator = cursor._iter()
 
         cursor._active_async_iterable = object()
         with self.assertRaises(StopAsyncIteration):
             await iterator.__anext__()
 
-        cursor = AsyncCursor(_AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None, batch_size=1)
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([{"_id": "1"}]), {}, MatchAll(), None, batch_size=1
+        )
         iterator = cursor._iter()
         self.assertEqual(await iterator.pull_chunk(0), [])
         await iterator.close()
         self.assertEqual(await iterator.pull_chunk(1), [])
 
-    async def test_async_cursor_pull_chunk_closes_when_fetch_batch_returns_no_documents(self):
-        cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None, batch_size=2)
+    async def test_async_cursor_pull_chunk_closes_when_fetch_batch_returns_no_documents(
+        self,
+    ):
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([]), {}, MatchAll(), None, batch_size=2
+        )
         iterator = cursor._iter(enforce_ownership=False)
 
         self.assertEqual(await iterator.pull_chunk(2), [])
@@ -883,8 +941,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             await cursor.first()
         self.assertEqual(collection.profile_calls[-1]["errmsg"], "boom")
 
-    async def test_async_cursor_first_returns_none_when_active_iterator_is_exhausted(self):
-        cursor = AsyncCursor(_AsyncCollectionStub([]), {}, MatchAll(), None, batch_size=1)
+    async def test_async_cursor_first_returns_none_when_active_iterator_is_exhausted(
+        self,
+    ):
+        cursor = AsyncCursor(
+            _AsyncCollectionStub([]), {}, MatchAll(), None, batch_size=1
+        )
         active = cursor._iter()
         cursor._active_async_iterable = active
 
@@ -913,7 +975,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             await cursor.to_list()
         self.assertEqual(collection.profile_calls[-1]["errmsg"], "boom")
 
-    async def test_async_cursor_first_profiles_success_and_empty_results_without_active_iterator(self):
+    async def test_async_cursor_first_profiles_success_and_empty_results_without_active_iterator(
+        self,
+    ):
         collection = _ProfiledAsyncCollectionStub([{"_id": "1"}])
         cursor = AsyncCursor(collection, {}, MatchAll(), None)
 
@@ -928,7 +992,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection.profile_calls[-1]["op"], "query")
         self.assertNotIn("errmsg", collection.profile_calls[-1])
 
-    async def test_async_cursor_rewind_clears_active_iterator_and_explain_handles_planning_issues(self):
+    async def test_async_cursor_rewind_clears_active_iterator_and_explain_handles_planning_issues(
+        self,
+    ):
         collection = _AsyncCollectionStub([{"_id": "1"}])
         cursor = AsyncCursor(collection, {}, MatchAll(), None)
         operation = cursor._as_operation().with_overrides(
@@ -954,14 +1020,20 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cursor._skip, 1)
 
     async def test_async_cursor_explain_rejects_unsupported_engine_result_shape(self):
-        cursor = AsyncCursor(_UnsupportedExplainCollectionStub([{"_id": "1"}]), {}, MatchAll(), None)
+        cursor = AsyncCursor(
+            _UnsupportedExplainCollectionStub([{"_id": "1"}]), {}, MatchAll(), None
+        )
 
         with self.assertRaises(TypeError):
             await cursor.explain()
 
-
     def test_sync_cursor_rejects_negative_skip_and_limit_and_supports_iteration(self):
-        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}]), {}, None)
+        cursor = Cursor(
+            _SyncClientStub(),
+            _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}]),
+            {},
+            None,
+        )
 
         with self.assertRaises(ValueError):
             cursor.skip(-1)
@@ -986,7 +1058,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation["cxp"]["capability"], "read")
 
     def test_sync_cursor_accepts_dict_sort_and_hint(self):
-        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
+        cursor = Cursor(
+            _SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None
+        )
 
         cursor.sort({"_id": 1})  # type: ignore[arg-type]
         cursor.hint({"name": 1})  # type: ignore[arg-type]
@@ -995,7 +1069,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cursor._hint, [("name", 1)])
 
     def test_sync_cursor_validates_sort_spec_eagerly(self):
-        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
+        cursor = Cursor(
+            _SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None
+        )
 
         cursor.sort({"name": 1})  # type: ignore[arg-type]
         self.assertEqual(cursor._sort, [("name", 1)])
@@ -1016,8 +1092,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             cursor.hint("")
 
-    def test_sync_cursor_comment_batch_size_and_max_time_ms_mutators_invalidate_caches(self):
-        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
+    def test_sync_cursor_comment_batch_size_and_max_time_ms_mutators_invalidate_caches(
+        self,
+    ):
+        cursor = Cursor(
+            _SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None
+        )
         cursor._cache = [{"_id": "cached"}]
         cursor._exhausted = True
 
@@ -1049,14 +1129,20 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(factory.calls, 1)
 
     def test_sync_cursor_public_error_messages_remain_stable(self):
-        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
+        cursor = Cursor(
+            _SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None
+        )
 
         list(cursor)
-        with self.assertRaisesRegex(InvalidOperation, "cannot modify cursor after iteration has started"):
+        with self.assertRaisesRegex(
+            InvalidOperation, "cannot modify cursor after iteration has started"
+        ):
             cursor.sort([("_id", 1)])
 
         cursor.close()
-        with self.assertRaisesRegex(InvalidOperation, "cannot use cursor after it has been closed"):
+        with self.assertRaisesRegex(
+            InvalidOperation, "cannot use cursor after it has been closed"
+        ):
             cursor.first()
 
     def test_sync_cursor_first_uses_direct_first_path_without_materializing_cache(self):
@@ -1066,6 +1152,21 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cursor.first(), {"_id": "1"})
         self.assertEqual(factory.calls, 1)
         self.assertEqual(factory.first_calls, 1)
+
+    def test_sync_cursor_close_after_first_avoids_idle_runner_crossing(self):
+        client = _CountingSyncClientStub()
+        cursor = Cursor(
+            client,
+            _AsyncCursorFactoryStub([{"_id": "1"}]),
+            {},
+            None,
+        )
+
+        self.assertEqual(cursor.first(), {"_id": "1"})
+        self.assertEqual(client.run_calls, 1)
+        cursor.close()
+
+        self.assertEqual(client.run_calls, 1)
 
     def test_sync_cursor_iteration_uses_first_fast_path_for_limit_one(self):
         factory = _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}])
@@ -1086,7 +1187,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(factory.calls, 1)
 
     def test_sync_cursor_rejects_mutation_after_iteration_starts(self):
-        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}]), {}, None)
+        cursor = Cursor(
+            _SyncClientStub(),
+            _AsyncCursorFactoryStub([{"_id": "1"}, {"_id": "2"}]),
+            {},
+            None,
+        )
 
         self.assertEqual(cursor.first(), {"_id": "1"})
         with self.assertRaises(InvalidOperation):
@@ -1099,7 +1205,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
             cursor.batch_size(10)
 
     def test_sync_cursor_batch_size_prefetches_local_batches(self):
-        collection = _BatchTrackingFindCollectionStub([{"_id": "1"}, {"_id": "2"}, {"_id": "3"}])
+        collection = _BatchTrackingFindCollectionStub(
+            [{"_id": "1"}, {"_id": "2"}, {"_id": "3"}]
+        )
         cursor = Cursor(_SyncClientStub(), collection, {}, None, batch_size=2)
 
         iterator = iter(cursor)
@@ -1119,8 +1227,12 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection.last_scan.yield_count, len(documents))
         self.assertIsNone(cursor._as_operation().batch_size)
 
-    def test_sync_cursor_iteration_streams_without_forcing_prefetch_when_batch_size_is_none(self):
-        documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
+    def test_sync_cursor_iteration_streams_without_forcing_prefetch_when_batch_size_is_none(
+        self,
+    ):
+        documents = [
+            {"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)
+        ]
         collection = _BatchTrackingFindCollectionStub(documents)
         cursor = Cursor(_SyncClientStub(), collection, {}, None)
 
@@ -1129,7 +1241,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection.last_scan.yield_count, len(documents))
 
     def test_sync_cursor_iteration_batches_runner_calls(self):
-        documents = [{"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)]
+        documents = [
+            {"_id": str(index)} for index in range(_DEFAULT_LOCAL_PREFETCH_SIZE + 10)
+        ]
         collection = _BatchTrackingFindCollectionStub(documents)
         client = _CountingSyncClientStub()
         cursor = Cursor(client, collection, {}, None)
@@ -1138,7 +1252,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertLess(client.run_calls, len(documents))
 
     def test_sync_cursor_close_is_idempotent_and_blocks_further_use(self):
-        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
+        cursor = Cursor(
+            _SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None
+        )
 
         cursor.close()
         cursor.close()
@@ -1280,7 +1396,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection.last_cursor.close_calls, 1)
 
     def test_sync_cursor_del_swallows_close_errors(self):
-        cursor = Cursor(_SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None)
+        cursor = Cursor(
+            _SyncClientStub(), _AsyncCursorFactoryStub([{"_id": "1"}]), {}, None
+        )
 
         def broken_close() -> None:
             raise RuntimeError("boom")
@@ -1324,7 +1442,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation["cxp"]["interface"], "database/mongodb")
         self.assertEqual(explanation["cxp"]["provider"], "mongoeco")
         self.assertEqual(explanation["cxp"]["capability"], "read")
-        self.assertEqual(collection._engine.explain_semantics_calls[0][1]["context"], None)
+        self.assertEqual(
+            collection._engine.explain_semantics_calls[0][1]["context"], None
+        )
         semantics = collection._engine.explain_semantics_calls[0][0][2]
         self.assertEqual(semantics.hint, "name_1")
         self.assertEqual(semantics.comment, "trace")
@@ -1441,7 +1561,9 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(InvalidOperation):
             cursor.to_list()
 
-    def test_sync_search_index_cursor_supports_first_to_list_rewind_clone_and_close(self):
+    def test_sync_search_index_cursor_supports_first_to_list_rewind_clone_and_close(
+        self,
+    ):
         async_cursor = AsyncSearchIndexCursor(
             lambda: self._load_indexes_async(
                 [

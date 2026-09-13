@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from mongoeco.api._async.cursor import (
     _DEFAULT_LOCAL_PREFETCH_SIZE,
     _resolve_planning_mode,
@@ -25,17 +27,6 @@ class _CursorIterator:
         self._async_iterable = async_iterable
         self._closed = False
 
-    def _pull_chunk(self) -> bool:
-        if self._cursor._sync_buffer_index < len(self._cursor._sync_buffer):
-            return True
-        pull_chunk = getattr(self._async_iterable, "pull_chunk", None)
-        if not callable(pull_chunk):
-            return False
-        batch_size = self._cursor._batch_size or _DEFAULT_LOCAL_PREFETCH_SIZE
-        self._cursor._sync_buffer = self._cursor._client._run(pull_chunk(batch_size))
-        self._cursor._sync_buffer_index = 0
-        return self._cursor._sync_buffer_index < len(self._cursor._sync_buffer)
-
     def __iter__(self):
         return self
 
@@ -45,25 +36,15 @@ class _CursorIterator:
         if self._cursor._active_async_iterable is not self._async_iterable:
             self._closed = True
             raise StopIteration
-        if self._pull_chunk():
-            value = self._cursor._sync_buffer[self._cursor._sync_buffer_index]
-            self._cursor._sync_buffer_index += 1
-            if self._cursor._sync_buffer_index >= len(self._cursor._sync_buffer):
-                self._cursor._sync_buffer = []
-                self._cursor._sync_buffer_index = 0
-            return value
         try:
-            return self._cursor._client._run(self._async_iterable.__anext__())
-        except StopAsyncIteration:
-            self._cursor._exhausted = True
-            self.close()
-            raise StopIteration
+            value = self._cursor._next_document()
         except Exception:
-            try:
-                self.close()
-            except Exception:
-                pass
+            self._closed = True
             raise
+        if value is None:
+            self._closed = True
+            raise StopIteration
+        return value
 
     def close(self) -> None:
         if self._closed:
@@ -148,28 +129,25 @@ class Cursor:
         use_existing_defaults: bool = False,
     ) -> None:
         for name in (
-            'filter_spec',
-            'projection',
-            'collation',
-            'sort',
-            'skip',
-            'limit',
-            'hint',
-            'comment',
-            'max_time_ms',
-            'batch_size',
-            'let',
-            'session',
+            "filter_spec",
+            "projection",
+            "collation",
+            "sort",
+            "skip",
+            "limit",
+            "hint",
+            "comment",
+            "max_time_ms",
+            "batch_size",
+            "let",
+            "session",
         ):
-            attribute = f'_{name}'
+            attribute = f"_{name}"
             if hasattr(self._async_cursor, attribute):
                 value = getattr(self._async_cursor, attribute)
                 setattr(self, attribute, value)
             elif not use_existing_defaults:
-                message = (
-                    'async cursor is missing required state: '
-                    f'{attribute}'
-                )
+                message = f"async cursor is missing required state: {attribute}"
                 raise TypeError(message)
 
     def _ensure_open(self) -> None:
@@ -291,22 +269,29 @@ class Cursor:
             raise ValueError("length must be non-negative or None")
         if length == 0:
             return []
-        if (
-            length is None
-            and not self._started
-            and self._active_async_iterable is None
-        ):
+        if length is None and not self._started and self._active_async_iterable is None:
             return list(self._load())
 
         documents: list[Document] = []
         while length is None or len(documents) < length:
-            document = self._next_for_to_list()
+            document = self._next_document()
             if document is None:
                 break
             documents.append(document)
         return documents
 
-    def _next_for_to_list(self) -> Document | None:
+    def _pull_chunk(self, active) -> bool:
+        if self._sync_buffer_index < len(self._sync_buffer):
+            return True
+        pull_chunk = getattr(active, "pull_chunk", None)
+        if not callable(pull_chunk):
+            return False
+        batch_size = self._batch_size or _DEFAULT_LOCAL_PREFETCH_SIZE
+        self._sync_buffer = self._client._run(pull_chunk(batch_size))
+        self._sync_buffer_index = 0
+        return bool(self._sync_buffer)
+
+    def _next_document(self) -> Document | None:
         if self._exhausted:
             return None
         self._started = True
@@ -315,11 +300,22 @@ class Cursor:
             active = self._async_cursor.__aiter__()
             self._active_async_iterable = active
         try:
+            if self._pull_chunk(active):
+                document = self._sync_buffer[self._sync_buffer_index]
+                self._sync_buffer_index += 1
+                if self._sync_buffer_index == len(self._sync_buffer):
+                    self._sync_buffer = []
+                    self._sync_buffer_index = 0
+                return document
             return self._client._run(active.__anext__())
         except StopAsyncIteration:
             self._exhausted = True
             self._close_active_iterator(active)
             return None
+        except Exception:
+            with suppress(Exception):
+                self._close_active_iterator(active)
+            raise
 
     def first(self) -> Document | None:
         self._ensure_open()
@@ -329,18 +325,7 @@ class Cursor:
             return None
         active = self._active_async_iterable
         if active is not None:
-            try:
-                return self._client._run(active.__anext__())
-            except StopAsyncIteration:
-                self._exhausted = True
-                self._close_active_iterator(active)
-                return None
-            except Exception:
-                try:
-                    self._close_active_iterator(active)
-                except Exception:
-                    pass
-                raise
+            return self._next_document()
         self._started = True
         return self._client._run(self._async_cursor.first())
 
@@ -349,7 +334,7 @@ class Cursor:
         active = self._active_async_iterable
         if active is not None:
             self._close_active_iterator(active)
-        rewind = getattr(self._async_cursor, 'rewind', None)
+        rewind = getattr(self._async_cursor, "rewind", None)
         if callable(rewind):
             rewind()
         self._started = False
@@ -395,7 +380,9 @@ class Cursor:
             if callable(close):
                 self._client._run(close())
         close_cursor = getattr(self._async_cursor, "close", None)
-        if callable(close_cursor):
+        close_nowait = getattr(self._async_cursor, "_close_nowait_if_idle", None)
+        closed_without_wait = callable(close_nowait) and close_nowait()
+        if callable(close_cursor) and not closed_without_wait:
             awaitable = close_cursor()
             try:
                 self._client._run(awaitable)

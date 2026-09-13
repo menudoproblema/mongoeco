@@ -48,10 +48,10 @@ def _serialize_explanation(result: object) -> dict[str, object]:
 
 def _find_explain_cxp_projection(filter_spec: Filter) -> dict[str, object]:
     metadata: dict[str, object] | None = None
-    if isinstance(filter_spec, dict) and '$text' in filter_spec:
-        metadata = {'nonCanonicalFeature': 'classicText'}
+    if isinstance(filter_spec, dict) and "$text" in filter_spec:
+        metadata = {"nonCanonicalFeature": "classicText"}
     return build_mongodb_explain_projection(
-        capability='read',
+        capability="read",
         metadata=metadata,
     )
 
@@ -179,7 +179,11 @@ class _AsyncCursorIterator:
         return items
 
     async def _fill_buffer(self) -> None:
-        target_size = self._batch_size if self._batch_size not in (None, 0) else _DEFAULT_LOCAL_PREFETCH_SIZE
+        target_size = (
+            self._batch_size
+            if self._batch_size not in (None, 0)
+            else _DEFAULT_LOCAL_PREFETCH_SIZE
+        )
         try:
             page = await self._cursor._fetch_batch(self._position, target_size)
         except BaseException:
@@ -224,6 +228,7 @@ def _resolve_planning_mode(collection) -> object:
     if planning_mode is not None:
         return planning_mode
     return getattr(collection, "_planning_mode", None) or PlanningMode.STRICT
+
 
 class AsyncCursor:
     """Cursor async mínimo y explícito sobre una colección."""
@@ -349,12 +354,13 @@ class AsyncCursor:
         record_runtime_opcounter = getattr(engine, "_record_runtime_opcounter", None)
         if callable(record_runtime_opcounter):
             record_runtime_opcounter("query")
-        operation = self._operation_with_overrides(limit=self._limit if limit is None else limit)
+        operation = self._operation_with_overrides(
+            limit=self._limit if limit is None else limit
+        )
         _ensure_operation_executable(self._collection, operation)
-        semantics = self._semantics_with_overrides(limit=operation.limit)
         open_snapshot = getattr(
             self._collection,
-            '_engine_scan_with_operation',
+            "_engine_scan_with_operation",
             None,
         )
         stream = (
@@ -363,7 +369,7 @@ class AsyncCursor:
             else adapt_engine(engine).open_read_snapshot(
                 self._collection._db_name,
                 self._collection._collection_name,
-                semantics,
+                self._semantics_with_overrides(limit=operation.limit),
                 operation_context=operation.context,
             )
         )
@@ -390,13 +396,9 @@ class AsyncCursor:
                 limit=self._limit,
             )
             _ensure_operation_executable(self._collection, operation)
-            semantics = self._semantics_with_overrides(
-                skip=self._skip,
-                limit=self._limit,
-            )
             open_snapshot = getattr(
                 self._collection,
-                '_engine_scan_with_operation',
+                "_engine_scan_with_operation",
                 None,
             )
             source = (
@@ -405,7 +407,10 @@ class AsyncCursor:
                 else adapt_engine(engine).open_read_snapshot(
                     self._collection._db_name,
                     self._collection._collection_name,
-                    semantics,
+                    self._semantics_with_overrides(
+                        skip=self._skip,
+                        limit=self._limit,
+                    ),
                     operation_context=operation.context,
                 )
             )
@@ -433,7 +438,9 @@ class AsyncCursor:
             await self._close_batch_source()
         return page
 
-    def _iter(self, *, limit: int | None = None, enforce_ownership: bool = True) -> _AsyncCursorIterator:
+    def _iter(
+        self, *, limit: int | None = None, enforce_ownership: bool = True
+    ) -> _AsyncCursorIterator:
         self._started = True
         if self._batch_size is None:
             return _AsyncCursorIterator(
@@ -443,12 +450,13 @@ class AsyncCursor:
                 source=self._scan(limit=limit),
             )
         batch_size = self._batch_size if limit is None else limit
-        return _AsyncCursorIterator(self, batch_size=batch_size, enforce_ownership=enforce_ownership)
+        return _AsyncCursorIterator(
+            self, batch_size=batch_size, enforce_ownership=enforce_ownership
+        )
 
     def __aiter__(self):
-        if self._closed or (
-            self._exhausted and self._active_async_iterable is None
-        ):
+        if self._closed or (self._exhausted and self._active_async_iterable is None):
+
             async def _empty():
                 if False:
                     yield None
@@ -526,7 +534,13 @@ class AsyncCursor:
             return []
         if self._limit == 0:
             return []
-        if length is None and self._limit == 1 and self._active_async_iterable is None and not self._started and not self._exhausted:
+        if (
+            length is None
+            and self._limit == 1
+            and self._active_async_iterable is None
+            and not self._started
+            and not self._exhausted
+        ):
             first = await self.first()
             self._exhausted = True
             self._started = True
@@ -546,7 +560,10 @@ class AsyncCursor:
             if callable(profiler):
                 await profiler(
                     op="query",
-                    command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                    command={
+                        "find": self._collection._collection_name,
+                        "filter": operation.filter_spec,
+                    },
                     duration_ns=time.perf_counter_ns() - started_at,
                     operation=operation,
                     errmsg=str(exc),
@@ -556,7 +573,10 @@ class AsyncCursor:
         if callable(profiler):
             await profiler(
                 op="query",
-                command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                command={
+                    "find": self._collection._collection_name,
+                    "filter": operation.filter_spec,
+                },
                 duration_ns=time.perf_counter_ns() - started_at,
                 operation=operation,
             )
@@ -575,6 +595,20 @@ class AsyncCursor:
         self._exhausted = True
         self._closed = True
 
+    def _close_nowait_if_idle(self) -> bool:
+        """Complete close without scheduling when no physical owner remains."""
+        if self._closed:
+            return True
+        if (
+            self._active_async_iterable is not None
+            or self._batch_source is not None
+            or self._retired_sources
+        ):
+            return False
+        self._exhausted = True
+        self._closed = True
+        return True
+
     async def first(self) -> Document | None:
         operation = self._as_operation()
         started_at = time.perf_counter_ns()
@@ -591,7 +625,10 @@ class AsyncCursor:
                 if callable(profiler):
                     await profiler(
                         op="query",
-                        command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                        command={
+                            "find": self._collection._collection_name,
+                            "filter": operation.filter_spec,
+                        },
                         duration_ns=time.perf_counter_ns() - started_at,
                         operation=operation,
                         errmsg=str(exc),
@@ -602,7 +639,10 @@ class AsyncCursor:
                 if callable(profiler):
                     await profiler(
                         op="query",
-                        command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                        command={
+                            "find": self._collection._collection_name,
+                            "filter": operation.filter_spec,
+                        },
                         duration_ns=time.perf_counter_ns() - started_at,
                         operation=operation,
                     )
@@ -627,7 +667,10 @@ class AsyncCursor:
             if callable(profiler):
                 await profiler(
                     op="query",
-                    command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                    command={
+                        "find": self._collection._collection_name,
+                        "filter": operation.filter_spec,
+                    },
                     duration_ns=time.perf_counter_ns() - started_at,
                     operation=operation,
                 )
@@ -636,7 +679,10 @@ class AsyncCursor:
         if callable(profiler):
             await profiler(
                 op="query",
-                command={"find": self._collection._collection_name, "filter": operation.filter_spec},
+                command={
+                    "find": self._collection._collection_name,
+                    "filter": operation.filter_spec,
+                },
                 duration_ns=time.perf_counter_ns() - started_at,
                 operation=operation,
             )
@@ -655,7 +701,7 @@ class AsyncCursor:
         return self
 
     def clone(self) -> "AsyncCursor":
-        create_context = getattr(self._collection, '_new_operation_context', None)
+        create_context = getattr(self._collection, "_new_operation_context", None)
         operation_context = (
             create_context(
                 session=self._session,
@@ -670,9 +716,7 @@ class AsyncCursor:
             else None
         )
         execution_variables = (
-            operation_context.expressions
-            if operation_context is not None
-            else None
+            operation_context.expressions if operation_context is not None else None
         )
         return type(self)(
             self._collection,
@@ -746,7 +790,7 @@ class AsyncCursor:
                 planning_mode=operation.planning_mode,
                 planning_issues=operation.planning_issues,
             ).to_document()
-            explanation['cxp'] = _find_explain_cxp_projection(self._filter_spec)
+            explanation["cxp"] = _find_explain_cxp_projection(self._filter_spec)
             return explanation
         engine = self._collection._engine
         semantics = self._base_semantics()
@@ -757,5 +801,5 @@ class AsyncCursor:
             context=self._session,
         )
         explanation = _serialize_explanation(result)
-        explanation['cxp'] = _find_explain_cxp_projection(self._filter_spec)
+        explanation["cxp"] = _find_explain_cxp_projection(self._filter_spec)
         return explanation

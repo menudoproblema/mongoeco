@@ -42,17 +42,19 @@ if TYPE_CHECKING:
     from mongoeco.engines.snapshots import ReadSnapshot
 
 
-_CHANGE_STREAM_TRANSACTION_PREFIX = 'change_stream_hub:'
-_PENDING_CHANGE_EVENTS_KEY = 'pending_change_events'
+_CHANGE_STREAM_TRANSACTION_PREFIX = "change_stream_hub:"
+_PENDING_CHANGE_EVENTS_KEY = "pending_change_events"
 
 
 class CollectionRuntimeCoordinator:
-    def __init__(self, collection: 'AsyncCollection'):
+    def __init__(self, collection: "AsyncCollection"):
         self._collection = collection
-        self._engine_spi = adapt_engine(getattr(collection, '_engine', object()))
+        self._engine_spi = getattr(collection, "_validated_engine_spi", None)
+        if self._engine_spi is None:
+            self._engine_spi = adapt_engine(getattr(collection, "_engine", object()))
         try:
             self._engine_spi.prepare_change_delivery(
-                getattr(collection, '_change_hub', None)
+                getattr(collection, "_change_hub", None)
             )
         except RuntimeError:
             # Lazy clients register immediately before their first write.
@@ -66,16 +68,16 @@ class CollectionRuntimeCoordinator:
             or operation_context is None
             or operation_context.session is None
             or not operation_context.session.in_transaction
-            or self._engine_spi.capabilities.change_delivery not in {
-                'commit-sequence',
-                'transactional-outbox',
+            or self._engine_spi.capabilities.change_delivery
+            not in {
+                "commit-sequence",
+                "transactional-outbox",
             }
         ):
             return
         session = operation_context.session
         hook_key = (
-            f'change_outbox_dispatch:{id(self._collection._engine)}:'
-            f'{id(change_hub)}'
+            f"change_outbox_dispatch:{id(self._collection._engine)}:{id(change_hub)}"
         )
         session.register_transaction_hooks(
             hook_key,
@@ -95,14 +97,14 @@ class CollectionRuntimeCoordinator:
         except Exception as exc:
             if change_hub is None:
                 return
-            mark_failure = getattr(change_hub, 'mark_publish_failure', None)
+            mark_failure = getattr(change_hub, "mark_publish_failure", None)
             if callable(mark_failure):
                 mark_failure(exc)
 
     @staticmethod
     def ensure_session_active(session: object | None) -> None:
         if session is not None:
-            ensure_active = getattr(session, 'ensure_active', None)
+            ensure_active = getattr(session, "ensure_active", None)
             if callable(ensure_active):
                 ensure_active()
 
@@ -118,9 +120,7 @@ class CollectionRuntimeCoordinator:
         if session is None:
             return
         self.ensure_session_active(session)
-        recorder = getattr(
-            self._collection._engine, '_record_operation_metadata', None
-        )
+        recorder = getattr(self._collection._engine, "_record_operation_metadata", None)
         if callable(recorder):
             try:
                 recorder(
@@ -132,7 +132,7 @@ class CollectionRuntimeCoordinator:
                 )
             except Exception:
                 pass
-        observe_operation = getattr(session, 'observe_operation', None)
+        observe_operation = getattr(session, "observe_operation", None)
         if callable(observe_operation):
             observe_operation()
 
@@ -146,18 +146,14 @@ class CollectionRuntimeCoordinator:
         operation: FindOperation | None = None,
         errmsg: str | None = None,
     ) -> None:
-        if self._collection._collection_name == 'system.profile':
+        if self._collection._collection_name == "system.profile":
             return
-        recorder = getattr(
-            self._collection._engine, '_record_profile_event', None
-        )
+        recorder = getattr(self._collection._engine, "_record_profile_event", None)
         if not callable(recorder):
             return
         duration_micros = max(1, duration_ns // 1000)
         active = True
-        is_active = getattr(
-            self._collection._engine, '_profile_is_active', None
-        )
+        is_active = getattr(self._collection._engine, "_profile_is_active", None)
         if callable(is_active):
             try:
                 active = bool(
@@ -186,9 +182,7 @@ class CollectionRuntimeCoordinator:
         execution_lineage: tuple[object, ...] = ()
         fallback_reason: str | None = None
         if operation is not None:
-            planner = getattr(
-                self._collection._engine, 'plan_find_execution', None
-            )
+            planner = getattr(self._collection._engine, "plan_find_execution", None)
             if callable(planner):
                 try:
                     execution_plan = await planner(
@@ -251,26 +245,23 @@ class CollectionRuntimeCoordinator:
         if change_hub is None:
             return
         if (
-            session is None
-            or not bool(getattr(session, 'in_transaction', False))
+            session is None or not bool(getattr(session, "in_transaction", False))
         ) and not self._change_hub_should_publish(change_hub):
             self._mark_change_hub_gap(change_hub)
             return
         payload = {
-            'operation_type': operation_type,
-            'db_name': self._collection._db_name,
-            'coll_name': self._collection._collection_name,
-            'document_key': deepcopy(document_key),
-            'full_document': deepcopy(full_document)
+            "operation_type": operation_type,
+            "db_name": self._collection._db_name,
+            "coll_name": self._collection._collection_name,
+            "document_key": deepcopy(document_key),
+            "full_document": deepcopy(full_document)
             if full_document is not None
             else None,
-            'update_description': deepcopy(update_description)
+            "update_description": deepcopy(update_description)
             if update_description is not None
             else None,
         }
-        if session is not None and bool(
-            getattr(session, 'in_transaction', False)
-        ):
+        if session is not None and bool(getattr(session, "in_transaction", False)):
             pending_events = self._pending_transaction_change_events(session)
             pending_events.append(payload)
             return
@@ -282,9 +273,7 @@ class CollectionRuntimeCoordinator:
         change_hub = self._collection._change_hub
         if change_hub is None:
             return False
-        if session is not None and bool(
-            getattr(session, 'in_transaction', False)
-        ):
+        if session is not None and bool(getattr(session, "in_transaction", False)):
             return True
         return self._change_hub_should_publish(change_hub)
 
@@ -295,14 +284,14 @@ class CollectionRuntimeCoordinator:
 
     @staticmethod
     def _change_hub_should_publish(change_hub: object) -> bool:
-        should_publish = getattr(change_hub, 'should_publish_events', None)
+        should_publish = getattr(change_hub, "should_publish_events", None)
         if callable(should_publish):
             return bool(should_publish())
         return True
 
     @staticmethod
     def _mark_change_hub_gap(change_hub: object) -> None:
-        mark_gap = getattr(change_hub, 'mark_gap', None)
+        mark_gap = getattr(change_hub, "mark_gap", None)
         if callable(mark_gap):
             mark_gap()
 
@@ -312,7 +301,7 @@ class CollectionRuntimeCoordinator:
         change_hub = self._collection._change_hub
         if change_hub is None:
             return []
-        engine_key = f'{_CHANGE_STREAM_TRANSACTION_PREFIX}{id(change_hub)}'
+        engine_key = f"{_CHANGE_STREAM_TRANSACTION_PREFIX}{id(change_hub)}"
         context = session.get_engine_context(engine_key)
         if context is None:
             context = EngineTransactionContext(
@@ -370,7 +359,7 @@ class CollectionRuntimeCoordinator:
         try:
             change_hub.publish(**payload)
         except Exception as exc:  # A committed write cannot be rolled back here.
-            mark_failure = getattr(change_hub, 'mark_publish_failure', None)
+            mark_failure = getattr(change_hub, "mark_publish_failure", None)
             if callable(mark_failure):
                 mark_failure(exc)
 
@@ -385,17 +374,15 @@ class CollectionRuntimeCoordinator:
         result = captured.result
         if (
             document is None
-            or '_id' not in document
+            or "_id" not in document
             or (result.upserted_id is None and result.modified_count == 0)
         ):
             return
         self.publish_change_event(
             operation_type=(
-                'insert'
-                if result.upserted_id is not None
-                else matched_operation_type
+                "insert" if result.upserted_id is not None else matched_operation_type
             ),
-            document_key={'_id': deepcopy(document['_id'])},
+            document_key={"_id": deepcopy(document["_id"])},
             full_document=document,
             session=session,
         )
@@ -410,12 +397,12 @@ class CollectionRuntimeCoordinator:
         if (
             captured.result.deleted_count == 0
             or document is None
-            or '_id' not in document
+            or "_id" not in document
         ):
             return
         self.publish_change_event(
-            operation_type='delete',
-            document_key={'_id': deepcopy(document['_id'])},
+            operation_type="delete",
+            document_key={"_id": deepcopy(document["_id"])},
             session=session,
         )
 
@@ -430,12 +417,12 @@ class CollectionRuntimeCoordinator:
             not outcome.applied
             or outcome.operation_type is None
             or document is None
-            or '_id' not in document
+            or "_id" not in document
         ):
             return
         self.publish_change_event(
             operation_type=outcome.operation_type,
-            document_key={'_id': deepcopy(document['_id'])},
+            document_key={"_id": deepcopy(document["_id"])},
             full_document=document,
             session=session,
         )
@@ -462,8 +449,8 @@ class CollectionRuntimeCoordinator:
         self._prepare_engine_change_delivery(operation.context)
         started_at = time.perf_counter_ns()
         try:
-            on_commit = (
-                lambda captured: self._publish_captured_update_event(
+            on_commit = lambda captured: (
+                self._publish_captured_update_event(
                     captured,
                     matched_operation_type=publish_operation_type,
                     session=session,
@@ -482,19 +469,17 @@ class CollectionRuntimeCoordinator:
                 operation_context=operation.context,
                 bypass_document_validation=bypass_document_validation,
                 replacement_document=replacement_document,
-                on_commit=(
-                    on_commit if publish_operation_type is not None else None
-                ),
+                on_commit=(on_commit if publish_operation_type is not None else None),
             )
         except Exception as exc:
             await self._collection._profile_operation(
-                op='update',
+                op="update",
                 command={
-                    'update': self._collection._collection_name,
-                    'q': operation.filter_spec,
-                    'u': deepcopy(operation.update_spec or {}),
-                    'upsert': upsert,
-                    'bypassDocumentValidation': bypass_document_validation,
+                    "update": self._collection._collection_name,
+                    "q": operation.filter_spec,
+                    "u": deepcopy(operation.update_spec or {}),
+                    "upsert": upsert,
+                    "bypassDocumentValidation": bypass_document_validation,
                 },
                 duration_ns=time.perf_counter_ns() - started_at,
                 errmsg=str(exc),
@@ -502,13 +487,13 @@ class CollectionRuntimeCoordinator:
             raise
         self._dispatch_engine_changes(operation.context)
         await self._collection._profile_operation(
-            op='update',
+            op="update",
             command={
-                'update': self._collection._collection_name,
-                'q': operation.filter_spec,
-                'u': deepcopy(operation.update_spec or {}),
-                'upsert': upsert,
-                'bypassDocumentValidation': bypass_document_validation,
+                "update": self._collection._collection_name,
+                "q": operation.filter_spec,
+                "u": deepcopy(operation.update_spec or {}),
+                "upsert": upsert,
+                "bypassDocumentValidation": bypass_document_validation,
             },
             duration_ns=time.perf_counter_ns() - started_at,
         )
@@ -598,7 +583,7 @@ class CollectionRuntimeCoordinator:
             dialect=self._collection._mongodb_dialect,
         )
         if operation.context is None:
-            raise TypeError('find operation is missing OperationContext')
+            raise TypeError("find operation is missing OperationContext")
         return self._engine_spi.open_read_snapshot(
             self._collection._db_name,
             self._collection._collection_name,
@@ -641,20 +626,22 @@ class CollectionRuntimeCoordinator:
                 dialect=self._collection._mongodb_dialect,
                 operation_context=operation.context,
                 on_commit=(
-                    lambda captured: self._publish_captured_delete_event(
-                        captured,
-                        session=session,
+                    lambda captured: (
+                        self._publish_captured_delete_event(
+                            captured,
+                            session=session,
+                        )
+                        if publish_change_event
+                        else None
                     )
-                    if publish_change_event
-                    else None
                 ),
             )
         except Exception as exc:
             await self._collection._profile_operation(
-                op='remove',
+                op="remove",
                 command={
-                    'delete': self._collection._collection_name,
-                    'q': operation.filter_spec,
+                    "delete": self._collection._collection_name,
+                    "q": operation.filter_spec,
                 },
                 duration_ns=time.perf_counter_ns() - started_at,
                 errmsg=str(exc),
@@ -662,10 +649,10 @@ class CollectionRuntimeCoordinator:
             raise
         self._dispatch_engine_changes(operation.context)
         await self._collection._profile_operation(
-            op='remove',
+            op="remove",
             command={
-                'delete': self._collection._collection_name,
-                'q': operation.filter_spec,
+                "delete": self._collection._collection_name,
+                "q": operation.filter_spec,
             },
             duration_ns=time.perf_counter_ns() - started_at,
         )
@@ -705,10 +692,10 @@ class CollectionRuntimeCoordinator:
             operation_context=operation.context,
         )
         await self._collection._profile_operation(
-            op='command',
+            op="command",
             command={
-                'count': self._collection._collection_name,
-                'query': operation.filter_spec,
+                "count": self._collection._collection_name,
+                "query": operation.filter_spec,
             },
             duration_ns=time.perf_counter_ns() - started_at,
             operation=operation,
@@ -719,7 +706,7 @@ class CollectionRuntimeCoordinator:
         self,
         filter_spec: Filter,
         *,
-        plan: 'QueryNode' | None = None,
+        plan: "QueryNode" | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         hint: HintSpec | None = None,
@@ -769,7 +756,7 @@ class CollectionRuntimeCoordinator:
             operation = operation.bind(operation_context)
         if execution_variables is None:
             execution_variables = operation_context.expressions
-        return AsyncCursor(
+        cursor = AsyncCursor(
             self._collection,
             operation.filter_spec,
             operation.plan,
@@ -788,6 +775,10 @@ class CollectionRuntimeCoordinator:
             session=resolved_session,
             apply_codec_options=apply_codec_options,
         )
+        # These fields are views of the operation just bound above. Retain the
+        # artifact instead of reconstructing/binding it at the first read.
+        cursor._operation_cache = operation
+        return cursor
 
     def build_upsert_replacement_document(
         self,
@@ -798,18 +789,18 @@ class CollectionRuntimeCoordinator:
 
         seeded: Document = {}
         seed_upsert_document(seeded, filter_spec)
-        if '_id' in seeded and '_id' in replacement:
+        if "_id" in seeded and "_id" in replacement:
             if not self._collection._mongodb_dialect.values_equal(
-                seeded['_id'], replacement['_id']
+                seeded["_id"], replacement["_id"]
             ):
                 raise WriteError(
-                    'The _id field cannot conflict with the replacement filter during upsert',
+                    "The _id field cannot conflict with the replacement filter during upsert",
                     code=66,
                 )
         document = deepcopy(seeded)
         document.update(deepcopy(replacement))
-        if '_id' not in document:
-            document['_id'] = ObjectId()
+        if "_id" not in document:
+            document["_id"] = ObjectId()
         return document
 
     @staticmethod

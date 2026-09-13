@@ -1,37 +1,39 @@
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from collections.abc import Mapping
-from typing import Iterable
 
 from mongoeco.api.operations import FindOperation, UpdateOperation
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.compiled_query import CompiledQuery
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import CollationSpec, normalize_collation
-from mongoeco.core.operators import CompiledExecutableUpdatePlan
+from mongoeco.core.compiled_query import CompiledQuery
+from mongoeco.core.expression_context import (
+    ExpressionExecutionContext,
+    ensure_expression_context,
+)
 from mongoeco.core.filtering import QueryEngine
-from mongoeco.core.expression_context import ExpressionExecutionContext, ensure_expression_context
-from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
 from mongoeco.core.operation_context import OperationContext
-from mongoeco.core.projections import apply_projection
+from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
+from mongoeco.core.operators import CompiledExecutableUpdatePlan
+from mongoeco.core.projections import _ProjectionExecutor
 from mongoeco.core.query_plan import MatchAll, QueryNode, ensure_query_plan
-from mongoeco.core.search import ClassicTextQuery, strip_search_result_metadata
 from mongoeco.core.schema_validation import (
     CompiledCollectionValidator,
     SchemaValidationResult,
     compile_collection_validator,
 )
+from mongoeco.core.search import ClassicTextQuery, strip_search_result_metadata
 from mongoeco.core.sorting import sort_documents, sort_documents_limited
 from mongoeco.errors import DocumentValidationFailure
 from mongoeco.types import (
+    CollationDocument,
     Document,
     ExecutionLineageStep,
-    PhysicalPlanStep,
     Filter,
+    PhysicalPlanStep,
     PlanningIssue,
     Projection,
     QueryPlanExplanation,
     SortSpec,
-    CollationDocument,
 )
 
 
@@ -53,7 +55,9 @@ class EngineFindSemantics:
     variables: ExpressionExecutionContext = field(
         default_factory=ExpressionExecutionContext
     )
-    compiled_query: CompiledQuery | None = field(default=None, compare=False, hash=False)
+    compiled_query: CompiledQuery | None = field(
+        default=None, compare=False, hash=False
+    )
     operation_context: OperationContext | None = field(
         default=None,
         compare=False,
@@ -64,18 +68,18 @@ class EngineFindSemantics:
     def __post_init__(self) -> None:
         if self.operation_context is not None:
             if self.dialect is not self.operation_context.dialect:
-                message = 'read dialect diverges from OperationContext'
+                message = "read dialect diverges from OperationContext"
                 raise ValueError(message)
             if self.collation != self.operation_context.collation:
-                message = 'read collation diverges from OperationContext'
+                message = "read collation diverges from OperationContext"
                 raise ValueError(message)
             if self.variables is not self.operation_context.expressions:
-                message = 'read variables diverge from OperationContext'
+                message = "read variables diverge from OperationContext"
                 raise ValueError(message)
         if self._deadline is None and self.max_time_ms is not None:
             object.__setattr__(
                 self,
-                '_deadline',
+                "_deadline",
                 operation_deadline(self.max_time_ms),
             )
 
@@ -118,13 +122,13 @@ class EngineUpdateSemantics:
         if self.operation_context is None:
             return
         if self.dialect is not self.operation_context.dialect:
-            message = 'update dialect diverges from OperationContext'
+            message = "update dialect diverges from OperationContext"
             raise ValueError(message)
         if self.collation != self.operation_context.collation:
-            message = 'update collation diverges from OperationContext'
+            message = "update collation diverges from OperationContext"
             raise ValueError(message)
         if self.variables is not self.operation_context.expressions:
-            message = 'update variables diverge from OperationContext'
+            message = "update variables diverge from OperationContext"
             raise ValueError(message)
 
 
@@ -212,12 +216,14 @@ def compile_find_semantics(
     if limit is not None and limit < 0:
         raise ValueError("limit must be >= 0")
     effective_collation = normalize_collation(
-        operation_context.collation
-        if operation_context is not None
-        else collation
+        operation_context.collation if operation_context is not None else collation
     )
-    effective_selector_filter = filter_spec if selector_filter is None else selector_filter
-    query_plan = ensure_query_plan(effective_selector_filter, plan, dialect=effective_dialect)
+    effective_selector_filter = (
+        filter_spec if selector_filter is None else selector_filter
+    )
+    query_plan = ensure_query_plan(
+        effective_selector_filter, plan, dialect=effective_dialect
+    )
 
     return EngineFindSemantics(
         filter_spec=filter_spec,
@@ -292,13 +298,13 @@ def compile_update_semantics(
     if operation.compiled_update_plan is None or operation.compiled_upsert_plan is None:
         raise ValueError("UpdateOperation must include compiled update plans")
     effective_selector_filter = (
-        operation.filter_spec
-        if selector_filter is None
-        else selector_filter
+        operation.filter_spec if selector_filter is None else selector_filter
     )
     return EngineUpdateSemantics(
         filter_spec=operation.filter_spec,
-        query_plan=ensure_query_plan(operation.filter_spec, operation.plan, dialect=effective_dialect),
+        query_plan=ensure_query_plan(
+            operation.filter_spec, operation.plan, dialect=effective_dialect
+        ),
         selector_plan=(
             ensure_query_plan(
                 effective_selector_filter,
@@ -392,6 +398,87 @@ def iter_filtered_documents(
     enforce_deadline(deadline)
 
 
+class FiniteDocumentScan:
+    """Stateful no-sort semantics with one source row examined per step."""
+
+    def __init__(
+        self,
+        documents: Iterable[Document],
+        semantics: EngineFindSemantics,
+        *,
+        emit_public_documents: bool = True,
+    ) -> None:
+        if semantics.sort is not None:
+            message = "finite document scans do not accept blocking sort"
+            raise ValueError(message)
+        self._documents = iter(documents)
+        self._semantics = semantics
+        self._project = _ProjectionExecutor(
+            semantics.projection,
+            selector_filter=semantics.selector_filter,
+            dialect=semantics.dialect,
+        )
+        self._remaining_skip = semantics.skip
+        self._remaining_limit = semantics.limit
+        self._emit_public_documents = emit_public_documents
+
+    def __iter__(self) -> "FiniteDocumentScan":
+        return self
+
+    def __next__(self) -> Document:
+        while True:
+            matched, document = self.next_examined()
+            if matched:
+                if document is None:
+                    message = "matched finite scan row has no document"
+                    raise RuntimeError(message)
+                return document
+
+    def next_examined(self) -> tuple[bool, Document | None]:
+        if self._remaining_limit == 0:
+            raise StopIteration
+        semantics = self._semantics
+        enforce_deadline(semantics.deadline)
+        document = next(self._documents)
+        if not self._matches(document):
+            return False, None
+        if self._remaining_skip:
+            self._remaining_skip -= 1
+            return False, None
+        projected = (
+            document if semantics.projection is None else self._project(document)
+        )
+        cleaned = _strip_result_metadata(projected)
+        result = (
+            DocumentCodec.to_public(cleaned) if self._emit_public_documents else cleaned
+        )
+        if self._remaining_limit is not None:
+            self._remaining_limit -= 1
+        return True, result
+
+    def _matches(self, document: Document) -> bool:
+        semantics = self._semantics
+        if isinstance(semantics.query_plan, MatchAll):
+            return True
+        if semantics.compiled_query is not None:
+            return semantics.compiled_query.match(
+                document,
+                variables=semantics.variables,
+            )
+        return QueryEngine.match_plan(
+            document,
+            semantics.query_plan,
+            dialect=semantics.dialect,
+            collation=semantics.collation,
+            variables=semantics.variables,
+        )
+
+    def close(self) -> None:
+        close = getattr(self._documents, "close", None)
+        if callable(close):
+            close()
+
+
 def finalize_documents(
     documents: Iterable[Document],
     semantics: EngineFindSemantics,
@@ -400,6 +487,26 @@ def finalize_documents(
     apply_skip_limit_phase: bool = True,
     emit_public_documents: bool = True,
 ) -> list[Document]:
+    return list(
+        _iter_finalize_documents(
+            documents,
+            semantics,
+            apply_sort_phase=apply_sort_phase,
+            apply_skip_limit_phase=apply_skip_limit_phase,
+            emit_public_documents=emit_public_documents,
+        )
+    )
+
+
+def _iter_finalize_documents(
+    documents: Iterable[Document],
+    semantics: EngineFindSemantics,
+    *,
+    apply_sort_phase: bool = True,
+    apply_skip_limit_phase: bool = True,
+    emit_public_documents: bool = True,
+) -> Iterable[Document]:
+    """Prepare blocking order/selection, then project the selected rows on demand."""
     deadline = semantics.deadline
     if apply_sort_phase:
         if apply_skip_limit_phase and semantics.limit is not None:
@@ -428,15 +535,12 @@ def finalize_documents(
             result = result[semantics.skip :]
         if semantics.limit is not None:
             result = result[: semantics.limit]
-    projected: list[Document] = []
-    for document in stream_finalize_documents(
+    yield from stream_finalize_documents(
         result,
         semantics,
         apply_skip_limit_phase=False,
         emit_public_documents=emit_public_documents,
-    ):
-        projected.append(document)
-    return projected
+    )
 
 
 def stream_finalize_documents(
@@ -449,6 +553,11 @@ def stream_finalize_documents(
     deadline = semantics.deadline
     projection = semantics.projection
     dialect = semantics.dialect
+    project = _ProjectionExecutor(
+        projection,
+        selector_filter=semantics.selector_filter,
+        dialect=dialect,
+    )
     remaining_skip = semantics.skip if apply_skip_limit_phase else 0
     remaining_limit = semantics.limit if apply_skip_limit_phase else None
     if deadline is None:
@@ -456,16 +565,7 @@ def stream_finalize_documents(
             if remaining_skip:
                 remaining_skip -= 1
                 continue
-            projected = (
-                document
-                if projection is None
-                else apply_projection(
-                    document,
-                    projection,
-                    selector_filter=semantics.selector_filter,
-                    dialect=dialect,
-                )
-            )
+            projected = document if projection is None else project(document)
             cleaned = _strip_result_metadata(projected)
             yield DocumentCodec.to_public(cleaned) if emit_public_documents else cleaned
             if remaining_limit is not None:
@@ -479,16 +579,7 @@ def stream_finalize_documents(
         if remaining_skip:
             remaining_skip -= 1
             continue
-        projected = (
-            document
-            if projection is None
-            else apply_projection(
-                document,
-                projection,
-                selector_filter=semantics.selector_filter,
-                dialect=dialect,
-            )
-        )
+        projected = document if projection is None else project(document)
         cleaned = _strip_result_metadata(projected)
         yield DocumentCodec.to_public(cleaned) if emit_public_documents else cleaned
         if remaining_limit is not None:

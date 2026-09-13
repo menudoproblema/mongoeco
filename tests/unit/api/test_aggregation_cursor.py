@@ -1,7 +1,7 @@
 import datetime
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from mongoeco import AsyncMongoClient, MongoClient
 from mongoeco.api._async.client import AsyncDatabase
@@ -42,9 +42,17 @@ class _FakeAsyncFindCursor:
     def __init__(self, documents):
         self._documents = documents
         self._plan = MatchAll()
+        self.to_list_lengths = []
+        self.close_calls = 0
 
-    async def to_list(self):
-        return list(self._documents)
+    async def to_list(self, length=None):
+        self.to_list_lengths.append(length)
+        if length is None:
+            return list(self._documents)
+        return list(self._documents[:length])
+
+    async def close(self):
+        self.close_calls += 1
 
 
 class _FakeCollection:
@@ -97,7 +105,9 @@ class _FakeCollection:
             documents = [
                 apply_projection(document, projection) for document in documents
             ]
-        return _FakeAsyncFindCursor(documents)
+        cursor = _FakeAsyncFindCursor(documents)
+        self.last_find_cursor = cursor
+        return cursor
 
     def _build_cursor(self, operation, *, session=None):
         self.built_operations.append((operation, session))
@@ -1332,6 +1342,58 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explain_semantics.comment, "trace")
         self.assertEqual(explain_semantics.max_time_ms, 5)
 
+    async def test_explain_surfaces_bounded_lookup_candidate_and_runtime_fallback(
+        self,
+    ):
+        collection = _FakeCollection([{"_id": "1", "role": "admin"}])
+        collection._engine.aggregation_cost_policy = AggregationCostPolicy(
+            max_materialized_documents=100,
+        )
+        collection._engine.aggregation_spill_policy = AggregationSpillPolicy(
+            threshold=40,
+        )
+        pipeline = [
+            {
+                "$lookup": {
+                    "from": "roles",
+                    "localField": "role",
+                    "foreignField": "name",
+                    "as": "resolved",
+                },
+            },
+        ]
+
+        explanation = await AsyncAggregationCursor(collection, pipeline).explain()
+
+        self.assertEqual(
+            explanation["pushdown"]["lookupPlans"],
+            [
+                {
+                    "stagePath": [0],
+                    "strategy": "bounded-hash-candidate",
+                    "reason": "eligible-with-runtime-fallback",
+                    "maxAssociations": 40,
+                },
+            ],
+        )
+
+        collated = AsyncAggregationCursor(
+            collection,
+            compile_aggregate_operation(
+                pipeline,
+                collation={"locale": "en", "strength": 2},
+            ),
+        )
+        collated_explanation = await collated.explain()
+        self.assertEqual(
+            collated_explanation["pushdown"]["lookupPlans"][0],
+            {
+                "stagePath": [0],
+                "strategy": "nested-loop",
+                "reason": "collation",
+            },
+        )
+
     async def test_async_aggregation_cursor_explain_covers_search_fallback_and_first_empty_profile(
         self,
     ):
@@ -1476,8 +1538,20 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             ),
         )
 
-        with self.assertRaises(OperationFailure):
+        referenced_loader = AsyncMock(return_value={})
+        with (
+            patch.object(
+                cursor,
+                "_load_referenced_collections",
+                referenced_loader,
+            ),
+            self.assertRaises(OperationFailure),
+        ):
             await cursor.to_list()
+
+        self.assertEqual(collection.last_find_cursor.to_list_lengths, [2])
+        self.assertEqual(collection.last_find_cursor.close_calls, 1)
+        referenced_loader.assert_not_awaited()
 
     async def test_materialize_allows_large_blocking_pipeline_when_spill_is_available(
         self,
