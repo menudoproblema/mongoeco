@@ -10,8 +10,24 @@ import sys
 import tempfile
 
 
+_PYPI_SIMPLE_INDEX = "https://pypi.org/simple"
+
+
 def _run(command: list[str], *, cwd: Path | None = None) -> None:
     subprocess.run(command, cwd=cwd, check=True)
+
+
+def _install_from_pypi(pip_bin: Path, *requirements: str) -> None:
+    _run(
+        [
+            str(pip_bin),
+            "install",
+            "--index-url",
+            _PYPI_SIMPLE_INDEX,
+            "--no-cache-dir",
+            *requirements,
+        ],
+    )
 
 
 def _contract_smoke_script() -> str:
@@ -140,8 +156,8 @@ def main() -> int:
         if venv_root.exists():
             shutil.rmtree(venv_root)
         _run([sys.executable, "-m", "venv", str(venv_root)])
-        _run([str(pip_bin), "install", "--upgrade", "pip"])
-        _run([str(pip_bin), "install", f"mongoeco=={args.version}"])
+        _install_from_pypi(pip_bin, "--upgrade", "pip")
+        _install_from_pypi(pip_bin, f"mongoeco=={args.version}")
         script = f"EXPECTED_VERSION = {args.version!r}\n{_contract_smoke_script()}"
         _run([str(python_bin), "-c", script], cwd=Path("/tmp"))
     finally:
