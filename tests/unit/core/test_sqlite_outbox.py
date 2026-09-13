@@ -36,7 +36,7 @@ from mongoeco.engines._sqlite_outbox import (
     renew_ephemeral_consumers,
     unregister_consumer,
 )
-from mongoeco.engines.adapter import adapt_engine
+from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
@@ -852,7 +852,7 @@ class SQLiteOutboxTests(unittest.IsolatedAsyncioTestCase):
             await engine.connect()
             try:
                 hub = ChangeStreamHub(journal_path=journal_path)
-                adapt_engine(engine).prepare_change_delivery(hub)
+                EngineSpiAdapter(engine).prepare_change_delivery(hub)
                 context = OperationContext.create(
                     dialect=MONGODB_DIALECT_70,
                     publication=ChangePublicationPolicy.EMIT,
@@ -873,7 +873,7 @@ class SQLiteOutboxTests(unittest.IsolatedAsyncioTestCase):
             await restarted.connect()
             try:
                 hub = ChangeStreamHub(journal_path=journal_path)
-                adapter = adapt_engine(restarted)
+                adapter = EngineSpiAdapter(restarted)
                 adapter.prepare_change_delivery(hub)
                 adapter.dispatch_committed_changes(hub)
                 adapter.dispatch_committed_changes(hub)
@@ -893,7 +893,7 @@ class SQLiteOutboxTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             hub = ChangeStreamHub()
-            adapter = adapt_engine(engine)
+            adapter = EngineSpiAdapter(engine)
             adapter.prepare_change_delivery(hub)
             context = OperationContext.create(
                 dialect=MONGODB_DIALECT_70,
@@ -921,7 +921,7 @@ class SQLiteOutboxTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             hub = ChangeStreamHub()
-            adapter = adapt_engine(engine)
+            adapter = EngineSpiAdapter(engine)
             adapter.prepare_change_delivery(hub)
             context = OperationContext.create(
                 dialect=MONGODB_DIALECT_70,
@@ -950,7 +950,7 @@ class SQLiteOutboxTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             first_hub = ChangeStreamHub()
-            adapter = adapt_engine(engine)
+            adapter = EngineSpiAdapter(engine)
             adapter.prepare_change_delivery(first_hub)
             await engine.insert_document(
                 'db',
@@ -1294,7 +1294,7 @@ class SQLiteOutboxTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             hub = ChangeStreamHub(journal_path='lagging-consumer.json')
-            adapter = adapt_engine(engine)
+            adapter = EngineSpiAdapter(engine)
             adapter.prepare_change_delivery(hub)
             for index in range(3):
                 context = OperationContext.create(
@@ -1340,7 +1340,7 @@ class SQLiteOutboxTests(unittest.IsolatedAsyncioTestCase):
             database_path = str(Path(temp_dir) / 'mongoeco.sqlite')
             engine = SQLiteEngine(database_path)
             await engine.connect()
-            adapt_engine(engine).prepare_change_delivery(ChangeStreamHub())
+            EngineSpiAdapter(engine).prepare_change_delivery(ChangeStreamHub())
             await engine.disconnect()
 
             reopened = SQLiteEngine(database_path)
@@ -1418,8 +1418,8 @@ class SQLiteOutboxTests(unittest.IsolatedAsyncioTestCase):
             try:
                 first_hub = ChangeStreamHub()
                 second_hub = ChangeStreamHub()
-                first_adapter = adapt_engine(first)
-                second_adapter = adapt_engine(second)
+                first_adapter = EngineSpiAdapter(first)
+                second_adapter = EngineSpiAdapter(second)
                 first_adapter.prepare_change_delivery(first_hub)
                 second_adapter.prepare_change_delivery(second_hub)
                 context = OperationContext.create(

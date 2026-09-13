@@ -15,6 +15,7 @@ from mongoeco.engines.results import (
 from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
 from mongoeco.session import ClientSession, EngineTransactionContext
 from mongoeco.types import DeleteResult, UpdateResult
+from tests.unit.api._collection_test_support import _SpiV2EngineStub
 
 
 class CollectionRuntimeCoordinatorTests(unittest.TestCase):
@@ -33,7 +34,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
 
         CollectionRuntimeCoordinator(collection)
 
-    def test_v2_document_lookup_does_not_leak_legacy_dialect_keyword(self):
+    def test_v2_document_lookup_uses_only_operation_context(self):
         class StrictGetEngine(MemoryEngine):
             async def get_document(
                 self,
@@ -62,7 +63,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         assert engine.lookup[:4] == ("db", "coll", "value", None)
 
     def test_document_by_id_crosses_adapter_with_operation_context(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def get_document(self, *args, **kwargs):
                 self.args = args
                 self.kwargs = kwargs
@@ -74,10 +75,11 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         result = asyncio.run(collection._runtime.document_by_id("value"))
 
         self.assertEqual(result, {"_id": "value"})
-        self.assertEqual(engine.kwargs["context"], None)
+        self.assertIn("operation_context", engine.kwargs)
+        self.assertNotIn("context", engine.kwargs)
 
     def test_profile_operation_tolerates_profiler_and_planner_failures(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.records = []
 
@@ -108,7 +110,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         self.assertEqual(engine.records[0][1]["execution_lineage"], ())
 
     def test_profile_operation_inactive_and_recorder_failures_are_nonfatal(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def _profile_is_active(self, *_args, **_kwargs):
                 return False
 
@@ -127,7 +129,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
 
     def test_profile_operation_skips_profile_namespace_and_missing_recorder(self):
         for name in ("system.profile", "ordinary"):
-            collection = AsyncCollection(object(), "db", name)
+            collection = AsyncCollection(_SpiV2EngineStub(), "db", name)
             asyncio.run(
                 collection._runtime.profile_operation(
                     op="query",
@@ -136,7 +138,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
             )
 
     def test_record_operation_metadata_updates_session_and_engine(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.calls = []
 
@@ -170,7 +172,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         self.assertIsNotNone(session.cluster_time)
 
     def test_select_first_document_uses_collection_build_cursor(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             pass
 
         class CursorStub:
@@ -206,7 +208,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         )
 
     def test_publish_change_event_is_noop_without_hub_and_delegates_with_hub(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             pass
 
         AsyncCollection(EngineStub(), "db", "coll")._runtime.publish_change_event(
@@ -243,6 +245,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
             _change_hub=None,
             _db_name="db",
             _collection_name="coll",
+            _engine=_SpiV2EngineStub(),
         )
 
         CollectionRuntimeCoordinator(collection).publish_change_event(
@@ -255,6 +258,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
             _change_hub=None,
             _db_name="db",
             _collection_name="coll",
+            _engine=_SpiV2EngineStub(),
         )
         runtime = CollectionRuntimeCoordinator(collection)
 
@@ -266,7 +270,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
 
     def test_pending_change_events_repairs_invalid_session_metadata(self):
         hub = SimpleNamespace(should_publish_events=lambda: True)
-        collection = AsyncCollection(object(), "db", "coll", change_hub=hub)
+        collection = AsyncCollection(_SpiV2EngineStub(), "db", "coll", change_hub=hub)
         runtime = collection._runtime
         session = ClientSession()
         engine_key = f"change_stream_hub:{id(hub)}"
@@ -298,7 +302,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
                 self.gaps += 1
 
         hub = Hub()
-        collection = AsyncCollection(object(), "db", "coll", change_hub=hub)
+        collection = AsyncCollection(_SpiV2EngineStub(), "db", "coll", change_hub=hub)
         session = ClientSession()
 
         session.start_transaction()
@@ -332,7 +336,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
             ),
             mark_publish_failure=failures.append,
         )
-        collection = AsyncCollection(object(), "db", "coll", change_hub=hub)
+        collection = AsyncCollection(_SpiV2EngineStub(), "db", "coll", change_hub=hub)
 
         collection._runtime.publish_change_event(
             operation_type="insert",
@@ -350,7 +354,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
             publish=lambda **payload: events.append(payload),
             mark_gap=lambda: events.append("gap"),
         )
-        collection = AsyncCollection(object(), "db", "coll", change_hub=hub)
+        collection = AsyncCollection(_SpiV2EngineStub(), "db", "coll", change_hub=hub)
         runtime = collection._runtime
 
         self.assertTrue(runtime.should_publish_change_events())
@@ -391,7 +395,7 @@ class CollectionRuntimeCoordinatorTests(unittest.TestCase):
         self.assertEqual(len(events), 3)
 
     def test_open_read_snapshot_rejects_an_unbound_operation(self):
-        collection = AsyncCollection(object(), "db", "coll")
+        collection = AsyncCollection(_SpiV2EngineStub(), "db", "coll")
         operation = compile_find_operation({})
 
         with self.assertRaisesRegex(TypeError, "missing OperationContext"):

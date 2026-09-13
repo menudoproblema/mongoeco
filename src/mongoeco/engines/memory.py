@@ -54,10 +54,6 @@ from mongoeco.core.query_plan import (
     QueryNode,
     ensure_query_plan,
 )
-from mongoeco.core.runtime_metadata import (
-    RuntimeDocumentState,
-    legacy_document_from_runtime_state,
-)
 from mongoeco.core.search import (
     MaterializedSearchDocument,
     SearchVectorQuery,
@@ -3067,7 +3063,7 @@ class MemoryEngine(AsyncStorageEngine):
         if operation_context is not None:
             context = operation_context.session
         outcomes: list[InsertOutcome] = []
-        await self._put_documents_bulk_impl(
+        await self._insert_documents_impl(
             db_name,
             coll_name,
             [document],
@@ -3096,7 +3092,7 @@ class MemoryEngine(AsyncStorageEngine):
         if operation_context is not None:
             context = operation_context.session
         outcomes: list[InsertOutcome] = []
-        await self._put_documents_bulk_impl(
+        await self._insert_documents_impl(
             db_name,
             coll_name,
             documents,
@@ -3110,60 +3106,12 @@ class MemoryEngine(AsyncStorageEngine):
                 on_commit(outcome)
         return tuple(outcomes)
 
-    @override
-    async def put_document(
-        self,
-        db_name: str,
-        coll_name: str,
-        document: Document,
-        overwrite: bool = True,
-        *,
-        context: ClientSession | None = None,
-        bypass_document_validation: bool = False,
-        on_commit: Callable[[Document], None] | None = None,
-        operation_context: OperationContext | None = None,
-    ) -> bool:
-        results = await self.put_documents_bulk(
-            db_name,
-            coll_name,
-            [document],
-            overwrite=overwrite,
-            context=context,
-            bypass_document_validation=bypass_document_validation,
-            on_commit=on_commit,
-            operation_context=operation_context,
-        )
-        return results[0]
-
-    async def put_documents_bulk(
+    async def _insert_documents_impl(  # noqa: PLR0912, PLR0913, PLR0915
         self,
         db_name: str,
         coll_name: str,
         documents: list[Document],
-        overwrite: bool = False,
-        *,
-        context: ClientSession | None = None,
-        bypass_document_validation: bool = False,
-        on_commit: Callable[[Document], None] | None = None,
-        operation_context: OperationContext | None = None,
-    ) -> list[bool]:
-        return await self._put_documents_bulk_impl(
-            db_name,
-            coll_name,
-            documents,
-            overwrite=overwrite,
-            context=context,
-            bypass_document_validation=bypass_document_validation,
-            on_commit=on_commit,
-            operation_context=operation_context,
-        )
-
-    async def _put_documents_bulk_impl(  # noqa: PLR0912, PLR0913, PLR0915
-        self,
-        db_name: str,
-        coll_name: str,
-        documents: list[Document],
-        overwrite: bool = False,
+        overwrite: bool = False,  # noqa: FBT001, FBT002
         *,
         context: ClientSession | None = None,
         bypass_document_validation: bool = False,
@@ -5168,37 +5116,6 @@ class MemoryEngine(AsyncStorageEngine):
                     return
         raise OperationFailure(f"search index not found with name [{name}]")
 
-    async def search_documents(
-        self,
-        db_name: str,
-        coll_name: str,
-        operator: str,
-        spec: object,
-        *,
-        max_time_ms: int | None = None,
-        context: ClientSession | None = None,
-        result_limit_hint: int | None = None,
-        downstream_filter_spec: dict[str, object] | None = None,
-    ) -> list[Document]:
-        deadline = operation_deadline(max_time_ms)
-        result = await _execute_memory_search_documents(
-            self,
-            db_name,
-            coll_name,
-            operator,
-            spec,
-            context=context,
-            result_limit_hint=result_limit_hint,
-            downstream_filter_spec=downstream_filter_spec,
-        )
-        enforce_deadline(deadline)
-        return [
-            legacy_document_from_runtime_state(document)
-            if isinstance(document, RuntimeDocumentState)
-            else document
-            for document in result
-        ]
-
     async def execute_search(
         self,
         db_name: str,
@@ -5252,30 +5169,6 @@ class MemoryEngine(AsyncStorageEngine):
             documents,
             backend="memory",
             operation_id=request.operation_context.operation_id,
-        )
-
-    async def explain_search_documents(
-        self,
-        db_name: str,
-        coll_name: str,
-        operator: str,
-        spec: object,
-        *,
-        max_time_ms: int | None = None,
-        context: ClientSession | None = None,
-        result_limit_hint: int | None = None,
-        downstream_filter_spec: dict[str, object] | None = None,
-    ) -> QueryPlanExplanation:
-        return await _explain_memory_search_documents(
-            self,
-            db_name,
-            coll_name,
-            operator,
-            spec,
-            max_time_ms=max_time_ms,
-            context=context,
-            result_limit_hint=result_limit_hint,
-            downstream_filter_spec=downstream_filter_spec,
         )
 
     async def explain_search(

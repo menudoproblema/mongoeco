@@ -1,4 +1,9 @@
 from tests.unit.api._collection_test_support import *  # noqa: F403
+from tests.unit.api._collection_test_support import (
+    EngineCapabilities,
+    InsertOutcome,
+    _SpiV2EngineStub,
+)
 import mongoeco.api._async._collection_bulk as collection_bulk_module
 import mongoeco.api.operations as operations_module
 from mongoeco.session import ClientSession
@@ -33,13 +38,17 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
     def test_insert_many_raises_duplicate_key_error_when_engine_rejects_document(
         self,
     ):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.calls = 0
 
-            async def put_document(self, *args, **kwargs):
+            async def insert_document(self, *args, **kwargs):
                 self.calls += 1
-                return self.calls == 1
+                applied = self.calls == 1
+                return InsertOutcome(
+                    applied=applied,
+                    document=args[2] if applied else None,
+                )
 
         collection = AsyncCollection(EngineStub(), 'db', 'coll')
 
@@ -102,13 +111,21 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         )
 
     def test_insert_many_prefers_bulk_engine_path_when_available(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
+            capabilities = EngineCapabilities(
+                batch_inserts=True,
+                explicit_read_snapshots=False,
+            )
+
             def __init__(self):
                 self.bulk_calls = 0
 
-            async def put_documents_bulk(self, *args, **kwargs):
+            async def insert_documents(self, *args, **kwargs):
                 self.bulk_calls += 1
-                return [True, True]
+                return tuple(
+                    InsertOutcome(applied=True, document=document)
+                    for document in args[2]
+                )
 
         async def _exercise():
             engine = EngineStub()
@@ -124,9 +141,15 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(len(inserted_ids), 2)
 
     def test_insert_many_profiles_bulk_engine_errors(self):
-        class EngineStub:
-            async def put_documents_bulk(self, *args, **kwargs):
-                raise RuntimeError('bulk boom')
+        class EngineStub(_SpiV2EngineStub):
+            capabilities = EngineCapabilities(
+                batch_inserts=True,
+                explicit_read_snapshots=False,
+            )
+
+            async def insert_documents(self, *args, **kwargs):
+                message = 'bulk boom'
+                raise RuntimeError(message)
 
         async def _exercise():
             collection = AsyncCollection(EngineStub(), 'db', 'coll')
@@ -142,21 +165,34 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             asyncio.run(_exercise())
 
     def test_insert_many_rejects_bulk_result_length_mismatch(self):
-        class EngineStub:
-            async def put_documents_bulk(self, *args, **kwargs):
-                return [True]
+        class EngineStub(_SpiV2EngineStub):
+            capabilities = EngineCapabilities(
+                batch_inserts=True,
+                explicit_read_snapshots=False,
+            )
+
+            async def insert_documents(self, *args, **kwargs):
+                return (InsertOutcome(applied=True, document=args[2][0]),)
 
         async def _exercise():
             collection = AsyncCollection(EngineStub(), 'db', 'coll')
             await collection.insert_many([{'name': 'Ada'}, {'name': 'Grace'}])
 
-        with self.assertRaisesRegex(RuntimeError, 'result count different'):
+        with self.assertRaisesRegex(RuntimeError, 'cardinality is inconsistent'):
             asyncio.run(_exercise())
 
     def test_insert_many_bulk_path_rejects_false_success_marker(self):
-        class EngineStub:
-            async def put_documents_bulk(self, *args, **kwargs):
-                return [True, False]
+        class EngineStub(_SpiV2EngineStub):
+            capabilities = EngineCapabilities(
+                batch_inserts=True,
+                explicit_read_snapshots=False,
+            )
+
+            async def insert_documents(self, *args, **kwargs):
+                return (
+                    InsertOutcome(applied=True, document=args[2][0]),
+                    InsertOutcome(applied=False),
+                )
 
         async def _exercise():
             collection = AsyncCollection(EngineStub(), 'db', 'coll')
@@ -168,9 +204,10 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
     def test_insert_many_non_bulk_path_profiles_errors_and_observes_session(
         self,
     ):
-        class EngineStub:
-            async def put_document(self, *args, **kwargs):
-                raise RuntimeError('single boom')
+        class EngineStub(_SpiV2EngineStub):
+            async def insert_document(self, *args, **kwargs):
+                message = 'single boom'
+                raise RuntimeError(message)
 
         async def _exercise_failure():
             collection = AsyncCollection(EngineStub(), 'db', 'coll')
@@ -223,9 +260,9 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
     def test_insert_many_non_bulk_success_profiles_session_and_change_events(
         self,
     ):
-        class EngineStub:
-            async def put_document(self, *args, **kwargs):
-                return True
+        class EngineStub(_SpiV2EngineStub):
+            async def insert_document(self, *args, **kwargs):
+                return InsertOutcome(applied=True, document=args[2])
 
         async def _exercise():
             collection = AsyncCollection(EngineStub(), 'db', 'coll')
@@ -254,7 +291,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertIsNotNone(session.operation_time)
 
     def test_find_one_profiles_direct_id_lookup_errors(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def get_document(self, *args, **kwargs):
                 raise RuntimeError('lookup boom')
 
@@ -830,7 +867,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(documents, [{'_id': '1', 'name': 'Ada'}])
 
     def test_bulk_write_propagates_request_and_bulk_level_write_options(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             pass
 
         async def _exercise():
@@ -989,7 +1026,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
     def test_bulk_write_propagates_bypass_document_validation_to_wrapped_calls(
         self,
     ):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             pass
 
         async def _exercise():
@@ -1269,7 +1306,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(result.modified_count, 0)
 
     def test_estimated_document_count_and_drop_delegate_to_engine(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.drop_calls = []
 
@@ -1305,7 +1342,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
     def test_metadata_and_change_notifications_delegate_to_engine_and_hub(
         self,
     ):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.metadata_calls = []
 

@@ -29,7 +29,7 @@ from mongoeco.core.search_models import (
     SearchExecutionMode,
     SearchExplainVerbosity,
 )
-from mongoeco.engines.adapter import adapt_engine
+from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.engines.capabilities import (
     resolve_engine_capabilities,
     validate_engine_contract,
@@ -42,7 +42,6 @@ from mongoeco.engines.results import (
     MutationOutcome,
 )
 from mongoeco.engines.semantic_core import compile_find_semantics
-from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
 from mongoeco.types import SearchIndexDefinition
 
 
@@ -52,7 +51,6 @@ if TYPE_CHECKING:
     from mongoeco.conformance.provider import EngineConformanceProvider
 
 
-_SPI_V2 = 2
 _EXPECTED_CHANGE_EVENTS = 2
 
 
@@ -79,8 +77,21 @@ async def run_engine_conformance(
     selected = frozenset(profiles)
     checks: list[ConformanceCheckResult] = []
     async with provider.open_engine() as engine:
-        capabilities = resolve_engine_capabilities(engine)
-        for definition in _checks(capabilities):
+        try:
+            capabilities = resolve_engine_capabilities(engine)
+        except (TypeError, ValueError) as error:
+            checks.append(
+                ConformanceCheckResult(
+                    profile=ConformanceProfile.SPI_V2_CORE,
+                    name="capabilities",
+                    status=ConformanceStatus.FAILED,
+                    capability="spi-v2",
+                    detail=f"{type(error).__name__}: {error}",
+                    evidence={"capabilityDeclared": False},
+                )
+            )
+            capabilities = None
+        for definition in (() if capabilities is None else _checks(capabilities)):
             if definition.profile not in selected:
                 continue
             if not definition.applicable:
@@ -191,8 +202,7 @@ def _checks(capabilities):
             "stable-snapshot",
             "stable-snapshot",
             _check_snapshot,
-            applicable=capabilities.spi_version == _SPI_V2,
-            inapplicable_detail="engine does not implement SPI v2 snapshots",
+            applicable=True,
         ),
         _CheckDefinition(
             ConformanceProfile.SPI_V2_CHANGE_DELIVERY,
@@ -223,9 +233,6 @@ def _checks(capabilities):
 
 async def _check_capabilities(engine: object, _db: str, _coll: str) -> None:
     capabilities = resolve_engine_capabilities(engine)
-    if capabilities.spi_version != _SPI_V2:
-        message = "conformance requires SPI v2"
-        raise AssertionError(message)
     try:
         validate_engine_contract(engine, capabilities)
     except (TypeError, ValueError) as error:
@@ -299,7 +306,7 @@ async def _check_batch_outcomes(engine: object, db: str, coll: str) -> None:
     ]
     original = deepcopy(documents)
     try:
-        outcomes = await adapt_engine(engine).insert_many_outcomes(
+        outcomes = await EngineSpiAdapter(engine).insert_many_outcomes(
             db,
             coll,
             documents,
@@ -459,23 +466,20 @@ async def _check_snapshot(engine: object, db: str, coll: str) -> None:
         overwrite=False,
         operation_context=context,
     )
-    capabilities = resolve_engine_capabilities(engine)
-    snapshot_owner = (
-        adapt_engine(engine) if capabilities.spi_version == _SPI_V2 else engine
-    )
-    snapshot = snapshot_owner.open_read_snapshot(
-        db,
-        coll,
-        compile_find_semantics(
-            {},
-            sort=[("_id", 1)],
+    snapshot_owner = EngineSpiAdapter(engine)
+    try:
+        snapshot = snapshot_owner.open_read_snapshot(
+            db,
+            coll,
+            compile_find_semantics(
+                {},
+                sort=[("_id", 1)],
+                operation_context=context,
+            ),
             operation_context=context,
-        ),
-        operation_context=context,
-    )
-    if not isinstance(snapshot, ReadSnapshot):
-        message = "open_read_snapshot must return ReadSnapshot"
-        raise AssertionError(message)
+        )
+    except (TypeError, RuntimeError) as error:
+        raise AssertionError(str(error)) from error
     try:
         first = await snapshot.__anext__()
         await engine.insert_document(
@@ -488,9 +492,6 @@ async def _check_snapshot(engine: object, db: str, coll: str) -> None:
         documents = [first, *[document async for document in snapshot]]
     finally:
         await snapshot.aclose()
-    if snapshot.metadata.policy is not SnapshotPolicy.STABLE:
-        message = "snapshot must declare STABLE policy"
-        raise AssertionError(message)
     if (
         documents
         != [
@@ -651,7 +652,7 @@ async def _check_vector_search_capabilities(
     context: OperationContext,
     similarities: frozenset[str],
 ) -> None:
-    adapter = adapt_engine(engine)
+    adapter = EngineSpiAdapter(engine)
     for similarity in sorted(similarities):
         index_name = f"by_vector_{similarity}"
         await engine.create_search_index(
@@ -737,7 +738,7 @@ async def _check_search(  # noqa: PLR0912, PLR0915 - capability matrix
         mode=SearchExecutionMode.HITS,
         operation_context=context,
     )
-    adapter = adapt_engine(engine)
+    adapter = EngineSpiAdapter(engine)
     outcome = await adapter.execute_search(db, coll, request)
     if [document["_id"] for document in outcome.documents] != ["search"]:
         message = "Search outcome did not preserve the matching document"

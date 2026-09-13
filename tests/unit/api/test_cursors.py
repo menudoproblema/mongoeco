@@ -15,12 +15,15 @@ from mongoeco.api._sync.cursor import Cursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.listing_cursor import ListingCursor
 from mongoeco.api._sync.search_index_cursor import SearchIndexCursor
+from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.types import PlanningIssue, PlanningMode
+from tests.unit.api._collection_test_support import _SpiV2EngineStub
 
 
-class _AsyncEngineStub:
+class _AsyncEngineStub(_SpiV2EngineStub):
     def __init__(self, documents):
         self._documents = documents
         self.explain_semantics_calls = []
@@ -63,6 +66,17 @@ class _AsyncCollectionStub:
             projection,
             **kwargs,
         )
+
+
+class _ContextFactoryCollectionStub(_AsyncCollectionStub):
+    def __init__(self, documents):
+        super().__init__(documents)
+        self.operation_context = OperationContext.create(dialect=MONGODB_DIALECT_70)
+        self.context_arguments = None
+
+    def _new_operation_context(self, **kwargs):
+        self.context_arguments = kwargs
+        return self.operation_context
 
 
 class _ProfiledAsyncCollectionStub(_AsyncCollectionStub):
@@ -118,7 +132,7 @@ class _BatchTrackingScanStub:
         self.close_calls += 1
 
 
-class _BatchTrackingEngineStub:
+class _BatchTrackingEngineStub(_SpiV2EngineStub):
     def __init__(self, documents):
         self._documents = documents
         self.created_scans = []
@@ -271,6 +285,28 @@ class _FailingStreamingAsyncCollectionStub(_StreamingAsyncCollectionStub):
 
 
 class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
+    def test_direct_async_cursor_uses_collection_context_factory(self):
+        collection = _ContextFactoryCollectionStub([])
+
+        cursor = AsyncCursor(
+            collection,
+            {},
+            MatchAll(),
+            None,
+            collation={"locale": "simple"},
+            let={"tenant": "acme"},
+        )
+
+        self.assertIs(cursor._operation_context, collection.operation_context)
+        self.assertEqual(
+            collection.context_arguments,
+            {
+                "session": None,
+                "collation": {"locale": "simple"},
+                "bindings": {"tenant": "acme"},
+            },
+        )
+
     async def test_async_cursor_private_helpers_cover_issue_messages_and_planning_mode_resolution(
         self,
     ):

@@ -1,5 +1,4 @@
 import unittest
-import warnings
 
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -40,7 +39,7 @@ from mongoeco.core.search_models import (
     SearchMetricOrigin,
 )
 from mongoeco.engines._sqlite_search_runtime import _eligible_collector_options
-from mongoeco.engines.adapter import adapt_engine
+from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.engines.capabilities import (
     EngineCapabilities,
     SearchEngineCapabilities,
@@ -93,15 +92,6 @@ class _NativeSearchEngine:
     async def delete_with_operation(self, *_args, **_kwargs): ...
     async def merge_document(self, *_args, **_kwargs): ...
     def scan_find_semantics(self, *_args, **_kwargs): ...
-
-
-class _LegacySearchEngine:
-    def __init__(self) -> None:
-        self.call = None
-
-    async def search_documents(self, *args, **kwargs):
-        self.call = (args, kwargs)
-        return [{"_id": "legacy"}]
 
 
 def _explanation() -> QueryPlanExplanation:
@@ -984,7 +974,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
         engine = _NativeSearchEngine()
         request = _request()
 
-        outcome = await adapt_engine(engine).execute_search(
+        outcome = await EngineSpiAdapter(engine).execute_search(
             "db",
             "items",
             request,
@@ -1024,13 +1014,13 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
         )
 
         with self.assertRaisesRegex(OperationFailure, "metadata collector"):
-            await adapt_engine(engine).execute_search(
+            await EngineSpiAdapter(engine).execute_search(
                 "db",
                 "items",
                 metadata_request,
             )
         with self.assertRaisesRegex(OperationFailure, "highlight"):
-            await adapt_engine(engine).execute_search(
+            await EngineSpiAdapter(engine).execute_search(
                 "db",
                 "items",
                 highlight_request,
@@ -1051,7 +1041,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
             operation_context=OperationContext.create(dialect=MONGODB_DIALECT_70),
         )
         with self.assertRaisesRegex(OperationFailure, r"\$vectorSearch"):
-            await adapt_engine(engine).execute_search("db", "items", vector_request)
+            await EngineSpiAdapter(engine).execute_search("db", "items", vector_request)
 
         engine.capabilities = replace(
             engine.capabilities,
@@ -1061,7 +1051,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
             ),
         )
         with self.assertRaisesRegex(OperationFailure, "similarity"):
-            await adapt_engine(engine).execute_search("db", "items", vector_request)
+            await EngineSpiAdapter(engine).execute_search("db", "items", vector_request)
         self.assertIsNone(engine.request)
 
     async def test_adapter_rejects_invalid_search_inputs_and_returns(
@@ -1071,14 +1061,14 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
         engine = _NativeSearchEngine()
 
         with self.assertRaisesRegex(TypeError, "SearchRequest"):
-            await adapt_engine(engine).execute_search("db", "items", object())
+            await EngineSpiAdapter(engine).execute_search("db", "items", object())
 
         async def invalid_outcome(*_args, **_kwargs):
             return [{"_id": 1}]
 
         engine.execute_search = invalid_outcome
         with self.assertRaisesRegex(TypeError, "SearchExecutionOutcome"):
-            await adapt_engine(engine).execute_search("db", "items", request)
+            await EngineSpiAdapter(engine).execute_search("db", "items", request)
 
         engine.capabilities = replace(
             engine.capabilities,
@@ -1107,7 +1097,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
 
         engine.execute_search = hits_in_metadata_mode
         with self.assertRaisesRegex(RuntimeError, "cannot contain hits"):
-            await adapt_engine(engine).execute_search(
+            await EngineSpiAdapter(engine).execute_search(
                 "db",
                 "items",
                 metadata_request,
@@ -1126,33 +1116,18 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
 
         engine.execute_search = collectors_in_hits_mode
         with self.assertRaisesRegex(RuntimeError, "collector metadata"):
-            await adapt_engine(engine).execute_search("db", "items", request)
+            await EngineSpiAdapter(engine).execute_search("db", "items", request)
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            with self.assertRaises(OperationFailure):
-                await adapt_engine(object()).execute_search(
-                    "db",
-                    "items",
-                    request,
-                )
+        no_search = _NativeSearchEngine()
+        no_search.capabilities = replace(no_search.capabilities, search=None)
+        with self.assertRaises(OperationFailure):
+            await EngineSpiAdapter(no_search).execute_search(
+                "db",
+                "items",
+                request,
+            )
 
-        legacy = _LegacySearchEngine()
-
-        async def invalid_documents(*_args, **_kwargs):
-            return [1]
-
-        legacy.search_documents = invalid_documents
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            with self.assertRaisesRegex(TypeError, "list of documents"):
-                await adapt_engine(legacy).execute_search(
-                    "db",
-                    "items",
-                    request,
-                )
-
-    async def test_adapter_isolates_native_and_legacy_explain_contracts(
+    async def test_adapter_validates_native_explain_and_reports_unsupported(
         self,
     ) -> None:
         request = _request()
@@ -1166,7 +1141,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
             return {}
 
         native.explain_search = invalid_explanation
-        adapter = adapt_engine(native)
+        adapter = EngineSpiAdapter(native)
         with self.assertRaisesRegex(TypeError, "SearchRequest"):
             await adapter.explain_search(
                 "db",
@@ -1184,70 +1159,18 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
                 SearchExplainVerbosity.EXECUTION_STATS,
             )
 
-        legacy_without_explain = _LegacySearchEngine()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            planner = await adapt_engine(legacy_without_explain).explain_search(
-                "db",
-                "items",
-                request,
-                SearchExplainVerbosity.QUERY_PLANNER,
-            )
-        self.assertEqual(planner.plan, "unsupported-search-engine")
-
-        legacy = _LegacySearchEngine()
-
-        async def explain(*_args, **_kwargs):
-            return _explanation()
-
-        legacy.explain_search_documents = explain
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            adapter = adapt_engine(legacy)
-            planner = await adapter.explain_search(
-                "db",
-                "items",
-                request,
-                SearchExplainVerbosity.QUERY_PLANNER,
-            )
-            execution = await adapter.explain_search(
-                "db",
-                "items",
-                request,
-                SearchExplainVerbosity.EXECUTION_STATS,
-            )
-        self.assertEqual(planner.plan, "legacy-search-contract")
-        self.assertEqual(execution, _explanation())
-
-        legacy.explain_search_documents = invalid_explanation
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            with self.assertRaisesRegex(TypeError, "legacy Search explain"):
-                await adapt_engine(legacy).explain_search(
-                    "db",
-                    "items",
-                    request,
-                    SearchExplainVerbosity.EXECUTION_STATS,
-                )
-
-    async def test_legacy_list_return_is_isolated_in_adapter(self) -> None:
-        engine = _LegacySearchEngine()
-        request = _request()
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            outcome = await adapt_engine(engine).execute_search(
-                "db",
-                "items",
-                request,
-            )
-
-        self.assertEqual(outcome.documents, [{"_id": "legacy"}])
-        _args, kwargs = engine.call
-        self.assertIs(
-            kwargs["context"],
-            request.operation_context.session,
+        without_explain = _NativeSearchEngine()
+        without_explain.capabilities = replace(
+            without_explain.capabilities,
+            search=SearchEngineCapabilities(explain_verbosity=False),
         )
+        planner = await EngineSpiAdapter(without_explain).explain_search(
+            "db",
+            "items",
+            request,
+            SearchExplainVerbosity.QUERY_PLANNER,
+        )
+        self.assertEqual(planner.plan, "unsupported-search-engine")
 
     async def test_metadata_mode_returns_collectors_without_public_hits(
         self,
@@ -1308,7 +1231,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
                         runtime_specification=specification,
                     )
 
-                    outcome = await adapt_engine(engine).execute_search(
+                    outcome = await EngineSpiAdapter(engine).execute_search(
                         "db",
                         "items",
                         request,
@@ -1340,7 +1263,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
                         "execute_search",
                         wraps=engine.execute_search,
                     ) as execute_search:
-                        explanation = await adapt_engine(engine).explain_search(
+                        explanation = await EngineSpiAdapter(engine).explain_search(
                             "db",
                             "items",
                             request,
@@ -1412,7 +1335,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
                 "_load_documents",
                 side_effect=AssertionError("pushdown decoded documents"),
             ):
-                outcome = await adapt_engine(engine).execute_search(
+                outcome = await EngineSpiAdapter(engine).execute_search(
                     "db",
                     "items",
                     request,
@@ -1457,7 +1380,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
 
         async with open_engine("sqlite") as engine:
             with self.assertRaisesRegex(OperationFailure, "index not found"):
-                await adapt_engine(engine).execute_search(
+                await EngineSpiAdapter(engine).execute_search(
                     "db",
                     "items",
                     request,
@@ -1517,7 +1440,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
                 runtime_specification=specification,
             )
 
-            outcome = await adapt_engine(engine).execute_search(
+            outcome = await EngineSpiAdapter(engine).execute_search(
                 "db",
                 "items",
                 request,
@@ -1574,7 +1497,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
                 runtime_specification=specification,
             )
 
-            outcome = await adapt_engine(engine).execute_search(
+            outcome = await EngineSpiAdapter(engine).execute_search(
                 "db",
                 "items",
                 request,
@@ -1623,7 +1546,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
                 runtime_specification=specification,
             )
 
-            outcome = await adapt_engine(engine).execute_search(
+            outcome = await EngineSpiAdapter(engine).execute_search(
                 "db",
                 "items",
                 request,
@@ -1676,7 +1599,7 @@ class SearchExecutionContractTests(unittest.IsolatedAsyncioTestCase):
                             "queryPlanner materialized Search",
                         ),
                     ):
-                        explanation = await adapt_engine(
+                        explanation = await EngineSpiAdapter(
                             engine,
                         ).explain_search(
                             "db",

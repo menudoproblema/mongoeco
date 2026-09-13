@@ -34,7 +34,10 @@ from mongoeco.core.bson_scalars import BsonInt32
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.query_plan import MatchAll
+from mongoeco.core.search import collect_search_metadata
+from mongoeco.core.search_models import SearchExecutionOutcome
 from mongoeco.core.sorting import sort_documents
+from mongoeco.engines import EngineCapabilities, SearchEngineCapabilities
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import (
@@ -45,6 +48,7 @@ from mongoeco.errors import (
 )
 from mongoeco.session import ClientSession
 from mongoeco.types import PlanningIssue, PlanningMode, SearchIndexModel
+from tests.unit.api._collection_test_support import _SpiV2EngineStub
 
 
 def _aggregation_sort_temp_paths() -> set[Path]:
@@ -153,7 +157,7 @@ class _FakeCollection:
         )
 
 
-class _FakeEngine:
+class _FakeEngine(_SpiV2EngineStub):
     def __init__(self):
         self.explain_semantics_calls = []
         self.scan_semantics_calls = []
@@ -174,6 +178,22 @@ class _FakeEngine:
                 yield {"_id": "r1", "label": "admin"}
 
         return _iter()
+
+
+def _enable_search(
+    engine: _FakeEngine,
+    execute,
+    *,
+    metadata_collectors: bool = False,
+) -> None:
+    engine.capabilities = EngineCapabilities(
+        batch_inserts=False,
+        explicit_read_snapshots=False,
+        search=SearchEngineCapabilities(
+            metadata_collectors=metadata_collectors,
+        ),
+    )
+    engine.execute_search = execute
 
 
 class _SyncClientStub:
@@ -566,15 +586,24 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         collection = _FakeCollection([])
         calls: list[str] = []
 
-        async def _search_documents(*args, **kwargs):
-            del kwargs
-            calls.append(str(args[2]))
-            return [
+        async def _execute_search(_db_name, _coll_name, request):
+            calls.append(str(request.effective_operator))
+            documents = [
                 {"_id": "1", "kind": "note"},
                 {"_id": "2", "kind": "reference"},
             ]
+            return SearchExecutionOutcome(
+                metadata=collect_search_metadata(
+                    documents,
+                    query=request.query,
+                ),
+            )
 
-        collection._engine.search_documents = _search_documents
+        _enable_search(
+            collection._engine,
+            _execute_search,
+            metadata_collectors=True,
+        )
         cursor = AsyncAggregationCursor(
             collection,
             [
@@ -646,12 +675,20 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         collection = _FakeCollection([])
         seen_specs: list[object] = []
 
-        async def _search_documents(*args, **kwargs):
-            del kwargs
-            seen_specs.append(args[3])
-            return [{"_id": "1", "kind": "note"}]
+        async def _execute_search(_db_name, _coll_name, request):
+            seen_specs.append(request.effective_specification)
+            return SearchExecutionOutcome(
+                metadata=collect_search_metadata(
+                    [{"_id": "1", "kind": "note"}],
+                    query=request.query,
+                ),
+            )
 
-        collection._engine.search_documents = _search_documents
+        _enable_search(
+            collection._engine,
+            _execute_search,
+            metadata_collectors=True,
+        )
         cursor = AsyncAggregationCursor(
             collection,
             [
@@ -745,15 +782,20 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             {"_id": "3", "kind": "keep"},
         ]
 
-        async def _search_documents(*args, **kwargs):
-            del args
-            calls.append(kwargs.get("result_limit_hint"))
-            limit_hint = kwargs.get("result_limit_hint")
+        async def _execute_search(_db_name, _coll_name, request):
+            calls.append(request.result_limit_hint)
+            limit_hint = request.result_limit_hint
             if isinstance(limit_hint, int) and limit_hint > 0:
-                return search_documents[:limit_hint]
-            return list(search_documents)
+                documents = search_documents[:limit_hint]
+            else:
+                documents = list(search_documents)
+            return SearchExecutionOutcome.from_documents(
+                documents,
+                backend="fake",
+                operation_id=request.operation_context.operation_id,
+            )
 
-        collection._engine.search_documents = _search_documents
+        _enable_search(collection._engine, _execute_search)
         cursor = AsyncAggregationCursor(
             collection,
             [
@@ -773,12 +815,15 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
 
         observed_limit_hints = []
 
-        async def _search_documents(*args, **kwargs):
-            del args
-            observed_limit_hints.append(kwargs["result_limit_hint"])
-            return []
+        async def _execute_search(_db_name, _coll_name, request):
+            observed_limit_hints.append(request.result_limit_hint)
+            return SearchExecutionOutcome.from_documents(
+                [],
+                backend="fake",
+                operation_id=request.operation_context.operation_id,
+            )
 
-        collection._engine.search_documents = _search_documents
+        _enable_search(collection._engine, _execute_search)
         cursor = AsyncAggregationCursor(
             collection,
             [
@@ -1739,11 +1784,14 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         )
         profiled = []
 
-        async def _search_documents(*args, **kwargs):
-            del args, kwargs
-            return []
+        async def _execute_search(_db_name, _coll_name, request):
+            return SearchExecutionOutcome.from_documents(
+                [],
+                backend="fake",
+                operation_id=request.operation_context.operation_id,
+            )
 
-        collection._engine.search_documents = _search_documents
+        _enable_search(collection._engine, _execute_search)
 
         async def _profile_operation(**kwargs):
             profiled.append(kwargs)

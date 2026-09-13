@@ -5,8 +5,6 @@ from copy import deepcopy
 import pytest
 
 from mongoeco.core.runtime_metadata import (
-    RUNTIME_METADATA_FIELD,
-    VIRTUAL_FIELDS_KEY,
     RuntimeDocumentState,
     RuntimeMaterializationPolicy,
     RuntimeMetadata,
@@ -14,10 +12,8 @@ from mongoeco.core.runtime_metadata import (
     RuntimeMetadataKey,
     RuntimeVirtualField,
     ensure_runtime_state,
-    legacy_document_from_runtime_state,
     prepare_persistence_document,
     prepare_public_document,
-    runtime_state_from_legacy_document,
 )
 
 
@@ -203,47 +199,3 @@ def test_runtime_state_mapping_and_path_helpers_cover_nested_arrays() -> None:
         source=RuntimeMetadataKey.SEARCH_HIGHLIGHTS,
     )
     assert invalid_list_path.public_document() == {"items": []}
-
-
-def test_legacy_sidecar_round_trip_is_confined_to_compatibility_boundary() -> None:
-    legacy = {
-        "_id": 1,
-        RUNTIME_METADATA_FIELD: {
-            "textScore": 2.0,
-            "vectorSearchScore": 0.5,
-            "highlights": [{"path": "title"}],
-            VIRTUAL_FIELDS_KEY: {
-                "searchHighlights": [{"path": "title"}],
-                1: "ignored",
-                "": "ignored",
-            },
-        },
-    }
-    state = runtime_state_from_legacy_document(legacy)
-
-    assert state.resolve(f"{RUNTIME_METADATA_FIELD}.textScore") == (True, 2.0)
-    assert state.resolve(f"{RUNTIME_METADATA_FIELD}.vectorSearchScore") == (
-        True,
-        0.5,
-    )
-    assert state.resolve(f"{RUNTIME_METADATA_FIELD}.highlights") == (
-        True,
-        [{"path": "title"}],
-    )
-    assert legacy_document_from_runtime_state(state) == {
-        "_id": 1,
-        RUNTIME_METADATA_FIELD: {
-            "textScore": 2.0,
-            "vectorSearchScore": 0.5,
-            "highlights": [{"path": "title"}],
-            VIRTUAL_FIELDS_KEY: {
-                "searchHighlights": [{"path": "title"}],
-            },
-        },
-    }
-    assert legacy_document_from_runtime_state(RuntimeDocumentState({"_id": 2})) == {
-        "_id": 2,
-    }
-    assert runtime_state_from_legacy_document(
-        {"_id": 3, RUNTIME_METADATA_FIELD: "invalid"},
-    ).document == {"_id": 3}

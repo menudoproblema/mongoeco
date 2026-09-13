@@ -1,4 +1,6 @@
 from tests.unit.api._collection_test_support import *  # noqa: F403
+from tests.unit.api._collection_test_support import InsertOutcome, _SpiV2EngineStub
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines.results import EngineDeleteResult, EngineUpdateResult
 
 
@@ -127,7 +129,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(scanned, {"_id": "1", "name": "Ada"})
 
     def test_collection_compiles_plan_once_and_passes_it_to_engine(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.scan_semantics = None
                 self.scan_semantics_history = []
@@ -138,8 +140,8 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 self.delete_dialect = None
                 self.count_dialect = None
 
-            async def put_document(self, *args, **kwargs):
-                return True
+            async def insert_document(self, *args, **kwargs):
+                return InsertOutcome(applied=True, document=args[2])
 
             async def get_document(self, *args, **kwargs):
                 return None
@@ -158,28 +160,20 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             async def update_with_operation(self, *args, **kwargs):
                 operation = args[2]
                 self.update_plan = operation.plan
-                self.update_dialect = kwargs["dialect"]
+                self.update_dialect = kwargs["operation_context"].dialect
                 from mongoeco.types import UpdateResult
 
                 result = UpdateResult(matched_count=0, modified_count=0)
-                return (
-                    EngineUpdateResult(result=result)
-                    if kwargs.get("capture_documents")
-                    else result
-                )
+                return EngineUpdateResult(result=result)
 
             async def delete_with_operation(self, *args, **kwargs):
                 operation = args[2]
                 self.delete_plan = operation.plan
-                self.delete_dialect = kwargs["dialect"]
+                self.delete_dialect = kwargs["operation_context"].dialect
                 from mongoeco.types import DeleteResult
 
                 result = DeleteResult(deleted_count=0)
-                return (
-                    EngineDeleteResult(result=result)
-                    if kwargs.get("capture_document")
-                    else result
-                )
+                return EngineDeleteResult(result=result)
 
             async def count_find_semantics(self, *args, **kwargs):
                 semantics = args[2]
@@ -239,7 +233,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertIs(engine.count_dialect, collection.mongodb_dialect)
 
     def test_index_helpers_normalize_and_forward_arguments(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def create_index(self, *args, **kwargs):
                 self.create_index_args = args
                 self.create_index_kwargs = kwargs
@@ -317,7 +311,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(engine.drop_indexes_kwargs, {"context": None})
 
     def test_list_indexes_returns_cursor(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def list_indexes(self, *args, **kwargs):
                 return [
                     {"name": "_id_", "key": {"_id": 1}, "unique": True},
@@ -358,7 +352,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             def __init__(self, document):
                 self.document = document
 
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.calls = []
 
@@ -439,7 +433,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             asyncio.run(_empty_insert())
 
     def test_create_index_accepts_ordered_mapping_key_spec(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def create_index(self, *args, **kwargs):
                 self.create_index_args = args
                 self.create_index_kwargs = kwargs
@@ -459,7 +453,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         )
 
     def test_create_indexes_uses_models_sequentially(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.calls = []
 
@@ -539,7 +533,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
     def test_create_indexes_forwards_optional_min_max_and_bucket_size_metadata(
         self,
     ):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.calls = []
 
@@ -574,7 +568,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(engine.calls[0][1]["bucket_size"], 0.5)
 
     def test_create_index_forwards_sparse_and_partial_filter_expression(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def create_index(self, *args, **kwargs):
                 self.kwargs = kwargs
                 return "idx"
@@ -609,7 +603,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         )
 
     def test_create_index_forwards_expire_after_seconds(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def create_index(self, *args, **kwargs):
                 self.kwargs = kwargs
                 return "expires_at_1"
@@ -643,7 +637,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         )
 
     def test_create_index_forwards_hidden(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def create_index(self, *args, **kwargs):
                 self.kwargs = kwargs
                 return "email_1"
@@ -656,7 +650,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertTrue(engine.kwargs["hidden"])
 
     def test_create_index_accepts_background_as_compatibility_noop(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def create_index(self, *args, **kwargs):
                 self.kwargs = kwargs
                 return "email_1"
@@ -673,7 +667,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
     def test_create_index_accepts_wildcard_projection_as_compatibility_noop(
         self,
     ):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def create_index(self, *args, **kwargs):
                 self.kwargs = kwargs
                 return "email_1"
@@ -698,7 +692,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             )
 
     def test_create_index_forwards_collation(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.kwargs = {}
 
@@ -727,7 +721,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
             )
 
     def test_create_index_forwards_max_time_ms(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def create_index(self, *args, **kwargs):
                 self.kwargs = kwargs
                 return "idx"
@@ -740,7 +734,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(engine.kwargs["max_time_ms"], 25)
 
     def test_create_indexes_shares_batch_deadline_across_calls(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.calls = []
 
@@ -952,7 +946,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                 self.assertEqual(scanned, [{"name": "Ada"}])
 
     def test_engine_update_and_delete_with_operation_profile_errors(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             async def update_with_operation(self, *args, **kwargs):
                 raise RuntimeError("update boom")
 
@@ -961,14 +955,23 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
 
         async def _exercise():
             collection = AsyncCollection(EngineStub(), "db", "coll")
+            operation_context = OperationContext.create(
+                dialect=collection.mongodb_dialect,
+            )
             update_operation = compile_update_operation(
                 {"_id": "1"},
                 update_spec={"$set": {"done": True}},
                 dialect=collection.mongodb_dialect,
+            ).with_overrides(
+                context=operation_context,
+                let=operation_context.expressions,
             )
             delete_operation = compile_update_operation(
                 {"_id": "1"},
                 dialect=collection.mongodb_dialect,
+            ).with_overrides(
+                context=operation_context,
+                let=operation_context.expressions,
             )
             profiled = []
 
@@ -1020,7 +1023,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
     def test_search_index_helpers_rename_watch_and_options_delegate_correctly(
         self,
     ):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.rename_calls = []
                 self.search_calls = []
@@ -1237,7 +1240,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
     def test_profile_operation_handles_system_profile_and_planner_failures(
         self,
     ):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.events = []
 
@@ -1274,7 +1277,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
     def test_profile_operation_skips_planner_and_command_factory_when_inactive(
         self,
     ):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.events = []
                 self.planner_calls = 0
@@ -1316,7 +1319,10 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self,
     ):
         async def _exercise_missing_method():
-            collection = AsyncCollection(object(), "db", "coll")
+            class IncompleteEngine(_SpiV2EngineStub):
+                update_with_operation = None
+
+            collection = AsyncCollection(IncompleteEngine(), "db", "coll")
             operation = compile_update_operation(
                 {"_id": "1"},
                 update_spec={"$set": {"done": True}},
@@ -1343,7 +1349,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
     def test_create_indexes_rolls_back_created_indexes_when_later_creation_fails(
         self,
     ):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.created = []
                 self.dropped = []
@@ -1378,7 +1384,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
         self.assertEqual(holder["engine"].dropped, ["idx_a"])
 
     def test_create_indexes_ignores_drop_failures_during_rollback(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.created = []
                 self.drop_attempts = []
@@ -1610,7 +1616,7 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
     def test_drop_index_accepts_string_names_and_rename_rejects_empty_name(
         self,
     ):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.drop_calls = []
 

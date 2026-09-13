@@ -27,7 +27,6 @@ from mongoeco.core.runtime_metadata import (
     ensure_runtime_state,
     prepare_persistence_document,
     prepare_public_document,
-    runtime_state_from_legacy_document,
 )
 from mongoeco.core.search_models import (
     SearchCountResult,
@@ -721,10 +720,7 @@ def strip_search_result_metadata(
     if not isinstance(document, dict):
         message = "runtime document state requires a document"
         raise TypeError(message)
-    if RUNTIME_METADATA_FIELD not in document:
-        return document
-    state = runtime_state_from_legacy_document(document)
-    return state.persistence_document() if for_persistence else state.public_document()
+    return document
 
 
 def iter_classic_text_values(

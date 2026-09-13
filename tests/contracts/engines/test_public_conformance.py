@@ -32,6 +32,7 @@ from mongoeco.conformance.runner import (
     _check_search,
     _check_snapshot,
 )
+from mongoeco.core.runtime_metadata import RuntimeDocumentState, RuntimeMetadataKey
 from mongoeco.core.search_models import (
     SearchCountResult,
     SearchExecutionMode,
@@ -65,7 +66,43 @@ class _Documents:
             raise StopAsyncIteration from error
 
 
-class _FaultyOutcomeEngine:
+class _SpiV2ConformanceStub:
+    capabilities = EngineCapabilities(
+        batch_inserts=False,
+        explicit_read_snapshots=True,
+    )
+
+    async def insert_document(self, *_args, **_kwargs):
+        return InsertOutcome(applied=True, document={"_id": "value"})
+
+    async def get_document(self, *_args, **_kwargs):
+        return None
+
+    async def count_find_semantics(self, *_args, **_kwargs):
+        return 0
+
+    async def update_with_operation(self, *_args, **_kwargs):
+        return MutationOutcome(UpdateResult(0, 0))
+
+    async def delete_with_operation(self, *_args, **_kwargs):
+        return DeleteOutcome(DeleteResult(0))
+
+    async def merge_document(self, *_args, **_kwargs):
+        return MergeOutcome(
+            matched=False,
+            applied=False,
+            operation_type="discard",
+        )
+
+    def open_read_snapshot(self, *_args, operation_context, **_kwargs):
+        return ReadSnapshot(
+            _Documents([]),
+            policy=SnapshotPolicy.STABLE,
+            operation_id=operation_context.operation_id,
+        )
+
+
+class _FaultyOutcomeEngine(_SpiV2ConformanceStub):
     def __init__(self, fault):
         self.fault = fault
 
@@ -107,14 +144,20 @@ class _FaultyOutcomeEngine:
         return {"_id": "context"}
 
 
-class _SnapshotEngine:
+class _SnapshotEngine(_SpiV2ConformanceStub):
     def __init__(self, snapshot):
         self.snapshot = snapshot
 
     async def insert_document(self, *_args, **_kwargs):
         return InsertOutcome(applied=True, document={"_id": "snapshot"})
 
-    def open_read_snapshot(self, *_args, **_kwargs):
+    def open_read_snapshot(self, *_args, operation_context, **_kwargs):
+        if isinstance(self.snapshot, ReadSnapshot):
+            object.__setattr__(
+                self.snapshot.metadata,
+                "operation_id",
+                operation_context.operation_id,
+            )
         return self.snapshot
 
 
@@ -143,7 +186,7 @@ class _MutableReadSnapshot(ReadSnapshot):
             raise
 
 
-class _LiveSnapshotEngine:
+class _LiveSnapshotEngine(_SpiV2ConformanceStub):
     def __init__(self, *, mutable_items=False):
         self.documents = []
         self.mutable_items = mutable_items
@@ -153,12 +196,16 @@ class _LiveSnapshotEngine:
         self.documents.append(owned)
         return InsertOutcome(applied=True, document=owned)
 
-    def open_read_snapshot(self, *_args, **_kwargs):
+    def open_read_snapshot(self, *_args, operation_context, **_kwargs):
         source = _LiveDocuments(
             list(self.documents) if self.mutable_items else self.documents,
         )
         snapshot_type = _MutableReadSnapshot if self.mutable_items else ReadSnapshot
-        return snapshot_type(source, policy=SnapshotPolicy.STABLE)
+        return snapshot_type(
+            source,
+            policy=SnapshotPolicy.STABLE,
+            operation_id=operation_context.operation_id,
+        )
 
     async def get_document(self, _db, _coll, identifier, **_kwargs):
         return next(
@@ -246,6 +293,47 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
         ):
             await _check_batch_outcomes(engine, "db", "items")
 
+    async def test_batch_check_enforces_success_ownership_and_isolation(self):
+        class RejectedInsertEngine(_SpiV2ConformanceStub):
+            async def insert_document(self, *_args, **_kwargs):
+                return InsertOutcome(applied=False)
+
+        with self.assertRaisesRegex(AssertionError, "one applied outcome"):
+            await _check_batch_outcomes(RejectedInsertEngine(), "db", "items")
+
+        class MutatingBatchEngine(_SpiV2ConformanceStub):
+            capabilities = EngineCapabilities(
+                batch_inserts=True,
+                explicit_read_snapshots=True,
+            )
+
+            async def insert_documents(self, _db, _coll, documents, **_kwargs):
+                documents[0]["nested"]["value"] = 999
+                return tuple(
+                    InsertOutcome(applied=True, document=deepcopy(document))
+                    for document in documents
+                )
+
+        with self.assertRaisesRegex(AssertionError, "caller-owned"):
+            await _check_batch_outcomes(MutatingBatchEngine(), "db", "items")
+
+        class AliasingBatchEngine(MutatingBatchEngine):
+            def __init__(self):
+                self.documents = []
+
+            async def insert_documents(self, _db, _coll, documents, **_kwargs):
+                self.documents = documents
+                return tuple(
+                    InsertOutcome(applied=True, document=document)
+                    for document in documents
+                )
+
+            async def get_document(self, *_args, **_kwargs):
+                return self.documents[0]
+
+        with self.assertRaisesRegex(AssertionError, "engine-owned"):
+            await _check_batch_outcomes(AliasingBatchEngine(), "db", "items")
+
     async def test_builtin_engines_pass_the_public_installed_contract(self):
         for factory in (MemoryEngine, SQLiteEngine):
             with self.subTest(engine=factory.__name__):
@@ -278,11 +366,11 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
                 )
 
     async def test_report_accumulates_failure_without_pytest_dependency(self):
-        class _LegacyEngine:
-            pass
+        class _InvalidV2Engine:
+            capabilities = EngineCapabilities()
 
         report = await run_engine_conformance(
-            EngineConformanceProvider("legacy", _LegacyEngine),
+            EngineConformanceProvider("invalid-v2", _InvalidV2Engine),
             profiles=(ConformanceProfile.SPI_V2_CORE,),
         )
 
@@ -303,11 +391,8 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
             report.require_success()
 
     async def test_report_exposes_inapplicable_partial_capabilities(self):
-        class _LegacyEngine:
-            pass
-
         report = await run_engine_conformance(
-            EngineConformanceProvider("legacy", _LegacyEngine),
+            EngineConformanceProvider("no-search", _SpiV2ConformanceStub),
             profiles=(ConformanceProfile.SEARCH_V1,),
         )
 
@@ -430,7 +515,11 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
             raise RuntimeError(msg)
 
         report = await run_engine_conformance(
-            EngineConformanceProvider("legacy", object, cleanup=cleanup),
+            EngineConformanceProvider(
+                "invalid-v2",
+                _SpiV2ConformanceStub,
+                cleanup=cleanup,
+            ),
             profiles=(ConformanceProfile.SPI_V2_CORE,),
         )
 
@@ -583,7 +672,7 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_optional_profiles_reject_divergent_claims_and_results(self):
         with self.assertRaisesRegex(AssertionError, "sequenced mode"):
-            await _check_change_delivery(object(), "db", "items")
+            await _check_change_delivery(_SpiV2ConformanceStub(), "db", "items")
 
         engine = MemoryEngine()
 
@@ -595,6 +684,41 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
 
         engine.execute_search = divergent_search
         with self.assertRaisesRegex(AssertionError, "matching document"):
+            await _check_search(engine, "db", "items")
+
+        engine = MemoryEngine()
+        original_execute = engine.execute_search
+
+        async def divergent_vector(db, coll, request):
+            if request.effective_operator == "$vectorSearch":
+                return SearchExecutionOutcome.from_documents(
+                    [{"_id": "other"}],
+                    backend="test",
+                )
+            return await original_execute(db, coll, request)
+
+        engine.execute_search = divergent_vector
+        with self.assertRaisesRegex(AssertionError, "vector Search"):
+            await _check_search(engine, "db", "items")
+
+        engine = MemoryEngine()
+        original_persistence = RuntimeDocumentState.persistence_document
+
+        def divergent_persistence(state):
+            has_highlights, _ = state.metadata_value(
+                RuntimeMetadataKey.SEARCH_HIGHLIGHTS,
+            )
+            if has_highlights:
+                return {"_id": "unexpected"}
+            return original_persistence(state)
+
+        with (
+            patch(
+                "mongoeco.core.runtime_metadata.RuntimeDocumentState.persistence_document",
+                new=divergent_persistence,
+            ),
+            self.assertRaisesRegex(AssertionError, "persistence boundaries"),
+        ):
             await _check_search(engine, "db", "items")
 
     async def test_change_delivery_check_rejects_each_delivery_violation(self):
@@ -741,6 +865,21 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
                 dispatch=lose_failed_delivery,
             )
 
+        shared_changes = [
+            CommittedChange(1, {"_id": "event", "nested": {"value": 1}}),
+            CommittedChange(2, {"_id": "event-2", "nested": {"value": 1}}),
+        ]
+
+        def leak_consumer_mutation(_consumer, callback):
+            for change in shared_changes:
+                callback(change)
+
+        with self.assertRaisesRegex(AssertionError, "isolated payload"):
+            await exercise(
+                insert_outcome=sequenced_pair,
+                dispatch=leak_consumer_mutation,
+            )
+
     async def test_search_check_rejects_each_declared_capability_violation(self):
         invalid_metadata = (
             SearchExecutionOutcome(),
@@ -800,9 +939,14 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
             await _check_search(engine, "db", "items")
 
     async def test_search_check_rejects_invalid_explain_evidence(self):
-        for invalid_verbosity, expected in (
-            (SearchExplainVerbosity.QUERY_PLANNER, "queryPlanner"),
-            (SearchExplainVerbosity.EXECUTION_STATS, "runtime evidence"),
+        for invalid_verbosity, invalid_stats, expected in (
+            (SearchExplainVerbosity.QUERY_PLANNER, {}, "queryPlanner"),
+            (SearchExplainVerbosity.EXECUTION_STATS, None, "runtime evidence"),
+            (
+                SearchExplainVerbosity.EXECUTION_STATS,
+                {"matchedCount": 2},
+                "observed Search match count",
+            ),
         ):
             engine = MemoryEngine()
             original_explain = engine.explain_search
@@ -815,15 +959,12 @@ class PublicEngineConformanceTests(unittest.IsolatedAsyncioTestCase):
                 *,
                 _original_explain=original_explain,
                 _invalid_verbosity=invalid_verbosity,
+                _invalid_stats=invalid_stats,
             ):
                 explanation = await _original_explain(db, coll, request, verbosity)
                 details = dict(explanation.details or {})
-                details["executionStats"] = (
-                    {}
-                    if _invalid_verbosity is SearchExplainVerbosity.QUERY_PLANNER
-                    else None
-                )
                 if verbosity is _invalid_verbosity:
+                    details["executionStats"] = _invalid_stats
                     return replace(explanation, details=details)
                 return explanation
 

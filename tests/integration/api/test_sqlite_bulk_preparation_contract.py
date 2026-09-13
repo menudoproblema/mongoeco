@@ -45,10 +45,10 @@ def test_bulk_submissions_scale_with_blocks_not_documents(
         try:
             with monkeypatch.context() as patch:
                 patch.setattr(executor, "submit", observe)
-                result = await engine.put_documents_bulk(
+                result = await engine.insert_documents(
                     "db", "records", [{"_id": index} for index in range(size)]
                 )
-            assert result == [True] * size
+            assert [item.applied for item in result] == [True] * size
             assert submitted <= math.ceil(size / 64) + 2
             completion_handoff_bound = 2
             assert peak_pending <= completion_handoff_bound
@@ -67,7 +67,7 @@ def test_independent_read_progresses_between_bulk_preparation_blocks(
     async def exercise():
         engine = SQLiteEngine(str(tmp_path / "fairness.sqlite"), executor_workers=1)
         await engine.connect()
-        await engine.put_document("db", "seed", {"_id": "read"})
+        await engine.insert_document("db", "seed", {"_id": "read"})
         loop = asyncio.get_running_loop()
         entered = asyncio.Event()
         release = threading.Event()
@@ -96,7 +96,7 @@ def test_independent_read_progresses_between_bulk_preparation_blocks(
                 patch.setattr(engine, "_get_document_sync", observe_read)
                 size = 1000
                 bulk = asyncio.create_task(
-                    engine.put_documents_bulk(
+                    engine.insert_documents(
                         "db", "records", [{"_id": index} for index in range(size)]
                     )
                 )
@@ -107,7 +107,7 @@ def test_independent_read_progresses_between_bulk_preparation_blocks(
                 assert await asyncio.wait_for(read, 2) == {"_id": "read"}
                 assert read_at
                 assert 0 < read_at[0] < size
-                assert await bulk == [True] * size
+                assert [item.applied for item in await bulk] == [True] * size
         finally:
             release.set()
             if bulk is not None:
@@ -143,7 +143,7 @@ def test_cancelled_preparation_stops_after_running_document_without_publication(
                     engine, "_prepare_bulk_document_with_indexes_sync", pause_first
                 )
                 bulk = asyncio.create_task(
-                    engine.put_documents_bulk(
+                    engine.insert_documents(
                         "db", "records", [{"_id": index} for index in range(1000)]
                     )
                 )
@@ -195,7 +195,7 @@ def test_bulk_preserves_validation_precedence_without_publishing_prefix(
                     engine, "_prepare_bulk_document_with_indexes_sync", fail_encoding
                 )
                 with pytest.raises(expected_error):
-                    await engine.put_documents_bulk("db", "records", documents)
+                    await engine.insert_documents("db", "records", documents)
             assert await engine.get_document("db", "records", 0) is None
             assert await engine.get_document("db", "records", 259) is None
         finally:

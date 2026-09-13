@@ -2,6 +2,8 @@ import asyncio
 import unittest
 from unittest.mock import patch
 
+from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.search import compile_search_stage
 from mongoeco.engines import _sqlite_search_runtime as search_runtime_module
 from mongoeco.engines.sqlite import SQLiteEngine
@@ -9,6 +11,16 @@ from mongoeco.types import SearchIndexDefinition
 from tests.unit.core._sqlite_helper_test_cases import SQLiteInternalHelperTests as _BaseSQLiteHelperTests
 
 _BaseSQLiteHelperTests.__test__ = False
+
+
+async def _insert_document(engine, db_name, coll_name, document) -> None:
+    await engine.insert_document(
+        db_name,
+        coll_name,
+        document,
+        overwrite=False,
+        operation_context=OperationContext.create(dialect=MONGODB_DIALECT_70),
+    )
 
 
 def _build_case(name: str, methods: list[str]) -> type[unittest.TestCase]:
@@ -41,7 +53,7 @@ class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
             engine = SQLiteEngine()
             await engine.connect()
             try:
-                await engine.put_document(
+                await _insert_document(engine,
                     "db",
                     "coll",
                     {
@@ -50,7 +62,7 @@ class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
                         "embedding": [1.0, 0.0],
                     },
                 )
-                await engine.put_document(
+                await _insert_document(engine,
                     "db",
                     "coll",
                     {
@@ -168,7 +180,7 @@ class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
             engine = SQLiteEngine()
             await engine.connect()
             try:
-                await engine.put_document(
+                await _insert_document(engine,
                     "db",
                     "coll",
                     {
@@ -180,7 +192,7 @@ class SQLiteSearchRuntimeDirectCoverageTests(unittest.TestCase):
                         "embedding": [1.0, 0.0],
                     },
                 )
-                await engine.put_document(
+                await _insert_document(engine,
                     "db",
                     "coll",
                     {

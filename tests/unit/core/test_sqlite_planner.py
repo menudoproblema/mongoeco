@@ -180,10 +180,10 @@ class SQLitePlannerUnitTests(unittest.TestCase):
             engine = SQLiteEngine()
             await engine.connect()
             try:
-                await engine.put_document(
+                await engine.insert_document(
                     "db", "users", {"_id": "1", "kind": "view", "payload": b"\x02"}
                 )
-                await engine.put_document(
+                await engine.insert_document(
                     "db", "users", {"_id": "2", "kind": "view", "payload": b"\x01"}
                 )
                 semantics = compile_find_semantics(

@@ -20,6 +20,7 @@ from mongoeco.errors import (
     ServerSelectionTimeoutError,
 )
 from mongoeco.types import PlanningMode
+from tests.unit.api._collection_test_support import _SpiV2EngineStub
 
 
 async def _noop() -> None:
@@ -812,7 +813,7 @@ client.close()
             client.close()
 
     def test_client_drop_database_prefers_engine_fast_path(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.fast_drop_calls = []
                 self.fallback_calls = []

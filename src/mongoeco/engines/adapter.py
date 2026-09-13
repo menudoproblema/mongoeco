@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import threading
 import uuid
-import warnings
-import weakref
 
 from dataclasses import replace
 from pathlib import Path
@@ -13,10 +11,6 @@ from mongoeco.api.operations import UpdateOperation
 from mongoeco.core.operation_context import (
     ChangePublicationPolicy,
     OperationContext,
-)
-from mongoeco.core.search import (
-    collect_search_metadata,
-    search_query_explain_details,
 )
 from mongoeco.core.search_execution import SearchRequest
 from mongoeco.core.search_models import (
@@ -47,7 +41,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
 
-_SPI_V2 = 2
 _DOCUMENT_ARGUMENT_INDEX = 2
 _MISSING_ARGUMENT = object()
 _LOCAL_CHANGE_CONSUMER_INSTANCE = uuid.uuid4().hex
@@ -69,10 +62,6 @@ def _call_argument(
         return default
     message = f"missing required engine argument: {name}"
     raise TypeError(message)
-
-
-_LEGACY_WARNING_LOCK = threading.Lock()
-_WARNED_LEGACY_ENGINE_TYPES: weakref.WeakSet[type[object]] = weakref.WeakSet()
 
 
 def _require_callable(
@@ -152,97 +141,59 @@ class EngineSpiAdapter:
         coll_name: str,
         request: SearchRequest,
     ) -> SearchExecutionOutcome:
-        """Execute optional Search SPI or isolate the 4.x legacy surface."""
+        """Execute the optional typed Search contract declared by SPI v2."""
         if not isinstance(request, SearchRequest):
             message = "Search SPI requires SearchRequest"
             raise TypeError(message)
-        if self.capabilities.search is not None:
-            search_capabilities = self.capabilities.search
-            effective_operator = request.effective_operator
-            if effective_operator not in search_capabilities.operators:
-                message = f"engine does not declare {effective_operator} support"
-                raise OperationFailure(message)
-            similarity = getattr(request.query, "similarity", None)
-            if (
-                effective_operator == "$vectorSearch"
-                and similarity not in search_capabilities.vector_similarities
-            ):
-                message = f"engine does not declare vector similarity [{similarity}]"
-                raise OperationFailure(message)
-            if (
-                request.mode is SearchExecutionMode.METADATA
-                and not search_capabilities.metadata_collectors
-            ):
-                message = "engine does not declare Search metadata collector support"
-                raise OperationFailure(message)
-            stage_options = getattr(request.query, "stage_options", None)
-            if (
-                stage_options is not None
-                and getattr(stage_options, "highlight", None) is not None
-                and not search_capabilities.highlight
-            ):
-                message = "engine does not declare Search highlight support"
-                raise OperationFailure(message)
-            execute = _require_callable(
-                self.engine,
-                "execute_search",
-                message=(
-                    "engine declaring Search capabilities must implement execute_search"
-                ),
-            )
-            outcome = await execute(db_name, coll_name, request)
-            if not isinstance(outcome, SearchExecutionOutcome):
-                message = "Search SPI must return SearchExecutionOutcome"
-                raise TypeError(message)
-            if request.mode is SearchExecutionMode.METADATA and outcome.hits:
-                message = "metadata Search outcome cannot contain hits"
-                raise RuntimeError(message)
-            if request.mode is SearchExecutionMode.HITS and (
-                outcome.metadata.count is not None or outcome.metadata.facets
-            ):
-                message = "hits Search outcome cannot contain collector metadata"
-                raise RuntimeError(message)
-            return outcome
-
-        legacy_execute = getattr(self.engine, "search_documents", None)
-        if not callable(legacy_execute):
+        search_capabilities = self.capabilities.search
+        if search_capabilities is None:
             message = f"{request.operator} is not supported by this engine"
             raise OperationFailure(message)
-        documents = await legacy_execute(
-            db_name,
-            coll_name,
-            request.effective_operator,
-            request.effective_specification,
-            max_time_ms=request.max_time_ms,
-            context=request.operation_context.session,
-            result_limit_hint=request.result_limit_hint,
-            downstream_filter_spec=request.downstream_filter_spec,
-        )
-        if not isinstance(documents, list) or not all(
-            isinstance(document, dict) for document in documents
+        effective_operator = request.effective_operator
+        if effective_operator not in search_capabilities.operators:
+            message = f"engine does not declare {effective_operator} support"
+            raise OperationFailure(message)
+        similarity = getattr(request.query, "similarity", None)
+        if (
+            effective_operator == "$vectorSearch"
+            and similarity not in search_capabilities.vector_similarities
         ):
-            message = "legacy Search engine must return a list of documents"
-            raise TypeError(message)
-        backend = type(self.engine).__name__
-        if request.mode is SearchExecutionMode.METADATA:
-            return SearchExecutionOutcome(
-                metadata=collect_search_metadata(
-                    documents,
-                    query=request.query,
-                ),
-                trace=SearchExecutionTrace(
-                    backend=backend,
-                    operation_id=request.operation_context.operation_id,
-                    snapshot_captured=True,
-                    matched_count=len(documents),
-                    collector_document_count=len(documents),
-                ),
-            )
-        return SearchExecutionOutcome.from_documents(
-            documents,
-            backend=backend,
-            operation_id=request.operation_context.operation_id,
+            message = f"engine does not declare vector similarity [{similarity}]"
+            raise OperationFailure(message)
+        if (
+            request.mode is SearchExecutionMode.METADATA
+            and not search_capabilities.metadata_collectors
+        ):
+            message = "engine does not declare Search metadata collector support"
+            raise OperationFailure(message)
+        stage_options = getattr(request.query, "stage_options", None)
+        if (
+            stage_options is not None
+            and getattr(stage_options, "highlight", None) is not None
+            and not search_capabilities.highlight
+        ):
+            message = "engine does not declare Search highlight support"
+            raise OperationFailure(message)
+        execute = _require_callable(
+            self.engine,
+            "execute_search",
+            message=(
+                "engine declaring Search capabilities must implement execute_search"
+            ),
         )
+        outcome = await execute(db_name, coll_name, request)
+        if not isinstance(outcome, SearchExecutionOutcome):
+            message = "Search SPI must return SearchExecutionOutcome"
+            raise TypeError(message)
+        if request.mode is SearchExecutionMode.METADATA and outcome.hits:
+            message = "metadata Search outcome cannot contain hits"
+            raise RuntimeError(message)
+        if request.mode is SearchExecutionMode.HITS and (
+            outcome.metadata.count is not None or outcome.metadata.facets
+        ):
+            message = "hits Search outcome cannot contain collector metadata"
+            raise RuntimeError(message)
+        return outcome
 
     async def explain_search(
         self,
@@ -251,7 +202,7 @@ class EngineSpiAdapter:
         request: SearchRequest,
         verbosity: SearchExplainVerbosity,
     ) -> QueryPlanExplanation:
-        """Explain Search while isolating the 4.x legacy surface."""
+        """Explain Search through the optional typed SPI v2 contract."""
         if not isinstance(request, SearchRequest):
             message = "Search SPI requires SearchRequest"
             raise TypeError(message)
@@ -283,56 +234,24 @@ class EngineSpiAdapter:
                 verbosity,
             )
 
-        legacy_explain = getattr(
-            self.engine,
-            "explain_search_documents",
-            None,
-        )
-        if verbosity is SearchExplainVerbosity.QUERY_PLANNER or not callable(
-            legacy_explain,
-        ):
-            explanation = QueryPlanExplanation(
-                engine=type(self.engine).__name__,
-                strategy="search",
-                plan=(
-                    "legacy-search-contract"
-                    if callable(legacy_explain)
-                    else "unsupported-search-engine"
-                ),
-                sort=None,
-                skip=0,
-                limit=None,
-                hint=None,
-                hinted_index=request.query.index_name,
-                comment=None,
-                max_time_ms=request.max_time_ms,
-                details={
-                    "operator": request.operator,
-                    "verbosity": verbosity.value,
-                    "executionStats": None,
-                    "degradation": "legacy-engine-has-no-planner-spi",
-                    **search_query_explain_details(request.query),
-                },
-            )
-            return self._attach_search_pipeline_plan(
-                explanation,
-                request,
-                verbosity,
-            )
-
-        explanation = await legacy_explain(
-            db_name,
-            coll_name,
-            request.operator,
-            request.specification,
+        explanation = QueryPlanExplanation(
+            engine=type(self.engine).__name__,
+            strategy="search",
+            plan="unsupported-search-engine",
+            sort=None,
+            skip=0,
+            limit=None,
+            hint=None,
+            hinted_index=request.query.index_name,
+            comment=None,
             max_time_ms=request.max_time_ms,
-            context=request.operation_context.session,
-            result_limit_hint=request.result_limit_hint,
-            downstream_filter_spec=request.downstream_filter_spec,
+            details={
+                "operator": request.operator,
+                "verbosity": verbosity.value,
+                "executionStats": None,
+                "degradation": "engine-has-no-search-explain-spi",
+            },
         )
-        if not isinstance(explanation, QueryPlanExplanation):
-            message = "legacy Search explain must return QueryPlanExplanation"
-            raise TypeError(message)
         return self._attach_search_pipeline_plan(explanation, request, verbosity)
 
     @staticmethod
@@ -491,21 +410,10 @@ class EngineSpiAdapter:
             message="engine must implement update_with_operation",
         )
         call_kwargs = dict(kwargs)
-        operation_context = None
-        if self.capabilities.spi_version == 1:
-            operation_context = call_kwargs.pop("operation_context", None)
-            if operation_context is not None:
-                call_kwargs["context"] = operation_context.session
-            call_kwargs["capture_documents"] = True
-        else:
-            operation_context = _require_operation_context(
-                call_kwargs.get("operation_context"),
-            )
-            _require_bound_update_context(args, call_kwargs, operation_context)
-            call_kwargs.pop("context", None)
-            call_kwargs.pop("dialect", None)
-        if self._uses_commit_callback and on_commit is not None:
-            call_kwargs["on_commit"] = on_commit
+        operation_context = _require_operation_context(
+            call_kwargs.get("operation_context"),
+        )
+        _require_bound_update_context(args, call_kwargs, operation_context)
         result = await method(*args, **call_kwargs)
         outcome = self._require_mutation_outcome(
             result,
@@ -527,21 +435,10 @@ class EngineSpiAdapter:
             message="engine must implement delete_with_operation",
         )
         call_kwargs = dict(kwargs)
-        operation_context = None
-        if self.capabilities.spi_version == 1:
-            operation_context = call_kwargs.pop("operation_context", None)
-            if operation_context is not None:
-                call_kwargs["context"] = operation_context.session
-            call_kwargs["capture_document"] = True
-        else:
-            operation_context = _require_operation_context(
-                call_kwargs.get("operation_context"),
-            )
-            _require_bound_update_context(args, call_kwargs, operation_context)
-            call_kwargs.pop("context", None)
-            call_kwargs.pop("dialect", None)
-        if self._uses_commit_callback and on_commit is not None:
-            call_kwargs["on_commit"] = on_commit
+        operation_context = _require_operation_context(
+            call_kwargs.get("operation_context"),
+        )
+        _require_bound_update_context(args, call_kwargs, operation_context)
         result = await method(*args, **call_kwargs)
         outcome = self._require_delete_outcome(
             result,
@@ -557,57 +454,24 @@ class EngineSpiAdapter:
         on_commit: Callable[[InsertOutcome], None] | None = None,
         **kwargs: object,
     ) -> InsertOutcome:
-        if self.capabilities.spi_version >= _SPI_V2:
-            method = _require_callable(
-                self.engine,
-                "insert_document",
-                message="SPI v2 engine must implement insert_document",
-            )
-            call_kwargs = dict(kwargs)
-            operation_context = _require_operation_context(
-                call_kwargs.get("operation_context"),
-            )
-            outcome = self._require_insert_outcome(
-                await method(*args, **call_kwargs),
-                operation_context=operation_context,
-            )
-        else:
-            method = _require_callable(
-                self.engine,
-                "put_document",
-                message="legacy engine must implement put_document",
-            )
-            document = _call_argument(
-                args,
-                kwargs,
-                name="document",
-                index=_DOCUMENT_ARGUMENT_INDEX,
-                default=None,
-            )
-            legacy_callback = None
-            if on_commit is not None:
-
-                def legacy_callback(committed: object) -> None:
-                    on_commit(
-                        InsertOutcome(applied=True, document=committed),
-                    )
-
-            call_kwargs = dict(kwargs)
-            operation_context = call_kwargs.pop("operation_context", None)
-            if operation_context is not None:
-                call_kwargs["context"] = operation_context.session
-            if self._uses_commit_callback and legacy_callback is not None:
-                call_kwargs["on_commit"] = legacy_callback
-            applied = bool(await method(*args, **call_kwargs))
-            outcome = InsertOutcome(
-                applied=applied,
-                document=document if applied else None,
-            )
+        method = _require_callable(
+            self.engine,
+            "insert_document",
+            message="SPI v2 engine must implement insert_document",
+        )
+        call_kwargs = dict(kwargs)
+        operation_context = _require_operation_context(
+            call_kwargs.get("operation_context"),
+        )
+        outcome = self._require_insert_outcome(
+            await method(*args, **call_kwargs),
+            operation_context=operation_context,
+        )
         if self._publishes_after_return and on_commit is not None and outcome:
             on_commit(outcome)
         return outcome
 
-    async def insert_many_outcomes(  # noqa: PLR0912 - versioned SPI paths
+    async def insert_many_outcomes(
         self,
         db_name: object,
         coll_name: object,
@@ -616,7 +480,7 @@ class EngineSpiAdapter:
         on_commit: Callable[[InsertOutcome], None] | None = None,
         **kwargs: object,
     ) -> tuple[InsertOutcome, ...]:
-        if self.capabilities.spi_version >= _SPI_V2 and self.capabilities.batch_inserts:
+        if self.capabilities.batch_inserts:
             method = _require_callable(
                 self.engine,
                 "insert_documents",
@@ -645,7 +509,7 @@ class EngineSpiAdapter:
             ):
                 message = "batch insert outcome cardinality is inconsistent"
                 raise RuntimeError(message)
-        elif self.capabilities.spi_version >= _SPI_V2:
+        else:
             base_context = _require_operation_context(
                 kwargs.get("operation_context"),
             )
@@ -666,43 +530,6 @@ class EngineSpiAdapter:
                 if not outcome.applied:
                     break
             outcomes = tuple(outcomes_list)
-        else:
-            method = getattr(self.engine, "put_documents_bulk", None)
-            if not callable(method):
-                raise NotImplementedError
-            legacy_callback = None
-            if on_commit is not None:
-
-                def legacy_callback(committed: object) -> None:
-                    on_commit(
-                        InsertOutcome(applied=True, document=committed),
-                    )
-
-            call_kwargs = dict(kwargs)
-            operation_context = call_kwargs.pop("operation_context", None)
-            if operation_context is not None:
-                call_kwargs["context"] = operation_context.session
-            if self._uses_commit_callback and legacy_callback is not None:
-                call_kwargs["on_commit"] = legacy_callback
-            applied_results = tuple(
-                await method(
-                    db_name,
-                    coll_name,
-                    documents,
-                    **call_kwargs,
-                ),
-            )
-            outcomes = tuple(
-                InsertOutcome(
-                    applied=bool(applied),
-                    document=document if applied else None,
-                )
-                for document, applied in zip(
-                    documents,
-                    applied_results,
-                    strict=False,
-                )
-            )
         if self._publishes_after_return and on_commit is not None:
             for outcome in outcomes:
                 if outcome:
@@ -721,18 +548,9 @@ class EngineSpiAdapter:
             message="engine must implement merge_document",
         )
         call_kwargs = dict(kwargs)
-        operation_context = None
-        if self.capabilities.spi_version == 1:
-            operation_context = call_kwargs.pop("operation_context", None)
-            if operation_context is not None:
-                call_kwargs["context"] = operation_context.session
-        else:
-            operation_context = _require_operation_context(
-                call_kwargs.get("operation_context"),
-            )
-            call_kwargs.pop("context", None)
-        if self._uses_commit_callback and on_commit is not None:
-            call_kwargs["on_commit"] = on_commit
+        operation_context = _require_operation_context(
+            call_kwargs.get("operation_context"),
+        )
         outcome = await method(*args, **call_kwargs)
         outcome = self._require_merge_outcome(
             outcome,
@@ -748,35 +566,34 @@ class EngineSpiAdapter:
         operation_context=None,
         **kwargs: object,
     ) -> ReadSnapshot:
-        if self.capabilities.spi_version >= _SPI_V2:
-            operation_context = _require_operation_context(operation_context)
-            _require_bound_read_context(args, kwargs, operation_context)
-            if self.capabilities.explicit_read_snapshots:
-                method = _require_callable(
-                    self.engine,
-                    "open_read_snapshot",
-                    message=(
-                        "SPI v2 engine declaring explicit snapshots must "
-                        "implement open_read_snapshot"
-                    ),
-                )
-                snapshot = method(
-                    *args,
-                    operation_context=operation_context,
-                    **kwargs,
-                )
-                if not isinstance(snapshot, ReadSnapshot):
-                    message = "SPI v2 engine did not return ReadSnapshot"
-                    raise TypeError(message)
-                if snapshot.metadata.operation_id != operation_context.operation_id:
-                    snapshot.discard()
-                    message = "SPI v2 snapshot operation identity is inconsistent"
-                    raise RuntimeError(message)
-                if snapshot.metadata.policy is not SnapshotPolicy.STABLE:
-                    snapshot.discard()
-                    message = "collection reads require a stable SPI v2 snapshot"
-                    raise RuntimeError(message)
-                return snapshot
+        operation_context = _require_operation_context(operation_context)
+        _require_bound_read_context(args, kwargs, operation_context)
+        if self.capabilities.explicit_read_snapshots:
+            method = _require_callable(
+                self.engine,
+                "open_read_snapshot",
+                message=(
+                    "SPI v2 engine declaring explicit snapshots must "
+                    "implement open_read_snapshot"
+                ),
+            )
+            snapshot = method(
+                *args,
+                operation_context=operation_context,
+                **kwargs,
+            )
+            if not isinstance(snapshot, ReadSnapshot):
+                message = "SPI v2 engine did not return ReadSnapshot"
+                raise TypeError(message)
+            if snapshot.metadata.operation_id != operation_context.operation_id:
+                snapshot.discard()
+                message = "SPI v2 snapshot operation identity is inconsistent"
+                raise RuntimeError(message)
+            if snapshot.metadata.policy is not SnapshotPolicy.STABLE:
+                snapshot.discard()
+                message = "collection reads require a STABLE SPI v2 snapshot"
+                raise RuntimeError(message)
+            return snapshot
         method = _require_callable(
             self.engine,
             "scan_find_semantics",
@@ -787,15 +604,13 @@ class EngineSpiAdapter:
         )
         source = method(
             *args,
-            context=(None if operation_context is None else operation_context.session),
+            context=operation_context.session,
             **kwargs,
         )
         return ReadSnapshot(
             source,
             policy=SnapshotPolicy.STABLE,
-            operation_id=(
-                None if operation_context is None else operation_context.operation_id
-            ),
+            operation_id=operation_context.operation_id,
         )
 
     async def get_document(
@@ -809,16 +624,10 @@ class EngineSpiAdapter:
             "get_document",
             message="engine must implement get_document",
         )
-        if self.capabilities.spi_version >= _SPI_V2:
-            operation_context = _require_operation_context(operation_context)
-            return await method(
-                *args,
-                operation_context=operation_context,
-                **kwargs,
-            )
+        operation_context = _require_operation_context(operation_context)
         return await method(
             *args,
-            context=(None if operation_context is None else operation_context.session),
+            operation_context=operation_context,
             **kwargs,
         )
 
@@ -833,29 +642,15 @@ class EngineSpiAdapter:
             "count_find_semantics",
             message="engine must implement count_find_semantics",
         )
-        if self.capabilities.spi_version >= _SPI_V2:
-            operation_context = _require_operation_context(operation_context)
-            _require_bound_read_context(args, kwargs, operation_context)
-            return int(
-                await method(
-                    *args,
-                    operation_context=operation_context,
-                    **kwargs,
-                ),
-            )
+        operation_context = _require_operation_context(operation_context)
+        _require_bound_read_context(args, kwargs, operation_context)
         return int(
             await method(
                 *args,
-                context=(
-                    None if operation_context is None else operation_context.session
-                ),
+                operation_context=operation_context,
                 **kwargs,
             ),
         )
-
-    @property
-    def _uses_commit_callback(self) -> bool:
-        return self.capabilities.change_delivery == "legacy-callback"
 
     @property
     def _publishes_after_return(self) -> bool:
@@ -868,23 +663,20 @@ class EngineSpiAdapter:
         operation_context: OperationContext | None = None,
     ) -> MutationOutcome:
         if isinstance(result, MutationOutcome):
-            if self.capabilities.spi_version >= _SPI_V2:
-                matched = result.matched_count > 0
-                applied = result.modified_count > 0 or result.upserted_id is not None
-                if (matched or applied) and result.after_document is None:
-                    message = "an applied SPI v2 mutation must expose its after image"
-                    raise RuntimeError(message)
-                if matched and result.before_document is None:
-                    message = "a modified SPI v2 mutation must expose its before image"
-                    raise RuntimeError(message)
-                self._validate_commit_sequence_contract(
-                    result.commit_sequence,
-                    applied=applied,
-                    operation_context=operation_context,
-                )
+            matched = result.matched_count > 0
+            applied = result.modified_count > 0 or result.upserted_id is not None
+            if (matched or applied) and result.after_document is None:
+                message = "an applied SPI v2 mutation must expose its after image"
+                raise RuntimeError(message)
+            if matched and result.before_document is None:
+                message = "a modified SPI v2 mutation must expose its before image"
+                raise RuntimeError(message)
+            self._validate_commit_sequence_contract(
+                result.commit_sequence,
+                applied=applied,
+                operation_context=operation_context,
+            )
             return result
-        if self.capabilities.spi_version == 1:
-            return MutationOutcome(result=result)
         message = "SPI v2 engine did not return MutationOutcome"
         raise TypeError(message)
 
@@ -895,22 +687,15 @@ class EngineSpiAdapter:
         operation_context: OperationContext | None = None,
     ) -> DeleteOutcome:
         if isinstance(result, DeleteOutcome):
-            if (
-                self.capabilities.spi_version >= _SPI_V2
-                and result.deleted_count > 0
-                and result.deleted_document is None
-            ):
+            if result.deleted_count > 0 and result.deleted_document is None:
                 message = "an applied SPI v2 delete must expose its deleted image"
                 raise RuntimeError(message)
-            if self.capabilities.spi_version >= _SPI_V2:
-                self._validate_commit_sequence_contract(
-                    result.commit_sequence,
-                    applied=result.deleted_count > 0,
-                    operation_context=operation_context,
-                )
+            self._validate_commit_sequence_contract(
+                result.commit_sequence,
+                applied=result.deleted_count > 0,
+                operation_context=operation_context,
+            )
             return result
-        if self.capabilities.spi_version == 1:
-            return DeleteOutcome(result=result)
         message = "SPI v2 engine did not return DeleteOutcome"
         raise TypeError(message)
 
@@ -921,19 +706,14 @@ class EngineSpiAdapter:
         operation_context: OperationContext | None = None,
     ) -> InsertOutcome:
         if isinstance(result, InsertOutcome):
-            if (
-                self.capabilities.spi_version >= _SPI_V2
-                and result.applied
-                and result.document is None
-            ):
+            if result.applied and result.document is None:
                 message = "an applied SPI v2 insert must expose its document"
                 raise RuntimeError(message)
-            if self.capabilities.spi_version >= _SPI_V2:
-                self._validate_commit_sequence_contract(
-                    result.commit_sequence,
-                    applied=result.applied,
-                    operation_context=operation_context,
-                )
+            self._validate_commit_sequence_contract(
+                result.commit_sequence,
+                applied=result.applied,
+                operation_context=operation_context,
+            )
             return result
         message = "SPI v2 engine did not return InsertOutcome"
         raise TypeError(message)
@@ -947,12 +727,11 @@ class EngineSpiAdapter:
         if not isinstance(result, MergeOutcome):
             message = "engine did not return MergeOutcome"
             raise TypeError(message)
-        if self.capabilities.spi_version >= _SPI_V2:
-            self._validate_commit_sequence_contract(
-                result.commit_sequence,
-                applied=result.applied,
-                operation_context=operation_context,
-            )
+        self._validate_commit_sequence_contract(
+            result.commit_sequence,
+            applied=result.applied,
+            operation_context=operation_context,
+        )
         return result
 
     def _validate_commit_sequence_contract(
@@ -974,31 +753,3 @@ class EngineSpiAdapter:
         if requires_sequence and applied and sequence is None:
             message = "an applied sequenced mutation requires commit_sequence"
             raise RuntimeError(message)
-
-
-class LegacyEngineAdapter(EngineSpiAdapter):
-    """Explicit compatibility marker for engines implementing SPI v1."""
-
-
-def adapt_engine(engine: object) -> EngineSpiAdapter:
-    capabilities = resolve_engine_capabilities(engine)
-    if capabilities.spi_version == 1:
-        engine_type = type(engine)
-        with _LEGACY_WARNING_LOCK:
-            should_warn = engine_type not in _WARNED_LEGACY_ENGINE_TYPES
-            if should_warn:
-                _WARNED_LEGACY_ENGINE_TYPES.add(engine_type)
-        if should_warn:
-            warnings.warn(
-                (
-                    f"{engine_type.__name__} implements deprecated MongoEco "
-                    "engine SPI v1; migrate to EngineCapabilities and SPI v2 "
-                    "before MongoEco 5.0.0"
-                ),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-    adapter_type = (
-        LegacyEngineAdapter if capabilities.spi_version == 1 else EngineSpiAdapter
-    )
-    return adapter_type(engine)

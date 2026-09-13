@@ -16,7 +16,7 @@ from mongoeco.compat import (
 def test_public_api_manifest_captures_contract_surfaces() -> None:
     manifest = public_api_manifest()
     assert manifest["schemaVersion"] == "mongoeco-public-api/v1"
-    assert manifest["contracts"]["engineSpi"] == [1, 2]
+    assert manifest["contracts"]["engineSpi"] == [2]
     assert manifest["contracts"]["search"] == ["search-v1"]
     assert set(manifest["modules"]) == {
         "mongoeco",

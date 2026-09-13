@@ -21,7 +21,7 @@ def test_paused_readers_release_executor_capacity(tmp_path, workers):
         )
         await engine.connect()
         try:
-            await engine.put_documents_bulk(
+            await engine.insert_documents(
                 "test", "records", [{"_id": index} for index in range(500)]
             )
             async with AsyncExitStack() as cleanup:
@@ -119,7 +119,7 @@ def test_sqlite_read_handoff_does_not_poll_a_timer(tmp_path, monkeypatch):
         engine = SQLiteEngine(str(tmp_path / "handoff.sqlite"), executor_workers=1)
         await engine.connect()
         try:
-            await engine.put_document("test", "records", {"_id": 1})
+            await engine.insert_document("test", "records", {"_id": 1})
             waits = []
             sleep = asyncio.sleep
 
@@ -149,7 +149,7 @@ def test_disconnect_closes_paused_physical_readers(tmp_path):
         await engine.connect()
         source = None
         try:
-            await engine.put_documents_bulk(
+            await engine.insert_documents(
                 "test", "records", [{"_id": index} for index in range(500)]
             )
             source = engine.scan_find_semantics(
@@ -213,7 +213,7 @@ def test_paused_readers_do_not_starve_another_engine_in_the_shared_pool(tmp_path
         await second.connect()
         try:
             assert first._ensure_executor() is second._ensure_executor()
-            await first.put_documents_bulk(
+            await first.insert_documents(
                 "test", "records", [{"_id": index} for index in range(500)]
             )
             async with AsyncExitStack() as cleanup:
@@ -254,7 +254,7 @@ def test_repeated_cancellation_keeps_close_owned_until_fetch_finishes(
             yield from documents
 
         try:
-            await engine.put_documents_bulk(
+            await engine.insert_documents(
                 "test", "records", [{"_id": index} for index in range(100)]
             )
             monkeypatch.setattr(engine, "_open_scan_documents_sync", blocked_source)

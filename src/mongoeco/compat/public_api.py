@@ -178,7 +178,7 @@ def public_api_manifest() -> dict[str, object]:
         "contracts": {
             "conformanceReport": CONFORMANCE_REPORT_SCHEMA_VERSION,
             "deprecationCatalog": DEPRECATION_CATALOG_SCHEMA_VERSION,
-            "engineSpi": [1, 2],
+            "engineSpi": [2],
             "search": ["search-v1"],
         },
         "resources": resources,

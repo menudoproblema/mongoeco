@@ -3,6 +3,8 @@ import unittest
 from unittest.mock import patch
 
 import mongoeco.engines._memory_search_runtime as memory_search_runtime_module
+from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines._memory_search_runtime import (
     _matches_vector_postfilter,
     _vector_filter_residual_description,
@@ -11,6 +13,16 @@ from mongoeco.engines._memory_search_runtime import (
 )
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.types import SearchIndexDefinition
+
+
+async def _insert_document(engine, db_name, coll_name, document) -> None:
+    await engine.insert_document(
+        db_name,
+        coll_name,
+        document,
+        overwrite=False,
+        operation_context=OperationContext.create(dialect=MONGODB_DIALECT_70),
+    )
 
 
 class MemorySearchRuntimeTests(unittest.TestCase):
@@ -99,17 +111,17 @@ class MemorySearchRuntimeTests(unittest.TestCase):
             engine = MemoryEngine()
             await engine.connect()
             try:
-                await engine.put_document(
+                await _insert_document(engine,
                     "db",
                     "coll",
                     {"_id": 1, "title": "Ada algorithms", "body": "vector compiler", "kind": "note", "score": 7, "embedding": [1.0, 0.0]},
                 )
-                await engine.put_document(
+                await _insert_document(engine,
                     "db",
                     "coll",
                     {"_id": 2, "title": "Grace notes", "body": "vector systems", "kind": "reference", "score": 10, "embedding": [0.5, 0.5]},
                 )
-                await engine.put_document(
+                await _insert_document(engine,
                     "db",
                     "coll",
                     {"_id": 3, "title": "Other", "body": "misc text", "kind": "note"},
@@ -246,9 +258,9 @@ class MemorySearchRuntimeTests(unittest.TestCase):
             engine = MemoryEngine()
             await engine.connect()
             try:
-                await engine.put_document("db", "coll", {"_id": 1, "title": "Ada", "kind": "note", "embedding": [1.0, 0.0]})
-                await engine.put_document("db", "coll", {"_id": 2, "title": "Grace", "kind": "reference", "embedding": [0.0, 1.0]})
-                await engine.put_document("db", "coll", {"_id": 3, "title": "Linus", "kind": "note", "embedding": [0.5, 0.5]})
+                await _insert_document(engine, "db", "coll", {"_id": 1, "title": "Ada", "kind": "note", "embedding": [1.0, 0.0]})
+                await _insert_document(engine, "db", "coll", {"_id": 2, "title": "Grace", "kind": "reference", "embedding": [0.0, 1.0]})
+                await _insert_document(engine, "db", "coll", {"_id": 3, "title": "Linus", "kind": "note", "embedding": [0.5, 0.5]})
                 await engine.create_search_index(
                     "db",
                     "coll",
@@ -382,8 +394,8 @@ class MemorySearchRuntimeTests(unittest.TestCase):
             engine = MemoryEngine()
             await engine.connect()
             try:
-                await engine.put_document("db", "coll", {"_id": 1, "kind": "note", "embedding": [1.0, 0.0]})
-                await engine.put_document("db", "coll", {"_id": 2, "kind": "reference", "embedding": [0.5, 0.5]})
+                await _insert_document(engine, "db", "coll", {"_id": 1, "kind": "note", "embedding": [1.0, 0.0]})
+                await _insert_document(engine, "db", "coll", {"_id": 2, "kind": "reference", "embedding": [0.5, 0.5]})
                 await engine.create_search_index(
                     "db",
                     "coll",
@@ -477,7 +489,7 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                     {"_id": 2, "title": "Grace"},
                     {"_id": 3, "title": "Linus"},
                 ):
-                    await engine.put_document("db", "coll", payload)
+                    await _insert_document(engine, "db", "coll", payload)
                 await engine.create_search_index(
                     "db",
                     "coll",
@@ -529,7 +541,7 @@ class MemorySearchRuntimeTests(unittest.TestCase):
                     {"_id": 1, "title": "Ada"},
                     {"_id": 2, "title": "Grace"},
                 ):
-                    await engine.put_document("db", "coll", payload)
+                    await _insert_document(engine, "db", "coll", payload)
                 await engine.create_search_index(
                     "db",
                     "coll",

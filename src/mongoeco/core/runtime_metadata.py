@@ -275,58 +275,6 @@ def prepare_persistence_document(
     )
 
 
-def runtime_state_from_legacy_document(
-    document: dict[str, Any],
-) -> RuntimeDocumentState:
-    """Translate the private 4.5 sidecar at the compatibility boundary."""
-    owned = deepcopy(document)
-    raw_metadata = owned.pop(RUNTIME_METADATA_FIELD, None)
-    metadata = RuntimeMetadata()
-    if not isinstance(raw_metadata, dict):
-        return RuntimeDocumentState(owned)
-
-    key_mapping = {
-        "textScore": RuntimeMetadataKey.TEXT_SCORE,
-        "vectorSearchScore": RuntimeMetadataKey.VECTOR_SEARCH_SCORE,
-        "highlights": RuntimeMetadataKey.SEARCH_HIGHLIGHTS,
-    }
-    for legacy_name, key in key_mapping.items():
-        if legacy_name in raw_metadata:
-            metadata = metadata.with_value(key, raw_metadata[legacy_name])
-
-    virtual_fields = raw_metadata.get(VIRTUAL_FIELDS_KEY)
-    if isinstance(virtual_fields, dict):
-        for path, value in virtual_fields.items():
-            if not isinstance(path, str) or not path:
-                continue
-            metadata = metadata.with_virtual_field(
-                path,
-                value,
-                source=RuntimeMetadataKey.SEARCH_HIGHLIGHTS,
-            )
-    return RuntimeDocumentState(owned, metadata)
-
-
-def legacy_document_from_runtime_state(state: RuntimeDocumentState) -> dict[str, Any]:
-    """Serialize only for deprecated SPI v1 consumers during the 4.x window."""
-    result = deepcopy(state.document)
-    raw_metadata: dict[str, object] = {}
-    legacy_names = {
-        RuntimeMetadataKey.TEXT_SCORE: "textScore",
-        RuntimeMetadataKey.VECTOR_SEARCH_SCORE: "vectorSearchScore",
-        RuntimeMetadataKey.SEARCH_HIGHLIGHTS: "highlights",
-    }
-    for entry in state.metadata.entries:
-        raw_metadata[legacy_names[entry.key]] = deepcopy(entry.value)
-    if state.metadata.virtual_fields:
-        raw_metadata[VIRTUAL_FIELDS_KEY] = {
-            item.path: deepcopy(item.value) for item in state.metadata.virtual_fields
-        }
-    if raw_metadata:
-        result[RUNTIME_METADATA_FIELD] = raw_metadata
-    return result
-
-
 def _get_plain_path(value: object, path: str) -> tuple[bool, object]:
     if not path:
         return True, value

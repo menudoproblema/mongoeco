@@ -6,12 +6,10 @@ from typing import Literal
 
 ChangeDeliveryMode = Literal[
     "none",
-    "legacy-callback",
     "commit-sequence",
     "transactional-outbox",
 ]
 
-_SPI_V1 = 1
 _SPI_V2 = 2
 
 _SPI_V2_REQUIRED_METHODS = frozenset(
@@ -96,13 +94,12 @@ class EngineCapabilities:
         if (
             not isinstance(self.spi_version, int)
             or isinstance(self.spi_version, bool)
-            or self.spi_version not in {_SPI_V1, _SPI_V2}
+            or self.spi_version != _SPI_V2
         ):
-            message = "spi_version must be one of the supported versions: 1, 2"
+            message = "spi_version must be 2"
             raise ValueError(message)
         if self.change_delivery not in {
             "none",
-            "legacy-callback",
             "commit-sequence",
             "transactional-outbox",
         }:
@@ -123,23 +120,8 @@ class EngineCapabilities:
             if not isinstance(getattr(self, field_name), bool):
                 message = f"{field_name} must be a bool"
                 raise TypeError(message)
-        if self.spi_version == _SPI_V1 and self.mutation_outcomes:
-            message = "SPI v1 cannot declare native mutation outcomes"
-            raise ValueError(message)
-        if self.spi_version == _SPI_V1 and self.explicit_read_snapshots:
-            message = "SPI v1 cannot declare explicit read snapshots"
-            raise ValueError(message)
-        if self.spi_version == _SPI_V1 and self.change_delivery not in {
-            "none",
-            "legacy-callback",
-        }:
-            message = "SPI v1 cannot declare sequenced change delivery"
-            raise ValueError(message)
-        if self.spi_version >= _SPI_V2 and not self.mutation_outcomes:
+        if not self.mutation_outcomes:
             message = "SPI v2 requires native mutation outcomes"
-            raise ValueError(message)
-        if self.spi_version >= _SPI_V2 and self.change_delivery == "legacy-callback":
-            message = "SPI v2 cannot declare legacy callback delivery"
             raise ValueError(message)
 
     @property
@@ -155,24 +137,16 @@ class EngineCapabilities:
 
 
 def resolve_engine_capabilities(engine: object) -> EngineCapabilities:
-    """Resolve native capabilities or describe a legacy engine centrally."""
+    """Return an engine's explicit SPI v2 capability declaration."""
     declared = getattr(engine, "capabilities", None)
     if callable(declared):
         declared = declared()
     if isinstance(declared, EngineCapabilities):
         return declared
-    return EngineCapabilities(
-        spi_version=_SPI_V1,
-        injected_clock=bool(getattr(engine, "supports_injected_clock", False)),
-        mutation_outcomes=False,
-        batch_inserts=callable(getattr(engine, "put_documents_bulk", None)),
-        explicit_read_snapshots=False,
-        change_delivery=(
-            "legacy-callback"
-            if bool(getattr(engine, "supports_commit_callbacks", False))
-            else "none"
-        ),
+    message = (
+        f"engine {type(engine).__name__} must declare EngineCapabilities for SPI v2"
     )
+    raise TypeError(message)
 
 
 def validate_engine_contract(
@@ -180,8 +154,6 @@ def validate_engine_contract(
     capabilities: EngineCapabilities,
 ) -> None:
     """Reject inconsistent SPI v2 declarations at the client boundary."""
-    if capabilities.spi_version < _SPI_V2:
-        return
     required = set(_SPI_V2_REQUIRED_METHODS)
     if capabilities.batch_inserts:
         required.add("insert_documents")

@@ -17,12 +17,16 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect70
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import get_document_value
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.query_plan import MatchAll, compile_filter
 from mongoeco.core.search import (
     TEXT_SCORE_FIELD,
+    compile_search_stage,
     compile_classic_text_query,
     strip_search_result_metadata,
 )
+from mongoeco.core.search_execution import SearchRequest
+from mongoeco.core.search_models import SearchExecutionMode, SearchExplainVerbosity
 from mongoeco.core.sorting import sort_documents
 from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.sqlite import SQLiteEngine
@@ -46,6 +50,63 @@ from mongoeco.types import (
     SearchIndexDefinition,
     UNDEFINED,
 )
+
+
+async def _execute_search_hits(  # noqa: PLR0913
+    engine: SQLiteEngine,
+    db_name: str,
+    coll_name: str,
+    operator: str,
+    specification: object,
+    *,
+    max_time_ms: int | None = None,
+    context: ClientSession | None = None,
+    result_limit_hint: int | None = None,
+    downstream_filter_spec: dict[str, object] | None = None,
+):
+    request = SearchRequest(
+        operator=operator,
+        specification=specification,
+        query=compile_search_stage(operator, specification),
+        mode=SearchExecutionMode.HITS,
+        operation_context=OperationContext.create(
+            dialect=MONGODB_DIALECT_70,
+            session=context,
+        ),
+        max_time_ms=max_time_ms,
+        result_limit_hint=result_limit_hint,
+        downstream_filter_spec=downstream_filter_spec,
+    )
+    return (await engine.execute_search(db_name, coll_name, request)).documents
+
+
+async def _explain_search(  # noqa: PLR0913
+    engine: SQLiteEngine,
+    db_name: str,
+    coll_name: str,
+    operator: str,
+    specification: object,
+    *,
+    max_time_ms: int | None = None,
+    context: ClientSession | None = None,
+    result_limit_hint: int | None = None,
+    downstream_filter_spec: dict[str, object] | None = None,
+    verbosity: SearchExplainVerbosity = SearchExplainVerbosity.EXECUTION_STATS,
+):
+    request = SearchRequest(
+        operator=operator,
+        specification=specification,
+        query=compile_search_stage(operator, specification),
+        mode=SearchExecutionMode.HITS,
+        operation_context=OperationContext.create(
+            dialect=MONGODB_DIALECT_70,
+            session=context,
+        ),
+        max_time_ms=max_time_ms,
+        result_limit_hint=result_limit_hint,
+        downstream_filter_spec=downstream_filter_spec,
+    )
+    return await engine.explain_search(db_name, coll_name, request, verbosity)
 
 
 class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
@@ -239,7 +300,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         try:
             session = ClientSession()
             engine.create_session_state(session)
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "view"})
 
             documents = [
                 doc
@@ -266,7 +327,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "view"})
             with patch(
                 "mongoeco.engines.sqlite.enforce_deadline",
                 side_effect=ExecutionTimeout("operation exceeded time limit"),
@@ -289,7 +350,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "view"})
             loader = engine._load_documents("db", "coll")
             self.assertEqual(next(loader)[1], {"_id": "1", "kind": "view"})
         finally:
@@ -301,7 +362,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com"}
             )
             with patch(
@@ -716,8 +777,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": 1, "kind": "int"})
-            await engine.put_document("db", "coll", {"_id": 1.0, "kind": "float"})
+            await engine.insert_document("db", "coll", {"_id": 1, "kind": "int"})
+            await engine.insert_document("db", "coll", {"_id": 1.0, "kind": "float"})
             int_doc = await engine.get_document("db", "coll", 1)
             float_doc = await engine.get_document("db", "coll", 1.0)
         finally:
@@ -731,7 +792,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             document = {"_id": "1", "z": 1, "a": 2}
-            await engine.put_document("db", "coll", document)
+            await engine.insert_document("db", "coll", document)
             found = await engine.get_document("db", "coll", "1")
         finally:
             await engine.disconnect()
@@ -745,7 +806,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         try:
             document = {"_id": b"123456789012", "payload": {"blob": b"\x00\x01\xff"}}
 
-            await engine.put_document("db", "coll", document)
+            await engine.insert_document("db", "coll", document)
             found = await engine.get_document("db", "coll", b"123456789012")
         finally:
             await engine.disconnect()
@@ -791,7 +852,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"name": "a"}]}
             )
             with self.assertRaises(NotImplementedError):
@@ -807,7 +868,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com"}
             )
             await engine.create_index("db", "coll", ["email"], unique=True)
@@ -831,7 +892,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "existing"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "existing"})
             result = await self._update(
                 engine,
                 "db",
@@ -852,7 +913,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "existing"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "existing"})
             with patch.object(
                 engine, "_load_documents", side_effect=AssertionError("loaded")
             ):
@@ -1051,7 +1112,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(engine._supports_fts5(_BrokenConnection()))
         self.assertFalse(engine._fts5_available)
 
-    async def test_put_document_invalidates_collection_feature_cache(self):
+    async def test_insert_document_invalidates_collection_feature_cache(self):
         engine = SQLiteEngine()
         await engine.connect()
         try:
@@ -1061,7 +1122,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertIn(feature_key, engine._collection_features_cache)
 
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"name": "a"}]}
             )
 
@@ -1102,8 +1163,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         lock_ownership: list[bool] = []
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "tags": ["python"]})
-            await engine.put_document("db", "coll", {"_id": "2", "tags": ["sqlite"]})
+            await engine.insert_document("db", "coll", {"_id": "1", "tags": ["python"]})
+            await engine.insert_document("db", "coll", {"_id": "2", "tags": ["sqlite"]})
 
             original = engine._replace_multikey_entries_for_index_for_document
 
@@ -1131,7 +1192,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         repopulated_cache_id: int | None = None
         try:
-            await engine.put_document("db", "users", {"_id": "1"})
+            await engine.insert_document("db", "users", {"_id": "1"})
             original_collection_id = engine._lookup_collection_id(
                 engine._require_connection(), "db", "users"
             )
@@ -1152,7 +1213,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.drop_collection("db", "users_archive")
             self.assertNotIn(("db", "users_archive"), engine._collection_id_cache)
 
-            await engine.put_document("db", "users_archive", {"_id": "2"})
+            await engine.insert_document("db", "users_archive", {"_id": "2"})
             recreated_collection_id = engine._lookup_collection_id(
                 engine._require_connection(), "db", "users_archive"
             )
@@ -1162,7 +1223,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(recreated_collection_id, repopulated_cache_id)
 
-    async def test_put_documents_bulk_sync_uses_prepared_documents_without_serializing_inside_lock(
+    async def test_insert_documents_sync_reuses_prepared_documents(
         self,
     ):
         engine = SQLiteEngine()
@@ -1188,7 +1249,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 side_effect=AssertionError("serialize-in-lock"),
             ):
                 results = await engine._run_blocking(
-                    engine._put_documents_bulk_sync,
+                    engine._insert_documents_sync,
                     "db",
                     "coll",
                     documents,
@@ -1202,10 +1263,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-        self.assertEqual(results, [True])
+        self.assertEqual([item.applied for item in results], [True])
         self.assertEqual(found, documents[0])
 
-    async def test_put_documents_bulk_prefers_precomputed_multikey_rows_when_index_snapshot_is_stable(
+    async def test_insert_documents_reuses_stable_multikey_rows(
         self,
     ):
         engine = SQLiteEngine()
@@ -1233,7 +1294,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 side_effect=AssertionError("recomputed"),
             ):
                 results = await engine._run_blocking(
-                    engine._put_documents_bulk_sync,
+                    engine._insert_documents_sync,
                     "db",
                     "coll",
                     documents,
@@ -1259,10 +1320,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-        self.assertEqual(results, [True])
+        self.assertEqual([item.applied for item in results], [True])
         self.assertEqual(rows, [("idx_tags", "python"), ("idx_tags", "sqlite")])
 
-    async def test_put_documents_bulk_sync_respects_sparse_unique_indexes(self):
+    async def test_insert_documents_sync_respects_sparse_unique_indexes(self):
         engine = SQLiteEngine()
         await engine.connect()
         try:
@@ -1285,7 +1346,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 for document in documents
             ]
             results = await engine._run_blocking(
-                engine._put_documents_bulk_sync,
+                engine._insert_documents_sync,
                 "db",
                 "coll",
                 documents,
@@ -1302,12 +1363,15 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-        self.assertEqual(results, [True, True, False])
+        self.assertEqual(
+            [item.applied for item in results],
+            [True, True, False],
+        )
         self.assertEqual(
             found, [{"_id": "1"}, {"_id": "2", "email": "a@example.com"}, None]
         )
 
-    async def test_put_documents_bulk_sync_respects_partial_unique_indexes(self):
+    async def test_insert_documents_sync_respects_partial_unique_indexes(self):
         engine = SQLiteEngine()
         await engine.connect()
         try:
@@ -1336,7 +1400,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 for document in documents
             ]
             results = await engine._run_blocking(
-                engine._put_documents_bulk_sync,
+                engine._insert_documents_sync,
                 "db",
                 "coll",
                 documents,
@@ -1353,7 +1417,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-        self.assertEqual(results, [True, True, False])
+        self.assertEqual(
+            [item.applied for item in results],
+            [True, True, False],
+        )
         self.assertEqual(
             found,
             [
@@ -1373,7 +1440,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         try:
             await engine.connect()
             try:
-                await engine.put_document(
+                await engine.insert_document(
                     "db", "coll", {"_id": "1", "tags": ["python"]}
                 )
                 await engine.create_index(
@@ -1437,7 +1504,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "existing"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "existing"})
             result = await self._update(
                 engine,
                 "db",
@@ -1455,7 +1522,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index(
                 "db", "coll", ["scores"], unique=False, name="idx_scores"
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {"_id": "1", "scores": [Decimal128("1.5"), Decimal128("2.5")]},
@@ -1485,7 +1552,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "profile": 1})
+            await engine.insert_document("db", "coll", {"_id": "1", "profile": 1})
 
             with self.assertRaises(OperationFailure):
                 await self._update(
@@ -1507,8 +1574,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "skip"})
-            await engine.put_document("db", "coll", {"_id": "2", "kind": "match"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "skip"})
+            await engine.insert_document("db", "coll", {"_id": "2", "kind": "match"})
 
             result = await self._update(
                 engine,
@@ -1539,8 +1606,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "skip"})
-            await engine.put_document("db", "coll", {"_id": "2", "kind": "match"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "skip"})
+            await engine.insert_document("db", "coll", {"_id": "2", "kind": "match"})
 
             result = await self._delete(engine, "db", "coll", {"kind": "match"})
         finally:
@@ -1554,8 +1621,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
-            await engine.put_document("db", "coll", {"_id": "2", "kind": "click"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "2", "kind": "click"})
 
             with (
                 patch(
@@ -1578,10 +1645,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"name": "a"}]}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "items": [{"name": "b"}]}
             )
 
@@ -1600,8 +1667,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "2", "data": {"b": 2}})
-            await engine.put_document("db", "coll", {"_id": "1", "data": {"b": 1}})
+            await engine.insert_document("db", "coll", {"_id": "2", "data": {"b": 2}})
+            await engine.insert_document("db", "coll", {"_id": "1", "data": {"b": 1}})
 
             with patch(
                 "mongoeco.engines.sqlite.QueryEngine.match_plan",
@@ -1618,7 +1685,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "click"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "click"})
             result = await self._delete(engine, "db", "coll", {"kind": "view"})
         finally:
             await engine.disconnect()
@@ -1631,10 +1698,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "email": "b@example.com"}
             )
 
@@ -1651,10 +1718,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     "db", "coll", ["other"], unique=False, name="idx"
                 )
 
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "dups", {"_id": "1", "email": "dup@example.com"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "dups", {"_id": "2", "email": "dup@example.com"}
             )
             with self.assertRaises(DuplicateKeyError):
@@ -1677,16 +1744,16 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"name": "a"}]}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "items": [{"name": "b"}]}
             )
             await engine.create_index("db", "coll", ["items.name"], unique=True)
 
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document(
+                await engine.insert_document(
                     "db", "coll", {"_id": "3", "items": [{"name": "a"}]}
                 )
         finally:
@@ -1696,26 +1763,28 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "existing", {"_id": "1", "tags": ["a", "b"]}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "existing", {"_id": "2", "tags": ["b", "c"]}
             )
             with self.assertRaises(DuplicateKeyError):
                 await engine.create_index("db", "existing", ["tags"], unique=True)
 
             await engine.create_index("db", "writes", ["tags"], unique=True)
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "writes", {"_id": "1", "tags": ["a", "b", "b"]}
             )
-            await engine.put_document("db", "writes", {"_id": "2", "tags": ["c", "d"]})
+            await engine.insert_document(
+                "db", "writes", {"_id": "2", "tags": ["c", "d"]}
+            )
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document(
+                await engine.insert_document(
                     "db", "writes", {"_id": "3", "tags": ["b", "e"]}
                 )
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document("db", "writes", {"_id": "4", "tags": "a"})
+                await engine.insert_document("db", "writes", {"_id": "4", "tags": "a"})
             with self.assertRaises(DuplicateKeyError):
                 await self._update(
                     engine,
@@ -1725,12 +1794,12 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     {"$set": {"tags": ["b", "d"]}},
                 )
 
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "compound_existing",
                 {"_id": "1", "tenant": "a", "tags": ["x", "shared"]},
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "compound_existing",
                 {"_id": "2", "tenant": "a", "tags": ["shared", "z"]},
@@ -1743,18 +1812,18 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index(
                 "db", "compound_writes", ["tenant", "tags"], unique=True
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "compound_writes",
                 {"_id": "1", "tenant": "a", "tags": ["x", "shared"]},
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "compound_writes",
                 {"_id": "2", "tenant": "b", "tags": ["shared", "z"]},
             )
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "compound_writes",
                     {"_id": "3", "tenant": "a", "tags": ["shared", "z"]},
@@ -1767,17 +1836,17 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 unique=True,
                 partial_filter_expression={"active": True},
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "partial", {"_id": "1", "tags": ["shared"], "active": False}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "partial", {"_id": "2", "tags": ["shared"], "active": False}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "partial", {"_id": "3", "tags": ["shared"], "active": True}
             )
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document(
+                await engine.insert_document(
                     "db", "partial", {"_id": "4", "tags": ["shared"], "active": True}
                 )
 
@@ -1794,8 +1863,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         collation = {"locale": "en", "strength": 2}
         await engine.connect()
         try:
-            await engine.put_document("db", "existing", {"_id": "1", "name": "Ada"})
-            await engine.put_document("db", "existing", {"_id": "2", "name": "ada"})
+            await engine.insert_document("db", "existing", {"_id": "1", "name": "Ada"})
+            await engine.insert_document("db", "existing", {"_id": "2", "name": "ada"})
             with self.assertRaises(DuplicateKeyError):
                 await engine.create_index(
                     "db", "existing", ["name"], unique=True, collation=collation
@@ -1804,10 +1873,12 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index(
                 "db", "writes", ["name"], unique=True, collation=collation
             )
-            await engine.put_document("db", "writes", {"_id": "1", "name": "Grace"})
+            await engine.insert_document("db", "writes", {"_id": "1", "name": "Grace"})
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document("db", "writes", {"_id": "2", "name": "grace"})
-            await engine.put_document("db", "writes", {"_id": "3", "name": "Lin"})
+                await engine.insert_document(
+                    "db", "writes", {"_id": "2", "name": "grace"}
+                )
+            await engine.insert_document("db", "writes", {"_id": "3", "name": "Lin"})
             with self.assertRaises(DuplicateKeyError):
                 await self._update(
                     engine,
@@ -1820,19 +1891,19 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index(
                 "db", "array_writes", ["names"], unique=True, collation=collation
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "array_writes", {"_id": "1", "names": ["Ada"]}
             )
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document(
+                await engine.insert_document(
                     "db", "array_writes", {"_id": "2", "names": ["ada"]}
                 )
 
             await engine.create_index("db", "indexed", ["email"], unique=True)
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "indexed", {"_id": "1", "email": "shared@example.com"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "other", {"_id": "1", "email": "shared@example.com"}
             )
         finally:
@@ -1859,7 +1930,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "existing",
                 {"_id": "1", "tags": ["a"], "labels": ["priority"]},
@@ -1868,13 +1939,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 await engine.create_index("db", "existing", ["tags", "labels"])
 
             await engine.create_index("db", "writes", ["tags", "labels"])
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "writes",
                 {"_id": "1", "tags": ["a"], "labels": "priority"},
             )
             with self.assertRaisesRegex(OperationFailure, "more than one array field"):
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "writes",
                     {"_id": "2", "tags": ["b"], "labels": ["bulk"]},
@@ -1889,7 +1960,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 )
 
             await engine.create_index("db", "embedded", ["items.code", "items.rank"])
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "embedded",
                 {
@@ -1911,9 +1982,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.create_index("db", "coll", ["email"], unique=True)
-            await engine.put_document("db", "coll", {"_id": "1"})
+            await engine.insert_document("db", "coll", {"_id": "1"})
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document("db", "coll", {"_id": "2"})
+                await engine.insert_document("db", "coll", {"_id": "2"})
         finally:
             await engine.disconnect()
 
@@ -1921,24 +1992,24 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {"_id": "1", "a": [{"loc": "A", "qty": 5}, {"qty": 10}]},
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {"_id": "2", "a": [{"loc": "A"}, {"qty": 5}]},
             )
             await engine.create_index("db", "coll", ["a.loc", "a.qty"], unique=True)
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {"_id": "3", "a": [{"loc": "A", "qty": 10}]},
             )
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "coll",
                     {"_id": "4", "a": [{"loc": "A", "qty": 5}]},
@@ -1955,7 +2026,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index(
                 "db", "coll", ["email"], unique=True, name="email_unique"
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com"}
             )
 
@@ -1980,7 +2051,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index(
                 "db", "coll", ["email"], unique=True, name="email_unique"
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com"}
             )
 
@@ -2000,15 +2071,15 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.create_index("db", "coll", ["items.name"], unique=True)
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"name": "a"}]}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "items": [{"name": "b"}]}
             )
 
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document(
+                await engine.insert_document(
                     "db", "coll", {"_id": "3", "items": [{"name": "a"}]}
                 )
         finally:
@@ -2018,7 +2089,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com"}
             )
             await engine.create_index("db", "coll", ["email"], unique=False, name="idx")
@@ -2061,7 +2132,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         session_id = uuid.UUID("12345678-1234-5678-1234-567812345678")
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "session_id": session_id}
             )
             await engine.create_index(
@@ -2080,10 +2151,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "tags": ["python", "mongodb"]}
             )
-            await engine.put_document("db", "coll", {"_id": "2", "tags": ["sqlite"]})
+            await engine.insert_document("db", "coll", {"_id": "2", "tags": ["sqlite"]})
             await engine.create_index(
                 "db", "coll", ["tags"], unique=False, name="idx_tags"
             )
@@ -2098,7 +2169,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"name": "a"}]}
             )
             with self.assertRaises(NotImplementedError):
@@ -2110,7 +2181,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "v": b"\x00"})
+            await engine.insert_document("db", "coll", {"_id": "1", "v": b"\x00"})
             with self.assertRaises(NotImplementedError):
                 engine._explain_query_plan_sync(
                     "db",
@@ -2126,7 +2197,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "v": [1]})
+            await engine.insert_document("db", "coll", {"_id": "1", "v": [1]})
             details = engine._explain_query_plan_sync("db", "coll", {"v": {"$gt": 0}})
         finally:
             await engine.disconnect()
@@ -2140,7 +2211,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "v": b"\x00"})
+            await engine.insert_document("db", "coll", {"_id": "1", "v": b"\x00"})
             with self.assertRaises(NotImplementedError):
                 engine._select_first_document_for_plan(
                     "db",
@@ -2160,10 +2231,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "email": "b@example.com"}
             )
             await engine.create_index("db", "coll", ["email"], unique=True)
@@ -2179,21 +2250,21 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-    async def test_put_document_with_overwrite_uses_atomic_upsert_and_respects_unique_indexes(
+    async def test_overwrite_insert_is_atomic_and_respects_unique_indexes(
         self,
     ):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com"}, overwrite=False
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "email": "b@example.com"}, overwrite=False
             )
             await engine.create_index("db", "coll", ["email"], unique=True)
 
-            replaced = await engine.put_document(
+            replaced = await engine.insert_document(
                 "db",
                 "coll",
                 {"_id": "2", "email": "c@example.com"},
@@ -2202,7 +2273,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             found = await engine.get_document("db", "coll", "2")
 
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "coll",
                     {"_id": "2", "email": "a@example.com"},
@@ -2220,7 +2291,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "tags": ["python", "mongodb"]}
             )
             await engine.create_index(
@@ -2271,7 +2342,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             ).fetchone()
             self.assertEqual(remaining[0], 0)
 
-            await engine.put_document("db", "coll", {"_id": "2", "tags": ["python"]})
+            await engine.insert_document("db", "coll", {"_id": "2", "tags": ["python"]})
             await engine.drop_collection("db", "coll")
             leftover = conn.execute(
                 """
@@ -2291,7 +2362,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {"_id": "1", "tags": ["python"], "cats": ["backend"]},
@@ -2325,14 +2396,14 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(count_cats, 1)
         self.assertEqual(rows, [("idx_cats", "backend"), ("idx_tags", "python")])
 
-    async def test_put_document_without_overwrite_uses_sql_do_nothing(self):
+    async def test_insert_document_without_overwrite_uses_sql_do_nothing(self):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            inserted = await engine.put_document(
+            inserted = await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com"}, overwrite=False
             )
-            skipped = await engine.put_document(
+            skipped = await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "b@example.com"}, overwrite=False
             )
             found = await engine.get_document("db", "coll", "1")
@@ -2681,10 +2752,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         )
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "expired", "expires_at": past, "name": "old"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "fresh", "expires_at": future, "name": "new"}
             )
             await engine.create_index(
@@ -2734,13 +2805,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index(
                 "db", "sparse", ["email"], unique=True, sparse=True
             )
-            await engine.put_document("db", "sparse", {"_id": "1"})
-            await engine.put_document("db", "sparse", {"_id": "2"})
-            await engine.put_document(
+            await engine.insert_document("db", "sparse", {"_id": "1"})
+            await engine.insert_document("db", "sparse", {"_id": "2"})
+            await engine.insert_document(
                 "db", "sparse", {"_id": "3", "email": "a@example.com"}
             )
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document(
+                await engine.insert_document(
                     "db", "sparse", {"_id": "4", "email": "a@example.com"}
                 )
 
@@ -2751,17 +2822,17 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 unique=True,
                 partial_filter_expression={"active": True},
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "partial", {"_id": "1", "email": "a@example.com", "active": False}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "partial", {"_id": "2", "email": "a@example.com", "active": False}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "partial", {"_id": "3", "email": "a@example.com", "active": True}
             )
             with self.assertRaises(DuplicateKeyError):
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "partial",
                     {"_id": "4", "email": "a@example.com", "active": True},
@@ -2773,7 +2844,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com", "active": False}
             )
             await engine.create_index(
@@ -2798,7 +2869,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com", "active": False}
             )
             await engine.create_index(
@@ -2827,7 +2898,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1"})
+            await engine.insert_document("db", "coll", {"_id": "1"})
             await engine.create_index(
                 "db",
                 "coll",
@@ -2852,7 +2923,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com", "active": False}
             )
             await engine.create_index(
@@ -2947,7 +3018,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {
@@ -3289,8 +3360,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "note"})
-            await engine.put_document("db", "coll", {"_id": "2", "kind": "note"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "note"})
+            await engine.insert_document("db", "coll", {"_id": "2", "kind": "note"})
 
             with (
                 patch.object(engine._admin_runtime, "profile_namespace_document", None),
@@ -3415,10 +3486,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             file_engine = SQLiteEngine(path=file_engine_path.name)
             await file_engine.connect()
             try:
-                await file_engine.put_document(
+                await file_engine.insert_document(
                     "db", "coll", {"_id": "1", "kind": "note"}
                 )
-                await file_engine.put_document(
+                await file_engine.insert_document(
                     "db", "coll", {"_id": "2", "kind": "note"}
                 )
                 session = ClientSession()
@@ -3565,7 +3636,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             await engine.create_index(
                 "db", "ttl", ["expires_at"], expire_after_seconds=0
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "ttl", {"_id": "expired", "expires_at": past}
             )
             conn = engine._require_connection()
@@ -3587,7 +3658,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-    async def test_put_document_rolls_back_when_commit_write_fails(self):
+    async def test_insert_document_rolls_back_when_commit_write_fails(self):
         engine = SQLiteEngine()
         await engine.connect()
         try:
@@ -3600,9 +3671,11 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 patch.object(
                     engine, "_rollback_write", wraps=engine._rollback_write
                 ) as rollback_write,
+                self.assertRaisesRegex(RuntimeError, "commit boom"),
             ):
-                with self.assertRaisesRegex(RuntimeError, "commit boom"):
-                    await engine.put_document("db", "coll", {"_id": "1", "name": "Ada"})
+                await engine.insert_document(
+                    "db", "coll", {"_id": "1", "name": "Ada"}
+                )
 
             self.assertGreaterEqual(rollback_write.call_count, 1)
             self.assertIsNone(await engine.get_document("db", "coll", "1"))
@@ -3782,7 +3855,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         try:
             session = ClientSession()
             owner.create_session_state(session)
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "users",
                 {"_id": "1", "marker": "count", "items": [{"value": 1}], "name": "Ada"},
@@ -3827,7 +3900,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1"}, overwrite=True)
+            await engine.insert_document("db", "coll", {"_id": "1"}, overwrite=True)
             await engine.delete_document("db", "coll", "1")
             self.assertEqual(await engine.list_collections("db"), ["coll"])
         finally:
@@ -3838,7 +3911,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         await engine.connect()
         try:
             await engine.create_collection("db", "events", options={"capped": True})
-            await engine.put_document("db", "events", {"_id": "1"}, overwrite=True)
+            await engine.insert_document("db", "events", {"_id": "1"}, overwrite=True)
             await engine.create_index("db", "events", ["kind"], name="kind_idx")
 
             await engine.rename_collection("db", "events", "archived")
@@ -3854,7 +3927,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         finally:
             await engine.disconnect()
 
-    async def test_explain_search_documents_reports_pending_status(self):
+    async def test_explain_search_reports_pending_status(self):
         engine = SQLiteEngine(simulate_search_index_latency=60.0)
         await engine.connect()
         try:
@@ -3872,11 +3945,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 ),
             )
 
-            explanation = await engine.explain_search_documents(
+            explanation = await _explain_search(
+                engine,
                 "db",
                 "coll",
                 "$search",
                 {"index": "by_text", "text": {"query": "ada", "path": "title"}},
+                verbosity=SearchExplainVerbosity.QUERY_PLANNER,
             )
         finally:
             await engine.disconnect()
@@ -4015,8 +4090,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
-            await engine.put_document("db", "coll", {"_id": "2", "kind": "click"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "2", "kind": "click"})
 
             with patch(
                 "mongoeco.engines.sqlite.QueryEngine.match_plan",
@@ -4037,8 +4112,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "active": True})
-            await engine.put_document("db", "coll", {"_id": "2", "active": False})
+            await engine.insert_document("db", "coll", {"_id": "1", "active": True})
+            await engine.insert_document("db", "coll", {"_id": "2", "active": False})
 
             sql, params = engine._build_select_sql(
                 "db",
@@ -4059,8 +4134,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "active": [True]})
-            await engine.put_document("db", "coll", {"_id": "2", "active": False})
+            await engine.insert_document("db", "coll", {"_id": "1", "active": [True]})
+            await engine.insert_document("db", "coll", {"_id": "2", "active": False})
 
             sql, _ = engine._build_select_sql(
                 "db",
@@ -4079,8 +4154,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
-            await engine.put_document("db", "coll", {"_id": "2", "age": 40})
+            await engine.insert_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.insert_document("db", "coll", {"_id": "2", "age": 40})
 
             sql, params = engine._build_select_sql(
                 "db",
@@ -4101,8 +4176,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
-            await engine.put_document("db", "coll", {"_id": "2", "age": None})
+            await engine.insert_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.insert_document("db", "coll", {"_id": "2", "age": None})
 
             sql, _ = engine._build_select_sql(
                 "db",
@@ -4121,8 +4196,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "score": 10})
-            await engine.put_document("db", "coll", {"_id": "2", "score": 30})
+            await engine.insert_document("db", "coll", {"_id": "1", "score": 10})
+            await engine.insert_document("db", "coll", {"_id": "2", "score": 30})
             await engine.create_index("db", "coll", [("score", -1)])
 
             sql, _ = engine._build_select_sql(
@@ -4146,8 +4221,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "score": 10})
-            await engine.put_document("db", "coll", {"_id": "2", "score": 30})
+            await engine.insert_document("db", "coll", {"_id": "1", "score": 10})
+            await engine.insert_document("db", "coll", {"_id": "2", "score": 30})
 
             sql, _ = engine._build_select_sql(
                 "db",
@@ -4170,8 +4245,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "score": 10})
-            await engine.put_document("db", "coll", {"_id": "2", "score": None})
+            await engine.insert_document("db", "coll", {"_id": "1", "score": 10})
+            await engine.insert_document("db", "coll", {"_id": "2", "score": None})
 
             sql, _ = engine._build_select_sql(
                 "db",
@@ -4191,7 +4266,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "username": "ada"})
+            await engine.insert_document("db", "coll", {"_id": "1", "username": "ada"})
             await engine.create_index("db", "coll", [("username", 1)])
 
             plan = await engine.plan_find_semantics(
@@ -4218,8 +4293,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
-            await engine.put_document("db", "coll", {"_id": "2", "age": 40})
+            await engine.insert_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.insert_document("db", "coll", {"_id": "2", "age": 40})
             await engine.create_index("db", "coll", [("age", 1)])
 
             plan = await engine.plan_find_semantics(
@@ -4243,8 +4318,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
-            await engine.put_document("db", "coll", {"_id": "2", "age": "40"})
+            await engine.insert_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.insert_document("db", "coll", {"_id": "2", "age": "40"})
             await engine.create_index("db", "coll", [("age", 1)])
 
             plan = await engine.plan_find_semantics(
@@ -4265,8 +4340,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
-            await engine.put_document("db", "coll", {"_id": "2", "age": 40})
+            await engine.insert_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.insert_document("db", "coll", {"_id": "2", "age": 40})
             await engine.create_index("db", "coll", [("age", 1)])
 
             explained = engine._explain_query_plan_sync(
@@ -4283,8 +4358,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "age": 18})
-            await engine.put_document("db", "coll", {"_id": "2", "age": 40})
+            await engine.insert_document("db", "coll", {"_id": "1", "age": 18})
+            await engine.insert_document("db", "coll", {"_id": "2", "age": 40})
             await engine.create_index("db", "coll", [("age", 1)])
 
             selected = engine._select_first_document_for_plan(
@@ -4305,7 +4380,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "username": "ada"})
+            await engine.insert_document("db", "coll", {"_id": "1", "username": "ada"})
             await engine.create_index("db", "coll", [("username", 1)])
 
             initial_match = [
@@ -4340,8 +4415,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
-            await engine.put_document("db", "coll", {"_id": "2", "kind": "click"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "2", "kind": "click"})
             plan = compile_filter({"kind": "view"})
 
             update_result = await self._update(
@@ -4373,13 +4448,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "kind": "view", "rank": 3}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "kind": "view", "rank": 1}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "3", "kind": "view", "rank": 2}
             )
 
@@ -4413,8 +4488,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
-            await engine.put_document("db", "coll", {"_id": "2", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "2", "kind": "view"})
 
             with (
                 patch(
@@ -4464,8 +4539,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "data": {"b": 1}})
-            await engine.put_document("db", "coll", {"_id": "2", "data": {"b": 2}})
+            await engine.insert_document("db", "coll", {"_id": "1", "data": {"b": 1}})
+            await engine.insert_document("db", "coll", {"_id": "2", "data": {"b": 2}})
 
             with patch(
                 "mongoeco.engines.sqlite.QueryEngine.match_plan",
@@ -4489,13 +4564,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "name": "Ada", "age": 10}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "name": "Bob", "age": "old"}
             )
-            await engine.put_document("db", "coll", {"_id": "3", "age": 11})
+            await engine.insert_document("db", "coll", {"_id": "3", "age": 11})
 
             with patch(
                 "mongoeco.engines.sqlite.QueryEngine.match_plan",
@@ -4529,8 +4604,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "rank": [2, 3]})
-            await engine.put_document("db", "coll", {"_id": "2", "rank": [1, 4]})
+            await engine.insert_document("db", "coll", {"_id": "1", "rank": [2, 3]})
+            await engine.insert_document("db", "coll", {"_id": "2", "rank": [1, 4]})
             with patch.object(
                 engine, "_load_documents", wraps=engine._load_documents
             ) as load_documents:
@@ -4650,8 +4725,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "rank": [2, 3]})
-            await engine.put_document("db", "coll", {"_id": "2", "rank": [1, 4]})
+            await engine.insert_document("db", "coll", {"_id": "1", "rank": [2, 3]})
+            await engine.insert_document("db", "coll", {"_id": "2", "rank": [1, 4]})
 
             with patch.object(
                 engine, "_load_documents", wraps=engine._load_documents
@@ -4674,7 +4749,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"name": "a"}]}
             )
             plan = compile_filter({"items.name": "a"})
@@ -4694,7 +4769,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "payload": b"abc"})
+            await engine.insert_document("db", "coll", {"_id": "1", "payload": b"abc"})
 
             self.assertTrue(
                 engine._sort_requires_python("db", "coll", MatchAll(), [("payload", 1)])
@@ -4706,7 +4781,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "payload": UNDEFINED})
+            await engine.insert_document(
+                "db", "coll", {"_id": "1", "payload": UNDEFINED}
+            )
 
             self.assertTrue(
                 engine._sort_requires_python("db", "coll", MatchAll(), [("payload", 1)])
@@ -4718,7 +4795,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
+            await engine.insert_document(
+                "db", "coll", {"_id": "legacy", "v": UNDEFINED}
+            )
             documents = [
                 document
                 async for document in self._scan(
@@ -4737,7 +4816,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
+            await engine.insert_document(
+                "db", "coll", {"_id": "legacy", "v": UNDEFINED}
+            )
             result = await self._delete(
                 engine,
                 "db",
@@ -4755,7 +4836,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "legacy", "v": UNDEFINED})
+            await engine.insert_document(
+                "db", "coll", {"_id": "legacy", "v": UNDEFINED}
+            )
             count = await self._count(
                 engine,
                 "db",
@@ -4773,7 +4856,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "payload": UNDEFINED})
+            await engine.insert_document(
+                "db", "coll", {"_id": "1", "payload": UNDEFINED}
+            )
             plan = compile_filter({"payload": {"$gt": 0}})
 
             with self.assertRaises(NotImplementedError):
@@ -4787,10 +4872,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "profile": {"rank": 2}}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "profile": {"rank": 1}}
             )
 
@@ -4821,8 +4906,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
-            await engine.put_document("db", "coll", {"_id": "2", "kind": "click"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "2", "kind": "click"})
 
             with patch(
                 "mongoeco.engines.sqlite.QueryEngine.match_plan",
@@ -4840,8 +4925,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "data": {"b": 1}})
-            await engine.put_document("db", "coll", {"_id": "2", "data": {"b": 2}})
+            await engine.insert_document("db", "coll", {"_id": "1", "data": {"b": 1}})
+            await engine.insert_document("db", "coll", {"_id": "2", "data": {"b": 2}})
 
             with patch(
                 "mongoeco.engines.sqlite.QueryEngine.match_plan",
@@ -4860,10 +4945,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"name": "a"}]}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "items": [{"name": "b"}]}
             )
 
@@ -4884,7 +4969,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "v": b"\x00"})
+            await engine.insert_document("db", "coll", {"_id": "1", "v": b"\x00"})
             count = await self._count(
                 engine,
                 "db",
@@ -4966,7 +5051,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {
@@ -4975,7 +5060,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     "session_id": session_id,
                 },
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {
@@ -5027,9 +5112,11 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": ids[0], "kind": "first"})
-            await engine.put_document("db", "coll", {"_id": ids[1], "kind": "second"})
-            await engine.put_document(
+            await engine.insert_document("db", "coll", {"_id": ids[0], "kind": "first"})
+            await engine.insert_document(
+                "db", "coll", {"_id": ids[1], "kind": "second"}
+            )
+            await engine.insert_document(
                 "db",
                 "coll",
                 {"_id": ObjectId("111111111111111111111111"), "kind": "third"},
@@ -5051,12 +5138,12 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {"_id": "1", "created_at": datetime.datetime(2025, 1, 2, 3, 4, 5)},
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {"_id": "2", "created_at": datetime.datetime(2025, 1, 1, 3, 4, 5)},
@@ -5086,8 +5173,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
-            await engine.put_document("db", "coll", {"_id": "2", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "2", "kind": "view"})
 
             async def _consume_first():
                 async for document in self._scan(
@@ -5134,8 +5221,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "view"})
-            await engine.put_document("db", "coll", {"_id": "2", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "view"})
+            await engine.insert_document("db", "coll", {"_id": "2", "kind": "view"})
             stop_event = threading.Event()
             seen: list[dict[str, object]] = []
 
@@ -5164,7 +5251,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "data": {"b": 1}})
+            await engine.insert_document("db", "coll", {"_id": "1", "data": {"b": 1}})
             stop_event = threading.Event()
             stop_event.set()
 
@@ -5293,9 +5380,11 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "name": "Ada"})
-            await engine.put_document("db", "coll", {"_id": "2", "name": {"nested": 1}})
-            await engine.put_document("db", "coll", {"_id": "3"})
+            await engine.insert_document("db", "coll", {"_id": "1", "name": "Ada"})
+            await engine.insert_document(
+                "db", "coll", {"_id": "2", "name": {"nested": 1}}
+            )
+            await engine.insert_document("db", "coll", {"_id": "3"})
 
             with patch(
                 "mongoeco.engines.sqlite.QueryEngine.match_plan",
@@ -5324,9 +5413,11 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         oid2 = ObjectId("abcdef0123456789abcdef01")
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "refs": [oid1, oid2]})
-            await engine.put_document("db", "coll", {"_id": "2", "refs": [oid2]})
-            await engine.put_document("db", "coll", {"_id": "3"})
+            await engine.insert_document(
+                "db", "coll", {"_id": "1", "refs": [oid1, oid2]}
+            )
+            await engine.insert_document("db", "coll", {"_id": "2", "refs": [oid2]})
+            await engine.insert_document("db", "coll", {"_id": "3"})
 
             with patch(
                 "mongoeco.engines.sqlite.QueryEngine.match_plan",
@@ -5347,10 +5438,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "profile": {"rank": 2}}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "profile": {"rank": 1}}
             )
 
@@ -5380,10 +5471,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"name": "a"}, {"name": "b"}]}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "items": [{"name": "c"}]}
             )
 
@@ -5407,10 +5498,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"name": "b"}]}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "items": [{"name": "a"}]}
             )
 
@@ -5435,13 +5526,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "kind": "view", "payload": b"\x02"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "kind": "view", "payload": b"\x01"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "3", "kind": "skip", "payload": b"\x00"}
             )
 
@@ -5473,11 +5564,11 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "tags": ["python", "sqlite"]}
             )
-            await engine.put_document("db", "coll", {"_id": "2", "tags": ["python"]})
-            await engine.put_document("db", "coll", {"_id": "3", "tags": "python"})
+            await engine.insert_document("db", "coll", {"_id": "2", "tags": ["python"]})
+            await engine.insert_document("db", "coll", {"_id": "3", "tags": "python"})
 
             documents = [
                 document["_id"]
@@ -5503,8 +5594,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "value": 5})
-            await engine.put_document("db", "coll", {"_id": "2", "value": 4})
+            await engine.insert_document("db", "coll", {"_id": "1", "value": 5})
+            await engine.insert_document("db", "coll", {"_id": "2", "value": 4})
 
             documents = [
                 document["_id"]
@@ -5530,11 +5621,11 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "tags": ["python", "sqlite"]}
             )
-            await engine.put_document("db", "coll", {"_id": "2", "tags": ["python"]})
-            await engine.put_document("db", "coll", {"_id": "3", "tags": "python"})
+            await engine.insert_document("db", "coll", {"_id": "2", "tags": ["python"]})
+            await engine.insert_document("db", "coll", {"_id": "3", "tags": "python"})
 
             documents = [
                 document["_id"]
@@ -5564,9 +5655,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "scores": [7, 2]})
-            await engine.put_document("db", "coll", {"_id": "2", "scores": [4]})
-            await engine.put_document("db", "coll", {"_id": "3", "scores": 7})
+            await engine.insert_document("db", "coll", {"_id": "1", "scores": [7, 2]})
+            await engine.insert_document("db", "coll", {"_id": "2", "scores": [4]})
+            await engine.insert_document("db", "coll", {"_id": "3", "scores": 7})
 
             documents = [
                 document["_id"]
@@ -5596,9 +5687,9 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "value": 7})
-            await engine.put_document("db", "coll", {"_id": "2", "value": [8, 1]})
-            await engine.put_document("db", "coll", {"_id": "3", "value": [2]})
+            await engine.insert_document("db", "coll", {"_id": "1", "value": 7})
+            await engine.insert_document("db", "coll", {"_id": "2", "value": [8, 1]})
+            await engine.insert_document("db", "coll", {"_id": "3", "value": [2]})
 
             documents = [
                 document["_id"]
@@ -5622,8 +5713,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "value": 5})
-            await engine.put_document("db", "coll", {"_id": "2", "value": [5]})
+            await engine.insert_document("db", "coll", {"_id": "1", "value": 5})
+            await engine.insert_document("db", "coll", {"_id": "2", "value": [5]})
 
             documents = [
                 document["_id"]
@@ -5657,8 +5748,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "value": 5})
-            await engine.put_document("db", "coll", {"_id": "2", "value": 4.5})
+            await engine.insert_document("db", "coll", {"_id": "1", "value": 5})
+            await engine.insert_document("db", "coll", {"_id": "2", "value": 4.5})
 
             documents = [
                 document["_id"]
@@ -5694,8 +5785,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "value": 7})
-            await engine.put_document("db", "coll", {"_id": "2", "value": ["x", 8]})
+            await engine.insert_document("db", "coll", {"_id": "1", "value": 7})
+            await engine.insert_document("db", "coll", {"_id": "2", "value": ["x", 8]})
 
             documents = [
                 document["_id"]
@@ -5736,13 +5827,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "title": "Ada Lovelace"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "title": "Grace Hopper"}
             )
-            await engine.put_document("db", "coll", {"_id": "3", "title": 123})
+            await engine.insert_document("db", "coll", {"_id": "3", "title": 123})
 
             documents = [
                 document["_id"]
@@ -5772,8 +5863,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada"})
-            await engine.put_document(
+            await engine.insert_document("db", "coll", {"_id": "1", "title": "Ada"})
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "title": "Ada Lovelace"}
             )
 
@@ -5805,11 +5896,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "title": "Ada Lovelace"}
             )
-            await engine.put_document("db", "coll", {"_id": "2", "title": "Lovelace"})
-            await engine.put_document(
+            await engine.insert_document(
+                "db", "coll", {"_id": "2", "title": "Lovelace"}
+            )
+            await engine.insert_document(
                 "db", "coll", {"_id": "3", "title": "Grace Hopper"}
             )
 
@@ -5859,10 +5952,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "title": "Ada Lovelace"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "title": ["Ada Lovelace"]}
             )
 
@@ -5902,7 +5995,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "title": "ada lovelace"}
             )
 
@@ -5932,10 +6025,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "title": "ada lovelace"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "title": "grace hopper"}
             )
 
@@ -5965,7 +6058,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "title": "álvaro"})
+            await engine.insert_document("db", "coll", {"_id": "1", "title": "álvaro"})
 
             documents = [
                 document["_id"]
@@ -6008,10 +6101,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "kind": "skip", "name": "old"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "kind": "match", "name": "old"}
             )
 
@@ -6045,10 +6138,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "data": {"b": 2}, "name": "old"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "data": {"b": 1}, "name": "old"}
             )
 
@@ -6076,7 +6169,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "match"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "match"})
 
             with (
                 patch(
@@ -6108,10 +6201,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "email": "a@example.com"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "email": "b@example.com"}
             )
             await engine.create_index("db", "coll", ["email"], unique=True)
@@ -6137,7 +6230,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "kind": "match"})
+            await engine.insert_document("db", "coll", {"_id": "1", "kind": "match"})
 
             with patch(
                 "mongoeco.engines.sqlite.translate_compiled_update_plan",
@@ -6372,7 +6465,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(indexes[1]["name"], "title_text_createdAt_-1")
             self.assertEqual(indexes[1]["key"], {"title": "text", "createdAt": -1})
 
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "title": "Ada", "createdAt": 1}
             )
             found = [
@@ -6403,10 +6496,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 default_language="english",
                 language_override="lang",
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "title": "Ada", "body": "none"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "title": "none", "body": "Ada"}
             )
 
@@ -6517,7 +6610,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             )
 
             with self.assertRaisesRegex(OperationFailure, "does not support \\$search"):
-                await engine.search_documents(
+                await _execute_search_hits(
+                    engine,
                     "db",
                     "coll",
                     "$search",
@@ -6526,7 +6620,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaisesRegex(
                 OperationFailure, "does not support \\$vectorSearch"
             ):
-                await engine.search_documents(
+                await _execute_search_hits(
+                    engine,
                     "db",
                     "coll",
                     "$vectorSearch",
@@ -6812,7 +6907,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 [],
             )
 
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "title": "Ada Lovelace"}
             )
             docs = engine._search_documents_sync(
@@ -6967,7 +7062,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
 
             engine._drop_search_backend_sync(conn, None)
 
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "title": "Ada Lovelace"}
             )
             physical_name = engine._physical_search_index_name("db", "coll", "text")
@@ -7001,10 +7096,10 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "profile": {"rank": 2}, "title": "Ada"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "profile": {"rank": 1}, "title": "Bob"}
             )
             await engine.create_index("db", "coll", [("title", 1)])
@@ -7072,7 +7167,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada"})
+            await engine.insert_document("db", "coll", {"_id": "1", "title": "Ada"})
             await engine.create_index(
                 "db", "coll", [("title", "text")], name="title_text"
             )
@@ -7122,7 +7217,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "items": [{"score": 7}]}
             )
             explanation = await self._explain(
@@ -7149,7 +7244,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "value": ["x", 7]})
+            await engine.insert_document("db", "coll", {"_id": "1", "value": ["x", 7]})
             explanation = await self._explain(
                 engine, "db", "coll", {"value": {"$gt": 5}}
             )
@@ -7178,7 +7273,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db",
                 "coll",
                 {"_id": "1", "location": {"type": "Point", "coordinates": [0, 0]}},
@@ -7227,7 +7322,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine(simulate_search_index_latency=60.0)
         await engine.connect()
         try:
-            await engine.put_document("db", "coll", {"_id": "1", "title": "Ada"})
+            await engine.insert_document("db", "coll", {"_id": "1", "title": "Ada"})
             await engine.create_index("db", "coll", [("title", 1)], name="title_idx")
             await engine.create_search_index(
                 "db",
@@ -7268,13 +7363,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "embedding": [1.0, 0.0, 0.0], "kind": "keep"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "embedding": [0.9, 0.1, 0.0], "kind": "drop"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "3", "embedding": [0.0, 1.0, 0.0]}
             )
             await engine.create_search_index(
@@ -7299,7 +7394,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 ),
             )
 
-            results = await engine.search_documents(
+            results = await _execute_search_hits(
+                engine,
                 "db",
                 "coll",
                 "$vectorSearch",
@@ -7312,7 +7408,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     "filter": {"kind": "keep"},
                 },
             )
-            explanation = await engine.explain_search_documents(
+            explanation = await _explain_search(
+                engine,
                 "db",
                 "coll",
                 "$vectorSearch",
@@ -7366,13 +7463,13 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "1", "embedding": [1.0, 0.0], "kind": "keep"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "2", "embedding": [0.9, 0.1], "kind": "drop"}
             )
-            await engine.put_document(
+            await engine.insert_document(
                 "db", "coll", {"_id": "3", "embedding": ["bad", 1.0], "kind": "keep"}
             )
             await engine.create_search_index(
@@ -7441,7 +7538,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                     (engine._storage_key("2"), 0.2),
                 ],
             ):
-                fallback_docs = await engine.search_documents(
+                fallback_docs = await _execute_search_hits(
+                    engine,
                     "db",
                     "coll",
                     "$vectorSearch",
@@ -7460,7 +7558,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
                 "mongoeco.engines._sqlite_search_runtime.search_sqlite_vector_backend",
                 return_value=[(engine._storage_key("2"), 0.2)],
             ):
-                explanation = await engine.explain_search_documents(
+                explanation = await _explain_search(
+                    engine,
                     "db",
                     "coll",
                     "$vectorSearch",
@@ -7493,7 +7592,8 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
             )
 
             with self.assertRaisesRegex(OperationFailure, "search index not found"):
-                await engine.explain_search_documents(
+                await _explain_search(
+                    engine,
                     "db",
                     "coll",
                     "$vectorSearch",
@@ -7512,7 +7612,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "alpha", "users", {"_id": "1", "email": "a@example.com"}
             )
             await engine.create_index("alpha", "users", ["email"], name="idx_email")
@@ -7568,7 +7668,7 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         engine = SQLiteEngine()
         await engine.connect()
         try:
-            await engine.put_document(
+            await engine.insert_document(
                 "alpha", "users", {"_id": "1", "email": "a@example.com"}
             )
 

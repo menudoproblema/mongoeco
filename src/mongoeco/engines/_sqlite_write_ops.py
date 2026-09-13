@@ -7,6 +7,7 @@ from mongoeco.core.identity import assert_valid_root_document_id
 from mongoeco.errors import DuplicateKeyError
 from mongoeco.engines.semantic_core import enforce_collection_document_validation
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
     from mongoeco.types import Document, EngineIndexRecord
 
 
-def put_document(  # noqa: PLR0913 - SQLite write transaction boundary
+def insert_document_record(  # noqa: PLR0913 - SQLite write transaction boundary
     conn: sqlite3.Connection,
     *,
     db_name: str,
@@ -29,16 +30,36 @@ def put_document(  # noqa: PLR0913 - SQLite write transaction boundary
     begin_write: Callable[[sqlite3.Connection], None],
     rollback_write: Callable[[sqlite3.Connection], None],
     commit_write: Callable[[sqlite3.Connection], None],
-    collection_options_or_empty: Callable[[sqlite3.Connection, str, str], dict[str, object]],
-    load_existing_document_for_storage_key: Callable[[sqlite3.Connection, str, str, str], Document | None],
+    collection_options_or_empty: Callable[
+        [sqlite3.Connection, str, str], dict[str, object]
+    ],
+    load_existing_document_for_storage_key: Callable[
+        [sqlite3.Connection, str, str, str], Document | None
+    ],
     ensure_collection_row: Callable[..., None],
     validate_document_against_unique_indexes: Callable[..., None],
     load_indexes: Callable[[str, str], list[EngineIndexRecord]],
-    rebuild_multikey_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, list[EngineIndexRecord]], None],
+    rebuild_multikey_entries_for_document: Callable[
+        [sqlite3.Connection, str, str, str, Document, list[EngineIndexRecord]], None
+    ],
     supports_scalar_index: Callable[[EngineIndexRecord], bool],
-    rebuild_scalar_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, list[EngineIndexRecord]], None],
-    load_search_index_rows: Callable[[str, str], list[tuple[object, str | None, float | None]]],
-    replace_search_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, list[tuple[object, str | None, float | None]]], None],
+    rebuild_scalar_entries_for_document: Callable[
+        [sqlite3.Connection, str, str, str, Document, list[EngineIndexRecord]], None
+    ],
+    load_search_index_rows: Callable[
+        [str, str], list[tuple[object, str | None, float | None]]
+    ],
+    replace_search_entries_for_document: Callable[
+        [
+            sqlite3.Connection,
+            str,
+            str,
+            str,
+            Document,
+            list[tuple[object, str | None, float | None]],
+        ],
+        None,
+    ],
     invalidate_collection_features_cache: Callable[[str, str], None],
 ) -> bool:
     if "_id" in document:
@@ -53,7 +74,9 @@ def put_document(  # noqa: PLR0913 - SQLite write transaction boundary
         collection_options = collection_options_or_empty(conn, db_name, coll_name)
         original_document = None
         if not bypass_document_validation or not overwrite:
-            original_document = load_existing_document_for_storage_key(conn, db_name, coll_name, storage_key)
+            original_document = load_existing_document_for_storage_key(
+                conn, db_name, coll_name, storage_key
+            )
 
         if not overwrite and original_document is not None:
             write.rollback()
@@ -73,8 +96,8 @@ def put_document(  # noqa: PLR0913 - SQLite write transaction boundary
             coll_name,
             document,
             storage_key if overwrite else None,
-            False,
-            True,
+            False,  # noqa: FBT003 - callback protocol uses positional flags
+            True,  # noqa: FBT003 - callback protocol uses positional flags
         )
 
         try:
@@ -97,13 +120,18 @@ def put_document(  # noqa: PLR0913 - SQLite write transaction boundary
                     (db_name, coll_name, storage_key, serialized_document),
                 )
         except sqlite3.IntegrityError as exc:
-            raise DuplicateKeyError(f"Duplicate key error: {exc}") from exc
+            message = f"Duplicate key error: {exc}"
+            raise DuplicateKeyError(message) from exc
 
         indexes = load_indexes(db_name, coll_name)
         if any(idx.get("multikey") for idx in indexes):
-            rebuild_multikey_entries_for_document(conn, db_name, coll_name, storage_key, document, indexes)
+            rebuild_multikey_entries_for_document(
+                conn, db_name, coll_name, storage_key, document, indexes
+            )
         if any(supports_scalar_index(idx) for idx in indexes):
-            rebuild_scalar_entries_for_document(conn, db_name, coll_name, storage_key, document, indexes)
+            rebuild_scalar_entries_for_document(
+                conn, db_name, coll_name, storage_key, document, indexes
+            )
 
         search_indexes = load_search_index_rows(db_name, coll_name)
         if search_indexes:
@@ -120,7 +148,7 @@ def put_document(  # noqa: PLR0913 - SQLite write transaction boundary
         return True
 
 
-def put_documents_bulk(  # noqa: PLR0913 - SQLite batch transaction boundary
+def insert_document_batch(  # noqa: PLR0913 - SQLite batch transaction boundary
     conn: sqlite3.Connection,
     *,
     db_name: str,
@@ -132,20 +160,46 @@ def put_documents_bulk(  # noqa: PLR0913 - SQLite batch transaction boundary
     dialect: MongoDialect,
     snapshot_options: dict[str, object] | None,
     purge_expired_documents: Callable[[sqlite3.Connection, str, str], None],
-    collection_options_or_empty: Callable[[sqlite3.Connection, str, str], dict[str, object]],
+    collection_options_or_empty: Callable[
+        [sqlite3.Connection, str, str], dict[str, object]
+    ],
     load_indexes: Callable[[str, str], list[EngineIndexRecord]],
-    load_search_index_rows: Callable[[str, str], list[tuple[object, str | None, float | None]]],
+    load_search_index_rows: Callable[
+        [str, str], list[tuple[object, str | None, float | None]]
+    ],
     begin_write: Callable[[sqlite3.Connection], None],
     ensure_collection_row: Callable[..., None],
     lookup_collection_id: Callable[[sqlite3.Connection, str, str, bool], int | None],
     validate_document_against_unique_indexes: Callable[..., None],
-    delete_multikey_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
-    delete_scalar_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
-    build_multikey_rows_for_document: Callable[[str, Document, list[EngineIndexRecord]], list[tuple[str, str, int, str]]],
-    ensure_multikey_physical_indexes: Callable[[sqlite3.Connection, list[EngineIndexRecord]], None],
-    build_scalar_rows_for_document: Callable[[str, Document, list[EngineIndexRecord]], list[tuple[str, str, int, str]]],
-    ensure_scalar_physical_indexes: Callable[[sqlite3.Connection, list[EngineIndexRecord]], None],
-    replace_search_entries_for_document: Callable[[sqlite3.Connection, str, str, str, Document, list[tuple[object, str | None, float | None]]], None],
+    delete_multikey_entries_for_storage_key: Callable[
+        [sqlite3.Connection, str, str, str], None
+    ],
+    delete_scalar_entries_for_storage_key: Callable[
+        [sqlite3.Connection, str, str, str], None
+    ],
+    build_multikey_rows_for_document: Callable[
+        [str, Document, list[EngineIndexRecord]], list[tuple[str, str, int, str]]
+    ],
+    ensure_multikey_physical_indexes: Callable[
+        [sqlite3.Connection, list[EngineIndexRecord]], None
+    ],
+    build_scalar_rows_for_document: Callable[
+        [str, Document, list[EngineIndexRecord]], list[tuple[str, str, int, str]]
+    ],
+    ensure_scalar_physical_indexes: Callable[
+        [sqlite3.Connection, list[EngineIndexRecord]], None
+    ],
+    replace_search_entries_for_document: Callable[
+        [
+            sqlite3.Connection,
+            str,
+            str,
+            str,
+            Document,
+            list[tuple[object, str | None, float | None]],
+        ],
+        None,
+    ],
     commit_write: Callable[[sqlite3.Connection], None],
     rollback_write: Callable[[sqlite3.Connection], None],
     invalidate_collection_features_cache: Callable[[str, str], None],
@@ -174,20 +228,26 @@ def put_documents_bulk(  # noqa: PLR0913 - SQLite batch transaction boundary
         rollback_write=rollback_write,
     ):
         ensure_collection_row(conn, db_name, coll_name)
-        collection_id = lookup_collection_id(conn, db_name, coll_name, True)
-        storage_keys = [storage_key for storage_key, _serialized, _rows in prepared_documents]
+        collection_id = lookup_collection_id(
+            conn,
+            db_name,
+            coll_name,
+            True,  # noqa: FBT003 - callback protocol uses a positional create flag
+        )
+        storage_keys = [
+            storage_key for storage_key, _serialized, _rows in prepared_documents
+        ]
         existing_storage_keys: set[str] = set()
         for offset in range(0, len(storage_keys), 900):
             chunk = storage_keys[offset : offset + 900]
-            if not chunk:
-                continue
             placeholders = ", ".join("?" for _ in chunk)
+            query = (
+                "SELECT storage_key FROM documents "  # noqa: S608
+                "WHERE db_name = ? AND coll_name = ? "
+                f"AND storage_key IN ({placeholders})"
+            )
             rows = conn.execute(
-                f"""
-                SELECT storage_key
-                FROM documents
-                WHERE db_name = ? AND coll_name = ? AND storage_key IN ({placeholders})
-                """,
+                query,
                 (db_name, coll_name, *chunk),
             ).fetchall()
             existing_storage_keys.update(row[0] for row in rows)
@@ -200,7 +260,10 @@ def put_documents_bulk(  # noqa: PLR0913 - SQLite batch transaction boundary
             try:
                 if "_id" in document:
                     assert_valid_root_document_id(document["_id"])
-                if storage_key in seen_storage_keys or storage_key in existing_storage_keys:
+                if (
+                    storage_key in seen_storage_keys
+                    or storage_key in existing_storage_keys
+                ):
                     results.append(False)
                     break
                 seen_storage_keys.add(storage_key)
@@ -209,8 +272,8 @@ def put_documents_bulk(  # noqa: PLR0913 - SQLite batch transaction boundary
                     coll_name,
                     document,
                     storage_key,
-                    True,
-                    False,
+                    True,  # noqa: FBT003 - callback protocol uses positional flags
+                    False,  # noqa: FBT003 - callback protocol uses positional flags
                 )
                 cursor = conn.execute(
                     """
@@ -223,17 +286,24 @@ def put_documents_bulk(  # noqa: PLR0913 - SQLite batch transaction boundary
                 if cursor.rowcount == 0:
                     results.append(False)
                     break
-                delete_multikey_entries_for_storage_key(conn, db_name, coll_name, storage_key)
-                delete_scalar_entries_for_storage_key(conn, db_name, coll_name, storage_key)
+                delete_multikey_entries_for_storage_key(
+                    conn, db_name, coll_name, storage_key
+                )
+                delete_scalar_entries_for_storage_key(
+                    conn, db_name, coll_name, storage_key
+                )
                 effective_rows = prepared_multikey_rows
                 if indexes != snapshot_indexes:
-                    effective_rows = build_multikey_rows_for_document(storage_key, document, indexes)
+                    effective_rows = build_multikey_rows_for_document(
+                        storage_key, document, indexes
+                    )
                 if collection_id is not None and effective_rows:
                     ensure_multikey_physical_indexes(conn, indexes)
                     conn.executemany(
                         """
                         INSERT OR IGNORE INTO multikey_entries (
-                            collection_id, index_name, storage_key, element_type, type_score, element_key
+                            collection_id, index_name, storage_key,
+                            element_type, type_score, element_key
                         ) VALUES (?, ?, ?, ?, ?, ?)
                         """,
                         [
@@ -245,16 +315,24 @@ def put_documents_bulk(  # noqa: PLR0913 - SQLite batch transaction boundary
                                 type_score,
                                 element_key,
                             )
-                            for index_name, element_type, type_score, element_key in effective_rows
+                            for (
+                                index_name,
+                                element_type,
+                                type_score,
+                                element_key,
+                            ) in effective_rows
                         ],
                     )
-                scalar_rows = build_scalar_rows_for_document(storage_key, document, indexes)
+                scalar_rows = build_scalar_rows_for_document(
+                    storage_key, document, indexes
+                )
                 if collection_id is not None and scalar_rows:
                     ensure_scalar_physical_indexes(conn, indexes)
                     conn.executemany(
                         """
                         INSERT OR IGNORE INTO scalar_index_entries (
-                            collection_id, index_name, storage_key, element_type, type_score, element_key
+                            collection_id, index_name, storage_key,
+                            element_type, type_score, element_key
                         ) VALUES (?, ?, ?, ?, ?, ?)
                         """,
                         [
@@ -266,7 +344,12 @@ def put_documents_bulk(  # noqa: PLR0913 - SQLite batch transaction boundary
                                 type_score,
                                 element_key,
                             )
-                            for index_name, element_type, type_score, element_key in scalar_rows
+                            for (
+                                index_name,
+                                element_type,
+                                type_score,
+                                element_key,
+                            ) in scalar_rows
                         ],
                     )
                 replace_search_entries_for_document(
@@ -294,9 +377,15 @@ def delete_document(
     begin_write: Callable[[sqlite3.Connection], None],
     commit_write: Callable[[sqlite3.Connection], None],
     rollback_write: Callable[[sqlite3.Connection], None],
-    delete_multikey_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
-    delete_scalar_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
-    delete_search_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
+    delete_multikey_entries_for_storage_key: Callable[
+        [sqlite3.Connection, str, str, str], None
+    ],
+    delete_scalar_entries_for_storage_key: Callable[
+        [sqlite3.Connection, str, str, str], None
+    ],
+    delete_search_entries_for_storage_key: Callable[
+        [sqlite3.Connection, str, str, str], None
+    ],
     invalidate_collection_features_cache: Callable[[str, str], None],
 ) -> bool:
     with sqlite_write_scope(

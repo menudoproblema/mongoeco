@@ -1,6 +1,5 @@
 import asyncio
 import unittest
-import warnings
 
 from types import SimpleNamespace
 
@@ -14,11 +13,12 @@ from mongoeco.core.operation_context import (
     ChangePublicationPolicy,
     OperationContext,
 )
+from mongoeco.core.search import compile_search_stage
+from mongoeco.core.search_execution import SearchRequest
+from mongoeco.core.search_models import SearchExecutionMode, SearchExplainVerbosity
 from mongoeco.engines import adapter as adapter_module
 from mongoeco.engines.adapter import (
     EngineSpiAdapter,
-    LegacyEngineAdapter,
-    adapt_engine,
 )
 from mongoeco.engines.base import AsyncCrudEngine, AsyncReadSemanticsEngine
 from mongoeco.engines.capabilities import (
@@ -43,7 +43,12 @@ from mongoeco.engines.semantic_core import compile_find_semantics
 from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.session import ClientSession
-from mongoeco.types import BulkWriteResult, DeleteResult, UpdateResult
+from mongoeco.types import (
+    BulkWriteResult,
+    DeleteResult,
+    QueryPlanExplanation,
+    UpdateResult,
+)
 
 
 class _EmptySource:
@@ -114,69 +119,6 @@ class _NativeEngine:
         )
 
 
-class _LegacyEngine:
-    supports_commit_callbacks = True
-
-    def __init__(self):
-        self.calls = []
-
-    async def put_document(self, *args, **kwargs):
-        self.calls.append(("insert", args, kwargs))
-        callback = kwargs.get("on_commit")
-        if callback is not None:
-            callback(args[2])
-        return True
-
-    async def put_documents_bulk(self, *args, **kwargs):
-        self.calls.append(("insert_many", args, kwargs))
-        callback = kwargs.get("on_commit")
-        if callback is not None:
-            for document in args[2]:
-                callback(document)
-        return [True for _document in args[2]]
-
-    async def get_document(self, *args, **kwargs):
-        self.calls.append(("get", args, kwargs))
-        return {"_id": args[2]}
-
-    async def count_find_semantics(self, *args, **kwargs):
-        self.calls.append(("count", args, kwargs))
-        return 2
-
-    async def update_with_operation(self, *args, **kwargs):
-        self.calls.append(("update", args, kwargs))
-        result = UpdateResult(1, 1)
-        callback = kwargs.get("on_commit")
-        if callback is not None:
-            callback(MutationOutcome(result=result))
-        return result
-
-    async def delete_with_operation(self, *args, **kwargs):
-        self.calls.append(("delete", args, kwargs))
-        result = DeleteResult(1)
-        callback = kwargs.get("on_commit")
-        if callback is not None:
-            callback(DeleteOutcome(result=result))
-        return result
-
-    async def merge_document(self, *args, **kwargs):
-        self.calls.append(("merge", args, kwargs))
-        outcome = MergeOutcome(
-            matched=False,
-            applied=True,
-            operation_type="insert",
-            after_document=args[2],
-        )
-        callback = kwargs.get("on_commit")
-        if callback is not None:
-            callback(outcome)
-        return outcome
-
-    def scan_find_semantics(self, *args, **kwargs):
-        self.calls.append(("snapshot", args, kwargs))
-        return _EmptySource()
-
-
 class EngineSpiV2ContractTests(unittest.TestCase):
     def test_adapter_argument_resolution_has_explicit_missing_semantics(self):
         marker = object()
@@ -198,38 +140,62 @@ class EngineSpiV2ContractTests(unittest.TestCase):
                 name="value",
                 index=2,
             )
+        with self.assertRaisesRegex(TypeError, "missing callable"):
+            adapter_module._require_callable(
+                object(),
+                "missing",
+                message="missing callable",
+            )
+
+    def test_search_explain_preserves_opaque_details_without_a_pipeline(self):
+        context = OperationContext.create(dialect=MONGODB_DIALECT_70)
+        specification = {
+            "index": "by_text",
+            "text": {"query": "ada", "path": "title"},
+        }
+        request = SearchRequest(
+            operator="$search",
+            specification=specification,
+            query=compile_search_stage("$search", specification),
+            mode=SearchExecutionMode.HITS,
+            operation_context=context,
+        )
+        explanation = QueryPlanExplanation(
+            engine="external",
+            strategy="search",
+            plan="opaque",
+            sort=None,
+            skip=0,
+            limit=None,
+            hint=None,
+            hinted_index="by_text",
+            comment=None,
+            max_time_ms=None,
+            details=object(),
+        )
+
+        result = EngineSpiAdapter._attach_search_pipeline_plan(
+            explanation,
+            request,
+            SearchExplainVerbosity.QUERY_PLANNER,
+        )
+
+        self.assertIs(result, explanation)
 
     def test_capabilities_reject_invalid_version_and_delivery_mode(self):
-        with self.assertRaisesRegex(ValueError, "supported versions"):
+        with self.assertRaisesRegex(ValueError, "must be 2"):
             EngineCapabilities(spi_version=True)
-        with self.assertRaisesRegex(ValueError, "supported versions"):
+        with self.assertRaisesRegex(ValueError, "must be 2"):
             EngineCapabilities(spi_version=3)
         with self.assertRaisesRegex(ValueError, "delivery mode"):
             EngineCapabilities(change_delivery="future")
         with self.assertRaisesRegex(ValueError, "native mutation outcomes"):
             EngineCapabilities(mutation_outcomes=False)
-        with self.assertRaisesRegex(ValueError, "legacy callback"):
-            EngineCapabilities(change_delivery="legacy-callback")
         assert not EngineCapabilities(
             explicit_read_snapshots=False,
         ).explicit_read_snapshots
         with self.assertRaisesRegex(TypeError, "batch_inserts"):
             EngineCapabilities(batch_inserts=1)
-        with self.assertRaisesRegex(ValueError, "native mutation outcomes"):
-            EngineCapabilities(spi_version=1)
-        with self.assertRaisesRegex(ValueError, "explicit read snapshots"):
-            EngineCapabilities(
-                spi_version=1,
-                mutation_outcomes=False,
-                explicit_read_snapshots=True,
-            )
-        with self.assertRaisesRegex(ValueError, "sequenced"):
-            EngineCapabilities(
-                spi_version=1,
-                mutation_outcomes=False,
-                change_delivery="commit-sequence",
-            )
-
         outbox = EngineCapabilities(change_delivery="transactional-outbox")
         assert outbox.transactional_outbox
         assert outbox.monotonic_commit_sequence
@@ -244,8 +210,7 @@ class EngineSpiV2ContractTests(unittest.TestCase):
 
         assert resolve_engine_capabilities(CallableCapabilities()) is declared
 
-    def test_v1_methods_do_not_leak_into_canonical_v2_protocols(self):
-        assert "put_document" not in AsyncCrudEngine.__dict__
+    def test_noncanonical_methods_do_not_leak_into_v2_protocols(self):
         assert "delete_document" not in AsyncCrudEngine.__dict__
         assert "scan_find_semantics" not in AsyncReadSemanticsEngine.__dict__
 
@@ -310,17 +275,9 @@ class EngineSpiV2ContractTests(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, "MutationOutcome"):
             FindAndModifyOutcome(captured=object(), value=None)  # type: ignore[arg-type]
 
-    def test_legacy_capability_detection_is_centralized(self):
-        class LegacyEngine:
-            supports_injected_clock = True
-            supports_commit_callbacks = True
-
-        capabilities = resolve_engine_capabilities(LegacyEngine())
-
-        assert capabilities.spi_version == 1
-        assert capabilities.injected_clock
-        assert not capabilities.mutation_outcomes
-        assert capabilities.change_delivery == "legacy-callback"
+    def test_engine_without_explicit_capabilities_is_rejected(self):
+        with self.assertRaisesRegex(TypeError, "must declare EngineCapabilities"):
+            resolve_engine_capabilities(object())
 
     def test_native_capabilities_are_returned_without_inference(self):
         declared = EngineCapabilities(
@@ -331,27 +288,8 @@ class EngineSpiV2ContractTests(unittest.TestCase):
 
         class NativeEngine:
             capabilities = declared
-            supports_injected_clock = False
 
         assert resolve_engine_capabilities(NativeEngine()) is declared
-
-    def test_inherited_v2_capabilities_ignore_legacy_clock_flags(self):
-        class ExternalMemoryEngine(MemoryEngine):
-            supports_injected_clock = False
-
-        capabilities = resolve_engine_capabilities(ExternalMemoryEngine())
-
-        assert capabilities.injected_clock
-        assert capabilities.spi_version == 2
-
-    def test_explicit_capabilities_take_precedence_over_legacy_flags(self):
-        declared = EngineCapabilities(injected_clock=True)
-
-        class ExternalMemoryEngine(MemoryEngine):
-            capabilities = declared
-            supports_injected_clock = False
-
-        assert resolve_engine_capabilities(ExternalMemoryEngine()) is declared
 
     def test_builtin_engines_declare_spi_v2(self):
         for engine in (MemoryEngine(), SQLiteEngine()):
@@ -360,20 +298,10 @@ class EngineSpiV2ContractTests(unittest.TestCase):
                 assert capabilities.spi_version == 2
                 assert capabilities.mutation_outcomes
 
-    def test_adapter_selection_is_versioned(self):
-        class LegacyEngine:
-            pass
-
-        with warnings.catch_warnings(record=True) as captured:
-            warnings.simplefilter("always")
-            adapter = adapt_engine(LegacyEngine())
-            adapt_engine(LegacyEngine())
-
-        assert isinstance(adapter, LegacyEngineAdapter)
-        assert len(captured) == 1
-        assert issubclass(captured[0].category, DeprecationWarning)
-        assert "before MongoEco 5.0.0" in str(captured[0].message)
-        assert isinstance(adapt_engine(MemoryEngine()), EngineSpiAdapter)
+    def test_adapter_requires_spi_v2_declaration(self):
+        with self.assertRaisesRegex(TypeError, "must declare EngineCapabilities"):
+            EngineSpiAdapter(object())
+        assert isinstance(EngineSpiAdapter(MemoryEngine()), EngineSpiAdapter)
 
     def test_v2_capability_declarations_are_validated_eagerly(self):
         class IncompleteEngine:
@@ -413,8 +341,6 @@ class EngineSpiV2ContractTests(unittest.TestCase):
                 "coll",
                 object(),
                 operation_context=context,
-                context="legacy",
-                dialect="legacy",
                 on_commit=callbacks.append,
             )
             deleted = await adapter.delete_outcome(
@@ -422,8 +348,6 @@ class EngineSpiV2ContractTests(unittest.TestCase):
                 "coll",
                 object(),
                 operation_context=context,
-                context="legacy",
-                dialect="legacy",
                 on_commit=callbacks.append,
             )
             merged = await adapter.merge_outcome(
@@ -431,7 +355,6 @@ class EngineSpiV2ContractTests(unittest.TestCase):
                 "coll",
                 {"_id": 4},
                 operation_context=context,
-                context="legacy",
                 on_commit=callbacks.append,
             )
             document = await adapter.get_document(
@@ -465,79 +388,6 @@ class EngineSpiV2ContractTests(unittest.TestCase):
             update_call = next(call for call in engine.calls if call[0] == "update")
             assert "context" not in update_call[2]
             assert "dialect" not in update_call[2]
-
-        asyncio.run(_exercise())
-
-    def test_legacy_adapter_translates_context_callbacks_and_results(self):
-        async def _exercise():
-            engine = _LegacyEngine()
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", DeprecationWarning)
-                adapter = adapt_engine(engine)
-            context = SimpleNamespace(session="session", operation_id="op")
-            callbacks = []
-
-            await adapter.insert_outcome(
-                "db",
-                "coll",
-                {"_id": 1},
-                operation_context=context,
-                on_commit=callbacks.append,
-            )
-            await adapter.insert_many_outcomes(
-                "db",
-                "coll",
-                [{"_id": 2}, {"_id": 3}],
-                operation_context=context,
-                on_commit=callbacks.append,
-            )
-            updated = await adapter.update_outcome(
-                "db",
-                "coll",
-                object(),
-                operation_context=context,
-                on_commit=callbacks.append,
-            )
-            deleted = await adapter.delete_outcome(
-                "db",
-                "coll",
-                object(),
-                operation_context=context,
-                on_commit=callbacks.append,
-            )
-            await adapter.merge_outcome(
-                "db",
-                "coll",
-                {"_id": 4},
-                operation_context=context,
-                on_commit=callbacks.append,
-            )
-            await adapter.get_document(
-                "db",
-                "coll",
-                1,
-                operation_context=context,
-            )
-            count = await adapter.count_documents(
-                "db",
-                "coll",
-                object(),
-                operation_context=context,
-            )
-            snapshot = adapter.open_read_snapshot(
-                "db",
-                "coll",
-                object(),
-                operation_context=context,
-            )
-
-            assert isinstance(updated, MutationOutcome)
-            assert isinstance(deleted, DeleteOutcome)
-            assert count == 2
-            assert snapshot.metadata.operation_id == "op"
-            assert len(callbacks) == 6
-            for _name, _args, kwargs in engine.calls:
-                assert kwargs.get("context") == "session"
 
         asyncio.run(_exercise())
 
@@ -649,7 +499,7 @@ class EngineSpiV2ContractTests(unittest.TestCase):
             operation_id=context.operation_id,
         )
         engine.open_read_snapshot = lambda *_args, **_kwargs: live_snapshot
-        with self.assertRaisesRegex(RuntimeError, "stable"):
+        with self.assertRaisesRegex(RuntimeError, "STABLE"):
             EngineSpiAdapter(engine).open_read_snapshot(
                 "db",
                 "coll",

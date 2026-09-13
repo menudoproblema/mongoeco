@@ -309,7 +309,7 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
             session.start_transaction()
 
             with self.assertRaisesRegex(RuntimeError, "cache boom"):
-                write_ops.put_document(
+                write_ops.insert_document_record(
                     conn,
                     db_name="db",
                     coll_name="coll",

@@ -19,15 +19,6 @@ from mongoeco.compat.deprecations import DeprecationEntry
 
 
 EXPECTED_IDENTIFIERS = {
-    "engine.spi-v1",
-    "engine.legacy-adapter",
-    "engine.put-document",
-    "engine.put-documents-bulk",
-    "engine.legacy-on-commit",
-    "engine.capture-document",
-    "engine.capture-documents",
-    "engine.supports-injected-clock",
-    "search.legacy-engine-methods",
     "search.automatic-highlights-field",
     "search.count-preview",
     "search.facet-preview",

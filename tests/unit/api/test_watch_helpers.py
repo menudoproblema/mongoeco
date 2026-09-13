@@ -9,6 +9,7 @@ from mongoeco.api._async.client import AsyncDatabase, AsyncMongoClient
 from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import InvalidOperation, OperationFailure
+from tests.unit.api._collection_test_support import _SpiV2EngineStub
 
 
 class WatchHelperTests(unittest.TestCase):
@@ -276,7 +277,7 @@ class DirectWatchHubTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(event["documentKey"], {"_id": 2})
 
     async def test_async_client_drop_database_falls_back_to_collection_iteration_without_fast_path(self):
-        class EngineStub:
+        class EngineStub(_SpiV2EngineStub):
             def __init__(self):
                 self.list_calls = []
                 self.drop_calls = []

@@ -3,8 +3,11 @@ import unittest
 
 from unittest.mock import patch
 
+from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines import snapshots as snapshots_module
-from mongoeco.engines.adapter import adapt_engine
+from mongoeco.engines.adapter import EngineSpiAdapter
+from mongoeco.engines.capabilities import EngineCapabilities
 from mongoeco.engines.snapshots import (
     ReadSnapshot,
     SnapshotLifecycle,
@@ -238,17 +241,42 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
         assert snapshot.metadata.policy == SnapshotPolicy.STABLE
         assert snapshot.metadata.operation_id == "operation"
 
-    async def test_legacy_scan_is_wrapped_as_stable_snapshot(self):
+    async def test_spi_v2_scan_is_wrapped_as_stable_snapshot(self):
         source = _Source()
 
-        class LegacyEngine:
+        class ScanEngine:
+            capabilities = EngineCapabilities(
+                batch_inserts=False,
+                explicit_read_snapshots=False,
+            )
+
             def scan_find_semantics(self, *_args, **_kwargs):
                 return source
 
-        snapshot = adapt_engine(LegacyEngine()).open_read_snapshot(
+            async def insert_document(self, *_args, **_kwargs):
+                pass
+
+            async def get_document(self, *_args, **_kwargs):
+                pass
+
+            async def count_find_semantics(self, *_args, **_kwargs):
+                pass
+
+            async def update_with_operation(self, *_args, **_kwargs):
+                pass
+
+            async def delete_with_operation(self, *_args, **_kwargs):
+                pass
+
+            async def merge_document(self, *_args, **_kwargs):
+                pass
+
+        context = OperationContext.create(dialect=MONGODB_DIALECT_70)
+        snapshot = EngineSpiAdapter(ScanEngine()).open_read_snapshot(
             "db",
             "coll",
             object(),
+            operation_context=context,
         )
 
         assert isinstance(snapshot, ReadSnapshot)

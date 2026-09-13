@@ -219,7 +219,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
 
                 async def seed_legacy_document():
                     await engine.drop_collection("db", "coll")
-                    await engine.put_document(
+                    await engine.insert_document(
                         "db",
                         "coll",
                         {"kind": "legacy"},
@@ -355,7 +355,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
 
                 async def seed_corrupt_document():
                     await engine.drop_collection("db", "coll")
-                    await engine.put_document(
+                    await engine.insert_document(
                         "db",
                         "coll",
                         {"_id": "old", "kind": "corrupt"},
@@ -753,7 +753,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
 
                 async def seed_corrupt_document():
                     await engine.drop_collection("db", "coll")
-                    await engine.put_document(
+                    await engine.insert_document(
                         "db",
                         "coll",
                         {"_id": "old", "kind": "corrupt"},
@@ -812,7 +812,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
                 after_delete_old = await collection.find({}).to_list()
 
                 await engine.drop_collection("db", "coll")
-                await engine.put_document(
+                await engine.insert_document(
                     "db", "coll", {"kind": "legacy"}, overwrite=False
                 )
                 find_missing_id = await collection.find_one({"_id": None})
@@ -898,7 +898,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
 
                 async def seed_legacy_document():
                     await engine.drop_collection("db", "coll")
-                    await engine.put_document(
+                    await engine.insert_document(
                         "db", "coll", {"kind": "legacy"}, overwrite=False
                     )
 

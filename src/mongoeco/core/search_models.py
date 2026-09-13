@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 from mongoeco.core.runtime_metadata import (
     RuntimeDocumentState,
     RuntimeMetadata,
-    runtime_state_from_legacy_document,
 )
 
 
@@ -887,10 +886,10 @@ class SearchHit:
         ):
             msg = "search hit runtime_metadata must be RuntimeMetadata or None"
             raise TypeError(msg)
-        if self.runtime_metadata is None:
-            state = runtime_state_from_legacy_document(self.document)
-        else:
-            state = RuntimeDocumentState(self.document, self.runtime_metadata)
+        state = RuntimeDocumentState(
+            self.document,
+            self.runtime_metadata or RuntimeMetadata(),
+        )
         object.__setattr__(self, "document", state.persistence_document())
         object.__setattr__(self, "runtime_metadata", state.metadata)
 

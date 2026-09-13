@@ -9,14 +9,33 @@ from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.compat import MongoDialect70
 from mongoeco.core.query_plan import MatchAll
 from mongoeco.core.upserts import _seed_filter_value, seed_upsert_document
+from mongoeco.engines import (
+    DeleteOutcome,
+    EngineCapabilities,
+    InsertOutcome,
+    MergeOutcome,
+    MutationOutcome,
+)
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import BulkWriteError, DuplicateKeyError, OperationFailure
 from mongoeco.types import (
     CodecOptions,
-    DeleteMany, DeleteOne, DeleteResult, IndexModel, InsertOne, ReplaceOne,
-    PlanningMode, ReadConcern, ReadPreference, ReadPreferenceMode,
-    ReturnDocument, SearchIndexModel, UpdateMany, UpdateOne, UpdateResult,
+    DeleteMany,
+    DeleteOne,
+    DeleteResult,
+    IndexModel,
+    InsertOne,
+    ReplaceOne,
+    PlanningMode,
+    ReadConcern,
+    ReadPreference,
+    ReadPreferenceMode,
+    ReturnDocument,
+    SearchIndexModel,
+    UpdateMany,
+    UpdateOne,
+    UpdateResult,
     WriteConcern,
 )
 
@@ -37,6 +56,8 @@ __all__ = [
     "BulkWriteError",
     "CodecOptions",
     "DuplicateKeyError",
+    "EngineCapabilities",
+    "InsertOutcome",
     "OperationFailure",
     "DeleteMany",
     "DeleteOne",
@@ -55,6 +76,7 @@ __all__ = [
     "UpdateResult",
     "WriteConcern",
     "_scan_stub_documents",
+    "_SpiV2EngineStub",
     "_SemanticsScanMixin",
     "AsyncCollectionHelperBase",
 ]
@@ -71,7 +93,41 @@ def _scan_stub_documents(documents, *, skip=0, limit=None):
     return _scan()
 
 
-class _SemanticsScanMixin:
+class _SpiV2EngineStub:
+    """Complete no-op SPI v2 engine for narrow collection unit tests."""
+
+    capabilities = EngineCapabilities(
+        batch_inserts=False,
+        explicit_read_snapshots=False,
+    )
+
+    async def insert_document(self, *args, **_kwargs):
+        return InsertOutcome(applied=True, document=args[2])
+
+    async def get_document(self, *_args, **_kwargs):
+        return None
+
+    async def update_with_operation(self, *_args, **_kwargs):
+        return MutationOutcome(UpdateResult(0, 0))
+
+    async def delete_with_operation(self, *_args, **_kwargs):
+        return DeleteOutcome(DeleteResult(0))
+
+    async def merge_document(self, *_args, **_kwargs):
+        return MergeOutcome(
+            matched=False,
+            applied=False,
+            operation_type="discard",
+        )
+
+    async def count_find_semantics(self, *_args, **_kwargs):
+        return 0
+
+    def scan_find_semantics(self, *_args, **_kwargs):
+        return _scan_stub_documents([])
+
+
+class _SemanticsScanMixin(_SpiV2EngineStub):
     _stub_documents = []
 
     def scan_find_semantics(self, db_name, coll_name, semantics, *, context=None):

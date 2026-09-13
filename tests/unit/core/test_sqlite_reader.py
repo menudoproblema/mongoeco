@@ -30,7 +30,7 @@ def engine(tmp_path):
 
     async def prepare():
         await instance.connect()
-        await instance.put_documents_bulk(
+        await instance.insert_documents(
             "test", "records", [{"_id": str(index)} for index in range(5)]
         )
 
@@ -64,9 +64,7 @@ def test_estimated_container_cost_handles_aliases_and_cycles():
 def test_serialized_size_hint_conservatively_bounds_builtin_json_trees(document):
     payload = json.dumps(document, separators=(",", ":"))
 
-    assert _serialized_document_size_estimate(payload) >= _owned_document_size(
-        document
-    )
+    assert _serialized_document_size_estimate(payload) >= _owned_document_size(document)
 
 
 @pytest.mark.parametrize(["max_documents", "max_bytes"], [(0, 1), (1, 0), (-1, 1)])
@@ -201,7 +199,7 @@ def test_fallback_batch_preserves_matches_across_examined_row_quota(
 
 def test_sql_prefilter_executes_only_declared_residual_plan(engine, monkeypatch):
     asyncio.run(
-        engine.put_documents_bulk(
+        engine.insert_documents(
             "test",
             "residual",
             [

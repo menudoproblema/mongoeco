@@ -14,7 +14,7 @@ from mongoeco.core.operation_context import (
     OperationContext,
 )
 from mongoeco.engines._change_dispatch import ConsumerDispatchCoordinator
-from mongoeco.engines.adapter import adapt_engine
+from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
@@ -25,7 +25,7 @@ class MemoryCommitSequenceTests(unittest.IsolatedAsyncioTestCase):
         self.engine = MemoryEngine()
         await self.engine.connect()
         self.hub = ChangeStreamHub()
-        self.adapter = adapt_engine(self.engine)
+        self.adapter = EngineSpiAdapter(self.engine)
         self.adapter.prepare_change_delivery(self.hub)
 
     async def asyncTearDown(self):
@@ -133,7 +133,7 @@ class MemoryCommitSequenceTests(unittest.IsolatedAsyncioTestCase):
         self.engine = MemoryEngine(change_log_max_entries=2)
         await self.engine.connect()
         self.hub = ChangeStreamHub()
-        self.adapter = adapt_engine(self.engine)
+        self.adapter = EngineSpiAdapter(self.engine)
         self.adapter.prepare_change_delivery(self.hub)
 
         for index in range(3):

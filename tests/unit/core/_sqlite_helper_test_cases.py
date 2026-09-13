@@ -408,7 +408,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             engine = SQLiteEngine()
             await engine.connect()
             try:
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "coll",
                     {
@@ -419,7 +419,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         "kind": "keep",
                     },
                 )
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "coll",
                     {
@@ -430,7 +430,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         "kind": "drop",
                     },
                 )
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "coll",
                     {
@@ -838,7 +838,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             engine = SQLiteEngine()
             await engine.connect()
             try:
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "coll",
                     {
@@ -850,7 +850,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         "embedding": [1.0, 0.0],
                     },
                 )
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "coll",
                     {
@@ -1349,7 +1349,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             engine = SQLiteEngine()
             await engine.connect()
             try:
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "coll",
                     {
@@ -1360,7 +1360,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                         "score": 7,
                     },
                 )
-                await engine.put_document(
+                await engine.insert_document(
                     "db",
                     "coll",
                     {
@@ -3977,7 +3977,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
                 ("db", "coll", "1", '{"_id": "1"}'),
             )
             with self.assertRaises(DuplicateKeyError):
-                write_ops.put_document(
+                write_ops.insert_document_record(
                     conn,
                     db_name="db",
                     coll_name="coll",
@@ -4007,7 +4007,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             with patch(
                 "mongoeco.engines._sqlite_write_ops.enforce_collection_document_validation"
             ) as validate_doc:
-                results = write_ops.put_documents_bulk(
+                results = write_ops.insert_document_batch(
                     conn,
                     db_name="db",
                     coll_name="bulk",
@@ -4044,7 +4044,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
 
             rollback = Mock()
             with self.assertRaises(RuntimeError):
-                write_ops.put_documents_bulk(
+                write_ops.insert_document_batch(
                     conn,
                     db_name="db",
                     coll_name="bulk2",

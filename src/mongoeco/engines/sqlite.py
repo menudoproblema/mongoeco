@@ -83,10 +83,6 @@ from mongoeco.core.query_plan import (
     QueryNode,
     ensure_query_plan,
 )
-from mongoeco.core.runtime_metadata import (
-    RuntimeDocumentState,
-    legacy_document_from_runtime_state,
-)
 from mongoeco.core.search import (
     SearchQuery,
     SearchVectorQuery,
@@ -231,8 +227,8 @@ from mongoeco.engines._sqlite_vector_backend import (
 )
 from mongoeco.engines._sqlite_write_ops import (
     delete_document as _sqlite_delete_document,
-    put_document as _sqlite_put_document,
-    put_documents_bulk as _sqlite_put_documents_bulk,
+    insert_document_batch as _sqlite_insert_document_batch,
+    insert_document_record as _sqlite_insert_document_record,
 )
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
 from mongoeco.engines.base import AsyncStorageEngine
@@ -5220,12 +5216,12 @@ class SQLiteEngine(AsyncStorageEngine):
             return profile_documents(db_name)
         return self._admin_runtime.profile_documents(db_name)
 
-    def _put_document_sync(
+    def _insert_document_sync(  # noqa: PLR0913 - SQLite transaction boundary
         self,
         db_name: str,
         coll_name: str,
         document: Document,
-        overwrite: bool,
+        overwrite: bool,  # noqa: FBT001 - SPI write semantic
         context: ClientSession | None,
         *,
         bypass_document_validation: bool = False,
@@ -5240,6 +5236,58 @@ class SQLiteEngine(AsyncStorageEngine):
             assert_valid_root_document_id(document["_id"])
         storage_key = self._storage_key(document.get("_id"))
         serialized_document = self._serialize_document(document)
+
+        def purge_expired_documents(
+            current: sqlite3.Connection,
+            current_db_name: str,
+            current_coll_name: str,
+        ) -> None:
+            now = (
+                self._ttl_now()
+                if operation_context is None
+                else operation_context.expressions.now.replace(tzinfo=datetime.UTC)
+            )
+            self._purge_expired_documents_sync(
+                current,
+                current_db_name,
+                current_coll_name,
+                context=context,
+                now=now,
+            )
+
+        def validate_unique_indexes(  # noqa: PLR0913, PLR0917 - callback protocol
+            current_db_name: str,
+            current_coll_name: str,
+            current_document: Document,
+            exclude_storage_key: str | None,
+            skip_id_check: bool = False,  # noqa: FBT001, FBT002
+            scan_payload_id: bool = False,  # noqa: FBT001, FBT002
+        ) -> None:
+            self._validate_document_against_unique_indexes(
+                current_db_name,
+                current_coll_name,
+                current_document,
+                exclude_storage_key=exclude_storage_key,
+                skip_id_check=skip_id_check,
+                scan_payload_id=scan_payload_id,
+            )
+
+        def replace_search_entries(  # noqa: PLR0913, PLR0917 - callback protocol
+            current: sqlite3.Connection,
+            current_db_name: str,
+            current_coll_name: str,
+            current_storage_key: str,
+            current_document: Document,
+            search_indexes: list[tuple[object, str | None, float | None]],
+        ) -> None:
+            self._replace_search_entries_for_document(
+                current,
+                current_db_name,
+                current_coll_name,
+                current_storage_key,
+                current_document,
+                search_indexes=search_indexes,
+            )
 
         with self._lock:
             conn = self._require_connection(context)
@@ -5259,7 +5307,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         context,
                     ),
                 ):
-                    applied = _sqlite_put_document(
+                    applied = _sqlite_insert_document_record(
                         conn,
                         db_name=db_name,
                         coll_name=coll_name,
@@ -5269,57 +5317,20 @@ class SQLiteEngine(AsyncStorageEngine):
                         dialect=effective_dialect,
                         storage_key=storage_key,
                         serialized_document=serialized_document,
-                        purge_expired_documents=lambda current, current_db_name, current_coll_name: (
-                            self._purge_expired_documents_sync(
-                                current,
-                                current_db_name,
-                                current_coll_name,
-                                context=context,
-                                now=(
-                                    self._ttl_now()
-                                    if operation_context is None
-                                    else operation_context.expressions.now.replace(
-                                        tzinfo=datetime.UTC,
-                                    )
-                                ),
-                            )
-                        ),
+                        purge_expired_documents=purge_expired_documents,
                         begin_write=lambda current: None,
                         rollback_write=lambda current: None,
                         commit_write=lambda current: None,
                         collection_options_or_empty=self._collection_options_or_empty_sync,
                         load_existing_document_for_storage_key=self._load_existing_document_for_storage_key,
                         ensure_collection_row=self._ensure_collection_row,
-                        validate_document_against_unique_indexes=lambda current_db_name, current_coll_name, current_document, exclude_storage_key, skip_id_check=False, scan_payload_id=False: (
-                            self._validate_document_against_unique_indexes(
-                                current_db_name,
-                                current_coll_name,
-                                current_document,
-                                exclude_storage_key=exclude_storage_key,
-                                skip_id_check=skip_id_check,
-                                scan_payload_id=scan_payload_id,
-                            )
-                        ),
+                        validate_document_against_unique_indexes=validate_unique_indexes,
                         load_indexes=self._load_indexes,
                         rebuild_multikey_entries_for_document=self._rebuild_multikey_entries_for_document,
                         supports_scalar_index=self._supports_scalar_index,
                         rebuild_scalar_entries_for_document=self._rebuild_scalar_entries_for_document,
-                        load_search_index_rows=lambda current_db_name, current_coll_name: (
-                            self._load_search_index_rows(
-                                current_db_name,
-                                current_coll_name,
-                            )
-                        ),
-                        replace_search_entries_for_document=lambda current, current_db_name, current_coll_name, current_storage_key, current_document, search_indexes: (
-                            self._replace_search_entries_for_document(
-                                current,
-                                current_db_name,
-                                current_coll_name,
-                                current_storage_key,
-                                current_document,
-                                search_indexes=search_indexes,
-                            )
-                        ),
+                        load_search_index_rows=self._load_search_index_rows,
+                        replace_search_entries_for_document=replace_search_entries,
                         invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                     )
                     commit_sequence = None
@@ -5624,7 +5635,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         context,
                     ),
                 ):
-                    results = _sqlite_put_documents_bulk(
+                    results = _sqlite_insert_document_batch(
                         conn,
                         db_name=db_name,
                         coll_name=coll_name,
@@ -5737,32 +5748,6 @@ class SQLiteEngine(AsyncStorageEngine):
                             ),
                         )
                 return tuple(outcomes)
-
-    def _put_documents_bulk_sync(
-        self,
-        db_name: str,
-        coll_name: str,
-        documents: list[Document],
-        prepared_documents: list[tuple[str, str, list[tuple[str, str, int, str]]]],
-        snapshot_indexes: list[EngineIndexRecord],
-        *,
-        context: ClientSession | None,
-        bypass_document_validation: bool = False,
-        snapshot_options: dict[str, object] | None = None,
-    ) -> list[bool]:
-        return [
-            outcome.applied
-            for outcome in self._insert_documents_sync(
-                db_name,
-                coll_name,
-                documents,
-                prepared_documents,
-                snapshot_indexes,
-                context=context,
-                bypass_document_validation=bypass_document_validation,
-                snapshot_options=snapshot_options,
-            )
-        ]
 
     def _prepare_bulk_document_sync(
         self,
@@ -7020,7 +7005,7 @@ class SQLiteEngine(AsyncStorageEngine):
         if operation_context is not None:
             context = operation_context.session
         outcome = await self._run_blocking(
-            self._put_document_sync,
+            self._insert_document_sync,
             db_name,
             coll_name,
             document,
@@ -7061,31 +7046,6 @@ class SQLiteEngine(AsyncStorageEngine):
         return outcomes
 
     @override
-    async def put_document(
-        self,
-        db_name: str,
-        coll_name: str,
-        document: Document,
-        overwrite: bool = True,
-        *,
-        context: ClientSession | None = None,
-        bypass_document_validation: bool = False,
-        on_commit: Callable[[Document], None] | None = None,
-    ) -> bool:
-        outcome = await self._run_blocking(
-            self._put_document_sync,
-            db_name,
-            coll_name,
-            document,
-            overwrite,
-            context,
-            bypass_document_validation=bypass_document_validation,
-        )
-        if outcome and on_commit is not None and outcome.document is not None:
-            on_commit(outcome.document)
-        return outcome.applied
-
-    @override
     async def merge_document(
         self,
         db_name: str,
@@ -7112,29 +7072,6 @@ class SQLiteEngine(AsyncStorageEngine):
             on_commit=on_commit,
             operation_context=operation_context,
         )
-
-    async def put_documents_bulk(
-        self,
-        db_name: str,
-        coll_name: str,
-        documents: list[Document],
-        *,
-        context: ClientSession | None = None,
-        bypass_document_validation: bool = False,
-        on_commit: Callable[[Document], None] | None = None,
-    ) -> list[bool]:
-        outcomes = await self._prepare_and_insert_documents(
-            db_name,
-            coll_name,
-            documents,
-            context=context,
-            bypass_document_validation=bypass_document_validation,
-        )
-        if on_commit is not None:
-            for outcome in outcomes:
-                if outcome.document is not None:
-                    on_commit(outcome.document)
-        return [outcome.applied for outcome in outcomes]
 
     async def _prepare_and_insert_documents(
         self,
@@ -7798,36 +7735,6 @@ class SQLiteEngine(AsyncStorageEngine):
             context,
         )
 
-    async def search_documents(
-        self,
-        db_name: str,
-        coll_name: str,
-        operator: str,
-        spec: object,
-        *,
-        max_time_ms: int | None = None,
-        context: ClientSession | None = None,
-        result_limit_hint: int | None = None,
-        downstream_filter_spec: dict[str, object] | None = None,
-    ) -> list[Document]:
-        result = await self._run_blocking(
-            self._search_documents_sync,
-            db_name,
-            coll_name,
-            operator,
-            spec,
-            max_time_ms,
-            context,
-            result_limit_hint,
-            downstream_filter_spec,
-        )
-        return [
-            legacy_document_from_runtime_state(document)
-            if isinstance(document, RuntimeDocumentState)
-            else document
-            for document in result
-        ]
-
     async def execute_search(
         self,
         db_name: str,
@@ -7912,30 +7819,6 @@ class SQLiteEngine(AsyncStorageEngine):
             documents,
             backend="sqlite",
             operation_id=request.operation_context.operation_id,
-        )
-
-    async def explain_search_documents(
-        self,
-        db_name: str,
-        coll_name: str,
-        operator: str,
-        spec: object,
-        *,
-        max_time_ms: int | None = None,
-        context: ClientSession | None = None,
-        result_limit_hint: int | None = None,
-        downstream_filter_spec: dict[str, object] | None = None,
-    ) -> QueryPlanExplanation:
-        return await self._run_blocking(
-            self._explain_search_documents_sync,
-            db_name,
-            coll_name,
-            operator,
-            spec,
-            max_time_ms,
-            context,
-            result_limit_hint,
-            downstream_filter_spec,
         )
 
     async def explain_search(
