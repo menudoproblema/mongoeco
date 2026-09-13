@@ -126,7 +126,7 @@ operacion. El protocolo v3 recibe:
 - `BoundUpdateOperation` para CAS/update;
 - `BoundAggregateOperation` para aggregation;
 - outcomes tipados existentes o sus sucesores versionados;
-- `ReadSnapshot` con el mismo `operation_id`.
+- `ReadSnapshotV3` con el mismo `operation_id`.
 
 No se permiten unions de retornos, `_return_outcome`, flags privados, `hasattr`
 semantico ni callbacks legacy.
@@ -191,6 +191,56 @@ SPI v3 debe separar tres conceptos que SPI v2 concentra en `ReadSnapshot`:
 - la obligacion de liberar sus recursos fisicos;
 - el permiso de capacidad que autoriza abrirla.
 
+No se amplia la clase publica `ReadSnapshot` de SPI v2. SPI v3 introduce un
+contrato sucesor, `ReadSnapshotV3`, y un coordinador de liberacion separado,
+`SnapshotRelease`. La distincion es de ownership, no solo de forma: el cursor
+puede solicitar cierre y esperar su resultado, pero la obligacion fisica y su
+lease pertenecen al `EngineRuntime`.
+
+```python
+class SnapshotPurpose(StrEnum):
+    READ = "read"
+    AGGREGATION = "aggregation"
+    TRANSACTION = "transaction"
+
+
+class SnapshotRelease(Protocol):
+    lifecycle: SnapshotLifecycle
+    first_error: BaseException | None
+
+    def request_close(self) -> None: ...
+
+    async def wait_closed(
+        self,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> None: ...
+
+
+class ReadSnapshotV3(Protocol, AsyncIterator[Document]):
+    operation_id: str
+    policy: SnapshotPolicy
+    purpose: SnapshotPurpose
+    release: SnapshotRelease
+
+    async def aclose(self) -> None: ...
+```
+
+`request_close()` es idempotente y no espera capacidad, locks ni I/O. En modo
+`IMMEDIATE` puede completar la liberacion antes de retornar solo si el engine
+acredita que no suspende, no ejecuta callbacks y no reentra en coordinacion del
+runtime. En modo `ASYNC` entrega la obligacion al supervisor del
+`EngineRuntime`. `wait_closed()` observa siempre esa misma obligacion; cancelar
+o agotar el timeout del waiter no cancela el cleanup. `aclose()` es la
+conveniencia comun que solicita y espera, no crea un segundo owner.
+
+La implementacion MUST compartir una unica transicion y un unico resultado
+entre `request_close()`, `aclose()`, cierre de cliente y finalizacion de cursor.
+Dos llamadas concurrentes no ejecutan dos cleanups. Un finalizador best-effort
+solo puede solicitar cierre; nunca espera ni ejecuta cleanup externo mientras
+el caller conserva un lock de ejecucion. Esta separacion elimina la reentrada
+que SPI v2 no puede prohibir sin cambiar su contrato publico.
+
 El engine propietario mantiene un `SnapshotLease` desde antes de adquirir el
 primer recurso fisico hasta que ese recurso queda realmente liberado. El lease
 no se libera cuando vence el timeout del consumidor, cuando se cancela quien
@@ -233,16 +283,9 @@ EngineContract(
 )
 ```
 
-Cada lease identifica tambien el proposito observable de la retencion:
-
-```python
-class SnapshotPurpose(StrEnum):
-    READ = "read"
-    AGGREGATION = "aggregation"
-    TRANSACTION = "transaction"
-```
-
-La enumeracion no expone el algoritmo de almacenamiento. Una copia completa,
+Cada lease identifica el proposito observable de la retencion mediante
+`SnapshotPurpose`. La enumeracion no expone el algoritmo de almacenamiento.
+Una copia completa,
 una raiz persistente o un snapshot nativo del backend son implementaciones
 validas si producen la misma estabilidad y contabilizan la retencion que
 mantienen viva. HAMT, paginas WAL y conexiones pertenecen al engine, no al SPI.
@@ -298,12 +341,14 @@ timeout, porque la admision no ha iniciado I/O ni ha esperado por capacidad.
 
 El modo de cierre es discriminado, no inferido mediante `hasattr`:
 
-- `IMMEDIATE` expone una operacion sincrona `close_nowait()` que completa la
+- `IMMEDIATE` permite que `SnapshotRelease.request_close()` complete la
   liberacion y la transicion terminal antes de retornar. No puede ejecutar I/O,
-  esperar un worker ni delegar cleanup posterior.
-- `ASYNC` expone `aclose()`. El timeout limita cuanto espera el consumidor, no
-  la responsabilidad del engine. Tras timeout el snapshot permanece `CLOSING`
-  y el cleanup continua supervisado; cancelar al waiter no cancela ese cleanup.
+  esperar un worker, adquirir el lock de ejecucion ni delegar cleanup posterior.
+- `ASYNC` hace que `request_close()` transfiera la obligacion al
+  `EngineRuntime`; `wait_closed()` y `ReadSnapshotV3.aclose()` solo esperan su
+  resultado. El timeout limita cuanto espera el consumidor, no la
+  responsabilidad del engine. Tras timeout el snapshot permanece `CLOSING` y
+  el cleanup continua supervisado.
 
 Ambos modos conservan cierre idempotente y exactamente una liberacion fisica.
 Un error de cierre mantiene el primer error observable, transiciona a `FAILED`
@@ -326,17 +371,35 @@ superficies coordinadas:
 
 1. `EngineContract.snapshots` declara modo de cierre y politica de admision;
 2. `open_read_snapshot()` reserva el lease y devuelve un snapshot que conserva
-   su ownership hasta la liberacion fisica;
+   su ownership hasta la liberacion fisica mediante `SnapshotRelease`;
 3. `open_aggregation_read_view()` y el inicio transaccional cargan sus
    retenciones al mismo owner con su `SnapshotPurpose`;
 4. la conformidad observa estados y contadores, sin acceder a tareas, locks ni
    payloads internos.
 
-La primera entrega v3 debe incluir estas tres superficies juntas. Publicar el
+La primera entrega v3 debe incluir estas cuatro superficies juntas. Publicar el
 error sin lease permitiria rechazos que no acotan obligaciones reales; publicar
 el lease sin observabilidad impediria acreditar la cota; inferir el modo de
 cierre conservaria la ambiguedad de SPI v2. No se crea un protocolo separado
 de admision ni un manager global.
+
+La entrega se ordena en cinco slices que no cambian el contrato v2:
+
+1. publicar tipos v3, adapters por version y fixtures de typing, manteniendo
+   `ReadSnapshot` y `ReadSnapshotV3` sin herencia entre ellos;
+2. implementar `EngineRuntime`, `SnapshotLease` y `SnapshotRelease` con
+   conformidad de reentrada, cancelacion, timeout, fallo y disconnect;
+3. acreditar Memory y SQLite en `IMMEDIATE` o `ASYNC` segun su liberacion real,
+   incluida la contabilidad por proposito;
+4. incorporar `AggregationReadView` sobre el mismo owner y demostrar una unica
+   generacion para fuente y namespaces foreign;
+5. ejecutar canario externo, wheel instalado, diff de API y matrices de
+   convivencia antes de habilitar una factory v3 fuera del repositorio.
+
+Las slices 1 y 2 forman el minimo publicable: exponer tipos sin ownership
+ejecutable permitiria un contrato nominal que conserva la causa de reentrada.
+La slice 4 puede permanecer como capability `MATERIALIZED`, pero no puede
+simular `STABLE_QUERY` mediante snapshots independientes.
 
 Los defaults concretos de Memory y SQLite, y si ambos pueden acreditar una cota
 por bytes, quedan como decisiones de la futura RFC normativa. La propuesta no
@@ -372,7 +435,7 @@ class AggregationReadView(Protocol):
         self,
         namespace: CollectionNamespace,
         operation: BoundFindOperation,
-    ) -> ReadSnapshot: ...
+    ) -> ReadSnapshotV3: ...
 
     async def aclose(self) -> None: ...
 ```
@@ -434,10 +497,11 @@ el gate observando solo que una tarea desaparecio de un registro.
 
 | Pieza | Requisito | Mecanismo vigente | Disposicion |
 | --- | --- | --- | --- |
-| Lifecycle y primer error | Terminalidad observable | `ReadSnapshot` SPI v2 | `reuse` |
+| Lifecycle y primer error | Terminalidad observable | `ReadSnapshot` SPI v2 | `derive` en `ReadSnapshotV3`; no heredar la clase |
 | Timeout del waiter | Espera finita | `close_timeout_seconds` | `reuse` |
 | Cancelacion del cleanup por overflow | Limitar tareas visibles | Registro interno acotado | `remove`: rompe liberacion |
 | `SnapshotLease` | Acotar obligaciones reales antes de adquirir | No existe | `justify` |
+| `SnapshotRelease` | Separar solicitud, espera y ownership fisico | `ReadSnapshot.aclose()` concentra los tres | `justify` |
 | `SnapshotPurpose` | Contabilizar lectura, agregacion y transaccion sin exponer internals | No existe | `justify` |
 | Persistencia estructural publica | Evitar copias O(N) en un engine concreto | Raices HAMT privadas en Memory | `remove`: el SPI gobierna coste observable, no estructuras |
 | `SnapshotSaturationMode.REJECT` | Evitar espera oculta y no acotada | Timeout de cleanup, no de admision | `justify` |
@@ -478,6 +542,10 @@ Las pruebas deben demostrar:
 - binding captura el reloj una vez;
 - ningun engine renormaliza BSON;
 - operation y snapshot comparten identidad;
+- todos los caminos de cierre comparten un unico `SnapshotRelease` y el mismo
+  primer error;
+- solicitar cierre desde un finalizador o mientras existe coordinacion activa
+  no espera locks ni ejecuta cleanup externo inline;
 - cancelacion y cleanup son exactos una vez;
 - la admision limita obligaciones reales y rechaza antes de adquirir recursos;
 - lectura, agregacion y transaccion contabilizan su retencion en el owner y
@@ -491,7 +559,8 @@ Las pruebas deben demostrar:
   independientes como falsa emulacion;
 - cerrar la vista cierra hijos y libera una sola vez su lease;
 - un timeout o cancelacion del waiter no cancela el cleanup;
-- `IMMEDIATE` no crea tareas y `ASYNC` conserva supervision hasta terminalidad;
+- `IMMEDIATE` no crea tareas ni suspende; `ASYNC` conserva supervision en el
+  runtime hasta terminalidad;
 - cambiar configuracion exige otra instancia y no altera leases abiertos;
 - outcomes imposibles se rechazan en la frontera comun;
 - capabilities parciales producen `not-applicable`, nunca falsos pass.
@@ -500,10 +569,11 @@ Las pruebas deben demostrar:
 
 1. pasar primero SPI v2 y su CLI de conformidad;
 2. separar DTOs de entrada de los planes ejecutables internos;
-3. implementar primitivas v3 sobre `Bound*Operation`;
-4. declarar capabilities v3 sin modificar la instancia v2;
-5. ejecutar perfiles v2 y v3 en paralelo;
-6. retirar la factory v2 solo despues de una deprecacion posterior.
+3. implementar `ReadSnapshotV3` y `SnapshotRelease` sin reutilizar subclases v2;
+4. implementar primitivas v3 sobre `Bound*Operation`;
+5. declarar capabilities v3 sin modificar la instancia v2;
+6. ejecutar perfiles v2 y v3 en paralelo;
+7. retirar la factory v2 solo despues de una deprecacion posterior.
 
 ## Gates de implementacion
 

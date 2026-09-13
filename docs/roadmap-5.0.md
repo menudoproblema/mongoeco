@@ -21,7 +21,7 @@ ejecute, 4.6 no esta recomendada para publicacion.
 
 | Gate | Evidencia | Responsable | Bloqueo |
 | --- | --- | --- | --- |
-| SPI v3 opt-in | protocolos, typing, canario externo, conformidad de admision/leases por lectura, agregacion y transaccion, y vista estable multi-namespace | maintainer SPI | mutacion silenciosa de SPI v2, retencion compartida contada como cero o por tamaño logico duplicado, o consultas foreign que mezclan generaciones |
+| SPI v3 opt-in | contratos `ReadSnapshotV3`/`SnapshotRelease`, protocolos, typing, canario externo, conformidad de reentrada y admision/leases por lectura, agregacion y transaccion, y vista estable multi-namespace | maintainer SPI | mutacion silenciosa o herencia de SPI v2, cleanup externo ejecutado inline por un finalizador, mas de un owner de liberacion, retencion compartida contada como cero o por tamaño logico duplicado, o consultas foreign que mezclan generaciones |
 | Control de trabajo aggregation | checkpoints internos, limpieza de spill, pruebas de progreso y presupuesto compuesto | maintainer core | bucle incorporado sin deadline, temporal retenido o limite presentado con una unidad que no contabiliza |
 | `search-v2` opt-in | schema, fixtures y dual conformance | maintainer Search | mezcla de shapes v1/v2 |
 | Adapters versionados | ratchets de imports y validators comunes | maintainer core | ramas versionadas distribuidas |

@@ -53,7 +53,10 @@ que:
   `BoundAggregateOperation`;
 - use exclusivamente el `OperationContext` ligado;
 - no normalice BSON ni recapture el reloj;
-- mantenga outcomes y snapshots tipados;
+- mantenga outcomes tipados y devuelva `ReadSnapshotV3`, sin heredar ni
+  modificar `ReadSnapshot` de SPI v2;
+- entregue la liberacion a un unico `SnapshotRelease` propiedad del runtime;
+  un finalizador solo solicita cierre y nunca ejecuta cleanup externo inline;
 - declare capabilities v3.
 
 Ejecuta perfiles v2 y v3 por separado hasta retirar deliberadamente la factory
@@ -65,8 +68,10 @@ Los booleanos o documentos opcionales de SPI v1 deben convertirse en outcomes
 al cruzar el adapter, no dentro del consumidor. Captura before/after dentro de
 la misma seccion atomica. Un no-match no lleva secuencia ni evento.
 
-Todo cursor debe cerrar el snapshot que posee. No conserves iteradores del
-engine fuera de `ReadSnapshot` ni reconstruyas identidad de operacion.
+Todo cursor v2 debe cerrar el snapshot que posee. En v3 solicita cierre al
+`SnapshotRelease` y puede esperar su resultado, pero no se convierte en owner
+del cleanup. No conserves iteradores del engine fuera del snapshot versionado
+ni reconstruyas identidad de operacion.
 
 ## Search v1 a v2
 

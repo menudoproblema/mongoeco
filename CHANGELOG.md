@@ -67,6 +67,10 @@ usa Semantic Versioning.
   mismo consumidor de cambios por cada wrapper; dos clientes siguen teniendo
   lifecycles independientes y SPI v2 no cambia. La propuesta SPI v3 convierte
   este ownership en `EngineRuntime` y bindings de namespace explicitos.
+- La propuesta SPI v3 versiona tambien la frontera de lectura como
+  `ReadSnapshotV3` y separa `SnapshotRelease` del lease de admision. Cursores,
+  finalizadores y cierre de cliente solicitan una unica liberacion propiedad
+  del runtime; SPI v2 conserva intacta su clase `ReadSnapshot`.
 - Las mutaciones documentales Memory reemplazan el snapshot completo de
   rollback por un journal de entradas y pertenencias de indice modificadas. Los
   fallos restauran storage, buckets, ordinales y alta de coleccion sin repetir
