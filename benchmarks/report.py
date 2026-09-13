@@ -1,3 +1,5 @@
+# ruff: noqa: E402, I001
+
 import argparse
 import json
 import os
@@ -9,6 +11,12 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
+from benchmarks._subject import activate_subject_root, require_imported_subject
+
+
+_ACTIVE_SUBJECT_ROOT = activate_subject_root(sys.argv)
+
+import mongoeco  # noqa: E402
 from mongoeco.core.json_compat import get_json_backend_name
 
 from benchmarks.contracts import (
@@ -327,6 +335,17 @@ def main() -> int:
     args = parser.parse_args()
     workload_names = resolve_workload_names(args.workload)
 
+    project_root = Path(__file__).resolve().parents[1]
+    subject_root = _ACTIVE_SUBJECT_ROOT or project_root
+    if args.subject_root is not None:
+        requested_root = args.subject_root.expanduser().resolve()
+        if requested_root != _ACTIVE_SUBJECT_ROOT:
+            message = (
+                "--subject-root must be selected before importing benchmark modules"
+            )
+            raise SystemExit(message)
+        require_imported_subject(subject_root, mongoeco.__file__)
+
     results = run_benchmarks(
         engine=args.engine,
         size=args.size,
@@ -339,8 +358,6 @@ def main() -> int:
         for engine_result in results.values()
     )
     baseline = _load_json(args.baseline_json)
-    project_root = Path(__file__).resolve().parents[1]
-    subject_root = args.subject_root or project_root
     report_document = build_report_document(
         results=results,
         size=args.size,

@@ -10,7 +10,8 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
-from mongoeco import __version__ as mongoeco_version
+import mongoeco
+
 from mongoeco.core.json_compat import get_json_backend_name
 
 
@@ -79,7 +80,7 @@ def build_report_document(
             "machine": platform.machine(),
             "sqlite": sqlite3.sqlite_version,
             "jsonBackend": get_json_backend_name(),
-            "mongoeco": mongoeco_version,
+            "mongoeco": mongoeco.__version__,
             "dependencies": {
                 name: _installed_version(name)
                 for name in ("mongomock", "orjson", "psutil", "pymongo", "usearch")
@@ -89,6 +90,7 @@ def build_report_document(
         "source": {
             "gitRevision": git_revision,
             "gitDirty": git_dirty,
+            "mongoecoModule": str(Path(mongoeco.__file__).resolve()),
             "harnessSha256": _source_hash(project_root, _SOURCE_PATHS),
             "datasetSha256": _source_hash(
                 project_root,
@@ -139,6 +141,11 @@ def validate_report(document: dict[str, Any]) -> list[str]:
     if not isinstance(repetitions, int) or repetitions < 1:
         issues.append("config.repetitions must be a positive integer")
     source = document["source"]
+    if (
+        not isinstance(source.get("mongoecoModule"), str)
+        or not source["mongoecoModule"]
+    ):
+        issues.append("source.mongoecoModule must identify the imported package")
     for field in ("harnessSha256", "datasetSha256"):
         if not isinstance(source.get(field), str) or not source[field].startswith(
             "sha256:"

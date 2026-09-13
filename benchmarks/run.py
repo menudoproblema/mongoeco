@@ -78,6 +78,7 @@ WORKLOADS = {
 }
 
 WORKLOAD_REQUIREMENTS = {
+    "aggregation_spill_diagnostics": frozenset({"aggregation-spill-diagnostics"}),
     "search_diagnostics": frozenset({"search"}),
     "search_meta_diagnostics": frozenset({"search"}),
     "vector_search_diagnostics": frozenset({"vector-search"}),

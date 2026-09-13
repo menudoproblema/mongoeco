@@ -1,8 +1,11 @@
 import unittest
 
 from copy import deepcopy
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
 
+from benchmarks._subject import require_imported_subject, resolve_subject_root
 from benchmarks.contracts import REPORT_SCHEMA, compare_reports, validate_report
 from benchmarks.engines.mongoeco_async import MongoecoSQLiteAsyncEngine
 from benchmarks.engines.mongoeco_mem import MongoecoMemoryEngine
@@ -41,6 +44,9 @@ class BenchmarkHarnessTests(unittest.TestCase):
             "source": {
                 "gitRevision": "abc123",
                 "gitDirty": False,
+                "mongoecoModule": str(
+                    Path("subject/src/mongoeco/__init__.py").resolve()
+                ),
                 "harnessSha256": "sha256:harness",
                 "datasetSha256": "sha256:dataset",
             },
@@ -81,6 +87,42 @@ class BenchmarkHarnessTests(unittest.TestCase):
         issues = validate_report(report)
 
         self.assertTrue(any("missing workload 'lookup'" in issue for issue in issues))
+
+    def test_subject_root_requires_a_real_source_package(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(SystemExit, "must contain"):
+                resolve_subject_root(
+                    ["benchmark", "--subject-root", str(root)],
+                )
+
+            package = root / "src" / "mongoeco"
+            package.mkdir(parents=True)
+            package.joinpath("__init__.py").touch()
+            self.assertEqual(
+                resolve_subject_root(
+                    ["benchmark", f"--subject-root={root}"],
+                ),
+                root.resolve(),
+            )
+
+    def test_subject_root_rejects_a_different_import_origin(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "src" / "mongoeco"
+            package.mkdir(parents=True)
+            module = package / "__init__.py"
+            module.touch()
+
+            self.assertEqual(
+                require_imported_subject(root, str(module)),
+                module.resolve(),
+            )
+            with self.assertRaisesRegex(SystemExit, "did not provide"):
+                require_imported_subject(
+                    root,
+                    str(root.parent / "other" / "mongoeco" / "__init__.py"),
+                )
 
     def test_benchmark_contract_rejects_sync_async_result_drift(self):
         report = self._report()
@@ -266,6 +308,28 @@ class BenchmarkHarnessTests(unittest.TestCase):
             results[SKIPPED_WORKLOADS_KEY],
             {
                 "search_diagnostics": ("adapter lacks benchmark capabilities: search"),
+            },
+        )
+
+    def test_spill_diagnostics_require_an_owned_adapter_capability(self):
+        engine = Mock(benchmark_capabilities=frozenset({"aggregation"}))
+
+        with patch("benchmarks.run.load_engine", return_value=engine):
+            results = _run_engine_workloads(
+                "external",
+                100_000,
+                1,
+                5,
+                workload_names=("aggregation_spill_diagnostics",),
+            )
+
+        self.assertEqual(
+            results[SKIPPED_WORKLOADS_KEY],
+            {
+                "aggregation_spill_diagnostics": (
+                    "adapter lacks benchmark capabilities: "
+                    "aggregation-spill-diagnostics"
+                )
             },
         )
 

@@ -4,7 +4,13 @@ from typing import Any
 
 class BenchmarkEngine(ABC):
     benchmark_capabilities = frozenset(
-        {"crud", "aggregation", "search", "vector-search"},
+        {
+            "crud",
+            "aggregation",
+            "aggregation-spill-diagnostics",
+            "search",
+            "vector-search",
+        },
     )
 
     @abstractmethod
