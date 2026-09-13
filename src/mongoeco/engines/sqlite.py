@@ -260,7 +260,7 @@ from mongoeco.engines.semantic_core import (
     iter_filtered_documents,
     stream_finalize_documents,
 )
-from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy
+from mongoeco.engines.snapshots import ReadSnapshot, SnapshotPolicy, _OwnedReadSnapshot
 from mongoeco.engines.sqlite_planner import (
     SQLiteReadExecutionPlan,
 )
@@ -7245,7 +7245,7 @@ class SQLiteEngine(AsyncStorageEngine):
         *,
         operation_context: OperationContext,
     ) -> ReadSnapshot:
-        return ReadSnapshot(
+        return _OwnedReadSnapshot(
             self.scan_find_semantics(
                 db_name,
                 coll_name,

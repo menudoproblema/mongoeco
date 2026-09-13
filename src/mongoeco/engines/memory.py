@@ -147,9 +147,9 @@ from mongoeco.engines.semantic_core import (
     stream_finalize_documents,
 )
 from mongoeco.engines.snapshots import (
-    _ImmediateReadSnapshot,
     ReadSnapshot,
     SnapshotPolicy,
+    _ImmediateOwnedReadSnapshot,
 )
 from mongoeco.engines.virtual_indexes import (
     describe_virtual_index_usage,
@@ -3699,7 +3699,7 @@ class MemoryEngine(AsyncStorageEngine):
         *,
         operation_context: OperationContext,
     ) -> ReadSnapshot:
-        return _ImmediateReadSnapshot(
+        return _ImmediateOwnedReadSnapshot(
             self.scan_find_semantics(
                 db_name,
                 coll_name,

@@ -9,7 +9,9 @@ from mongoeco.engines.snapshots import (
     ReadSnapshot,
     SnapshotLifecycle,
     SnapshotPolicy,
+    _ImmediateOwnedReadSnapshot,
     _ImmediateReadSnapshot,
+    _OwnedReadSnapshot,
 )
 
 
@@ -140,6 +142,33 @@ class ReadSnapshotTests(unittest.IsolatedAsyncioTestCase):
 
         assert source_document == {"_id": 1, "nested": {"value": 1}}
         await snapshot.aclose()
+
+    async def test_owned_snapshot_preserves_source_document_identity(self):
+        source_document = {"_id": 1, "nested": {"value": 1}}
+        source = _Source()
+        source.values = iter([source_document])
+        snapshot = _OwnedReadSnapshot(source, policy=SnapshotPolicy.STABLE)
+
+        delivered = await snapshot.__anext__()
+
+        assert delivered is source_document
+        await snapshot.aclose()
+
+    async def test_immediate_owned_snapshot_combines_owned_results_and_cleanup(self):
+        source_document = {"_id": 1}
+        source = _Source()
+        source.values = iter([source_document])
+        snapshot = _ImmediateOwnedReadSnapshot(
+            source,
+            policy=SnapshotPolicy.STABLE,
+        )
+
+        assert await snapshot.__anext__() is source_document
+        await snapshot.aclose()
+        await snapshot.aclose()
+
+        assert snapshot.closed
+        assert source.close_calls == 1
 
     async def test_discard_supervises_cleanup_and_records_failures(self):
         source = _Source()

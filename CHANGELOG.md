@@ -46,6 +46,11 @@ usa Semantic Versioning.
   semantica dos veces en el scan normal. Cada stream reutiliza la proyeccion
   y sus rutas compiladas, manteniendo errores diferidos, contexto y propiedad
   independiente de los resultados, sin cambiar SPI v2.
+- Los snapshots de los engines propios reconocen que sus fuentes ya entregan
+  arboles independientes y evitan repetir una copia profunda al cruzar la
+  frontera del snapshot. `ReadSnapshot` conserva la copia defensiva por
+  defecto para engines y adapters externos; el fast path es privado y no
+  cambia SPI v2 ni permite publicar buffers prestados.
 - SQLite reutiliza catalogos internos de solo lectura por conexion y conserva
   copias publicas mutables. Detecta cambios de indices desde otros clientes o
   procesos; planificacion y lectura comparten una vista SQLite para no usar

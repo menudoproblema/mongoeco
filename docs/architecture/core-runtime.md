@@ -87,6 +87,15 @@ global de memoria. Los contenedores publicos siguen siendo propios; esta fusion
 no elimina las fronteras defensivas de snapshots ni autoriza a los engines
 externos a entregar buffers prestados.
 
+`ReadSnapshot` materializa por defecto una copia profunda de cada documento:
+esa sigue siendo la frontera defensiva de SPI v2 y del adapter legacy. Memory y
+SQLite usan subtipos privados solo despues de construir un arbol independiente
+en su propia fuente de scan; esos snapshots omiten exclusivamente la segunda
+copia redundante. La propiedad debe probarse en el productor y no puede
+declararse mediante una opcion publica de confianza. Un engine externo nuevo
+continua en la ruta defensiva salvo que una futura revision del SPI formalice
+el contrato de resultados propios.
+
 Memory aplica el programa de proyeccion sobre su documento interno antes de
 construir los contenedores publicos que sobreviven a ella. La copia publica se
 hace por demanda al consumir cada lote; no se construyen N documentos publicos

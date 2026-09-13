@@ -98,7 +98,7 @@ class ReadSnapshot(AsyncIterator[Document]):
         try:
             if self._iterator is None:
                 self._iterator = self._source.__aiter__()
-            return deepcopy(await self._iterator.__anext__())
+            return self._own_document(await self._iterator.__anext__())
         except StopAsyncIteration:
             await self.aclose()
             raise
@@ -109,6 +109,9 @@ class ReadSnapshot(AsyncIterator[Document]):
             with suppress(BaseException):
                 await self.aclose()
             raise
+
+    def _own_document(self, document: Document) -> Document:
+        return deepcopy(document)
 
     async def _close_after_cancellation(self) -> None:
         close_task = self._ensure_close_task()
@@ -255,6 +258,13 @@ class ReadSnapshot(AsyncIterator[Document]):
         return self._close_error
 
 
+class _OwnedReadSnapshot(ReadSnapshot):
+    """Internal contract for sources that already yield independent trees."""
+
+    def _own_document(self, document: Document) -> Document:
+        return document
+
+
 class _ImmediateReadSnapshot(ReadSnapshot):
     """Read snapshot whose owned source is guaranteed to close without yielding.
 
@@ -275,3 +285,10 @@ class _ImmediateReadSnapshot(ReadSnapshot):
             return
         self._lifecycle = SnapshotLifecycle.CLOSING
         await self._close_owned_resources()
+
+
+class _ImmediateOwnedReadSnapshot(_ImmediateReadSnapshot):
+    """Owned-result snapshot whose cleanup is also immediate."""
+
+    def _own_document(self, document: Document) -> Document:
+        return document
