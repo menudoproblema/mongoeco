@@ -1158,7 +1158,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(semantics.projection)
             self.assertEqual(kwargs["context"], None)
 
-    async def test_materialize_keeps_remaining_pipeline_when_prefix_breaks(
+    async def test_incremental_sort_keeps_remaining_pipeline_when_prefix_breaks(
         self,
     ):
         collection = _FakeCollection(
@@ -1189,7 +1189,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                     "hint": None,
                     "comment": None,
                     "max_time_ms": None,
-                    "batch_size": None,
+                    "batch_size": 256,
                     "session": None,
                 }
             ],
@@ -1675,6 +1675,91 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         await cursor.close()
 
         self.assertEqual(_aggregation_sort_temp_paths(), before)
+
+    async def test_sort_consumes_finite_source_pages_and_preserves_global_windows(
+        self,
+    ):
+        collection = _FakeCollection(
+            [
+                {"_id": "a", "values": [5, 1]},
+                {"_id": "b", "values": [4, 2]},
+                {"_id": "c", "values": [3, 0]},
+            ]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [
+                {"$unwind": "$values"},
+                {"$skip": 1},
+                {"$limit": 4},
+                {"$sort": {"values": 1}},
+                {"$project": {"_id": 0, "values": 1}},
+                {"$skip": 1},
+                {"$limit": 2},
+            ],
+            batch_size=2,
+            allow_disk_use=True,
+        )
+        before = _aggregation_sort_temp_paths()
+
+        self.assertEqual(await cursor.to_list(), [{"values": 2}, {"values": 3}])
+        self.assertEqual(collection.last_find_cursor.to_list_lengths, [])
+        self.assertEqual(collection.last_find_cursor.pull_chunk_sizes, [2, 2])
+        self.assertEqual(collection.last_find_cursor.close_calls, 1)
+        self.assertEqual(_aggregation_sort_temp_paths(), before)
+
+        explanation = await AsyncAggregationCursor(
+            collection,
+            [{"$unwind": "$values"}, {"$sort": {"values": 1}}],
+            allow_disk_use=True,
+        ).explain()
+        self.assertTrue(explanation["pushdown"]["incrementalSortInput"])
+        self.assertTrue(explanation["pushdown"]["streamingSortOutput"])
+        self.assertTrue(explanation["pushdown"]["sourceBatchExecution"])
+        self.assertFalse(explanation["pushdown"]["streamingEligible"])
+
+    async def test_partial_incremental_sort_closes_source_and_spill_output(self):
+        collection = _FakeCollection(
+            [{"_id": index, "values": [index]} for index in range(6)]
+        )
+        cursor = AsyncAggregationCursor(
+            collection,
+            [{"$unwind": "$values"}, {"$sort": {"values": -1}}],
+            batch_size=2,
+            allow_disk_use=True,
+        )
+        before = _aggregation_sort_temp_paths()
+
+        self.assertEqual((await anext(cursor))["values"], 5)
+        self.assertEqual(collection.last_find_cursor.to_list_lengths, [])
+        self.assertEqual(collection.last_find_cursor.close_calls, 1)
+        self.assertGreater(len(_aggregation_sort_temp_paths()), len(before))
+
+        await cursor.close()
+
+        self.assertEqual(_aggregation_sort_temp_paths(), before)
+
+    def test_incremental_sort_split_preserves_prefix_and_suffix_windows(self):
+        plan = AsyncAggregationCursor._split_incremental_sort_pipeline(
+            [
+                {"$unwind": "$values"},
+                {"$skip": 3},
+                {"$limit": 4},
+                {"$sort": {"values": 1}},
+                {"$project": {"values": 1}},
+                {"$skip": 2},
+                {"$limit": 1},
+            ]
+        )
+
+        self.assertIsNotNone(plan)
+        self.assertEqual(plan.prefix, [{"$unwind": "$values"}])
+        self.assertEqual(plan.prefix_skip, 3)
+        self.assertEqual(plan.prefix_limit, 4)
+        self.assertEqual(plan.sort_spec, {"values": 1})
+        self.assertEqual(plan.suffix, [{"$project": {"values": 1}}])
+        self.assertEqual(plan.suffix_skip, 2)
+        self.assertEqual(plan.suffix_limit, 1)
 
     def test_incremental_group_split_preserves_global_prefix_window(self):
         plan = AsyncAggregationCursor._split_incremental_group_pipeline(

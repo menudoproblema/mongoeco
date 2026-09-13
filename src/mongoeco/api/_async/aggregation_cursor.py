@@ -130,6 +130,39 @@ class _StreamingSortPlan:
     suffix_limit: int | None
 
 
+@dataclass(frozen=True, slots=True)
+class _IncrementalSortPlan:
+    prefix: Pipeline
+    prefix_skip: int
+    prefix_limit: int | None
+    sort_spec: object
+    suffix: Pipeline
+    suffix_skip: int
+    suffix_limit: int | None
+
+
+@dataclass(slots=True)
+class _RemainingWindow:
+    skip: int
+    limit: int | None
+
+    @property
+    def open(self) -> bool:
+        return self.limit != 0
+
+    def apply(self, documents: list[Document]) -> list[Document]:
+        if self.skip:
+            if len(documents) <= self.skip:
+                self.skip -= len(documents)
+                return []
+            documents = documents[self.skip :]
+            self.skip = 0
+        if self.limit is not None:
+            documents = documents[: self.limit]
+            self.limit -= len(documents)
+        return documents
+
+
 class _CursorPageSource:
     """Own a cursor iterator and expose one finite pull operation at a time."""
 
@@ -165,6 +198,21 @@ class _CursorPageSource:
 
 _SearchOptimizationStrategy = SearchPipelineStrategy
 _SearchOptimizationPlan = SearchPipelinePlan
+_LOCAL_STREAM_PREFIX_OPERATORS = frozenset(
+    {
+        "$match",
+        "$project",
+        "$unset",
+        "$addFields",
+        "$set",
+        "$unwind",
+        "$replaceRoot",
+        "$replaceWith",
+        "$redact",
+        "$skip",
+        "$limit",
+    }
+)
 
 
 class AsyncAggregationCursor:
@@ -700,19 +748,6 @@ class AsyncAggregationCursor:
         *,
         dialect=MONGODB_DIALECT_70,
     ) -> _IncrementalGroupPlan | None:
-        local_prefix_operators = {
-            "$match",
-            "$project",
-            "$unset",
-            "$addFields",
-            "$set",
-            "$unwind",
-            "$replaceRoot",
-            "$replaceWith",
-            "$redact",
-            "$skip",
-            "$limit",
-        }
         for index, stage in enumerate(pipeline):
             if not isinstance(stage, dict) or len(stage) != 1:
                 return None
@@ -732,7 +767,7 @@ class AsyncAggregationCursor:
                     group_spec=spec,
                     suffix=pipeline[index + 1 :],
                 )
-            if operator not in local_prefix_operators:
+            if operator not in _LOCAL_STREAM_PREFIX_OPERATORS:
                 return None
         return None
 
@@ -761,6 +796,43 @@ class AsyncAggregationCursor:
             suffix_skip=suffix_skip,
             suffix_limit=suffix_limit,
         )
+
+    @classmethod
+    def _split_incremental_sort_pipeline(
+        cls,
+        pipeline: Pipeline,
+        *,
+        dialect=MONGODB_DIALECT_70,
+    ) -> _IncrementalSortPlan | None:
+        for index, stage in enumerate(pipeline):
+            if not isinstance(stage, dict) or len(stage) != 1:
+                return None
+            operator, spec = next(iter(stage.items()))
+            if operator == "$sort":
+                prefix_split = cls._split_streamable_pipeline(
+                    pipeline[:index],
+                    dialect=dialect,
+                )
+                suffix_split = cls._split_streamable_pipeline(
+                    pipeline[index + 1 :],
+                    dialect=dialect,
+                )
+                if prefix_split is None or suffix_split is None:
+                    return None
+                prefix, prefix_skip, prefix_limit = prefix_split
+                suffix, suffix_skip, suffix_limit = suffix_split
+                return _IncrementalSortPlan(
+                    prefix=prefix,
+                    prefix_skip=prefix_skip,
+                    prefix_limit=prefix_limit,
+                    sort_spec=spec,
+                    suffix=suffix,
+                    suffix_skip=suffix_skip,
+                    suffix_limit=suffix_limit,
+                )
+            if operator not in _LOCAL_STREAM_PREFIX_OPERATORS:
+                return None
+        return None
 
     def _collect_collection_names(self, pipeline: Pipeline) -> set[str]:
         names: set[str] = set()
@@ -1586,6 +1658,84 @@ class AsyncAggregationCursor:
         finally:
             sorted_documents.close()
 
+    async def _stream_incremental_sort(
+        self,
+        plan: _IncrementalSortPlan,
+        *,
+        spill_policy: AggregationSpillPolicy,
+        dialect,
+        deadline: float | None,
+    ) -> AsyncIterator[Document]:
+        page_size = self._batch_size or 256
+        input_window = _RemainingWindow(plan.prefix_skip, plan.prefix_limit)
+        output_window = _RemainingWindow(plan.suffix_skip, plan.suffix_limit)
+        spool = spill_policy.open_sort_spool(
+            _require_sort(plan.sort_spec),
+            dialect=dialect,
+            collation=self._collation,
+            deadline=deadline,
+        )
+        sorted_documents = None
+        try:
+            if input_window.open:
+                source = _CursorPageSource(
+                    self._build_pushdown_cursor(
+                        self._pushdown_find_operation(batch_size=page_size),
+                    )
+                )
+                try:
+                    await source.prepare()
+                    while input_window.open:
+                        page = await source.pull(page_size)
+                        if not page:
+                            break
+                        transformed = apply_pipeline(
+                            page,
+                            plan.prefix,
+                            variables=self._execution_variables(),
+                            dialect=dialect,
+                            collation=self._collation,
+                            spill_policy=spill_policy,
+                            lookup_hash_max_associations=(
+                                self._lookup_hash_max_associations()
+                            ),
+                            deadline=deadline,
+                        )
+                        spool.add(input_window.apply(transformed))
+                finally:
+                    await source.aclose()
+
+            sorted_documents = spool.finish()
+            referenced_collections = (
+                await self._load_referenced_collections() if plan.suffix else {}
+            )
+            while output_window.open:
+                page = list(islice(sorted_documents, page_size))
+                if not page:
+                    break
+                transformed = apply_pipeline(
+                    page,
+                    plan.suffix,
+                    collection_resolver=referenced_collections.get,
+                    variables=self._execution_variables(),
+                    dialect=dialect,
+                    collation=self._collation,
+                    spill_policy=spill_policy,
+                    lookup_hash_max_associations=(self._lookup_hash_max_associations()),
+                    deadline=deadline,
+                )
+                for document in output_window.apply(transformed):
+                    yield self._materialize_document(
+                        DocumentCodec.to_public(
+                            strip_search_result_metadata(document),
+                        ),
+                    )
+        finally:
+            close_output = getattr(sorted_documents, "close", None)
+            if callable(close_output):
+                close_output()
+            spool.close()
+
     async def _stream_windowed_pipeline(
         self,
         stream_plan: tuple[Pipeline, int, int | None],
@@ -1671,6 +1821,28 @@ class AsyncAggregationCursor:
         if incremental_group is not None:
             output = self._stream_incremental_group(
                 incremental_group,
+                dialect=dialect,
+                deadline=deadline,
+            )
+            try:
+                async for document in output:
+                    yield document
+            finally:
+                await output.aclose()
+            return
+        spill_policy = self._spill_policy()
+        incremental_sort = (
+            self._split_incremental_sort_pipeline(
+                pushdown.remaining_pipeline,
+                dialect=dialect,
+            )
+            if spill_policy is not None
+            else None
+        )
+        if incremental_sort is not None:
+            output = self._stream_incremental_sort(
+                incremental_sort,
+                spill_policy=spill_policy,
                 dialect=dialect,
                 deadline=deadline,
             )
@@ -1938,19 +2110,33 @@ class AsyncAggregationCursor:
                 dialect=dialect,
             )
         )
-        pushdown_summary["incrementalGroupInput"] = incremental_group_plan is not None
-        pushdown_summary["streamingSortOutput"] = bool(
-            incremental_group_plan is not None
-            and self._spill_policy() is not None
-            and self._split_streaming_sort_suffix(
-                incremental_group_plan.suffix,
+        spill_policy = self._spill_policy()
+        incremental_sort_plan = (
+            None
+            if self._leading_search_stage() is not None or spill_policy is None
+            else self._split_incremental_sort_pipeline(
+                streamable_pipeline,
                 dialect=dialect,
             )
-            is not None
+        )
+        pushdown_summary["incrementalGroupInput"] = incremental_group_plan is not None
+        pushdown_summary["incrementalSortInput"] = incremental_sort_plan is not None
+        pushdown_summary["streamingSortOutput"] = bool(
+            incremental_sort_plan is not None
+            or (
+                incremental_group_plan is not None
+                and spill_policy is not None
+                and self._split_streaming_sort_suffix(
+                    incremental_group_plan.suffix,
+                    dialect=dialect,
+                )
+                is not None
+            )
         )
         pushdown_summary["sourceBatchExecution"] = bool(
             pushdown_summary["streamingEligible"]
             or pushdown_summary["incrementalGroupInput"]
+            or pushdown_summary["incrementalSortInput"]
         )
         pushdown_summary["streamableStageCount"] = (
             len(streaming_split[0]) if streaming_split is not None else 0

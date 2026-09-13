@@ -250,3 +250,24 @@ class AggregationWorkControlTests(TestCase):
             max(len(call.args[0]) for call in sorter.call_args_list),
             policy.threshold,
         )
+
+    def test_sort_spool_accepts_bounded_batches_and_owns_partial_output(self):
+        policy = AggregationSpillPolicy(threshold=3)
+        spool = policy.open_sort_spool([("rank", 1)])
+        temp_root = Path(tempfile.gettempdir())
+        before = set(temp_root.glob("*.mongoeco-aggsort"))
+
+        for start in range(0, 12, 2):
+            spool.add(
+                {"_id": index, "rank": 11 - index} for index in range(start, start + 2)
+            )
+            self.assertLessEqual(spool.buffered_documents, policy.threshold)
+
+        self.assertGreater(spool.run_count, 0)
+        output = spool.finish()
+        self.assertEqual(next(output)["rank"], 0)
+        self.assertGreater(len(set(temp_root.glob("*.mongoeco-aggsort"))), len(before))
+
+        output.close()
+
+        self.assertEqual(set(temp_root.glob("*.mongoeco-aggsort")), before)

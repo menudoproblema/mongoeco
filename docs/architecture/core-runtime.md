@@ -292,8 +292,8 @@ ejecutan como maximo 256 pasos; los caminos que expanden resultados reutilizan
 la misma primitiva de control. Esto es cancelacion cooperativa, no una garantia
 hard real-time: una evaluacion de expresion, comparacion BSON, operacion del
 codec, llamada a una extension o primitiva de I/O puede ser indivisible. El
-budget compuesto de bytes, el streaming desde las restantes entradas
-bloqueantes y la particion externa de estados de group siguen pendientes.
+budget compuesto de bytes, el streaming desde las entradas bloqueantes no
+elegibles y la particion externa de estados de group siguen pendientes.
 
 Cuando el primer operador bloqueante que queda despues del pushdown es
 `$group`, el cursor alimenta un estado acumulador incremental desde trabajos de
@@ -305,10 +305,19 @@ completa. La memoria del acumulador depende del numero de grupos y de
 acumuladores cuyo resultado crece (`$push`, `$addToSet`, etc.), que es salida
 inevitable y no se presenta como O(1).
 
-El resultado de grupos y los stages bloqueantes posteriores salvo el sort
-elegible aun usan la frontera materializada vigente. Particionar estado de
+Cuando el primer bloqueante elegible es `$sort`, su entrada se consume tambien
+en paginas finitas despues del prefijo streamable. Un spool propietario forma
+runs cuyo buffer no supera el umbral de spill, limita a 32 los ficheros abiertos
+por pasada y entrega el merge por demanda. Cerrar, cancelar o fallar libera el
+cursor fuente, los streams y todos los temporales. La expansion producida por
+una pagina y las primitivas sincronas de sort, codec e I/O conservan los
+checkpoints cooperativos existentes, pero no se presentan como operaciones
+interrumpibles a mitad de llamada.
+
+El resultado de grupos y los stages bloqueantes posteriores salvo los sorts
+elegibles aun usan la frontera materializada vigente. Particionar estado de
 acumuladores a disco requiere el budget compuesto; sigue pendiente y no se
-oculta bajo la mejora de entrada incremental.
+oculta bajo las mejoras de entrada incremental.
 
 En la superficie publica, `aggregate().explain()` ya deja visible ademas un
 resumen estructurado de pushdown (`mode`, stages empujados, stages restantes y
@@ -318,11 +327,12 @@ engine y core. `pushdown.lookupPlans` informa si cada join es candidato al hash
 acotado o requiere nested loop, junto con el motivo y la capacidad. Es una
 decision de planning: la saturacion observada al construir el indice puede
 degradar a nested loop sin cambiar resultados ni errores publicos.
-`incrementalGroupInput` distingue el acumulador alimentado por lotes de una
-pipeline completamente materializada; `sourceBatchExecution` agrupa esa ruta y
-el streaming completo sin afirmar que la salida de `$group` sea incremental.
-`streamingSortOutput` indica especificamente que el merge externo posterior
-entrega por demanda y mantiene cleanup propietario.
+`incrementalGroupInput` distingue el acumulador alimentado por lotes y
+`incrementalSortInput` el spool alimentado por paginas de una pipeline
+completamente materializada. `sourceBatchExecution` agrupa ambas rutas y el
+streaming completo sin afirmar que la salida de `$group` sea incremental.
+`streamingSortOutput` indica especificamente que el merge externo entrega por
+demanda y mantiene cleanup propietario.
 
 La pipeline materializada soporta tambien ya stages analiticos locales como
 `$densify` y `$fill`, y stages con side effects locales como `$merge`. En este

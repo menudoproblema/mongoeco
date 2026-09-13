@@ -1025,4 +1025,9 @@ class AggregatePushdownSummaryDocument(TypedDict, total=False):
     remainingStages: int
     streamingEligible: bool
     streamableStageCount: int
+    incrementalGroupInput: bool
+    incrementalSortInput: bool
+    streamingSortOutput: bool
+    sourceBatchExecution: bool
+    lookupPlans: list[dict[str, object]]
     leadingSearchOperator: str

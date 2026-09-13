@@ -113,9 +113,11 @@ usa Semantic Versioning.
   vez y limpia runs originales e intermedios ante exito o fallo. Su merge
   entrega un iterador y el cursor lo consume directamente despues de `$group`,
   incluidos stages streamables posteriores; cerrar un resultado parcial libera
-  todos los runs sin construir otra lista completa de salida. El estado de
-  grupos y otras fronteras bloqueantes no se presentan como memoria total
-  acotada.
+  todos los runs sin construir otra lista completa de salida. Cuando `$sort` es
+  el primer bloqueante elegible, el cursor alimenta ese spool directamente por
+  paginas y cada run mantiene como maximo el umbral configurado, incluso sin un
+  `batchSize` publico. El estado de grupos, la expansion dentro de una pagina y
+  otras fronteras bloqueantes no se presentan como memoria total acotada.
 - Los informes de benchmark usan un schema v2 con commit/dirty, hashes del
   harness y dataset, configuracion y versiones efectivas del entorno. El
   comparador rechaza escenarios ausentes, metricas invalidas y bases
