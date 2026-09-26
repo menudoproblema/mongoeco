@@ -129,6 +129,25 @@ _OPTION_DELTAS_AFTER_HISTORICAL_SNAPSHOT = (
     ),
 )
 
+_NEW_OPERATION_OPTIONS_AFTER_HISTORICAL_SNAPSHOT = (
+    (
+        'create_index',
+        'background',
+        (
+            'Accepted and type-checked for API parity; it does not schedule '
+            'a background index build.'
+        ),
+    ),
+    (
+        'create_index',
+        'wildcard_projection',
+        (
+            'Accepted and type-checked for API parity; the projection is '
+            'not passed to the engine.'
+        ),
+    ),
+)
+
 
 class _FlatComparable:
     def __init__(self, label: str) -> None:
@@ -210,6 +229,12 @@ class CompatResolutionTests(unittest.TestCase):
             current['database_command_options'][command][option] = (
                 expected['database_command_options'][command][option]
             )
+        for operation, option, note in _NEW_OPERATION_OPTIONS_AFTER_HISTORICAL_SNAPSHOT:
+            self.assertNotIn(option, expected['operation_options'][operation])
+            self.assertEqual(
+                current['operation_options'][operation].pop(option),
+                {'note': note, 'status': 'accepted-noop'},
+            )
         self.assertEqual(
             failpoint,
             {
@@ -273,6 +298,10 @@ class CompatResolutionTests(unittest.TestCase):
             self.assertEqual(expected.count(old_line), 1)
             self.assertEqual(current.count(new_line), 1)
             current = current.replace(new_line, old_line, 1)
+        for _, option, note in _NEW_OPERATION_OPTIONS_AFTER_HISTORICAL_SNAPSHOT:
+            new_line = f'- `{option}`: `status`="accepted-noop", `note`="{note}"\n'
+            self.assertEqual(current.count(new_line), 1)
+            current = current.replace(new_line, '', 1)
         suffix = "## Local Runtime Subsets\n"
         failpoint_section = (
             "### `configureFailPoint`\n"
@@ -568,6 +597,14 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(
             operation_catalog['find']['hint']['status'],
             'effective',
+        )
+        self.assertEqual(
+            {
+                name
+                for name, option in operation_catalog['create_index'].items()
+                if option['status'] == 'accepted-noop'
+            },
+            {'background', 'wildcard_projection'},
         )
         self.assertEqual(
             database_command_option_catalog['find']['batchSize']['status'],

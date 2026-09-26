@@ -127,6 +127,14 @@ OPERATION_OPTION_SUPPORT_CATALOG = MappingProxyType(
             {
                 "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata for index administration."),
                 "max_time_ms": OperationOptionSupport(_EFFECTIVE, "Enforced as a local deadline during index build and multikey backfill."),
+                "background": OperationOptionSupport(
+                    _ACCEPTED_NOOP,
+                    "Accepted and type-checked for API parity; it does not schedule a background index build.",
+                ),
+                "wildcard_projection": OperationOptionSupport(
+                    _ACCEPTED_NOOP,
+                    "Accepted and type-checked for API parity; the projection is not passed to the engine.",
+                ),
             }
         ),
         "create_indexes": MappingProxyType(
@@ -297,8 +305,17 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = MappingProxyType(
             {
                 "scandata": OperationOptionSupport(_ACCEPTED_NOOP, "Accepted and type-checked; validation reports a warning and performs the same local scan."),
                 "full": OperationOptionSupport(_ACCEPTED_NOOP, "Accepted and type-checked; validation reports a warning and performs the same local pass."),
-                "background": OperationOptionSupport(_ACCEPTED_NOOP, "Accepted and type-checked; validation reports a warning and runs synchronously."),
-                "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata for the validation command."),
+                "background": OperationOptionSupport(
+                    _ACCEPTED_NOOP,
+                    (
+                        "Accepted and type-checked; validation reports a warning "
+                        "and runs synchronously."
+                    ),
+                ),
+                "comment": OperationOptionSupport(
+                    _EFFECTIVE,
+                    "Recorded in engine session metadata for the validation command.",
+                ),
             }
         ),
     }

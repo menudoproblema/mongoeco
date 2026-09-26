@@ -168,6 +168,10 @@ as warnings without changing the validation pass or making it asynchronous.
 `listCommands.supportedOptions` lists accepted names; its
 `acceptedNoopOptions` identifies these four cases explicitly. A consumer must
 not treat their presence in `supportedOptions` as evidence of an effect.
+For the public `create_index` API, `background` and `wildcard_projection` are
+also accepted and type-checked without being passed to the engine; their owner
+catalog entries now state `accepted-noop`. Index creation itself remains a
+local operational contract, separate from a deployment guarantee.
 
 The catalog's identity, version and SHA-256 in every requirement and snapshot
 are exact pins. Changing the capability set or semantics requires a new

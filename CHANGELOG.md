@@ -22,6 +22,9 @@ usa Semantic Versioning.
   `validate.scandata`/`full`/`background` are accepted without changing the
   local operation. `listCommands` now lists them in `acceptedNoopOptions` while
   retaining them in `supportedOptions` as accepted inputs.
+- Record `create_index.background` and `create_index.wildcard_projection` as
+  accepted no-op API options. The existing type checks and engine-boundary
+  tests remain the operational evidence for their limited meaning.
 
 ## [4.7.0] - 2026-09-13
 
