@@ -760,6 +760,33 @@ def test_collation_facts_keep_backend_and_capability_scope() -> None:
         snapshot_for({"capabilities": {"unknownFlag": True}})
 
 
+def test_collation_support_aliases_match_exact_io_operations() -> None:
+    owner = json.loads(
+        files("mongoeco.cxp.exchange")
+        .joinpath("data/operational-metadata.json")
+        .read_text(encoding="utf-8")
+    )
+    capabilities = {
+        item["name"]: item
+        for item in load_mongodb_declared_snapshot().payload["capabilities"]
+    }
+    for operation, facts in owner["collation"]["operationMetadata"].items():
+        if operation == "serverStatus":
+            continue
+        capability = (
+            "read" if operation in owner["read"]["operationMetadata"] else "write"
+        )
+        expected = facts["supportsCollation"]
+        assert (
+            owner[capability]["operationMetadata"][operation]["acceptsCollation"]
+            is expected
+        )
+        assert (
+            capabilities[capability]["properties"][f"{operation}.acceptsCollation"]
+            is expected
+        )
+
+
 def test_collation_backend_availability_has_three_outcomes() -> None:
     requirement_content = load_mongodb_profile("mongodb-core").as_dict()
     requirement_content["payload"]["requirement"] = {
