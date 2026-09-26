@@ -39,7 +39,7 @@ def _context() -> Document:
             "spec_version": 2,
             "payload": {
                 "subject_id": "mongoeco-public-catalog",
-                "configuration_revision": "mongoeco-public-catalog-1.0.0",
+                "configuration_revision": "mongoeco-public-catalog-1.1.0",
                 "accepted_sources": ["declared"],
             },
         },
@@ -162,9 +162,12 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "2426ee7a7d9b4c06ab6d22b3eb9de2dcc16f2cd7b385efb618c7eb373c84dc5a"
+        "d6173897f4a6e66843b9be4620fdac87f24720013cb23baa85b126b765f147f3"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
+    assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
+        "org.mongoeco:public-catalog:1.1.0"
+    )
     assert all(
         reference == load_mongodb_profile(name).payload["catalog"]
         for name in PROFILE_NAMES
@@ -290,6 +293,144 @@ def test_runtime_projection_omits_unobserved_metadata() -> None:
         catalogs=mongodb_catalog_store(),
     )
     assert result.verdict == "indeterminate"
+
+
+def test_declared_transaction_and_change_stream_values_are_exact() -> None:
+    claims = {
+        item["name"]: item["properties"]
+        for item in load_mongodb_declared_snapshot().payload["capabilities"]
+    }
+    assert {
+        key: value
+        for key, value in claims["transactions"].items()
+        if key != "metadata_keys"
+    } == {
+        "async": True,
+        "distributed": False,
+        "embedded": True,
+        "mode": "local",
+        "sync": True,
+    }
+    assert {
+        key: value
+        for key, value in claims["change_streams"].items()
+        if key != "metadata_keys"
+    } == {
+        "boundedHistory": True,
+        "distributed": False,
+        "implementation": "local",
+        "persistent": False,
+        "resumable": True,
+        "resumableAcrossClientRestarts": False,
+        "resumableAcrossNodes": False,
+        "resumableAcrossProcesses": False,
+    }
+
+
+def test_value_requirement_distinguishes_false_from_missing() -> None:
+    requirement_content = load_mongodb_profile("mongodb-core").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "change-stream-persistence",
+        "operator": "equals",
+        "capability": "change_streams",
+        "path": "/properties/persistent",
+        "value": False,
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    requirement = Document(requirement_content, expected_type="cxp.requirements")
+    declared = load_mongodb_declared_snapshot().as_dict()
+
+    def verdict(content: dict[str, object]) -> str:
+        snapshot = Document(content, expected_type="cxp.snapshot")
+        return evaluate_requirements_detailed(
+            snapshot,
+            requirement,
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        ).verdict
+
+    assert verdict(declared) == "compatible"
+    for claim in declared["payload"]["capabilities"]:
+        if claim["name"] == "change_streams":
+            claim["properties"]["persistent"] = True
+    assert verdict(declared) == "incompatible"
+    for claim in declared["payload"]["capabilities"]:
+        if claim["name"] == "change_streams":
+            del claim["properties"]["persistent"]
+    assert verdict(declared) == "indeterminate"
+
+
+def test_runtime_projection_keeps_false_and_omits_unreported_value() -> None:
+    snapshot = build_mongodb_snapshot(
+        catalog=load_mongodb_catalog(),
+        identity=MongoSnapshotIdentity(
+            provider_id="provider-A",
+            subject_id="subject-A",
+            configuration_revision="revision-A",
+            observed_at="2026-09-26T00:00:00Z",
+            source_kind="observed",
+            source_reference="owner-report-sha256:example",
+        ),
+        capabilities=(
+            MongoCapabilityClaim(
+                name="transactions",
+                support="supported",
+                metadata={"distributed": False, "mode": "local", "sync": None},
+                operations=(),
+            ),
+        ),
+    )
+    properties = snapshot.payload["capabilities"][0]["properties"]
+    assert properties == {
+        "distributed": False,
+        "mode": "local",
+    }
+    requirement_content = load_mongodb_profile("mongodb-core").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "transaction-sync-metadata",
+        "operator": "contains_all",
+        "capability": "transactions",
+        "path": "/properties/metadata_keys",
+        "values": ["sync"],
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    context_content = _context().as_dict()
+    context_content["payload"] = {
+        "subject_id": "subject-A",
+        "configuration_revision": "revision-A",
+        "accepted_sources": ["observed"],
+    }
+    result = evaluate_requirements_detailed(
+        snapshot,
+        Document(requirement_content, expected_type="cxp.requirements"),
+        Document(context_content, expected_type="cxp.context"),
+        catalogs=mongodb_catalog_store(),
+    )
+    assert result.verdict == "indeterminate"
+    with pytest.raises(ValueError, match="Invalid MongoDB transactions metadata"):
+        build_mongodb_snapshot(
+            catalog=load_mongodb_catalog(),
+            identity=MongoSnapshotIdentity(
+                provider_id="provider-A",
+                subject_id="subject-A",
+                configuration_revision="revision-A",
+                observed_at="2026-09-26T00:00:00Z",
+                source_kind="observed",
+                source_reference="owner-report-sha256:example",
+            ),
+            capabilities=(
+                MongoCapabilityClaim(
+                    name="transactions",
+                    support="supported",
+                    metadata={"distributed": "false"},
+                    operations=(),
+                ),
+            ),
+        )
 
 
 def test_runtime_projection_rejects_unsupported_operation_result() -> None:

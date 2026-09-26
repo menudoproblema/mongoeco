@@ -107,7 +107,12 @@
             "embedded",
             "mode",
             "sync"
-          ]
+          ],
+          "async": true,
+          "distributed": false,
+          "embedded": true,
+          "mode": "local",
+          "sync": true
         },
         "support": "supported"
       },
@@ -129,7 +134,15 @@
             "resumableAcrossClientRestarts",
             "resumableAcrossNodes",
             "resumableAcrossProcesses"
-          ]
+          ],
+          "boundedHistory": true,
+          "distributed": false,
+          "implementation": "local",
+          "persistent": false,
+          "resumable": true,
+          "resumableAcrossClientRestarts": false,
+          "resumableAcrossNodes": false,
+          "resumableAcrossProcesses": false
         },
         "support": "supported"
       },
@@ -250,15 +263,15 @@
     "catalog": {
       "name": "mongodb",
       "namespace": "org.mongoeco",
-      "sha256": "2426ee7a7d9b4c06ab6d22b3eb9de2dcc16f2cd7b385efb618c7eb373c84dc5a",
-      "version": "1.0.0"
+      "sha256": "d6173897f4a6e66843b9be4620fdac87f24720013cb23baa85b126b765f147f3",
+      "version": "1.1.0"
     },
-    "configuration_revision": "mongoeco-public-catalog-1.0.0",
+    "configuration_revision": "mongoeco-public-catalog-1.1.0",
     "observed_at": "2026-09-26T00:00:00.000000Z",
     "provider_id": "mongoeco",
     "source": {
       "kind": "declared",
-      "reference": "org.mongoeco:public-catalog:1.0.0"
+      "reference": "org.mongoeco:public-catalog:1.1.0"
     },
     "subject_id": "mongoeco-public-catalog"
   },

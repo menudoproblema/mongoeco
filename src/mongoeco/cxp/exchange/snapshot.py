@@ -9,6 +9,23 @@ from cxp.exchange import CatalogStore, Document, catalog_reference
 from mongoeco.cxp.exchange.metadata import validate_mongodb_metadata
 
 
+_VALUE_FIELDS: dict[str, frozenset[str]] = {
+    "transactions": frozenset({"async", "distributed", "embedded", "mode", "sync"}),
+    "change_streams": frozenset(
+        {
+            "boundedHistory",
+            "distributed",
+            "implementation",
+            "persistent",
+            "resumable",
+            "resumableAcrossClientRestarts",
+            "resumableAcrossNodes",
+            "resumableAcrossProcesses",
+        }
+    ),
+}
+
+
 @dataclass(frozen=True, slots=True)
 class MongoOperationClaim:
     name: str
@@ -44,7 +61,7 @@ def build_mongodb_snapshot(
     if catalog.payload["identity"] != {
         "namespace": "org.mongoeco",
         "name": "mongodb",
-        "version": "1.0.0",
+        "version": "1.1.0",
     }:
         message = "Expected the Mongoeco-owned MongoDB catalog"
         raise ValueError(message)
@@ -53,7 +70,11 @@ def build_mongodb_snapshot(
         properties: dict[str, object] = {}
         if claim.metadata is not None:
             validate_mongodb_metadata(claim.name, claim.metadata)
-            properties["metadata_keys"] = sorted(claim.metadata)
+            if all(value is not None for value in claim.metadata.values()):
+                properties["metadata_keys"] = sorted(claim.metadata)
+            for field in _VALUE_FIELDS.get(claim.name, frozenset()):
+                if field in claim.metadata and claim.metadata[field] is not None:
+                    properties[field] = claim.metadata[field]
         claims.append(
             {
                 "name": claim.name,

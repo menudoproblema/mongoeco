@@ -20,7 +20,7 @@ context = Document(
         "spec_version": 2,
         "payload": {
             "subject_id": "mongoeco-public-catalog",
-            "configuration_revision": "mongoeco-public-catalog-1.0.0",
+            "configuration_revision": "mongoeco-public-catalog-1.1.0",
             "accepted_sources": ["declared"],
         },
     },
@@ -51,24 +51,37 @@ is indeterminate; an explicitly reported set without a required key is
 incompatible. No profile is inferred from a tier, and there is no implicit
 ordering among tiers.
 
+Catalog version `1.1.0` also defines thirteen typed value properties for
+`transactions` and `change_streams`. The declared snapshot reports their
+exact boolean and string values, including `false` for distributed or
+persistent behavior where applicable. A consumer can require an exact value;
+an absent property remains indeterminate. The catalog reference in every
+profile, tier and snapshot was changed together, so the earlier catalog hash
+cannot silently acquire these meanings.
+
 The packaged snapshot describes Mongoeco's **declared public library
 surface**. Its source is `declared`; it does not prove what a running
 deployment has observed or tested. Runtime providers must emit their own
-validated snapshot with only the capabilities, bindings and metadata keys they
+validated snapshot with only the capabilities, bindings and properties they
 can substantiate. In particular, copying this declaration into an `observed`
 snapshot would misstate provenance. A consumer demanding `observed` or
 `tested` receives an indeterminate result from this declared snapshot.
 
 `build_mongodb_snapshot` accepts a `MongoSnapshotIdentity` and explicit
 `MongoCapabilityClaim`/`MongoOperationClaim` values. It checks Mongoeco-owned
-typed metadata before projecting the keys actually present, then asks
+typed metadata before projecting the keys and supported values actually present,
+then asks
 `CatalogStore` to validate the complete snapshot. Passing `metadata=None`
 omits the key set and leaves metadata requirements indeterminate; it is not
 converted to an empty observed set. The caller supplies the source kind and
 reference for every homogeneous snapshot. The owner validator rejects unknown
 top-level metadata keys and wrong top-level value types for all ten
-capabilities. Nested operation and runtime metadata remains governed by
-Mongoeco's operational contract; exchange claims only key presence.
+capabilities. A metadata field whose value is `None` prevents asserting a
+complete `metadata_keys` set; the other validated values can still be reported.
+For the two capabilities above, `None` is omitted as an unknown value and
+`false` remains an explicit negative value. Nested operation and
+runtime metadata remains governed by Mongoeco's operational contract. The
+remaining capability values are not yet represented as exchange claims.
 
 Structured MongoDB metadata values, telemetry, runtime input validation and
 `explain()` projections remain operational contracts of Mongoeco. Cursor

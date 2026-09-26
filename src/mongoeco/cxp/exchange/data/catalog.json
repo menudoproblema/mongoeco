@@ -145,6 +145,31 @@
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
             "nullable": false
+          },
+          "async": {
+            "description": "Whether the async client surface is supported.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distributed": {
+            "description": "Whether the behavior spans independent nodes.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "embedded": {
+            "description": "Whether the behavior is available in embedded backends.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "mode": {
+            "description": "Effective transaction mode declared by this implementation.",
+            "kind": "string",
+            "nullable": false
+          },
+          "sync": {
+            "description": "Whether the synchronous client surface is supported.",
+            "kind": "boolean",
+            "nullable": false
           }
         }
       },
@@ -164,6 +189,46 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
+            "nullable": false
+          },
+          "boundedHistory": {
+            "description": "Whether retained change history is bounded.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distributed": {
+            "description": "Whether the behavior spans independent nodes.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "implementation": {
+            "description": "Implementation kind of the change stream.",
+            "kind": "string",
+            "nullable": false
+          },
+          "persistent": {
+            "description": "Whether change history survives process restart.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "resumable": {
+            "description": "Whether a stream can resume within its supported scope.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "resumableAcrossClientRestarts": {
+            "description": "Whether a stream resumes after client recreation.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "resumableAcrossNodes": {
+            "description": "Whether a stream resumes on another node.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "resumableAcrossProcesses": {
+            "description": "Whether a stream resumes after process restart.",
+            "kind": "boolean",
             "nullable": false
           }
         }
@@ -269,7 +334,7 @@
     "identity": {
       "name": "mongodb",
       "namespace": "org.mongoeco",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "owner": "Mongoeco"
   },
