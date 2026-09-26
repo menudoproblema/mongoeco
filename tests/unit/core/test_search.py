@@ -1865,6 +1865,67 @@ class SearchCoreTests(unittest.TestCase):
                 },
             )
 
+    def test_search_meta_facet_collector_preserves_each_supported_operator(
+        self,
+    ) -> None:
+        clauses = {
+            "text": {"query": "ada", "path": "title"},
+            "phrase": {"query": "ada", "path": "title"},
+            "autocomplete": {"query": "ada", "path": "title"},
+            "wildcard": {"query": "ada*", "path": "title"},
+            "regex": {"query": "ada.*", "path": "title"},
+            "exists": {"path": "title"},
+            "in": {"path": "kind", "value": ["note"]},
+            "equals": {"path": "kind", "value": "note"},
+            "range": {"path": "score", "gte": 5, "lt": 10},
+            "near": {"path": "score", "origin": 10, "pivot": 2},
+            "compound": {"must": [{"text": {"query": "ada", "path": "title"}}]},
+        }
+        definition = SearchIndexDefinition(
+            {"mappings": {"dynamic": True}},
+            name="by_text",
+        )
+        for name, clause in clauses.items():
+            with self.subTest(operator=name):
+                query = compile_search_stage(
+                    "$searchMeta",
+                    {
+                        "index": "by_text",
+                        "facet": {
+                            "operator": {name: clause},
+                            "facets": {"kindFacet": {"path": "kind"}},
+                        },
+                    },
+                )
+                self.assertEqual(search_query_operator_name(query), name)
+                self.assertTrue(query.stage_options.facet.named)
+                self.assertTrue(
+                    matches_search_query(
+                        {"title": "ada notes", "kind": "note", "score": 9},
+                        definition=definition,
+                        query=query,
+                    ),
+                )
+                self.assertFalse(
+                    matches_search_query(
+                        {"kind": "other", "score": 20},
+                        definition=definition,
+                        query=query,
+                    ),
+                )
+
+        with self.assertRaises(OperationFailure):
+            compile_search_stage(
+                "$searchMeta",
+                {
+                    "index": "by_text",
+                    "facet": {
+                        "operator": {"unsupported": {"path": "title"}},
+                        "facets": {"kindFacet": {"path": "kind"}},
+                    },
+                },
+            )
+
     def test_wrapper_compilers_reject_wrong_operator_shapes(self) -> None:
         with self.assertRaisesRegex(
             OperationFailure,
