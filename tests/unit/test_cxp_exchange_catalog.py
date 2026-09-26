@@ -165,7 +165,7 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "9b3973183ea7d7b04529fe38b0560c4f33143552c8cd50291a91605376f41273"
+        "aa99d50bb4821c53a082cd30567fbe427747cb059776de98a8a6b1afb6b3fbcc"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
@@ -792,6 +792,73 @@ def test_collation_backend_availability_has_three_outcomes() -> None:
         if claim["name"] == "collation":
             del claim["properties"]["backend.advancedOptionsAvailable"]
     assert verdict() == "indeterminate"
+
+
+def test_search_aggregate_claims_keep_result_and_scope() -> None:
+    owner = json.loads(
+        files("mongoeco.cxp.exchange")
+        .joinpath("data/operational-metadata.json")
+        .read_text(encoding="utf-8")
+    )["search"]["operationMetadata"]["aggregate"]
+    claim = next(
+        item
+        for item in load_mongodb_declared_snapshot().payload["capabilities"]
+        if item["name"] == "search"
+    )
+    assert claim["operations"] == [
+        {"name": "aggregate", "result_type": "org.mongoeco:result.cursor:1"}
+    ]
+    for field, value in owner.items():
+        if field in {"resultType", "stageOptions"}:
+            continue
+        reported = claim["properties"][f"aggregate.{field}"]
+        if isinstance(value, list):
+            assert reported == sorted(value)
+        else:
+            assert reported == value
+    assert "aggregate.stageOptions" not in claim["properties"]
+
+    requirement_content = load_mongodb_profile("mongodb-search").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "search-database-scope",
+        "operator": "equals",
+        "capability": "search",
+        "operations": ["aggregate"],
+        "path": "/properties/aggregate.supportsDatabaseScope",
+        "value": True,
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    requirement = Document(requirement_content, expected_type="cxp.requirements")
+    snapshot_content = load_mongodb_declared_snapshot().as_dict()
+
+    def verdict() -> str:
+        return evaluate_requirements_detailed(
+            Document(snapshot_content, expected_type="cxp.snapshot"),
+            requirement,
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        ).verdict
+
+    assert verdict() == "incompatible"
+    for item in snapshot_content["payload"]["capabilities"]:
+        if item["name"] == "search":
+            item["properties"]["aggregate.supportsDatabaseScope"] = True
+    assert verdict() == "compatible"
+    for item in snapshot_content["payload"]["capabilities"]:
+        if item["name"] == "search":
+            del item["properties"]["aggregate.supportsDatabaseScope"]
+    assert verdict() == "indeterminate"
+
+    with pytest.raises(ValueError, match="Invalid MongoDB search metadata"):
+        validate_mongodb_metadata(
+            "search",
+            {
+                "operators": [],
+                "operationMetadata": {"aggregate": {"supportsDatabaseScope": "false"}},
+            },
+        )
 
 
 def test_read_operator_set_distinguishes_missing_and_excluded() -> None:

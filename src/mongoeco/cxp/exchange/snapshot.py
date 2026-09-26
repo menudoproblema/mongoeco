@@ -13,6 +13,7 @@ from mongoeco.cxp.exchange.metadata import (
     COLLATION_CAPABILITY_FIELDS,
     READ_OPERATION_FIELDS,
     SDAM_FIELDS,
+    SEARCH_OPERATION_FIELDS,
     VECTOR_SEARCH_OPERATION_FIELDS,
     WRITE_OPERATION_FIELDS,
     validate_mongodb_metadata,
@@ -84,6 +85,7 @@ _OPERATION_VALUE_FIELDS = {
     "read": READ_OPERATION_FIELDS,
     "write": WRITE_OPERATION_FIELDS,
     "aggregation": AGGREGATION_OPERATION_FIELDS,
+    "search": SEARCH_OPERATION_FIELDS,
     "vector_search": VECTOR_SEARCH_OPERATION_FIELDS,
 }
 

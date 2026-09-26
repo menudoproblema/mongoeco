@@ -371,6 +371,57 @@ class MongoSearchMetadata(msgspec.Struct, frozen=True, forbid_unknown_fields=Tru
     note: str | None = None
 
 
+SEARCH_OPERATION_FIELDS = frozenset(
+    {
+        "acceptedNoopOptions",
+        "acceptsPipeline",
+        "aggregateStage",
+        "operators",
+        "requiresLeadingStage",
+        "supportedOptions",
+        "supportsCollectionScope",
+        "supportsDatabaseScope",
+        "supportsExplain",
+        "supportsSession",
+        "unsupportedOptions",
+    }
+)
+
+
+class MongoSearchOperationMetadata(
+    msgspec.Struct, frozen=True, forbid_unknown_fields=True
+):
+    accepted_noop_options: tuple[str, ...] | None = msgspec.field(
+        name="acceptedNoopOptions", default=None
+    )
+    accepts_pipeline: bool | None = msgspec.field(name="acceptsPipeline", default=None)
+    aggregate_stage: str | None = msgspec.field(name="aggregateStage", default=None)
+    operators: tuple[str, ...] | None = None
+    requires_leading_stage: bool | None = msgspec.field(
+        name="requiresLeadingStage", default=None
+    )
+    result_type: str | None = msgspec.field(name="resultType", default=None)
+    stage_options: dict[str, object] | None = msgspec.field(
+        name="stageOptions", default=None
+    )
+    supported_options: tuple[str, ...] | None = msgspec.field(
+        name="supportedOptions", default=None
+    )
+    supports_collection_scope: bool | None = msgspec.field(
+        name="supportsCollectionScope", default=None
+    )
+    supports_database_scope: bool | None = msgspec.field(
+        name="supportsDatabaseScope", default=None
+    )
+    supports_explain: bool | None = msgspec.field(
+        name="supportsExplain", default=None
+    )
+    supports_session: bool | None = msgspec.field(name="supportsSession", default=None)
+    unsupported_options: tuple[str, ...] | None = msgspec.field(
+        name="unsupportedOptions", default=None
+    )
+
+
 class MongoVectorSearchMetadata(
     msgspec.Struct, frozen=True, forbid_unknown_fields=True
 ):
@@ -591,6 +642,7 @@ OPERATION_SCHEMAS: dict[
     "read": (READ_OPERATION_NAMES, MongoReadOperationMetadata),
     "write": (WRITE_OPERATION_NAMES, MongoWriteOperationMetadata),
     "aggregation": (frozenset({"aggregate"}), MongoAggregationOperationMetadata),
+    "search": (frozenset({"aggregate"}), MongoSearchOperationMetadata),
     "vector_search": (frozenset({"aggregate"}), MongoVectorSearchOperationMetadata),
 }
 

@@ -6,7 +6,7 @@
     "catalog": {
       "name": "mongodb",
       "namespace": "org.mongoeco",
-      "sha256": "9b3973183ea7d7b04529fe38b0560c4f33143552c8cd50291a91605376f41273",
+      "sha256": "aa99d50bb4821c53a082cd30567fbe427747cb059776de98a8a6b1afb6b3fbcc",
       "version": "1.1.0"
     },
     "requirement": {

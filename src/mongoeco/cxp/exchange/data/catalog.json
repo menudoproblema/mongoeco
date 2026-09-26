@@ -1315,6 +1315,61 @@
             "description": "Mongoeco search textualFieldMappings for this configuration.",
             "kind": "string_set",
             "nullable": false
+          },
+          "aggregate.acceptedNoopOptions": {
+            "description": "Mongoeco search.aggregate acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.acceptsPipeline": {
+            "description": "Mongoeco search.aggregate acceptsPipeline for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.aggregateStage": {
+            "description": "Mongoeco search.aggregate aggregateStage for the declared configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "aggregate.operators": {
+            "description": "Mongoeco search.aggregate operators for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.requiresLeadingStage": {
+            "description": "Mongoeco search.aggregate requiresLeadingStage for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportedOptions": {
+            "description": "Mongoeco search.aggregate supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.supportsCollectionScope": {
+            "description": "Mongoeco search.aggregate supportsCollectionScope for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsDatabaseScope": {
+            "description": "Mongoeco search.aggregate supportsDatabaseScope for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsExplain": {
+            "description": "Mongoeco search.aggregate supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsSession": {
+            "description": "Mongoeco search.aggregate supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.unsupportedOptions": {
+            "description": "Mongoeco search.aggregate unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
           }
         }
       },

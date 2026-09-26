@@ -106,6 +106,12 @@ fields and wrong types. The integer list `supportedStrengths` remains an
 operational input-validation contract because exchange v1 has no integer-set
 value kind; a string conversion would change its meaning.
 
+`search.aggregate` reports its own operation options, accepted no-ops,
+leading-stage and scope flags with the exact cursor result binding. Its
+structured `stageOptions` remain in Mongoeco's input and execution contract;
+the exchange projection does not assert that an opaque value satisfies a
+specific nested stage requirement.
+
 The packaged snapshot describes Mongoeco's **declared public library
 surface**. Its source is `declared`; it does not prove what a running
 deployment has observed or tested. Runtime providers must emit their own

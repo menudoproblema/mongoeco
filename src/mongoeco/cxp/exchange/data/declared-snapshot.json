@@ -1048,7 +1048,37 @@
             "autocomplete",
             "string",
             "token"
-          ]
+          ],
+          "aggregate.acceptedNoopOptions": [],
+          "aggregate.acceptsPipeline": true,
+          "aggregate.aggregateStage": "$search",
+          "aggregate.operators": [
+            "text",
+            "phrase",
+            "autocomplete",
+            "wildcard",
+            "exists",
+            "in",
+            "equals",
+            "range",
+            "near",
+            "compound",
+            "regex"
+          ],
+          "aggregate.requiresLeadingStage": true,
+          "aggregate.supportedOptions": [
+            "allow_disk_use",
+            "batch_size",
+            "comment",
+            "hint",
+            "let",
+            "max_time_ms"
+          ],
+          "aggregate.supportsCollectionScope": true,
+          "aggregate.supportsDatabaseScope": false,
+          "aggregate.supportsExplain": true,
+          "aggregate.supportsSession": true,
+          "aggregate.unsupportedOptions": []
         },
         "support": "supported"
       },
@@ -1206,7 +1236,7 @@
     "catalog": {
       "name": "mongodb",
       "namespace": "org.mongoeco",
-      "sha256": "9b3973183ea7d7b04529fe38b0560c4f33143552c8cd50291a91605376f41273",
+      "sha256": "aa99d50bb4821c53a082cd30567fbe427747cb059776de98a8a6b1afb6b3fbcc",
       "version": "1.1.0"
     },
     "configuration_revision": "mongoeco-public-catalog-1.1.0",
