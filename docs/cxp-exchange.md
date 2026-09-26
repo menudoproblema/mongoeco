@@ -91,20 +91,28 @@ search reports `aggregate.supportsDatabaseScope=false`; omission remains
 unknown. The owner validator checks the nested types and the result binding.
 
 Top-level search and vector search scalars and string sets, including the
-text-search tier, filter modes, mappings, and reported backend, are typed
-catalog properties. Narrative notes and structured nested operator semantics
-remain owner-operated until their correlations have an exact exchange mapping.
+text-search tier, filter modes, mappings, and backend, are typed catalog
+properties. The generic declared snapshot omits vector backend, mode and
+filter mode because the selected engine changes them. A snapshot of a
+concrete configuration may report their validated values. Narrative notes
+and structured nested operator semantics remain owner-operated until their
+correlations have an exact exchange mapping.
 
-Persistence support and the seven SDAM feature flags are reported as exact
-booleans. `false` is a negative claim, while omission stays unknown. The
-generic declared snapshot does not assert a concrete server count or topology
-for an external deployment; those facts belong to that resource's observation.
+Persistence and the seven SDAM feature flags have exact boolean properties.
+The generic declared snapshot reports the driver-wide SDAM flags, but omits
+`persistent`: MemoryEngine and SQLiteEngine do not make the same persistence
+claim. `false` in a concrete snapshot is a negative claim; omission stays
+unknown. Server count and topology also belong to a selected resource's
+observation.
 
 Collation backend and supported capability values are scoped as `backend.*`
 and `capabilities.*` properties. The owner validator rejects unknown nested
 fields and wrong types. The integer list `supportedStrengths` remains an
 operational input-validation contract because exchange v1 has no integer-set
-value kind; a string conversion would change its meaning.
+value kind; a string conversion would change its meaning. The generic declared
+snapshot omits the four backend availability/selection values and
+`capabilities.fallbackBackend`: optional ICU and pyuca installations change
+them. A snapshot for an installed environment can report those values.
 
 `search.aggregate` reports its own operation options, accepted no-ops,
 leading-stage and scope flags with the exact cursor result binding. Its
@@ -165,8 +173,9 @@ removal requires the coordinated release sequence and installed consumer gates.
 The row-level audit of the owner metadata is in
 [`cxp-operational-metadata-conservation.csv`](cxp-operational-metadata-conservation.csv).
 It pins the source SHA-256 and assigns all 410 logical facts to an exchange
-claim or a producer-operated contract. Its current status is open: 298 rows
-have an exact exchange destination; 112 rows need owner review, individual
-operational oracles, or deployment observation. This file covers the packaged
+claim or a producer-operated contract. Its current status is open: 289 rows
+have an exact claim in the generic declaration or an operation alias; nine
+have catalog definitions but require a concrete runtime observation; 112
+need owner review or individual operational oracles. This file covers the packaged
 operational metadata only. It does not close the separate inventory of public
 APIs, wire commands, BSON behavior, or deployed resources.

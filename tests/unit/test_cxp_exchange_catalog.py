@@ -528,12 +528,9 @@ def test_all_projected_operation_facts_match_owner_declaration(
             "vector_search",
             (
                 "aggregateStage",
-                "backend",
                 "explainFeatures",
                 "fallback",
-                "filterMode",
                 "hybridFilterModes",
-                "mode",
                 "similarities",
             ),
         ),
@@ -611,13 +608,18 @@ def test_sdam_and_persistence_flags_match_owner_and_omit_unknown() -> None:
         item["name"]: item
         for item in load_mongodb_declared_snapshot().payload["capabilities"]
     }
-    assert claims["persistence"]["properties"]["persistent"] is owner[
-        "persistence"
-    ]["persistent"]
+    assert "persistent" not in claims["persistence"]["properties"]
+    assert "persistent" in next(
+        item
+        for item in load_mongodb_catalog().payload["capabilities"]
+        if item["name"] == "persistence"
+    )["properties"]
     for field, value in owner["topology_discovery"]["sdam"].items():
         assert claims["topology_discovery"]["properties"][f"sdam.{field}"] is value
     assert "topologyType" not in claims["topology_discovery"]["properties"]
     assert "serverCount" not in claims["topology_discovery"]["properties"]
+    for field in ("backend", "mode", "filterMode"):
+        assert field not in claims["vector_search"]["properties"]
 
     identity = MongoSnapshotIdentity(
         provider_id="provider-A",
@@ -655,6 +657,42 @@ def test_sdam_and_persistence_flags_match_owner_and_omit_unknown() -> None:
     with pytest.raises(ValueError, match="Invalid MongoDB topology_discovery metadata"):
         snapshot_for({"unknownFlag": True})
 
+    persistence = build_mongodb_snapshot(
+        catalog=load_mongodb_catalog(),
+        identity=identity,
+        capabilities=(
+            MongoCapabilityClaim(
+                name="persistence",
+                support="supported",
+                metadata={"persistent": False, "storageEngine": "memory"},
+                operations=(),
+            ),
+        ),
+    )
+    assert persistence.payload["capabilities"][0]["properties"]["persistent"] is False
+
+    vector = build_mongodb_snapshot(
+        catalog=load_mongodb_catalog(),
+        identity=identity,
+        capabilities=(
+            MongoCapabilityClaim(
+                name="vector_search",
+                support="supported",
+                metadata={
+                    "similarities": ["cosine"],
+                    "backend": "python",
+                    "mode": "exact",
+                    "filterMode": "post-candidate",
+                },
+                operations=(),
+            ),
+        ),
+    )
+    properties = vector.payload["capabilities"][0]["properties"]
+    assert properties["backend"] == "python"
+    assert properties["mode"] == "exact"
+    assert properties["filterMode"] == "post-candidate"
+
 
 def test_sdam_false_requirement_has_three_distinct_outcomes() -> None:
     requirement_content = load_mongodb_profile("mongodb-core").as_dict()
@@ -690,6 +728,71 @@ def test_sdam_false_requirement_has_three_distinct_outcomes() -> None:
     assert verdict() == "indeterminate"
 
 
+def test_persistence_requires_a_concrete_configuration() -> None:
+    requirement_content = load_mongodb_profile("mongodb-core").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "persistent-engine",
+        "operator": "equals",
+        "capability": "persistence",
+        "path": "/properties/persistent",
+        "value": True,
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    requirement = Document(requirement_content, expected_type="cxp.requirements")
+    assert evaluate_requirements_detailed(
+        load_mongodb_declared_snapshot(),
+        requirement,
+        _context(),
+        catalogs=mongodb_catalog_store(),
+    ).verdict == "indeterminate"
+
+    identity = MongoSnapshotIdentity(
+        provider_id="provider-A",
+        subject_id="subject-A",
+        configuration_revision="revision-A",
+        observed_at="2026-09-26T00:00:00Z",
+        source_kind="observed",
+        source_reference="owner-report-sha256:example",
+    )
+    context = Document(
+        {
+            "document_type": "cxp.context",
+            "spec_version": 2,
+            "payload": {
+                "subject_id": "subject-A",
+                "configuration_revision": "revision-A",
+                "accepted_sources": ["observed"],
+            },
+        },
+        expected_type="cxp.context",
+    )
+
+    def verdict(*, persistent: bool) -> str:
+        snapshot = build_mongodb_snapshot(
+            catalog=load_mongodb_catalog(),
+            identity=identity,
+            capabilities=(
+                MongoCapabilityClaim(
+                    name="persistence",
+                    support="supported",
+                    metadata={
+                        "persistent": persistent,
+                        "storageEngine": "configured-engine",
+                    },
+                    operations=(),
+                ),
+            ),
+        )
+        return evaluate_requirements_detailed(
+            snapshot, requirement, context, catalogs=mongodb_catalog_store()
+        ).verdict
+
+    assert verdict(persistent=False) == "incompatible"
+    assert verdict(persistent=True) == "compatible"
+
+
 def test_collation_facts_keep_backend_and_capability_scope() -> None:
     owner = json.loads(
         files("mongoeco.cxp.exchange")
@@ -719,7 +822,11 @@ def test_collation_facts_keep_backend_and_capability_scope() -> None:
     }.items():
         for field in fields:
             value = owner["collation"][scope][field]
-            reported = claim["properties"][f"{scope}.{field}"]
+            property_name = f"{scope}.{field}"
+            if scope == "backend" or field == "fallbackBackend":
+                assert property_name not in claim["properties"]
+                continue
+            reported = claim["properties"][property_name]
             if isinstance(value, list):
                 assert reported == sorted(value)
             else:
@@ -810,6 +917,10 @@ def test_collation_backend_availability_has_three_outcomes() -> None:
             catalogs=mongodb_catalog_store(),
         ).verdict
 
+    assert verdict() == "indeterminate"
+    for claim in snapshot_content["payload"]["capabilities"]:
+        if claim["name"] == "collation":
+            claim["properties"]["backend.advancedOptionsAvailable"] = False
     assert verdict() == "incompatible"
     for claim in snapshot_content["payload"]["capabilities"]:
         if claim["name"] == "collation":

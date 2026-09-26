@@ -1141,7 +1141,6 @@
           "aggregate.supportsSession": true,
           "aggregate.unsupportedOptions": [],
           "aggregateStage": "$vectorSearch",
-          "backend": "usearch",
           "explainFeatures": [
             "pathSummary",
             "resolvedLeafPaths",
@@ -1152,13 +1151,11 @@
             "vectorBackend"
           ],
           "fallback": "exact",
-          "filterMode": "post-candidate-with-adaptive-candidate-expansion",
           "hybridFilterModes": [
             "candidate-prefilter",
             "candidate-prefilter+post-candidate",
             "post-candidate"
           ],
-          "mode": "local-ann-with-exact-baseline",
           "similarities": [
             "cosine",
             "dotProduct",
@@ -1176,19 +1173,12 @@
             "capabilities",
             "operationMetadata"
           ],
-          "backend.advancedOptionsAvailable": false,
-          "backend.availableBackends": [
-            "pyuca"
-          ],
-          "backend.selectedBackend": "pyuca",
-          "backend.unicodeAvailable": true,
           "capabilities.advancedOptionsRequireIcu": [
             "backwards",
             "alternate",
             "maxVariable",
             "normalization"
           ],
-          "capabilities.fallbackBackend": "pyuca",
           "capabilities.optionalIcuBackend": true,
           "capabilities.supportedLocales": [
             "simple",
@@ -1207,8 +1197,7 @@
             "operationMetadata",
             "persistent",
             "storageEngine"
-          ],
-          "persistent": true
+          ]
         },
         "support": "supported"
       },
