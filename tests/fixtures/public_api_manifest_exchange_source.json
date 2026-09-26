@@ -24548,7 +24548,7 @@
         },
         "load_mongodb_catalog": {
           "async": false,
-          "definedIn": "mongoeco.cxp.exchange",
+          "definedIn": "mongoeco.cxp.exchange.documents",
           "kind": "function",
           "parameters": [],
           "qualifiedName": "load_mongodb_catalog",
@@ -24560,7 +24560,7 @@
         },
         "load_mongodb_declared_snapshot": {
           "async": false,
-          "definedIn": "mongoeco.cxp.exchange",
+          "definedIn": "mongoeco.cxp.exchange.documents",
           "kind": "function",
           "parameters": [],
           "qualifiedName": "load_mongodb_declared_snapshot",
@@ -24572,7 +24572,7 @@
         },
         "load_mongodb_profile": {
           "async": false,
-          "definedIn": "mongoeco.cxp.exchange",
+          "definedIn": "mongoeco.cxp.exchange.documents",
           "kind": "function",
           "parameters": [
             {
@@ -24595,7 +24595,7 @@
         },
         "load_mongodb_tier": {
           "async": false,
-          "definedIn": "mongoeco.cxp.exchange",
+          "definedIn": "mongoeco.cxp.exchange.documents",
           "kind": "function",
           "parameters": [
             {
@@ -24618,7 +24618,7 @@
         },
         "mongodb_catalog_store": {
           "async": false,
-          "definedIn": "mongoeco.cxp.exchange",
+          "definedIn": "mongoeco.cxp.exchange.documents",
           "kind": "function",
           "parameters": [],
           "qualifiedName": "mongodb_catalog_store",
@@ -37184,7 +37184,7 @@
       }
     }
   },
-  "packageVersion": "4.7.0",
+  "packageVersion": "4.8.0",
   "resources": [
     "py.typed",
     "compat/resources/deprecations-v1.json",

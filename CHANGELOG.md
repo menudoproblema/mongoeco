@@ -8,6 +8,17 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed (target 4.8.0; not published)
+
+- **Documented minor-version exception:** replace the public legacy CXP
+  catalogs, descriptors, handshake and compatibility calculations with
+  `mongoeco.cxp.exchange` owner documents and the single CXP evaluator. This
+  breaks imports and reporting views from Mongoeco 4.7; the replacement and
+  removed surfaces are listed in `docs/cxp-c4-migration.md`.
+- Require `cxp[exchange]>=5.0.0,<6`. Mongoeco 4.8.0 is prepared against the
+  exact local CXP 5.0.0 candidate; it is not published or authorized for
+  publication by this source change.
+
 ## [4.7.0] - 2026-09-13
 
 ### Removed

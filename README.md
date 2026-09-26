@@ -69,11 +69,11 @@ MongoEco is a PEP 561 typed package. Wheels and source distributions include
 engine SPI v2, Search and conformance surfaces. CI checks those contracts with
 strict positive and negative consumer fixtures against the installed wheel.
 
-The base install now also includes `cxp>=4.1.0`, so `mongoeco` can expose the
-canonical `database/mongodb` contract directly.
+The 4.8.0 source requires `cxp[exchange]>=5.0.0,<6` and exposes its
+`database/mongodb` contract through owner-authored exchange documents.
 Reference:
 
-* [docs/cxp.md](docs/cxp.md)
+* [docs/cxp-exchange.md](docs/cxp-exchange.md)
 
 The public compatibility export and the top-level `cxp` blocks surfaced by
 `find(...).explain()` / `aggregate(...).explain()` are now projected from that
@@ -158,10 +158,10 @@ from `mongoeco.engines`; see the
 SPI v2 is the only stable engine SPI and engine capabilities must be declared
 explicitly.
 
-## Public Surface Stability (removal-major source)
+## Public Surface Stability (4.8.0 source candidate)
 
-This source prototype prepares the next breaking release; its version has not
-been assigned. Its import roots are explicit:
+The 4.8.0 source candidate prepares an exchange-only breaking release. It is
+not published. Its import roots are explicit:
 
 * stable import roots are `mongoeco`, `mongoeco.compat`, `mongoeco.cxp.exchange`,
   `mongoeco.engines` and `mongoeco.conformance`
@@ -499,6 +499,10 @@ public API and engine SPI v2 are supported contracts. MongoEco 4.7 deliberately
 removes the deprecated engine SPI v1 within a minor release; this documented
 exception to Semantic Versioning is a product decision, not an inferred
 compatibility guarantee.
+
+The unpublished 4.8.0 source makes a second explicit minor-version exception
+for removal of its legacy CXP surface. Its exchange replacement and public
+API diff are documented in [the CXP migration guide](docs/cxp-c4-migration.md).
 
 Release-readiness checklist:
 

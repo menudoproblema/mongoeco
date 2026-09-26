@@ -164,7 +164,7 @@ The catalog's identity, version and SHA-256 in every requirement and snapshot
 are exact pins. Changing the capability set or semantics requires a new
 catalog version and explicitly adopted requirement documents.
 
-The removal-major source removes the old `mongoeco.cxp` reexports and modules.
+The unpublished 4.8.0 source removes the old `mongoeco.cxp` reexports and modules.
 `mongoeco.compat.export_exchange_catalog()` embeds the exact owner documents
 in its reporting view. Historical source and tests remain in
 `evidence/mongoeco-legacy-cxp-python.zip`, outside installed packages. Public
