@@ -84,6 +84,12 @@ omitted set remains unknown. The owner validator checks each nested write
 field's type and operation name, and the snapshot builder requires an exact
 result binding before reporting its values.
 
+`aggregation.aggregate` and `vector_search.aggregate` have separate property
+namespaces despite sharing an operation name. Their supported stage, operator,
+option and scope values follow the owner declaration. In particular, vector
+search reports `aggregate.supportsDatabaseScope=false`; omission remains
+unknown. The owner validator checks the nested types and the result binding.
+
 The packaged snapshot describes Mongoeco's **declared public library
 surface**. Its source is `declared`; it does not prove what a running
 deployment has observed or tested. Runtime providers must emit their own

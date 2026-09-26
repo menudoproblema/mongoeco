@@ -265,6 +265,70 @@ class MongoAggregationMetadata(msgspec.Struct, frozen=True, forbid_unknown_field
     )
 
 
+AGGREGATION_OPERATION_FIELDS = frozenset(
+    {
+        "acceptedNoopOptions",
+        "acceptsPipeline",
+        "supportedExpressionOperators",
+        "supportedGroupAccumulators",
+        "supportedOptions",
+        "supportedStages",
+        "supportedWindowAccumulators",
+        "supportsCollectionScope",
+        "supportsDatabaseScope",
+        "supportsExplain",
+        "supportsLeadingSearchStage",
+        "supportsLeadingVectorSearchStage",
+        "supportsSession",
+        "unsupportedOptions",
+    }
+)
+
+
+class MongoAggregationOperationMetadata(
+    msgspec.Struct, frozen=True, forbid_unknown_fields=True
+):
+    accepted_noop_options: tuple[str, ...] | None = msgspec.field(
+        name="acceptedNoopOptions", default=None
+    )
+    accepts_pipeline: bool | None = msgspec.field(name="acceptsPipeline", default=None)
+    result_type: str | None = msgspec.field(name="resultType", default=None)
+    supported_expression_operators: tuple[str, ...] | None = msgspec.field(
+        name="supportedExpressionOperators", default=None
+    )
+    supported_group_accumulators: tuple[str, ...] | None = msgspec.field(
+        name="supportedGroupAccumulators", default=None
+    )
+    supported_options: tuple[str, ...] | None = msgspec.field(
+        name="supportedOptions", default=None
+    )
+    supported_stages: tuple[str, ...] | None = msgspec.field(
+        name="supportedStages", default=None
+    )
+    supported_window_accumulators: tuple[str, ...] | None = msgspec.field(
+        name="supportedWindowAccumulators", default=None
+    )
+    supports_collection_scope: bool | None = msgspec.field(
+        name="supportsCollectionScope", default=None
+    )
+    supports_database_scope: bool | None = msgspec.field(
+        name="supportsDatabaseScope", default=None
+    )
+    supports_explain: bool | None = msgspec.field(
+        name="supportsExplain", default=None
+    )
+    supports_leading_search_stage: bool | None = msgspec.field(
+        name="supportsLeadingSearchStage", default=None
+    )
+    supports_leading_vector_search_stage: bool | None = msgspec.field(
+        name="supportsLeadingVectorSearchStage", default=None
+    )
+    supports_session: bool | None = msgspec.field(name="supportsSession", default=None)
+    unsupported_options: tuple[str, ...] | None = msgspec.field(
+        name="unsupportedOptions", default=None
+    )
+
+
 class MongoSearchMetadata(msgspec.Struct, frozen=True, forbid_unknown_fields=True):
     operators: tuple[str, ...]
     aggregate_stage: Literal["$search"] = msgspec.field(
@@ -330,6 +394,64 @@ class MongoVectorSearchMetadata(
     note: str | None = None
 
 
+VECTOR_SEARCH_OPERATION_FIELDS = frozenset(
+    {
+        "acceptedNoopOptions",
+        "acceptsPipeline",
+        "aggregateStage",
+        "explainFeatures",
+        "hybridFilterModes",
+        "requiresLeadingStage",
+        "scoreField",
+        "similarities",
+        "supportedOptions",
+        "supportsCollectionScope",
+        "supportsDatabaseScope",
+        "supportsExplain",
+        "supportsSession",
+        "unsupportedOptions",
+    }
+)
+
+
+class MongoVectorSearchOperationMetadata(
+    msgspec.Struct, frozen=True, forbid_unknown_fields=True
+):
+    accepted_noop_options: tuple[str, ...] | None = msgspec.field(
+        name="acceptedNoopOptions", default=None
+    )
+    accepts_pipeline: bool | None = msgspec.field(name="acceptsPipeline", default=None)
+    aggregate_stage: str | None = msgspec.field(name="aggregateStage", default=None)
+    explain_features: tuple[str, ...] | None = msgspec.field(
+        name="explainFeatures", default=None
+    )
+    hybrid_filter_modes: tuple[str, ...] | None = msgspec.field(
+        name="hybridFilterModes", default=None
+    )
+    requires_leading_stage: bool | None = msgspec.field(
+        name="requiresLeadingStage", default=None
+    )
+    result_type: str | None = msgspec.field(name="resultType", default=None)
+    score_field: str | None = msgspec.field(name="scoreField", default=None)
+    similarities: tuple[str, ...] | None = None
+    supported_options: tuple[str, ...] | None = msgspec.field(
+        name="supportedOptions", default=None
+    )
+    supports_collection_scope: bool | None = msgspec.field(
+        name="supportsCollectionScope", default=None
+    )
+    supports_database_scope: bool | None = msgspec.field(
+        name="supportsDatabaseScope", default=None
+    )
+    supports_explain: bool | None = msgspec.field(
+        name="supportsExplain", default=None
+    )
+    supports_session: bool | None = msgspec.field(name="supportsSession", default=None)
+    unsupported_options: tuple[str, ...] | None = msgspec.field(
+        name="unsupportedOptions", default=None
+    )
+
+
 class MongoCollationMetadata(msgspec.Struct, frozen=True, forbid_unknown_fields=True):
     backend: dict[str, object] = msgspec.field(default_factory=dict)
     capabilities: dict[str, object] = msgspec.field(default_factory=dict)
@@ -374,6 +496,8 @@ OPERATION_SCHEMAS: dict[
 ] = {
     "read": (READ_OPERATION_NAMES, MongoReadOperationMetadata),
     "write": (WRITE_OPERATION_NAMES, MongoWriteOperationMetadata),
+    "aggregation": (frozenset({"aggregate"}), MongoAggregationOperationMetadata),
+    "vector_search": (frozenset({"aggregate"}), MongoVectorSearchOperationMetadata),
 }
 
 

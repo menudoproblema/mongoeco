@@ -1170,6 +1170,76 @@
             "description": "Mongoeco aggregation sync for this configuration.",
             "kind": "boolean",
             "nullable": false
+          },
+          "aggregate.acceptedNoopOptions": {
+            "description": "Mongoeco aggregation.aggregate acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.acceptsPipeline": {
+            "description": "Mongoeco aggregation.aggregate acceptsPipeline for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportedExpressionOperators": {
+            "description": "Mongoeco aggregation.aggregate supportedExpressionOperators for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.supportedGroupAccumulators": {
+            "description": "Mongoeco aggregation.aggregate supportedGroupAccumulators for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.supportedOptions": {
+            "description": "Mongoeco aggregation.aggregate supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.supportedStages": {
+            "description": "Mongoeco aggregation.aggregate supportedStages for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.supportedWindowAccumulators": {
+            "description": "Mongoeco aggregation.aggregate supportedWindowAccumulators for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.supportsCollectionScope": {
+            "description": "Mongoeco aggregation.aggregate supportsCollectionScope for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsDatabaseScope": {
+            "description": "Mongoeco aggregation.aggregate supportsDatabaseScope for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsExplain": {
+            "description": "Mongoeco aggregation.aggregate supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsLeadingSearchStage": {
+            "description": "Mongoeco aggregation.aggregate supportsLeadingSearchStage for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsLeadingVectorSearchStage": {
+            "description": "Mongoeco aggregation.aggregate supportsLeadingVectorSearchStage for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsSession": {
+            "description": "Mongoeco aggregation.aggregate supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.unsupportedOptions": {
+            "description": "Mongoeco aggregation.aggregate unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
           }
         }
       },
@@ -1208,6 +1278,76 @@
         "properties": {
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.acceptedNoopOptions": {
+            "description": "Mongoeco vector_search.aggregate acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.acceptsPipeline": {
+            "description": "Mongoeco vector_search.aggregate acceptsPipeline for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.aggregateStage": {
+            "description": "Mongoeco vector_search.aggregate aggregateStage for the declared configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "aggregate.explainFeatures": {
+            "description": "Mongoeco vector_search.aggregate explainFeatures for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.hybridFilterModes": {
+            "description": "Mongoeco vector_search.aggregate hybridFilterModes for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.requiresLeadingStage": {
+            "description": "Mongoeco vector_search.aggregate requiresLeadingStage for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.scoreField": {
+            "description": "Mongoeco vector_search.aggregate scoreField for the declared configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "aggregate.similarities": {
+            "description": "Mongoeco vector_search.aggregate similarities for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.supportedOptions": {
+            "description": "Mongoeco vector_search.aggregate supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregate.supportsCollectionScope": {
+            "description": "Mongoeco vector_search.aggregate supportsCollectionScope for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsDatabaseScope": {
+            "description": "Mongoeco vector_search.aggregate supportsDatabaseScope for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsExplain": {
+            "description": "Mongoeco vector_search.aggregate supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.supportsSession": {
+            "description": "Mongoeco vector_search.aggregate supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "aggregate.unsupportedOptions": {
+            "description": "Mongoeco vector_search.aggregate unsupportedOptions for the declared configuration.",
             "kind": "string_set",
             "nullable": false
           }

@@ -8,7 +8,9 @@ from cxp.exchange import CatalogStore, Document, catalog_reference
 
 from mongoeco.cxp.exchange.documents import load_mongodb_catalog
 from mongoeco.cxp.exchange.metadata import (
+    AGGREGATION_OPERATION_FIELDS,
     READ_OPERATION_FIELDS,
+    VECTOR_SEARCH_OPERATION_FIELDS,
     WRITE_OPERATION_FIELDS,
     validate_mongodb_metadata,
 )
@@ -50,6 +52,8 @@ _VALUE_FIELDS: dict[str, frozenset[str]] = {
 _OPERATION_VALUE_FIELDS = {
     "read": READ_OPERATION_FIELDS,
     "write": WRITE_OPERATION_FIELDS,
+    "aggregation": AGGREGATION_OPERATION_FIELDS,
+    "vector_search": VECTOR_SEARCH_OPERATION_FIELDS,
 }
 
 

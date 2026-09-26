@@ -165,7 +165,7 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "82f7198a60e582650d422521eb8021dd0fe9b8ee5fa4c268a42e2c07d6ef04ec"
+        "d6096ec2a64c29a223a72f3e24155dce07c67078d1f4989c3a4e528ebe483c89"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
@@ -449,8 +449,12 @@ def test_write_options_are_scoped_to_their_operation() -> None:
     assert verdict() == "indeterminate"
 
 
-@pytest.mark.parametrize("capability", ["read", "write"])
-def test_all_io_operation_facts_match_owner_declaration(capability: str) -> None:
+@pytest.mark.parametrize(
+    "capability", ["read", "write", "aggregation", "vector_search"]
+)
+def test_all_projected_operation_facts_match_owner_declaration(
+    capability: str,
+) -> None:
     owner = json.loads(
         files("mongoeco.cxp.exchange")
         .joinpath("data/operational-metadata.json")
@@ -467,7 +471,11 @@ def test_all_io_operation_facts_match_owner_declaration(capability: str) -> None
         for field, value in facts.items():
             if field != "resultType":
                 reported = claim["properties"][f"{operation}.{field}"]
-                assert reported == value
+                if isinstance(value, list):
+                    assert len(value) == len(set(value))
+                    assert reported == sorted(value)
+                else:
+                    assert reported == value
 
 
 @pytest.mark.parametrize(
@@ -666,6 +674,98 @@ def test_unknown_write_operation_metadata_rejects_before_projection() -> None:
         validate_mongodb_metadata(
             "write", {"operationMetadata": {"not_in_catalog": {"acceptsSort": True}}}
         )
+
+
+def test_vector_aggregate_scope_is_explicitly_negative() -> None:
+    vector = next(
+        item
+        for item in load_mongodb_declared_snapshot().payload["capabilities"]
+        if item["name"] == "vector_search"
+    )
+    assert vector["properties"]["aggregate.supportsDatabaseScope"] is False
+    assert vector["properties"]["aggregate.supportsCollectionScope"] is True
+    assert vector["operations"] == [
+        {"name": "aggregate", "result_type": "org.mongoeco:result.cursor:1"}
+    ]
+
+    requirement_content = load_mongodb_profile("mongodb-search").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "vector-database-scope",
+        "operator": "equals",
+        "capability": "vector_search",
+        "operations": ["aggregate"],
+        "path": "/properties/aggregate.supportsDatabaseScope",
+        "value": True,
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    requirement = Document(requirement_content, expected_type="cxp.requirements")
+    snapshot_content = load_mongodb_declared_snapshot().as_dict()
+
+    def verdict() -> str:
+        return evaluate_requirements_detailed(
+            Document(snapshot_content, expected_type="cxp.snapshot"),
+            requirement,
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        ).verdict
+
+    assert verdict() == "incompatible"
+    for claim in snapshot_content["payload"]["capabilities"]:
+        if claim["name"] == "vector_search":
+            del claim["properties"]["aggregate.supportsDatabaseScope"]
+    assert verdict() == "indeterminate"
+
+
+def test_aggregate_operation_projection_rejects_unproven_bindings() -> None:
+    identity = MongoSnapshotIdentity(
+        provider_id="provider-A",
+        subject_id="subject-A",
+        configuration_revision="revision-A",
+        observed_at="2026-09-26T00:00:00Z",
+        source_kind="observed",
+        source_reference="owner-report-sha256:example",
+    )
+
+    def snapshot_for(
+        capability: str, metadata: dict[str, object], *, result: str = "cursor"
+    ) -> Document:
+        return build_mongodb_snapshot(
+            catalog=load_mongodb_catalog(),
+            identity=identity,
+            capabilities=(
+                MongoCapabilityClaim(
+                    name=capability,
+                    support="supported",
+                    metadata={
+                        **(
+                            {"supportedStages": []}
+                            if capability == "aggregation"
+                            else {"similarities": []}
+                        ),
+                        "operationMetadata": {"aggregate": metadata},
+                    },
+                    operations=(
+                        MongoOperationClaim(
+                            name="aggregate",
+                            result_type=f"org.mongoeco:result.{result}:1",
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+    properties = snapshot_for(
+        "vector_search", {"supportsDatabaseScope": False, "supportedOptions": []}
+    ).payload["capabilities"][0]["properties"]
+    assert properties["aggregate.supportsDatabaseScope"] is False
+    assert properties["aggregate.supportedOptions"] == []
+    for capability in ("aggregation", "vector_search"):
+        with pytest.raises(ValueError, match=f"Invalid MongoDB {capability} metadata"):
+            snapshot_for(capability, {"supportsDatabaseScope": "false"})
+        with pytest.raises(ValueError, match="result differs from its binding"):
+            snapshot_for(capability, {"resultType": "cursor"}, result="document")
 
 
 @pytest.mark.parametrize(
