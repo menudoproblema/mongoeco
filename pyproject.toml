@@ -83,6 +83,7 @@ mongoeco = [
     "compat/resources/*.json",
     "compat/schemas/*.json",
     "conformance/schemas/*.json",
+    "cxp/exchange/data/*.json",
 ]
 
 [tool.setuptools.dynamic]

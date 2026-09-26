@@ -1,5 +1,10 @@
 # CXP Integration
 
+The owner-authored document exchange catalog, tiers and profiles for the
+planned legacy transition are described in [cxp-exchange.md](cxp-exchange.md).
+That additive surface requires `cxp[exchange]>=4.3.0,<5`; this page records
+the currently supported legacy facade until its migration release.
+
 `mongoeco` treats CXP as the canonical public capability model for the
 `database/mongodb` interface, and reexports the related execution catalogs that
 matter for consumers already working against the CXP catalog surface.

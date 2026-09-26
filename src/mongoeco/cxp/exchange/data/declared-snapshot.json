@@ -1,0 +1,266 @@
+{
+  "critical_extensions": [],
+  "document_type": "cxp.snapshot",
+  "extensions": {},
+  "payload": {
+    "capabilities": [
+      {
+        "name": "read",
+        "operations": [
+          {
+            "name": "find",
+            "result_type": "org.mongoeco:result.cursor:1"
+          },
+          {
+            "name": "find_one",
+            "result_type": "org.mongoeco:result.document:1"
+          },
+          {
+            "name": "count_documents",
+            "result_type": "org.mongoeco:result.count:1"
+          },
+          {
+            "name": "estimated_document_count",
+            "result_type": "org.mongoeco:result.count:1"
+          },
+          {
+            "name": "distinct",
+            "result_type": "org.mongoeco:result.array:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": [
+            "async",
+            "embedded",
+            "operationMetadata",
+            "queryFieldOperators",
+            "queryTopLevelOperators",
+            "sync"
+          ]
+        },
+        "support": "supported"
+      },
+      {
+        "name": "write",
+        "operations": [
+          {
+            "name": "insert_one",
+            "result_type": "org.mongoeco:result.insert_result:1"
+          },
+          {
+            "name": "insert_many",
+            "result_type": "org.mongoeco:result.insert_many_result:1"
+          },
+          {
+            "name": "update_one",
+            "result_type": "org.mongoeco:result.update_result:1"
+          },
+          {
+            "name": "update_many",
+            "result_type": "org.mongoeco:result.update_result:1"
+          },
+          {
+            "name": "replace_one",
+            "result_type": "org.mongoeco:result.update_result:1"
+          },
+          {
+            "name": "delete_one",
+            "result_type": "org.mongoeco:result.delete_result:1"
+          },
+          {
+            "name": "delete_many",
+            "result_type": "org.mongoeco:result.delete_result:1"
+          },
+          {
+            "name": "bulk_write",
+            "result_type": "org.mongoeco:result.bulk_write_result:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": [
+            "async",
+            "embedded",
+            "operationMetadata",
+            "supportsPipelineUpdate",
+            "sync",
+            "updateOperators"
+          ]
+        },
+        "support": "supported"
+      },
+      {
+        "name": "transactions",
+        "operations": [
+          {
+            "name": "start_session",
+            "result_type": "org.mongoeco:result.session:1"
+          },
+          {
+            "name": "with_transaction",
+            "result_type": "org.mongoeco:result.transaction_result:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": [
+            "async",
+            "distributed",
+            "embedded",
+            "mode",
+            "sync"
+          ]
+        },
+        "support": "supported"
+      },
+      {
+        "name": "change_streams",
+        "operations": [
+          {
+            "name": "watch",
+            "result_type": "org.mongoeco:result.change_stream:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": [
+            "boundedHistory",
+            "distributed",
+            "implementation",
+            "persistent",
+            "resumable",
+            "resumableAcrossClientRestarts",
+            "resumableAcrossNodes",
+            "resumableAcrossProcesses"
+          ]
+        },
+        "support": "supported"
+      },
+      {
+        "name": "aggregation",
+        "operations": [
+          {
+            "name": "aggregate",
+            "result_type": "org.mongoeco:result.cursor:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": [
+            "async",
+            "embedded",
+            "explainable",
+            "operationMetadata",
+            "supportedExpressionOperators",
+            "supportedGroupAccumulators",
+            "supportedStages",
+            "supportedWindowAccumulators",
+            "sync"
+          ]
+        },
+        "support": "supported"
+      },
+      {
+        "name": "search",
+        "operations": [
+          {
+            "name": "aggregate",
+            "result_type": "org.mongoeco:result.cursor:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": [
+            "advancedAtlasLikeGaps",
+            "aggregateStage",
+            "exactFilterFieldMappings",
+            "explainFeatures",
+            "fieldMappings",
+            "note",
+            "operationMetadata",
+            "operatorSemantics",
+            "operators",
+            "sqliteBackends",
+            "stageOptions",
+            "structuredFieldMappings",
+            "structuredParentPathOperators",
+            "textSearchTier",
+            "textualFieldMappings"
+          ]
+        },
+        "support": "supported"
+      },
+      {
+        "name": "vector_search",
+        "operations": [
+          {
+            "name": "aggregate",
+            "result_type": "org.mongoeco:result.cursor:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": [
+            "aggregateStage",
+            "backend",
+            "explainFeatures",
+            "fallback",
+            "filterMode",
+            "hybridFilterModes",
+            "mode",
+            "note",
+            "operationMetadata",
+            "similarities"
+          ]
+        },
+        "support": "supported"
+      },
+      {
+        "name": "collation",
+        "operations": [],
+        "properties": {
+          "metadata_keys": [
+            "backend",
+            "capabilities",
+            "operationMetadata"
+          ]
+        },
+        "support": "supported"
+      },
+      {
+        "name": "persistence",
+        "operations": [],
+        "properties": {
+          "metadata_keys": [
+            "operationMetadata",
+            "persistent",
+            "storageEngine"
+          ]
+        },
+        "support": "supported"
+      },
+      {
+        "name": "topology_discovery",
+        "operations": [],
+        "properties": {
+          "metadata_keys": [
+            "operationMetadata",
+            "sdam",
+            "serverCount",
+            "topologyType"
+          ]
+        },
+        "support": "supported"
+      }
+    ],
+    "catalog": {
+      "name": "mongodb",
+      "namespace": "org.mongoeco",
+      "sha256": "2426ee7a7d9b4c06ab6d22b3eb9de2dcc16f2cd7b385efb618c7eb373c84dc5a",
+      "version": "1.0.0"
+    },
+    "configuration_revision": "mongoeco-public-catalog-1.0.0",
+    "observed_at": "2026-09-26T00:00:00.000000Z",
+    "provider_id": "mongoeco",
+    "source": {
+      "kind": "declared",
+      "reference": "org.mongoeco:public-catalog:1.0.0"
+    },
+    "subject_id": "mongoeco-public-catalog"
+  },
+  "spec_version": 1
+}

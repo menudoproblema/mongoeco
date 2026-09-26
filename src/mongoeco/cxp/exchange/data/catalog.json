@@ -1,0 +1,277 @@
+{
+  "critical_extensions": [],
+  "document_type": "cxp.catalog",
+  "extensions": {},
+  "payload": {
+    "capabilities": [
+      {
+        "description": "Read-only collection operations.",
+        "name": "read",
+        "operations": [
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "find",
+            "result_type": "org.mongoeco:result.cursor:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "find_one",
+            "result_type": "org.mongoeco:result.document:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "count_documents",
+            "result_type": "org.mongoeco:result.count:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "estimated_document_count",
+            "result_type": "org.mongoeco:result.count:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "distinct",
+            "result_type": "org.mongoeco:result.array:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": {
+            "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          }
+        }
+      },
+      {
+        "description": "Mutation operations over collections.",
+        "name": "write",
+        "operations": [
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "insert_one",
+            "result_type": "org.mongoeco:result.insert_result:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "insert_many",
+            "result_type": "org.mongoeco:result.insert_many_result:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "update_one",
+            "result_type": "org.mongoeco:result.update_result:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "update_many",
+            "result_type": "org.mongoeco:result.update_result:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "replace_one",
+            "result_type": "org.mongoeco:result.update_result:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "delete_one",
+            "result_type": "org.mongoeco:result.delete_result:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "delete_many",
+            "result_type": "org.mongoeco:result.delete_result:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "bulk_write",
+            "result_type": "org.mongoeco:result.bulk_write_result:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": {
+            "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          }
+        }
+      },
+      {
+        "description": "Client sessions and transaction orchestration.",
+        "name": "transactions",
+        "operations": [
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "start_session",
+            "result_type": "org.mongoeco:result.session:1"
+          },
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "with_transaction",
+            "result_type": "org.mongoeco:result.transaction_result:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": {
+            "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          }
+        }
+      },
+      {
+        "description": "Observe collection or database changes.",
+        "name": "change_streams",
+        "operations": [
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "watch",
+            "result_type": "org.mongoeco:result.change_stream:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": {
+            "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          }
+        }
+      },
+      {
+        "description": "General-purpose aggregation pipeline support.",
+        "name": "aggregation",
+        "operations": [
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "aggregate",
+            "result_type": "org.mongoeco:result.cursor:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": {
+            "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          }
+        }
+      },
+      {
+        "description": "Atlas Search via aggregate pipelines.",
+        "name": "search",
+        "operations": [
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "aggregate",
+            "result_type": "org.mongoeco:result.cursor:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": {
+            "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          }
+        }
+      },
+      {
+        "description": "Atlas Vector Search via aggregate pipelines.",
+        "name": "vector_search",
+        "operations": [
+          {
+            "idempotency": {
+              "state": "unknown"
+            },
+            "name": "aggregate",
+            "result_type": "org.mongoeco:result.cursor:1"
+          }
+        ],
+        "properties": {
+          "metadata_keys": {
+            "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          }
+        }
+      },
+      {
+        "description": "Locale-aware comparison and sorting support.",
+        "name": "collation",
+        "operations": [],
+        "properties": {
+          "metadata_keys": {
+            "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          }
+        }
+      },
+      {
+        "description": "Persistence guarantees and storage-engine metadata.",
+        "name": "persistence",
+        "operations": [],
+        "properties": {
+          "metadata_keys": {
+            "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          }
+        }
+      },
+      {
+        "description": "Expose topology and SDAM-style discovery data.",
+        "name": "topology_discovery",
+        "operations": [],
+        "properties": {
+          "metadata_keys": {
+            "description": "Keys present in producer-validated capability metadata.",
+            "kind": "string_set",
+            "nullable": false
+          }
+        }
+      }
+    ],
+    "description": "Generic MongoDB component compatibility declarations.",
+    "identity": {
+      "name": "mongodb",
+      "namespace": "org.mongoeco",
+      "version": "1.0.0"
+    },
+    "owner": "Mongoeco"
+  },
+  "spec_version": 1
+}

@@ -1,0 +1,49 @@
+{
+  "critical_extensions": [],
+  "document_type": "cxp.requirements",
+  "extensions": {},
+  "payload": {
+    "catalog": {
+      "name": "mongodb",
+      "namespace": "org.mongoeco",
+      "sha256": "2426ee7a7d9b4c06ab6d22b3eb9de2dcc16f2cd7b385efb618c7eb373c84dc5a",
+      "version": "1.0.0"
+    },
+    "requirement": {
+      "conditions": [
+        {
+          "capability": "read",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "core.read",
+          "operations": [],
+          "operator": "support",
+          "require_effective": true
+        },
+        {
+          "capability": "write",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "core.write",
+          "operations": [],
+          "operator": "support",
+          "require_effective": true
+        },
+        {
+          "capability": "aggregation",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "core.aggregation",
+          "operations": [],
+          "operator": "support",
+          "require_effective": true
+        }
+      ],
+      "critical_extensions": [],
+      "extensions": {},
+      "id": "tier.core",
+      "operator": "all"
+    }
+  },
+  "spec_version": 1
+}

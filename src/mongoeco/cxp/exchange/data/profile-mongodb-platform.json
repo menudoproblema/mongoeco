@@ -1,0 +1,136 @@
+{
+  "critical_extensions": [],
+  "document_type": "cxp.requirements",
+  "extensions": {},
+  "payload": {
+    "catalog": {
+      "name": "mongodb",
+      "namespace": "org.mongoeco",
+      "sha256": "2426ee7a7d9b4c06ab6d22b3eb9de2dcc16f2cd7b385efb618c7eb373c84dc5a",
+      "version": "1.0.0"
+    },
+    "requirement": {
+      "conditions": [
+        {
+          "capability": "read",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-platform.read",
+          "operations": [
+            "find",
+            "find_one",
+            "count_documents",
+            "estimated_document_count",
+            "distinct"
+          ],
+          "operator": "support",
+          "require_effective": true
+        },
+        {
+          "capability": "write",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-platform.write",
+          "operations": [
+            "insert_one",
+            "insert_many",
+            "update_one",
+            "update_many",
+            "replace_one",
+            "delete_one",
+            "delete_many",
+            "bulk_write"
+          ],
+          "operator": "support",
+          "require_effective": true
+        },
+        {
+          "capability": "aggregation",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-platform.aggregation",
+          "operations": [
+            "aggregate"
+          ],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "supportedStages"
+          ]
+        },
+        {
+          "capability": "transactions",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-platform.transactions",
+          "operations": [
+            "start_session",
+            "with_transaction"
+          ],
+          "operator": "support",
+          "require_effective": true
+        },
+        {
+          "capability": "change_streams",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-platform.change_streams",
+          "operations": [
+            "watch"
+          ],
+          "operator": "support",
+          "require_effective": true
+        },
+        {
+          "capability": "collation",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-platform.collation",
+          "operations": [],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "backend",
+            "capabilities"
+          ]
+        },
+        {
+          "capability": "persistence",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-platform.persistence",
+          "operations": [],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "persistent",
+            "storageEngine"
+          ]
+        },
+        {
+          "capability": "topology_discovery",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-platform.topology_discovery",
+          "operations": [],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "sdam",
+            "serverCount",
+            "topologyType"
+          ]
+        }
+      ],
+      "critical_extensions": [],
+      "extensions": {},
+      "id": "profile.mongodb-platform",
+      "operator": "all"
+    }
+  },
+  "spec_version": 1
+}
