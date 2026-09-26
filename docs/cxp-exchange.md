@@ -65,7 +65,13 @@ capabilities. Nested operation and runtime metadata remains governed by
 Mongoeco's operational contract; exchange claims only key presence.
 
 Structured MongoDB metadata values, telemetry, runtime input validation and
-`explain()` projections remain operational contracts of Mongoeco. Telemetry
+`explain()` projections remain operational contracts of Mongoeco. Cursor
+`explain()["cxp"]` now carries the exact exchange catalog reference and
+`profileVerdicts` evaluated from Mongoeco's installed declared snapshot with
+context v2. The verdicts describe the provider declaration, not a guessed
+minimal profile for one query. `operationMetadata` is a separate Mongoeco-owned
+description of the exercised operation. Unknown capability names reject before
+projection. Telemetry
 primitives now live in `mongoeco.telemetry_contract`; the public
 `mongoeco.cxp.telemetry` facade reexports those local types while consumers
 migrate. The old

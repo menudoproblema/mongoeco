@@ -78,7 +78,7 @@ from mongoeco.core.search_planning import (
     search_prefix_output_limit,
     search_result_limit_hint,
 )
-from mongoeco.cxp import build_mongodb_explain_projection
+from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import OperationFailure
 from mongoeco.session import ClientSession
@@ -397,14 +397,16 @@ class AsyncAggregationCursor:
     def _cxp_explain_projection(self) -> dict[str, object]:
         leading_search = self._leading_search_stage()
         if leading_search is None:
-            return build_mongodb_explain_projection(capability="aggregation")
+            return build_mongodb_exchange_explain_projection(
+                capability="aggregation"
+            )
         operator, _spec = leading_search
         if operator == "$vectorSearch":
-            return build_mongodb_explain_projection(
+            return build_mongodb_exchange_explain_projection(
                 capability="aggregation",
                 additional_capabilities=("vector_search",),
             )
-        return build_mongodb_explain_projection(
+        return build_mongodb_exchange_explain_projection(
             capability="aggregation",
             additional_capabilities=("search",),
         )

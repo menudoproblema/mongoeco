@@ -25,6 +25,9 @@ from mongoeco.cxp.exchange import (
     mongodb_catalog_store,
 )
 from mongoeco.cxp.exchange.metadata import validate_mongodb_metadata
+from mongoeco.cxp.exchange.projection import (
+    build_mongodb_exchange_explain_projection,
+)
 
 
 def _context() -> Document:
@@ -40,6 +43,22 @@ def _context() -> Document:
         },
         expected_type="cxp.context",
     )
+
+
+def test_explain_projection_uses_pinned_catalog_and_one_evaluator() -> None:
+    projection = build_mongodb_exchange_explain_projection(
+        capability="aggregation",
+        additional_capabilities=("vector_search",),
+    )
+    assert projection["catalog"] == catalog_reference(load_mongodb_catalog())
+    assert projection["profileVerdicts"] == dict.fromkeys(PROFILE_NAMES, "compatible")
+    assert projection["operationName"] == "aggregate"
+    assert projection["operationMetadata"]["aggregateStage"] == "$vectorSearch"
+
+
+def test_explain_projection_rejects_unknown_capability() -> None:
+    with pytest.raises(ValueError, match="Unknown MongoDB capability"):
+        build_mongodb_exchange_explain_projection(capability="unreported")
 
 
 def _snapshot_with(

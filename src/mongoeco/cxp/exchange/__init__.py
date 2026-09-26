@@ -56,12 +56,18 @@ def mongodb_catalog_store() -> CatalogStore:
     return CatalogStore((load_mongodb_catalog(),))
 
 
+from mongoeco.cxp.exchange.projection import (  # noqa: E402
+    build_mongodb_exchange_explain_projection,
+)
+
+
 __all__ = (
     "PROFILE_NAMES",
     "TIER_NAMES",
     "MongoCapabilityClaim",
     "MongoOperationClaim",
     "MongoSnapshotIdentity",
+    "build_mongodb_exchange_explain_projection",
     "build_mongodb_snapshot",
     "load_mongodb_catalog",
     "load_mongodb_declared_snapshot",

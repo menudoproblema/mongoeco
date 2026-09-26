@@ -325,21 +325,18 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(
             async_cursor_module._find_explain_cxp_projection({"name": "Ada"})[
-                "minimalProfile"
+                "profileVerdicts"
             ],
-            "mongodb-core",
-        )
-        self.assertEqual(
-            async_cursor_module._find_explain_cxp_projection({"name": "Ada"})[
-                "minimalProfileRequirements"
-            ][0]["capabilityName"],
-            "read",
-        )
-        self.assertEqual(
-            async_cursor_module._find_explain_cxp_projection({"name": "Ada"})[
-                "compatibleProfiles"
-            ],
-            ["mongodb-core", "mongodb-platform"],
+            dict.fromkeys(
+                (
+                    "mongodb-core",
+                    "mongodb-text-search",
+                    "mongodb-search",
+                    "mongodb-platform",
+                    "mongodb-aggregate-rich",
+                ),
+                "compatible",
+            ),
         )
         self.assertEqual(
             async_cursor_module._find_explain_cxp_projection({"name": "Ada"})[
@@ -352,16 +349,11 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
                 "operationMetadata"
             ]["acceptsSort"]
         )
-        self.assertTrue(
-            async_cursor_module._find_explain_cxp_projection({"name": "Ada"})[
-                "compatibleProfileSupport"
-            ]["mongodb-core"]["supported"]
-        )
         self.assertEqual(
             async_cursor_module._find_explain_cxp_projection(
                 {"$text": {"$search": "ada"}}
-            )["minimalProfile"],
-            "mongodb-core",
+            )["profileVerdicts"]["mongodb-core"],
+            "compatible",
         )
         no_scope_operation = type(
             "Operation",

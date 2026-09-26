@@ -18,7 +18,8 @@ The old facade below remains active pending its exchange migration.
 That means:
 
 * the public compatibility story is described with CXP capability names;
-* `compat` exports and `explain()` projections derive from that same model;
+* `compat` still exposes the transitional legacy catalog, while driver
+  `explain()` reports exchange verdicts and owner operational metadata;
 * `mongoeco` is ready to be wrapped by external systems that want to expose it
   as a live CXP provider.
 
@@ -36,13 +37,15 @@ In practice, this boundary is deliberate and stable:
 
 ## What `mongoeco` publishes
 
-The package publishes the canonical `database/mongodb` catalog, the aligned
-execution catalogs, and its public metadata through:
+The package publishes its owner-authored exchange catalog and requirement
+documents through `mongoeco.cxp.exchange`. The transitional catalog facade
+and public metadata remain available through:
 
 * `mongoeco.cxp`
 * `mongoeco.compat.export_cxp_catalog()`
-* the top-level `cxp` block exposed by `find(...).explain()` and
-  `aggregate(...).explain()`
+
+The top-level `cxp` block exposed by `find(...).explain()` and
+`aggregate(...).explain()` uses exchange and carries its exact catalog pin.
 
 Through `mongoeco.cxp`, the public catalog surface includes:
 
@@ -232,18 +235,12 @@ Each operation entry now also includes canonical telemetry requirements for its
 capability view (spans, metrics and events with required fields), so tooling
 can validate observability contracts without inferring signal names.
 
-The same requirement shape is now reused in `explain()["cxp"]` whenever
-`mongoeco` can infer a minimal reusable profile honestly, through:
-
-* `minimalProfile`
-* `minimalProfileRequirements`
-* `compatibleProfiles`
-* `compatibleProfileSupport`
-* `operationName`
-* `operationMetadata`
-
-`mongoeco` reexports those profiles through `mongoeco.cxp`, but does not
-perform profile negotiation itself.
+The driver `explain()["cxp"]` now reports the exact exchange catalog reference
+and `profileVerdicts` for the installed Mongoeco declaration. These verdicts
+come from the exchange evaluator with context v2. `operationName` and
+`operationMetadata` remain Mongoeco's operational explanation of the query.
+The old `minimalProfile` inference and profile-support export remain only on
+the transitional legacy facade; they are not used by driver explain.
 
 The canonical MongoDB catalog also defines typed metadata schemas for the
 capabilities that need a richer subset contract, such as:
@@ -347,17 +344,10 @@ with MongoClient(MemoryEngine()) as client:
     print(explain["cxp"])
 ```
 
-When `mongoeco` can infer it honestly, the `cxp` block in `explain()` also
-exposes the minimal reusable MongoDB profile for that capability path:
-
-* `find(...)` -> `mongodb-core`
-* `aggregate([{"$search": ...}])` -> `mongodb-text-search`
-* `aggregate([{"$vectorSearch": ...}])` -> `mongodb-search`
-
-That means a consumer can inspect one `explain()` result and recover both:
-
-* the canonical capability path being exercised;
-* the profile gate and exact profile requirements that would cover that path.
+The `cxp` block identifies the exercised capability and reports the provider's
+profile verdicts. A consumer that needs an admission decision must evaluate its
+own pinned requirement against the applicable snapshot and context; one query
+does not establish a minimal profile for the whole provider.
 
 ## Limits
 

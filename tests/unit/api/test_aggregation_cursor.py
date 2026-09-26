@@ -363,7 +363,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "verbosity"):
             await cursor.explain("invalid")
 
-    def test_cxp_projection_reports_minimal_profile_for_aggregation_search_paths(
+    def test_cxp_projection_reports_catalog_verdicts_for_search_paths(
         self,
     ):
         collection = _FakeCollection([])
@@ -388,11 +388,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual(
-            plain._cxp_explain_projection()["minimalProfile"], "mongodb-core"
-        )
-        self.assertEqual(
-            plain._cxp_explain_projection()["compatibleProfiles"],
-            ["mongodb-core", "mongodb-platform", "mongodb-aggregate-rich"],
+            plain._cxp_explain_projection()["profileVerdicts"]["mongodb-core"],
+            "compatible",
         )
         self.assertEqual(
             plain._cxp_explain_projection()["operationName"],
@@ -403,24 +400,11 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
                 "supportsDatabaseScope"
             ]
         )
-        self.assertTrue(
-            plain._cxp_explain_projection()["compatibleProfileSupport"][
-                "mongodb-aggregate-rich"
-            ]["supported"]
-        )
         self.assertEqual(
-            plain._cxp_explain_projection()["minimalProfileRequirements"][0][
-                "capabilityName"
+            text_search._cxp_explain_projection()["profileVerdicts"][
+                "mongodb-text-search"
             ],
-            "read",
-        )
-        self.assertEqual(
-            text_search._cxp_explain_projection()["minimalProfile"],
-            "mongodb-text-search",
-        )
-        self.assertEqual(
-            text_search._cxp_explain_projection()["compatibleProfiles"],
-            ["mongodb-text-search", "mongodb-search"],
+            "compatible",
         )
         self.assertEqual(
             text_search._cxp_explain_projection()["operationName"],
@@ -433,18 +417,10 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             "$search",
         )
         self.assertEqual(
-            text_search._cxp_explain_projection()["minimalProfileRequirements"][-1][
-                "capabilityName"
+            vector_search._cxp_explain_projection()["profileVerdicts"][
+                "mongodb-search"
             ],
-            "search",
-        )
-        self.assertEqual(
-            vector_search._cxp_explain_projection()["minimalProfile"],
-            "mongodb-search",
-        )
-        self.assertEqual(
-            vector_search._cxp_explain_projection()["compatibleProfiles"],
-            ["mongodb-search"],
+            "compatible",
         )
         self.assertEqual(
             vector_search._cxp_explain_projection()["operationName"],
@@ -457,10 +433,8 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             "$vectorSearch",
         )
         self.assertEqual(
-            vector_search._cxp_explain_projection()["minimalProfileRequirements"][-1][
-                "capabilityName"
-            ],
-            "vector_search",
+            vector_search._cxp_explain_projection()["additionalCapabilities"],
+            ["vector_search"],
         )
 
     def test_search_result_limit_hint_is_only_exposed_for_safe_trailing_window(

@@ -19,7 +19,7 @@ from mongoeco.core.operation_context import (
     resolve_operation_session,
 )
 from mongoeco.core.query_plan import QueryNode
-from mongoeco.cxp import build_mongodb_explain_projection
+from mongoeco.cxp.exchange import build_mongodb_exchange_explain_projection
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import InvalidOperation, OperationFailure
 from mongoeco.session import ClientSession
@@ -50,7 +50,7 @@ def _find_explain_cxp_projection(filter_spec: Filter) -> dict[str, object]:
     metadata: dict[str, object] | None = None
     if isinstance(filter_spec, dict) and "$text" in filter_spec:
         metadata = {"nonCanonicalFeature": "classicText"}
-    return build_mongodb_explain_projection(
+    return build_mongodb_exchange_explain_projection(
         capability="read",
         metadata=metadata,
     )
