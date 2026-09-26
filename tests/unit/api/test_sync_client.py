@@ -795,6 +795,23 @@ client.close()
         finally:
             client.close()
 
+    def test_local_topology_starts_unknown_with_one_seed_for_each_engine(self):
+        for engine_type, expected_storage in (
+            (MemoryEngine, "memory"),
+            (SQLiteEngine, "sqlite"),
+        ):
+            with (
+                self.subTest(engine=expected_storage),
+                MongoClient(engine_type()) as client,
+            ):
+                topology = client.topology_description
+                self.assertEqual(topology.topology_type.value, "unknown")
+                self.assertEqual(len(topology.servers), 1)
+                self.assertEqual(
+                    client.alpha.command("serverStatus")["storageEngine"]["name"],
+                    expected_storage,
+                )
+
     def test_sync_collection_exposes_subcollections_and_change_stream_helpers(self):
         client = MongoClient(MemoryEngine())
         try:

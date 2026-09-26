@@ -183,6 +183,12 @@ replay. This file covers the packaged operational metadata only. It does not
 close the separate inventory of public APIs, wire commands, BSON behavior or
 deployed resources.
 
+The static `serverCount: 1` and `topologyType: unknown` values describe the
+initial local topology seed, not a Mongo deployment. A `hello` observation can
+change both. `storageEngine` is likewise selected at runtime. Admission must
+use observations for its actual binding and generation; these three source
+values do not authorize a favorable default.
+
 In the owner metadata, `search.stageOptions.facet.previewOnly` describes only
 the deprecated 4.x `facetPreview` explain alias. Typed `$searchMeta` facet
 collector output remains the canonical operational result. The
