@@ -1,8 +1,8 @@
 # Mongoeco migration to exchange-only CXP
 
-This guide describes the isolated removal-major source. It is not a published
-release or a version assignment. The preceding migration release keeps the old
-imports with deprecation warnings while consumers change.
+This guide describes the exchange-only source on `main`. It is not a published
+release or a version assignment. The preceding migration source kept the old
+imports with deprecation warnings while consumers changed.
 
 | Retired surface | Replacement or owner |
 | --- | --- |
@@ -25,9 +25,9 @@ five removals and two additions. The exact legacy Python source and tests are
 archived in `evidence/mongoeco-legacy-cxp-python.zip`, and the old CXP guide is
 `evidence/mongoeco-legacy-cxp.md`.
 
-Before a public removal release, publish and verify the required CXP
-migration minors, rebuild Mongoeco and its consumers against the selected CXP
-major artifact, update dependency bounds and lockfiles to that exact release,
-run the full installed artifact matrix and compare the final public API
-manifest. The current source keeps the pre-major package version and `<5` CXP
-bound so a resolver cannot install an unpublished incompatible major.
+Before a public removal release, rebuild Mongoeco and its consumers against
+the exact CXP 5.0.0 artifact, regenerate any lockfiles after publication, run
+the full installed artifact matrix and compare the final public API manifest.
+This source requires `cxp[exchange]>=5.0.0,<6` and still carries the
+pre-release Mongoeco package version until its own release procedure assigns
+the next public version.

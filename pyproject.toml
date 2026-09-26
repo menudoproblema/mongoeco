@@ -12,7 +12,7 @@ license-files = ["LICENSE"]
 authors = [{name = "Vicente Ruiz"}]
 requires-python = ">=3.13"
 dependencies = [
-    "cxp[exchange]>=4.3.0,<5",
+    "cxp[exchange]>=5.0.0,<6",
     "msgspec>=0.20,<1",
     "pyuca>=1.2,<2",
     "rpds-py>=0.27,<2027",

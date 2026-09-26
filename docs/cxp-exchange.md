@@ -4,7 +4,7 @@ Mongoeco owns the `org.mongoeco` / `mongodb` catalog and its profile and tier
 requirements. They are packaged as JSON data under
 `mongoeco.cxp.exchange.data`; a consumer can read and evaluate them without
 importing a CXP catalog, descriptor, handshake or registry module.
-Install `cxp[exchange]>=4.3.0,<5` to use the document API and context v2.
+Install `cxp[exchange]>=5.0.0,<6` to use the document API and context v2.
 
 ```python
 from cxp.exchange import Document, evaluate_requirements
