@@ -14,7 +14,7 @@ from cxp.exchange import (
     evaluate_requirements_detailed,
 )
 
-from mongoeco.cxp.exchange import (
+from mongoeco.cxp.exchange.documents import (
     PROFILE_NAMES,
     load_mongodb_catalog,
     load_mongodb_declared_snapshot,

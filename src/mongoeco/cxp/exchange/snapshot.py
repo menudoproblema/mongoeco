@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from cxp.exchange import CatalogStore, Document, catalog_reference
 
+from mongoeco.cxp.exchange.documents import load_mongodb_catalog
 from mongoeco.cxp.exchange.metadata import validate_mongodb_metadata
 
 
@@ -64,6 +65,9 @@ def build_mongodb_snapshot(
         "version": "1.1.0",
     }:
         message = "Expected the Mongoeco-owned MongoDB catalog"
+        raise ValueError(message)
+    if catalog.sha256 != load_mongodb_catalog().sha256:
+        message = "Expected the exact Mongoeco-owned MongoDB catalog"
         raise ValueError(message)
     claims = []
     for claim in capabilities:

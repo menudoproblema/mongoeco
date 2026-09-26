@@ -186,6 +186,24 @@ def test_catalog_identity_and_hash_are_exact() -> None:
         )
 
 
+def test_runtime_projection_rejects_same_version_with_different_content() -> None:
+    changed = deepcopy(load_mongodb_catalog().as_dict())
+    changed["payload"]["description"] = "Different owner semantics"
+    with pytest.raises(ValueError, match="exact Mongoeco-owned MongoDB catalog"):
+        build_mongodb_snapshot(
+            catalog=Document(changed, expected_type="cxp.catalog"),
+            identity=MongoSnapshotIdentity(
+                provider_id="provider-A",
+                subject_id="subject-A",
+                configuration_revision="revision-A",
+                observed_at="2026-09-26T00:00:00Z",
+                source_kind="observed",
+                source_reference="owner-report-sha256:example",
+            ),
+            capabilities=(),
+        )
+
+
 def test_declared_source_does_not_satisfy_observed_only_policy() -> None:
     content = _context().as_dict()
     content["payload"]["accepted_sources"] = ["observed"]
