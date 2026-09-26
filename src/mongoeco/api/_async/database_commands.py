@@ -32,9 +32,10 @@ from mongoeco.core.bson_scalars import utc_bson_now
 from mongoeco.core.expression_context import ExpressionExecutionContext
 from mongoeco.core.json_compat import get_json_backend_name
 from mongoeco.driver.topology import sdam_capabilities_info
-from mongoeco.engines.base import AsyncStorageEngine
+# Public annotation introspection resolves these names at runtime.
+from mongoeco.engines.base import AsyncStorageEngine  # noqa: TC001
 from mongoeco.errors import ConnectionFailure, OperationFailure
-from mongoeco.session import ClientSession
+from mongoeco.session import ClientSession  # noqa: TC001
 from mongoeco.session_guards import ensure_session_can_use_engine
 from mongoeco.types import (
     BuildInfoDocument,
@@ -1296,6 +1297,14 @@ class AsyncDatabaseCommandService:
                 ),
                 comment=comment,
             )
+
+        if command_name == "dropDatabase":
+            command_value = spec.get("dropDatabase")
+            if command_value is not True and (
+                type(command_value) is not int or command_value != 1
+            ):
+                message = "dropDatabase command value must be 1"
+                raise TypeError(message)
 
         route = self._DELEGATED_COMMAND_HANDLERS.get(command_name)
         if route is None:

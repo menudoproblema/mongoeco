@@ -744,6 +744,109 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(connection.client_metadata, {"application": {"name": "wire-tests"}})
         self.assertEqual(connection.compression, ("noop",))
 
+    async def test_executor_preserves_both_legacy_handshake_aliases(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        for alias in ("isMaster", "ismaster"):
+            with self.subTest(alias=alias):
+                result = await proxy._executor.execute_command(
+                    {alias: 1, "$db": "admin"},
+                    connection=connection,
+                )
+                self.assertEqual(result["ok"], 1.0)
+                self.assertTrue(result["ismaster"])
+                self.assertEqual(connection.last_hello_command, alias)
+
+        self.assertEqual(connection.hello_count, 2)
+        with self.assertRaisesRegex(OperationFailure, "unsupported wire command"):
+            await proxy._executor.execute_command(
+                {"isMASTER": 1, "$db": "admin"},
+                connection=connection,
+            )
+
+    async def test_executor_wire_failpoint_is_local_fail_command_only(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        configured = await proxy._executor.execute_command(
+            {
+                "configureFailPoint": "failCommand",
+                "mode": {"times": 1},
+                "data": {"failCommands": ["ping"], "errorCode": 123},
+                "$db": "admin",
+            },
+            connection=connection,
+        )
+        self.assertEqual(configured["failPoint"], "failCommand")
+        self.assertTrue(configured["enabled"])
+        with self.assertRaisesRegex(
+            OperationFailure, "failCommand failpoint triggered"
+        ):
+            await proxy._executor.execute_command(
+                {"ping": 1, "$db": "admin"},
+                connection=connection,
+            )
+        self.assertEqual(
+            await proxy._executor.execute_command(
+                {"ping": 1, "$db": "admin"},
+                connection=connection,
+            ),
+            {"ok": 1.0},
+        )
+
+        with self.assertRaisesRegex(OperationFailure, "only supports failCommand"):
+            await proxy._executor.execute_command(
+                {"configureFailPoint": "other", "mode": "off", "$db": "admin"},
+                connection=connection,
+            )
+
+    async def test_wire_rename_and_drop_database_preserve_invalid_input(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        await proxy._executor.execute_command(
+            {"create": "source", "$db": "db"}, connection=connection
+        )
+        await proxy._executor.execute_command(
+            {"insert": "source", "documents": [{"_id": 1}], "$db": "db"},
+            connection=connection,
+        )
+
+        with self.assertRaisesRegex(OperationFailure, "current database"):
+            await proxy._executor.execute_command(
+                {"renameCollection": "other.source", "to": "db.target", "$db": "db"},
+                connection=connection,
+            )
+        for invalid in (0, "drop", 1.0):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(
+                OperationFailure, "wire dropDatabase requires the command value 1"
+            ):
+                await proxy._executor.execute_command(
+                    {"dropDatabase": invalid, "$db": "db"},
+                    connection=connection,
+                )
+
+        names_before = await proxy._executor.execute_command(
+            {"listCollections": 1, "$db": "db"}, connection=connection
+        )
+        self.assertEqual(
+            [item["name"] for item in names_before["cursor"]["firstBatch"]],
+            ["source"],
+        )
+        renamed = await proxy._executor.execute_command(
+            {"renameCollection": "db.source", "to": "db.target", "$db": "db"},
+            connection=connection,
+        )
+        self.assertEqual(renamed, {"ok": 1.0})
+        dropped = await proxy._executor.execute_command(
+            {"dropDatabase": 1, "$db": "db"}, connection=connection
+        )
+        self.assertEqual(dropped, {"dropped": "db", "ok": 1.0})
+        names_after = await proxy._executor.execute_command(
+            {"listCollections": 1, "$db": "db"}, connection=connection
+        )
+        self.assertEqual(names_after["cursor"]["firstBatch"], [])
+
     async def test_executor_rejects_commands_outside_wire_surface(self):
         proxy = AsyncMongoEcoProxyServer()
         connection = proxy._connections.create(("127.0.0.1", 27017))

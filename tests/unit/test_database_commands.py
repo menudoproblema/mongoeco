@@ -26,6 +26,7 @@ from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.types import CollectionStatsSnapshot, CollectionValidationSnapshot, DatabaseStatsSnapshot, FindAndModifyLastErrorObject, FindAndModifyCommandResult
+from mongoeco.wire.capabilities import resolve_wire_command_capability
 from mongoeco.wire.surface import WireSurface
 
 
@@ -224,6 +225,10 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
                 for entry in DATABASE_COMMAND_SUPPORT_CATALOG.values()
             )
         )
+        for name, entry in DATABASE_COMMAND_SUPPORT_CATALOG.items():
+            capability = resolve_wire_command_capability(name)
+            if capability.kind == "passthrough":
+                self.assertEqual(capability.family, entry.family, name)
         failpoint = list_commands_document()["commands"]["configureFailPoint"]
         self.assertEqual(
             failpoint,
@@ -238,6 +243,22 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
                     "failpoint or distributed server behavior is claimed."
                 ),
             },
+        )
+
+    def test_drop_database_rejects_non_command_values_before_routing(self):
+        service = AsyncDatabaseCommandService(_FakeAdmin())
+        for invalid in (0, "drop", 1.0, None):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(
+                TypeError, "dropDatabase command value must be 1"
+            ):
+                service.parse_raw_command({"dropDatabase": invalid})
+        self.assertEqual(
+            service.parse_raw_command({"dropDatabase": 1}).command_name,
+            "dropDatabase",
+        )
+        self.assertEqual(
+            service.parse_raw_command({"dropDatabase": True}).command_name,
+            "dropDatabase",
         )
 
     def test_helper_result_builders_cover_document_helpers_and_engine_name_detection(self):

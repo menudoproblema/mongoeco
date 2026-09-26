@@ -86,6 +86,7 @@ _ADMIN_CAPABILITIES: dict[str, WireCommandCapability] = {
     "aggregate": WireCommandCapability(name="aggregate", family="admin_read"),
     "buildInfo": WireCommandCapability(name="buildInfo", family="admin_introspection", binds_session=False),
     "collStats": WireCommandCapability(name="collStats", family="admin_stats"),
+    "configureFailPoint": WireCommandCapability(name="configureFailPoint", family="admin_control"),
     "connectionStatus": WireCommandCapability(name="connectionStatus", family="admin_status", binds_session=False),
     "count": WireCommandCapability(name="count", family="admin_read"),
     "create": WireCommandCapability(name="create", family="admin_namespace"),
@@ -96,6 +97,7 @@ _ADMIN_CAPABILITIES: dict[str, WireCommandCapability] = {
     "delete": WireCommandCapability(name="delete", family="admin_write"),
     "distinct": WireCommandCapability(name="distinct", family="admin_read"),
     "drop": WireCommandCapability(name="drop", family="admin_namespace"),
+    "dropDatabase": WireCommandCapability(name="dropDatabase", family="admin_namespace"),
     "dropIndexes": WireCommandCapability(name="dropIndexes", family="admin_index"),
     "explain": WireCommandCapability(name="explain", family="admin_explain"),
     "find": WireCommandCapability(name="find", family="admin_read"),
@@ -111,10 +113,17 @@ _ADMIN_CAPABILITIES: dict[str, WireCommandCapability] = {
     "killOp": WireCommandCapability(name="killOp", family="admin_control", binds_session=False),
     "ping": WireCommandCapability(name="ping", family="admin_status", binds_session=False),
     "profile": WireCommandCapability(name="profile", family="admin_control"),
-    "serverStatus": WireCommandCapability(name="serverStatus", family="admin_status", binds_session=False),
+    "renameCollection": WireCommandCapability(
+        name="renameCollection", family="admin_namespace"
+    ),
+    "serverStatus": WireCommandCapability(
+        name="serverStatus", family="admin_status", binds_session=False
+    ),
     "update": WireCommandCapability(name="update", family="admin_write"),
     "validate": WireCommandCapability(name="validate", family="admin_validate"),
-    "whatsmyuri": WireCommandCapability(name="whatsmyuri", family="admin_introspection", binds_session=False),
+    "whatsmyuri": WireCommandCapability(
+        name="whatsmyuri", family="admin_introspection", binds_session=False
+    ),
 }
 
 _SPECIAL_CAPABILITIES: dict[str, WireCommandCapability] = {

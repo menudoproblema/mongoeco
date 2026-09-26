@@ -230,6 +230,17 @@ def _validate_db_stats(_body: dict[str, Any], command_document: dict[str, Any]) 
         raise OperationFailure("wire dbStats scale must be a positive integer")
 
 
+def _validate_drop_database(
+    _body: dict[str, Any], command_document: dict[str, Any]
+) -> None:
+    command_value = command_document.get("dropDatabase")
+    if command_value is not True and (
+        type(command_value) is not int or command_value != 1
+    ):
+        message = "wire dropDatabase requires the command value 1"
+        raise OperationFailure(message)
+
+
 def _validate_list_collections(_body: dict[str, Any], command_document: dict[str, Any]) -> None:
     _validate_command_value_one("listCollections", command_document.get("listCollections"))
     name_only = command_document.get("nameOnly")
@@ -422,6 +433,7 @@ _WIRE_COMMAND_VALIDATORS: dict[str, _WireValidator] = {
     "collStats": _validate_coll_stats,
     "dbHash": _validate_db_hash,
     "dbStats": _validate_db_stats,
+    "dropDatabase": _validate_drop_database,
     "listCollections": _validate_list_collections,
     "listDatabases": _validate_list_databases,
     "profile": _validate_profile,

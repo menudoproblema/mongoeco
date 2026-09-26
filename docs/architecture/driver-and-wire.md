@@ -172,6 +172,18 @@ accesible por `database.command(...)` y por wire. Su unico modo local es
 generales de MongoDB ni comportamiento distribuido. El inventario de
 `WireSurface` enumera cada nombre una sola vez, aunque un alias como
 `isMaster` aparezca en las listas de comandos de base de datos y especiales.
+El router wire conserva las mismas familias propietarias para todos los
+comandos passthrough: en particular, `configureFailPoint` es `admin_control`
+y `dropDatabase`/`renameCollection` son `admin_namespace`. Los aliases de
+handshake se enrutan por su familia wire `handshake` sin cambiar su ficha
+administrativa de `listCommands`.
+
+`dropDatabase` exige el valor de comando `1` (o `True` en el API Python)
+antes de enrutar o modificar datos; `0`, cadenas y otros tipos se rechazan.
+Es la forma documentada por el
+[comando MongoDB](https://www.mongodb.com/docs/v8.2/reference/command/dropDatabase/).
+`renameCollection` rechaza namespaces ajenos a la base seleccionada antes de
+aplicar el cambio.
 
 La validacion temprana del executor tambien cubre ya familias especiales
 fuera del passthrough puro:
