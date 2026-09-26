@@ -177,7 +177,8 @@ claim or a producer-operated contract. Its current status is open: 289 rows
 have an exact claim in the generic declaration or an operation alias; nine
 have catalog definitions but require a concrete runtime observation; 18
 collation behavior and scope rows have Memory/SQLite sync and async oracles,
-including an installed-wheel replay; 94 still need owner review or individual
-operational oracles. This file covers the packaged
+including an installed-wheel replay; four other collation rows have owner
+operational oracles; 90 still need owner review or individual operational
+oracles. This file covers the packaged
 operational metadata only. It does not close the separate inventory of public
 APIs, wire commands, BSON behavior, or deployed resources.

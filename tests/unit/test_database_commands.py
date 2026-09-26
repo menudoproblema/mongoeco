@@ -147,6 +147,12 @@ class _ProfilingEngine(MemoryEngine):
 
 
 class AsyncDatabaseCommandServiceTests(unittest.TestCase):
+    def test_collation_inspection_is_exposed_by_server_status(self):
+        status = server_status_document(MONGODB_DIALECT_70, engine=MemoryEngine())
+        self.assertIn("selectedBackend", status["mongoeco"]["collation"])
+        self.assertNotIn("collation", status)
+        self.assertNotIn("mongoeco", hello_document(MONGODB_DIALECT_70))
+
     def test_database_command_contract_is_shared_source_of_truth_for_runtime_metadata(self):
         list_commands = list_commands_document()
         find_document = list_commands["commands"]["find"]
