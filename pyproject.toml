@@ -83,6 +83,7 @@ mongoeco = [
     "py.typed",
     "compat/resources/*.json",
     "compat/schemas/*.json",
+    "driver/resources/*.json",
     "conformance/schemas/*.json",
     "cxp/exchange/data/*.json",
 ]

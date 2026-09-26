@@ -6,6 +6,9 @@ import textwrap
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 
+import mongoeco.cxp as cxp_module
+from mongoeco.cxp.exchange import load_mongodb_catalog
+
 
 class PublicExportsTests(unittest.TestCase):
     @staticmethod
@@ -19,7 +22,6 @@ class PublicExportsTests(unittest.TestCase):
             'mongoeco.api._async',
             'mongoeco.api._sync',
             'mongoeco.compat',
-            'mongoeco.cxp',
             'mongoeco.core.aggregation',
             'mongoeco.driver',
             'mongoeco.engines',
@@ -131,7 +133,8 @@ class PublicExportsTests(unittest.TestCase):
     def test_compat_package_keeps_a_curated_public_surface(self):
         import mongoeco.compat as compat_module
 
-        self.assertIn("export_cxp_catalog", compat_module.__all__)
+        self.assertIn("export_exchange_catalog", compat_module.__all__)
+        self.assertNotIn("export_cxp_catalog", compat_module.__all__)
         self.assertIn("export_full_compat_catalog", compat_module.__all__)
         self.assertNotIn("export_local_runtime_subset_catalog", compat_module.__all__)
         self.assertNotIn("DATABASE_COMMAND_SUPPORT_CATALOG", compat_module.__all__)
@@ -164,17 +167,9 @@ class PublicExportsTests(unittest.TestCase):
         self.assertFalse(hasattr(mongoeco, "LocalCommandTransport"))
         self.assertFalse(hasattr(mongoeco, "WireProtocolCommandTransport"))
 
-    def test_cxp_package_keeps_a_contract_focused_public_surface(self):
-        import mongoeco.cxp as cxp_module
-
-        self.assertIn("MONGODB_CATALOG", cxp_module.__all__)
-        self.assertIn("MONGODB_CORE_PROFILE", cxp_module.__all__)
-        self.assertIn("MongoSearchMetadata", cxp_module.__all__)
-        self.assertIn("export_cxp_capability_catalog", cxp_module.__all__)
-        self.assertIn("export_cxp_profile_catalog", cxp_module.__all__)
-        self.assertNotIn("MONGODB_FIND", cxp_module.__all__)
-        self.assertNotIn("MONGODB_UPDATE_ONE", cxp_module.__all__)
-        self.assertNotIn("MONGODB_SEARCH", cxp_module.__all__)
-        self.assertFalse(hasattr(cxp_module, "MONGODB_FIND"))
+    def test_cxp_package_has_only_exchange_documents(self):
+        self.assertEqual(cxp_module.__all__, ())
+        self.assertFalse(hasattr(cxp_module, "MONGODB_CATALOG"))
+        self.assertEqual(load_mongodb_catalog().document_type, "cxp.catalog")
         self.assertFalse(hasattr(cxp_module, "MONGODB_UPDATE_ONE"))
         self.assertFalse(hasattr(cxp_module, "MONGODB_SEARCH"))

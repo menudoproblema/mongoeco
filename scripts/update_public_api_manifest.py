@@ -22,7 +22,9 @@ from mongoeco.compat import (  # noqa: E402
 )
 
 
-DEFAULT_OUTPUT = PROJECT_ROOT / "tests/fixtures/public_api_manifest_v1.json"
+DEFAULT_OUTPUT = (
+    PROJECT_ROOT / "tests/fixtures/public_api_manifest_exchange_source.json"
+)
 
 
 def _render(document: dict[str, object]) -> str:

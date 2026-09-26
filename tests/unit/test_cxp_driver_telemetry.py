@@ -3,8 +3,8 @@ import unittest
 from unittest.mock import patch
 
 from mongoeco import AsyncMongoClient, MongoClient
-from mongoeco.cxp import MONGODB_CATALOG
-from mongoeco.cxp.driver_telemetry import (
+from mongoeco.driver.telemetry_projector import (
+    DriverTelemetryProjector,
     _classify_command,
     _normalize_command_name,
     _resolve_namespace,
@@ -12,7 +12,14 @@ from mongoeco.cxp.driver_telemetry import (
     _resolve_vector_similarity,
     _resolve_write_operation_name,
 )
-from mongoeco.cxp.telemetry import DriverTelemetryProjector, TelemetryBuffer
+from mongoeco.driver.telemetry_validation import driver_telemetry_issues
+from mongoeco.telemetry_contract import (
+    TelemetryBuffer,
+    TelemetryEvent,
+    TelemetryMetric,
+    TelemetrySnapshot,
+    TelemetrySpan,
+)
 from mongoeco.driver.monitoring import (
     CommandFailedEvent,
     CommandStartedEvent,
@@ -25,6 +32,46 @@ from mongoeco.driver.monitoring import (
 
 
 class DriverTelemetryProjectorTests(unittest.TestCase):
+    def test_owner_telemetry_validation_rejects_missing_fields_and_wrong_unit(
+        self,
+    ) -> None:
+        snapshot = TelemetrySnapshot(
+            provider_id="mongoeco-driver",
+            spans=(
+                TelemetrySpan(
+                    trace_id="trace",
+                    span_id="span",
+                    parent_span_id=None,
+                    name="db.client.operation",
+                    start_time=1.0,
+                    end_time=2.0,
+                    attributes={"db.operation.name": "find"},
+                ),
+            ),
+            metrics=(
+                TelemetryMetric(
+                    name="db.client.operation.duration",
+                    value=1.0,
+                    unit="ms",
+                    labels={},
+                ),
+            ),
+            events=(
+                TelemetryEvent(
+                    event_type="db.client.operation.completed",
+                    payload={},
+                ),
+            ),
+        )
+        issues = driver_telemetry_issues(snapshot, ("read",))
+        self.assertTrue(any("Missing span attribute" in issue for issue in issues))
+        self.assertTrue(any("Invalid metric unit" in issue for issue in issues))
+        self.assertTrue(any("Missing event payload" in issue for issue in issues))
+        self.assertEqual(
+            driver_telemetry_issues(snapshot, ("unknown",)),
+            ("Unknown telemetry capability: unknown",),
+        )
+
     def test_constructor_validates_buffer_provider_id_and_exposes_provider_id(self) -> None:
         buffer = TelemetryBuffer("other-provider")
         with self.assertRaisesRegex(ValueError, "provider_id does not match"):
@@ -83,7 +130,7 @@ class DriverTelemetryProjectorTests(unittest.TestCase):
             "succeeded",
         )
         self.assertTrue(
-            MONGODB_CATALOG.is_telemetry_snapshot_compliant(snapshot, ("read",))
+            not driver_telemetry_issues(snapshot, ("read",))
         )
 
     def test_failed_write_command_projects_canonical_operation_telemetry(self) -> None:
@@ -130,7 +177,7 @@ class DriverTelemetryProjectorTests(unittest.TestCase):
             "failed",
         )
         self.assertTrue(
-            MONGODB_CATALOG.is_telemetry_snapshot_compliant(snapshot, ("write",))
+            not driver_telemetry_issues(snapshot, ("write",))
         )
 
     def test_aggregate_search_and_vector_commands_project_specialized_telemetry(self) -> None:
@@ -222,7 +269,7 @@ class DriverTelemetryProjectorTests(unittest.TestCase):
                     self.assertEqual(snapshot.spans[0].attributes[key], value)
                     self.assertEqual(snapshot.events[0].payload[key], value)
                 self.assertTrue(
-                    MONGODB_CATALOG.is_telemetry_snapshot_compliant(
+                    not driver_telemetry_issues(
                         snapshot,
                         capabilities,
                     )
@@ -374,7 +421,7 @@ class DriverTelemetryProjectorTests(unittest.TestCase):
                 snapshot = async_projector.snapshot()
                 self.assertEqual(snapshot.provider_id, "async-client")
                 self.assertTrue(
-                    MONGODB_CATALOG.is_telemetry_snapshot_compliant(snapshot, ("write",))
+                    not driver_telemetry_issues(snapshot, ("write",))
                 )
             finally:
                 await client.close()
@@ -395,7 +442,7 @@ class DriverTelemetryProjectorTests(unittest.TestCase):
             snapshot = sync_projector.snapshot()
             self.assertEqual(snapshot.provider_id, "sync-client")
             self.assertTrue(
-                MONGODB_CATALOG.is_telemetry_snapshot_compliant(snapshot, ("write",))
+                not driver_telemetry_issues(snapshot, ("write",))
             )
         finally:
             client.close()
@@ -457,7 +504,7 @@ class DriverTelemetryProjectorTests(unittest.TestCase):
             )
         )
         pending = projector._pending["req-time-1"]
-        with patch("mongoeco.cxp.driver_telemetry.time.time", return_value=pending.start_time - 1):
+        with patch("mongoeco.driver.telemetry_projector.time.time", return_value=pending.start_time - 1):
             projector.handle_driver_event(
                 CommandSucceededEvent(
                     database="demo",

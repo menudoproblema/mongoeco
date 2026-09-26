@@ -8,7 +8,7 @@
   },
   "time.time": {
     "src/mongoeco/_types/_bson_objectid.py": "generación de ObjectId, fuera del contrato del reloj",
-    "src/mongoeco/cxp/driver_telemetry.py": "telemetría del driver",
+    "src/mongoeco/driver/telemetry_projector.py": "telemetría del driver",
     "src/mongoeco/engines/_active_operations.py": "registro de operaciones activas",
     "src/mongoeco/engines/_sqlite_search_runtime.py": "simulación de disponibilidad de índices de búsqueda",
     "src/mongoeco/engines/_sqlite_vector_backend.py": "metadatos de índices vectoriales",

@@ -1,7 +1,5 @@
 """Independent checks for Mongoeco's portable compatibility declarations."""
 
-import warnings
-
 from copy import deepcopy
 
 import pytest
@@ -65,14 +63,10 @@ def test_explain_projection_rejects_unknown_capability() -> None:
         build_mongodb_exchange_explain_projection(capability="unreported")
 
 
-def test_legacy_root_export_warns_before_retirement() -> None:
-    facade.__dict__.pop("MONGODB_CATALOG", None)
-    with warnings.catch_warnings(record=True) as captured:
-        warnings.simplefilter("always", DeprecationWarning)
-        assert facade.MONGODB_CATALOG.interface == "database/mongodb"
-    assert any(
-        "retiring CXP component protocol" in str(item.message) for item in captured
-    )
+def test_legacy_root_exports_are_absent() -> None:
+    assert facade.__all__ == ()
+    assert not hasattr(facade, "MONGODB_CATALOG")
+    assert not hasattr(facade, "export_cxp_capability_catalog")
 
 
 def _snapshot_with(

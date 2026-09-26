@@ -1,0 +1,407 @@
+{
+  "aggregation": {
+    "events": {
+      "db.client.aggregate.completed": {
+        "required_payload_keys": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.operation.outcome",
+          "db.pipeline.stage.count"
+        ],
+        "severity": null
+      }
+    },
+    "metrics": {
+      "db.client.aggregate.duration": {
+        "required_labels": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.operation.outcome"
+        ],
+        "unit": "s"
+      }
+    },
+    "spans": {
+      "db.client.aggregate": {
+        "required_attributes": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.pipeline.stage.count"
+        ]
+      }
+    }
+  },
+  "change_streams": {
+    "events": {
+      "db.client.change_stream.completed": {
+        "required_payload_keys": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.operation.outcome",
+          "db.change.operation_type"
+        ],
+        "severity": null
+      }
+    },
+    "metrics": {
+      "db.client.change_stream.duration": {
+        "required_labels": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.operation.outcome",
+          "db.change.operation_type"
+        ],
+        "unit": "s"
+      }
+    },
+    "spans": {
+      "db.client.change_stream": {
+        "required_attributes": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.change.operation_type"
+        ]
+      }
+    }
+  },
+  "collation": {
+    "events": {
+      "db.client.collation.completed": {
+        "required_payload_keys": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.operation.outcome",
+          "db.collation.locale"
+        ],
+        "severity": null
+      }
+    },
+    "metrics": {
+      "db.client.collation.duration": {
+        "required_labels": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.operation.outcome",
+          "db.collation.locale"
+        ],
+        "unit": "s"
+      }
+    },
+    "spans": {
+      "db.client.collation": {
+        "required_attributes": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.collation.locale"
+        ]
+      }
+    }
+  },
+  "persistence": {
+    "events": {
+      "db.client.persistence.reported": {
+        "required_payload_keys": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.operation.outcome",
+          "db.persistence.storage_engine",
+          "db.persistence.persistent"
+        ],
+        "severity": null
+      }
+    },
+    "metrics": {
+      "db.client.persistence.duration": {
+        "required_labels": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.operation.outcome",
+          "db.persistence.storage_engine"
+        ],
+        "unit": "s"
+      }
+    },
+    "spans": {
+      "db.client.persistence": {
+        "required_attributes": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.persistence.storage_engine",
+          "db.persistence.persistent"
+        ]
+      }
+    }
+  },
+  "read": {
+    "events": {
+      "db.client.operation.completed": {
+        "required_payload_keys": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.operation.outcome"
+        ],
+        "severity": null
+      }
+    },
+    "metrics": {
+      "db.client.operation.duration": {
+        "required_labels": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.operation.outcome"
+        ],
+        "unit": "s"
+      }
+    },
+    "spans": {
+      "db.client.operation": {
+        "required_attributes": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name"
+        ]
+      }
+    }
+  },
+  "search": {
+    "events": {
+      "db.client.search.completed": {
+        "required_payload_keys": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.operation.outcome",
+          "db.pipeline.stage.name",
+          "db.search.operator"
+        ],
+        "severity": null
+      }
+    },
+    "metrics": {
+      "db.client.search.duration": {
+        "required_labels": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.operation.outcome",
+          "db.pipeline.stage.name"
+        ],
+        "unit": "s"
+      }
+    },
+    "spans": {
+      "db.client.search": {
+        "required_attributes": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.pipeline.stage.name",
+          "db.search.operator"
+        ]
+      }
+    }
+  },
+  "topology_discovery": {
+    "events": {
+      "db.client.topology.discovered": {
+        "required_payload_keys": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.topology.type",
+          "db.topology.server.count"
+        ],
+        "severity": null
+      }
+    },
+    "metrics": {
+      "db.client.topology.duration": {
+        "required_labels": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.topology.type"
+        ],
+        "unit": "s"
+      }
+    },
+    "spans": {
+      "db.client.topology": {
+        "required_attributes": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.topology.type",
+          "db.topology.server.count"
+        ]
+      }
+    }
+  },
+  "transactions": {
+    "events": {
+      "db.client.transaction.completed": {
+        "required_payload_keys": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.operation.outcome",
+          "db.transaction.id",
+          "db.transaction.outcome"
+        ],
+        "severity": null
+      }
+    },
+    "metrics": {
+      "db.client.transaction.duration": {
+        "required_labels": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.operation.outcome",
+          "db.transaction.outcome"
+        ],
+        "unit": "s"
+      }
+    },
+    "spans": {
+      "db.client.transaction": {
+        "required_attributes": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.transaction.id"
+        ]
+      }
+    }
+  },
+  "vector_search": {
+    "events": {
+      "db.client.vector_search.completed": {
+        "required_payload_keys": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.operation.outcome",
+          "db.pipeline.stage.name",
+          "db.vector_search.similarity"
+        ],
+        "severity": null
+      }
+    },
+    "metrics": {
+      "db.client.vector_search.duration": {
+        "required_labels": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.operation.outcome",
+          "db.vector_search.similarity"
+        ],
+        "unit": "s"
+      }
+    },
+    "spans": {
+      "db.client.vector_search": {
+        "required_attributes": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.pipeline.stage.name",
+          "db.vector_search.similarity"
+        ]
+      }
+    }
+  },
+  "write": {
+    "events": {
+      "db.client.operation.completed": {
+        "required_payload_keys": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name",
+          "db.operation.outcome"
+        ],
+        "severity": null
+      }
+    },
+    "metrics": {
+      "db.client.operation.duration": {
+        "required_labels": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.operation.outcome"
+        ],
+        "unit": "s"
+      }
+    },
+    "spans": {
+      "db.client.operation": {
+        "required_attributes": [
+          "cxp.resource.name",
+          "cxp.resource.kind",
+          "db.system.name",
+          "db.operation.name",
+          "db.namespace.name"
+        ]
+      }
+    }
+  }
+}

@@ -104,22 +104,14 @@ For reusable profile gates, the practical split is now:
 * `mongodb-platform` when you need the broader platform surface, including
   canonical metadata for collation, persistence and topology discovery.
 
-The public compat export serializes those profiles with structured
-requirements, and the `cxp` block in `explain()` now carries the minimal
-reusable profile, its structured requirements and the broader compatible
-profiles for the current capability path when that can be inferred honestly.
-
-If a consumer only needs the reusable profile catalog, it can use
-`mongoeco.compat.export_cxp_profile_catalog()`. If it wants the same profiles
-annotated with current runtime support, it can use
-`mongoeco.compat.export_cxp_profile_support_catalog()`.
-That is enough to build simple test gates without coupling `mongoeco` to any
-particular runner or resource system.
-If it wants to consume support from the operation point of view, it can also
-use `mongoeco.compat.export_cxp_operation_catalog()`.
-That operation view now includes canonical telemetry requirements per
-capability binding, so tooling can validate profile and observability contracts
-without inferring signal names.
+The exchange documents publish these named profiles with exact catalog pins.
+The `cxp` block in `explain()` carries their evaluated verdicts for the declared
+library snapshot; it does not infer a minimal profile from a query path.
+Consumers can load each profile from `mongoeco.cxp.exchange` and evaluate it
+with a context that explicitly states accepted provenance. The compat report
+embeds the same documents through `export_exchange_catalog()`.
+Operational telemetry shape requirements live in Mongoeco's driver resources
+and are validated separately from component compatibility.
 
 The root `mongoeco` package is intentionally narrower than the full runtime
 internals. It centers on:
@@ -132,7 +124,7 @@ Compatibility tooling and the canonical MongoDB CXP contract surface live in
 their own packages:
 
 * `mongoeco.compat`
-* `mongoeco.cxp`
+* `mongoeco.cxp.exchange`
 * `mongoeco.engines` for the public storage-engine SPI v2
 * `mongoeco.conformance` for versioned engine contract validation
 
@@ -152,9 +144,7 @@ Import guidance by layer:
 
 * use `mongoeco` for clients, sessions, BSON-facing types and URI/config helpers
 * use `mongoeco.compat` for dialect/profile resolution and compat/tooling exports
-* use `mongoeco.cxp` for the curated MongoDB CXP contract and reusable profiles
-* use `mongoeco.cxp.catalogs.interfaces.database.mongodb` for the full
-  MongoDB capability/operation vocabulary
+* use `mongoeco.cxp.exchange` for pinned MongoDB compatibility documents
 * use `mongoeco.engines` and `mongoeco.conformance` for third-party storage
   engines and their public contract tests
 * use `mongoeco.driver` and `mongoeco.wire` only when you intentionally need
@@ -168,11 +158,12 @@ from `mongoeco.engines`; see the
 SPI v2 is the only stable engine SPI and engine capabilities must be declared
 explicitly.
 
-## Public Surface Stability (4.x)
+## Public Surface Stability (removal-major source)
 
-The 4.x contract is intentionally explicit:
+This source prototype prepares the next breaking release; its version has not
+been assigned. Its import roots are explicit:
 
-* stable import roots are `mongoeco`, `mongoeco.compat`, `mongoeco.cxp`,
+* stable import roots are `mongoeco`, `mongoeco.compat`, `mongoeco.cxp.exchange`,
   `mongoeco.engines` and `mongoeco.conformance`
 * each root surface is curated through its `__all__`
 * lower-level runtime symbols stay in explicit subpackages
@@ -185,26 +176,25 @@ it exposes the canonical catalog and projects the active capability path
 through `compat` and `explain()`. External systems can wrap `mongoeco` if they
 want to negotiate profiles or instantiate resources through CXP.
 
-`mongoeco.cxp` is the canonical contract source; `mongoeco.compat` keeps
-projected reporting views over that same source instead of maintaining a
-parallel CXP catalog model.
+`mongoeco.cxp.exchange` is the canonical compatibility source. `mongoeco.compat`
+exports those exact documents in its reporting view.
+See the [CXP removal migration guide](docs/cxp-c4-migration.md) for import and
+reporting changes.
 
 The direct path for CXP-facing tooling is:
 
 ```python
 from mongoeco import MongoClient
-from mongoeco.compat import export_cxp_catalog
-from mongoeco.cxp import MONGODB_CATALOG
+from mongoeco.compat import export_exchange_catalog
 from mongoeco.engines.memory import MemoryEngine
 
 
-print(export_cxp_catalog()["interface"])
+print(export_exchange_catalog()["catalog_sha256"])
 
 with MongoClient(MemoryEngine()) as client:
     collection = client.get_database("demo").get_collection("items")
     collection.insert_one({"_id": 1, "score": 8})
     explain = collection.aggregate([{"$match": {"score": {"$gte": 8}}}]).explain()
-    print(MONGODB_CATALOG.interface)
     print(explain["cxp"])
 ```
 

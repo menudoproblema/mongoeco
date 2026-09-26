@@ -481,8 +481,19 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             set(exported["database_commands"]),
             set(DATABASE_COMMAND_SUPPORT_CATALOG),
         )
-        self.assertEqual(exported["cxp"]["interface"], "database/mongodb")
-        self.assertIn("search", exported["cxp"]["capabilities"])
+        self.assertEqual(
+            exported["exchange"]["catalog"]["payload"]["identity"]["name"],
+            "mongodb",
+        )
+        self.assertIn(
+            "search",
+            {
+                capability["name"]
+                for capability in exported["exchange"]["catalog"]["payload"][
+                    "capabilities"
+                ]
+            },
+        )
         self.assertIn("vectorSearch", exported["local_runtime_subsets"])
         self.assertIn("geospatial", exported["local_runtime_subsets"])
 

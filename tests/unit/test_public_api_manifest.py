@@ -22,7 +22,7 @@ def test_public_api_manifest_captures_contract_surfaces() -> None:
         "mongoeco",
         "mongoeco.api",
         "mongoeco.compat",
-        "mongoeco.cxp",
+        "mongoeco.cxp.exchange",
         "mongoeco.engines",
         "mongoeco.conformance",
     }

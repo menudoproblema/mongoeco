@@ -54,10 +54,7 @@ from mongoeco.compat import (
     export_full_compat_catalog_markdown,
     export_database_command_catalog,
     export_database_command_option_catalog,
-    export_cxp_catalog,
-    export_cxp_operation_catalog,
-    export_cxp_profile_catalog,
-    export_cxp_profile_support_catalog,
+    export_exchange_catalog,
     export_mock_safe_profile_catalog,
     export_mongodb_dialect_catalog,
     export_operation_option_catalog,
@@ -152,9 +149,14 @@ class CompatResolutionTests(unittest.TestCase):
         snapshot_path = Path("tests/fixtures/compat_catalog_snapshot.json")
         expected = json.loads(snapshot_path.read_text(encoding="utf-8"))
         current = export_full_compat_catalog()
+        expected.pop("cxp")
+        exchange = current.pop("exchange")
         old_mock_safe = expected.pop("mock_safe_profile")
         new_mock_safe = current.pop("mock_safe_profile")
         self.assertEqual(current, expected)
+        self.assertEqual(exchange, export_exchange_catalog())
+        self.assertEqual(exchange["catalog"]["document_type"], "cxp.catalog")
+        self.assertIn("mongodb-mock-safe", exchange["profiles"])
         self.assertEqual(new_mock_safe["verdict"], "compatible")
         self.assertEqual(new_mock_safe["catalog"]["name"], "mongodb")
         self.assertEqual(
@@ -194,203 +196,19 @@ class CompatResolutionTests(unittest.TestCase):
         snapshot_path = Path("tests/fixtures/compat_catalog_snapshot.md")
         expected = snapshot_path.read_text(encoding="utf-8")
         current = export_full_compat_catalog_markdown()
-        marker = "## Mock Safe Profile\n"
         suffix = "## Local Runtime Subsets\n"
-        self.assertEqual(current.split(marker)[0], expected.split(marker)[0])
+        self.assertEqual(
+            current.split("## CXP Exchange")[0],
+            expected.split("## CXP")[0],
+        )
         self.assertEqual(current.split(suffix)[1], expected.split(suffix)[1])
         self.assertIn("## Mock Safe Profile", current)
+        self.assertIn("## CXP Exchange", current)
         self.assertIn("`read`", current)
 
-    def test_exported_cxp_catalog_includes_richer_operation_metadata_and_search_mappings(self):
-        catalog = export_cxp_catalog()
 
-        self.assertIn("profiles", catalog)
-        self.assertEqual(
-            catalog["profiles"]["mongodb-text-search"]["name"],
-            "mongodb-text-search",
-        )
-        self.assertEqual(
-            catalog["profiles"]["mongodb-core"]["requirements"][0]["capabilityName"],
-            "read",
-        )
-        self.assertEqual(
-            catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
-                "find"
-            ]["resultType"],
-            "cursor",
-        )
-        self.assertTrue(
-            catalog["capabilities"]["write"]["metadata"]["operationMetadata"][
-                "update_one"
-            ]["supportsUpsert"]
-        )
-        self.assertTrue(
-            catalog["capabilities"]["aggregation"]["metadata"][
-                "operationMetadata"
-            ]["aggregate"]["supportsCollectionScope"]
-        )
-        self.assertIn(
-            "document",
-            catalog["capabilities"]["search"]["metadata"]["fieldMappings"],
-        )
-        self.assertEqual(
-            catalog["capabilities"]["search"]["metadata"][
-                "structuredParentPathOperators"
-            ],
-            ["text", "phrase", "autocomplete", "wildcard", "regex", "exists"],
-        )
-        self.assertEqual(
-            catalog["capabilities"]["search"]["metadata"]["explainFeatures"],
-            [
-                "pathSummary",
-                "resolvedLeafPaths",
-                "structuredParentPathResolution",
-                "querySemantics",
-                "stageOptions",
-                "countPreview",
-                "highlightPreview",
-                "facetPreview",
-            ],
-        )
-        self.assertEqual(
-            catalog["capabilities"]["search"]["metadata"]["stageOptions"]["highlight"],
-            {
-                "supportsPath": True,
-                "supportsMaxChars": True,
-                "supportsMaxNumPassages": True,
-                "resultField": "searchHighlights",
-            },
-        )
-        self.assertEqual(
-            catalog["capabilities"]["search"]["metadata"]["stageOptions"]["countOptions"],
-            {
-                "supportsThreshold": True,
-                "thresholdMode": "lowerBound",
-            },
-        )
-        self.assertEqual(
-            catalog["capabilities"]["vector_search"]["metadata"]["hybridFilterModes"],
-            [
-                "candidate-prefilter",
-                "candidate-prefilter+post-candidate",
-                "post-candidate",
-            ],
-        )
-        self.assertIn(
-            "candidatePlan",
-            catalog["capabilities"]["vector_search"]["metadata"]["explainFeatures"],
-        )
-        self.assertEqual(
-            catalog["capabilities"]["vector_search"]["metadata"]["operationMetadata"][
-                "aggregate"
-            ]["scoreField"],
-            "vectorSearchScore",
-        )
-        self.assertEqual(
-            catalog["capabilities"]["collation"]["metadata"]["operationMetadata"][
-                "serverStatus"
-            ]["metadataPath"],
-            "mongoeco.collation",
-        )
-        self.assertEqual(
-            catalog["capabilities"]["persistence"]["metadata"]["operationMetadata"][
-                "serverStatus"
-            ]["metadataPaths"],
-            ["storageEngine.name", "mongoeco.engineRuntime"],
-        )
-        self.assertEqual(
-            catalog["capabilities"]["topology_discovery"]["metadata"][
-                "operationMetadata"
-            ]["sdam_capabilities"]["metadataPath"],
-            "sdam_capabilities()",
-        )
-        self.assertTrue(
-            catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
-                "find"
-            ]["acceptsSort"]
-        )
-        self.assertTrue(
-            catalog["capabilities"]["write"]["metadata"]["operationMetadata"][
-                "update_one"
-            ]["acceptsArrayFilters"]
-        )
-        self.assertTrue(
-            catalog["capabilities"]["read"]["metadata"]["operationMetadata"][
-                "find"
-            ]["acceptsCollation"]
-        )
-        self.assertEqual(
-            catalog["capabilities"]["read"]["telemetry"]["spans"][0]["name"],
-            "db.client.operation",
-        )
-        self.assertIn(
-            "db.operation.name",
-            [
-                field["name"]
-                for field in catalog["capabilities"]["read"]["telemetry"]["spans"][
-                    0
-                ]["requiredAttributes"]
-            ],
-        )
 
-    def test_exported_cxp_profile_catalog_matches_cxp_catalog_profiles(self):
-        self.assertEqual(
-            export_cxp_profile_catalog(),
-            export_cxp_catalog()["profiles"],
-        )
 
-    def test_exported_cxp_profile_support_catalog_matches_cxp_catalog_profile_support(self):
-        support_catalog = export_cxp_profile_support_catalog()
-        self.assertEqual(
-            support_catalog,
-            export_cxp_catalog()["profileSupport"],
-        )
-        self.assertTrue(support_catalog["mongodb-core"]["supported"])
-        self.assertTrue(support_catalog["mongodb-platform"]["supported"])
-        self.assertEqual(
-            support_catalog["mongodb-core"]["validation"]["messages"],
-            [],
-        )
-        self.assertEqual(
-            support_catalog["mongodb-platform"]["validation"]["messages"],
-            [],
-        )
-
-    def test_exported_cxp_operation_catalog_matches_cxp_catalog_operations(self):
-        operation_catalog = export_cxp_operation_catalog()
-        self.assertEqual(
-            operation_catalog,
-            export_cxp_catalog()["operations"],
-        )
-        self.assertEqual(
-            operation_catalog["find"][0]["capabilityName"],
-            "read",
-        )
-        self.assertEqual(
-            operation_catalog["update_one"][0]["compatibleProfiles"],
-            ["mongodb-core", "mongodb-platform"],
-        )
-        self.assertEqual(
-            operation_catalog["serverStatus"][0]["compatibleProfiles"],
-            ["mongodb-platform"],
-        )
-        self.assertEqual(
-            operation_catalog["find"][0]["telemetry"]["events"][0]["eventType"],
-            "db.client.operation.completed",
-        )
-        self.assertIn(
-            "db.operation.outcome",
-            [
-                field["name"]
-                for field in operation_catalog["find"][0]["telemetry"]["events"][
-                    0
-                ]["requiredPayloadKeys"]
-            ],
-        )
-        self.assertEqual(
-            operation_catalog["sdam_capabilities"][0]["capabilityName"],
-            "topology_discovery",
-        )
 
     def test_export_mock_safe_profile_catalog_is_supported_and_strict(self):
         profile = export_mock_safe_profile_catalog()
@@ -634,7 +452,7 @@ class CompatResolutionTests(unittest.TestCase):
         operation_catalog = export_operation_option_catalog()
         database_command_option_catalog = export_database_command_option_catalog()
         runtime_subset_catalog = export_local_runtime_subset_catalog()
-        cxp_catalog = export_cxp_catalog()
+        exchange_catalog = export_exchange_catalog()
         full_catalog = export_full_compat_catalog()
 
         self.assertEqual(set(mongodb_catalog), set(MONGODB_DIALECTS))
@@ -646,18 +464,14 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(full_catalog['database_commands'], database_command_catalog)
         self.assertEqual(full_catalog['operation_options'], operation_catalog)
         self.assertEqual(full_catalog['database_command_options'], database_command_option_catalog)
-        self.assertEqual(full_catalog['cxp'], cxp_catalog)
+        self.assertEqual(full_catalog['exchange'], exchange_catalog)
         self.assertEqual(full_catalog['local_runtime_subsets'], runtime_subset_catalog)
-        self.assertEqual(full_catalog['cxp']['interface'], 'database/mongodb')
-        self.assertIn('search', full_catalog['cxp']['capabilities'])
         self.assertEqual(
-            full_catalog['cxp']['capabilities']['aggregation']['operations'][0]['name'],
-            'aggregate',
+            exchange_catalog['catalog']['payload']['identity']['name'],
+            'mongodb',
         )
-        self.assertIn(
-            '$group',
-            full_catalog['cxp']['capabilities']['aggregation']['metadata']['supportedStages'],
-        )
+        self.assertIn('mongodb-search', exchange_catalog['profiles'])
+        self.assertIn('stageOptions', runtime_subset_catalog['search'])
         self.assertIn('query_field_operators', mongodb_catalog['7.0'])
         self.assertIn('behavior_flags', mongodb_catalog['7.0'])
         self.assertIn('behavior_flags', pymongo_catalog['4.9'])
@@ -989,18 +803,3 @@ class CompatResolutionTests(unittest.TestCase):
     def test_auto_installed_profile_requires_pymongo(self, _version):
         with self.assertRaises(ValueError):
             detect_installed_pymongo_profile()
-
-    def test_cxp_capability_telemetry_serializer_defaults_to_empty_when_missing(self):
-        from mongoeco.cxp import capabilities as cxp_capabilities
-
-        class _CapabilityWithoutTelemetry:
-            telemetry = None
-
-        self.assertEqual(
-            cxp_capabilities._serialize_capability_telemetry(_CapabilityWithoutTelemetry()),
-            {
-                "spans": [],
-                "metrics": [],
-                "events": [],
-            },
-        )

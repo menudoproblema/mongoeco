@@ -3,7 +3,7 @@
 Mongoeco owns the `org.mongoeco` / `mongodb` catalog and its profile and tier
 requirements. They are packaged as JSON data under
 `mongoeco.cxp.exchange.data`; a consumer can read and evaluate them without
-importing the old CXP catalog, descriptor, handshake or registry modules.
+importing a CXP catalog, descriptor, handshake or registry module.
 Install `cxp[exchange]>=4.3.0,<5` to use the document API and context v2.
 
 ```python
@@ -78,9 +78,8 @@ context v2. The verdicts describe the provider declaration, not a guessed
 minimal profile for one query. `operationMetadata` is a separate Mongoeco-owned
 description of the exercised operation. Unknown capability names reject before
 projection. Telemetry
-primitives now live in `mongoeco.telemetry_contract`; the public
-`mongoeco.cxp.telemetry` facade reexports those local types while consumers
-migrate. The old
+primitives now live in `mongoeco.telemetry_contract`; the projector and its
+operational shape validator live in `mongoeco.driver`. The retired
 generic catalog has no operation input or result schemas; its result-type
 identities are retained in the exchange operation bindings. Any future
 compatibility decision about structured subsets requires explicit portable
@@ -90,3 +89,9 @@ key alone cannot assert the value of such a subset.
 The catalog's identity, version and SHA-256 in every requirement and snapshot
 are exact pins. Changing the capability set or semantics requires a new
 catalog version and explicitly adopted requirement documents.
+
+The removal-major source removes the old `mongoeco.cxp` reexports and modules.
+`mongoeco.compat.export_exchange_catalog()` embeds the exact owner documents
+in its reporting view. Historical source and tests remain in
+`evidence/mongoeco-legacy-cxp-python.zip`, outside installed packages. Public
+removal requires the coordinated release sequence and installed consumer gates.

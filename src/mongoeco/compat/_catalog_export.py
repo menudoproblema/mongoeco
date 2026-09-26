@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from importlib.resources import files
 
 from mongoeco.compat._catalog_constants import (
     AUTO_INSTALLED_PYMONGO_PROFILE,
@@ -26,15 +27,10 @@ from mongoeco.compat._catalog_data import (
     SUPPORTED_UPDATE_OPERATORS,
     SUPPORTED_WINDOW_ACCUMULATORS,
 )
-from mongoeco.cxp import (
-    export_cxp_capability_catalog,
-    export_cxp_operation_catalog as _export_cxp_operation_catalog_from_cxp,
-    export_cxp_profile_catalog as _export_cxp_profile_catalog_from_cxp,
-    export_cxp_profile_support_catalog as _export_cxp_profile_support_catalog_from_cxp,
-)
 from cxp.exchange import Document, evaluate_requirements_detailed
-from mongoeco.cxp.capabilities import export_legacy_runtime_subset_catalog
 from mongoeco.cxp.exchange import (
+    PROFILE_NAMES,
+    load_mongodb_catalog,
     load_mongodb_declared_snapshot,
     load_mongodb_profile,
     mongodb_catalog_store,
@@ -132,23 +128,29 @@ def export_database_command_catalog() -> dict[str, dict[str, object]]:
 
 
 def export_local_runtime_subset_catalog() -> dict[str, dict[str, object]]:
-    return export_legacy_runtime_subset_catalog()
+    resource = files("mongoeco.compat").joinpath(
+        "resources/runtime-subsets-v1.json"
+    )
+    value = json.loads(resource.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        message = "Invalid owner runtime subset catalog"
+        raise ValueError(message)
+    return value
 
 
-def export_cxp_catalog() -> dict[str, object]:
-    return export_cxp_capability_catalog()
-
-
-def export_cxp_profile_catalog() -> dict[str, dict[str, object]]:
-    return _export_cxp_profile_catalog_from_cxp()
-
-
-def export_cxp_profile_support_catalog() -> dict[str, dict[str, object]]:
-    return _export_cxp_profile_support_catalog_from_cxp()
-
-
-def export_cxp_operation_catalog() -> dict[str, list[dict[str, object]]]:
-    return _export_cxp_operation_catalog_from_cxp()
+def export_exchange_catalog() -> dict[str, object]:
+    """Return exact owner documents; compatibility is evaluated by exchange."""
+    catalog = load_mongodb_catalog()
+    snapshot = load_mongodb_declared_snapshot()
+    return {
+        "catalog": catalog.as_dict(),
+        "catalog_sha256": catalog.sha256,
+        "declared_snapshot": snapshot.as_dict(),
+        "profiles": {
+            name: load_mongodb_profile(name).as_dict()
+            for name in PROFILE_NAMES
+        },
+    }
 
 
 def export_mock_safe_profile_catalog() -> dict[str, object]:
@@ -230,7 +232,7 @@ def export_full_compat_catalog() -> dict[str, object]:
         "database_commands": export_database_command_catalog(),
         "operation_options": export_operation_option_catalog(),
         "database_command_options": export_database_command_option_catalog(),
-        "cxp": export_cxp_catalog(),
+        "exchange": export_exchange_catalog(),
         "mock_safe_profile": export_mock_safe_profile_catalog(),
         "local_runtime_subsets": export_local_runtime_subset_catalog(),
     }
@@ -318,68 +320,21 @@ def export_full_compat_catalog_markdown() -> str:
             lines.append(f"- `{option}`: {rendered}")
         lines.append("")
 
-    cxp_catalog = catalog["cxp"]
-    assert isinstance(cxp_catalog, dict)
-    lines.append("## CXP")
-    lines.append(f"- `interface`: `{cxp_catalog['interface']}`")
-    profiles = cxp_catalog.get("profiles", {})
+    exchange_catalog = catalog["exchange"]
+    assert isinstance(exchange_catalog, dict)
+    lines.append("## CXP Exchange")
+    owner_catalog = exchange_catalog["catalog"]
+    assert isinstance(owner_catalog, dict)
+    identity = owner_catalog["payload"]["identity"]
+    lines.append(
+        "- `catalog`: "
+        f"`{identity['namespace']}:{identity['name']}:{identity['version']}`"
+    )
+    lines.append(f"- `sha256`: `{exchange_catalog['catalog_sha256']}`")
+    profiles = exchange_catalog["profiles"]
     assert isinstance(profiles, dict)
-    if profiles:
-        lines.append("### Profiles")
-        for name, entry in profiles.items():
-            assert isinstance(entry, dict)
-            lines.append(f"#### `{name}`")
-            description = entry.get("description")
-            lines.append(f"- `description`: `{description}`")
-            recommended_for = entry.get("recommendedFor", ())
-            if isinstance(recommended_for, list):
-                rendered_recommended_for = ", ".join(
-                    f"`{value}`" for value in recommended_for
-                ) or "_empty_"
-                lines.append(
-                    f"- `recommendedFor`: {rendered_recommended_for}"
-                )
-    capabilities = cxp_catalog["capabilities"]
-    assert isinstance(capabilities, dict)
-    for name, entry in capabilities.items():
-        assert isinstance(entry, dict)
-        lines.append(f"### `{name}`")
-        description = entry.get("description")
-        lines.append(f"- `description`: `{description}`")
-        tiers = entry.get("tiers", ())
-        rendered_tiers = ", ".join(f"`{value}`" for value in tiers) or "_empty_"
-        lines.append(f"- `tiers`: {rendered_tiers}")
-        operations = entry.get("operations", ())
-        if isinstance(operations, list):
-            rendered_operations = ", ".join(
-                f"`{operation.get('name')}`"
-                for operation in operations
-                if isinstance(operation, dict)
-            ) or "_empty_"
-            lines.append(f"- `operations`: {rendered_operations}")
-        metadata = entry.get("metadata", {})
-        assert isinstance(metadata, dict)
-        for field_name, field_value in metadata.items():
-            if isinstance(field_value, list):
-                rendered = ", ".join(f"`{item}`" for item in field_value) or "_empty_"
-            else:
-                rendered = f"`{field_value}`"
-            lines.append(f"- `{field_name}`: {rendered}")
-        lines.append("")
-
-    extensions = cxp_catalog["extensions"]
-    assert isinstance(extensions, dict)
-    lines.append("## CXP Extensions")
-    for name, entry in extensions.items():
-        assert isinstance(entry, dict)
-        lines.append(f"### `{name}`")
-        for field_name, field_value in entry.items():
-            if isinstance(field_value, list):
-                rendered = ", ".join(f"`{item}`" for item in field_value) or "_empty_"
-            else:
-                rendered = f"`{field_value}`"
-            lines.append(f"- `{field_name}`: {rendered}")
-        lines.append("")
+    lines.append("- `profiles`: " + ", ".join(f"`{name}`" for name in profiles))
+    lines.append("")
 
     mock_safe_profile = catalog["mock_safe_profile"]
     assert isinstance(mock_safe_profile, dict)

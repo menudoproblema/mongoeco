@@ -33,81 +33,45 @@ def _install_from_pypi(pip_bin: Path, *requirements: str) -> None:
 def _contract_smoke_script() -> str:
     return """
 import importlib
+import importlib.util
 import mongoeco
 import mongoeco.compat as compat
-import mongoeco.cxp as cxp
+import mongoeco.cxp.exchange as exchange
 
 assert mongoeco.__version__ == EXPECTED_VERSION, (
     f"version mismatch: expected {EXPECTED_VERSION}, got {mongoeco.__version__}"
 )
 
-# Superficie principal de mongoeco.cxp: fachada acotada.
-required_cxp_symbols = {
-    "MONGODB_INTERFACE",
-    "MONGODB_CATALOG",
-    "MONGODB_CORE_PROFILE",
-    "MONGODB_TEXT_SEARCH_PROFILE",
-    "MONGODB_SEARCH_PROFILE",
-    "MONGODB_PLATFORM_PROFILE",
-    "MONGODB_AGGREGATE_RICH_PROFILE",
-    "MongoAggregationMetadata",
-    "MongoSearchMetadata",
-    "MongoVectorSearchMetadata",
-    "MongoCollationMetadata",
-    "MongoPersistenceMetadata",
-    "MongoTopologyDiscoveryMetadata",
-    "export_cxp_capability_catalog",
-    "export_cxp_operation_catalog",
-    "export_cxp_profile_catalog",
-    "export_cxp_profile_support_catalog",
+required_exchange_symbols = {
+    "load_mongodb_catalog",
+    "load_mongodb_declared_snapshot",
+    "load_mongodb_profile",
+    "mongodb_catalog_store",
 }
-for name in required_cxp_symbols:
-    assert hasattr(cxp, name), f"missing mongoeco.cxp symbol: {name}"
-    assert name in cxp.__all__, f"missing mongoeco.cxp __all__ symbol: {name}"
+for name in required_exchange_symbols:
+    assert hasattr(exchange, name), f"missing exchange symbol: {name}"
+    assert name in exchange.__all__, name
 
-# Evitar reexports anchos/legacy en la fachada.
-for legacy_name in (
-    "Capability",
-    "CapabilityMatrix",
-    "CapabilityMetadata",
-    "MONGODB_FIND",
-    "MONGODB_UPDATE_ONE",
-    "MONGODB_SEARCH",
-):
-    assert not hasattr(cxp, legacy_name), f"legacy symbol leaked in mongoeco.cxp: {legacy_name}"
-
-# Submodulos explicitos de mongoeco.cxp deben seguir disponibles.
 for module_name in (
-    "mongoeco.cxp.types",
+    "mongoeco.cxp.capabilities",
+    "mongoeco.cxp.catalogs",
     "mongoeco.cxp.descriptors",
-    "mongoeco.cxp.contracts",
     "mongoeco.cxp.handshake",
-    "mongoeco.cxp.telemetry",
-    "mongoeco.cxp.integration",
+    "cxp.capabilities",
+    "cxp.catalogs",
+    "cxp.descriptors",
+    "cxp.handshake",
 ):
-    importlib.import_module(module_name)
+    assert importlib.util.find_spec(module_name) is None, module_name
 
-assert cxp.MONGODB_INTERFACE == "database/mongodb"
-assert cxp.MONGODB_CATALOG.interface == "database/mongodb"
+catalog = exchange.load_mongodb_catalog()
+compat_catalog = compat.export_exchange_catalog()
+assert catalog.document_type == "cxp.catalog"
+assert compat_catalog["catalog_sha256"] == catalog.sha256
+assert "mongodb-core" in compat_catalog["profiles"]
 
-cxp_capability_catalog = cxp.export_cxp_capability_catalog()
-compat_catalog = compat.export_cxp_catalog()
-
-assert cxp_capability_catalog["interface"] == "database/mongodb"
-assert compat_catalog["interface"] == "database/mongodb"
-assert cxp_capability_catalog["interface"] == compat_catalog["interface"]
-assert "profiles" in cxp_capability_catalog
-assert "profileSupport" in cxp_capability_catalog
-assert "capabilities" in compat_catalog
-assert "operations" in compat_catalog
-assert "profileSupport" in compat_catalog
-
-# compat sigue siendo la proyeccion de contrato para tooling.
 for name in (
-    "export_cxp_catalog",
-    "export_cxp_operation_catalog",
-    "export_cxp_profile_catalog",
-    "export_cxp_profile_support_catalog",
+    "export_exchange_catalog",
     "export_full_compat_catalog",
 ):
     assert hasattr(compat, name), f"missing mongoeco.compat symbol: {name}"
@@ -115,7 +79,7 @@ for name in (
 
 print("ok", mongoeco.__version__)
 print("module", mongoeco.__file__)
-print("cxp_interface", cxp.MONGODB_INTERFACE)
+print("cxp_catalog_sha256", catalog.sha256)
 """
 
 

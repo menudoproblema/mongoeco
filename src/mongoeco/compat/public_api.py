@@ -17,7 +17,7 @@ PUBLIC_API_MODULES = (
     "mongoeco",
     "mongoeco.api",
     "mongoeco.compat",
-    "mongoeco.cxp",
+    "mongoeco.cxp.exchange",
     "mongoeco.engines",
     "mongoeco.conformance",
 )

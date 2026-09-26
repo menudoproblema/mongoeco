@@ -59,7 +59,7 @@ class _PendingTelemetry:
 
 
 class DriverTelemetryProjector:
-    """Project driver monitor events into canonical CXP MongoDB telemetry."""
+    """Project driver monitor events into Mongoeco's operational telemetry."""
 
     def __init__(
         self,
