@@ -1,7 +1,11 @@
+import asyncio
+
 from tests.unit.api._collection_test_support import *  # noqa: F403
 from tests.unit.api._collection_test_support import InsertOutcome, _SpiV2EngineStub
+from mongoeco.api._async.collection import AsyncCollection
 from mongoeco.core.operation_context import OperationContext
 from mongoeco.engines.results import EngineDeleteResult, EngineUpdateResult
+from mongoeco.types import IndexModel
 
 
 class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
@@ -690,6 +694,131 @@ class AsyncCollectionManagementTests(AsyncCollectionHelperBase):
                     wildcard_projection=1,  # type: ignore[arg-type]
                 )
             )
+
+    def test_create_indexes_preserves_model_document_but_omits_noop_index_options(self):
+        class EngineStub(_SpiV2EngineStub):
+            def __init__(self):
+                self.calls = []
+
+            async def create_index(self, *args, **kwargs):
+                self.calls.append((args, kwargs))
+                return kwargs["name"]
+
+            async def index_information(self, *args, **kwargs):
+                return {"_id_": {"key": [("_id", 1)], "unique": True}}
+
+        model = IndexModel(
+            [("$**", 1)],
+            name="wild_idx",
+            background=True,
+            wildcardProjection={"private": 0},
+        )
+        self.assertTrue(model.document["background"])
+        self.assertEqual(model.document["wildcardProjection"], {"private": 0})
+
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+        self.assertEqual(asyncio.run(collection.create_indexes([model])), ["wild_idx"])
+        self.assertEqual(len(engine.calls), 1)
+        self.assertNotIn("background", engine.calls[0][1])
+        self.assertNotIn("wildcard_projection", engine.calls[0][1])
+
+    def test_create_indexes_forwards_effective_index_model_fields(self):
+        class EngineStub(_SpiV2EngineStub):
+            def __init__(self):
+                self.calls = []
+
+            async def create_index(self, *args, **kwargs):
+                self.calls.append((args, kwargs))
+                return kwargs["name"]
+
+            async def index_information(self, *args, **kwargs):
+                return {"_id_": {"key": [("_id", 1)], "unique": True}}
+
+        models = [
+            IndexModel(
+                [("expires_at", 1)],
+                name="regular_idx",
+                unique=True,
+                sparse=True,
+                hidden=True,
+                collation={"locale": "en"},
+                partialFilterExpression={"active": True},
+                expireAfterSeconds=30,
+            ),
+            IndexModel(
+                [("title", "text")],
+                name="text_idx",
+                weights={"title": 5},
+                defaultLanguage="english",
+                languageOverride="lang",
+            ),
+            IndexModel(
+                [("location", "2d")],
+                name="geo_idx",
+                min=-180,
+                max=180,
+                bucketSize=0.5,
+            ),
+        ]
+        engine = EngineStub()
+        collection = AsyncCollection(engine, "db", "coll")
+
+        self.assertEqual(
+            asyncio.run(collection.create_indexes(models)),
+            ["regular_idx", "text_idx", "geo_idx"],
+        )
+        self.assertEqual(
+            [args for args, _kwargs in engine.calls],
+            [
+                ("db", "coll", [("expires_at", 1)]),
+                ("db", "coll", [("title", "text")]),
+                ("db", "coll", [("location", "2d")]),
+            ],
+        )
+        regular, text, geo = [kwargs for _args, kwargs in engine.calls]
+        self.assertEqual(
+            {
+                key: regular[key]
+                for key in (
+                    "name",
+                    "unique",
+                    "sparse",
+                    "hidden",
+                    "collation",
+                    "partial_filter_expression",
+                    "expire_after_seconds",
+                )
+            },
+            {
+                "name": "regular_idx",
+                "unique": True,
+                "sparse": True,
+                "hidden": True,
+                "collation": {"locale": "en"},
+                "partial_filter_expression": {"active": True},
+                "expire_after_seconds": 30,
+            },
+        )
+        self.assertEqual(
+            {
+                key: text[key]
+                for key in (
+                    "weights",
+                    "default_language",
+                    "language_override",
+                )
+            },
+            {
+                "weights": {"title": 5},
+                "default_language": "english",
+                "language_override": "lang",
+            },
+        )
+        self.assertEqual(
+            {key: geo[key] for key in ("min_value", "max_value", "bucket_size")},
+            {"min_value": -180, "max_value": 180, "bucket_size": 0.5},
+        )
 
     def test_create_index_forwards_collation(self):
         class EngineStub(_SpiV2EngineStub):

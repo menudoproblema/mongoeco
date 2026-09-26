@@ -170,8 +170,19 @@ as warnings without changing the validation pass or making it asynchronous.
 not treat their presence in `supportedOptions` as evidence of an effect.
 For the public `create_index` API, `background` and `wildcard_projection` are
 also accepted and type-checked without being passed to the engine; their owner
-catalog entries now state `accepted-noop`. Index creation itself remains a
-local operational contract, separate from a deployment guarantee.
+catalog entries now state `accepted-noop`. The same applies when these options
+arrive inside an `IndexModel` passed to `create_indexes`. `IndexModel.document`
+reflects the authored model, including both options, and is not an observation
+of an installed index. The 16 model fields and the exact scope of their current
+evidence are recorded in
+[`cxp-index-model-conservation.csv`](cxp-index-model-conservation.csv). Index
+creation itself remains a local operational contract, separate from a
+deployment guarantee.
+The accessible Cosecha MongoDB provider reconstructs PyMongo `IndexModel`
+instances while restoring index dumps; Mochuelo Q2 also builds PyMongo models
+for index reconciliation. These are consumer paths to verify with installed
+artifacts after Q2 admission. Their use of PyMongo does not establish that
+Mongoeco applies either accepted-noop option.
 
 The catalog's identity, version and SHA-256 in every requirement and snapshot
 are exact pins. Changing the capability set or semantics requires a new

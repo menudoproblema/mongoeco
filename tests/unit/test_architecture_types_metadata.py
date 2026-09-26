@@ -518,6 +518,10 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
                 "unique": True,
             },
         )
+        with self.assertRaises(ValueError):
+            IndexModel([("email", 1)], name="")
+        with self.assertRaises(ValueError):
+            IndexModel([("email", 1)], name=42)
 
     def test_index_definition_and_model_round_trip_expire_after_seconds(self):
         from mongoeco.types import IndexModel
@@ -1230,3 +1234,11 @@ class ArchitectureTypeMetadataTests(unittest.TestCase):
             "default_language and language_override are only supported for text indexes",
         ):
             IndexModel([("title", 1)], default_language="english")
+        with self.assertRaisesRegex(
+            ValueError,
+            "language_override are only supported for text indexes",
+        ):
+            IndexModel(
+                [("title", 1)],
+                language_override="lang",
+            )
