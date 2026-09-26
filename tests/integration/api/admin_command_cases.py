@@ -59,8 +59,20 @@ async def assert_hello_and_is_master_commands_return_handshake_metadata(
         case.assertFalse(hello["readOnly"])
         case.assertEqual(hello["version"], "8.0.0")
         case.assertEqual(hello["ok"], 1.0)
+        case.assertNotIn("ismaster", hello)
+        case.assertNotIn("mongoeco", hello)
+        case.assertNotIn("storageEngine", hello)
         case.assertTrue(is_master["ismaster"])
         case.assertEqual(is_master["version"], "8.0.0")
+        case.assertEqual(set(is_master) - set(hello), {"ismaster"})
+        for key in hello.keys() - {"localTime"}:
+            case.assertEqual(is_master[key], hello[key])
+        case.assertNotIn("mongoeco", is_master)
+
+        sdam = await _maybe_await(client.sdam_capabilities())
+        case.assertFalse(sdam["fullSdam"])
+        case.assertTrue(sdam["helloMemberDiscovery"])
+        case.assertNotIn("storageEngine", sdam)
 
 
 async def assert_list_commands_and_connection_status_commands_return_local_admin_metadata(
@@ -125,10 +137,16 @@ async def assert_server_status_command_returns_local_runtime_metadata(
                 )
                 case.assertIn("collation", status["mongoeco"])
                 case.assertIn("sdam", status["mongoeco"])
+                case.assertEqual(
+                    status["mongoeco"]["sdam"],
+                    await _maybe_await(client.sdam_capabilities()),
+                )
+                case.assertNotIn("sdam", status)
                 case.assertIn("changeStreams", status["mongoeco"])
                 case.assertIn("engineRuntime", status["mongoeco"])
                 case.assertIn("planner", status["mongoeco"]["engineRuntime"])
                 case.assertIn("search", status["mongoeco"]["engineRuntime"])
+                case.assertNotIn("engineRuntime", status)
                 case.assertIn("caches", status["mongoeco"]["engineRuntime"])
                 case.assertIn("selectedBackend", status["mongoeco"]["collation"])
                 case.assertIn("fullSdam", status["mongoeco"]["sdam"])
