@@ -22,7 +22,34 @@ class MongoReadMetadata(msgspec.Struct, frozen=True, forbid_unknown_fields=True)
     )
 
 
-class MongoFindOperationMetadata(
+READ_OPERATION_NAMES = frozenset(
+    {"find", "find_one", "count_documents", "estimated_document_count", "distinct"}
+)
+READ_OPERATION_FIELDS = frozenset(
+    {
+        "acceptedNoopOptions",
+        "acceptsBatchSize",
+        "acceptsCollation",
+        "acceptsComment",
+        "acceptsFieldPath",
+        "acceptsFilter",
+        "acceptsHint",
+        "acceptsLet",
+        "acceptsLimit",
+        "acceptsMaxTimeMs",
+        "acceptsProjection",
+        "acceptsSkip",
+        "acceptsSort",
+        "collectionScoped",
+        "supportedOptions",
+        "supportsExplain",
+        "supportsSession",
+        "unsupportedOptions",
+    }
+)
+
+
+class MongoReadOperationMetadata(
     msgspec.Struct, frozen=True, forbid_unknown_fields=True
 ):
     accepted_noop_options: tuple[str, ...] | None = msgspec.field(
@@ -35,6 +62,9 @@ class MongoFindOperationMetadata(
         name="acceptsCollation", default=None
     )
     accepts_comment: bool | None = msgspec.field(name="acceptsComment", default=None)
+    accepts_field_path: bool | None = msgspec.field(
+        name="acceptsFieldPath", default=None
+    )
     accepts_filter: bool | None = msgspec.field(name="acceptsFilter", default=None)
     accepts_hint: bool | None = msgspec.field(name="acceptsHint", default=None)
     accepts_let: bool | None = msgspec.field(name="acceptsLet", default=None)
@@ -248,12 +278,21 @@ def validate_mongodb_metadata(capability: str, metadata: dict[str, object]) -> N
             msgspec.convert(msgspec.to_builtins(metadata), type=schema, strict=True)
             if capability == "read":
                 operations = metadata.get("operationMetadata")
-                if isinstance(operations, dict) and "find" in operations:
-                    msgspec.convert(
-                        msgspec.to_builtins(operations["find"]),
-                        type=MongoFindOperationMetadata,
-                        strict=True,
-                    )
+                if isinstance(operations, dict):
+                    if set(operations) - READ_OPERATION_NAMES:
+                        message = "Unknown read operation metadata"
+                        raise ValueError(message)
+                    for operation in operations.values():
+                        if not isinstance(operation, dict) or not all(
+                            isinstance(key, str) for key in operation
+                        ):
+                            message = "Read operation metadata must be an object"
+                            raise ValueError(message)
+                        msgspec.convert(
+                            msgspec.to_builtins(operation),
+                            type=MongoReadOperationMetadata,
+                            strict=True,
+                        )
         except (
             TypeError,
             ValueError,

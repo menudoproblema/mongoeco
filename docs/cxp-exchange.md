@@ -59,13 +59,16 @@ an absent property remains indeterminate. The catalog reference in every
 profile, tier and snapshot was changed together, so the earlier catalog hash
 cannot silently acquire these meanings.
 
-The `read` capability additionally defines `find.*` properties for the
-published `find` operation. Option sets, acceptance flags, scope and session
-or explain support stay tied to that operation by their property names.
-`find.resultType` remains represented by the operation's exact `result_type`
-binding. A requirement on `find.supportedOptions` does not claim anything
-about `find_one` or another operation. Mongoeco validates the known nested
-`find` metadata before projecting it; an unknown field or wrong type rejects.
+The `read` capability additionally defines properties scoped by name to each
+of its five published operations (`find.*`, `find_one.*`, and so on). Option
+sets, acceptance flags, scope and session or explain support stay tied to the
+operation that declares them. Each `resultType` remains represented by that
+operation's exact `result_type` binding. A requirement on
+`find.supportedOptions` makes no claim about `find_one.supportedOptions`.
+Mongoeco validates the known nested read metadata before projecting it; an
+unknown operation, field or wrong type rejects. A nested read claim also
+requires the same operation's exact result binding; a mismatched or absent
+binding rejects before a snapshot is returned.
 
 The packaged snapshot describes Mongoeco's **declared public library
 surface**. Its source is `declared`; it does not prove what a running

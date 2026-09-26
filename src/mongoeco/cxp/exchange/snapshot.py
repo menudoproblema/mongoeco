@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from cxp.exchange import CatalogStore, Document, catalog_reference
 
 from mongoeco.cxp.exchange.documents import load_mongodb_catalog
-from mongoeco.cxp.exchange.metadata import validate_mongodb_metadata
+from mongoeco.cxp.exchange.metadata import (
+    READ_OPERATION_FIELDS,
+    validate_mongodb_metadata,
+)
 
 
 _VALUE_FIELDS: dict[str, frozenset[str]] = {
@@ -25,27 +28,6 @@ _VALUE_FIELDS: dict[str, frozenset[str]] = {
         }
     ),
 }
-_READ_FIND_FIELDS = frozenset(
-    {
-        "acceptedNoopOptions",
-        "acceptsBatchSize",
-        "acceptsCollation",
-        "acceptsComment",
-        "acceptsFilter",
-        "acceptsHint",
-        "acceptsLet",
-        "acceptsLimit",
-        "acceptsMaxTimeMs",
-        "acceptsProjection",
-        "acceptsSkip",
-        "acceptsSort",
-        "collectionScoped",
-        "supportedOptions",
-        "supportsExplain",
-        "supportsSession",
-        "unsupportedOptions",
-    }
-)
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +54,45 @@ class MongoSnapshotIdentity:
     source_reference: str
 
 
+def _project_properties(claim: MongoCapabilityClaim) -> dict[str, object]:
+    metadata = claim.metadata
+    if metadata is None:
+        return {}
+    validate_mongodb_metadata(claim.name, metadata)
+    properties: dict[str, object] = {}
+    if all(value is not None for value in metadata.values()):
+        properties["metadata_keys"] = sorted(metadata)
+    for field in _VALUE_FIELDS.get(claim.name, frozenset()):
+        if field in metadata and metadata[field] is not None:
+            properties[field] = metadata[field]
+    if claim.name == "read":
+        operation_metadata = metadata.get("operationMetadata")
+        if isinstance(operation_metadata, dict):
+            bindings = {
+                operation.name: operation.result_type for operation in claim.operations
+            }
+            for operation_name, operation_values in operation_metadata.items():
+                if isinstance(operation_values, dict):
+                    if operation_name not in bindings:
+                        message = "Read operation metadata lacks its exact binding"
+                        raise ValueError(message)
+                    result_type = operation_values.get("resultType")
+                    if result_type is not None and bindings[operation_name] != (
+                        f"org.mongoeco:result.{result_type}:1"
+                    ):
+                        message = "Read operation result differs from its binding"
+                        raise ValueError(message)
+                    for field in READ_OPERATION_FIELDS:
+                        if (
+                            field in operation_values
+                            and operation_values[field] is not None
+                        ):
+                            properties[f"{operation_name}.{field}"] = operation_values[
+                                field
+                            ]
+    return properties
+
+
 def build_mongodb_snapshot(
     *,
     catalog: Document,
@@ -90,38 +111,18 @@ def build_mongodb_snapshot(
     if catalog.sha256 != load_mongodb_catalog().sha256:
         message = "Expected the exact Mongoeco-owned MongoDB catalog"
         raise ValueError(message)
-    claims = []
-    for claim in capabilities:
-        properties: dict[str, object] = {}
-        if claim.metadata is not None:
-            validate_mongodb_metadata(claim.name, claim.metadata)
-            if all(value is not None for value in claim.metadata.values()):
-                properties["metadata_keys"] = sorted(claim.metadata)
-            for field in _VALUE_FIELDS.get(claim.name, frozenset()):
-                if field in claim.metadata and claim.metadata[field] is not None:
-                    properties[field] = claim.metadata[field]
-            if claim.name == "read":
-                operation_metadata = claim.metadata.get("operationMetadata")
-                if isinstance(operation_metadata, dict):
-                    find_metadata = operation_metadata.get("find")
-                    if isinstance(find_metadata, dict):
-                        for field in _READ_FIND_FIELDS:
-                            if (
-                                field in find_metadata
-                                and find_metadata[field] is not None
-                            ):
-                                properties[f"find.{field}"] = find_metadata[field]
-        claims.append(
-            {
-                "name": claim.name,
-                "support": claim.support,
-                "properties": properties,
-                "operations": [
-                    {"name": operation.name, "result_type": operation.result_type}
-                    for operation in claim.operations
-                ],
-            }
-        )
+    claims = [
+        {
+            "name": claim.name,
+            "support": claim.support,
+            "properties": _project_properties(claim),
+            "operations": [
+                {"name": operation.name, "result_type": operation.result_type}
+                for operation in claim.operations
+            ],
+        }
+        for claim in capabilities
+    ]
     document = Document(
         {
             "document_type": "cxp.snapshot",

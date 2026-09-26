@@ -134,6 +134,251 @@
             "description": "Mongoeco read.find unsupportedOptions for the declared configuration.",
             "kind": "string_set",
             "nullable": false
+          },
+          "count_documents.acceptedNoopOptions": {
+            "description": "Mongoeco read.count_documents acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "count_documents.acceptsCollation": {
+            "description": "Mongoeco read.count_documents acceptsCollation for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "count_documents.acceptsComment": {
+            "description": "Mongoeco read.count_documents acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "count_documents.acceptsFilter": {
+            "description": "Mongoeco read.count_documents acceptsFilter for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "count_documents.acceptsHint": {
+            "description": "Mongoeco read.count_documents acceptsHint for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "count_documents.acceptsMaxTimeMs": {
+            "description": "Mongoeco read.count_documents acceptsMaxTimeMs for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "count_documents.collectionScoped": {
+            "description": "Mongoeco read.count_documents collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "count_documents.supportedOptions": {
+            "description": "Mongoeco read.count_documents supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "count_documents.supportsExplain": {
+            "description": "Mongoeco read.count_documents supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "count_documents.supportsSession": {
+            "description": "Mongoeco read.count_documents supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "count_documents.unsupportedOptions": {
+            "description": "Mongoeco read.count_documents unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "distinct.acceptedNoopOptions": {
+            "description": "Mongoeco read.distinct acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "distinct.acceptsCollation": {
+            "description": "Mongoeco read.distinct acceptsCollation for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distinct.acceptsComment": {
+            "description": "Mongoeco read.distinct acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distinct.acceptsFieldPath": {
+            "description": "Mongoeco read.distinct acceptsFieldPath for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distinct.acceptsFilter": {
+            "description": "Mongoeco read.distinct acceptsFilter for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distinct.acceptsHint": {
+            "description": "Mongoeco read.distinct acceptsHint for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distinct.acceptsMaxTimeMs": {
+            "description": "Mongoeco read.distinct acceptsMaxTimeMs for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distinct.collectionScoped": {
+            "description": "Mongoeco read.distinct collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distinct.supportedOptions": {
+            "description": "Mongoeco read.distinct supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "distinct.supportsExplain": {
+            "description": "Mongoeco read.distinct supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distinct.supportsSession": {
+            "description": "Mongoeco read.distinct supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "distinct.unsupportedOptions": {
+            "description": "Mongoeco read.distinct unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "estimated_document_count.acceptedNoopOptions": {
+            "description": "Mongoeco read.estimated_document_count acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "estimated_document_count.acceptsComment": {
+            "description": "Mongoeco read.estimated_document_count acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "estimated_document_count.acceptsFilter": {
+            "description": "Mongoeco read.estimated_document_count acceptsFilter for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "estimated_document_count.acceptsMaxTimeMs": {
+            "description": "Mongoeco read.estimated_document_count acceptsMaxTimeMs for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "estimated_document_count.collectionScoped": {
+            "description": "Mongoeco read.estimated_document_count collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "estimated_document_count.supportedOptions": {
+            "description": "Mongoeco read.estimated_document_count supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "estimated_document_count.supportsExplain": {
+            "description": "Mongoeco read.estimated_document_count supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "estimated_document_count.supportsSession": {
+            "description": "Mongoeco read.estimated_document_count supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "estimated_document_count.unsupportedOptions": {
+            "description": "Mongoeco read.estimated_document_count unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "find_one.acceptedNoopOptions": {
+            "description": "Mongoeco read.find_one acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "find_one.acceptsBatchSize": {
+            "description": "Mongoeco read.find_one acceptsBatchSize for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.acceptsCollation": {
+            "description": "Mongoeco read.find_one acceptsCollation for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.acceptsComment": {
+            "description": "Mongoeco read.find_one acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.acceptsFilter": {
+            "description": "Mongoeco read.find_one acceptsFilter for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.acceptsHint": {
+            "description": "Mongoeco read.find_one acceptsHint for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.acceptsLet": {
+            "description": "Mongoeco read.find_one acceptsLet for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.acceptsLimit": {
+            "description": "Mongoeco read.find_one acceptsLimit for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.acceptsMaxTimeMs": {
+            "description": "Mongoeco read.find_one acceptsMaxTimeMs for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.acceptsProjection": {
+            "description": "Mongoeco read.find_one acceptsProjection for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.acceptsSkip": {
+            "description": "Mongoeco read.find_one acceptsSkip for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.acceptsSort": {
+            "description": "Mongoeco read.find_one acceptsSort for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.collectionScoped": {
+            "description": "Mongoeco read.find_one collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.supportedOptions": {
+            "description": "Mongoeco read.find_one supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "find_one.supportsExplain": {
+            "description": "Mongoeco read.find_one supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.supportsSession": {
+            "description": "Mongoeco read.find_one supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find_one.unsupportedOptions": {
+            "description": "Mongoeco read.find_one unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
           }
         }
       },

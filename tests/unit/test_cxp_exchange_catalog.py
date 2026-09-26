@@ -1,6 +1,9 @@
 """Independent checks for Mongoeco's portable compatibility declarations."""
 
+import json
+
 from copy import deepcopy
+from importlib.resources import files
 
 import pytest
 
@@ -162,7 +165,7 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "203873ae07652b6bdf2c8d46f86b3e4cd4d3407a58e1b3c6aa1a46830de39776"
+        "e38f9e6404bc372b5887567d62cc2ac7bf9893cae4c9a6f7d04eeec626e667ce"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
@@ -364,7 +367,8 @@ def test_find_options_are_scoped_to_the_find_operation() -> None:
         "name": "find",
         "result_type": "org.mongoeco:result.cursor:1",
     }
-    assert "find_one.supportedOptions" not in read["properties"]
+    assert read["properties"]["find_one.supportedOptions"] == []
+    assert read["properties"]["find_one.acceptsHint"] is False
 
     requirement_content = load_mongodb_profile("mongodb-core").as_dict()
     requirement_content["payload"]["requirement"] = {
@@ -400,6 +404,26 @@ def test_find_options_are_scoped_to_the_find_operation() -> None:
     assert verdict() == "indeterminate"
 
 
+def test_all_read_operation_facts_match_owner_declaration() -> None:
+    owner = json.loads(
+        files("mongoeco.cxp.exchange")
+        .joinpath("data/operational-metadata.json")
+        .read_text(encoding="utf-8")
+    )
+    read = next(
+        item
+        for item in load_mongodb_declared_snapshot().payload["capabilities"]
+        if item["name"] == "read"
+    )
+    bindings = {item["name"]: item["result_type"] for item in read["operations"]}
+    for operation, facts in owner["read"]["operationMetadata"].items():
+        assert bindings[operation] == f"org.mongoeco:result.{facts['resultType']}:1"
+        for field, value in facts.items():
+            if field != "resultType":
+                reported = read["properties"][f"{operation}.{field}"]
+                assert reported == value
+
+
 def test_find_runtime_projection_validates_nested_values() -> None:
     identity = MongoSnapshotIdentity(
         provider_id="provider-A",
@@ -410,7 +434,9 @@ def test_find_runtime_projection_validates_nested_values() -> None:
         source_reference="owner-report-sha256:example",
     )
 
-    def snapshot_for(find: dict[str, object]) -> Document:
+    def snapshot_for(
+        find: dict[str, object], *, binding: str | None = "cursor"
+    ) -> Document:
         return build_mongodb_snapshot(
             catalog=load_mongodb_catalog(),
             identity=identity,
@@ -420,10 +446,14 @@ def test_find_runtime_projection_validates_nested_values() -> None:
                     support="supported",
                     metadata={"operationMetadata": {"find": find}},
                     operations=(
-                        MongoOperationClaim(
-                            name="find",
-                            result_type="org.mongoeco:result.cursor:1",
-                        ),
+                        (
+                            MongoOperationClaim(
+                                name="find",
+                                result_type=f"org.mongoeco:result.{binding}:1",
+                            ),
+                        )
+                        if binding is not None
+                        else ()
                     ),
                 ),
             ),
@@ -439,6 +469,69 @@ def test_find_runtime_projection_validates_nested_values() -> None:
         snapshot_for({"acceptsHint": "false"})
     with pytest.raises(ValueError, match="Invalid MongoDB read metadata"):
         snapshot_for({"unknownOption": True})
+    with pytest.raises(ValueError, match="lacks its exact binding"):
+        snapshot_for({"acceptsHint": True}, binding=None)
+    with pytest.raises(ValueError, match="result differs from its binding"):
+        snapshot_for({"resultType": "document"})
+
+
+@pytest.mark.parametrize(
+    ["operation", "field", "value", "result_type"],
+    [
+        ("find_one", "acceptsHint", False, "document"),
+        ("count_documents", "acceptsFilter", True, "count"),
+        ("estimated_document_count", "acceptsFilter", False, "count"),
+        ("distinct", "acceptsFieldPath", True, "array"),
+    ],
+)
+def test_other_read_operation_values_keep_their_scope(
+    operation: str, field: str, value: object, result_type: str
+) -> None:
+    snapshot = build_mongodb_snapshot(
+        catalog=load_mongodb_catalog(),
+        identity=MongoSnapshotIdentity(
+            provider_id="provider-A",
+            subject_id="subject-A",
+            configuration_revision="revision-A",
+            observed_at="2026-09-26T00:00:00Z",
+            source_kind="observed",
+            source_reference="owner-report-sha256:example",
+        ),
+        capabilities=(
+            MongoCapabilityClaim(
+                name="read",
+                support="supported",
+                metadata={"operationMetadata": {operation: {field: value}}},
+                operations=(
+                    MongoOperationClaim(
+                        name=operation,
+                        result_type=f"org.mongoeco:result.{result_type}:1",
+                    ),
+                ),
+            ),
+        ),
+    )
+    properties = snapshot.payload["capabilities"][0]["properties"]
+    assert properties[f"{operation}.{field}"] is value
+    other_operations = {
+        "find",
+        "find_one",
+        "count_documents",
+        "estimated_document_count",
+        "distinct",
+    } - {operation}
+    assert all(
+        not key.startswith(f"{other}.")
+        for other in other_operations
+        for key in properties
+    )
+
+
+def test_unknown_read_operation_metadata_rejects_before_projection() -> None:
+    with pytest.raises(ValueError, match="Invalid MongoDB read metadata"):
+        validate_mongodb_metadata(
+            "read", {"operationMetadata": {"not_in_catalog": {"acceptsHint": True}}}
+        )
 
 
 def test_value_requirement_distinguishes_false_from_missing() -> None:
