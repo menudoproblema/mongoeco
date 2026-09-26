@@ -920,6 +920,23 @@ class SearchCoreTests(unittest.TestCase):
                 query=query,
             ),
         )
+        any_order_query = compile_search_autocomplete_query(
+            {
+                "index": "by_text",
+                "autocomplete": {
+                    "query": "ada alg",
+                    "path": "title",
+                    "tokenOrder": "any",
+                },
+            },
+        )
+        self.assertTrue(
+            matches_search_autocomplete_query(
+                {"title": "Algorithm notes by Ada"},
+                definition=definition,
+                query=any_order_query,
+            ),
+        )
 
     def test_matches_search_autocomplete_query_supports_fuzzy_matching(
         self,
@@ -941,6 +958,32 @@ class SearchCoreTests(unittest.TestCase):
                 {"title": "Algorithm handbook"},
                 definition=definition,
                 query=fuzzy_query,
+            ),
+        )
+        one_edit_query = SearchAutocompleteQuery(
+            index_name="by_text",
+            raw_query="algorithn",
+            terms=("algorithn",),
+            paths=("title",),
+            fuzzy_max_edits=1,
+        )
+        self.assertTrue(
+            matches_search_autocomplete_query(
+                {"title": "Algorithm handbook"},
+                definition=definition,
+                query=one_edit_query,
+            ),
+        )
+        self.assertFalse(
+            matches_search_autocomplete_query(
+                {"title": "Algorithm handbook"},
+                definition=definition,
+                query=SearchAutocompleteQuery(
+                    index_name="by_text",
+                    raw_query="algorithn",
+                    terms=("algorithn",),
+                    paths=("title",),
+                ),
             ),
         )
         strict_prefix_query = SearchAutocompleteQuery(
@@ -1881,6 +1924,18 @@ class SearchCoreTests(unittest.TestCase):
             "near": {"path": "score", "origin": 10, "pivot": 2},
             "compound": {"must": [{"text": {"query": "ada", "path": "title"}}]},
         }
+        semantics = {
+            "text": ("tokenized-any-term", "local-text-tier"),
+            "phrase": ("ordered-token-window", "local-text-tier"),
+            "autocomplete": ("token-prefix", "local-text-tier"),
+            "wildcard": ("glob-local", "local-text-tier"),
+            "regex": ("python-regex-local", "local-text-tier"),
+            "exists": ("field-presence", "local-text-tier"),
+            "in": ("exact-membership", "local-filter-tier"),
+            "equals": ("exact-equality", "local-filter-tier"),
+            "range": ("range-comparison", "local-filter-tier"),
+            "near": ("distance-ranking", "local-filter-tier"),
+        }
         definition = SearchIndexDefinition(
             {"mappings": {"dynamic": True}},
             name="by_text",
@@ -1899,6 +1954,12 @@ class SearchCoreTests(unittest.TestCase):
                 )
                 self.assertEqual(search_query_operator_name(query), name)
                 self.assertTrue(query.stage_options.facet.named)
+                if name in semantics:
+                    actual = search_query_explain_details(query)["querySemantics"]
+                    self.assertEqual(
+                        (actual["matchingMode"], actual["scope"]),
+                        semantics[name],
+                    )
                 self.assertTrue(
                     matches_search_query(
                         {"title": "ada notes", "kind": "note", "score": 9},
@@ -1994,6 +2055,19 @@ class SearchCoreTests(unittest.TestCase):
             },
         )
         self.assertEqual(query.flags, "imsux")
+        for flag in "aimsux":
+            with self.subTest(flag=flag):
+                query = compile_search_regex_query(
+                    {
+                        "index": "by_text",
+                        "regex": {
+                            "query": "Ada.*",
+                            "path": "title",
+                            "flags": flag,
+                        },
+                    },
+                )
+                self.assertEqual(query.flags, flag)
 
     def test_compile_vector_search_query_and_search_stage_error_paths(
         self,

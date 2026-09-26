@@ -180,7 +180,8 @@ collation behavior and scope rows have Memory/SQLite sync and async oracles,
 including an installed-wheel replay; four other collation rows have owner
 operational oracles; 18 persistence and topology inspection rows have sync
 and async operational oracles; 26 search stage option rows have focused
-positive and negative oracles; 46 still need owner review or individual
+positive and negative oracles; 36 search operator semantics rows have
+per-operator evidence; ten rows still need owner review or individual
 operational oracles. This file covers the packaged
 operational metadata only. It does not close the separate inventory of public
 APIs, wire commands, BSON behavior, or deployed resources.
