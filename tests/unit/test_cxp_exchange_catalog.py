@@ -14,6 +14,10 @@ from cxp.exchange import (
 from mongoeco.cxp.exchange import (
     PROFILE_NAMES,
     TIER_NAMES,
+    MongoCapabilityClaim,
+    MongoOperationClaim,
+    MongoSnapshotIdentity,
+    build_mongodb_snapshot,
     load_mongodb_catalog,
     load_mongodb_declared_snapshot,
     load_mongodb_profile,
@@ -147,3 +151,104 @@ def test_declared_source_does_not_satisfy_observed_only_policy() -> None:
     )
     assert result.verdict == "indeterminate"
     assert {finding.code for finding in result.findings} == {"source_not_accepted"}
+
+
+def _provider_snapshot(metadata: dict[str, object] | None) -> Document:
+    return build_mongodb_snapshot(
+        catalog=load_mongodb_catalog(),
+        identity=MongoSnapshotIdentity(
+            provider_id="provider-A",
+            subject_id="subject-A",
+            configuration_revision="revision-A",
+            observed_at="2026-09-26T00:00:00Z",
+            source_kind="observed",
+            source_reference="owner-report-sha256:example",
+        ),
+        capabilities=(
+            MongoCapabilityClaim(
+                name="aggregation",
+                support="supported",
+                metadata=metadata,
+                operations=(
+                    MongoOperationClaim(
+                        name="aggregate",
+                        result_type="org.mongoeco:result.cursor:1",
+                    ),
+                ),
+            ),
+        ),
+    )
+
+
+def test_runtime_projection_validates_metadata_before_reporting_keys() -> None:
+    snapshot = _provider_snapshot(
+        {
+            "supportedStages": ["$match"],
+            "supportedExpressionOperators": ["$add"],
+            "supportedGroupAccumulators": ["$sum"],
+            "supportedWindowAccumulators": [],
+        }
+    )
+    reported = snapshot.payload["capabilities"][0]["properties"]["metadata_keys"]
+    assert reported == [
+        "supportedExpressionOperators",
+        "supportedGroupAccumulators",
+        "supportedStages",
+        "supportedWindowAccumulators",
+    ]
+    with pytest.raises(ValueError, match="Invalid MongoDB aggregation metadata"):
+        _provider_snapshot({"supportedStages": [1]})
+    with pytest.raises(ValueError, match="Invalid MongoDB aggregation metadata"):
+        _provider_snapshot({"supportedExpressionOperators": ["$add"]})
+
+
+def test_runtime_projection_omits_unobserved_metadata() -> None:
+    snapshot = _provider_snapshot(None)
+    assert snapshot.payload["capabilities"][0]["properties"] == {}
+    context = Document(
+        {
+            "document_type": "cxp.context",
+            "spec_version": 2,
+            "payload": {
+                "subject_id": "subject-A",
+                "configuration_revision": "revision-A",
+                "accepted_sources": ["observed"],
+            },
+        },
+        expected_type="cxp.context",
+    )
+    result = evaluate_requirements_detailed(
+        snapshot,
+        load_mongodb_profile("mongodb-aggregate-rich"),
+        context,
+        catalogs=mongodb_catalog_store(),
+    )
+    assert result.verdict == "indeterminate"
+
+
+def test_runtime_projection_rejects_unsupported_operation_result() -> None:
+    with pytest.raises(InvalidDocumentError):
+        build_mongodb_snapshot(
+            catalog=load_mongodb_catalog(),
+            identity=MongoSnapshotIdentity(
+                provider_id="provider-A",
+                subject_id="subject-A",
+                configuration_revision="revision-A",
+                observed_at="2026-09-26T00:00:00Z",
+                source_kind="observed",
+                source_reference="owner-report-sha256:example",
+            ),
+            capabilities=(
+                MongoCapabilityClaim(
+                    name="aggregation",
+                    support="supported",
+                    metadata={"supportedStages": ["$match"]},
+                    operations=(
+                        MongoOperationClaim(
+                            name="aggregate",
+                            result_type="org.mongoeco:result.wrong:1",
+                        ),
+                    ),
+                ),
+            ),
+        )

@@ -6,6 +6,13 @@ from importlib.resources import files
 
 from cxp.exchange import CatalogStore, Document, load_document
 
+from mongoeco.cxp.exchange.snapshot import (
+    MongoCapabilityClaim,
+    MongoOperationClaim,
+    MongoSnapshotIdentity,
+    build_mongodb_snapshot,
+)
+
 
 PROFILE_NAMES = (
     "mongodb-core",
@@ -52,6 +59,10 @@ def mongodb_catalog_store() -> CatalogStore:
 __all__ = (
     "PROFILE_NAMES",
     "TIER_NAMES",
+    "MongoCapabilityClaim",
+    "MongoOperationClaim",
+    "MongoSnapshotIdentity",
+    "build_mongodb_snapshot",
     "load_mongodb_catalog",
     "load_mongodb_declared_snapshot",
     "load_mongodb_profile",

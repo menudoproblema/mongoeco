@@ -53,6 +53,14 @@ can substantiate. In particular, copying this declaration into an `observed`
 snapshot would misstate provenance. A consumer demanding `observed` or
 `tested` receives an indeterminate result from this declared snapshot.
 
+`build_mongodb_snapshot` accepts a `MongoSnapshotIdentity` and explicit
+`MongoCapabilityClaim`/`MongoOperationClaim` values. It checks Mongoeco-owned
+typed metadata before projecting the keys actually present, then asks
+`CatalogStore` to validate the complete snapshot. Passing `metadata=None`
+omits the key set and leaves metadata requirements indeterminate; it is not
+converted to an empty observed set. The caller supplies the source kind and
+reference for every homogeneous snapshot.
+
 Structured MongoDB metadata values, telemetry, runtime input validation and
 `explain()` projections remain operational contracts of Mongoeco. The old
 generic catalog has no operation input or result schemas; its result-type
