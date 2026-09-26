@@ -9,10 +9,11 @@ the currently supported legacy facade until its migration release.
 `database/mongodb` interface, and reexports the related execution catalogs that
 matter for consumers already working against the CXP catalog surface.
 
-The runtime dependency is `cxp>=4.1.0`, with no upper version bound. This
-integration uses the preserved Python catalog API, not the optional document
-exchange layer: `cxp[exchange]` is not required. CI pins 4.1.0 for controlled
-validation; locks record the concrete version resolved for development.
+The migration branch declares `cxp[exchange]>=4.3.0,<5`: context v2 requires
+4.3.0 and the major bound prevents an automatic incompatible resolution. CXP
+4.3.0 is currently an exact local candidate, so the checked-in development
+lock still resolves the earlier 4.1.0 release and cannot certify this branch.
+The old facade below remains active pending its exchange migration.
 
 That means:
 

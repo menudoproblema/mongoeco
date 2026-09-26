@@ -24,6 +24,7 @@ from mongoeco.cxp.exchange import (
     load_mongodb_tier,
     mongodb_catalog_store,
 )
+from mongoeco.cxp.exchange.metadata import validate_mongodb_metadata
 
 
 def _context() -> Document:
@@ -200,6 +201,29 @@ def test_runtime_projection_validates_metadata_before_reporting_keys() -> None:
         _provider_snapshot({"supportedStages": [1]})
     with pytest.raises(ValueError, match="Invalid MongoDB aggregation metadata"):
         _provider_snapshot({"supportedExpressionOperators": ["$add"]})
+
+
+@pytest.mark.parametrize(
+    ["capability", "metadata"],
+    [
+        ("read", {"queryFieldOperators": ["$eq"]}),
+        ("write", {"updateOperators": ["$set"]}),
+        ("transactions", {"distributed": False}),
+        ("change_streams", {"persistent": False}),
+        ("aggregation", {"supportedStages": ["$match"]}),
+        ("search", {"operators": ["text"]}),
+        ("vector_search", {"similarities": ["cosine"]}),
+        ("collation", {"backend": {"selectedBackend": "pyuca"}}),
+        ("persistence", {"persistent": True, "storageEngine": "sqlite"}),
+        ("topology_discovery", {"topologyType": "Single", "serverCount": 1}),
+    ],
+)
+def test_owner_metadata_rejects_unvalidated_keys(
+    capability: str, metadata: dict[str, object]
+) -> None:
+    validate_mongodb_metadata(capability, metadata)
+    with pytest.raises(ValueError, match=f"Invalid MongoDB {capability} metadata"):
+        validate_mongodb_metadata(capability, {**metadata, "unvalidatedClaim": True})
 
 
 def test_runtime_projection_omits_unobserved_metadata() -> None:

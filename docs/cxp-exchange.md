@@ -59,7 +59,10 @@ typed metadata before projecting the keys actually present, then asks
 `CatalogStore` to validate the complete snapshot. Passing `metadata=None`
 omits the key set and leaves metadata requirements indeterminate; it is not
 converted to an empty observed set. The caller supplies the source kind and
-reference for every homogeneous snapshot.
+reference for every homogeneous snapshot. The owner validator rejects unknown
+top-level metadata keys and wrong top-level value types for all ten
+capabilities. Nested operation and runtime metadata remains governed by
+Mongoeco's operational contract; exchange claims only key presence.
 
 Structured MongoDB metadata values, telemetry, runtime input validation and
 `explain()` projections remain operational contracts of Mongoeco. Telemetry
