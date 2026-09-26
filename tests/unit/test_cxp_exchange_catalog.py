@@ -165,7 +165,7 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "64a3001192149b5845b41ea943ec1ba3eca15316371cd70a07434f71f73ade8f"
+        "9b3973183ea7d7b04529fe38b0560c4f33143552c8cd50291a91605376f41273"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
@@ -687,6 +687,110 @@ def test_sdam_false_requirement_has_three_distinct_outcomes() -> None:
     for claim in snapshot_content["payload"]["capabilities"]:
         if claim["name"] == "topology_discovery":
             del claim["properties"]["sdam.fullSdam"]
+    assert verdict() == "indeterminate"
+
+
+def test_collation_facts_keep_backend_and_capability_scope() -> None:
+    owner = json.loads(
+        files("mongoeco.cxp.exchange")
+        .joinpath("data/operational-metadata.json")
+        .read_text(encoding="utf-8")
+    )
+    claim = next(
+        item
+        for item in load_mongodb_declared_snapshot().payload["capabilities"]
+        if item["name"] == "collation"
+    )
+    for scope, fields in {
+        "backend": (
+            "advancedOptionsAvailable",
+            "availableBackends",
+            "selectedBackend",
+            "unicodeAvailable",
+        ),
+        "capabilities": (
+            "advancedOptionsRequireIcu",
+            "fallbackBackend",
+            "optionalIcuBackend",
+            "supportedLocales",
+            "supportsCaseLevel",
+            "supportsNumericOrdering",
+        ),
+    }.items():
+        for field in fields:
+            value = owner["collation"][scope][field]
+            reported = claim["properties"][f"{scope}.{field}"]
+            if isinstance(value, list):
+                assert reported == sorted(value)
+            else:
+                assert reported == value
+    assert "capabilities.supportedStrengths" not in claim["properties"]
+
+    identity = MongoSnapshotIdentity(
+        provider_id="provider-A",
+        subject_id="subject-A",
+        configuration_revision="revision-A",
+        observed_at="2026-09-26T00:00:00Z",
+        source_kind="observed",
+        source_reference="owner-report-sha256:example",
+    )
+
+    def snapshot_for(metadata: dict[str, object]) -> Document:
+        return build_mongodb_snapshot(
+            catalog=load_mongodb_catalog(),
+            identity=identity,
+            capabilities=(
+                MongoCapabilityClaim(
+                    name="collation",
+                    support="supported",
+                    metadata=metadata,
+                    operations=(),
+                ),
+            ),
+        )
+
+    projected = snapshot_for(
+        {"backend": {"advancedOptionsAvailable": False}, "capabilities": {}}
+    ).payload["capabilities"][0]["properties"]
+    assert projected["backend.advancedOptionsAvailable"] is False
+    assert "capabilities.supportedLocales" not in projected
+    with pytest.raises(ValueError, match="Invalid MongoDB collation metadata"):
+        snapshot_for({"backend": {"selectedBackend": 42}})
+    with pytest.raises(ValueError, match="Invalid MongoDB collation metadata"):
+        snapshot_for({"capabilities": {"unknownFlag": True}})
+
+
+def test_collation_backend_availability_has_three_outcomes() -> None:
+    requirement_content = load_mongodb_profile("mongodb-core").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "advanced-collation",
+        "operator": "equals",
+        "capability": "collation",
+        "path": "/properties/backend.advancedOptionsAvailable",
+        "value": True,
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    requirement = Document(requirement_content, expected_type="cxp.requirements")
+    snapshot_content = load_mongodb_declared_snapshot().as_dict()
+
+    def verdict() -> str:
+        return evaluate_requirements_detailed(
+            Document(snapshot_content, expected_type="cxp.snapshot"),
+            requirement,
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        ).verdict
+
+    assert verdict() == "incompatible"
+    for claim in snapshot_content["payload"]["capabilities"]:
+        if claim["name"] == "collation":
+            claim["properties"]["backend.advancedOptionsAvailable"] = True
+    assert verdict() == "compatible"
+    for claim in snapshot_content["payload"]["capabilities"]:
+        if claim["name"] == "collation":
+            del claim["properties"]["backend.advancedOptionsAvailable"]
     assert verdict() == "indeterminate"
 
 

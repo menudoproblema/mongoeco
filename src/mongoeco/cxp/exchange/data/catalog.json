@@ -1457,6 +1457,56 @@
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
             "nullable": false
+          },
+          "backend.advancedOptionsAvailable": {
+            "description": "Mongoeco collation backend.advancedOptionsAvailable for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "backend.availableBackends": {
+            "description": "Mongoeco collation backend.availableBackends for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "backend.selectedBackend": {
+            "description": "Mongoeco collation backend.selectedBackend for this configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "backend.unicodeAvailable": {
+            "description": "Mongoeco collation backend.unicodeAvailable for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "capabilities.advancedOptionsRequireIcu": {
+            "description": "Mongoeco collation capabilities.advancedOptionsRequireIcu for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "capabilities.fallbackBackend": {
+            "description": "Mongoeco collation capabilities.fallbackBackend for this configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "capabilities.optionalIcuBackend": {
+            "description": "Mongoeco collation capabilities.optionalIcuBackend for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "capabilities.supportedLocales": {
+            "description": "Mongoeco collation capabilities.supportedLocales for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "capabilities.supportsCaseLevel": {
+            "description": "Mongoeco collation capabilities.supportsCaseLevel for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "capabilities.supportsNumericOrdering": {
+            "description": "Mongoeco collation capabilities.supportsNumericOrdering for this configuration.",
+            "kind": "boolean",
+            "nullable": false
           }
         }
       },

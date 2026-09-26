@@ -452,6 +452,65 @@ class MongoVectorSearchOperationMetadata(
     )
 
 
+COLLATION_BACKEND_FIELDS = frozenset(
+    {
+        "advancedOptionsAvailable",
+        "availableBackends",
+        "selectedBackend",
+        "unicodeAvailable",
+    }
+)
+COLLATION_CAPABILITY_FIELDS = frozenset(
+    {
+        "advancedOptionsRequireIcu",
+        "fallbackBackend",
+        "optionalIcuBackend",
+        "supportedLocales",
+        "supportsCaseLevel",
+        "supportsNumericOrdering",
+    }
+)
+
+
+class MongoCollationBackendMetadata(
+    msgspec.Struct, frozen=True, forbid_unknown_fields=True
+):
+    advanced_options_available: bool | None = msgspec.field(
+        name="advancedOptionsAvailable", default=None
+    )
+    available_backends: tuple[str, ...] | None = msgspec.field(
+        name="availableBackends", default=None
+    )
+    selected_backend: str | None = msgspec.field(name="selectedBackend", default=None)
+    unicode_available: bool | None = msgspec.field(
+        name="unicodeAvailable", default=None
+    )
+
+
+class MongoCollationCapabilitiesMetadata(
+    msgspec.Struct, frozen=True, forbid_unknown_fields=True
+):
+    advanced_options_require_icu: tuple[str, ...] | None = msgspec.field(
+        name="advancedOptionsRequireIcu", default=None
+    )
+    fallback_backend: str | None = msgspec.field(name="fallbackBackend", default=None)
+    optional_icu_backend: bool | None = msgspec.field(
+        name="optionalIcuBackend", default=None
+    )
+    supported_locales: tuple[str, ...] | None = msgspec.field(
+        name="supportedLocales", default=None
+    )
+    supported_strengths: tuple[int, ...] | None = msgspec.field(
+        name="supportedStrengths", default=None
+    )
+    supports_case_level: bool | None = msgspec.field(
+        name="supportsCaseLevel", default=None
+    )
+    supports_numeric_ordering: bool | None = msgspec.field(
+        name="supportsNumericOrdering", default=None
+    )
+
+
 class MongoCollationMetadata(msgspec.Struct, frozen=True, forbid_unknown_fields=True):
     backend: dict[str, object] = msgspec.field(default_factory=dict)
     capabilities: dict[str, object] = msgspec.field(default_factory=dict)
@@ -580,6 +639,17 @@ def validate_mongodb_metadata(capability: str, metadata: dict[str, object]) -> N
                     type=MongoSdamMetadata,
                     strict=True,
                 )
+            if capability == "collation":
+                for field, nested_schema in (
+                    ("backend", MongoCollationBackendMetadata),
+                    ("capabilities", MongoCollationCapabilitiesMetadata),
+                ):
+                    if field in metadata:
+                        msgspec.convert(
+                            msgspec.to_builtins(metadata[field]),
+                            type=nested_schema,
+                            strict=True,
+                        )
             _validate_operation_metadata(capability, metadata)
         except (
             TypeError,

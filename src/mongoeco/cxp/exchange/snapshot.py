@@ -9,6 +9,8 @@ from cxp.exchange import CatalogStore, Document, catalog_reference
 from mongoeco.cxp.exchange.documents import load_mongodb_catalog
 from mongoeco.cxp.exchange.metadata import (
     AGGREGATION_OPERATION_FIELDS,
+    COLLATION_BACKEND_FIELDS,
+    COLLATION_CAPABILITY_FIELDS,
     READ_OPERATION_FIELDS,
     SDAM_FIELDS,
     VECTOR_SEARCH_OPERATION_FIELDS,
@@ -123,18 +125,31 @@ def _project_properties(claim: MongoCapabilityClaim) -> dict[str, object]:
             properties[field] = metadata[field]
     if claim.name == "topology_discovery":
         properties.update(_project_sdam(metadata))
+    if claim.name == "collation":
+        properties.update(
+            _project_nested(metadata, "backend", COLLATION_BACKEND_FIELDS)
+        )
+        properties.update(
+            _project_nested(metadata, "capabilities", COLLATION_CAPABILITY_FIELDS)
+        )
     properties.update(_project_operation_properties(claim, metadata))
     return properties
 
 
 def _project_sdam(metadata: dict[str, object]) -> dict[str, object]:
-    sdam = metadata.get("sdam")
-    if not isinstance(sdam, dict):
+    return _project_nested(metadata, "sdam", SDAM_FIELDS)
+
+
+def _project_nested(
+    metadata: dict[str, object], name: str, fields: frozenset[str]
+) -> dict[str, object]:
+    nested = metadata.get(name)
+    if not isinstance(nested, dict):
         return {}
     return {
-        f"sdam.{field}": sdam[field]
-        for field in SDAM_FIELDS
-        if field in sdam and sdam[field] is not None
+        f"{name}.{field}": nested[field]
+        for field in fields
+        if field in nested and nested[field] is not None
     }
 
 

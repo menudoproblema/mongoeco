@@ -100,6 +100,12 @@ booleans. `false` is a negative claim, while omission stays unknown. The
 generic declared snapshot does not assert a concrete server count or topology
 for an external deployment; those facts belong to that resource's observation.
 
+Collation backend and supported capability values are scoped as `backend.*`
+and `capabilities.*` properties. The owner validator rejects unknown nested
+fields and wrong types. The integer list `supportedStrengths` remains an
+operational input-validation contract because exchange v1 has no integer-set
+value kind; a string conversion would change its meaning.
+
 The packaged snapshot describes Mongoeco's **declared public library
 surface**. Its source is `declared`; it does not prove what a running
 deployment has observed or tested. Runtime providers must emit their own
