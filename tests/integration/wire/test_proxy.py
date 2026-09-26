@@ -435,6 +435,89 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("visibleNamespaces", profile_status)
             self.assertEqual(profile_status["ok"], 1.0)
 
+    async def test_proxy_rejects_invalid_introspection_command_values_through_pymongo(
+        self,
+    ):
+        async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+            uri = proxy.address.uri
+
+            def _exercise() -> None:
+                client = PyMongoClient(
+                    uri, serverSelectionTimeoutMS=3000, directConnection=True
+                )
+                try:
+                    for command_name in (
+                        "buildInfo",
+                        "getCmdLineOpts",
+                        "hostInfo",
+                        "listCommands",
+                        "serverStatus",
+                        "whatsmyuri",
+                    ):
+                        with self.subTest(command=command_name), self.assertRaisesRegex(
+                            Exception,
+                            f"wire {command_name} requires the command value 1",
+                        ):
+                            client.admin.command({command_name: 0})
+                finally:
+                    client.close()
+
+            await asyncio.to_thread(_exercise)
+
+    async def test_proxy_create_and_drop_preserve_namespace_on_invalid_names(self):
+        async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+            uri = proxy.address.uri
+
+            def _exercise() -> None:
+                client = PyMongoClient(
+                    uri, serverSelectionTimeoutMS=3000, directConnection=True
+                )
+                try:
+                    database = client.alpha
+                    self.assertEqual(database.command({"create": "events"})["ok"], 1.0)
+                    self.assertIn("events", database.list_collection_names())
+                    with self.assertRaisesRegex(
+                        Exception, "wire create requires a non-empty collection name"
+                    ):
+                        database.command({"create": ""})
+                    with self.assertRaisesRegex(
+                        Exception, "wire drop requires a non-empty collection name"
+                    ):
+                        database.command({"drop": ""})
+                    self.assertIn("events", database.list_collection_names())
+                    self.assertEqual(database.command({"drop": "events"})["ok"], 1.0)
+                    self.assertNotIn("events", database.list_collection_names())
+                finally:
+                    client.close()
+
+            await asyncio.to_thread(_exercise)
+
+    async def test_proxy_current_op_and_kill_op_validate_operational_ids(self):
+        async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+            uri = proxy.address.uri
+
+            def _exercise() -> None:
+                client = PyMongoClient(
+                    uri, serverSelectionTimeoutMS=3000, directConnection=True
+                )
+                try:
+                    current = client.admin.command({"currentOp": 1})
+                    self.assertIsInstance(current["inprog"], list)
+                    kill_result = client.admin.command({"killOp": 1, "op": "missing"})
+                    self.assertEqual(kill_result["numKilled"], 0)
+                    with self.assertRaisesRegex(
+                        Exception, "wire currentOp requires the command value 1"
+                    ):
+                        client.admin.command({"currentOp": 0})
+                    with self.assertRaisesRegex(
+                        Exception, "wire killOp requires a non-empty string op"
+                    ):
+                        client.admin.command({"killOp": 1, "op": ""})
+                finally:
+                    client.close()
+
+            await asyncio.to_thread(_exercise)
+
     async def test_proxy_server_status_reports_live_local_opcounters(self):
         async with AsyncMongoEcoProxyServer(engine=MemoryEngine(), mongodb_dialect="8.0") as proxy:
             uri = proxy.address.uri

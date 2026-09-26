@@ -44,6 +44,7 @@ def test_wire_conservation_matrix_covers_every_advertised_command() -> None:
     assert set(names) == set(WireSurface().supported_commands)
     assert all(row["product"] == "Mongoeco" for row in rows)
     assert all(row["owner"] == "Mongoeco" for row in rows)
+    assert all(row["status"].startswith("bounded_behavior_verified") for row in rows)
 
     surface = PROJECT_ROOT / "src/mongoeco/wire/surface.py"
     routing = PROJECT_ROOT / "src/mongoeco/wire/capabilities.py"

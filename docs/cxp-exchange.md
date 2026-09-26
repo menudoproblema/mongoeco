@@ -186,9 +186,12 @@ deployed resources.
 The local wire command inventory is recorded separately in
 [`cxp-wire-command-conservation.csv`](cxp-wire-command-conservation.csv).
 It lists all 46 advertised command names, their routing kind and family, the
-exact source hashes and current evidence. Nineteen commands have bounded positive
-and negative behavior tests; the other 27 still need command-level review.
-The operational routing remains owned by Mongoeco. Whether any wire support
+exact source hashes and current evidence. All 46 commands have bounded positive
+and negative behavior tests, including client-facing PyMongo paths for the
+database commands. For `hello`, malformed optional client/compression metadata
+is accepted without replacing previously valid connection metadata; it does
+not assert support for those malformed values. The operational routing remains
+owned by Mongoeco. Whether any wire support
 claims should become exchange compatibility properties is an open owner
 decision; this inventory does not assert such a property or close C4.
 

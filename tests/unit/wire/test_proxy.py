@@ -744,6 +744,35 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(connection.client_metadata, {"application": {"name": "wire-tests"}})
         self.assertEqual(connection.compression, ("noop",))
 
+    async def test_executor_hello_does_not_promote_malformed_optional_metadata(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        accepted = await proxy._executor.execute_command(
+            {
+                "hello": 1,
+                "$db": "admin",
+                "client": {"application": {"name": "valid"}},
+                "compression": ["noop"],
+            },
+            connection=connection,
+        )
+        self.assertEqual(accepted["ok"], 1.0)
+
+        malformed = await proxy._executor.execute_command(
+            {
+                "hello": 1,
+                "$db": "admin",
+                "client": "wrong shape",
+                "compression": ["noop", 7],
+            },
+            connection=connection,
+        )
+        self.assertEqual(malformed["ok"], 1.0)
+        self.assertEqual(connection.hello_count, 2)
+        self.assertEqual(connection.client_metadata, {"application": {"name": "valid"}})
+        self.assertEqual(connection.compression, ("noop",))
+
     async def test_executor_preserves_both_legacy_handshake_aliases(self):
         proxy = AsyncMongoEcoProxyServer()
         connection = proxy._connections.create(("127.0.0.1", 27017))
