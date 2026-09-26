@@ -4,6 +4,8 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
+from mongoeco import MongoClient
+from mongoeco.api.admin_parsing import normalize_index_models_from_command
 from mongoeco.api._async import _database_command_contract as command_contract
 from mongoeco.api._async.database_commands import (
     SUPPORTED_DATABASE_COMMANDS,
@@ -215,6 +217,75 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
                 command_contract.command_help_document("unknownCommand")["supportedOptions"],
                 ["comment", "maxTimeMS"],
             )
+
+    def test_create_indexes_help_preserves_nested_index_spec_semantics(self):
+        help_document = list_commands_document()["commands"]["createIndexes"]
+        self.assertEqual(help_document["supportedOptions"], ["comment", "maxTimeMS"])
+        self.assertEqual(
+            set(help_document["indexSpecFields"]),
+            {
+                "key", "name", "unique", "sparse", "background", "hidden",
+                "collation", "partialFilterExpression", "expireAfterSeconds",
+                "weights", "wildcardProjection", "defaultLanguage",
+                "languageOverride", "min", "max", "bucketSize",
+                "wildcard_projection", "default_language", "language_override",
+                "min_value", "max_value", "bucket_size",
+            },
+        )
+        self.assertEqual(
+            help_document["acceptedNoopIndexSpecFields"],
+            ["background", "wildcardProjection", "wildcard_projection"],
+        )
+        self.assertEqual(
+            help_document["indexSpecAliases"],
+            {
+                "wildcard_projection": "wildcardProjection",
+                "default_language": "defaultLanguage",
+                "language_override": "languageOverride",
+                "min_value": "min",
+                "max_value": "max",
+                "bucket_size": "bucketSize",
+            },
+        )
+
+        model = normalize_index_models_from_command(
+            [{
+                "key": {"$**": 1},
+                "name": "wild_idx",
+                "background": True,
+                "wildcard_projection": {"private": 0},
+            }]
+        )[0]
+        self.assertEqual(model.document["wildcardProjection"], {"private": 0})
+        with self.assertRaisesRegex(TypeError, "unsupported createIndexes options"):
+            normalize_index_models_from_command(
+                [{"key": {"a": 1}, "unlisted": True}]
+            )
+        with self.assertRaisesRegex(TypeError, "unsupported IndexModel options"):
+            normalize_index_models_from_command(
+                [{
+                    "key": {"$**": 1},
+                    "wildcardProjection": {"private": 0},
+                    "wildcard_projection": {"private": 0},
+                }]
+            )
+
+        client = MongoClient(MemoryEngine())
+        self.assertEqual(
+            client["db"].command({
+                "createIndexes": "items",
+                "indexes": [{
+                    "key": {"$**": 1},
+                    "name": "wild_idx",
+                    "background": True,
+                    "wildcardProjection": {"private": 0},
+                }],
+            })["ok"],
+            1.0,
+        )
+        installed = client["db"]["items"].index_information()["wild_idx"]
+        self.assertNotIn("background", installed)
+        self.assertNotIn("wildcardProjection", installed)
 
     def test_advertised_database_commands_have_owner_contracts(self):
         surface = WireSurface()

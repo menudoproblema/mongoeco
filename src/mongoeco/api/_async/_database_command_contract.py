@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from mongoeco.api.admin_parsing import (
+    CREATE_INDEXES_ACCEPTED_NOOP_SPEC_FIELDS,
+    CREATE_INDEXES_SPEC_ALIASES,
+    CREATE_INDEXES_SPEC_FIELDS,
+)
 from mongoeco.compat._catalog_database_commands import DATABASE_COMMAND_SUPPORT_CATALOG
 from mongoeco.compat._catalog_models import DatabaseCommandSupport, OptionSupportStatus
 from mongoeco.compat._catalog_operation_options import DATABASE_COMMAND_OPTION_SUPPORT_CATALOG
@@ -52,6 +57,12 @@ def command_help_document(command_name: str) -> dict[str, object]:
         document["supportedOptions"] = list(supported_options)
     if accepted_noop_options:
         document["acceptedNoopOptions"] = list(accepted_noop_options)
+    if command_name == "createIndexes":
+        document["indexSpecFields"] = sorted(CREATE_INDEXES_SPEC_FIELDS)
+        document["acceptedNoopIndexSpecFields"] = sorted(
+            CREATE_INDEXES_ACCEPTED_NOOP_SPEC_FIELDS
+        )
+        document["indexSpecAliases"] = dict(sorted(CREATE_INDEXES_SPEC_ALIASES.items()))
     if entry.note is not None:
         document["note"] = entry.note
     return document

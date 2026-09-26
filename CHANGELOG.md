@@ -25,6 +25,9 @@ usa Semantic Versioning.
 - Record `create_index.background` and `create_index.wildcard_projection` as
   accepted no-op API options. The existing type checks and engine-boundary
   tests remain the operational evidence for their limited meaning.
+- Describe accepted `createIndexes.indexes[]` fields separately from command
+  options in `listCommands`, including aliases and the `background` and
+  wildcard-projection fields that are accepted without an engine effect.
 
 ## [4.7.0] - 2026-09-13
 

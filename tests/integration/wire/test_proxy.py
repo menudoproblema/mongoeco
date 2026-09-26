@@ -14,6 +14,67 @@ from mongoeco.wire import AsyncMongoEcoProxyServer
 
 @unittest.skipIf(PyMongoClient is None, "pymongo is required for wire proxy tests")
 class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_proxy_exposes_nested_create_indexes_noop_contract(self):
+        async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+            uri = proxy.address.uri
+
+            def _exercise() -> tuple[dict, dict, str]:
+                client = PyMongoClient(
+                    uri,
+                    serverSelectionTimeoutMS=3000,
+                    directConnection=True,
+                )
+                try:
+                    help_document = client.admin.command("listCommands")["commands"][
+                        "createIndexes"
+                    ]
+                    result = client.alpha.command(
+                        {
+                            "createIndexes": "items",
+                            "indexes": [
+                                {
+                                    "key": {"$**": 1},
+                                    "name": "wild_idx",
+                                    "background": True,
+                                    "wildcardProjection": {"private": 0},
+                                }
+                            ],
+                        }
+                    )
+                    installed = client.alpha.items.index_information()["wild_idx"]
+                    try:
+                        client.alpha.command(
+                            {
+                                "createIndexes": "items",
+                                "indexes": [{"key": {"x": 1}, "unlisted": True}],
+                            }
+                        )
+                    except Exception as error:
+                        invalid = str(error)
+                    else:
+                        invalid = ""
+                    return (
+                        help_document,
+                        {"result": result, "installed": installed},
+                        invalid,
+                    )
+                finally:
+                    client.close()
+
+            help_document, outcome, invalid = await asyncio.to_thread(_exercise)
+            self.assertEqual(
+                help_document["supportedOptions"], ["comment", "maxTimeMS"]
+            )
+            self.assertIn("wildcardProjection", help_document["indexSpecFields"])
+            self.assertEqual(
+                help_document["acceptedNoopIndexSpecFields"],
+                ["background", "wildcardProjection", "wildcard_projection"],
+            )
+            self.assertEqual(outcome["result"]["ok"], 1.0)
+            self.assertNotIn("wildcardProjection", outcome["installed"])
+            self.assertNotIn("background", outcome["installed"])
+            self.assertIn("unsupported createIndexes options", invalid)
+
     async def test_proxy_supports_ping_insert_find_and_aggregate_through_pymongo(self):
         async with AsyncMongoEcoProxyServer(engine=MemoryEngine(), mongodb_dialect="8.0") as proxy:
             uri = proxy.address.uri

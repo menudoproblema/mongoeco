@@ -716,6 +716,10 @@ class CommandHelpDocument(TypedDict, total=False):
     supportsExplain: bool
     supportsComment: bool
     supportedOptions: list[str]
+    acceptedNoopOptions: list[str]
+    indexSpecFields: list[str]
+    acceptedNoopIndexSpecFields: list[str]
+    indexSpecAliases: dict[str, str]
     note: str
 
 

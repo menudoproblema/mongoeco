@@ -168,6 +168,14 @@ as warnings without changing the validation pass or making it asynchronous.
 `listCommands.supportedOptions` lists accepted names; its
 `acceptedNoopOptions` identifies these four cases explicitly. A consumer must
 not treat their presence in `supportedOptions` as evidence of an effect.
+For `createIndexes`, `supportedOptions` lists only command-level options.
+`indexSpecFields` lists the exact accepted fields of each element of
+`indexes`, including `key`; `indexSpecAliases` records the accepted Python
+spellings. `acceptedNoopIndexSpecFields` identifies `background` and both
+spellings of wildcard projection. None of these lists asserts that every
+other index field has a proven physical effect. Unknown fields and two
+non-null spellings of the same supplied field are rejected before index
+creation.
 For the public `create_index` API, `background` and `wildcard_projection` are
 also accepted and type-checked without being passed to the engine; their owner
 catalog entries now state `accepted-noop`. The same applies when these options

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from types import MappingProxyType
 
 from mongoeco.api.argument_validation import (
     normalize_sort_spec as _normalize_sort_spec,
@@ -10,6 +11,47 @@ from mongoeco.api.argument_validation import (
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, Filter, IndexModel
+
+
+CREATE_INDEXES_SPEC_FIELDS = frozenset(
+    {
+        "key",
+        "name",
+        "unique",
+        "sparse",
+        "background",
+        "hidden",
+        "collation",
+        "partialFilterExpression",
+        "expireAfterSeconds",
+        "weights",
+        "wildcardProjection",
+        "defaultLanguage",
+        "languageOverride",
+        "min",
+        "max",
+        "bucketSize",
+        "wildcard_projection",
+        "default_language",
+        "language_override",
+        "min_value",
+        "max_value",
+        "bucket_size",
+    }
+)
+CREATE_INDEXES_SPEC_ALIASES = MappingProxyType(
+    {
+        "wildcard_projection": "wildcardProjection",
+        "default_language": "defaultLanguage",
+        "language_override": "languageOverride",
+        "min_value": "min",
+        "max_value": "max",
+        "bucket_size": "bucketSize",
+    }
+)
+CREATE_INDEXES_ACCEPTED_NOOP_SPEC_FIELDS = frozenset(
+    {"background", "wildcardProjection", "wildcard_projection"}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,79 +134,14 @@ def normalize_index_models_from_command(indexes: object) -> list[IndexModel]:
         if "key" not in raw_index:
             raise OperationFailure("index specification must contain 'key'")
 
-        unsupported = set(raw_index) - {
-            "key",
-            "name",
-            "unique",
-            "sparse",
-            "background",
-            "hidden",
-            "collation",
-            "partialFilterExpression",
-            "expireAfterSeconds",
-            "weights",
-            "wildcardProjection",
-            "defaultLanguage",
-            "languageOverride",
-            "min",
-            "max",
-            "bucketSize",
-            "wildcard_projection",
-            "default_language",
-            "language_override",
-            "min_value",
-            "max_value",
-            "bucket_size",
-        }
+        unsupported = set(raw_index) - CREATE_INDEXES_SPEC_FIELDS
         if unsupported:
             unsupported_names = ", ".join(sorted(unsupported))
             raise TypeError(
                 f"unsupported createIndexes options in command: {unsupported_names}"
             )
 
-        kwargs: dict[str, object] = {}
-        if "name" in raw_index:
-            kwargs["name"] = raw_index["name"]
-        if "unique" in raw_index:
-            kwargs["unique"] = raw_index["unique"]
-        if "sparse" in raw_index:
-            kwargs["sparse"] = raw_index["sparse"]
-        if "background" in raw_index:
-            kwargs["background"] = raw_index["background"]
-        if "hidden" in raw_index:
-            kwargs["hidden"] = raw_index["hidden"]
-        if "collation" in raw_index:
-            kwargs["collation"] = raw_index["collation"]
-        if "partialFilterExpression" in raw_index:
-            kwargs["partialFilterExpression"] = raw_index["partialFilterExpression"]
-        if "expireAfterSeconds" in raw_index:
-            kwargs["expireAfterSeconds"] = raw_index["expireAfterSeconds"]
-        if "weights" in raw_index:
-            kwargs["weights"] = raw_index["weights"]
-        if "wildcardProjection" in raw_index:
-            kwargs["wildcardProjection"] = raw_index["wildcardProjection"]
-        if "defaultLanguage" in raw_index:
-            kwargs["defaultLanguage"] = raw_index["defaultLanguage"]
-        if "languageOverride" in raw_index:
-            kwargs["languageOverride"] = raw_index["languageOverride"]
-        if "min" in raw_index:
-            kwargs["min"] = raw_index["min"]
-        if "max" in raw_index:
-            kwargs["max"] = raw_index["max"]
-        if "bucketSize" in raw_index:
-            kwargs["bucketSize"] = raw_index["bucketSize"]
-        if "wildcard_projection" in raw_index:
-            kwargs["wildcard_projection"] = raw_index["wildcard_projection"]
-        if "default_language" in raw_index:
-            kwargs["default_language"] = raw_index["default_language"]
-        if "language_override" in raw_index:
-            kwargs["language_override"] = raw_index["language_override"]
-        if "min_value" in raw_index:
-            kwargs["min_value"] = raw_index["min_value"]
-        if "max_value" in raw_index:
-            kwargs["max_value"] = raw_index["max_value"]
-        if "bucket_size" in raw_index:
-            kwargs["bucket_size"] = raw_index["bucket_size"]
+        kwargs = {name: value for name, value in raw_index.items() if name != "key"}
         normalized.append(IndexModel(raw_index["key"], **kwargs))
     return normalized
 
