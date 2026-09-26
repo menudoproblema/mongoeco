@@ -148,6 +148,11 @@ real del subsistema:
 - runtime observable (`listCommands`, `serverStatus`, explain);
 - tests y snapshots.
 
+La prueba de alineacion exige una ficha propietaria para cada comando que
+`database.command(...)` anuncia, y verifica la ficha de `configureFailPoint`
+en `listCommands` con alcance local `failCommand`. El snapshot historico 4.7.0
+permanece intacto; la nueva ficha se comprueba como delta explicito.
+
 Por eso esta capa debe leerse junto con los tests y no solo junto con las docs.
 
 ## Tests estructurales de mantenimiento

@@ -20,6 +20,9 @@ WIRE_SPECIAL_COMMANDS: tuple[str, ...] = (
 )
 
 WIRE_SUPPORTED_OPCODES: tuple[int, ...] = (2004, 2013)
+WIRE_SUPPORTED_COMMANDS: tuple[str, ...] = tuple(
+    dict.fromkeys(SUPPORTED_DATABASE_COMMANDS + WIRE_SPECIAL_COMMANDS)
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,7 +36,7 @@ class WireSurface:
     compression: tuple[str, ...] = ()
     supports_sessions: bool = True
     supports_transactions: bool = True
-    supported_commands: tuple[str, ...] = SUPPORTED_DATABASE_COMMANDS + WIRE_SPECIAL_COMMANDS
+    supported_commands: tuple[str, ...] = WIRE_SUPPORTED_COMMANDS
     supported_opcodes: tuple[int, ...] = WIRE_SUPPORTED_OPCODES
 
     def supports_command(self, command_name: str) -> bool:

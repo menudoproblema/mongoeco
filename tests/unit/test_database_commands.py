@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 from mongoeco.api._async import _database_command_contract as command_contract
 from mongoeco.api._async.database_commands import (
+    SUPPORTED_DATABASE_COMMANDS,
     AsyncDatabaseCommandService,
     BuildInfoResult,
     _LegacyAdminRoutingAdapter,
@@ -20,10 +21,12 @@ from mongoeco.api._async.database_commands import (
     whats_my_uri_document,
 )
 from mongoeco.compat import MONGODB_DIALECT_70
+from mongoeco.compat._catalog_database_commands import DATABASE_COMMAND_SUPPORT_CATALOG
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import ConnectionFailure, OperationFailure
 from mongoeco.types import CollectionStatsSnapshot, CollectionValidationSnapshot, DatabaseStatsSnapshot, FindAndModifyLastErrorObject, FindAndModifyCommandResult
+from mongoeco.wire.surface import WireSurface
 
 
 class _FakeAdmin:
@@ -202,6 +205,40 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
                 command_contract.command_help_document("unknownCommand")["supportedOptions"],
                 ["comment", "maxTimeMS"],
             )
+
+    def test_advertised_database_commands_have_owner_contracts(self):
+        surface = WireSurface()
+        self.assertEqual(
+            set(SUPPORTED_DATABASE_COMMANDS),
+            set(DATABASE_COMMAND_SUPPORT_CATALOG),
+        )
+        self.assertEqual(
+            len(surface.supported_commands), len(set(surface.supported_commands))
+        )
+        self.assertTrue(
+            all(surface.supports_command(name) for name in SUPPORTED_DATABASE_COMMANDS)
+        )
+        self.assertTrue(
+            all(
+                entry.supports_wire
+                for entry in DATABASE_COMMAND_SUPPORT_CATALOG.values()
+            )
+        )
+        failpoint = list_commands_document()["commands"]["configureFailPoint"]
+        self.assertEqual(
+            failpoint,
+            {
+                "help": "mongoeco local support for the configureFailPoint command",
+                "adminFamily": "admin_control",
+                "supportsWire": True,
+                "supportsExplain": False,
+                "supportsComment": False,
+                "note": (
+                    "Local test-only failCommand control; no general MongoDB "
+                    "failpoint or distributed server behavior is claimed."
+                ),
+            },
+        )
 
     def test_helper_result_builders_cover_document_helpers_and_engine_name_detection(self):
         short_dialect = SimpleNamespace(server_version="8")

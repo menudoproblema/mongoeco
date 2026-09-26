@@ -20,6 +20,13 @@ DATABASE_COMMAND_SUPPORT_CATALOG = MappingProxyType(
             family="admin_stats",
             note="Served from local collection stats snapshots.",
         ),
+        "configureFailPoint": DatabaseCommandSupport(
+            family="admin_control",
+            note=(
+                "Local test-only failCommand control; no general MongoDB "
+                "failpoint or distributed server behavior is claimed."
+            ),
+        ),
         "connectionStatus": DatabaseCommandSupport(
             family="admin_status",
             note="Static local auth/runtime shape, with wire auth info patched from the active connection.",

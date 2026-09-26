@@ -153,6 +153,21 @@ class CompatResolutionTests(unittest.TestCase):
         exchange = current.pop("exchange")
         old_mock_safe = expected.pop("mock_safe_profile")
         new_mock_safe = current.pop("mock_safe_profile")
+        failpoint = current["database_commands"].pop("configureFailPoint")
+        self.assertEqual(
+            failpoint,
+            {
+                "family": "admin_control",
+                "supports_wire": True,
+                "supports_explain": False,
+                "supports_comment": False,
+                "supported_options": [],
+                "note": (
+                    "Local test-only failCommand control; no general MongoDB "
+                    "failpoint or distributed server behavior is claimed."
+                ),
+            },
+        )
         self.assertEqual(current, expected)
         self.assertEqual(exchange, export_exchange_catalog())
         self.assertEqual(exchange["catalog"]["document_type"], "cxp.catalog")
@@ -197,8 +212,19 @@ class CompatResolutionTests(unittest.TestCase):
         expected = snapshot_path.read_text(encoding="utf-8")
         current = export_full_compat_catalog_markdown()
         suffix = "## Local Runtime Subsets\n"
+        failpoint_section = (
+            "### `configureFailPoint`\n"
+            "- `family`: `admin_control`\n"
+            "- `supports_wire`: `True`\n"
+            "- `supports_explain`: `False`\n"
+            "- `supports_comment`: `False`\n"
+            "- `supported_options`: _empty_\n"
+            "- `note`: `Local test-only failCommand control; no general "
+            "MongoDB failpoint or distributed server behavior is claimed.`\n\n"
+        )
+        self.assertEqual(current.count(failpoint_section), 1)
         self.assertEqual(
-            current.split("## CXP Exchange")[0],
+            current.replace(failpoint_section, "", 1).split("## CXP Exchange")[0],
             expected.split("## CXP")[0],
         )
         self.assertEqual(current.split(suffix)[1], expected.split(suffix)[1])

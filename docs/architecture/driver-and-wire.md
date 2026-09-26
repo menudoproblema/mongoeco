@@ -166,6 +166,13 @@ ejecutable:
 - los snapshots del catalogo congelan ambas vistas para evitar que la
   documentacion contractual vaya por detras del soporte real.
 
+`configureFailPoint` figura en esas tres vistas como comando `admin_control`
+accesible por `database.command(...)` y por wire. Su unico modo local es
+`failCommand`, para pruebas controladas; la ficha no promete failpoints
+generales de MongoDB ni comportamiento distribuido. El inventario de
+`WireSurface` enumera cada nombre una sola vez, aunque un alias como
+`isMaster` aparezca en las listas de comandos de base de datos y especiales.
+
 La validacion temprana del executor tambien cubre ya familias especiales
 fuera del passthrough puro:
 
