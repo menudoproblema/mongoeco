@@ -32,57 +32,19 @@ from mongoeco.cxp import (
     export_cxp_profile_catalog as _export_cxp_profile_catalog_from_cxp,
     export_cxp_profile_support_catalog as _export_cxp_profile_support_catalog_from_cxp,
 )
+from cxp.exchange import Document, evaluate_requirements_detailed
 from mongoeco.cxp.capabilities import export_legacy_runtime_subset_catalog
+from mongoeco.cxp.exchange import (
+    load_mongodb_declared_snapshot,
+    load_mongodb_profile,
+    mongodb_catalog_store,
+)
 
 _MOCK_SAFE_PROFILE_NAME = "mongoeco-mock-safe"
 _MOCK_SAFE_PROFILE_DESCRIPTION = (
     "Strict profile for mock/test runtime usage with deterministic local "
     "contract expectations for read/write/search/platform tooling."
 )
-_MOCK_SAFE_PROFILE_REQUIREMENTS: tuple[dict[str, object], ...] = (
-    {
-        "capabilityName": "read",
-        "requiredOperations": ["find", "find_one", "count_documents", "distinct"],
-        "requiredMetadataKeys": ["operationMetadata", "queryFieldOperators"],
-    },
-    {
-        "capabilityName": "write",
-        "requiredOperations": ["insert_one", "update_one", "delete_one", "bulk_write"],
-        "requiredMetadataKeys": ["operationMetadata", "supportsPipelineUpdate"],
-    },
-    {
-        "capabilityName": "aggregation",
-        "requiredOperations": ["aggregate"],
-        "requiredMetadataKeys": ["supportedStages", "operationMetadata"],
-    },
-    {
-        "capabilityName": "search",
-        "requiredOperations": ["aggregate"],
-        "requiredMetadataKeys": ["operators", "fieldMappings", "stageOptions", "operationMetadata"],
-    },
-    {
-        "capabilityName": "vector_search",
-        "requiredOperations": ["aggregate"],
-        "requiredMetadataKeys": ["similarities", "operationMetadata", "explainFeatures"],
-    },
-    {
-        "capabilityName": "collation",
-        "requiredOperations": [],
-        "requiredMetadataKeys": ["backend", "capabilities", "operationMetadata"],
-    },
-    {
-        "capabilityName": "persistence",
-        "requiredOperations": [],
-        "requiredMetadataKeys": ["persistent", "storageEngine", "operationMetadata"],
-    },
-    {
-        "capabilityName": "topology_discovery",
-        "requiredOperations": [],
-        "requiredMetadataKeys": ["topologyType", "serverCount", "sdam", "operationMetadata"],
-    },
-)
-
-
 def export_mongodb_dialect_catalog() -> dict[str, dict[str, object]]:
     return {
         key: {
@@ -190,98 +152,59 @@ def export_cxp_operation_catalog() -> dict[str, list[dict[str, object]]]:
 
 
 def export_mock_safe_profile_catalog() -> dict[str, object]:
-    catalog = export_cxp_capability_catalog()
-    interface = catalog.get("interface")
-    capabilities = catalog.get("capabilities", {})
-    expected_interface = "database/mongodb"
-    messages: list[str] = []
-    missing_capabilities: list[str] = []
-    missing_operations: list[dict[str, object]] = []
-    missing_metadata_keys: list[dict[str, object]] = []
-    interface_mismatch = None
-    if interface != expected_interface:
-        interface_mismatch = f"{interface!r} != {expected_interface!r}"
-        messages.append(
-            f"interface mismatch: expected {expected_interface!r}, got {interface!r}"
-        )
-    if not isinstance(capabilities, dict):
-        capabilities = {}
-    for requirement in _MOCK_SAFE_PROFILE_REQUIREMENTS:
-        capability_name = requirement["capabilityName"]
-        if not isinstance(capability_name, str):
-            continue
-        capability_entry = capabilities.get(capability_name)
-        if not isinstance(capability_entry, dict):
-            missing_capabilities.append(capability_name)
-            messages.append(
-                f"missing capability {capability_name!r} for {_MOCK_SAFE_PROFILE_NAME}"
-            )
-            continue
-        operations = capability_entry.get("operations", ())
-        capability_operation_names = {
-            operation["name"]
-            for operation in operations
-            if isinstance(operation, dict) and isinstance(operation.get("name"), str)
-        }
-        required_operations = requirement["requiredOperations"]
-        if isinstance(required_operations, list):
-            missing_required_operations = [
-                operation_name
-                for operation_name in required_operations
-                if isinstance(operation_name, str)
-                and operation_name not in capability_operation_names
-            ]
-            if missing_required_operations:
-                missing_operations.append(
-                    {
-                        "capabilityName": capability_name,
-                        "operationNames": missing_required_operations,
-                    }
-                )
-                messages.append(
-                    f"missing operations for {capability_name!r}: {missing_required_operations}"
-                )
-        metadata = capability_entry.get("metadata", {})
-        if not isinstance(metadata, dict):
-            metadata = {}
-        required_metadata_keys = requirement["requiredMetadataKeys"]
-        if isinstance(required_metadata_keys, list):
-            missing_required_metadata = [
-                metadata_key
-                for metadata_key in required_metadata_keys
-                if isinstance(metadata_key, str) and metadata_key not in metadata
-            ]
-            if missing_required_metadata:
-                missing_metadata_keys.append(
-                    {
-                        "capabilityName": capability_name,
-                        "metadataKeys": missing_required_metadata,
-                    }
-                )
-                messages.append(
-                    f"missing metadata for {capability_name!r}: {missing_required_metadata}"
-                )
-    supported = (
-        interface_mismatch is None
-        and not missing_capabilities
-        and not missing_operations
-        and not missing_metadata_keys
+    snapshot = load_mongodb_declared_snapshot()
+    requirements = load_mongodb_profile("mongodb-mock-safe")
+    context = Document(
+        {
+            "document_type": "cxp.context",
+            "spec_version": 2,
+            "payload": {
+                "subject_id": snapshot.payload["subject_id"],
+                "configuration_revision": snapshot.payload[
+                    "configuration_revision"
+                ],
+                "accepted_sources": ["declared"],
+            },
+        },
+        expected_type="cxp.context",
+    )
+    result = evaluate_requirements_detailed(
+        snapshot,
+        requirements,
+        context,
+        catalogs=mongodb_catalog_store(),
     )
     return {
         "name": _MOCK_SAFE_PROFILE_NAME,
         "description": _MOCK_SAFE_PROFILE_DESCRIPTION,
         "recommendedFor": ["mock-runtime-tests", "contract-gated-tooling"],
-        "requirements": [dict(requirement) for requirement in _MOCK_SAFE_PROFILE_REQUIREMENTS],
-        "supported": supported,
+        "requirements": [
+            {
+                "capabilityName": condition["capability"],
+                "requiredOperations": list(condition["operations"]),
+                "requiredMetadataKeys": list(condition.get("values", ())),
+            }
+            for condition in requirements.payload["requirement"]["conditions"]
+        ],
+        "supported": result.is_compatible,
+        "verdict": result.verdict,
+        "catalog": requirements.payload["catalog"],
         "validation": {
-            "messages": messages,
-            "unknownProfileCapabilities": [],
-            "missingCapabilities": missing_capabilities,
-            "missingOperations": missing_operations,
-            "missingMetadataKeys": missing_metadata_keys,
-            "invalidMetadata": [],
-            "interfaceMismatch": interface_mismatch,
-            "expectedInterface": expected_interface,
+            "messages": [
+                finding.message
+                for finding in result.findings
+                if finding.verdict != "compatible"
+            ],
+            "findings": [
+                {
+                    "requirementId": finding.requirement_id,
+                    "verdict": finding.verdict,
+                    "code": finding.code,
+                    "path": finding.path,
+                }
+                for finding in result.findings
+                if finding.verdict != "compatible"
+            ],
         },
     }
 

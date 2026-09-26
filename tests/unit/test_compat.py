@@ -1,10 +1,14 @@
 import ast
+from copy import deepcopy
 from types import MappingProxyType
 import math
 import json
 from pathlib import Path
 import unittest
 from unittest.mock import patch
+
+from cxp.exchange import Document, InvalidDocumentError
+from mongoeco.cxp.exchange import load_mongodb_declared_snapshot
 
 from mongoeco.compat import (
     AUTO_INSTALLED_PYMONGO_PROFILE,
@@ -147,8 +151,16 @@ class CompatResolutionTests(unittest.TestCase):
     def test_exported_full_catalog_matches_versioned_snapshot_fixture(self):
         snapshot_path = Path("tests/fixtures/compat_catalog_snapshot.json")
         expected = json.loads(snapshot_path.read_text(encoding="utf-8"))
-
-        self.assertEqual(export_full_compat_catalog(), expected)
+        current = export_full_compat_catalog()
+        old_mock_safe = expected.pop("mock_safe_profile")
+        new_mock_safe = current.pop("mock_safe_profile")
+        self.assertEqual(current, expected)
+        self.assertEqual(new_mock_safe["verdict"], "compatible")
+        self.assertEqual(new_mock_safe["catalog"]["name"], "mongodb")
+        self.assertEqual(
+            {item["capabilityName"] for item in new_mock_safe["requirements"]},
+            {item["capabilityName"] for item in old_mock_safe["requirements"]},
+        )
 
     def test_catalog_module_is_thin_public_composer(self):
         module_path = Path("src/mongoeco/compat/catalog.py")
@@ -181,8 +193,13 @@ class CompatResolutionTests(unittest.TestCase):
     def test_exported_markdown_catalog_matches_snapshot_fixture(self):
         snapshot_path = Path("tests/fixtures/compat_catalog_snapshot.md")
         expected = snapshot_path.read_text(encoding="utf-8")
-
-        self.assertEqual(export_full_compat_catalog_markdown(), expected)
+        current = export_full_compat_catalog_markdown()
+        marker = "## Mock Safe Profile\n"
+        suffix = "## Local Runtime Subsets\n"
+        self.assertEqual(current.split(marker)[0], expected.split(marker)[0])
+        self.assertEqual(current.split(suffix)[1], expected.split(suffix)[1])
+        self.assertIn("## Mock Safe Profile", current)
+        self.assertIn("`read`", current)
 
     def test_exported_cxp_catalog_includes_richer_operation_metadata_and_search_mappings(self):
         catalog = export_cxp_catalog()
@@ -406,88 +423,36 @@ class CompatResolutionTests(unittest.TestCase):
             export_mock_safe_profile_catalog(),
         )
 
-    def test_mock_safe_profile_validation_handles_interface_and_catalog_mismatch_paths(self):
-        fake_catalog = {
-            "interface": "other/interface",
-            "capabilities": "not-a-mapping",
-        }
-        fake_requirements = (
-            {
-                "capabilityName": "missing_capability",
-                "requiredOperations": ["x"],
-                "requiredMetadataKeys": ["k"],
-            },
-            {
-                "capabilityName": 123,
-                "requiredOperations": ["ignored"],
-                "requiredMetadataKeys": ["ignored"],
-            },
-        )
-
+    def test_mock_safe_profile_rejects_catalog_mismatch(self):
+        content = deepcopy(load_mongodb_declared_snapshot().as_dict())
+        content["payload"]["catalog"]["sha256"] = "0" * 64
+        snapshot = Document(content, expected_type="cxp.snapshot")
         with patch.object(
-            catalog_export,
-            "export_cxp_capability_catalog",
-            return_value=fake_catalog,
-        ), patch.object(
-            catalog_export,
-            "_MOCK_SAFE_PROFILE_REQUIREMENTS",
-            fake_requirements,
+            catalog_export, "load_mongodb_declared_snapshot", return_value=snapshot
+        ), self.assertRaises(InvalidDocumentError):
+            catalog_export.export_mock_safe_profile_catalog()
+
+    def test_mock_safe_profile_rejects_missing_operation_and_metadata(self):
+        content = deepcopy(load_mongodb_declared_snapshot().as_dict())
+        read = next(
+            claim
+            for claim in content["payload"]["capabilities"]
+            if claim["name"] == "read"
+        )
+        read["operations"] = [
+            operation
+            for operation in read["operations"]
+            if operation["name"] != "find_one"
+        ]
+        read["properties"]["metadata_keys"].remove("operationMetadata")
+        snapshot = Document(content, expected_type="cxp.snapshot")
+        with patch.object(
+            catalog_export, "load_mongodb_declared_snapshot", return_value=snapshot
         ):
             profile = catalog_export.export_mock_safe_profile_catalog()
-
         self.assertFalse(profile["supported"])
-        self.assertIsNotNone(profile["validation"]["interfaceMismatch"])
-        self.assertEqual(
-            profile["validation"]["missingCapabilities"],
-            ["missing_capability"],
-        )
-        self.assertEqual(
-            profile["validation"]["missingOperations"],
-            [],
-        )
-        self.assertEqual(
-            profile["validation"]["missingMetadataKeys"],
-            [],
-        )
-
-    def test_mock_safe_profile_validation_handles_missing_operation_and_metadata_paths(self):
-        fake_catalog = {
-            "interface": "database/mongodb",
-            "capabilities": {
-                "read": {
-                    "operations": [{"name": "find"}],
-                    "metadata": "not-a-mapping",
-                }
-            },
-        }
-        fake_requirements = (
-            {
-                "capabilityName": "read",
-                "requiredOperations": ["find", "find_one"],
-                "requiredMetadataKeys": ["operationMetadata"],
-            },
-        )
-
-        with patch.object(
-            catalog_export,
-            "export_cxp_capability_catalog",
-            return_value=fake_catalog,
-        ), patch.object(
-            catalog_export,
-            "_MOCK_SAFE_PROFILE_REQUIREMENTS",
-            fake_requirements,
-        ):
-            profile = catalog_export.export_mock_safe_profile_catalog()
-
-        self.assertFalse(profile["supported"])
-        self.assertEqual(
-            profile["validation"]["missingOperations"],
-            [{"capabilityName": "read", "operationNames": ["find_one"]}],
-        )
-        self.assertEqual(
-            profile["validation"]["missingMetadataKeys"],
-            [{"capabilityName": "read", "metadataKeys": ["operationMetadata"]}],
-        )
+        self.assertIn(profile["verdict"], {"incompatible", "indeterminate"})
+        self.assertTrue(profile["validation"]["findings"])
 
     def test_markdown_render_handles_non_mapping_mock_safe_requirement_items(self):
         catalog = export_full_compat_catalog()

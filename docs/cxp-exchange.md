@@ -41,7 +41,10 @@ named `all` requirements over their exact capability sets. The six profiles
 also require their operation names and metadata key presence. They include
 `mongodb-mock-safe`, which preserves the mock and tooling gate through
 operation bindings and required owner-validated metadata keys. Omitting a
-required reported key makes that profile incompatible. The property
+required reported key makes that profile incompatible.
+`compat.export_mock_safe_profile_catalog()` evaluates this same pinned
+document through exchange and has no separate compatibility evaluator. The
+property
 `metadata_keys` is a `string_set`: `contains_all` preserves the old
 `required_metadata_keys` condition. A missing capability or unreported key set
 is indeterminate; an explicitly reported set without a required key is
