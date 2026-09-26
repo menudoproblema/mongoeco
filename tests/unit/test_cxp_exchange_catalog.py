@@ -165,7 +165,7 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "43baccd874849078402e03ad1d392d4dd3b60e7d939e49cb4e85dbc824f20fa9"
+        "82f7198a60e582650d422521eb8021dd0fe9b8ee5fa4c268a42e2c07d6ef04ec"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
@@ -468,6 +468,95 @@ def test_all_io_operation_facts_match_owner_declaration(capability: str) -> None
             if field != "resultType":
                 reported = claim["properties"][f"{operation}.{field}"]
                 assert reported == value
+
+
+@pytest.mark.parametrize(
+    ["capability", "fields"],
+    [
+        (
+            "read",
+            (
+                "async",
+                "embedded",
+                "queryFieldOperators",
+                "queryTopLevelOperators",
+                "sync",
+            ),
+        ),
+        (
+            "write",
+            ("async", "embedded", "supportsPipelineUpdate", "sync", "updateOperators"),
+        ),
+        (
+            "aggregation",
+            (
+                "async",
+                "embedded",
+                "explainable",
+                "supportedExpressionOperators",
+                "supportedGroupAccumulators",
+                "supportedStages",
+                "supportedWindowAccumulators",
+                "sync",
+            ),
+        ),
+    ],
+)
+def test_io_and_aggregation_values_match_owner_declaration(
+    capability: str, fields: tuple[str, ...]
+) -> None:
+    owner = json.loads(
+        files("mongoeco.cxp.exchange")
+        .joinpath("data/operational-metadata.json")
+        .read_text(encoding="utf-8")
+    )
+    claim = next(
+        item
+        for item in load_mongodb_declared_snapshot().payload["capabilities"]
+        if item["name"] == capability
+    )
+    definitions = next(
+        item
+        for item in load_mongodb_catalog().payload["capabilities"]
+        if item["name"] == capability
+    )["properties"]
+    for field in fields:
+        assert claim["properties"][field] == owner[capability][field]
+        assert field in definitions
+
+
+def test_read_operator_set_distinguishes_missing_and_excluded() -> None:
+    requirement_content = load_mongodb_profile("mongodb-core").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "read-jsonschema-query",
+        "operator": "contains_all",
+        "capability": "read",
+        "path": "/properties/queryTopLevelOperators",
+        "values": ["$jsonSchema"],
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    requirement = Document(requirement_content, expected_type="cxp.requirements")
+    snapshot_content = load_mongodb_declared_snapshot().as_dict()
+
+    def verdict() -> str:
+        return evaluate_requirements_detailed(
+            Document(snapshot_content, expected_type="cxp.snapshot"),
+            requirement,
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        ).verdict
+
+    assert verdict() == "compatible"
+    for item in snapshot_content["payload"]["capabilities"]:
+        if item["name"] == "read":
+            item["properties"]["queryTopLevelOperators"].remove("$jsonSchema")
+    assert verdict() == "incompatible"
+    for item in snapshot_content["payload"]["capabilities"]:
+        if item["name"] == "read":
+            del item["properties"]["queryTopLevelOperators"]
+    assert verdict() == "indeterminate"
 
 
 def test_find_runtime_projection_validates_nested_values() -> None:

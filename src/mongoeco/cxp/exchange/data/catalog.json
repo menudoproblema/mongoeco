@@ -379,6 +379,31 @@
             "description": "Mongoeco read.find_one unsupportedOptions for the declared configuration.",
             "kind": "string_set",
             "nullable": false
+          },
+          "async": {
+            "description": "Mongoeco read async for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "embedded": {
+            "description": "Mongoeco read embedded for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "queryFieldOperators": {
+            "description": "Mongoeco read queryFieldOperators for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "queryTopLevelOperators": {
+            "description": "Mongoeco read queryTopLevelOperators for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "sync": {
+            "description": "Mongoeco read sync for this configuration.",
+            "kind": "boolean",
+            "nullable": false
           }
         }
       },
@@ -948,6 +973,31 @@
             "description": "Mongoeco write.update_one unsupportedOptions for the declared configuration.",
             "kind": "string_set",
             "nullable": false
+          },
+          "async": {
+            "description": "Mongoeco write async for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "embedded": {
+            "description": "Mongoeco write embedded for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "supportsPipelineUpdate": {
+            "description": "Mongoeco write supportsPipelineUpdate for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "sync": {
+            "description": "Mongoeco write sync for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "updateOperators": {
+            "description": "Mongoeco write updateOperators for this configuration.",
+            "kind": "string_set",
+            "nullable": false
           }
         }
       },
@@ -1079,6 +1129,46 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
+            "nullable": false
+          },
+          "async": {
+            "description": "Mongoeco aggregation async for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "embedded": {
+            "description": "Mongoeco aggregation embedded for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "explainable": {
+            "description": "Mongoeco aggregation explainable for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "supportedExpressionOperators": {
+            "description": "Mongoeco aggregation supportedExpressionOperators for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "supportedGroupAccumulators": {
+            "description": "Mongoeco aggregation supportedGroupAccumulators for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "supportedStages": {
+            "description": "Mongoeco aggregation supportedStages for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "supportedWindowAccumulators": {
+            "description": "Mongoeco aggregation supportedWindowAccumulators for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "sync": {
+            "description": "Mongoeco aggregation sync for this configuration.",
+            "kind": "boolean",
             "nullable": false
           }
         }

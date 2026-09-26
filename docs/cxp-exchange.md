@@ -59,6 +59,12 @@ an absent property remains indeterminate. The catalog reference in every
 profile, tier and snapshot was changed together, so the earlier catalog hash
 cannot silently acquire these meanings.
 
+The authored top-level `read`, `write` and `aggregation` values are also
+reported as typed properties. This includes query and update operator sets,
+aggregation stages and accumulators, and explicit boolean support flags.
+Metadata validation happens before projection; omitted fields stay unknown
+instead of taking favorable defaults from the owner schema.
+
 The `read` capability additionally defines properties scoped by name to each
 of its five published operations (`find.*`, `find_one.*`, and so on). Option
 sets, acceptance flags, scope and session or explain support stay tied to the

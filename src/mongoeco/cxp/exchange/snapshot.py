@@ -15,6 +15,24 @@ from mongoeco.cxp.exchange.metadata import (
 
 
 _VALUE_FIELDS: dict[str, frozenset[str]] = {
+    "read": frozenset(
+        {"async", "embedded", "queryFieldOperators", "queryTopLevelOperators", "sync"}
+    ),
+    "write": frozenset(
+        {"async", "embedded", "supportsPipelineUpdate", "sync", "updateOperators"}
+    ),
+    "aggregation": frozenset(
+        {
+            "async",
+            "embedded",
+            "explainable",
+            "supportedExpressionOperators",
+            "supportedGroupAccumulators",
+            "supportedStages",
+            "supportedWindowAccumulators",
+            "sync",
+        }
+    ),
     "transactions": frozenset({"async", "distributed", "embedded", "mode", "sync"}),
     "change_streams": frozenset(
         {
