@@ -1,0 +1,157 @@
+{
+  "critical_extensions": [],
+  "document_type": "cxp.requirements",
+  "extensions": {},
+  "payload": {
+    "catalog": {
+      "name": "mongodb",
+      "namespace": "org.mongoeco",
+      "sha256": "2426ee7a7d9b4c06ab6d22b3eb9de2dcc16f2cd7b385efb618c7eb373c84dc5a",
+      "version": "1.0.0"
+    },
+    "requirement": {
+      "conditions": [
+        {
+          "capability": "read",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-mock-safe.read",
+          "operations": [
+            "find",
+            "find_one",
+            "count_documents",
+            "distinct"
+          ],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "operationMetadata",
+            "queryFieldOperators"
+          ]
+        },
+        {
+          "capability": "write",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-mock-safe.write",
+          "operations": [
+            "insert_one",
+            "update_one",
+            "delete_one",
+            "bulk_write"
+          ],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "operationMetadata",
+            "supportsPipelineUpdate"
+          ]
+        },
+        {
+          "capability": "aggregation",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-mock-safe.aggregation",
+          "operations": [
+            "aggregate"
+          ],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "supportedStages",
+            "operationMetadata"
+          ]
+        },
+        {
+          "capability": "search",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-mock-safe.search",
+          "operations": [
+            "aggregate"
+          ],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "operators",
+            "fieldMappings",
+            "stageOptions",
+            "operationMetadata"
+          ]
+        },
+        {
+          "capability": "vector_search",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-mock-safe.vector_search",
+          "operations": [
+            "aggregate"
+          ],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "similarities",
+            "operationMetadata",
+            "explainFeatures"
+          ]
+        },
+        {
+          "capability": "collation",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-mock-safe.collation",
+          "operations": [],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "backend",
+            "capabilities",
+            "operationMetadata"
+          ]
+        },
+        {
+          "capability": "persistence",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-mock-safe.persistence",
+          "operations": [],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "persistent",
+            "storageEngine",
+            "operationMetadata"
+          ]
+        },
+        {
+          "capability": "topology_discovery",
+          "critical_extensions": [],
+          "extensions": {},
+          "id": "mongodb-mock-safe.topology_discovery",
+          "operations": [],
+          "operator": "contains_all",
+          "path": "/properties/metadata_keys",
+          "require_effective": true,
+          "values": [
+            "topologyType",
+            "serverCount",
+            "sdam",
+            "operationMetadata"
+          ]
+        }
+      ],
+      "critical_extensions": [],
+      "extensions": {},
+      "id": "profile.mongodb-mock-safe",
+      "operator": "all"
+    }
+  },
+  "spec_version": 1
+}

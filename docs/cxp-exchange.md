@@ -37,8 +37,11 @@ assert result.payload["verdict"] == "compatible"
 
 The catalog declares ten MongoDB capabilities and the operation names and
 result types from the published generic MongoDB interface. The three tiers are
-named `all` requirements over their exact capability sets. The five profiles
-also require their operation names and metadata key presence. The property
+named `all` requirements over their exact capability sets. The six profiles
+also require their operation names and metadata key presence. They include
+`mongodb-mock-safe`, which preserves the mock and tooling gate through
+operation bindings and required owner-validated metadata keys. Omitting a
+required reported key makes that profile incompatible. The property
 `metadata_keys` is a `string_set`: `contains_all` preserves the old
 `required_metadata_keys` condition. A missing capability or unreported key set
 is indeterminate; an explicitly reported set without a required key is

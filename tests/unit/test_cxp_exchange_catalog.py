@@ -89,6 +89,21 @@ def test_declared_surface_satisfies_every_profile(name: str) -> None:
     assert result.verdict == "compatible"
 
 
+def test_mock_safe_profile_requires_its_correlated_claims() -> None:
+    missing = deepcopy(load_mongodb_declared_snapshot().as_dict())
+    for claim in missing["payload"]["capabilities"]:
+        if claim["name"] == "vector_search":
+            claim["properties"]["metadata_keys"].remove("explainFeatures")
+    snapshot = Document(missing, expected_type="cxp.snapshot")
+    result = evaluate_requirements_detailed(
+        snapshot,
+        load_mongodb_profile("mongodb-mock-safe"),
+        _context(),
+        catalogs=mongodb_catalog_store(),
+    )
+    assert result.verdict == "incompatible"
+
+
 @pytest.mark.parametrize("name", TIER_NAMES)
 def test_declared_surface_satisfies_every_tier(name: str) -> None:
     result = evaluate_requirements_detailed(

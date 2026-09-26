@@ -20,6 +20,7 @@ PROFILE_NAMES = (
     "mongodb-search",
     "mongodb-platform",
     "mongodb-aggregate-rich",
+    "mongodb-mock-safe",
 )
 TIER_NAMES = ("core", "search", "platform")
 

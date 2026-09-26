@@ -334,6 +334,7 @@ class CursorUnitTests(unittest.IsolatedAsyncioTestCase):
                     "mongodb-search",
                     "mongodb-platform",
                     "mongodb-aggregate-rich",
+                    "mongodb-mock-safe",
                 ),
                 "compatible",
             ),
