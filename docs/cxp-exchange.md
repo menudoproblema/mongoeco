@@ -180,9 +180,10 @@ creation itself remains a local operational contract, separate from a
 deployment guarantee.
 The accessible Cosecha MongoDB provider reconstructs PyMongo `IndexModel`
 instances while restoring index dumps; Mochuelo Q2 also builds PyMongo models
-for index reconciliation. These are consumer paths to verify with installed
-artifacts after Q2 admission. Their use of PyMongo does not establish that
-Mongoeco applies either accepted-noop option.
+for index reconciliation. Cosecha's installed provider now rejects a snapshot
+restore when Mongoeco discards `wildcardProjection`. That check preserves the
+snapshot's meaning without claiming the option is effective. Mochuelo's Q2
+path still requires its own consumer gate after Q2 admission.
 
 The catalog's identity, version and SHA-256 in every requirement and snapshot
 are exact pins. Changing the capability set or semantics requires a new
