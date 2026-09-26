@@ -62,7 +62,10 @@ converted to an empty observed set. The caller supplies the source kind and
 reference for every homogeneous snapshot.
 
 Structured MongoDB metadata values, telemetry, runtime input validation and
-`explain()` projections remain operational contracts of Mongoeco. The old
+`explain()` projections remain operational contracts of Mongoeco. Telemetry
+primitives now live in `mongoeco.telemetry_contract`; the public
+`mongoeco.cxp.telemetry` facade reexports those local types while consumers
+migrate. The old
 generic catalog has no operation input or result schemas; its result-type
 identities are retained in the exchange operation bindings. Any future
 compatibility decision about structured subsets requires explicit portable

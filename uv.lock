@@ -643,6 +643,7 @@ name = "mongoeco"
 source = { editable = "." }
 dependencies = [
     { name = "cxp" },
+    { name = "msgspec" },
     { name = "pyuca" },
     { name = "rpds-py" },
     { name = "shapely" },
@@ -690,6 +691,7 @@ requires-dist = [
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.165,<6.166" },
     { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.26,<5" },
     { name = "jsonschema", marker = "extra == 'engine-testing'", specifier = ">=4.26,<5" },
+    { name = "msgspec", specifier = ">=0.20,<1" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=2.3,<2.4" },
     { name = "orjson", marker = "extra == 'json-fast'", specifier = ">=3.11,<4" },
     { name = "pre-commit", marker = "extra == 'dev'" },

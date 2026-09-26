@@ -1,15 +1,10 @@
 from __future__ import annotations
 
 import time
+
 from dataclasses import dataclass
 from typing import Any
 
-from cxp.telemetry import (
-    TelemetryBuffer,
-    TelemetryContext,
-    TelemetryOverflowPolicy,
-    TelemetrySnapshot,
-)
 from mongoeco.driver.monitoring import (
     CommandFailedEvent,
     CommandStartedEvent,
@@ -23,6 +18,14 @@ from mongoeco.driver.monitoring import (
     ServerSelectionFailedEvent,
     TopologyRefreshedEvent,
 )
+from mongoeco.telemetry_contract import (
+    TelemetryBuffer,
+    TelemetryContext,
+    TelemetryOverflowPolicy,
+    TelemetrySeverity,
+    TelemetrySnapshot,
+)
+
 
 _READ_COMMANDS = {
     "find": "find",
@@ -152,8 +155,7 @@ class DriverTelemetryProjector:
             return
         context = TelemetryContext(trace_id=pending.trace_id)
         end_time = time.time()
-        if end_time < pending.start_time:
-            end_time = pending.start_time
+        end_time = max(end_time, pending.start_time)
         self._buffer.record_span(
             context.create_span(
                 pending.span_name,
@@ -173,7 +175,7 @@ class DriverTelemetryProjector:
             unit="s",
             labels=metric_labels,
         )
-        severity = "error" if outcome == "failed" else "info"
+        severity: TelemetrySeverity = "error" if outcome == "failed" else "info"
         self._buffer.record_event(
             context.create_event(
                 pending.event_type,
@@ -229,7 +231,7 @@ def _classify_command(event: CommandStartedEvent) -> dict[str, Any] | None:
     )
 
 
-def _classify_aggregate_command(
+def _classify_aggregate_command(  # noqa: PLR0911 - branch on command shape
     event: CommandStartedEvent,
 ) -> dict[str, Any] | None:
     namespace = _resolve_namespace(event.database, event.command_name, event.command)
@@ -254,7 +256,9 @@ def _classify_aggregate_command(
                 search_operator=operator,
             )
         if _VECTOR_SEARCH_STAGE_NAME in first_stage:
-            similarity = _resolve_vector_similarity(first_stage[_VECTOR_SEARCH_STAGE_NAME])
+            similarity = _resolve_vector_similarity(
+                first_stage[_VECTOR_SEARCH_STAGE_NAME]
+            )
             if similarity is None:
                 return None
             return _build_classification(
@@ -276,7 +280,7 @@ def _classify_aggregate_command(
     )
 
 
-def _build_classification(
+def _build_classification(  # noqa: PLR0913 - explicit telemetry fields
     *,
     span_name: str,
     metric_name: str,
@@ -371,7 +375,7 @@ def _resolve_collection_name(
     return None
 
 
-def _resolve_write_operation_name(
+def _resolve_write_operation_name(  # noqa: PLR0911 - command-specific cases
     normalized_command_name: str,
     payload: dict[str, Any],
 ) -> str | None:
@@ -406,8 +410,7 @@ def _resolve_write_operation_name(
         update_spec = payload.get("update")
         if isinstance(update_spec, dict):
             has_operator_keys = any(
-                isinstance(key, str) and key.startswith("$")
-                for key in update_spec
+                isinstance(key, str) and key.startswith("$") for key in update_spec
             )
             return "update_one" if has_operator_keys else "replace_one"
         return "findAndModify"
