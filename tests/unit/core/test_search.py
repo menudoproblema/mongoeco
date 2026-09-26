@@ -1987,6 +1987,38 @@ class SearchCoreTests(unittest.TestCase):
                 },
             )
 
+    def test_facet_preview_alias_does_not_replace_typed_collector_result(
+        self,
+    ) -> None:
+        query = compile_search_stage(
+            "$searchMeta",
+            {
+                "index": "by_text",
+                "text": {"query": "ada", "path": "title"},
+                "facet": {"path": "kind", "numBuckets": 1},
+            },
+        )
+        documents = [{"title": "ada", "kind": "note"}]
+        canonical = search_module.build_search_meta_document(documents, query=query)
+        self.assertEqual(
+            canonical["facet"]["buckets"],
+            [{"value": "note", "count": 1}],
+        )
+        self.assertNotIn("facetPreview", canonical)
+
+        preview = search_module.build_search_stage_option_previews(
+            documents,
+            definition=SearchIndexDefinition(
+                {"mappings": {"dynamic": True}},
+                name="by_text",
+            ),
+            query=query,
+        )
+        self.assertIn("facetPreview", preview)
+        self.assertTrue(
+            search_query_explain_details(query)["stageOptions"]["facet"]["previewOnly"],
+        )
+
     def test_wrapper_compilers_reject_wrong_operator_shapes(self) -> None:
         with self.assertRaisesRegex(
             OperationFailure,

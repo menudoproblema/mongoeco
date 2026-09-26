@@ -173,15 +173,21 @@ removal requires the coordinated release sequence and installed consumer gates.
 The row-level audit of the owner metadata is in
 [`cxp-operational-metadata-conservation.csv`](cxp-operational-metadata-conservation.csv).
 It pins the source SHA-256 and assigns all 410 logical facts to an exchange
-claim or a producer-operated contract. Its current status is open: 289 rows
-have an exact claim in the generic declaration or an operation alias; nine
-have catalog definitions but require a concrete runtime observation; 18
-collation behavior and scope rows have Memory/SQLite sync and async oracles,
-including an installed-wheel replay; four other collation rows have owner
-operational oracles; 18 persistence and topology inspection rows have sync
-and async operational oracles; 26 search stage option rows have focused
-positive and negative oracles; 36 search operator semantics rows have
-per-operator evidence; ten rows still need owner review or individual
-operational oracles. This file covers the packaged
-operational metadata only. It does not close the separate inventory of public
-APIs, wire commands, BSON behavior, or deployed resources.
+claim or a producer-operated contract. Of those, 289 have exact exchange
+claims; 104 owner operational rows have individual positive and negative
+oracles; five owner narratives have documented limits; nine catalog definitions
+and three owner runtime facts still require concrete deployment observations.
+The operational oracles cover collation, persistence and topology inspection,
+Search stage options and Search operator semantics, including installed-wheel
+replay. This file covers the packaged operational metadata only. It does not
+close the separate inventory of public APIs, wire commands, BSON behavior or
+deployed resources.
+
+In the owner metadata, `search.stageOptions.facet.previewOnly` describes only
+the deprecated 4.x `facetPreview` explain alias. Typed `$searchMeta` facet
+collector output remains the canonical operational result. The
+`atlasParity: subset` markers on autocomplete, regex and wildcard denote a
+local `search-v1` syntax subset and never assert compatibility with an Atlas
+deployment. The owner contract and deprecation record are
+[`search-contract-v1.md`](architecture/search-contract-v1.md) and
+[`deprecations-v1.json`](../src/mongoeco/compat/resources/deprecations-v1.json).
