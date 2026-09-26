@@ -49,6 +49,91 @@
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
             "nullable": false
+          },
+          "find.acceptedNoopOptions": {
+            "description": "Mongoeco read.find acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "find.acceptsBatchSize": {
+            "description": "Mongoeco read.find acceptsBatchSize for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.acceptsCollation": {
+            "description": "Mongoeco read.find acceptsCollation for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.acceptsComment": {
+            "description": "Mongoeco read.find acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.acceptsFilter": {
+            "description": "Mongoeco read.find acceptsFilter for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.acceptsHint": {
+            "description": "Mongoeco read.find acceptsHint for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.acceptsLet": {
+            "description": "Mongoeco read.find acceptsLet for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.acceptsLimit": {
+            "description": "Mongoeco read.find acceptsLimit for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.acceptsMaxTimeMs": {
+            "description": "Mongoeco read.find acceptsMaxTimeMs for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.acceptsProjection": {
+            "description": "Mongoeco read.find acceptsProjection for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.acceptsSkip": {
+            "description": "Mongoeco read.find acceptsSkip for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.acceptsSort": {
+            "description": "Mongoeco read.find acceptsSort for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.collectionScoped": {
+            "description": "Mongoeco read.find collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.supportedOptions": {
+            "description": "Mongoeco read.find supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "find.supportsExplain": {
+            "description": "Mongoeco read.find supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.supportsSession": {
+            "description": "Mongoeco read.find supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "find.unsupportedOptions": {
+            "description": "Mongoeco read.find unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
           }
         }
       },

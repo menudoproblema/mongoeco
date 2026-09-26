@@ -22,6 +22,49 @@ class MongoReadMetadata(msgspec.Struct, frozen=True, forbid_unknown_fields=True)
     )
 
 
+class MongoFindOperationMetadata(
+    msgspec.Struct, frozen=True, forbid_unknown_fields=True
+):
+    accepted_noop_options: tuple[str, ...] | None = msgspec.field(
+        name="acceptedNoopOptions", default=None
+    )
+    accepts_batch_size: bool | None = msgspec.field(
+        name="acceptsBatchSize", default=None
+    )
+    accepts_collation: bool | None = msgspec.field(
+        name="acceptsCollation", default=None
+    )
+    accepts_comment: bool | None = msgspec.field(name="acceptsComment", default=None)
+    accepts_filter: bool | None = msgspec.field(name="acceptsFilter", default=None)
+    accepts_hint: bool | None = msgspec.field(name="acceptsHint", default=None)
+    accepts_let: bool | None = msgspec.field(name="acceptsLet", default=None)
+    accepts_limit: bool | None = msgspec.field(name="acceptsLimit", default=None)
+    accepts_max_time_ms: bool | None = msgspec.field(
+        name="acceptsMaxTimeMs", default=None
+    )
+    accepts_projection: bool | None = msgspec.field(
+        name="acceptsProjection", default=None
+    )
+    accepts_skip: bool | None = msgspec.field(name="acceptsSkip", default=None)
+    accepts_sort: bool | None = msgspec.field(name="acceptsSort", default=None)
+    collection_scoped: bool | None = msgspec.field(
+        name="collectionScoped", default=None
+    )
+    result_type: str | None = msgspec.field(name="resultType", default=None)
+    supported_options: tuple[str, ...] | None = msgspec.field(
+        name="supportedOptions", default=None
+    )
+    supports_explain: bool | None = msgspec.field(
+        name="supportsExplain", default=None
+    )
+    supports_session: bool | None = msgspec.field(
+        name="supportsSession", default=None
+    )
+    unsupported_options: tuple[str, ...] | None = msgspec.field(
+        name="unsupportedOptions", default=None
+    )
+
+
 class MongoWriteMetadata(msgspec.Struct, frozen=True, forbid_unknown_fields=True):
     embedded: bool | None = None
     sync: bool | None = None
@@ -203,6 +246,14 @@ def validate_mongodb_metadata(capability: str, metadata: dict[str, object]) -> N
     if schema is not None:
         try:
             msgspec.convert(msgspec.to_builtins(metadata), type=schema, strict=True)
+            if capability == "read":
+                operations = metadata.get("operationMetadata")
+                if isinstance(operations, dict) and "find" in operations:
+                    msgspec.convert(
+                        msgspec.to_builtins(operations["find"]),
+                        type=MongoFindOperationMetadata,
+                        strict=True,
+                    )
         except (
             TypeError,
             ValueError,

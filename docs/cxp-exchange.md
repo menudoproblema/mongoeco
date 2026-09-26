@@ -59,6 +59,14 @@ an absent property remains indeterminate. The catalog reference in every
 profile, tier and snapshot was changed together, so the earlier catalog hash
 cannot silently acquire these meanings.
 
+The `read` capability additionally defines `find.*` properties for the
+published `find` operation. Option sets, acceptance flags, scope and session
+or explain support stay tied to that operation by their property names.
+`find.resultType` remains represented by the operation's exact `result_type`
+binding. A requirement on `find.supportedOptions` does not claim anything
+about `find_one` or another operation. Mongoeco validates the known nested
+`find` metadata before projecting it; an unknown field or wrong type rejects.
+
 The packaged snapshot describes Mongoeco's **declared public library
 surface**. Its source is `declared`; it does not prove what a running
 deployment has observed or tested. Runtime providers must emit their own
@@ -78,10 +86,11 @@ reference for every homogeneous snapshot. The owner validator rejects unknown
 top-level metadata keys and wrong top-level value types for all ten
 capabilities. A metadata field whose value is `None` prevents asserting a
 complete `metadata_keys` set; the other validated values can still be reported.
-For the two capabilities above, `None` is omitted as an unknown value and
-`false` remains an explicit negative value. Nested operation and
+For the capabilities above, `None` is omitted as an unknown value and
+`false` remains an explicit negative value. Other nested operation and
 runtime metadata remains governed by Mongoeco's operational contract. The
-remaining capability values are not yet represented as exchange claims.
+remaining capability and operation values are not yet represented as exchange
+claims.
 
 Structured MongoDB metadata values, telemetry, runtime input validation and
 `explain()` projections remain operational contracts of Mongoeco. Cursor

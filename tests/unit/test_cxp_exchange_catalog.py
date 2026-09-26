@@ -162,7 +162,7 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "d6173897f4a6e66843b9be4620fdac87f24720013cb23baa85b126b765f147f3"
+        "203873ae07652b6bdf2c8d46f86b3e4cd4d3407a58e1b3c6aa1a46830de39776"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
@@ -343,6 +343,102 @@ def test_declared_transaction_and_change_stream_values_are_exact() -> None:
         "resumableAcrossNodes": False,
         "resumableAcrossProcesses": False,
     }
+
+
+def test_find_options_are_scoped_to_the_find_operation() -> None:
+    read = next(
+        item
+        for item in load_mongodb_declared_snapshot().payload["capabilities"]
+        if item["name"] == "read"
+    )
+    assert read["properties"]["find.supportedOptions"] == [
+        "batch_size",
+        "comment",
+        "hint",
+        "let",
+        "max_time_ms",
+    ]
+    assert read["properties"]["find.acceptsHint"] is True
+    assert read["properties"]["find.unsupportedOptions"] == []
+    assert read["operations"][0] == {
+        "name": "find",
+        "result_type": "org.mongoeco:result.cursor:1",
+    }
+    assert "find_one.supportedOptions" not in read["properties"]
+
+    requirement_content = load_mongodb_profile("mongodb-core").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "find-hint-support",
+        "operator": "contains_all",
+        "capability": "read",
+        "operations": ["find"],
+        "path": "/properties/find.supportedOptions",
+        "values": ["hint"],
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    requirement = Document(requirement_content, expected_type="cxp.requirements")
+    snapshot_content = load_mongodb_declared_snapshot().as_dict()
+
+    def verdict() -> str:
+        return evaluate_requirements_detailed(
+            Document(snapshot_content, expected_type="cxp.snapshot"),
+            requirement,
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        ).verdict
+
+    assert verdict() == "compatible"
+    for item in snapshot_content["payload"]["capabilities"]:
+        if item["name"] == "read":
+            item["properties"]["find.supportedOptions"].remove("hint")
+    assert verdict() == "incompatible"
+    for item in snapshot_content["payload"]["capabilities"]:
+        if item["name"] == "read":
+            del item["properties"]["find.supportedOptions"]
+    assert verdict() == "indeterminate"
+
+
+def test_find_runtime_projection_validates_nested_values() -> None:
+    identity = MongoSnapshotIdentity(
+        provider_id="provider-A",
+        subject_id="subject-A",
+        configuration_revision="revision-A",
+        observed_at="2026-09-26T00:00:00Z",
+        source_kind="observed",
+        source_reference="owner-report-sha256:example",
+    )
+
+    def snapshot_for(find: dict[str, object]) -> Document:
+        return build_mongodb_snapshot(
+            catalog=load_mongodb_catalog(),
+            identity=identity,
+            capabilities=(
+                MongoCapabilityClaim(
+                    name="read",
+                    support="supported",
+                    metadata={"operationMetadata": {"find": find}},
+                    operations=(
+                        MongoOperationClaim(
+                            name="find",
+                            result_type="org.mongoeco:result.cursor:1",
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+    properties = snapshot_for(
+        {"acceptsHint": False, "supportedOptions": [], "supportsSession": None}
+    ).payload["capabilities"][0]["properties"]
+    assert properties["find.acceptsHint"] is False
+    assert properties["find.supportedOptions"] == []
+    assert "find.supportsSession" not in properties
+    with pytest.raises(ValueError, match="Invalid MongoDB read metadata"):
+        snapshot_for({"acceptsHint": "false"})
+    with pytest.raises(ValueError, match="Invalid MongoDB read metadata"):
+        snapshot_for({"unknownOption": True})
 
 
 def test_value_requirement_distinguishes_false_from_missing() -> None:

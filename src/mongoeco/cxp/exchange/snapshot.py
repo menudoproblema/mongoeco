@@ -25,6 +25,27 @@ _VALUE_FIELDS: dict[str, frozenset[str]] = {
         }
     ),
 }
+_READ_FIND_FIELDS = frozenset(
+    {
+        "acceptedNoopOptions",
+        "acceptsBatchSize",
+        "acceptsCollation",
+        "acceptsComment",
+        "acceptsFilter",
+        "acceptsHint",
+        "acceptsLet",
+        "acceptsLimit",
+        "acceptsMaxTimeMs",
+        "acceptsProjection",
+        "acceptsSkip",
+        "acceptsSort",
+        "collectionScoped",
+        "supportedOptions",
+        "supportsExplain",
+        "supportsSession",
+        "unsupportedOptions",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +100,17 @@ def build_mongodb_snapshot(
             for field in _VALUE_FIELDS.get(claim.name, frozenset()):
                 if field in claim.metadata and claim.metadata[field] is not None:
                     properties[field] = claim.metadata[field]
+            if claim.name == "read":
+                operation_metadata = claim.metadata.get("operationMetadata")
+                if isinstance(operation_metadata, dict):
+                    find_metadata = operation_metadata.get("find")
+                    if isinstance(find_metadata, dict):
+                        for field in _READ_FIND_FIELDS:
+                            if (
+                                field in find_metadata
+                                and find_metadata[field] is not None
+                            ):
+                                properties[f"find.{field}"] = find_metadata[field]
         claims.append(
             {
                 "name": claim.name,
