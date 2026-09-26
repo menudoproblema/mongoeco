@@ -9,6 +9,7 @@ from cxp.exchange import CatalogStore, Document, catalog_reference
 from mongoeco.cxp.exchange.documents import load_mongodb_catalog
 from mongoeco.cxp.exchange.metadata import (
     READ_OPERATION_FIELDS,
+    WRITE_OPERATION_FIELDS,
     validate_mongodb_metadata,
 )
 
@@ -27,6 +28,10 @@ _VALUE_FIELDS: dict[str, frozenset[str]] = {
             "resumableAcrossProcesses",
         }
     ),
+}
+_OPERATION_VALUE_FIELDS = {
+    "read": READ_OPERATION_FIELDS,
+    "write": WRITE_OPERATION_FIELDS,
 }
 
 
@@ -65,7 +70,8 @@ def _project_properties(claim: MongoCapabilityClaim) -> dict[str, object]:
     for field in _VALUE_FIELDS.get(claim.name, frozenset()):
         if field in metadata and metadata[field] is not None:
             properties[field] = metadata[field]
-    if claim.name == "read":
+    operation_fields = _OPERATION_VALUE_FIELDS.get(claim.name)
+    if operation_fields is not None:
         operation_metadata = metadata.get("operationMetadata")
         if isinstance(operation_metadata, dict):
             bindings = {
@@ -74,15 +80,15 @@ def _project_properties(claim: MongoCapabilityClaim) -> dict[str, object]:
             for operation_name, operation_values in operation_metadata.items():
                 if isinstance(operation_values, dict):
                     if operation_name not in bindings:
-                        message = "Read operation metadata lacks its exact binding"
+                        message = "Operation metadata lacks its exact binding"
                         raise ValueError(message)
                     result_type = operation_values.get("resultType")
                     if result_type is not None and bindings[operation_name] != (
                         f"org.mongoeco:result.{result_type}:1"
                     ):
-                        message = "Read operation result differs from its binding"
+                        message = "Operation result differs from its binding"
                         raise ValueError(message)
-                    for field in READ_OPERATION_FIELDS:
+                    for field in operation_fields:
                         if (
                             field in operation_values
                             and operation_values[field] is not None

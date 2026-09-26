@@ -165,7 +165,7 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "e38f9e6404bc372b5887567d62cc2ac7bf9893cae4c9a6f7d04eeec626e667ce"
+        "43baccd874849078402e03ad1d392d4dd3b60e7d939e49cb4e85dbc824f20fa9"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
@@ -404,23 +404,69 @@ def test_find_options_are_scoped_to_the_find_operation() -> None:
     assert verdict() == "indeterminate"
 
 
-def test_all_read_operation_facts_match_owner_declaration() -> None:
+def test_write_options_are_scoped_to_their_operation() -> None:
+    write = next(
+        item
+        for item in load_mongodb_declared_snapshot().payload["capabilities"]
+        if item["name"] == "write"
+    )
+    assert "sort" in write["properties"]["update_one.supportedOptions"]
+    assert "sort" not in write["properties"]["update_many.supportedOptions"]
+    assert write["properties"]["update_many.acceptsSort"] is False
+    assert write["properties"]["insert_one.supportedOptions"] == []
+
+    requirement_content = load_mongodb_profile("mongodb-core").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "update-sort-support",
+        "operator": "contains_all",
+        "capability": "write",
+        "operations": ["update_one"],
+        "path": "/properties/update_one.supportedOptions",
+        "values": ["sort"],
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    requirement = Document(requirement_content, expected_type="cxp.requirements")
+    snapshot_content = load_mongodb_declared_snapshot().as_dict()
+
+    def verdict() -> str:
+        return evaluate_requirements_detailed(
+            Document(snapshot_content, expected_type="cxp.snapshot"),
+            requirement,
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        ).verdict
+
+    assert verdict() == "compatible"
+    for item in snapshot_content["payload"]["capabilities"]:
+        if item["name"] == "write":
+            item["properties"]["update_one.supportedOptions"].remove("sort")
+    assert verdict() == "incompatible"
+    for item in snapshot_content["payload"]["capabilities"]:
+        if item["name"] == "write":
+            del item["properties"]["update_one.supportedOptions"]
+    assert verdict() == "indeterminate"
+
+
+@pytest.mark.parametrize("capability", ["read", "write"])
+def test_all_io_operation_facts_match_owner_declaration(capability: str) -> None:
     owner = json.loads(
         files("mongoeco.cxp.exchange")
         .joinpath("data/operational-metadata.json")
         .read_text(encoding="utf-8")
     )
-    read = next(
+    claim = next(
         item
         for item in load_mongodb_declared_snapshot().payload["capabilities"]
-        if item["name"] == "read"
+        if item["name"] == capability
     )
-    bindings = {item["name"]: item["result_type"] for item in read["operations"]}
-    for operation, facts in owner["read"]["operationMetadata"].items():
+    bindings = {item["name"]: item["result_type"] for item in claim["operations"]}
+    for operation, facts in owner[capability]["operationMetadata"].items():
         assert bindings[operation] == f"org.mongoeco:result.{facts['resultType']}:1"
         for field, value in facts.items():
             if field != "resultType":
-                reported = read["properties"][f"{operation}.{field}"]
+                reported = claim["properties"][f"{operation}.{field}"]
                 assert reported == value
 
 
@@ -473,6 +519,64 @@ def test_find_runtime_projection_validates_nested_values() -> None:
         snapshot_for({"acceptsHint": True}, binding=None)
     with pytest.raises(ValueError, match="result differs from its binding"):
         snapshot_for({"resultType": "document"})
+
+
+def test_write_runtime_projection_validates_nested_values() -> None:
+    identity = MongoSnapshotIdentity(
+        provider_id="provider-A",
+        subject_id="subject-A",
+        configuration_revision="revision-A",
+        observed_at="2026-09-26T00:00:00Z",
+        source_kind="observed",
+        source_reference="owner-report-sha256:example",
+    )
+
+    def snapshot_for(
+        update_one: dict[str, object], *, binding: str | None = "update_result"
+    ) -> Document:
+        return build_mongodb_snapshot(
+            catalog=load_mongodb_catalog(),
+            identity=identity,
+            capabilities=(
+                MongoCapabilityClaim(
+                    name="write",
+                    support="supported",
+                    metadata={"operationMetadata": {"update_one": update_one}},
+                    operations=(
+                        (
+                            MongoOperationClaim(
+                                name="update_one",
+                                result_type=f"org.mongoeco:result.{binding}:1",
+                            ),
+                        )
+                        if binding is not None
+                        else ()
+                    ),
+                ),
+            ),
+        )
+
+    properties = snapshot_for(
+        {"acceptsSort": False, "supportedOptions": [], "supportsUpsert": None}
+    ).payload["capabilities"][0]["properties"]
+    assert properties["update_one.acceptsSort"] is False
+    assert properties["update_one.supportedOptions"] == []
+    assert "update_one.supportsUpsert" not in properties
+    with pytest.raises(ValueError, match="Invalid MongoDB write metadata"):
+        snapshot_for({"acceptsSort": "false"})
+    with pytest.raises(ValueError, match="Invalid MongoDB write metadata"):
+        snapshot_for({"unknownOption": True})
+    with pytest.raises(ValueError, match="lacks its exact binding"):
+        snapshot_for({"acceptsSort": True}, binding=None)
+    with pytest.raises(ValueError, match="result differs from its binding"):
+        snapshot_for({"resultType": "delete_result"})
+
+
+def test_unknown_write_operation_metadata_rejects_before_projection() -> None:
+    with pytest.raises(ValueError, match="Invalid MongoDB write metadata"):
+        validate_mongodb_metadata(
+            "write", {"operationMetadata": {"not_in_catalog": {"acceptsSort": True}}}
+        )
 
 
 @pytest.mark.parametrize(

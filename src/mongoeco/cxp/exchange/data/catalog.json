@@ -448,6 +448,506 @@
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
             "nullable": false
+          },
+          "bulk_write.acceptedNoopOptions": {
+            "description": "Mongoeco write.bulk_write acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "bulk_write.acceptsComment": {
+            "description": "Mongoeco write.bulk_write acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "bulk_write.acceptsLet": {
+            "description": "Mongoeco write.bulk_write acceptsLet for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "bulk_write.acceptsOrderedExecution": {
+            "description": "Mongoeco write.bulk_write acceptsOrderedExecution for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "bulk_write.acceptsWriteModels": {
+            "description": "Mongoeco write.bulk_write acceptsWriteModels for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "bulk_write.collectionScoped": {
+            "description": "Mongoeco write.bulk_write collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "bulk_write.supportedOptions": {
+            "description": "Mongoeco write.bulk_write supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "bulk_write.supportsExplain": {
+            "description": "Mongoeco write.bulk_write supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "bulk_write.supportsOrderedExecution": {
+            "description": "Mongoeco write.bulk_write supportsOrderedExecution for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "bulk_write.supportsSession": {
+            "description": "Mongoeco write.bulk_write supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "bulk_write.unsupportedOptions": {
+            "description": "Mongoeco write.bulk_write unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "delete_many.acceptedNoopOptions": {
+            "description": "Mongoeco write.delete_many acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "delete_many.acceptsCollation": {
+            "description": "Mongoeco write.delete_many acceptsCollation for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_many.acceptsComment": {
+            "description": "Mongoeco write.delete_many acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_many.acceptsFilter": {
+            "description": "Mongoeco write.delete_many acceptsFilter for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_many.acceptsHint": {
+            "description": "Mongoeco write.delete_many acceptsHint for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_many.acceptsLet": {
+            "description": "Mongoeco write.delete_many acceptsLet for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_many.collectionScoped": {
+            "description": "Mongoeco write.delete_many collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_many.supportedOptions": {
+            "description": "Mongoeco write.delete_many supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "delete_many.supportsExplain": {
+            "description": "Mongoeco write.delete_many supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_many.supportsSession": {
+            "description": "Mongoeco write.delete_many supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_many.unsupportedOptions": {
+            "description": "Mongoeco write.delete_many unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "delete_one.acceptedNoopOptions": {
+            "description": "Mongoeco write.delete_one acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "delete_one.acceptsCollation": {
+            "description": "Mongoeco write.delete_one acceptsCollation for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_one.acceptsComment": {
+            "description": "Mongoeco write.delete_one acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_one.acceptsFilter": {
+            "description": "Mongoeco write.delete_one acceptsFilter for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_one.acceptsHint": {
+            "description": "Mongoeco write.delete_one acceptsHint for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_one.acceptsLet": {
+            "description": "Mongoeco write.delete_one acceptsLet for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_one.collectionScoped": {
+            "description": "Mongoeco write.delete_one collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_one.supportedOptions": {
+            "description": "Mongoeco write.delete_one supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "delete_one.supportsExplain": {
+            "description": "Mongoeco write.delete_one supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_one.supportsSession": {
+            "description": "Mongoeco write.delete_one supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "delete_one.unsupportedOptions": {
+            "description": "Mongoeco write.delete_one unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "insert_many.acceptedNoopOptions": {
+            "description": "Mongoeco write.insert_many acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "insert_many.acceptsComment": {
+            "description": "Mongoeco write.insert_many acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_many.acceptsDocuments": {
+            "description": "Mongoeco write.insert_many acceptsDocuments for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_many.acceptsOrderedExecution": {
+            "description": "Mongoeco write.insert_many acceptsOrderedExecution for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_many.collectionScoped": {
+            "description": "Mongoeco write.insert_many collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_many.supportedOptions": {
+            "description": "Mongoeco write.insert_many supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "insert_many.supportsExplain": {
+            "description": "Mongoeco write.insert_many supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_many.supportsOrderedExecution": {
+            "description": "Mongoeco write.insert_many supportsOrderedExecution for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_many.supportsSession": {
+            "description": "Mongoeco write.insert_many supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_many.unsupportedOptions": {
+            "description": "Mongoeco write.insert_many unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "insert_one.acceptedNoopOptions": {
+            "description": "Mongoeco write.insert_one acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "insert_one.acceptsComment": {
+            "description": "Mongoeco write.insert_one acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_one.acceptsDocument": {
+            "description": "Mongoeco write.insert_one acceptsDocument for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_one.collectionScoped": {
+            "description": "Mongoeco write.insert_one collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_one.supportedOptions": {
+            "description": "Mongoeco write.insert_one supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "insert_one.supportsExplain": {
+            "description": "Mongoeco write.insert_one supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_one.supportsSession": {
+            "description": "Mongoeco write.insert_one supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "insert_one.unsupportedOptions": {
+            "description": "Mongoeco write.insert_one unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "replace_one.acceptedNoopOptions": {
+            "description": "Mongoeco write.replace_one acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "replace_one.acceptsCollation": {
+            "description": "Mongoeco write.replace_one acceptsCollation for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.acceptsComment": {
+            "description": "Mongoeco write.replace_one acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.acceptsFilter": {
+            "description": "Mongoeco write.replace_one acceptsFilter for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.acceptsHint": {
+            "description": "Mongoeco write.replace_one acceptsHint for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.acceptsLet": {
+            "description": "Mongoeco write.replace_one acceptsLet for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.acceptsReplacementDocument": {
+            "description": "Mongoeco write.replace_one acceptsReplacementDocument for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.acceptsSort": {
+            "description": "Mongoeco write.replace_one acceptsSort for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.collectionScoped": {
+            "description": "Mongoeco write.replace_one collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.supportedOptions": {
+            "description": "Mongoeco write.replace_one supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "replace_one.supportsExplain": {
+            "description": "Mongoeco write.replace_one supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.supportsReplacementDocument": {
+            "description": "Mongoeco write.replace_one supportsReplacementDocument for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.supportsSession": {
+            "description": "Mongoeco write.replace_one supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.supportsUpsert": {
+            "description": "Mongoeco write.replace_one supportsUpsert for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "replace_one.unsupportedOptions": {
+            "description": "Mongoeco write.replace_one unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "update_many.acceptedNoopOptions": {
+            "description": "Mongoeco write.update_many acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "update_many.acceptsArrayFilters": {
+            "description": "Mongoeco write.update_many acceptsArrayFilters for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.acceptsCollation": {
+            "description": "Mongoeco write.update_many acceptsCollation for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.acceptsComment": {
+            "description": "Mongoeco write.update_many acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.acceptsFilter": {
+            "description": "Mongoeco write.update_many acceptsFilter for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.acceptsHint": {
+            "description": "Mongoeco write.update_many acceptsHint for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.acceptsLet": {
+            "description": "Mongoeco write.update_many acceptsLet for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.acceptsSort": {
+            "description": "Mongoeco write.update_many acceptsSort for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.acceptsUpdateDocument": {
+            "description": "Mongoeco write.update_many acceptsUpdateDocument for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.collectionScoped": {
+            "description": "Mongoeco write.update_many collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.supportedOptions": {
+            "description": "Mongoeco write.update_many supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "update_many.supportedUpdateOperators": {
+            "description": "Mongoeco write.update_many supportedUpdateOperators for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "update_many.supportsExplain": {
+            "description": "Mongoeco write.update_many supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.supportsPipelineUpdate": {
+            "description": "Mongoeco write.update_many supportsPipelineUpdate for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.supportsSession": {
+            "description": "Mongoeco write.update_many supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.supportsUpsert": {
+            "description": "Mongoeco write.update_many supportsUpsert for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_many.unsupportedOptions": {
+            "description": "Mongoeco write.update_many unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "update_one.acceptedNoopOptions": {
+            "description": "Mongoeco write.update_one acceptedNoopOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "update_one.acceptsArrayFilters": {
+            "description": "Mongoeco write.update_one acceptsArrayFilters for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.acceptsCollation": {
+            "description": "Mongoeco write.update_one acceptsCollation for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.acceptsComment": {
+            "description": "Mongoeco write.update_one acceptsComment for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.acceptsFilter": {
+            "description": "Mongoeco write.update_one acceptsFilter for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.acceptsHint": {
+            "description": "Mongoeco write.update_one acceptsHint for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.acceptsLet": {
+            "description": "Mongoeco write.update_one acceptsLet for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.acceptsSort": {
+            "description": "Mongoeco write.update_one acceptsSort for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.acceptsUpdateDocument": {
+            "description": "Mongoeco write.update_one acceptsUpdateDocument for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.collectionScoped": {
+            "description": "Mongoeco write.update_one collectionScoped for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.supportedOptions": {
+            "description": "Mongoeco write.update_one supportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "update_one.supportedUpdateOperators": {
+            "description": "Mongoeco write.update_one supportedUpdateOperators for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "update_one.supportsExplain": {
+            "description": "Mongoeco write.update_one supportsExplain for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.supportsPipelineUpdate": {
+            "description": "Mongoeco write.update_one supportsPipelineUpdate for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.supportsSession": {
+            "description": "Mongoeco write.update_one supportsSession for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.supportsUpsert": {
+            "description": "Mongoeco write.update_one supportsUpsert for the declared configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "update_one.unsupportedOptions": {
+            "description": "Mongoeco write.update_one unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
           }
         }
       },

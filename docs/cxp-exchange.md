@@ -70,6 +70,14 @@ unknown operation, field or wrong type rejects. A nested read claim also
 requires the same operation's exact result binding; a mismatched or absent
 binding rejects before a snapshot is returned.
 
+The eight `write` operations have the same scoped treatment. For example,
+`update_one.supportedOptions` includes `sort`, while
+`update_many.supportedOptions` does not, and its `acceptsSort` value is
+explicitly `false`. An empty option set is a reported negative claim; an
+omitted set remains unknown. The owner validator checks each nested write
+field's type and operation name, and the snapshot builder requires an exact
+result binding before reporting its values.
+
 The packaged snapshot describes Mongoeco's **declared public library
 surface**. Its source is `declared`; it does not prove what a running
 deployment has observed or tested. Runtime providers must emit their own
@@ -90,10 +98,9 @@ top-level metadata keys and wrong top-level value types for all ten
 capabilities. A metadata field whose value is `None` prevents asserting a
 complete `metadata_keys` set; the other validated values can still be reported.
 For the capabilities above, `None` is omitted as an unknown value and
-`false` remains an explicit negative value. Other nested operation and
-runtime metadata remains governed by Mongoeco's operational contract. The
-remaining capability and operation values are not yet represented as exchange
-claims.
+`false` remains an explicit negative value. Nested metadata for the remaining
+capabilities and operations stays governed by Mongoeco's operational contract;
+its values are not yet represented as exchange claims.
 
 Structured MongoDB metadata values, telemetry, runtime input validation and
 `explain()` projections remain operational contracts of Mongoeco. Cursor

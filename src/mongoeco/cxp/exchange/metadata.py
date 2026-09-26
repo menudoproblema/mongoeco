@@ -110,6 +110,112 @@ class MongoWriteMetadata(msgspec.Struct, frozen=True, forbid_unknown_fields=True
     )
 
 
+WRITE_OPERATION_NAMES = frozenset(
+    {
+        "insert_one",
+        "insert_many",
+        "update_one",
+        "update_many",
+        "replace_one",
+        "delete_one",
+        "delete_many",
+        "bulk_write",
+    }
+)
+WRITE_OPERATION_FIELDS = frozenset(
+    {
+        "acceptedNoopOptions",
+        "acceptsArrayFilters",
+        "acceptsCollation",
+        "acceptsComment",
+        "acceptsDocument",
+        "acceptsDocuments",
+        "acceptsFilter",
+        "acceptsHint",
+        "acceptsLet",
+        "acceptsOrderedExecution",
+        "acceptsReplacementDocument",
+        "acceptsSort",
+        "acceptsUpdateDocument",
+        "acceptsWriteModels",
+        "collectionScoped",
+        "supportedOptions",
+        "supportedUpdateOperators",
+        "supportsExplain",
+        "supportsOrderedExecution",
+        "supportsPipelineUpdate",
+        "supportsReplacementDocument",
+        "supportsSession",
+        "supportsUpsert",
+        "unsupportedOptions",
+    }
+)
+
+
+class MongoWriteOperationMetadata(
+    msgspec.Struct, frozen=True, forbid_unknown_fields=True
+):
+    accepted_noop_options: tuple[str, ...] | None = msgspec.field(
+        name="acceptedNoopOptions", default=None
+    )
+    accepts_array_filters: bool | None = msgspec.field(
+        name="acceptsArrayFilters", default=None
+    )
+    accepts_collation: bool | None = msgspec.field(
+        name="acceptsCollation", default=None
+    )
+    accepts_comment: bool | None = msgspec.field(name="acceptsComment", default=None)
+    accepts_document: bool | None = msgspec.field(name="acceptsDocument", default=None)
+    accepts_documents: bool | None = msgspec.field(
+        name="acceptsDocuments", default=None
+    )
+    accepts_filter: bool | None = msgspec.field(name="acceptsFilter", default=None)
+    accepts_hint: bool | None = msgspec.field(name="acceptsHint", default=None)
+    accepts_let: bool | None = msgspec.field(name="acceptsLet", default=None)
+    accepts_ordered_execution: bool | None = msgspec.field(
+        name="acceptsOrderedExecution", default=None
+    )
+    accepts_replacement_document: bool | None = msgspec.field(
+        name="acceptsReplacementDocument", default=None
+    )
+    accepts_sort: bool | None = msgspec.field(name="acceptsSort", default=None)
+    accepts_update_document: bool | None = msgspec.field(
+        name="acceptsUpdateDocument", default=None
+    )
+    accepts_write_models: bool | None = msgspec.field(
+        name="acceptsWriteModels", default=None
+    )
+    collection_scoped: bool | None = msgspec.field(
+        name="collectionScoped", default=None
+    )
+    result_type: str | None = msgspec.field(name="resultType", default=None)
+    supported_options: tuple[str, ...] | None = msgspec.field(
+        name="supportedOptions", default=None
+    )
+    supported_update_operators: tuple[str, ...] | None = msgspec.field(
+        name="supportedUpdateOperators", default=None
+    )
+    supports_explain: bool | None = msgspec.field(
+        name="supportsExplain", default=None
+    )
+    supports_ordered_execution: bool | None = msgspec.field(
+        name="supportsOrderedExecution", default=None
+    )
+    supports_pipeline_update: bool | None = msgspec.field(
+        name="supportsPipelineUpdate", default=None
+    )
+    supports_replacement_document: bool | None = msgspec.field(
+        name="supportsReplacementDocument", default=None
+    )
+    supports_session: bool | None = msgspec.field(
+        name="supportsSession", default=None
+    )
+    supports_upsert: bool | None = msgspec.field(name="supportsUpsert", default=None)
+    unsupported_options: tuple[str, ...] | None = msgspec.field(
+        name="unsupportedOptions", default=None
+    )
+
+
 class MongoTransactionsMetadata(
     msgspec.Struct, frozen=True, forbid_unknown_fields=True
 ):
@@ -263,6 +369,39 @@ METADATA_SCHEMAS: dict[str, type[msgspec.Struct]] = {
     "persistence": MongoPersistenceMetadata,
     "topology_discovery": MongoTopologyDiscoveryMetadata,
 }
+OPERATION_SCHEMAS: dict[
+    str, tuple[frozenset[str], type[msgspec.Struct]]
+] = {
+    "read": (READ_OPERATION_NAMES, MongoReadOperationMetadata),
+    "write": (WRITE_OPERATION_NAMES, MongoWriteOperationMetadata),
+}
+
+
+def _validate_operation_metadata(
+    capability: str, metadata: dict[str, object]
+) -> None:
+    contract = OPERATION_SCHEMAS.get(capability)
+    if contract is None:
+        return
+    operations = metadata.get("operationMetadata")
+    if operations is None:
+        return
+    if not isinstance(operations, dict) or not all(
+        isinstance(name, str) for name in operations
+    ):
+        message = "Operation metadata must be a string-keyed object"
+        raise ValueError(message)
+    names, schema = contract
+    if set(operations) - names:
+        message = "Unknown operation metadata"
+        raise ValueError(message)
+    for operation in operations.values():
+        if not isinstance(operation, dict) or not all(
+            isinstance(key, str) for key in operation
+        ):
+            message = "Operation metadata must be a string-keyed object"
+            raise ValueError(message)
+        msgspec.convert(msgspec.to_builtins(operation), type=schema, strict=True)
 
 
 def validate_mongodb_metadata(capability: str, metadata: dict[str, object]) -> None:
@@ -276,23 +415,7 @@ def validate_mongodb_metadata(capability: str, metadata: dict[str, object]) -> N
     if schema is not None:
         try:
             msgspec.convert(msgspec.to_builtins(metadata), type=schema, strict=True)
-            if capability == "read":
-                operations = metadata.get("operationMetadata")
-                if isinstance(operations, dict):
-                    if set(operations) - READ_OPERATION_NAMES:
-                        message = "Unknown read operation metadata"
-                        raise ValueError(message)
-                    for operation in operations.values():
-                        if not isinstance(operation, dict) or not all(
-                            isinstance(key, str) for key in operation
-                        ):
-                            message = "Read operation metadata must be an object"
-                            raise ValueError(message)
-                        msgspec.convert(
-                            msgspec.to_builtins(operation),
-                            type=MongoReadOperationMetadata,
-                            strict=True,
-                        )
+            _validate_operation_metadata(capability, metadata)
         except (
             TypeError,
             ValueError,
