@@ -1,4 +1,5 @@
 from importlib import import_module
+from warnings import warn
 
 _FACADE_EXPORTS = (
     'build_mongodb_explain_projection',
@@ -49,6 +50,12 @@ def __getattr__(name: str):
     module_name = _EXPORT_MODULES.get(name)
     if module_name is None:
         raise AttributeError(name)
+    warn(
+        f"mongoeco.cxp.{name} uses the retiring CXP component protocol; "
+        "use mongoeco.cxp.exchange documents and evaluation",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     value = getattr(import_module(module_name), name)
     globals()[name] = value
     return value

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from functools import lru_cache
+from warnings import warn
 
 import msgspec
 
@@ -73,6 +74,13 @@ from mongoeco.core.search import (
     STRUCTURED_SEARCH_FIELD_MAPPING_TYPES,
     SUPPORTED_SEARCH_FIELD_MAPPING_TYPES,
     TEXTUAL_SEARCH_FIELD_MAPPING_TYPES,
+)
+
+warn(
+    "mongoeco.cxp.capabilities is deprecated; use "
+    "mongoeco.cxp.exchange owner documents",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
 __all__ = (

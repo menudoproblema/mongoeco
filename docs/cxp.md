@@ -14,6 +14,8 @@ The migration branch declares `cxp[exchange]>=4.3.0,<5`: context v2 requires
 4.3.0 is currently an exact local candidate, so the checked-in development
 lock still resolves the earlier 4.1.0 release and cannot certify this branch.
 The old facade below remains active pending its exchange migration.
+Accessing its root reexports or importing `mongoeco.cxp.capabilities` now
+emits `DeprecationWarning`; callers should adopt `mongoeco.cxp.exchange`.
 
 That means:
 
