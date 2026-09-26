@@ -3890,6 +3890,21 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         ],
                     )
 
+                    self.assertIsNone(await collection.find_one({"name": "ALICE"}))
+                    self.assertEqual(
+                        await collection.find({"name": "ALICE"}).to_list(),
+                        [],
+                    )
+                    self.assertEqual(
+                        [
+                            item["code"]
+                            for item in await collection.find(
+                                {}, sort=[("code", 1)]
+                            ).to_list()
+                        ],
+                        ["10", "2", "3"],
+                    )
+
                     found = await collection.find_one(
                         {"name": "ALICE"},
                         collation=collation,
@@ -3907,6 +3922,15 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         [{"code": "2"}, {"code": "3"}, {"code": "10"}],
                     )
 
+                    self.assertEqual(
+                        (
+                            await collection.update_one(
+                                {"name": "ALICE"},
+                                {"$set": {"matched": True}},
+                            )
+                        ).matched_count,
+                        0,
+                    )
                     update_result = await collection.update_one(
                         {"name": "ALICE"},
                         {"$set": {"matched": True}},
@@ -3923,18 +3947,113 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         },
                     )
 
+                    self.assertEqual(
+                        set(await collection.distinct("name")),
+                        {"Alice", "alice", "Bob"},
+                    )
                     distinct_names = await collection.distinct(
                         "name",
                         collation=collation,
                     )
                     self.assertEqual(distinct_names, ["Alice", "Bob"])
 
+                    self.assertEqual(
+                        (await collection.delete_one({"name": "bob"})).deleted_count,
+                        0,
+                    )
                     delete_result = await collection.delete_one(
                         {"name": "bob"},
                         collation=collation,
                     )
                     self.assertEqual(delete_result.deleted_count, 1)
                     self.assertIsNone(await collection.find_one({"_id": 3}))
+
+    async def test_collation_applies_to_remaining_collection_operations(self):
+        collation = {"locale": "en", "strength": 2}
+        for engine_name in ENGINE_FACTORIES:
+            with self.subTest(engine=engine_name):
+                async with open_client(engine_name) as client:
+                    collection = client.alpha.collation_operations
+                    await collection.insert_many(
+                        [
+                            {"_id": 1, "name": "Alice"},
+                            {"_id": 2, "name": "alice"},
+                            {"_id": 3, "name": "Bob"},
+                        ],
+                    )
+
+                    self.assertEqual(
+                        await collection.count_documents({"name": "ALICE"}),
+                        0,
+                    )
+                    self.assertEqual(
+                        await collection.count_documents(
+                            {"name": "ALICE"},
+                            collation=collation,
+                        ),
+                        2,
+                    )
+
+                    self.assertEqual(
+                        (
+                            await collection.update_many(
+                                {"name": "ALICE"},
+                                {"$set": {"matched": True}},
+                            )
+                        ).matched_count,
+                        0,
+                    )
+                    self.assertEqual(
+                        (
+                            await collection.update_many(
+                                {"name": "ALICE"},
+                                {"$set": {"matched": True}},
+                                collation=collation,
+                            )
+                        ).matched_count,
+                        2,
+                    )
+
+                    self.assertEqual(
+                        (
+                            await collection.replace_one(
+                                {"name": "BOB"},
+                                {"_id": 3, "name": "Bobby"},
+                            )
+                        ).matched_count,
+                        0,
+                    )
+                    self.assertEqual(
+                        (
+                            await collection.replace_one(
+                                {"name": "BOB"},
+                                {"_id": 3, "name": "Bobby"},
+                                collation=collation,
+                            )
+                        ).matched_count,
+                        1,
+                    )
+                    self.assertEqual(
+                        (await collection.find_one({"_id": 3}))["name"],
+                        "Bobby",
+                    )
+
+                    self.assertEqual(
+                        (
+                            await collection.delete_many({"name": "ALICE"})
+                        ).deleted_count,
+                        0,
+                    )
+                    self.assertEqual(
+                        (
+                            await collection.delete_many(
+                                {"name": "ALICE"},
+                                collation=collation,
+                            )
+                        ).deleted_count,
+                        2,
+                    )
+                    self.assertEqual(await collection.count_documents({}), 1)
 
     async def test_collation_applies_to_aggregate_and_aggregate_command(self):
         collation = {"locale": "en", "strength": 2, "numericOrdering": True}

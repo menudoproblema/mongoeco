@@ -175,7 +175,9 @@ The row-level audit of the owner metadata is in
 It pins the source SHA-256 and assigns all 410 logical facts to an exchange
 claim or a producer-operated contract. Its current status is open: 289 rows
 have an exact claim in the generic declaration or an operation alias; nine
-have catalog definitions but require a concrete runtime observation; 112
-need owner review or individual operational oracles. This file covers the packaged
+have catalog definitions but require a concrete runtime observation; 18
+collation behavior and scope rows have Memory/SQLite sync and async oracles,
+including an installed-wheel replay; 94 still need owner review or individual
+operational oracles. This file covers the packaged
 operational metadata only. It does not close the separate inventory of public
 APIs, wire commands, BSON behavior, or deployed resources.

@@ -3838,6 +3838,19 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         ],
                     )
 
+                    self.assertIsNone(collection.find_one({"name": "ALICE"}))
+                    self.assertEqual(
+                        collection.find({"name": "ALICE"}).to_list(),
+                        [],
+                    )
+                    self.assertEqual(
+                        [
+                            item["code"]
+                            for item in collection.find({}, sort=[("code", 1)])
+                        ],
+                        ["10", "2", "3"],
+                    )
+
                     found = collection.find_one(
                         {"name": "ALICE"},
                         collation=collation,
@@ -3855,6 +3868,13 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         [{"code": "2"}, {"code": "3"}, {"code": "10"}],
                     )
 
+                    self.assertEqual(
+                        collection.update_one(
+                            {"name": "ALICE"},
+                            {"$set": {"matched": True}},
+                        ).matched_count,
+                        0,
+                    )
                     update_result = collection.update_one(
                         {"name": "ALICE"},
                         {"$set": {"matched": True}},
@@ -3871,18 +3891,129 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         },
                     )
 
+                    self.assertEqual(
+                        set(collection.distinct("name")),
+                        {"Alice", "alice", "Bob"},
+                    )
                     distinct_names = collection.distinct(
                         "name",
                         collation=collation,
                     )
                     self.assertEqual(distinct_names, ["Alice", "Bob"])
 
+                    self.assertEqual(
+                        collection.delete_one({"name": "bob"}).deleted_count,
+                        0,
+                    )
                     delete_result = collection.delete_one(
                         {"name": "bob"},
                         collation=collation,
                     )
                     self.assertEqual(delete_result.deleted_count, 1)
                     self.assertIsNone(collection.find_one({"_id": 3}))
+
+    def test_collation_applies_to_remaining_collection_operations(self):
+        collation = {"locale": "en", "strength": 2}
+        invalid_collation = {"locale": "es"}
+        for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
+            with self.subTest(engine=engine_name), MongoClient(factory()) as client:
+                collection = client.alpha.collation_operations
+                collection.insert_many(
+                    [
+                        {"_id": 1, "name": "Alice"},
+                        {"_id": 2, "name": "alice"},
+                        {"_id": 3, "name": "Bob"},
+                    ],
+                )
+
+                self.assertEqual(
+                    collection.count_documents({"name": "ALICE"}),
+                    0,
+                )
+                self.assertEqual(
+                    collection.count_documents(
+                        {"name": "ALICE"},
+                        collation=collation,
+                    ),
+                    2,
+                )
+                with self.assertRaises(ValueError):
+                    collection.count_documents(
+                        {"name": "ALICE"},
+                        collation=invalid_collation,
+                    )
+
+                self.assertEqual(
+                    collection.update_many(
+                        {"name": "ALICE"},
+                        {"$set": {"matched": True}},
+                    ).matched_count,
+                    0,
+                )
+                self.assertEqual(
+                    collection.update_many(
+                        {"name": "ALICE"},
+                        {"$set": {"matched": True}},
+                        collation=collation,
+                    ).matched_count,
+                    2,
+                )
+                self.assertEqual(
+                    collection.count_documents({"matched": True}),
+                    2,
+                )
+                with self.assertRaises(ValueError):
+                    collection.update_many(
+                        {"name": "ALICE"},
+                        {"$set": {"invalid": True}},
+                        collation=invalid_collation,
+                    )
+                self.assertEqual(
+                    collection.count_documents({"invalid": True}),
+                    0,
+                )
+
+                self.assertEqual(
+                    collection.replace_one(
+                        {"name": "BOB"},
+                        {"_id": 3, "name": "Bobby"},
+                    ).matched_count,
+                    0,
+                )
+                self.assertEqual(
+                    collection.replace_one(
+                        {"name": "BOB"},
+                        {"_id": 3, "name": "Bobby"},
+                        collation=collation,
+                    ).matched_count,
+                    1,
+                )
+                self.assertEqual(collection.find_one({"_id": 3})["name"], "Bobby")
+                with self.assertRaises(ValueError):
+                    collection.replace_one(
+                        {"name": "ALICE"},
+                        {"_id": 1, "name": "invalid"},
+                        collation=invalid_collation,
+                    )
+                self.assertEqual(collection.find_one({"_id": 1})["name"], "Alice")
+
+                self.assertEqual(
+                    collection.delete_many({"name": "ALICE"}).deleted_count,
+                    0,
+                )
+                with self.assertRaises(ValueError):
+                    collection.delete_many(
+                        {"name": "ALICE"},
+                        collation=invalid_collation,
+                    )
+                self.assertEqual(
+                    collection.delete_many(
+                        {"name": "ALICE"},
+                        collation=collation,
+                    ).deleted_count,
+                    2,
+                )
+                self.assertEqual(collection.count_documents({}), 1)
 
     def test_collation_applies_to_aggregate_and_aggregate_command(self):
         collation = {"locale": "en", "strength": 2, "numericOrdering": True}
