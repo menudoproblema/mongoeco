@@ -18,6 +18,10 @@ usa Semantic Versioning.
 - Require `cxp[exchange]>=5.0.0,<6`. Mongoeco 4.8.0 is prepared against the
   exact local CXP 5.0.0 candidate; it is not published or authorized for
   publication by this source change.
+- Adopt owner catalog `org.mongoeco:mongodb@1.2.0` with `cxp.catalog`
+  spec_version 2, per-element source references and explicit string domains.
+  Snapshot and requirements keep spec_version 1 and pin the new catalog hash;
+  invalid closed-domain values are rejected before evaluation.
 - Correct the owner option catalog: `listCollections.authorizedCollections` and
   `validate.scandata`/`full`/`background` are accepted without changing the
   local operation. `listCommands` now lists them in `acceptedNoopOptions` while

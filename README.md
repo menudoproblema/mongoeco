@@ -70,7 +70,10 @@ engine SPI v2, Search and conformance surfaces. CI checks those contracts with
 strict positive and negative consumer fixtures against the installed wheel.
 
 The 4.8.0 source requires `cxp[exchange]>=5.0.0,<6` and exposes its
-`database/mongodb` contract through owner-authored exchange documents.
+`database/mongodb` contract through owner-authored exchange documents. Its
+`org.mongoeco:mongodb@1.2.0` catalog uses CXP catalog spec_version 2;
+snapshots and requirements pin that exact catalog while retaining their v1
+document formats.
 Reference:
 
 * [docs/cxp-exchange.md](docs/cxp-exchange.md)

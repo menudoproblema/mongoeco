@@ -5,6 +5,10 @@ requirements. They are packaged as JSON data under
 `mongoeco.cxp.exchange.data`; a consumer can read and evaluate them without
 importing a CXP catalog, descriptor, handshake or registry module.
 Install `cxp[exchange]>=5.0.0,<6` to use the document API and context v2.
+Catalog `1.2.0` uses `cxp.catalog` spec_version 2. Snapshot and requirements
+remain spec_version 1; context remains spec_version 2. The earlier catalog
+`1.1.0` keeps its own identity and hash, and consumers must adopt the new pin
+explicitly.
 
 ```python
 from cxp.exchange import Document, evaluate_requirements
@@ -20,7 +24,7 @@ context = Document(
         "spec_version": 2,
         "payload": {
             "subject_id": "mongoeco-public-catalog",
-            "configuration_revision": "mongoeco-public-catalog-1.1.0",
+            "configuration_revision": "mongoeco-public-catalog-1.2.0",
             "accepted_sources": ["declared"],
         },
     },
@@ -45,13 +49,23 @@ required reported key makes that profile incompatible.
 `compat.export_mock_safe_profile_catalog()` evaluates this same pinned
 document through exchange and has no separate compatibility evaluator. The
 property
-`metadata_keys` is a `string_set`: `contains_all` preserves the old
+`metadata_keys` is a `string_set` with a closed domain sourced from Mongoeco's
+metadata validators: `contains_all` preserves the old
 `required_metadata_keys` condition. A missing capability or unreported key set
 is indeterminate; an explicitly reported set without a required key is
 incompatible. No profile is inferred from a tier, and there is no implicit
 ordering among tiers.
 
-Catalog version `1.1.0` also defines thirteen typed value properties for
+Every catalog, capability, property and operation has an owner source with
+reference, revision and locator. The source and any SHA-256 constrain the
+catalog's meaning; CXP does not fetch or authenticate that material. String
+domains are closed only where the owner has an exact vocabulary; other string
+properties declare an open domain. A snapshot or requirement using a token
+outside a closed domain is invalid before evaluation, including in an
+unselected `any` branch. A valid but unsatisfied requirement is incompatible,
+and a missing observation remains indeterminate.
+
+Catalog version `1.2.0` also defines thirteen typed value properties for
 `transactions` and `change_streams`. The declared snapshot reports their
 exact boolean and string values, including `false` for distributed or
 persistent behavior where applicable. A consumer can require an exact value;

@@ -1225,15 +1225,15 @@
     "catalog": {
       "name": "mongodb",
       "namespace": "org.mongoeco",
-      "sha256": "aa99d50bb4821c53a082cd30567fbe427747cb059776de98a8a6b1afb6b3fbcc",
-      "version": "1.1.0"
+      "version": "1.2.0",
+      "sha256": "84c69da54a8d09f6dce9a3cbc394cf8c2f251402c72e18b3f7488af86ef08aeb"
     },
-    "configuration_revision": "mongoeco-public-catalog-1.1.0",
+    "configuration_revision": "mongoeco-public-catalog-1.2.0",
     "observed_at": "2026-09-26T00:00:00.000000Z",
     "provider_id": "mongoeco",
     "source": {
       "kind": "declared",
-      "reference": "org.mongoeco:public-catalog:1.1.0"
+      "reference": "org.mongoeco:public-catalog:1.2.0"
     },
     "subject_id": "mongoeco-public-catalog"
   },

@@ -1,10 +1,12 @@
 """Independent checks for Mongoeco's portable compatibility declarations."""
 
+import hashlib
 import json
 
 from copy import deepcopy
 from importlib.resources import files
 
+import msgspec
 import pytest
 
 from cxp.exchange import (
@@ -29,10 +31,13 @@ from mongoeco.cxp.exchange import (
     load_mongodb_tier,
     mongodb_catalog_store,
 )
-from mongoeco.cxp.exchange.metadata import validate_mongodb_metadata
+from mongoeco.cxp.exchange.metadata import METADATA_SCHEMAS, validate_mongodb_metadata
 from mongoeco.cxp.exchange.projection import (
     build_mongodb_exchange_explain_projection,
 )
+
+
+CATALOG_SPEC_VERSION = 2
 
 
 def _context() -> Document:
@@ -42,7 +47,7 @@ def _context() -> Document:
             "spec_version": 2,
             "payload": {
                 "subject_id": "mongoeco-public-catalog",
-                "configuration_revision": "mongoeco-public-catalog-1.1.0",
+                "configuration_revision": "mongoeco-public-catalog-1.2.0",
                 "accepted_sources": ["declared"],
             },
         },
@@ -165,11 +170,11 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "aa99d50bb4821c53a082cd30567fbe427747cb059776de98a8a6b1afb6b3fbcc"
+        "84c69da54a8d09f6dce9a3cbc394cf8c2f251402c72e18b3f7488af86ef08aeb"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
-        "org.mongoeco:public-catalog:1.1.0"
+        "org.mongoeco:public-catalog:1.2.0"
     )
     assert all(
         reference == load_mongodb_profile(name).payload["catalog"]
@@ -184,6 +189,98 @@ def test_catalog_identity_and_hash_are_exact() -> None:
         evaluate_requirements_detailed(
             Document(changed, expected_type="cxp.snapshot"),
             load_mongodb_profile("mongodb-core"),
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        )
+
+
+def test_catalog_v2_provenance_and_metadata_vocabularies_match_owner() -> None:
+    catalog = load_mongodb_catalog()
+    assert catalog.spec_version == CATALOG_SPEC_VERSION
+    owner_path = files("mongoeco.cxp.exchange").joinpath(
+        "data/operational-metadata.json"
+    )
+    metadata_path = files("mongoeco.cxp.exchange").joinpath("metadata.py")
+    owner = json.loads(owner_path.read_text(encoding="utf-8"))
+    expected_hashes = {
+        "src/mongoeco/cxp/exchange/data/operational-metadata.json": hashlib.sha256(
+            owner_path.read_bytes()
+        ).hexdigest(),
+        "src/mongoeco/cxp/exchange/metadata.py": hashlib.sha256(
+            metadata_path.read_bytes()
+        ).hexdigest(),
+    }
+
+    def check_source(source: dict[str, object]) -> None:
+        reference = source["reference"]
+        if reference in expected_hashes:
+            assert source["sha256"] == expected_hashes[reference]
+            if reference.endswith("operational-metadata.json"):
+                value: object = owner
+                for token in str(source["locator"]).strip("/").split("/"):
+                    if token:
+                        assert isinstance(value, dict)
+                        value = value[token]
+        else:
+            assert reference == "src/mongoeco/cxp/exchange/data/catalog.json"
+            assert source["scope"] == (
+                "Existing owner operation and result contract in catalog v1.1.0"
+            )
+
+    check_source(catalog.payload["source"])
+    for capability in catalog.payload["capabilities"]:
+        name = capability["name"]
+        check_source(capability["source"])
+        for definition in capability["properties"].values():
+            check_source(definition["source"])
+        for operation in capability["operations"]:
+            check_source(operation["source"])
+        keys = capability["properties"]["metadata_keys"]["domain"]
+        assert keys == {
+            "mode": "closed",
+            "values": sorted(
+                field.encode_name
+                for field in msgspec.structs.fields(METADATA_SCHEMAS[name])
+            ),
+        }
+
+
+def test_v2_rejects_unknown_key_even_outside_required_capabilities() -> None:
+    content = load_mongodb_declared_snapshot().as_dict()
+    collation = next(
+        item for item in content["payload"]["capabilities"]
+        if item["name"] == "collation"
+    )
+    collation["properties"]["metadata_keys"].append("inventedFlag")
+    with pytest.raises(InvalidDocumentError, match="outside the closed domain"):
+        evaluate_requirements_detailed(
+            Document(content, expected_type="cxp.snapshot"),
+            load_mongodb_profile("mongodb-core"),
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        )
+
+
+def test_v2_rejects_invalid_requirement_in_otherwise_satisfied_any() -> None:
+    content = load_mongodb_profile("mongodb-core").as_dict()
+    content["payload"]["requirement"]["operator"] = "any"
+    content["payload"]["requirement"]["conditions"] = [
+        content["payload"]["requirement"]["conditions"][0],
+        {
+            "id": "unknown-metadata-key",
+            "operator": "contains_all",
+            "capability": "collation",
+            "path": "/properties/metadata_keys",
+            "values": ["inventedFlag"],
+            "require_effective": True,
+            "extensions": {},
+            "critical_extensions": [],
+        },
+    ]
+    with pytest.raises(InvalidDocumentError, match="outside the closed domain"):
+        evaluate_requirements_detailed(
+            load_mongodb_declared_snapshot(),
+            Document(content, expected_type="cxp.requirements"),
             _context(),
             catalogs=mongodb_catalog_store(),
         )
@@ -564,7 +661,7 @@ def test_io_and_aggregation_values_match_owner_declaration(
         assert field in definitions
 
 
-def test_search_tier_value_distinguishes_missing_and_mismatch() -> None:
+def test_search_tier_value_distinguishes_missing_and_out_of_domain() -> None:
     requirement_content = load_mongodb_profile("mongodb-search").as_dict()
     requirement_content["payload"]["requirement"] = {
         "id": "closed-local-search-tier",
@@ -591,7 +688,8 @@ def test_search_tier_value_distinguishes_missing_and_mismatch() -> None:
     for claim in snapshot_content["payload"]["capabilities"]:
         if claim["name"] == "search":
             claim["properties"]["textSearchTier"] = "other-tier"
-    assert verdict() == "incompatible"
+    with pytest.raises(InvalidDocumentError, match="outside the closed domain"):
+        verdict()
     for claim in snapshot_content["payload"]["capabilities"]:
         if claim["name"] == "search":
             del claim["properties"]["textSearchTier"]
