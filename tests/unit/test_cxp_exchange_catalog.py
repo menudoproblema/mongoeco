@@ -165,7 +165,7 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "cafad158cb47c6280b4cd2ef58ebd1214bd9964ba5d39d2f4da9f17705c5af5f"
+        "64a3001192149b5845b41ea943ec1ba3eca15316371cd70a07434f71f73ade8f"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
@@ -598,6 +598,95 @@ def test_search_tier_value_distinguishes_missing_and_mismatch() -> None:
     for claim in snapshot_content["payload"]["capabilities"]:
         if claim["name"] == "search":
             del claim["properties"]["textSearchTier"]
+    assert verdict() == "indeterminate"
+
+
+def test_sdam_and_persistence_flags_match_owner_and_omit_unknown() -> None:
+    owner = json.loads(
+        files("mongoeco.cxp.exchange")
+        .joinpath("data/operational-metadata.json")
+        .read_text(encoding="utf-8")
+    )
+    claims = {
+        item["name"]: item
+        for item in load_mongodb_declared_snapshot().payload["capabilities"]
+    }
+    assert claims["persistence"]["properties"]["persistent"] is owner[
+        "persistence"
+    ]["persistent"]
+    for field, value in owner["topology_discovery"]["sdam"].items():
+        assert claims["topology_discovery"]["properties"][f"sdam.{field}"] is value
+    assert "topologyType" not in claims["topology_discovery"]["properties"]
+    assert "serverCount" not in claims["topology_discovery"]["properties"]
+
+    identity = MongoSnapshotIdentity(
+        provider_id="provider-A",
+        subject_id="subject-A",
+        configuration_revision="revision-A",
+        observed_at="2026-09-26T00:00:00Z",
+        source_kind="observed",
+        source_reference="owner-report-sha256:example",
+    )
+
+    def snapshot_for(sdam: dict[str, object]) -> Document:
+        return build_mongodb_snapshot(
+            catalog=load_mongodb_catalog(),
+            identity=identity,
+            capabilities=(
+                MongoCapabilityClaim(
+                    name="topology_discovery",
+                    support="supported",
+                    metadata={
+                        "topologyType": "single",
+                        "serverCount": 1,
+                        "sdam": sdam,
+                    },
+                    operations=(),
+                ),
+            ),
+        )
+
+    properties = snapshot_for({"fullSdam": False, "topologyVersionAware": None})
+    reported = properties.payload["capabilities"][0]["properties"]
+    assert reported["sdam.fullSdam"] is False
+    assert "sdam.topologyVersionAware" not in reported
+    with pytest.raises(ValueError, match="Invalid MongoDB topology_discovery metadata"):
+        snapshot_for({"fullSdam": "false"})
+    with pytest.raises(ValueError, match="Invalid MongoDB topology_discovery metadata"):
+        snapshot_for({"unknownFlag": True})
+
+
+def test_sdam_false_requirement_has_three_distinct_outcomes() -> None:
+    requirement_content = load_mongodb_profile("mongodb-core").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "no-full-sdam",
+        "operator": "equals",
+        "capability": "topology_discovery",
+        "path": "/properties/sdam.fullSdam",
+        "value": False,
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    requirement = Document(requirement_content, expected_type="cxp.requirements")
+    snapshot_content = load_mongodb_declared_snapshot().as_dict()
+
+    def verdict() -> str:
+        return evaluate_requirements_detailed(
+            Document(snapshot_content, expected_type="cxp.snapshot"),
+            requirement,
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        ).verdict
+
+    assert verdict() == "compatible"
+    for claim in snapshot_content["payload"]["capabilities"]:
+        if claim["name"] == "topology_discovery":
+            claim["properties"]["sdam.fullSdam"] = True
+    assert verdict() == "incompatible"
+    for claim in snapshot_content["payload"]["capabilities"]:
+        if claim["name"] == "topology_discovery":
+            del claim["properties"]["sdam.fullSdam"]
     assert verdict() == "indeterminate"
 
 

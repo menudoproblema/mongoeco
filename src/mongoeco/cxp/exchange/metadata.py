@@ -468,6 +468,41 @@ class MongoPersistenceMetadata(msgspec.Struct, frozen=True, forbid_unknown_field
     )
 
 
+SDAM_FIELDS = frozenset(
+    {
+        "distributedMonitoring",
+        "electionMetadataAware",
+        "fullSdam",
+        "helloMemberDiscovery",
+        "longPollingHello",
+        "serverHealthTracking",
+        "topologyVersionAware",
+    }
+)
+
+
+class MongoSdamMetadata(msgspec.Struct, frozen=True, forbid_unknown_fields=True):
+    distributed_monitoring: bool | None = msgspec.field(
+        name="distributedMonitoring", default=None
+    )
+    election_metadata_aware: bool | None = msgspec.field(
+        name="electionMetadataAware", default=None
+    )
+    full_sdam: bool | None = msgspec.field(name="fullSdam", default=None)
+    hello_member_discovery: bool | None = msgspec.field(
+        name="helloMemberDiscovery", default=None
+    )
+    long_polling_hello: bool | None = msgspec.field(
+        name="longPollingHello", default=None
+    )
+    server_health_tracking: bool | None = msgspec.field(
+        name="serverHealthTracking", default=None
+    )
+    topology_version_aware: bool | None = msgspec.field(
+        name="topologyVersionAware", default=None
+    )
+
+
 class MongoTopologyDiscoveryMetadata(
     msgspec.Struct, frozen=True, forbid_unknown_fields=True
 ):
@@ -539,6 +574,12 @@ def validate_mongodb_metadata(capability: str, metadata: dict[str, object]) -> N
     if schema is not None:
         try:
             msgspec.convert(msgspec.to_builtins(metadata), type=schema, strict=True)
+            if capability == "topology_discovery" and "sdam" in metadata:
+                msgspec.convert(
+                    msgspec.to_builtins(metadata["sdam"]),
+                    type=MongoSdamMetadata,
+                    strict=True,
+                )
             _validate_operation_metadata(capability, metadata)
         except (
             TypeError,

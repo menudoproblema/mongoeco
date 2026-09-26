@@ -1469,6 +1469,11 @@
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
             "nullable": false
+          },
+          "persistent": {
+            "description": "Mongoeco persistence persistent for this configuration.",
+            "kind": "boolean",
+            "nullable": false
           }
         }
       },
@@ -1480,6 +1485,41 @@
           "metadata_keys": {
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
+            "nullable": false
+          },
+          "sdam.distributedMonitoring": {
+            "description": "Mongoeco topology_discovery sdam.distributedMonitoring for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "sdam.electionMetadataAware": {
+            "description": "Mongoeco topology_discovery sdam.electionMetadataAware for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "sdam.fullSdam": {
+            "description": "Mongoeco topology_discovery sdam.fullSdam for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "sdam.helloMemberDiscovery": {
+            "description": "Mongoeco topology_discovery sdam.helloMemberDiscovery for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "sdam.longPollingHello": {
+            "description": "Mongoeco topology_discovery sdam.longPollingHello for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "sdam.serverHealthTracking": {
+            "description": "Mongoeco topology_discovery sdam.serverHealthTracking for this configuration.",
+            "kind": "boolean",
+            "nullable": false
+          },
+          "sdam.topologyVersionAware": {
+            "description": "Mongoeco topology_discovery sdam.topologyVersionAware for this configuration.",
+            "kind": "boolean",
             "nullable": false
           }
         }

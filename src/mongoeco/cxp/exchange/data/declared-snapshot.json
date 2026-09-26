@@ -1157,7 +1157,8 @@
             "operationMetadata",
             "persistent",
             "storageEngine"
-          ]
+          ],
+          "persistent": true
         },
         "support": "supported"
       },
@@ -1170,7 +1171,14 @@
             "sdam",
             "serverCount",
             "topologyType"
-          ]
+          ],
+          "sdam.distributedMonitoring": false,
+          "sdam.electionMetadataAware": true,
+          "sdam.fullSdam": false,
+          "sdam.helloMemberDiscovery": true,
+          "sdam.longPollingHello": false,
+          "sdam.serverHealthTracking": true,
+          "sdam.topologyVersionAware": true
         },
         "support": "supported"
       }
@@ -1178,7 +1186,7 @@
     "catalog": {
       "name": "mongodb",
       "namespace": "org.mongoeco",
-      "sha256": "cafad158cb47c6280b4cd2ef58ebd1214bd9964ba5d39d2f4da9f17705c5af5f",
+      "sha256": "64a3001192149b5845b41ea943ec1ba3eca15316371cd70a07434f71f73ade8f",
       "version": "1.1.0"
     },
     "configuration_revision": "mongoeco-public-catalog-1.1.0",

@@ -95,6 +95,11 @@ text-search tier, filter modes, mappings, and reported backend, are typed
 catalog properties. Narrative notes and structured nested operator semantics
 remain owner-operated until their correlations have an exact exchange mapping.
 
+Persistence support and the seven SDAM feature flags are reported as exact
+booleans. `false` is a negative claim, while omission stays unknown. The
+generic declared snapshot does not assert a concrete server count or topology
+for an external deployment; those facts belong to that resource's observation.
+
 The packaged snapshot describes Mongoeco's **declared public library
 surface**. Its source is `declared`; it does not prove what a running
 deployment has observed or tested. Runtime providers must emit their own

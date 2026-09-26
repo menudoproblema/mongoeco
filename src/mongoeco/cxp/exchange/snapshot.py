@@ -10,6 +10,7 @@ from mongoeco.cxp.exchange.documents import load_mongodb_catalog
 from mongoeco.cxp.exchange.metadata import (
     AGGREGATION_OPERATION_FIELDS,
     READ_OPERATION_FIELDS,
+    SDAM_FIELDS,
     VECTOR_SEARCH_OPERATION_FIELDS,
     WRITE_OPERATION_FIELDS,
     validate_mongodb_metadata,
@@ -75,6 +76,7 @@ _VALUE_FIELDS: dict[str, frozenset[str]] = {
             "resumableAcrossProcesses",
         }
     ),
+    "persistence": frozenset({"persistent"}),
 }
 _OPERATION_VALUE_FIELDS = {
     "read": READ_OPERATION_FIELDS,
@@ -119,32 +121,47 @@ def _project_properties(claim: MongoCapabilityClaim) -> dict[str, object]:
     for field in _VALUE_FIELDS.get(claim.name, frozenset()):
         if field in metadata and metadata[field] is not None:
             properties[field] = metadata[field]
+    if claim.name == "topology_discovery":
+        properties.update(_project_sdam(metadata))
+    properties.update(_project_operation_properties(claim, metadata))
+    return properties
+
+
+def _project_sdam(metadata: dict[str, object]) -> dict[str, object]:
+    sdam = metadata.get("sdam")
+    if not isinstance(sdam, dict):
+        return {}
+    return {
+        f"sdam.{field}": sdam[field]
+        for field in SDAM_FIELDS
+        if field in sdam and sdam[field] is not None
+    }
+
+
+def _project_operation_properties(
+    claim: MongoCapabilityClaim, metadata: dict[str, object]
+) -> dict[str, object]:
     operation_fields = _OPERATION_VALUE_FIELDS.get(claim.name)
-    if operation_fields is not None:
-        operation_metadata = metadata.get("operationMetadata")
-        if isinstance(operation_metadata, dict):
-            bindings = {
-                operation.name: operation.result_type for operation in claim.operations
-            }
-            for operation_name, operation_values in operation_metadata.items():
-                if isinstance(operation_values, dict):
-                    if operation_name not in bindings:
-                        message = "Operation metadata lacks its exact binding"
-                        raise ValueError(message)
-                    result_type = operation_values.get("resultType")
-                    if result_type is not None and bindings[operation_name] != (
-                        f"org.mongoeco:result.{result_type}:1"
-                    ):
-                        message = "Operation result differs from its binding"
-                        raise ValueError(message)
-                    for field in operation_fields:
-                        if (
-                            field in operation_values
-                            and operation_values[field] is not None
-                        ):
-                            properties[f"{operation_name}.{field}"] = operation_values[
-                                field
-                            ]
+    operation_metadata = metadata.get("operationMetadata")
+    if operation_fields is None or not isinstance(operation_metadata, dict):
+        return {}
+    bindings = {operation.name: operation.result_type for operation in claim.operations}
+    properties: dict[str, object] = {}
+    for operation_name, operation_values in operation_metadata.items():
+        if not isinstance(operation_values, dict):
+            continue  # Owner validation above rejects this shape.
+        if operation_name not in bindings:
+            message = "Operation metadata lacks its exact binding"
+            raise ValueError(message)
+        result_type = operation_values.get("resultType")
+        if result_type is not None and bindings[operation_name] != (
+            f"org.mongoeco:result.{result_type}:1"
+        ):
+            message = "Operation result differs from its binding"
+            raise ValueError(message)
+        for field in operation_fields:
+            if field in operation_values and operation_values[field] is not None:
+                properties[f"{operation_name}.{field}"] = operation_values[field]
     return properties
 
 
