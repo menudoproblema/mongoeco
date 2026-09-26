@@ -183,6 +183,15 @@ replay. This file covers the packaged operational metadata only. It does not
 close the separate inventory of public APIs, wire commands, BSON behavior or
 deployed resources.
 
+The local wire command inventory is recorded separately in
+[`cxp-wire-command-conservation.csv`](cxp-wire-command-conservation.csv).
+It lists all 46 advertised command names, their routing kind and family, the
+exact source hashes and current evidence. Nineteen commands have bounded positive
+and negative behavior tests; the other 27 still need command-level review.
+The operational routing remains owned by Mongoeco. Whether any wire support
+claims should become exchange compatibility properties is an open owner
+decision; this inventory does not assert such a property or close C4.
+
 The static `serverCount: 1` and `topologyType: unknown` values describe the
 initial local topology seed, not a Mongo deployment. A `hello` observation can
 change both. `storageEngine` is likewise selected at runtime. Admission must
