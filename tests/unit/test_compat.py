@@ -87,6 +87,48 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = (
 )
 export_local_runtime_subset_catalog = catalog_export.export_local_runtime_subset_catalog
 
+_OPTION_DELTAS_AFTER_HISTORICAL_SNAPSHOT = (
+    (
+        'listCollections',
+        'authorizedCollections',
+        'Accepted for wire/API parity and preserved in the normalized command options.',
+        (
+            'Accepted and type-checked for wire/API parity; local namespace '
+            'listing does not apply an authorization filter.'
+        ),
+    ),
+    (
+        'validate',
+        'background',
+        'Validated and surfaced in the validation snapshot contract.',
+        (
+            'Accepted and type-checked; validation reports a warning and runs '
+            'synchronously.'
+        ),
+    ),
+    (
+        'validate',
+        'full',
+        'Controls whether the validation snapshot requests the expanded pass.',
+        (
+            'Accepted and type-checked; validation reports a warning and performs '
+            'the same local pass.'
+        ),
+    ),
+    (
+        'validate',
+        'scandata',
+        (
+            'Controls whether storage-engine level scan metadata is requested '
+            'in the validation snapshot.'
+        ),
+        (
+            'Accepted and type-checked; validation reports a warning and performs '
+            'the same local scan.'
+        ),
+    ),
+)
+
 
 class _FlatComparable:
     def __init__(self, label: str) -> None:
@@ -154,6 +196,20 @@ class CompatResolutionTests(unittest.TestCase):
         old_mock_safe = expected.pop("mock_safe_profile")
         new_mock_safe = current.pop("mock_safe_profile")
         failpoint = current["database_commands"].pop("configureFailPoint")
+        for command, option, old_note, new_note in (
+            _OPTION_DELTAS_AFTER_HISTORICAL_SNAPSHOT
+        ):
+            self.assertEqual(
+                expected['database_command_options'][command][option],
+                {'note': old_note, 'status': 'effective'},
+            )
+            self.assertEqual(
+                current['database_command_options'][command][option],
+                {'note': new_note, 'status': 'accepted-noop'},
+            )
+            current['database_command_options'][command][option] = (
+                expected['database_command_options'][command][option]
+            )
         self.assertEqual(
             failpoint,
             {
@@ -211,6 +267,12 @@ class CompatResolutionTests(unittest.TestCase):
         snapshot_path = Path("tests/fixtures/compat_catalog_snapshot.md")
         expected = snapshot_path.read_text(encoding="utf-8")
         current = export_full_compat_catalog_markdown()
+        for _, option, old_note, new_note in _OPTION_DELTAS_AFTER_HISTORICAL_SNAPSHOT:
+            old_line = f'- `{option}`: `status`="effective", `note`="{old_note}"'
+            new_line = f'- `{option}`: `status`="accepted-noop", `note`="{new_note}"'
+            self.assertEqual(expected.count(old_line), 1)
+            self.assertEqual(current.count(new_line), 1)
+            current = current.replace(new_line, old_line, 1)
         suffix = "## Local Runtime Subsets\n"
         failpoint_section = (
             "### `configureFailPoint`\n"
@@ -513,7 +575,15 @@ class CompatResolutionTests(unittest.TestCase):
         )
         self.assertEqual(
             database_command_option_catalog['listCollections']['authorizedCollections']['status'],
-            'effective',
+            'accepted-noop',
+        )
+        self.assertEqual(
+            {
+                name
+                for name, option in database_command_option_catalog['validate'].items()
+                if option['status'] == 'accepted-noop'
+            },
+            {'scandata', 'full', 'background'},
         )
         self.assertTrue(PYMONGO_PROFILE_411.supports(PYMONGO_CAP_UPDATE_ONE_SORT))
         self.assertFalse(PYMONGO_PROFILE_49.supports(PYMONGO_CAP_UPDATE_ONE_SORT))

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from mongoeco.compat._catalog_database_commands import DATABASE_COMMAND_SUPPORT_CATALOG
-from mongoeco.compat._catalog_models import DatabaseCommandSupport
+from mongoeco.compat._catalog_models import DatabaseCommandSupport, OptionSupportStatus
 from mongoeco.compat._catalog_operation_options import DATABASE_COMMAND_OPTION_SUPPORT_CATALOG
 
 
@@ -13,6 +13,18 @@ def command_supported_options(command_name: str) -> tuple[str, ...]:
     return tuple(sorted(DATABASE_COMMAND_OPTION_SUPPORT_CATALOG.get(command_name, {})))
 
 
+def command_accepted_noop_options(command_name: str) -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            option_name
+            for option_name, support in DATABASE_COMMAND_OPTION_SUPPORT_CATALOG.get(
+                command_name, {}
+            ).items()
+            if support.status is OptionSupportStatus.ACCEPTED_NOOP
+        )
+    )
+
+
 def command_supports_comment(command_name: str) -> bool:
     return "comment" in DATABASE_COMMAND_OPTION_SUPPORT_CATALOG.get(command_name, {})
 
@@ -20,6 +32,7 @@ def command_supports_comment(command_name: str) -> bool:
 def command_help_document(command_name: str) -> dict[str, object]:
     entry = command_support_entry(command_name)
     supported_options = command_supported_options(command_name)
+    accepted_noop_options = command_accepted_noop_options(command_name)
     document: dict[str, object] = {
         "help": f"mongoeco local support for the {command_name} command",
     }
@@ -28,6 +41,8 @@ def command_help_document(command_name: str) -> dict[str, object]:
         document["supportsComment"] = command_supports_comment(command_name)
         if supported_options:
             document["supportedOptions"] = list(supported_options)
+        if accepted_noop_options:
+            document["acceptedNoopOptions"] = list(accepted_noop_options)
         return document
     document["adminFamily"] = entry.family
     document["supportsWire"] = entry.supports_wire
@@ -35,6 +50,8 @@ def command_help_document(command_name: str) -> dict[str, object]:
     document["supportsComment"] = command_supports_comment(command_name)
     if supported_options:
         document["supportedOptions"] = list(supported_options)
+    if accepted_noop_options:
+        document["acceptedNoopOptions"] = list(accepted_noop_options)
     if entry.note is not None:
         document["note"] = entry.note
     return document

@@ -1084,6 +1084,7 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
         async def _run():
             await database.get_collection("users").insert_one({"_id": "1", "name": "Ada"})
 
+            baseline = await service.validate_collection("users")
             validated = await service.validate_collection(
                 "users",
                 scandata=True,
@@ -1098,6 +1099,10 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                     "validate full is accepted for compatibility but does not change local validation behavior",
                     "validate background is accepted for compatibility but validation runs synchronously in mongoeco",
                 ],
+            )
+            self.assertEqual(
+                {key: value for key, value in validated.items() if key != "warnings"},
+                {key: value for key, value in baseline.items() if key != "warnings"},
             )
 
         asyncio.run(_run())

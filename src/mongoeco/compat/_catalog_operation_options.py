@@ -5,6 +5,7 @@ from types import MappingProxyType
 from mongoeco.compat._catalog_models import OperationOptionSupport, OptionSupportStatus
 
 _EFFECTIVE = OptionSupportStatus.EFFECTIVE
+_ACCEPTED_NOOP = OptionSupportStatus.ACCEPTED_NOOP
 
 OPERATION_OPTION_SUPPORT_CATALOG = MappingProxyType(
     {
@@ -256,7 +257,7 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = MappingProxyType(
             {
                 "filter": OperationOptionSupport(_EFFECTIVE, "Applied to the local namespace snapshot before cursor materialization."),
                 "nameOnly": OperationOptionSupport(_EFFECTIVE, "Controls the fields exposed by the listCollections cursor."),
-                "authorizedCollections": OperationOptionSupport(_EFFECTIVE, "Accepted for wire/API parity and preserved in the normalized command options."),
+                "authorizedCollections": OperationOptionSupport(_ACCEPTED_NOOP, "Accepted and type-checked for wire/API parity; local namespace listing does not apply an authorization filter."),
                 "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata for the admin read command."),
             }
         ),
@@ -294,9 +295,9 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = MappingProxyType(
         ),
         "validate": MappingProxyType(
             {
-                "scandata": OperationOptionSupport(_EFFECTIVE, "Controls whether storage-engine level scan metadata is requested in the validation snapshot."),
-                "full": OperationOptionSupport(_EFFECTIVE, "Controls whether the validation snapshot requests the expanded pass."),
-                "background": OperationOptionSupport(_EFFECTIVE, "Validated and surfaced in the validation snapshot contract."),
+                "scandata": OperationOptionSupport(_ACCEPTED_NOOP, "Accepted and type-checked; validation reports a warning and performs the same local scan."),
+                "full": OperationOptionSupport(_ACCEPTED_NOOP, "Accepted and type-checked; validation reports a warning and performs the same local pass."),
+                "background": OperationOptionSupport(_ACCEPTED_NOOP, "Accepted and type-checked; validation reports a warning and runs synchronously."),
                 "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata for the validation command."),
             }
         ),

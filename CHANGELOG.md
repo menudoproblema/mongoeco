@@ -18,6 +18,10 @@ usa Semantic Versioning.
 - Require `cxp[exchange]>=5.0.0,<6`. Mongoeco 4.8.0 is prepared against the
   exact local CXP 5.0.0 candidate; it is not published or authorized for
   publication by this source change.
+- Correct the owner option catalog: `listCollections.authorizedCollections` and
+  `validate.scandata`/`full`/`background` are accepted without changing the
+  local operation. `listCommands` now lists them in `acceptedNoopOptions` while
+  retaining them in `supportedOptions` as accepted inputs.
 
 ## [4.7.0] - 2026-09-13
 

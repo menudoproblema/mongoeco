@@ -345,6 +345,14 @@ async def assert_list_collections_command_supports_name_only(
                         filter={"name": "events"},
                     ),
                 )
+                without_authorization_flag = await _maybe_await(
+                    client.alpha.command(
+                        "listCollections",
+                        nameOnly=True,
+                        authorizedCollections=False,
+                        filter={"name": "events"},
+                    ),
+                )
 
                 case.assertEqual(
                     result,
@@ -357,6 +365,7 @@ async def assert_list_collections_command_supports_name_only(
                         "ok": 1.0,
                     },
                 )
+                case.assertEqual(without_authorization_flag, result)
 
 
 async def assert_database_command_supports_ping_list_collections_and_drop_database(

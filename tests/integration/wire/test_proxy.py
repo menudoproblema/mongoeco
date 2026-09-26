@@ -435,6 +435,29 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("visibleNamespaces", profile_status)
             self.assertEqual(profile_status["ok"], 1.0)
 
+    async def test_proxy_list_commands_distinguishes_accepted_noop_options(self):
+        async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+            uri = proxy.address.uri
+
+            def _exercise() -> dict:
+                client = PyMongoClient(
+                    uri, serverSelectionTimeoutMS=3000, directConnection=True
+                )
+                try:
+                    return client.admin.command("listCommands")["commands"]
+                finally:
+                    client.close()
+
+            commands = await asyncio.to_thread(_exercise)
+            self.assertEqual(
+                commands["listCollections"]["acceptedNoopOptions"],
+                ["authorizedCollections"],
+            )
+            self.assertEqual(
+                commands["validate"]["acceptedNoopOptions"],
+                ["background", "full", "scandata"],
+            )
+
     async def test_proxy_rejects_invalid_introspection_command_values_through_pymongo(
         self,
     ):

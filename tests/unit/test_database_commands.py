@@ -193,6 +193,15 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
                 "supportsComment": False,
             },
         )
+        list_collections = list_commands["commands"]["listCollections"]
+        self.assertIn("authorizedCollections", list_collections["supportedOptions"])
+        self.assertEqual(
+            list_collections["acceptedNoopOptions"], ["authorizedCollections"]
+        )
+        self.assertEqual(
+            list_commands["commands"]["validate"]["acceptedNoopOptions"],
+            ["background", "full", "scandata"],
+        )
         with patch.object(
             command_contract,
             "command_supported_options",

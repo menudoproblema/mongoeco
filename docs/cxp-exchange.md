@@ -160,6 +160,15 @@ compatibility decision about structured subsets requires explicit portable
 properties and an exact catalog version. An opaque extension or a metadata
 key alone cannot assert the value of such a subset.
 
+The operational command catalog distinguishes an accepted input from an
+effective option. `listCollections.authorizedCollections` is type-checked but
+does not filter the local namespace list by authorization. The `validate`
+options `scandata`, `full` and `background` are also type-checked and reported
+as warnings without changing the validation pass or making it asynchronous.
+`listCommands.supportedOptions` lists accepted names; its
+`acceptedNoopOptions` identifies these four cases explicitly. A consumer must
+not treat their presence in `supportedOptions` as evidence of an effect.
+
 The catalog's identity, version and SHA-256 in every requirement and snapshot
 are exact pins. Changing the capability set or semantics requires a new
 catalog version and explicitly adopted requirement documents.
