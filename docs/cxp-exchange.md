@@ -182,6 +182,12 @@ as warnings without changing the validation pass or making it asynchronous.
 `listCommands.supportedOptions` lists accepted names; its
 `acceptedNoopOptions` identifies these four cases explicitly. A consumer must
 not treat their presence in `supportedOptions` as evidence of an effect.
+The 71 advertised top-level options across 22 database commands are inventoried
+in [`cxp-database-command-option-conservation.csv`](cxp-database-command-option-conservation.csv).
+The four accepted no-op options have bounded behavior and wrong-type tests.
+The remaining 67 are owner claims of effective behavior; their individual
+positive and negative option-level oracles are still pending. The inventory
+does not turn these operational options into CXP compatibility guarantees.
 For `createIndexes`, `supportedOptions` lists only command-level options.
 `indexSpecFields` lists the exact accepted fields of each element of
 `indexes`, including `key`; `indexSpecAliases` records the accepted Python
@@ -241,7 +247,9 @@ exact source hashes and current evidence. All 46 commands have bounded positive
 and negative behavior tests, including client-facing PyMongo paths for the
 database commands. It does not yet inventory every argument and result field
 of those commands; the `createIndexes.indexes[]` field inventory above closes
-one distinct part of that work. For `hello`, malformed optional
+one distinct part of that work, and the top-level database-command option
+inventory closes another census without proving every claimed effect. For
+`hello`, malformed optional
 client/compression metadata
 is accepted without replacing previously valid connection metadata; it does
 not assert support for those malformed values. The operational routing remains

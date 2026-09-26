@@ -35,6 +35,9 @@ usa Semantic Versioning.
 - Inventory all 22 accepted `createIndexes.indexes[]` fields with their
   conditions, alias relationships, no-op status and positive/negative parser
   cases; keep this operational surface distinct from CXP deployment claims.
+- Inventory the 71 advertised top-level options of 22 database commands.
+  Verify the four accepted no-op options with bounded positive and wrong-type
+  cases; retain the 67 effective owner claims as pending option-level oracles.
 
 ## [4.7.0] - 2026-09-13
 
