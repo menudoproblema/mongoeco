@@ -972,6 +972,82 @@
             "structuredParentPathOperators",
             "textSearchTier",
             "textualFieldMappings"
+          ],
+          "advancedAtlasLikeGaps": [
+            "fullFacetCollectorParity",
+            "fullHighlightParity",
+            "countMetaParity",
+            "advancedAutocompleteSemantics",
+            "advancedWildcardSemantics",
+            "advancedRegexOptions"
+          ],
+          "aggregateStage": "$search",
+          "exactFilterFieldMappings": [
+            "boolean",
+            "date",
+            "number",
+            "objectId",
+            "uuid"
+          ],
+          "explainFeatures": [
+            "pathSummary",
+            "resolvedLeafPaths",
+            "structuredParentPathResolution",
+            "querySemantics",
+            "stageOptions",
+            "countPreview",
+            "highlightPreview",
+            "facetPreview"
+          ],
+          "fieldMappings": [
+            "autocomplete",
+            "boolean",
+            "date",
+            "document",
+            "embeddedDocuments",
+            "number",
+            "objectId",
+            "string",
+            "token",
+            "uuid"
+          ],
+          "operators": [
+            "text",
+            "phrase",
+            "autocomplete",
+            "wildcard",
+            "exists",
+            "in",
+            "equals",
+            "range",
+            "near",
+            "compound",
+            "regex"
+          ],
+          "sqliteBackends": [
+            "fts5",
+            "fts5-glob",
+            "fts5-path",
+            "fts5-prefilter",
+            "python"
+          ],
+          "structuredFieldMappings": [
+            "document",
+            "embeddedDocuments"
+          ],
+          "structuredParentPathOperators": [
+            "text",
+            "phrase",
+            "autocomplete",
+            "wildcard",
+            "regex",
+            "exists"
+          ],
+          "textSearchTier": "closed-local-tier",
+          "textualFieldMappings": [
+            "autocomplete",
+            "string",
+            "token"
           ]
         },
         "support": "supported"
@@ -1033,7 +1109,31 @@
           "aggregate.supportsDatabaseScope": false,
           "aggregate.supportsExplain": true,
           "aggregate.supportsSession": true,
-          "aggregate.unsupportedOptions": []
+          "aggregate.unsupportedOptions": [],
+          "aggregateStage": "$vectorSearch",
+          "backend": "usearch",
+          "explainFeatures": [
+            "pathSummary",
+            "resolvedLeafPaths",
+            "querySemantics",
+            "scoreBreakdown",
+            "candidatePlan",
+            "hybridRetrieval",
+            "vectorBackend"
+          ],
+          "fallback": "exact",
+          "filterMode": "post-candidate-with-adaptive-candidate-expansion",
+          "hybridFilterModes": [
+            "candidate-prefilter",
+            "candidate-prefilter+post-candidate",
+            "post-candidate"
+          ],
+          "mode": "local-ann-with-exact-baseline",
+          "similarities": [
+            "cosine",
+            "dotProduct",
+            "euclidean"
+          ]
         },
         "support": "supported"
       },
@@ -1078,7 +1178,7 @@
     "catalog": {
       "name": "mongodb",
       "namespace": "org.mongoeco",
-      "sha256": "d6096ec2a64c29a223a72f3e24155dce07c67078d1f4989c3a4e528ebe483c89",
+      "sha256": "cafad158cb47c6280b4cd2ef58ebd1214bd9964ba5d39d2f4da9f17705c5af5f",
       "version": "1.1.0"
     },
     "configuration_revision": "mongoeco-public-catalog-1.1.0",

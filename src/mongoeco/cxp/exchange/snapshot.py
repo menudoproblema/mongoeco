@@ -35,6 +35,33 @@ _VALUE_FIELDS: dict[str, frozenset[str]] = {
             "sync",
         }
     ),
+    "search": frozenset(
+        {
+            "advancedAtlasLikeGaps",
+            "aggregateStage",
+            "exactFilterFieldMappings",
+            "explainFeatures",
+            "fieldMappings",
+            "operators",
+            "sqliteBackends",
+            "structuredFieldMappings",
+            "structuredParentPathOperators",
+            "textSearchTier",
+            "textualFieldMappings",
+        }
+    ),
+    "vector_search": frozenset(
+        {
+            "aggregateStage",
+            "backend",
+            "explainFeatures",
+            "fallback",
+            "filterMode",
+            "hybridFilterModes",
+            "mode",
+            "similarities",
+        }
+    ),
     "transactions": frozenset({"async", "distributed", "embedded", "mode", "sync"}),
     "change_streams": frozenset(
         {

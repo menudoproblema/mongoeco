@@ -1260,6 +1260,61 @@
             "description": "Keys present in producer-validated capability metadata.",
             "kind": "string_set",
             "nullable": false
+          },
+          "advancedAtlasLikeGaps": {
+            "description": "Mongoeco search advancedAtlasLikeGaps for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregateStage": {
+            "description": "Mongoeco search aggregateStage for this configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "exactFilterFieldMappings": {
+            "description": "Mongoeco search exactFilterFieldMappings for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "explainFeatures": {
+            "description": "Mongoeco search explainFeatures for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "fieldMappings": {
+            "description": "Mongoeco search fieldMappings for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "operators": {
+            "description": "Mongoeco search operators for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "sqliteBackends": {
+            "description": "Mongoeco search sqliteBackends for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "structuredFieldMappings": {
+            "description": "Mongoeco search structuredFieldMappings for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "structuredParentPathOperators": {
+            "description": "Mongoeco search structuredParentPathOperators for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "textSearchTier": {
+            "description": "Mongoeco search textSearchTier for this configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "textualFieldMappings": {
+            "description": "Mongoeco search textualFieldMappings for this configuration.",
+            "kind": "string_set",
+            "nullable": false
           }
         }
       },
@@ -1348,6 +1403,46 @@
           },
           "aggregate.unsupportedOptions": {
             "description": "Mongoeco vector_search.aggregate unsupportedOptions for the declared configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "aggregateStage": {
+            "description": "Mongoeco vector_search aggregateStage for this configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "backend": {
+            "description": "Mongoeco vector_search backend for this configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "explainFeatures": {
+            "description": "Mongoeco vector_search explainFeatures for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "fallback": {
+            "description": "Mongoeco vector_search fallback for this configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "filterMode": {
+            "description": "Mongoeco vector_search filterMode for this configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "hybridFilterModes": {
+            "description": "Mongoeco vector_search hybridFilterModes for this configuration.",
+            "kind": "string_set",
+            "nullable": false
+          },
+          "mode": {
+            "description": "Mongoeco vector_search mode for this configuration.",
+            "kind": "string",
+            "nullable": false
+          },
+          "similarities": {
+            "description": "Mongoeco vector_search similarities for this configuration.",
             "kind": "string_set",
             "nullable": false
           }

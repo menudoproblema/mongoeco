@@ -165,7 +165,7 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "d6096ec2a64c29a223a72f3e24155dce07c67078d1f4989c3a4e528ebe483c89"
+        "cafad158cb47c6280b4cd2ef58ebd1214bd9964ba5d39d2f4da9f17705c5af5f"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
@@ -508,6 +508,35 @@ def test_all_projected_operation_facts_match_owner_declaration(
                 "sync",
             ),
         ),
+        (
+            "search",
+            (
+                "advancedAtlasLikeGaps",
+                "aggregateStage",
+                "exactFilterFieldMappings",
+                "explainFeatures",
+                "fieldMappings",
+                "operators",
+                "sqliteBackends",
+                "structuredFieldMappings",
+                "structuredParentPathOperators",
+                "textSearchTier",
+                "textualFieldMappings",
+            ),
+        ),
+        (
+            "vector_search",
+            (
+                "aggregateStage",
+                "backend",
+                "explainFeatures",
+                "fallback",
+                "filterMode",
+                "hybridFilterModes",
+                "mode",
+                "similarities",
+            ),
+        ),
     ],
 )
 def test_io_and_aggregation_values_match_owner_declaration(
@@ -529,8 +558,47 @@ def test_io_and_aggregation_values_match_owner_declaration(
         if item["name"] == capability
     )["properties"]
     for field in fields:
-        assert claim["properties"][field] == owner[capability][field]
+        value = owner[capability][field]
+        if isinstance(value, list):
+            assert len(value) == len(set(value))
+            assert claim["properties"][field] == sorted(value)
+        else:
+            assert claim["properties"][field] == value
         assert field in definitions
+
+
+def test_search_tier_value_distinguishes_missing_and_mismatch() -> None:
+    requirement_content = load_mongodb_profile("mongodb-search").as_dict()
+    requirement_content["payload"]["requirement"] = {
+        "id": "closed-local-search-tier",
+        "operator": "equals",
+        "capability": "search",
+        "path": "/properties/textSearchTier",
+        "value": "closed-local-tier",
+        "require_effective": True,
+        "extensions": {},
+        "critical_extensions": [],
+    }
+    requirement = Document(requirement_content, expected_type="cxp.requirements")
+    snapshot_content = load_mongodb_declared_snapshot().as_dict()
+
+    def verdict() -> str:
+        return evaluate_requirements_detailed(
+            Document(snapshot_content, expected_type="cxp.snapshot"),
+            requirement,
+            _context(),
+            catalogs=mongodb_catalog_store(),
+        ).verdict
+
+    assert verdict() == "compatible"
+    for claim in snapshot_content["payload"]["capabilities"]:
+        if claim["name"] == "search":
+            claim["properties"]["textSearchTier"] = "other-tier"
+    assert verdict() == "incompatible"
+    for claim in snapshot_content["payload"]["capabilities"]:
+        if claim["name"] == "search":
+            del claim["properties"]["textSearchTier"]
+    assert verdict() == "indeterminate"
 
 
 def test_read_operator_set_distinguishes_missing_and_excluded() -> None:

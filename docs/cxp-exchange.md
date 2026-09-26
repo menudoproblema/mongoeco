@@ -90,6 +90,11 @@ option and scope values follow the owner declaration. In particular, vector
 search reports `aggregate.supportsDatabaseScope=false`; omission remains
 unknown. The owner validator checks the nested types and the result binding.
 
+Top-level search and vector search scalars and string sets, including the
+text-search tier, filter modes, mappings, and reported backend, are typed
+catalog properties. Narrative notes and structured nested operator semantics
+remain owner-operated until their correlations have an exact exchange mapping.
+
 The packaged snapshot describes Mongoeco's **declared public library
 surface**. Its source is `declared`; it does not prove what a running
 deployment has observed or tested. Runtime providers must emit their own
