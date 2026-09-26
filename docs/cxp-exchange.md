@@ -161,3 +161,12 @@ The removal-major source removes the old `mongoeco.cxp` reexports and modules.
 in its reporting view. Historical source and tests remain in
 `evidence/mongoeco-legacy-cxp-python.zip`, outside installed packages. Public
 removal requires the coordinated release sequence and installed consumer gates.
+
+The row-level audit of the owner metadata is in
+[`cxp-operational-metadata-conservation.csv`](cxp-operational-metadata-conservation.csv).
+It pins the source SHA-256 and assigns all 410 logical facts to an exchange
+claim or a producer-operated contract. Its current status is open: 298 rows
+have an exact exchange destination; 112 rows need owner review, individual
+operational oracles, or deployment observation. This file covers the packaged
+operational metadata only. It does not close the separate inventory of public
+APIs, wire commands, BSON behavior, or deployed resources.
