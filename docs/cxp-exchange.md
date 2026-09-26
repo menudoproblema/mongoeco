@@ -185,8 +185,10 @@ not treat their presence in `supportedOptions` as evidence of an effect.
 The 71 advertised top-level options across 22 database commands are inventoried
 in [`cxp-database-command-option-conservation.csv`](cxp-database-command-option-conservation.csv).
 The four accepted no-op options have bounded behavior and wrong-type tests.
-The remaining 67 are owner claims of effective behavior; their individual
-positive and negative option-level oracles are still pending. The inventory
+Four effective options (`filter` and `nameOnly` on `listCollections` and
+`listDatabases`) have isolated positive and wrong-type cases. The remaining
+63 are owner claims of effective behavior whose individual positive and
+negative option-level oracles are still pending. The inventory
 does not turn these operational options into CXP compatibility guarantees.
 For `createIndexes`, `supportedOptions` lists only command-level options.
 `indexSpecFields` lists the exact accepted fields of each element of

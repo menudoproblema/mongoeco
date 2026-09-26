@@ -37,7 +37,8 @@ usa Semantic Versioning.
   cases; keep this operational surface distinct from CXP deployment claims.
 - Inventory the 71 advertised top-level options of 22 database commands.
   Verify the four accepted no-op options with bounded positive and wrong-type
-  cases; retain the 67 effective owner claims as pending option-level oracles.
+  cases, and four effective listing options with isolated cases; retain the
+  other 63 effective owner claims as pending option-level oracles.
 
 ## [4.7.0] - 2026-09-13
 

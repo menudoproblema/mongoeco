@@ -28,6 +28,12 @@ ACCEPTED_NOOP = {
     ("validate", "full"),
     ("validate", "background"),
 }
+EFFECTIVE_VERIFIED = {
+    ("listCollections", "filter"),
+    ("listCollections", "nameOnly"),
+    ("listDatabases", "filter"),
+    ("listDatabases", "nameOnly"),
+}
 
 
 def test_inventory_tracks_exact_owner_and_public_command_option_sets() -> None:
@@ -68,12 +74,23 @@ def test_inventory_tracks_exact_owner_and_public_command_option_sets() -> None:
         for row in rows
         if row["disposition"] == "accepted_noop"
     } == ACCEPTED_NOOP
+    verified = {
+        (row["element"].split("/")[2], row["element"].split("/")[4])
+        for row in rows
+        if row["disposition"] == "owner_claim_effective"
+        and row["status"] == "bounded_behavior_verified"
+        and row["positive_evidence"]
+        and row["negative_evidence"]
+    }
+    assert verified == EFFECTIVE_VERIFIED
     assert all(
         row["status"] == "option_level_oracle_pending"
         and not row["positive_evidence"]
         and not row["negative_evidence"]
         for row in rows
         if row["disposition"] == "owner_claim_effective"
+        and (row["element"].split("/")[2], row["element"].split("/")[4])
+        not in EFFECTIVE_VERIFIED
     )
 
 
@@ -122,3 +139,71 @@ def test_accepted_noop_options_reject_wrong_type(command: str, option: str) -> N
             database.command({**request, option: "invalid"})
     finally:
         client.close()
+
+
+@pytest.mark.parametrize("command", ["listCollections", "listDatabases"])
+def test_list_filter_narrows_named_results(command: str) -> None:
+    with MongoClient(MemoryEngine()) as client:
+        client.alpha.create_collection("events")
+        client.alpha.create_collection("logs")
+        client.beta.create_collection("items")
+        baseline = client.alpha.command({command: 1})
+        selected = client.alpha.command(
+            {
+                command: 1,
+                "filter": {"name": "alpha" if command == "listDatabases" else "events"},
+            }
+        )
+        rows = (
+            baseline["databases"]
+            if command == "listDatabases"
+            else baseline["cursor"]["firstBatch"]
+        )
+        filtered = (
+            selected["databases"]
+            if command == "listDatabases"
+            else selected["cursor"]["firstBatch"]
+        )
+        assert {row["name"] for row in rows} == (
+            {"alpha", "beta"} if command == "listDatabases" else {"events", "logs"}
+        )
+        assert len(filtered) == 1
+        assert filtered[0]["name"] == (
+            "alpha" if command == "listDatabases" else "events"
+        )
+
+
+@pytest.mark.parametrize("command", ["listCollections", "listDatabases"])
+def test_list_name_only_limits_result_fields(command: str) -> None:
+    with MongoClient(MemoryEngine()) as client:
+        client.alpha.create_collection("events")
+        client.beta.create_collection("items")
+        baseline = client.alpha.command({command: 1})
+        selected = client.alpha.command({command: 1, "nameOnly": True})
+        rows = (
+            baseline["databases"]
+            if command == "listDatabases"
+            else baseline["cursor"]["firstBatch"]
+        )
+        narrowed = (
+            selected["databases"]
+            if command == "listDatabases"
+            else selected["cursor"]["firstBatch"]
+        )
+        assert len(rows) == len(narrowed)
+        assert all(set(row) > {"name"} for row in rows)
+        assert all(
+            set(row) == ({"name"} if command == "listDatabases" else {"name", "type"})
+            for row in narrowed
+        )
+
+
+@pytest.mark.parametrize("command", ["listCollections", "listDatabases"])
+@pytest.mark.parametrize(["option", "invalid"], [("filter", []), ("nameOnly", 1)])
+def test_list_effective_options_reject_wrong_type(
+    command: str, option: str, invalid: object
+) -> None:
+    with MongoClient(MemoryEngine()) as client:
+        client.alpha.create_collection("events")
+        with pytest.raises(TypeError):
+            client.alpha.command({command: 1, option: invalid})
