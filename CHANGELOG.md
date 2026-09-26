@@ -32,6 +32,9 @@ usa Semantic Versioning.
 - Describe accepted `createIndexes.indexes[]` fields separately from command
   options in `listCommands`, including aliases and the `background` and
   wildcard-projection fields that are accepted without an engine effect.
+- Inventory all 22 accepted `createIndexes.indexes[]` fields with their
+  conditions, alias relationships, no-op status and positive/negative parser
+  cases; keep this operational surface distinct from CXP deployment claims.
 
 ## [4.7.0] - 2026-09-13
 

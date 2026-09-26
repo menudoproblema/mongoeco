@@ -189,7 +189,11 @@ spellings. `acceptedNoopIndexSpecFields` identifies `background` and both
 spellings of wildcard projection. None of these lists asserts that every
 other index field has a proven physical effect. Unknown fields and two
 non-null spellings of the same supplied field are rejected before index
-creation.
+creation. The 22 fields have individual conditions and positive/negative
+parser cases in
+[`cxp-create-indexes-spec-conservation.csv`](cxp-create-indexes-spec-conservation.csv).
+This operational command inventory remains separate from the 16 authored
+`IndexModel` fields and from deployment compatibility claims.
 For the public `create_index` API, `background` and `wildcard_projection` are
 also accepted and type-checked without being passed to the engine; their owner
 catalog entries now state `accepted-noop`. The same applies when these options
@@ -235,7 +239,10 @@ The local wire command inventory is recorded separately in
 It lists all 46 advertised command names, their routing kind and family, the
 exact source hashes and current evidence. All 46 commands have bounded positive
 and negative behavior tests, including client-facing PyMongo paths for the
-database commands. For `hello`, malformed optional client/compression metadata
+database commands. It does not yet inventory every argument and result field
+of those commands; the `createIndexes.indexes[]` field inventory above closes
+one distinct part of that work. For `hello`, malformed optional
+client/compression metadata
 is accepted without replacing previously valid connection metadata; it does
 not assert support for those malformed values. The operational routing remains
 owned by Mongoeco. Whether any wire support
