@@ -201,6 +201,28 @@ def test_catalog_identity_and_hash_are_exact() -> None:
         )
 
 
+@pytest.mark.parametrize("mutation", ["identity", "content"])
+def test_snapshot_builder_rejects_foreign_or_changed_catalog(mutation: str) -> None:
+    content = load_mongodb_catalog().as_dict()
+    if mutation == "identity":
+        content["payload"]["identity"]["name"] = "different"
+        expected = "Mongoeco-owned MongoDB catalog"
+    else:
+        content["payload"]["description"] = "different catalog bytes"
+        expected = "exact Mongoeco-owned MongoDB catalog"
+    catalog = Document(content, expected_type="cxp.catalog")
+    identity = MongoSnapshotIdentity(
+        provider_id="provider-A",
+        subject_id="subject-A",
+        configuration_revision="revision-A",
+        observed_at="2026-09-26T00:00:00Z",
+        source_kind="observed",
+        source_reference="owner-report-sha256:example",
+    )
+    with pytest.raises(ValueError, match=expected):
+        build_mongodb_snapshot(catalog=catalog, identity=identity, capabilities=())
+
+
 def test_catalog_v2_provenance_and_metadata_vocabularies_match_owner() -> None:
     catalog = load_mongodb_catalog()
     assert catalog.spec_version == CATALOG_SPEC_VERSION
