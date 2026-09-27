@@ -268,7 +268,17 @@ not assert support for those malformed values. Client compression preferences
 remain connection metadata. The proxy does not handle `OP_COMPRESSED` and
 therefore omits `compression` from its `hello` response even when the client
 requests a compressor or `WireSurface.compression` is configured. That surface
-field is accepted without transport effect in this version. The operational
+field is accepted without transport effect in this version. The three `hello`
+command spellings now require a command value equal to `1` (including `True`
+and `1.0`); a missing or
+invalid `$db` is rejected before registering the handshake. The bounded
+request and response field contract, including the absent compression and
+topology markers, is itemized in
+[`cxp-wire-hello-field-conservation.csv`](cxp-wire-hello-field-conservation.csv).
+The response reports local proxy limits and a selected MongoDB dialect
+compatibility version. Its `gitVersion` value is the literal marker
+`mongoeco`, not a source revision, and `isWritablePrimary` does not describe
+the state of a physical replica. The operational
 routing remains owned by Mongoeco. The inspected PyMongo paths send commands
 and consume their responses; the inspected Cosecha, GDT and Mochuelo checkouts
 do not compare individual Mongoeco wire command names through exchange. All 46

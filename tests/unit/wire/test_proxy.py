@@ -1,5 +1,5 @@
-import unittest
 import datetime
+import unittest
 from unittest.mock import patch
 import uuid
 import struct
@@ -714,7 +714,7 @@ class WireProxyUnitTests(unittest.TestCase):
         modern = service.build_hello_response(
             command_name="hello", body={}, connection=connection
         )
-        self.assertNotIn("ismaster", modern)
+        self.assertEqual(set(modern), set(document) - {"ismaster"})
         self.assertTrue(modern["isWritablePrimary"])
         self.assertEqual(modern["connectionId"], 7)
         another = service.build_hello_response(
@@ -1055,6 +1055,21 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(connection.hello_count, 0)
         self.assertIsNone(connection.client_metadata)
         self.assertEqual(connection.compression, ())
+
+    async def test_executor_hello_accepts_equivalent_one_values(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        for command_name in ("hello", "isMaster", "ismaster"):
+            for command_value in (True, 1.0):
+                with self.subTest(command_name=command_name, value=command_value):
+                    result = await proxy._executor.execute_command(
+                        {command_name: command_value, "$db": "admin"},
+                        connection=connection,
+                    )
+                    self.assertEqual(result["ok"], 1.0)
+
+        self.assertEqual(connection.hello_count, 6)
 
     async def test_executor_wire_failpoint_is_local_fail_command_only(self):
         proxy = AsyncMongoEcoProxyServer()

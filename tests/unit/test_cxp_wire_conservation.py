@@ -15,6 +15,7 @@ from mongoeco.wire.surface import WireSurface
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MATRIX = PROJECT_ROOT / "docs" / "cxp-wire-command-conservation.csv"
 CURSOR_MATRIX = PROJECT_ROOT / "docs" / "cxp-wire-cursor-field-conservation.csv"
+HELLO_MATRIX = PROJECT_ROOT / "docs" / "cxp-wire-hello-field-conservation.csv"
 EXPECTED_COMMAND_COUNT = 46
 EXPECTED_CURSOR_FIELDS = frozenset(
     {
@@ -44,6 +45,21 @@ EXPECTED_CURSOR_FIELDS = frozenset(
         "/killCursors/response/cursorsAlive",
         "/killCursors/response/cursorsNotFound",
         "/killCursors/response/ok",
+    }
+)
+EXPECTED_HELLO_FIELDS = frozenset(
+    {
+        "/request/hello", "/request/isMaster", "/request/ismaster",
+        "/request/$db", "/request/client", "/request/compression",
+        "/response/helloOk", "/response/isWritablePrimary",
+        "/response/ismaster", "/response/maxBsonObjectSize",
+        "/response/maxMessageSizeBytes", "/response/maxWriteBatchSize",
+        "/response/logicalSessionTimeoutMinutes", "/response/connectionId",
+        "/response/minWireVersion", "/response/maxWireVersion",
+        "/response/readOnly", "/response/localTime", "/response/ok",
+        "/response/version", "/response/versionArray", "/response/gitVersion",
+        "/response/compression", "/response/setName", "/response/hosts",
+        "/response/serviceId", "/response/loadBalanced",
     }
 )
 SHA256_HEX_LENGTH = 64
@@ -133,6 +149,42 @@ def test_wire_cursor_field_matrix_covers_request_and_result_fields() -> None:
         assert row["disposition"] == "owner_operational"
         assert row["status"] == "bounded_behavior_verified"
         assert len(row["source_revision"]) == GIT_SHA_LENGTH
+        for field, source in sources.items():
+            assert row[field] == hashlib.sha256(source.read_bytes()).hexdigest()
+        assert row["positive_evidence"] != row["negative_evidence"]
+        _assert_test_references_exist(row["positive_evidence"])
+        _assert_test_references_exist(row["negative_evidence"])
+
+
+def test_wire_hello_field_matrix_covers_bounded_request_and_result_fields() -> None:
+    with HELLO_MATRIX.open(newline="", encoding="utf-8") as stream:
+        rows = list(csv.DictReader(stream))
+    elements = [row["element"] for row in rows]
+    assert len(elements) == len(EXPECTED_HELLO_FIELDS)
+    assert len(elements) == len(set(elements))
+    assert set(elements) == EXPECTED_HELLO_FIELDS
+
+    sources = {
+        "handshake_sha256": PROJECT_ROOT / "src/mongoeco/wire/handshake.py",
+        "surface_sha256": PROJECT_ROOT / "src/mongoeco/wire/surface.py",
+        "connections_sha256": PROJECT_ROOT / "src/mongoeco/wire/connections.py",
+        "context_sha256": PROJECT_ROOT / "src/mongoeco/wire/_executor_support.py",
+        "validation_sha256": PROJECT_ROOT / "src/mongoeco/wire/_executor_validation.py",
+    }
+    expected_source = "; ".join(
+        str(path.relative_to(PROJECT_ROOT)) for path in sources.values()
+    )
+    for row in rows:
+        assert row["product"] == "Mongoeco"
+        assert row["owner"] == "Mongoeco"
+        assert row["source"] == expected_source
+        assert row["disposition"] == "owner_operational"
+        assert row["status"] == "bounded_behavior_verified"
+        assert row["source_revision"] == "1b8369ff8d8466fab6bcfa51393a9bd43ee2ec61"
+        assert row["meaning"]
+        assert row["conditions_scope"]
+        assert row["consumer_decision"]
+        assert row["destination"]
         for field, source in sources.items():
             assert row[field] == hashlib.sha256(source.read_bytes()).hexdigest()
         assert row["positive_evidence"] != row["negative_evidence"]

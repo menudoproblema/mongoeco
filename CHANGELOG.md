@@ -18,6 +18,9 @@ usa Semantic Versioning.
 - Require `cxp[exchange]>=5.0.0,<6`. Mongoeco 4.8.0 is prepared against the
   exact local CXP 5.0.0 candidate; it is not published or authorized for
   publication by this source change.
+- Validate the three wire `hello` command aliases before recording connection
+  state, and inventory their bounded request and response fields, including
+  absent compression and topology claims.
 - Preserve the historical legacy compatibility snapshots when exporting the
   current exchange view. Reject unknown telemetry buffer overflow policies
   instead of silently treating them as `drop_oldest`.

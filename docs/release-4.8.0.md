@@ -54,6 +54,9 @@ catalog option acceptance alone does not establish a deployment guarantee.
   does not handle `OP_COMPRESSED`. Valid preferences remain connection metadata
   and the response's `compression` field is absent. The existing
   `WireSurface.compression` configuration is accepted without transport effect.
+  The three command aliases reject invalid command values and databases before
+  recording connection state. A separate matrix pins the bounded `hello`
+  request and response fields and explicitly marks absent topology fields.
 
 The full [release checklist](release-checklist.md), including remote CI and
 the final installed artifact matrix, remains a gate for any later publication.
