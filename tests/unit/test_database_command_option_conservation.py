@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 import csv
 import hashlib
+import json
+import time
 
 from pathlib import Path
 from unittest.mock import patch
@@ -21,7 +23,7 @@ from mongoeco.compat._catalog_operation_options import (
 )
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import OperationFailure
+from mongoeco.errors import ExecutionTimeout, OperationFailure
 from mongoeco.wire import AsyncMongoEcoProxyServer
 
 
@@ -44,6 +46,22 @@ EFFECTIVE_VERIFIED = {
     ("listDatabases", "nameOnly"),
     ("explain", "comment"),
     ("explain", "maxTimeMS"),
+    ("find", "filter"),
+    ("find", "sort"),
+    ("find", "projection"),
+    ("find", "skip"),
+    ("find", "limit"),
+    ("find", "let"),
+    ("find", "hint"),
+    ("find", "maxTimeMS"),
+    ("count", "query"),
+    ("count", "skip"),
+    ("count", "limit"),
+    ("count", "hint"),
+    ("count", "maxTimeMS"),
+    ("distinct", "query"),
+    ("distinct", "hint"),
+    ("distinct", "maxTimeMS"),
 }
 COMMENT_COMMANDS = {
     "aggregate": {"aggregate": "items", "pipeline": []},
@@ -509,3 +527,456 @@ def test_explain_outer_options_are_preserved_on_wire() -> None:
             )
 
     asyncio.run(run())
+
+
+FIND_OPTION_CASES = [
+    (
+        "filter",
+        {"filter": {"kind": "click"}},
+        [{"_id": 3, "kind": "click", "rank": 2}],
+        {"filter": []},
+    ),
+    (
+        "sort",
+        {"sort": {"rank": 1}},
+        [
+            {"_id": 2, "kind": "view", "rank": 1},
+            {"_id": 3, "kind": "click", "rank": 2},
+            {"_id": 1, "kind": "view", "rank": 3},
+        ],
+        {"sort": 1},
+    ),
+    (
+        "projection",
+        {"projection": {"rank": 1, "_id": 0}},
+        [{"rank": 3}, {"rank": 1}, {"rank": 2}],
+        {"projection": 1},
+    ),
+    (
+        "skip",
+        {"skip": 1},
+        [
+            {"_id": 2, "kind": "view", "rank": 1},
+            {"_id": 3, "kind": "click", "rank": 2},
+        ],
+        {"skip": -1},
+    ),
+    (
+        "limit",
+        {"limit": 2},
+        [
+            {"_id": 1, "kind": "view", "rank": 3},
+            {"_id": 2, "kind": "view", "rank": 1},
+        ],
+        {"limit": -1},
+    ),
+    (
+        "let",
+        {
+            "filter": {"$expr": {"$eq": ["$kind", "$$target"]}},
+            "let": {"target": "view"},
+        },
+        [
+            {"_id": 1, "kind": "view", "rank": 3},
+            {"_id": 2, "kind": "view", "rank": 1},
+        ],
+        {"let": 1},
+    ),
+]
+FIND_DOCUMENTS = [
+    {"_id": 1, "kind": "view", "rank": 3},
+    {"_id": 2, "kind": "view", "rank": 1},
+    {"_id": 3, "kind": "click", "rank": 2},
+]
+
+
+@pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("surface", ["api", "wire"])
+@pytest.mark.parametrize("case", FIND_OPTION_CASES)
+def test_find_option_changes_result_and_rejects_invalid_input(
+    engine_type: type[MemoryEngine | SQLiteEngine],
+    surface: str,
+    case: tuple[str, dict[str, object], list[dict[str, object]], dict[str, object]],
+) -> None:
+    option, positive, expected, invalid = case
+    assert option in positive
+
+    if surface == "api":
+        with MongoClient(engine_type()) as client:
+            database = client.audit
+            database.items.insert_many(FIND_DOCUMENTS)
+            response = database.command({"find": "items", **positive})
+            assert response["cursor"]["firstBatch"] == expected
+            if option == "let":
+                changed = database.command(
+                    {"find": "items", **positive, "let": {"target": "click"}}
+                )
+                assert changed["cursor"]["firstBatch"] == [FIND_DOCUMENTS[2]]
+            with pytest.raises((TypeError, ValueError, OperationFailure)):
+                database.command({"find": "items", **invalid})
+        return
+
+    async def run_wire() -> None:
+        async with AsyncMongoEcoProxyServer(engine=engine_type()) as proxy:
+            connection = proxy._connections.create(("127.0.0.1", 27017))
+
+            async def execute(document: dict[str, object]) -> dict[str, object]:
+                return await proxy._executor.execute_command(
+                    {**document, "$db": "audit"}, connection=connection
+                )
+
+            await execute({"insert": "items", "documents": FIND_DOCUMENTS})
+            response = await execute({"find": "items", **positive})
+            assert response["cursor"]["firstBatch"] == expected
+            if option == "let":
+                changed = await execute(
+                    {"find": "items", **positive, "let": {"target": "click"}}
+                )
+                assert changed["cursor"]["firstBatch"] == [FIND_DOCUMENTS[2]]
+            with pytest.raises((TypeError, ValueError, OperationFailure)):
+                await execute({"find": "items", **invalid})
+
+    asyncio.run(run_wire())
+
+
+@pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
+def test_find_hint_requires_usable_index_and_surfaces_plan(
+    engine_type: type[MemoryEngine | SQLiteEngine],
+) -> None:
+    with MongoClient(engine_type()) as client:
+        database = client.audit
+        database.items.insert_many(FIND_DOCUMENTS)
+        database.items.create_index([("kind", 1)], name="kind_idx")
+        response = database.command({"find": "items", "hint": "kind_idx"})
+        assert sorted(response["cursor"]["firstBatch"], key=lambda row: row["_id"]) == (
+            FIND_DOCUMENTS
+        )
+        explained = database.command({"explain": {"find": "items", "hint": "kind_idx"}})
+        assert explained["hinted_index"] == "kind_idx"
+        with pytest.raises(OperationFailure):
+            database.command({"find": "items", "hint": "missing_idx"})
+
+    async def run_wire() -> None:
+        async with AsyncMongoEcoProxyServer(engine=engine_type()) as proxy:
+            connection = proxy._connections.create(("127.0.0.1", 27017))
+
+            async def execute(document: dict[str, object]) -> dict[str, object]:
+                return await proxy._executor.execute_command(
+                    {**document, "$db": "audit"}, connection=connection
+                )
+
+            await execute({"insert": "items", "documents": FIND_DOCUMENTS})
+            await execute(
+                {
+                    "createIndexes": "items",
+                    "indexes": [{"key": {"kind": 1}, "name": "kind_idx"}],
+                }
+            )
+            response = await execute({"find": "items", "hint": "kind_idx"})
+            assert (
+                sorted(response["cursor"]["firstBatch"], key=lambda row: row["_id"])
+                == FIND_DOCUMENTS
+            )
+            explained = await execute(
+                {"explain": {"find": "items", "hint": "kind_idx"}}
+            )
+            assert explained["hinted_index"] == "kind_idx"
+            with pytest.raises(OperationFailure):
+                await execute({"find": "items", "hint": "missing_idx"})
+
+    asyncio.run(run_wire())
+
+
+@pytest.mark.parametrize(
+    ["engine_type", "module"],
+    [(MemoryEngine, "memory"), (SQLiteEngine, "sqlite")],
+)
+def test_find_max_time_ms_reaches_engine_deadline(
+    engine_type: type[MemoryEngine | SQLiteEngine], module: str
+) -> None:
+    def fail_if_deadline(deadline: float | None) -> None:
+        if deadline is not None:
+            message = "controlled deadline"
+            raise ExecutionTimeout(message)
+
+    with MongoClient(engine_type()) as client:
+        database = client.audit
+        database.items.insert_one({"_id": 1})
+        with patch(
+            f"mongoeco.engines.{module}.enforce_deadline", side_effect=fail_if_deadline
+        ):
+            assert database.command({"find": "items"})["cursor"]["firstBatch"] == [
+                {"_id": 1}
+            ]
+            with pytest.raises(ExecutionTimeout, match="controlled deadline"):
+                database.command({"find": "items", "maxTimeMS": 17})
+        with pytest.raises(TypeError):
+            database.command({"find": "items", "maxTimeMS": "invalid"})
+
+    async def run_wire() -> None:
+        async with AsyncMongoEcoProxyServer(engine=engine_type()) as proxy:
+            connection = proxy._connections.create(("127.0.0.1", 27017))
+
+            async def execute(document: dict[str, object]) -> dict[str, object]:
+                return await proxy._executor.execute_command(
+                    {**document, "$db": "audit"}, connection=connection
+                )
+
+            await execute({"insert": "items", "documents": [{"_id": 1}]})
+            with patch(
+                f"mongoeco.engines.{module}.enforce_deadline",
+                side_effect=fail_if_deadline,
+            ):
+                assert (await execute({"find": "items"}))["cursor"]["firstBatch"] == [
+                    {"_id": 1}
+                ]
+                with pytest.raises(ExecutionTimeout, match="controlled deadline"):
+                    await execute({"find": "items", "maxTimeMS": 17})
+            with pytest.raises((TypeError, ValueError, OperationFailure)):
+                await execute({"find": "items", "maxTimeMS": "invalid"})
+
+    asyncio.run(run_wire())
+
+
+COUNT_DISTINCT_CASES = [
+    ("count", "query", {"query": {"kind": "view"}}, 2, {"query": []}),
+    ("count", "skip", {"skip": 1}, 2, {"skip": -1}),
+    ("count", "limit", {"limit": 2}, 2, {"limit": -1}),
+    (
+        "distinct",
+        "query",
+        {"query": {"rank": {"$gte": 3}}},
+        ["view"],
+        {"query": []},
+    ),
+]
+
+
+@pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("surface", ["api", "wire"])
+@pytest.mark.parametrize("case", COUNT_DISTINCT_CASES)
+def test_count_distinct_selection_options_change_result_and_reject_invalid(
+    engine_type: type[MemoryEngine | SQLiteEngine],
+    surface: str,
+    case: tuple[str, str, dict[str, object], object, dict[str, object]],
+) -> None:
+    command, option, positive, expected, invalid = case
+    assert option in positive
+    request = {command: "items"}
+    if command == "distinct":
+        request["key"] = "kind"
+    result_field = "n" if command == "count" else "values"
+
+    def assert_result(result: dict[str, object]) -> None:
+        actual = result[result_field]
+        assert (sorted(actual) if isinstance(actual, list) else actual) == expected
+
+    if surface == "api":
+        with MongoClient(engine_type()) as client:
+            database = client.audit
+            database.items.insert_many(FIND_DOCUMENTS)
+            baseline = database.command(request)
+            assert baseline[result_field] != expected
+            assert_result(database.command({**request, **positive}))
+            with pytest.raises((TypeError, ValueError, OperationFailure)):
+                database.command({**request, **invalid})
+        return
+
+    async def run_wire() -> None:
+        async with AsyncMongoEcoProxyServer(engine=engine_type()) as proxy:
+            connection = proxy._connections.create(("127.0.0.1", 27017))
+
+            async def execute(document: dict[str, object]) -> dict[str, object]:
+                return await proxy._executor.execute_command(
+                    {**document, "$db": "audit"}, connection=connection
+                )
+
+            await execute({"insert": "items", "documents": FIND_DOCUMENTS})
+            baseline = await execute(request)
+            assert baseline[result_field] != expected
+            assert_result(await execute({**request, **positive}))
+            with pytest.raises((TypeError, ValueError, OperationFailure)):
+                await execute({**request, **invalid})
+
+    asyncio.run(run_wire())
+
+
+@pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("surface", ["api", "wire"])
+def test_count_python_fallback_preserves_skip_and_limit(
+    engine_type: type[MemoryEngine | SQLiteEngine], surface: str
+) -> None:
+    query = {"kind": {"$regex": "view"}}
+    cases = [
+        ({}, 2),
+        ({"skip": 1}, 1),
+        ({"limit": 1}, 1),
+        ({"skip": 1, "limit": 1}, 1),
+        ({"skip": 2}, 0),
+        ({"limit": 0}, 0),
+    ]
+
+    if surface == "api":
+        with MongoClient(engine_type()) as client:
+            database = client.audit
+            database.items.insert_many(FIND_DOCUMENTS)
+            for options, expected in cases:
+                assert (
+                    database.command({"count": "items", "query": query, **options})["n"]
+                    == expected
+                )
+        return
+
+    async def run_wire() -> None:
+        async with AsyncMongoEcoProxyServer(engine=engine_type()) as proxy:
+            connection = proxy._connections.create(("127.0.0.1", 27017))
+
+            async def execute(document: dict[str, object]) -> dict[str, object]:
+                return await proxy._executor.execute_command(
+                    {**document, "$db": "audit"}, connection=connection
+                )
+
+            await execute({"insert": "items", "documents": FIND_DOCUMENTS})
+            for options, expected in cases:
+                assert (await execute({"count": "items", "query": query, **options}))[
+                    "n"
+                ] == expected
+
+    asyncio.run(run_wire())
+
+
+@pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("command", ["count", "distinct"])
+def test_count_distinct_hint_requires_index_and_surfaces_plan(
+    engine_type: type[MemoryEngine | SQLiteEngine], command: str
+) -> None:
+    expected_view_count = 2
+    request = {command: "items", "hint": "kind_idx"}
+    if command == "distinct":
+        request["key"] = "kind"
+
+    def assert_hint(result: dict[str, object]) -> None:
+        assert result["hinted_index"] == "kind_idx"
+
+    with MongoClient(engine_type()) as client:
+        database = client.audit
+        database.items.insert_many(FIND_DOCUMENTS)
+        database.items.create_index([("kind", 1)], name="kind_idx")
+        database.command(request)
+        assert_hint(database.command({"explain": request}))
+        with pytest.raises(OperationFailure):
+            database.command({**request, "hint": "missing_idx"})
+        if command == "count":
+            fallback = {**request, "query": {"kind": {"$regex": "view"}}}
+            assert database.command(fallback)["n"] == expected_view_count
+            with pytest.raises(OperationFailure):
+                database.command({**fallback, "hint": "missing_idx"})
+
+    async def run_wire() -> None:
+        async with AsyncMongoEcoProxyServer(engine=engine_type()) as proxy:
+            connection = proxy._connections.create(("127.0.0.1", 27017))
+
+            async def execute(document: dict[str, object]) -> dict[str, object]:
+                return await proxy._executor.execute_command(
+                    {**document, "$db": "audit"}, connection=connection
+                )
+
+            await execute({"insert": "items", "documents": FIND_DOCUMENTS})
+            await execute(
+                {
+                    "createIndexes": "items",
+                    "indexes": [{"key": {"kind": 1}, "name": "kind_idx"}],
+                }
+            )
+            await execute(request)
+            assert_hint(await execute({"explain": request}))
+            with pytest.raises(OperationFailure):
+                await execute({**request, "hint": "missing_idx"})
+            if command == "count":
+                fallback = {**request, "query": {"kind": {"$regex": "view"}}}
+                assert (await execute(fallback))["n"] == expected_view_count
+                with pytest.raises(OperationFailure):
+                    await execute({**fallback, "hint": "missing_idx"})
+
+    asyncio.run(run_wire())
+
+
+@pytest.mark.parametrize(
+    ["engine_type", "module"],
+    [(MemoryEngine, "memory"), (SQLiteEngine, "sqlite")],
+)
+@pytest.mark.parametrize("command", ["count", "distinct"])
+def test_count_distinct_max_time_ms_reaches_engine_deadline(
+    engine_type: type[MemoryEngine | SQLiteEngine], module: str, command: str
+) -> None:
+    request = {command: "items"}
+    if command == "distinct":
+        request["key"] = "kind"
+
+    def fail_if_deadline(deadline: float | None) -> None:
+        if deadline is not None:
+            message = "controlled deadline"
+            raise ExecutionTimeout(message)
+
+    with MongoClient(engine_type()) as client:
+        database = client.audit
+        database.items.insert_many(FIND_DOCUMENTS)
+        with patch(
+            f"mongoeco.engines.{module}.enforce_deadline", side_effect=fail_if_deadline
+        ):
+            database.command(request)
+            with pytest.raises(ExecutionTimeout, match="controlled deadline"):
+                database.command({**request, "maxTimeMS": 17})
+        with pytest.raises(TypeError):
+            database.command({**request, "maxTimeMS": "invalid"})
+
+    async def run_wire() -> None:
+        async with AsyncMongoEcoProxyServer(engine=engine_type()) as proxy:
+            connection = proxy._connections.create(("127.0.0.1", 27017))
+
+            async def execute(document: dict[str, object]) -> dict[str, object]:
+                return await proxy._executor.execute_command(
+                    {**document, "$db": "audit"}, connection=connection
+                )
+
+            await execute({"insert": "items", "documents": FIND_DOCUMENTS})
+            with patch(
+                f"mongoeco.engines.{module}.enforce_deadline",
+                side_effect=fail_if_deadline,
+            ):
+                await execute(request)
+                with pytest.raises(ExecutionTimeout, match="controlled deadline"):
+                    await execute({**request, "maxTimeMS": 17})
+            with pytest.raises((TypeError, ValueError, OperationFailure)):
+                await execute({**request, "maxTimeMS": "invalid"})
+
+    asyncio.run(run_wire())
+
+
+def test_sqlite_count_interrupts_expired_sql_statement() -> None:
+    document_count = 300
+    engine = SQLiteEngine()
+    with MongoClient(engine) as client:
+        database = client.audit
+        database.items.insert_many(
+            {"_id": index, "kind": "view"} for index in range(document_count)
+        )
+        calls = 0
+
+        def slow_extract(document: str, path: str) -> object:
+            nonlocal calls
+            calls += 1
+            time.sleep(0.00005)
+            return json.loads(document).get(path.removeprefix("$."))
+
+        connection = engine._connection
+        assert connection is not None
+        connection.create_function("json_extract", 2, slow_extract)
+        request = {"count": "items", "query": {"kind": "view"}}
+        assert database.command(request)["n"] == document_count
+        baseline_calls = calls
+        calls = 0
+        with pytest.raises(ExecutionTimeout):
+            database.command({**request, "maxTimeMS": 20})
+        assert 0 < calls < baseline_calls
+        assert database.command({"count": "items"})["n"] == document_count

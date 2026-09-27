@@ -37,16 +37,22 @@ usa Semantic Versioning.
   cases; keep this operational surface distinct from CXP deployment claims.
 - Inventory the 71 advertised top-level options of 22 database commands.
   Verify the four accepted no-op options with bounded positive and wrong-type
-  cases and eight effective options with scoped positive and negative cases.
+  cases and twenty-four effective options with scoped positive and negative cases.
   For 17 additional `comment` options, verify the `system.profile` effect
   with profiling enabled and disabled; other claimed effects remain pending.
-  The remaining 42 effective options await individual option-level oracles.
+  The remaining 26 effective options await individual option-level oracles.
   Clarify that top-level `aggregate.batchSize` limits wire `firstBatch` but is
   ignored by direct `database.command()`, where `cursor.batchSize` controls
   local prefetch.
 - Propagate top-level `explain.comment` and `explain.maxTimeMS` into supported
   explained commands, with explicit inner values taking precedence; reject an
   invalid outer `maxTimeMS` even when an inner value is valid.
+- Verify all eight remaining `find` command options on Memory and SQLite
+  through direct API and wire execution, including result shaping, hint
+  planning, variable binding, deadline routing and invalid-input rejection.
+- Verify `count` and `distinct` query, hint and deadline behavior, plus count
+  skip and limit. SQLite count now passes hints to its SQL planner, interrupts
+  expired SQL, and applies skip and limit in its Python fallback.
 
 ## [4.7.0] - 2026-09-13
 

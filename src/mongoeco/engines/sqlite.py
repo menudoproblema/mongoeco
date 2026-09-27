@@ -285,6 +285,7 @@ from mongoeco.engines.virtual_indexes import (
 )
 from mongoeco.errors import (
     DuplicateKeyError,
+    ExecutionTimeout,
     InvalidOperation,
     OperationFailure,
 )
@@ -6393,6 +6394,8 @@ class SQLiteEngine(AsyncStorageEngine):
             )
         )
         effective_dialect = semantics.dialect
+        deadline = semantics.deadline
+        enforce_deadline(deadline)
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -6409,28 +6412,59 @@ class SQLiteEngine(AsyncStorageEngine):
                             db_name,
                             coll_name,
                             semantics,
+                            hint=semantics.hint,
                         )
                         sql, params = execution_plan.require_sql()
-                        row = conn.execute(
-                            f"SELECT COUNT(*) FROM ({sql})",
-                            tuple(params),
-                        ).fetchone()
+                        deadline_exceeded = False
+
+                        def interrupt_expired_statement() -> int:
+                            nonlocal deadline_exceeded
+                            deadline_exceeded = (
+                                deadline is not None and time.monotonic() > deadline
+                            )
+                            return int(deadline_exceeded)
+
+                        if deadline is not None:
+                            conn.set_progress_handler(interrupt_expired_statement, 1000)
+                        try:
+                            row = conn.execute(
+                                f"SELECT COUNT(*) FROM ({sql})",
+                                tuple(params),
+                            ).fetchone()
+                        except sqlite3.OperationalError as exc:
+                            if deadline_exceeded:
+                                message = "operation exceeded time limit"
+                                raise ExecutionTimeout(message) from exc
+                            raise
+                        finally:
+                            if deadline is not None:
+                                conn.set_progress_handler(None, 0)
+                        enforce_deadline(deadline)
                         return int(row[0])
                     except (NotImplementedError, TypeError):
-                        return sum(
-                            1
-                            for _, document in self._load_documents(
-                                db_name,
-                                coll_name,
-                            )
-                            if QueryEngine.match_plan(
+                        count = 0
+                        skipped = semantics.skip
+                        remaining = semantics.limit
+                        for _, document in self._load_documents(db_name, coll_name):
+                            enforce_deadline(deadline)
+                            if not QueryEngine.match_plan(
                                 document,
                                 semantics.query_plan,
                                 dialect=effective_dialect,
                                 collation=semantics.collation,
                                 variables=semantics.variables,
-                            )
-                        )
+                            ):
+                                continue
+                            if skipped:
+                                skipped -= 1
+                                continue
+                            if remaining is not None and remaining <= 0:
+                                break
+                            count += 1
+                            if remaining is not None:
+                                remaining -= 1
+                        enforce_deadline(deadline)
+                        return count
 
     def _create_index_sync(
         self,
