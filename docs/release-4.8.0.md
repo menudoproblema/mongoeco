@@ -21,12 +21,12 @@ catalog option acceptance alone does not establish a deployment guarantee.
 
 ## Current local evidence
 
-- The source suite passes: 4,617 passed, 26 skipped, 2,499 subtests passed.
+- The source suite passes: 4,622 passed, 26 skipped, 2,502 subtests passed.
 - The public API manifest, public typing contract, changed-file Ruff ratchet
   and `git diff --check` pass.
-- The previous local candidate passed installed wheel and sdist smokes with
-  CXP 5 and Cosecha. Source changes after that candidate require a new exact
-  build and installed-artifact gate before this commit can be nominated.
+- Wheel and sdist builds of the local candidate pass installed smoke tests
+  with CXP 5 and Cosecha. The exact source revision, hashes and environment
+  are retained in the local release evidence receipt.
 - The command option inventory has 71 top-level options across 22 database
   commands. Four accepted no-op options have bounded positive and wrong-type
   cases; all 67 effective options have scoped positive and negative cases.
