@@ -195,10 +195,10 @@ direct `database.command()` materializes the full result. Direct `find` uses
 the option for local prefetch, while direct `aggregate` ignores top-level
 `batchSize` and uses `cursor.batchSize` for that purpose. Top-level `explain`
 options propagate to supported explained commands unless an inner value is
-explicit; invalid outer `maxTimeMS` is rejected. Another 17 `comment` options
-have a verified `system.profile` effect when profiling is enabled, while their
-other claimed effects remain pending. No other effective option lacks
-an individual positive and negative option-level oracle. The inventory
+explicit; invalid outer `maxTimeMS` is rejected. The other 17 `comment` options
+retain the command comment in an explicit API session and emit a
+`system.profile` event only when profiling is enabled, through API and wire.
+All 67 effective options have scoped positive and negative oracles. The inventory
 does not turn these operational options into CXP compatibility guarantees.
 For `createIndexes`, `supportedOptions` lists only command-level options.
 `indexSpecFields` lists the exact accepted fields of each element of

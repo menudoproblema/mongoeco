@@ -1656,6 +1656,7 @@ class AsyncDatabaseCommandService:
                 command=dict(parsed.spec),
                 duration_micros=max(1, (time.perf_counter_ns() - started_at) // 1000),
             )
+        self._record_command_session_metadata(parsed, session)
         return serialized
 
     async def command(
@@ -1672,6 +1673,26 @@ class AsyncDatabaseCommandService:
             execution_context=execution_context,
             **kwargs,
         )
+
+    def _record_command_session_metadata(
+        self,
+        command: AdminCommand[object],
+        session: ClientSession | None,
+    ) -> None:
+        if session is None:
+            return
+        comment = command.spec.get("comment")
+        if comment is None:
+            return
+        record_metadata = getattr(self._engine, "_record_operation_metadata", None)
+        if callable(record_metadata):
+            record_metadata(
+                session,
+                operation=command.command_name,
+                comment=comment,
+                max_time_ms=command.spec.get("maxTimeMS"),
+                hint=command.spec.get("hint"),
+            )
 
     @staticmethod
     def _command_namespace(

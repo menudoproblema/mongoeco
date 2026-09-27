@@ -122,9 +122,12 @@ COMMENT_COMMANDS = {
     },
     "validate": {"validate": "items"},
 }
-PROFILE_SCOPE_VERIFIED = {
+COMMENT_VERIFIED = {
     (command, "comment") for command in COMMENT_COMMANDS if command != "explain"
 }
+COMMENT_COMMAND_CASES = sorted(
+    (name, spec) for name, spec in COMMENT_COMMANDS.items() if name != "explain"
+)
 
 
 def test_inventory_tracks_exact_owner_and_public_command_option_sets() -> None:
@@ -177,23 +180,10 @@ def test_inventory_tracks_exact_owner_and_public_command_option_sets() -> None:
         and row["positive_evidence"]
         and row["negative_evidence"]
     }
-    assert verified == EFFECTIVE_VERIFIED
-    profile_verified = {
-        (row["element"].split("/")[2], row["element"].split("/")[4])
-        for row in rows
-        if row["status"] == "profile_scope_verified_other_effects_pending"
-        and row["positive_evidence"]
-        and row["negative_evidence"]
-    }
-    assert profile_verified == PROFILE_SCOPE_VERIFIED
+    assert verified == EFFECTIVE_VERIFIED | COMMENT_VERIFIED
     assert all(
-        row["status"] == "option_level_oracle_pending"
-        and not row["positive_evidence"]
-        and not row["negative_evidence"]
+        row["status"] != "profile_scope_verified_other_effects_pending"
         for row in rows
-        if row["disposition"] == "owner_claim_effective"
-        and (row["element"].split("/")[2], row["element"].split("/")[4])
-        not in EFFECTIVE_VERIFIED | PROFILE_SCOPE_VERIFIED
     )
 
 
@@ -456,6 +446,81 @@ def test_comment_is_recorded_only_under_enabled_profiling(
             assert len(matches) == int(profiling_enabled)
             if matches:
                 assert command in matches[0]["command"]
+
+
+@pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize(
+    ["command", "command_document"], COMMENT_COMMAND_CASES
+)
+def test_command_comment_is_retained_in_explicit_session_metadata(
+    engine_type: type[MemoryEngine | SQLiteEngine],
+    command: str,
+    command_document: dict[str, object],
+) -> None:
+    marker = f"session-{command}"
+    for supplied in (False, True):
+        with MongoClient(engine_type()) as client:
+            database = client.audit
+            database.items.insert_one({"_id": 1, "value": 1})
+            database.items.create_index([("value", 1)], name="value_idx")
+            session = client.start_session()
+            request = dict(command_document)
+            if supplied:
+                request["comment"] = marker
+            database.command(request, session=session)
+            state = next(iter(session.engine_state.values()))
+            last_operation = state.get("last_operation")
+            if supplied:
+                assert isinstance(last_operation, dict)
+                assert last_operation["operation"] == command
+                assert last_operation["comment"] == marker
+            elif isinstance(last_operation, dict):
+                assert last_operation.get("comment") != marker
+
+
+@pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize(
+    ["command", "command_document"], COMMENT_COMMAND_CASES
+)
+def test_wire_command_comment_is_profiled_only_when_enabled(
+    engine_type: type[MemoryEngine | SQLiteEngine],
+    command: str,
+    command_document: dict[str, object],
+) -> None:
+    async def exercise(*, profiling_enabled: bool) -> None:
+        async with AsyncMongoEcoProxyServer(engine=engine_type()) as proxy:
+            connection = proxy._connections.create(("127.0.0.1", 27017))
+
+            async def execute(document: dict[str, object]) -> dict[str, object]:
+                return await proxy._executor.execute_command(
+                    {**document, "$db": "audit"}, connection=connection
+                )
+
+            await execute({"insert": "items", "documents": [{"_id": 1, "value": 1}]})
+            await execute(
+                {
+                    "createIndexes": "items",
+                    "indexes": [{"key": {"value": 1}, "name": "value_idx"}],
+                }
+            )
+            if profiling_enabled:
+                await execute({"profile": 2, "slowms": 0})
+            marker = f"wire-{command}"
+            result = await execute({**command_document, "comment": marker})
+            if command == "aggregate":
+                assert result["cursor"]["firstBatch"]
+            profiled = await execute({"find": "system.profile"})
+            matches = [
+                row
+                for row in profiled["cursor"]["firstBatch"]
+                if row["command"].get("comment") == marker
+            ]
+            assert len(matches) == int(profiling_enabled)
+            if matches:
+                assert command in matches[0]["command"]
+
+    asyncio.run(exercise(profiling_enabled=False))
+    asyncio.run(exercise(profiling_enabled=True))
 
 
 @pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])

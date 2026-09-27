@@ -38,9 +38,9 @@ usa Semantic Versioning.
 - Inventory the 71 advertised top-level options of 22 database commands.
   Verify the four accepted no-op options with bounded positive and wrong-type
   cases and fifty effective options with scoped positive and negative cases.
-  For 17 additional `comment` options, verify the `system.profile` effect
-  with profiling enabled and disabled; other claimed effects remain pending.
-  No other top-level effective options await individual oracles.
+  For 17 additional `comment` options, verify the explicit session metadata
+  and `system.profile` behavior through API and wire with profiling enabled
+  and disabled. All 67 effective options now have scoped oracles.
   Clarify that top-level `aggregate.batchSize` limits wire `firstBatch` but is
   ignored by direct `database.command()`, where `cursor.batchSize` controls
   local prefetch.
@@ -65,6 +65,9 @@ usa Semantic Versioning.
   Memory and SQLite now enforce find-and-modify update deadlines before
   mutation and before commit, rolling back a late timeout. SQLite includes
   worker queue wait in that deadline.
+- Preserve command-level `comment` in explicit session metadata after nested
+  operations, including admin reads and writes. Keep `system.profile`
+  observation conditional on profiling being enabled.
 
 ## [4.7.0] - 2026-09-13
 
