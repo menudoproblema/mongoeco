@@ -21,14 +21,16 @@ catalog option acceptance alone does not establish a deployment guarantee.
 
 ## Current local evidence
 
-- The source suite passes: 4,634 passed, 26 skipped, 2,502 subtests passed;
+- The source suite passes: 4,644 passed, 26 skipped, 2,550 subtests passed;
   measured coverage is 99.01% against the 99.00% minimum. `unittest` passes
-  3,551 cases and the deep property profile passes four.
+  3,559 cases and the deep property profile passes four.
 - The public API manifest, public typing contract, changed-file Ruff ratchet
   and `git diff --check` pass.
-- Wheel and sdist builds of the local candidate pass installed smoke tests
-  with CXP 5 and Cosecha. The exact source revision, hashes and environment
-  are retained in the local release evidence receipt.
+- Reproducible wheel and sdist builds of the local candidate pass installed
+  smoke tests with CXP 5 and Cosecha. Four isolated Python 3.13/3.14 cells
+  each pass 13 consumer smokes, including complete wire `listCommands`.
+  The exact source revision, hashes and environment are retained in the local
+  release evidence receipt.
 - The 25 real differential cases pass separately against MongoDB 7.0.39 and
   8.0.24, with no failure or skip. The four-version PyMongo profile matrix
   matches its checked-in summary. The current exchange export is written
