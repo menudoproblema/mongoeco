@@ -100,6 +100,7 @@ class WireExecutorHelperCoverageTests(unittest.IsolatedAsyncioTestCase):
                 client=_FakeClient(["bad"]),
                 cursor_store=WireCursorStore(),
                 auth=SimpleNamespace(require_authenticated=lambda *_args, **_kwargs: None),
+                surface=WireSurface(),
             )
 
         with self.assertRaisesRegex(OperationFailure, "document response"):

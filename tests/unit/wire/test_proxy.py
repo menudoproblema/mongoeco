@@ -928,6 +928,55 @@ class WireProxyUnitTests(unittest.TestCase):
 
 
 class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
+    async def test_wire_list_commands_reports_all_routed_commands(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        result = await proxy._executor.execute_command(
+            {"listCommands": 1, "$db": "admin"}, connection=connection
+        )
+        commands = result["commands"]
+        wire_only = {
+            "abortTransaction": "transactions",
+            "authenticate": "auth",
+            "commitTransaction": "transactions",
+            "endSessions": "sessions",
+            "getMore": "cursor",
+            "killCursors": "cursor",
+            "logout": "auth",
+            "saslContinue": "auth",
+            "saslStart": "auth",
+        }
+        self.assertEqual(set(commands), set(WireSurface().supported_commands))
+        self.assertEqual(len(commands), 46)
+        for name, family in wire_only.items():
+            with self.subTest(command=name):
+                self.assertEqual(commands[name]["adminFamily"], family)
+                self.assertTrue(commands[name]["supportsWire"])
+                self.assertFalse(commands[name]["supportsExplain"])
+                self.assertFalse(commands[name]["supportsComment"])
+                self.assertNotIn("supportedOptions", commands[name])
+        self.assertEqual(commands["find"]["adminFamily"], "admin_read")
+
+    async def test_wire_list_commands_respects_configured_surface(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        surface = WireSurface(
+            supported_commands=("listCommands", "getMore", "ping", "unknown", "getMore")
+        )
+        executor = WireCommandExecutor(
+            proxy._client, proxy._cursor_store, proxy._session_store, surface=surface
+        )
+
+        result = await executor.execute_command(
+            {"listCommands": 1, "$db": "admin"}, connection=connection
+        )
+        self.assertEqual(set(result["commands"]), {"listCommands", "getMore", "ping"})
+        with self.assertRaisesRegex(OperationFailure, "unsupported wire command"):
+            await executor.execute_command(
+                {"find": "events", "$db": "admin"}, connection=connection
+            )
+
     async def test_wire_update_command_reuses_one_now_for_all_statements(self):
         async with AsyncMongoEcoProxyServer() as proxy:
             connection = proxy._connections.create(("127.0.0.1", 27017))

@@ -27,6 +27,7 @@ class WireSpecialCommandHandlers:
         self._client = client
         self._cursor_store = cursor_store
         self._session_store = session_store
+        self._surface = surface
         self._auth = auth
         self._handshake = WireHandshakeService(client.mongodb_dialect, surface=surface)
         self._handlers = {
@@ -100,4 +101,5 @@ class WireSpecialCommandHandlers:
             client=self._client,
             cursor_store=self._cursor_store,
             auth=self._auth,
+            surface=self._surface,
         )

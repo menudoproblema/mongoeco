@@ -534,6 +534,9 @@ class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     client.close()
 
             commands = await asyncio.to_thread(_exercise)
+            self.assertEqual(len(commands), 46)
+            self.assertEqual(commands["getMore"]["adminFamily"], "cursor")
+            self.assertEqual(commands["saslStart"]["adminFamily"], "auth")
             self.assertEqual(
                 commands["listCollections"]["acceptedNoopOptions"],
                 ["authorizedCollections"],
