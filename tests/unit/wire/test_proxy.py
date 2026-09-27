@@ -243,11 +243,47 @@ class WireProxyUnitTests(unittest.TestCase):
         cursor_id = result["cursor"]["id"]
 
         response = proxy._cursor_store.kill_cursors(
-            {"killCursors": "events", "cursors": [cursor_id, 999]}
+            {"killCursors": "events", "cursors": [cursor_id, 999]},
+            db_name="alpha",
         )
 
         self.assertEqual(response["cursorsKilled"], [cursor_id])
         self.assertEqual(response["cursorsUnknown"], [999])
+
+    def test_cursor_namespace_is_required_for_get_more_and_kill(self):
+        store = AsyncMongoEcoProxyServer()._cursor_store
+        result = store.materialize_command_result(
+            {"find": "events", "batchSize": 1},
+            {
+                "cursor": {
+                    "id": 0,
+                    "ns": "alpha.events",
+                    "firstBatch": [{"seq": 1}, {"seq": 2}],
+                },
+                "ok": 1.0,
+            },
+        )
+        cursor_id = result["cursor"]["id"]
+
+        for db_name, collection in (("beta", "events"), ("alpha", "other")):
+            with self.subTest(db_name=db_name, collection=collection):
+                with self.assertRaisesRegex(OperationFailure, "namespace"):
+                    store.get_more(
+                        {"getMore": cursor_id, "collection": collection},
+                        db_name=db_name,
+                    )
+                rejected_kill = store.kill_cursors(
+                    {"killCursors": collection, "cursors": [cursor_id]},
+                    db_name=db_name,
+                )
+                self.assertEqual(rejected_kill["cursorsKilled"], [])
+                self.assertEqual(rejected_kill["cursorsUnknown"], [cursor_id])
+
+        correct_page = store.get_more(
+            {"getMore": cursor_id, "collection": "events"},
+            db_name="alpha",
+        )
+        self.assertEqual(correct_page["cursor"]["nextBatch"], [{"seq": 2}])
 
     def test_session_store_reuses_lsid_and_starts_transaction_when_requested(self):
         proxy = AsyncMongoEcoProxyServer()
@@ -1355,6 +1391,44 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(logged_out, {"ok": 1.0})
         self.assertEqual(connection.authenticated_users, [])
 
+    async def test_executor_rejects_cross_namespace_cursor_use(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        connection.authenticate(
+            username="ada",
+            db="admin",
+            mechanism="SCRAM-SHA-256",
+        )
+        result = proxy._cursor_store.materialize_command_result(
+            {"find": "events", "batchSize": 1},
+            {
+                "cursor": {
+                    "id": 0,
+                    "ns": "alpha.events",
+                    "firstBatch": [{"seq": 1}, {"seq": 2}],
+                },
+                "ok": 1.0,
+            },
+        )
+        cursor_id = result["cursor"]["id"]
+
+        with self.assertRaisesRegex(OperationFailure, "namespace"):
+            await proxy._executor.execute_command(
+                {"getMore": cursor_id, "collection": "events", "$db": "beta"},
+                connection=connection,
+            )
+        rejected = await proxy._executor.execute_command(
+            {"killCursors": "events", "cursors": [cursor_id], "$db": "beta"},
+            connection=connection,
+        )
+        self.assertEqual(rejected["cursorsKilled"], [])
+        self.assertEqual(rejected["cursorsUnknown"], [cursor_id])
+        correct = await proxy._executor.execute_command(
+            {"getMore": cursor_id, "collection": "events", "$db": "alpha"},
+            connection=connection,
+        )
+        self.assertEqual(correct["cursor"]["nextBatch"], [{"seq": 2}])
+
     async def test_executor_validates_auth_session_and_cursor_shapes_early(self):
         proxy = AsyncMongoEcoProxyServer(
             auth_users=(
@@ -1594,6 +1668,12 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 {"cursor": {"id": 0, "ns": "alpha.events", "firstBatch": []}, "ok": 1.0},
             )
 
+        with self.assertRaisesRegex(OperationFailure, "namespace"):
+            store.materialize_command_result(
+                {"find": "events", "batchSize": 1},
+                {"cursor": {"id": 0, "firstBatch": [1, 2]}, "ok": 1.0},
+            )
+
         with self.assertRaisesRegex(TypeError, "collection must be a string"):
             store.get_more({"getMore": 1, "collection": 1}, db_name="alpha")
 
@@ -1604,10 +1684,16 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             store.get_more({"getMore": 1, "collection": "events", "batchSize": -1}, db_name="alpha")
 
         with self.assertRaisesRegex(TypeError, "killCursors must name a collection"):
-            store.kill_cursors({"killCursors": "", "cursors": []})
+            store.kill_cursors({"killCursors": "", "cursors": []}, db_name="alpha")
 
         with self.assertRaisesRegex(TypeError, "cursors must be a list"):
-            store.kill_cursors({"killCursors": "events", "cursors": "bad"})
+            store.kill_cursors(
+                {"killCursors": "events", "cursors": "bad"},
+                db_name="alpha",
+            )
 
         with self.assertRaisesRegex(TypeError, "cursor ids must be integers"):
-            store.kill_cursors({"killCursors": "events", "cursors": ["bad"]})
+            store.kill_cursors(
+                {"killCursors": "events", "cursors": ["bad"]},
+                db_name="alpha",
+            )

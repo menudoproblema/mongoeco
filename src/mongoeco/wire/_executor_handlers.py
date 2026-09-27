@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from mongoeco.api import AsyncMongoClient
+from typing import TYPE_CHECKING
+
 from mongoeco.wire._executor_passthrough import execute_passthrough_command
-from mongoeco.wire.auth import WireAuthenticationService
-from mongoeco.wire.connections import WireConnectionContext
-from mongoeco.wire.cursors import WireCursorStore
 from mongoeco.wire.handshake import WireHandshakeService
-from mongoeco.wire.requests import WireRequestContext
-from mongoeco.wire.sessions import WireSessionStore
-from mongoeco.wire.surface import WireSurface
+
+if TYPE_CHECKING:
+    from mongoeco.api import AsyncMongoClient
+    from mongoeco.wire.auth import WireAuthenticationService
+    from mongoeco.wire.cursors import WireCursorStore
+    from mongoeco.wire.requests import WireRequestContext
+    from mongoeco.wire.sessions import WireSessionStore
+    from mongoeco.wire.surface import WireSurface
 
 
 class WireSpecialCommandHandlers:
@@ -61,7 +64,10 @@ class WireSpecialCommandHandlers:
 
     async def _handle_kill_cursors(self, context: WireRequestContext) -> dict[str, object]:
         self._auth.require_authenticated(context.connection, context.command_name)
-        return self._cursor_store.kill_cursors(context.command_document)
+        return self._cursor_store.kill_cursors(
+            context.command_document,
+            db_name=context.db_name,
+        )
 
     async def _handle_authenticate(self, context: WireRequestContext) -> dict[str, object]:
         return self._auth.authenticate(context.command_document, connection=context.connection)

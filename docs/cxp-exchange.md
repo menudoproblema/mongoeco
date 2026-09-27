@@ -265,9 +265,20 @@ inventory closes another census without proving every claimed effect. For
 client/compression metadata
 is accepted without replacing previously valid connection metadata; it does
 not assert support for those malformed values. The operational routing remains
-owned by Mongoeco. Whether any wire support
-claims should become exchange compatibility properties is an open owner
-decision; this inventory does not assert such a property or close C4.
+owned by Mongoeco. The inspected PyMongo paths send commands and consume their
+responses; the inspected Cosecha, GDT and Mochuelo checkouts do not compare
+individual Mongoeco wire command names through exchange. All 46 names therefore
+remain Mongoeco operational contracts, with no per-command exchange claim for
+those consumers. This classification does not establish that every argument or
+result field has been conserved, nor does the accessible-repository census
+establish the absence of published external consumers.
+Cursor IDs are scoped to the namespace that produced them. Wire `getMore`
+rejects a known ID presented with another database or collection;
+`killCursors` reports that ID as unknown in the other namespace and leaves
+the original cursor available. Unknown IDs still produce an empty `nextBatch`
+for `getMore`; a paginated result without a namespace is rejected before a
+cursor ID is issued. The positive and negative owner oracles cover both the cursor
+store and the command executor.
 
 The static `serverCount: 1` and `topologyType: unknown` values describe the
 initial local topology seed, not a Mongo deployment. A `hello` observation can

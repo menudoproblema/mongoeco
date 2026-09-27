@@ -35,10 +35,14 @@ class WireCursorStore:
         if batch_size is None or batch_size <= 0 or len(first_batch) <= batch_size:
             cursor["id"] = 0
             return result
+        namespace = cursor.get("ns")
+        if not isinstance(namespace, str) or not namespace:
+            message = "wire cursor namespace must be a non-empty string"
+            raise OperationFailure(message)
         cursor_id = self._next_cursor_id
         self._next_cursor_id += 1
         self._state[cursor_id] = WireCursorState(
-            namespace=str(cursor.get("ns", "")),
+            namespace=namespace,
             remaining_batch=list(first_batch[batch_size:]),
         )
         cursor["id"] = cursor_id
@@ -72,6 +76,10 @@ class WireCursorStore:
                 },
                 "ok": 1.0,
             }
+        expected_namespace = f"{db_name}.{collection_name}"
+        if state.namespace != expected_namespace:
+            message = "getMore cursor namespace does not match the command"
+            raise OperationFailure(message)
         effective_batch_size = len(state.remaining_batch) if not batch_size else batch_size
         next_batch = list(state.remaining_batch[:effective_batch_size])
         state.remaining_batch = state.remaining_batch[effective_batch_size:]
@@ -82,13 +90,18 @@ class WireCursorStore:
         return {
             "cursor": {
                 "id": next_cursor_id,
-                "ns": state.namespace or f"{db_name}.{collection_name}",
+                "ns": state.namespace,
                 "nextBatch": next_batch,
             },
             "ok": 1.0,
         }
 
-    def kill_cursors(self, command_document: dict[str, Any]) -> dict[str, Any]:
+    def kill_cursors(
+        self,
+        command_document: dict[str, Any],
+        *,
+        db_name: str,
+    ) -> dict[str, Any]:
         collection_name = command_document.get("killCursors")
         if not isinstance(collection_name, str) or not collection_name:
             raise TypeError("killCursors must name a collection")
@@ -97,12 +110,15 @@ class WireCursorStore:
             raise TypeError("cursors must be a list")
         killed: list[int] = []
         not_found: list[int] = []
+        expected_namespace = f"{db_name}.{collection_name}"
         for cursor_id in cursors:
             if not isinstance(cursor_id, int) or isinstance(cursor_id, bool):
                 raise TypeError("cursor ids must be integers")
-            if self._state.pop(cursor_id, None) is None:
+            state = self._state.get(cursor_id)
+            if state is None or state.namespace != expected_namespace:
                 not_found.append(cursor_id)
             else:
+                self._state.pop(cursor_id)
                 killed.append(cursor_id)
         return {
             "cursorsKilled": killed,
@@ -124,4 +140,3 @@ class WireCursorStore:
         if not isinstance(batch_size, int) or isinstance(batch_size, bool) or batch_size < 0:
             raise TypeError("batchSize must be a non-negative integer")
         return batch_size
-

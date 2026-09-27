@@ -44,7 +44,6 @@ def test_wire_conservation_matrix_covers_every_advertised_command() -> None:
     assert set(names) == set(WireSurface().supported_commands)
     assert all(row["product"] == "Mongoeco" for row in rows)
     assert all(row["owner"] == "Mongoeco" for row in rows)
-    assert all(row["status"].startswith("bounded_behavior_verified") for row in rows)
 
     surface = PROJECT_ROOT / "src/mongoeco/wire/surface.py"
     routing = PROJECT_ROOT / "src/mongoeco/wire/capabilities.py"
@@ -60,16 +59,12 @@ def test_wire_conservation_matrix_covers_every_advertised_command() -> None:
         assert len(row["routing_sha256"]) == SHA256_HEX_LENGTH
         assert len(row["source_revision"]) == GIT_SHA_LENGTH
         assert row["disposition"] == (
-            "owner_operational; compatibility_classification_pending"
+            "owner_operational; no_exchange_consumer_found_in_inspected_repos"
         )
-        if row["status"].startswith("bounded_behavior_verified"):
-            assert row["positive_evidence"]
-            assert row["negative_evidence"]
-            _assert_test_reference_exists(row["positive_evidence"])
-            _assert_test_reference_exists(row["negative_evidence"])
-        else:
-            assert row["status"] == (
-                "command_behavior_oracles_pending; exchange_classification_pending"
-            )
-            assert not row["positive_evidence"]
-            assert not row["negative_evidence"]
+        assert row["status"] == (
+            "bounded_behavior_verified; exchange_classified_owner_operational"
+        )
+        assert row["positive_evidence"]
+        assert row["negative_evidence"]
+        _assert_test_reference_exists(row["positive_evidence"])
+        _assert_test_reference_exists(row["negative_evidence"])

@@ -21,17 +21,21 @@ catalog option acceptance alone does not establish a deployment guarantee.
 
 ## Current local evidence
 
-- The source suite passes: 4,612 passed, 26 skipped, 2,497 subtests passed.
+- The source suite passes: 4,614 passed, 26 skipped, 2,499 subtests passed.
 - The public API manifest, public typing contract, changed-file Ruff ratchet
   and `git diff --check` pass.
-- The local 4.8.0 candidate passed installed wheel and sdist smokes with CXP 5
-  and Cosecha. The exact commit and artifact hashes are retained in the
-  preparation receipt outside the distributable source.
+- The previous local candidate passed installed wheel and sdist smokes with
+  CXP 5 and Cosecha. Source changes after that candidate require a new exact
+  build and installed-artifact gate before this commit can be nominated.
 - The command option inventory has 71 top-level options across 22 database
   commands. Four accepted no-op options have bounded positive and wrong-type
   cases; all 67 effective options have scoped positive and negative cases.
   The 17 `comment` options retain explicit session metadata and profile only
   when profiling is enabled, through API and wire.
+- All 46 advertised wire command names are classified as Mongoeco operational
+  contracts for the inspected consumers. Cursor IDs now require the creating
+  namespace for `getMore` and `killCursors`; bounded positive and negative
+  cases cover the store and wire executor.
 
 The full [release checklist](release-checklist.md), including remote CI and
 the final installed artifact matrix, remains a gate for any later publication.
