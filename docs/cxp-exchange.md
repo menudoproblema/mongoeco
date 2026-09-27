@@ -185,9 +185,13 @@ not treat their presence in `supportedOptions` as evidence of an effect.
 The 71 advertised top-level options across 22 database commands are inventoried
 in [`cxp-database-command-option-conservation.csv`](cxp-database-command-option-conservation.csv).
 The four accepted no-op options have bounded behavior and wrong-type tests.
-Four effective options (`filter` and `nameOnly` on `listCollections` and
-`listDatabases`) have isolated positive and wrong-type cases. The remaining
-63 are owner claims of effective behavior whose individual positive and
+Six effective options have scoped positive and negative cases: `filter` and
+`nameOnly` on both listing commands, plus `batchSize` on `find` and
+`aggregate`. For `batchSize`, wire limits `firstBatch` and exposes `getMore`;
+direct `database.command()` materializes the full result. Direct `find` uses
+the option for local prefetch, while direct `aggregate` ignores top-level
+`batchSize` and uses `cursor.batchSize` for that purpose. The remaining
+61 are owner claims of effective behavior whose individual positive and
 negative option-level oracles are still pending. The inventory
 does not turn these operational options into CXP compatibility guarantees.
 For `createIndexes`, `supportedOptions` lists only command-level options.

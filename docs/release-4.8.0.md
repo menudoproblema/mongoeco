@@ -21,7 +21,7 @@ catalog option acceptance alone does not establish a deployment guarantee.
 
 ## Current local evidence
 
-- The source suite passes: 4,269 passed, 26 skipped, 2,497 subtests passed.
+- The source suite passes: 4,275 passed, 26 skipped, 2,497 subtests passed.
 - The public API manifest, public typing contract, changed-file Ruff ratchet
   and `git diff --check` pass.
 - The local 4.8.0 candidate passed installed wheel and sdist smokes with CXP 5
@@ -29,8 +29,8 @@ catalog option acceptance alone does not establish a deployment guarantee.
   preparation receipt outside the distributable source.
 - The command option inventory has 71 top-level options across 22 database
   commands. Four accepted no-op options have bounded positive and wrong-type
-  cases; four effective listing options have isolated positive and wrong-type
-  cases. The other 63 owner claims of effective behavior still lack individual
+  cases; six effective options have scoped positive and negative cases.
+  The other 61 owner claims of effective behavior still lack individual
   option-level oracles.
 
 The full [release checklist](release-checklist.md), including remote CI and

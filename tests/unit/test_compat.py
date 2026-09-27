@@ -148,6 +148,43 @@ _NEW_OPERATION_OPTIONS_AFTER_HISTORICAL_SNAPSHOT = (
     ),
 )
 
+_BATCH_SIZE_SCOPE_DELTAS = (
+    (
+        'aggregate',
+        (
+            'Compiled through database admin routing and exposed by both '
+            'database.command(...) and the local wire passthrough.'
+        ),
+        (
+            'Compiled through database admin routing and exposed by API and wire. '
+            'Top-level batchSize limits wire firstBatch only; database.command(...) '
+            'uses cursor.batchSize for local prefetch and returns the full result.'
+        ),
+        'Materialized into the command cursor surface for streamable pipelines.',
+        (
+            'Top-level batchSize limits the wire firstBatch; database.command() '
+            'ignores it and uses cursor.batchSize for local prefetch.'
+        ),
+    ),
+    (
+        'find',
+        (
+            'Compiled through the same find operation path as the public '
+            'collection surface.'
+        ),
+        (
+            'Compiled through the collection find path. batchSize limits wire '
+            'firstBatch; database.command(...) uses it for local prefetch but '
+            'returns the full result.'
+        ),
+        'Materialized into the command cursor surface.',
+        (
+            'Limits the wire firstBatch; database.command() uses it for local '
+            'prefetch but materializes the full command result.'
+        ),
+    ),
+)
+
 
 class _FlatComparable:
     def __init__(self, label: str) -> None:
@@ -235,6 +272,31 @@ class CompatResolutionTests(unittest.TestCase):
                 current['operation_options'][operation].pop(option),
                 {'note': note, 'status': 'accepted-noop'},
             )
+        for (
+            command,
+            old_command_note,
+            new_command_note,
+            old_option_note,
+            new_option_note,
+        ) in _BATCH_SIZE_SCOPE_DELTAS:
+            self.assertEqual(
+                expected['database_commands'][command]['note'], old_command_note
+            )
+            self.assertEqual(
+                current['database_commands'][command]['note'], new_command_note
+            )
+            current['database_commands'][command]['note'] = old_command_note
+            self.assertEqual(
+                expected['database_command_options'][command]['batchSize'],
+                {'note': old_option_note, 'status': 'effective'},
+            )
+            self.assertEqual(
+                current['database_command_options'][command]['batchSize'],
+                {'note': new_option_note, 'status': 'effective'},
+            )
+            current['database_command_options'][command]['batchSize']['note'] = (
+                old_option_note
+            )
         self.assertEqual(
             failpoint,
             {
@@ -302,6 +364,19 @@ class CompatResolutionTests(unittest.TestCase):
             new_line = f'- `{option}`: `status`="accepted-noop", `note`="{note}"\n'
             self.assertEqual(current.count(new_line), 1)
             current = current.replace(new_line, '', 1)
+        for (
+            _, old_command_note, new_command_note, old_option_note, new_option_note
+        ) in _BATCH_SIZE_SCOPE_DELTAS:
+            for old_line, new_line in (
+                (f'- `note`: `{old_command_note}`', f'- `note`: `{new_command_note}`'),
+                (
+                    f'- `batchSize`: `status`="effective", `note`="{old_option_note}"',
+                    f'- `batchSize`: `status`="effective", `note`="{new_option_note}"',
+                ),
+            ):
+                self.assertEqual(expected.count(old_line), 1)
+                self.assertEqual(current.count(new_line), 1)
+                current = current.replace(new_line, old_line, 1)
         suffix = "## Local Runtime Subsets\n"
         failpoint_section = (
             "### `configureFailPoint`\n"
