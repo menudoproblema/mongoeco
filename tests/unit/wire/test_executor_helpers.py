@@ -106,6 +106,28 @@ class WireExecutorHelperCoverageTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(OperationFailure, "document response"):
             _materialize_passthrough_result({"find": "events"}, ["bad"], cursor_store=WireCursorStore())
 
+    async def test_wire_list_commands_rejects_malformed_database_catalog(self):
+        context = WireRequestContext(
+            db_name="admin",
+            command_name="listCommands",
+            command_document={"listCommands": 1},
+            raw_body={"listCommands": 1, "$db": "admin"},
+            capability=resolve_wire_command_capability("listCommands"),
+            connection=WireConnectionContext(connection_id=1),
+        )
+        auth = SimpleNamespace(require_authenticated=lambda *_args, **_kwargs: None)
+        for invalid in ([], {"commands": []}):
+            with self.subTest(result=invalid), self.assertRaisesRegex(
+                OperationFailure, "command catalog"
+            ):
+                await execute_passthrough_command(
+                    context,
+                    client=_FakeClient(invalid),
+                    cursor_store=WireCursorStore(),
+                    auth=auth,
+                    surface=WireSurface(),
+                )
+
     async def test_special_command_handlers_dispatch_authenticate(self):
         auth = WireAuthenticationService((WireAuthUser("ada", "pencil"),))
         handlers = WireSpecialCommandHandlers(
