@@ -83,6 +83,40 @@ print("cxp_catalog_sha256", catalog.sha256)
 """
 
 
+def _published_47_contract_smoke_script() -> str:
+    # The already published 4.7.0 artifact retains its own CXP 4 contract.
+    return """
+import importlib
+import mongoeco
+import mongoeco.compat as compat
+import mongoeco.cxp as cxp
+
+assert mongoeco.__version__ == "4.7.0"
+for name in (
+    "MONGODB_INTERFACE",
+    "MONGODB_CATALOG",
+    "export_cxp_capability_catalog",
+    "export_cxp_operation_catalog",
+    "export_cxp_profile_catalog",
+    "export_cxp_profile_support_catalog",
+):
+    assert hasattr(cxp, name), name
+    assert name in cxp.__all__, name
+for module_name in (
+    "mongoeco.cxp.descriptors",
+    "mongoeco.cxp.contracts",
+    "mongoeco.cxp.handshake",
+    "mongoeco.cxp.telemetry",
+):
+    importlib.import_module(module_name)
+catalog = cxp.export_cxp_capability_catalog()
+assert catalog["interface"] == "database/mongodb"
+assert compat.export_cxp_catalog()["interface"] == catalog["interface"]
+assert "profiles" in catalog and "profileSupport" in catalog
+print("historical contract", mongoeco.__version__)
+"""
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -121,8 +155,17 @@ def main() -> int:
             shutil.rmtree(venv_root)
         _run([sys.executable, "-m", "venv", str(venv_root)])
         _install_from_pypi(pip_bin, "--upgrade", "pip")
-        _install_from_pypi(pip_bin, f"mongoeco=={args.version}")
-        script = f"EXPECTED_VERSION = {args.version!r}\n{_contract_smoke_script()}"
+        if args.version == "4.7.0":
+            # Preserve evidence for the historical release without carrying its
+            # protocol implementation into the current package. Its published
+            # dependency metadata does not exclude incompatible CXP 5.
+            _install_from_pypi(
+                pip_bin, "mongoeco==4.7.0", "cxp[exchange]==4.3.0"
+            )
+            script = _published_47_contract_smoke_script()
+        else:
+            _install_from_pypi(pip_bin, f"mongoeco=={args.version}")
+            script = f"EXPECTED_VERSION = {args.version!r}\n{_contract_smoke_script()}"
         _run([str(python_bin), "-c", script], cwd=Path("/tmp"))
     finally:
         if not keep_venv:

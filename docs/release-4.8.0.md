@@ -30,6 +30,9 @@ catalog option acceptance alone does not establish a deployment guarantee.
 - Fresh constrained pip installations of the candidate wheel on Python 3.13
   and 3.14 resolve published CXP 5.0.0, install the CI test and benchmark
   dependencies, pass `pip check` and import from `site-packages`.
+- The latest released artifact smoke checks historical Mongoeco 4.7.0 with
+  CXP 4.3.0, the last compatible published CXP major. It does not claim that
+  Mongoeco 4.7.0 resolves safely without a CXP upper bound.
 - Reproducible wheel and sdist builds of the local candidate pass installed
   smoke tests with CXP 5 and Cosecha. Four isolated Python 3.13/3.14 cells
   each pass 13 consumer smokes, including complete wire `listCommands`.
