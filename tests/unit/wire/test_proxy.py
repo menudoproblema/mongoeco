@@ -394,6 +394,34 @@ class WireProxyUnitTests(unittest.TestCase):
         )
         self.assertEqual(correct_page["cursor"]["nextBatch"], [{"seq": 2}])
 
+    def test_cursor_session_key_distinguishes_boolean_and_integer_values(self):
+        store = AsyncMongoEcoProxyServer()._cursor_store
+        first = store.materialize_command_result(
+            {"find": "events", "batchSize": 1},
+            {
+                "cursor": {
+                    "id": 0,
+                    "ns": "alpha.events",
+                    "firstBatch": [{"seq": 1}, {"seq": 2}],
+                },
+                "ok": 1.0,
+            },
+            lsid={"id": True},
+        )
+        cursor_id = first["cursor"]["id"]
+        with self.assertRaisesRegex(OperationFailure, "session"):
+            store.get_more(
+                {"getMore": cursor_id, "collection": "events"},
+                db_name="alpha",
+                lsid={"id": 1},
+            )
+        correct = store.get_more(
+            {"getMore": cursor_id, "collection": "events"},
+            db_name="alpha",
+            lsid={"id": True},
+        )
+        self.assertEqual(correct["cursor"]["nextBatch"], [{"seq": 2}])
+
     def test_session_store_reuses_lsid_and_starts_transaction_when_requested(self):
         proxy = AsyncMongoEcoProxyServer()
         store = WireSessionStore()
@@ -1458,6 +1486,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 },
                 "ok": 1.0,
             },
+            connection=connection,
         )
         cursor_id = cursor_result["cursor"]["id"]
         lsid = {"id": "wire-txn"}
@@ -1518,6 +1547,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 },
                 "ok": 1.0,
             },
+            connection=connection,
         )
         cursor_id = result["cursor"]["id"]
 
@@ -1556,6 +1586,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 },
                 "ok": 1.0,
             },
+            connection=connection,
         )
         cursor_id = first["cursor"]["id"]
         result = await proxy._executor.execute_command(
@@ -1573,6 +1604,180 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 "ok": 1.0,
             },
         )
+
+    async def test_executor_get_more_preserves_creating_session(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        collection = proxy._client.get_database("alpha").get_collection("events")
+        await collection.insert_many([{"seq": 1}, {"seq": 2}])
+        lsid = {"tenant": "one", "id": "session-1"}
+        first = await proxy._executor.execute_command(
+            {
+                "find": "events",
+                "filter": {},
+                "batchSize": 1,
+                "$db": "alpha",
+                "lsid": lsid,
+            },
+            connection=connection,
+        )
+        cursor_id = first["cursor"]["id"]
+        self.assertGreater(cursor_id, 0)
+
+        for wrong_lsid in (None, {"id": "other", "tenant": "one"}):
+            with self.subTest(wrong_lsid=wrong_lsid):
+                body = {"getMore": cursor_id, "collection": "events", "$db": "alpha"}
+                if wrong_lsid is not None:
+                    body["lsid"] = wrong_lsid
+                with self.assertRaisesRegex(OperationFailure, "session"):
+                    await proxy._executor.execute_command(body, connection=connection)
+
+        correct = await proxy._executor.execute_command(
+            {
+                "getMore": cursor_id,
+                "collection": "events",
+                "$db": "alpha",
+                "lsid": {"id": "session-1", "tenant": "one"},
+            },
+            connection=connection,
+        )
+        self.assertEqual(correct["cursor"]["id"], 0)
+        self.assertEqual([item["seq"] for item in correct["cursor"]["nextBatch"]], [2])
+
+        another = await proxy._executor.execute_command(
+            {
+                "find": "events",
+                "filter": {},
+                "batchSize": 1,
+                "$db": "alpha",
+                "lsid": lsid,
+            },
+            connection=connection,
+        )
+        killed = await proxy._executor.execute_command(
+            {
+                "killCursors": "events",
+                "cursors": [another["cursor"]["id"]],
+                "$db": "alpha",
+            },
+            connection=connection,
+        )
+        self.assertEqual(killed["cursorsKilled"], [another["cursor"]["id"]])
+
+    async def test_executor_get_more_with_creating_session(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        collection = proxy._client.get_database("alpha").get_collection("events")
+        await collection.insert_many([{"seq": 1}, {"seq": 2}])
+        lsid = {"tenant": "one", "id": "session-positive"}
+        first = await proxy._executor.execute_command(
+            {"find": "events", "batchSize": 1, "$db": "alpha", "lsid": lsid},
+            connection=connection,
+        )
+        cursor_id = first["cursor"]["id"]
+        self.assertGreater(cursor_id, 0)
+        page = await proxy._executor.execute_command(
+            {
+                "getMore": cursor_id,
+                "collection": "events",
+                "$db": "alpha",
+                "lsid": {"id": "session-positive", "tenant": "one"},
+            },
+            connection=connection,
+        )
+        self.assertEqual(page["cursor"]["id"], 0)
+        self.assertEqual([item["seq"] for item in page["cursor"]["nextBatch"]], [2])
+
+        second = await proxy._executor.execute_command(
+            {"find": "events", "batchSize": 1, "$db": "alpha", "lsid": lsid},
+            connection=connection,
+        )
+        killed = await proxy._executor.execute_command(
+            {
+                "killCursors": "events",
+                "cursors": [second["cursor"]["id"]],
+                "$db": "alpha",
+            },
+            connection=connection,
+        )
+        self.assertEqual(killed["cursorsKilled"], [second["cursor"]["id"]])
+
+    async def test_executor_cursor_rejects_another_authenticated_user(self):
+        proxy = AsyncMongoEcoProxyServer(
+            auth_users=(WireAuthUser("ada", "secret"), WireAuthUser("bob", "secret")),
+        )
+        ada = proxy._connections.create(("127.0.0.1", 27017))
+        ada.authenticate(username="ada", db="admin", mechanism="SCRAM-SHA-256")
+        bob = proxy._connections.create(("127.0.0.1", 27018))
+        bob.authenticate(username="bob", db="admin", mechanism="SCRAM-SHA-256")
+        collection = proxy._client.get_database("alpha").get_collection("events")
+        await collection.insert_many([{"seq": 1}, {"seq": 2}])
+        first = await proxy._executor.execute_command(
+            {"find": "events", "batchSize": 1, "$db": "alpha"},
+            connection=ada,
+        )
+        cursor_id = first["cursor"]["id"]
+
+        with self.assertRaisesRegex(OperationFailure, "user"):
+            await proxy._executor.execute_command(
+                {"getMore": cursor_id, "collection": "events", "$db": "alpha"},
+                connection=bob,
+            )
+        rejected = await proxy._executor.execute_command(
+            {"killCursors": "events", "cursors": [cursor_id], "$db": "alpha"},
+            connection=bob,
+        )
+        self.assertEqual(rejected["cursorsKilled"], [])
+        self.assertEqual(rejected["cursorsUnknown"], [cursor_id])
+
+        another_ada = proxy._connections.create(("127.0.0.1", 27019))
+        another_ada.authenticate(
+            username="ada", db="admin", mechanism="SCRAM-SHA-256"
+        )
+        correct = await proxy._executor.execute_command(
+            {"getMore": cursor_id, "collection": "events", "$db": "alpha"},
+            connection=another_ada,
+        )
+        self.assertEqual([item["seq"] for item in correct["cursor"]["nextBatch"]], [2])
+
+    async def test_executor_cursor_accepts_same_user_on_another_connection(self):
+        proxy = AsyncMongoEcoProxyServer(
+            auth_users=(WireAuthUser("ada", "secret"),),
+        )
+        first_connection = proxy._connections.create(("127.0.0.1", 27017))
+        first_connection.authenticate(
+            username="ada", db="admin", mechanism="SCRAM-SHA-256"
+        )
+        second_connection = proxy._connections.create(("127.0.0.1", 27018))
+        second_connection.authenticate(
+            username="ada", db="admin", mechanism="SCRAM-SHA-1"
+        )
+        collection = proxy._client.get_database("alpha").get_collection("events")
+        await collection.insert_many([{"seq": 1}, {"seq": 2}])
+        first = await proxy._executor.execute_command(
+            {"find": "events", "batchSize": 1, "$db": "alpha"},
+            connection=first_connection,
+        )
+        cursor_id = first["cursor"]["id"]
+        page = await proxy._executor.execute_command(
+            {"getMore": cursor_id, "collection": "events", "$db": "alpha"},
+            connection=second_connection,
+        )
+        self.assertEqual([item["seq"] for item in page["cursor"]["nextBatch"]], [2])
+
+        another = await proxy._executor.execute_command(
+            {"find": "events", "batchSize": 1, "$db": "alpha"},
+            connection=first_connection,
+        )
+        killed = await proxy._executor.execute_command(
+            {
+                "killCursors": "events",
+                "cursors": [another["cursor"]["id"]],
+                "$db": "alpha",
+            },
+            connection=second_connection,
+        )
+        self.assertEqual(killed["cursorsKilled"], [another["cursor"]["id"]])
 
     async def test_executor_validates_auth_session_and_cursor_shapes_early(self):
         proxy = AsyncMongoEcoProxyServer(

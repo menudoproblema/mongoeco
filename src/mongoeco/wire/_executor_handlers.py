@@ -60,13 +60,19 @@ class WireSpecialCommandHandlers:
 
     async def _handle_get_more(self, context: WireRequestContext) -> dict[str, object]:
         self._auth.require_authenticated(context.connection, context.command_name)
-        return self._cursor_store.get_more(context.command_document, db_name=context.db_name)
+        return self._cursor_store.get_more(
+            context.command_document,
+            db_name=context.db_name,
+            lsid=context.raw_body.get("lsid"),
+            connection=context.connection,
+        )
 
     async def _handle_kill_cursors(self, context: WireRequestContext) -> dict[str, object]:
         self._auth.require_authenticated(context.connection, context.command_name)
         return self._cursor_store.kill_cursors(
             context.command_document,
             db_name=context.db_name,
+            connection=context.connection,
         )
 
     async def _handle_authenticate(self, context: WireRequestContext) -> dict[str, object]:

@@ -1,15 +1,43 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.errors import OperationFailure
+from mongoeco.wire._session_identity import wire_session_key
+
+
+if TYPE_CHECKING:
+    from mongoeco.wire.connections import WireConnectionContext
+
+
+def _principal_key(
+    connection: WireConnectionContext | None,
+) -> tuple[tuple[str, str], ...]:
+    if connection is None:
+        return ()
+    identities: set[tuple[str, str]] = set()
+    for item in connection.authenticated_users:
+        user = item.get("user")
+        database = item.get("db")
+        if (
+            not isinstance(user, str)
+            or not user
+            or not isinstance(database, str)
+            or not database
+        ):
+            message = "wire connection user identity is incomplete"
+            raise OperationFailure(message)
+        identities.add((database, user))
+    return tuple(sorted(identities))
 
 
 @dataclass(slots=True)
 class WireCursorState:
     namespace: str
     remaining_batch: list[object]
+    session_key: str | None = None
+    principal_key: tuple[tuple[str, str], ...] = ()
 
 
 class WireCursorStore:
@@ -24,6 +52,9 @@ class WireCursorStore:
         self,
         command_document: dict[str, Any],
         result: dict[str, Any],
+        *,
+        lsid: object | None = None,
+        connection: WireConnectionContext | None = None,
     ) -> dict[str, Any]:
         cursor = result.get("cursor")
         if not isinstance(cursor, dict):
@@ -44,6 +75,8 @@ class WireCursorStore:
         self._state[cursor_id] = WireCursorState(
             namespace=namespace,
             remaining_batch=list(first_batch[batch_size:]),
+            session_key=wire_session_key(lsid) if lsid is not None else None,
+            principal_key=_principal_key(connection),
         )
         cursor["id"] = cursor_id
         cursor["firstBatch"] = list(first_batch[:batch_size])
@@ -54,6 +87,8 @@ class WireCursorStore:
         command_document: dict[str, Any],
         *,
         db_name: str,
+        lsid: object | None = None,
+        connection: WireConnectionContext | None = None,
     ) -> dict[str, Any]:
         cursor_id = command_document.get("getMore")
         if not isinstance(cursor_id, int) or isinstance(cursor_id, bool):
@@ -80,6 +115,13 @@ class WireCursorStore:
         if state.namespace != expected_namespace:
             message = "getMore cursor namespace does not match the command"
             raise OperationFailure(message)
+        request_session_key = wire_session_key(lsid) if lsid is not None else None
+        if state.session_key != request_session_key:
+            message = "getMore cursor session does not match the creating command"
+            raise OperationFailure(message)
+        if state.principal_key != _principal_key(connection):
+            message = "getMore cursor user does not match the creating command"
+            raise OperationFailure(message)
         effective_batch_size = len(state.remaining_batch) if not batch_size else batch_size
         next_batch = list(state.remaining_batch[:effective_batch_size])
         state.remaining_batch = state.remaining_batch[effective_batch_size:]
@@ -101,6 +143,7 @@ class WireCursorStore:
         command_document: dict[str, Any],
         *,
         db_name: str,
+        connection: WireConnectionContext | None = None,
     ) -> dict[str, Any]:
         collection_name = command_document.get("killCursors")
         if not isinstance(collection_name, str) or not collection_name:
@@ -111,11 +154,16 @@ class WireCursorStore:
         killed: list[int] = []
         not_found: list[int] = []
         expected_namespace = f"{db_name}.{collection_name}"
+        request_principal = _principal_key(connection)
         for cursor_id in cursors:
             if not isinstance(cursor_id, int) or isinstance(cursor_id, bool):
                 raise TypeError("cursor ids must be integers")
             state = self._state.get(cursor_id)
-            if state is None or state.namespace != expected_namespace:
+            if (
+                state is None
+                or state.namespace != expected_namespace
+                or state.principal_key != request_principal
+            ):
                 not_found.append(cursor_id)
             else:
                 self._state.pop(cursor_id)

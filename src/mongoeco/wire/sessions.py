@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from mongoeco.api import AsyncMongoClient
 from mongoeco.errors import OperationFailure
-from mongoeco.session import ClientSession
-from mongoeco.types import ObjectId
-from mongoeco.wire.capabilities import WireCommandCapability
+from mongoeco.wire._session_identity import wire_session_key
+
+if TYPE_CHECKING:
+    from mongoeco.api import AsyncMongoClient
+    from mongoeco.session import ClientSession
+    from mongoeco.wire.capabilities import WireCommandCapability
 
 
 @dataclass(slots=True)
@@ -38,7 +39,7 @@ class WireSessionStore:
         lsid = body.get("lsid")
         if lsid is None:
             return None
-        key = self._key_for_lsid(lsid)
+        key = wire_session_key(lsid)
         context = self._sessions.get(key)
         if context is None or not context.session.active:
             context = WireSessionContext(key=key, session=client.start_session())
@@ -50,7 +51,7 @@ class WireSessionStore:
         if not isinstance(session_specs, list):
             raise TypeError("endSessions must be a list")
         for session_spec in session_specs:
-            key = self._key_for_lsid(session_spec)
+            key = wire_session_key(session_spec)
             context = self._sessions.get(key)
             if context is not None:
                 context.session.close()
@@ -73,7 +74,7 @@ class WireSessionStore:
         lsid = body.get("lsid")
         if lsid is None:
             raise OperationFailure("wire transaction command requires lsid")
-        key = self._key_for_lsid(lsid)
+        key = wire_session_key(lsid)
         context = self._sessions.get(key)
         if context is None or not context.session.active:
             raise OperationFailure("wire transaction command requires an active session")
@@ -88,23 +89,3 @@ class WireSessionStore:
                 raise OperationFailure("startTransaction requires autocommit=false")
             if not session.transaction_active:
                 session.start_transaction()
-
-    @classmethod
-    def _key_for_lsid(cls, lsid: object) -> str:
-        if isinstance(lsid, dict):
-            return repr(tuple((key, cls._freeze(value)) for key, value in sorted(lsid.items())))
-        return repr(cls._freeze(lsid))
-
-    @classmethod
-    def _freeze(cls, value: object) -> object:
-        if isinstance(value, dict):
-            return tuple((key, cls._freeze(item)) for key, item in sorted(value.items()))
-        if isinstance(value, list):
-            return tuple(cls._freeze(item) for item in value)
-        if isinstance(value, uuid.UUID):
-            return ("uuid", str(value))
-        if isinstance(value, (bytes, bytearray)):
-            return ("bytes", bytes(value))
-        if isinstance(value, ObjectId):
-            return ("objectid", str(value))
-        return value

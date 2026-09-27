@@ -279,6 +279,18 @@ the original cursor available. Unknown IDs still produce an empty `nextBatch`
 for `getMore`; a paginated result without a namespace is rejected before a
 cursor ID is issued. The positive and negative owner oracles cover both the cursor
 store and the command executor.
+When the creating command carries `lsid`, `getMore` must carry the same
+session identity. A missing or different `lsid` is rejected without consuming
+the cursor; BSON document key order does not change identity. A cursor created
+without `lsid` likewise does not acquire a session later. `killCursors` can
+omit `lsid` as permitted by the
+[MongoDB driver sessions specification](https://github.com/mongodb/specifications/blob/master/source/sessions/driver-sessions.md#sessions-and-cursors).
+This local correlation does not make a deployment-level exchange claim.
+With wire authentication enabled, a cursor also remains bound to its creating
+authenticated user identity. A different user cannot read it with `getMore`
+or remove it with `killCursors`, while the same user can continue from another
+connection. This matches the user coauthorization condition described by the
+[MongoDB server authentication design](https://github.com/mongodb/mongo/blob/master/src/mongo/db/auth/README.md).
 The 20 request and result fields in this bounded cursor path are itemized in
 [`cxp-wire-cursor-field-conservation.csv`](cxp-wire-cursor-field-conservation.csv),
 including effective database scope, first and subsequent batches, and the

@@ -34,7 +34,11 @@ catalog option acceptance alone does not establish a deployment guarantee.
   when profiling is enabled, through API and wire.
 - All 46 advertised wire command names are classified as Mongoeco operational
   contracts for the inspected consumers. Cursor IDs now require the creating
-  namespace for `getMore` and `killCursors`; bounded positive and negative
+  namespace for `getMore` and `killCursors`; `getMore` also requires the
+  creating session identity when present, while `killCursors` may omit it.
+  Authenticated cursors stay bound to their creating user identity across
+  connections.
+  Bounded positive and negative
   cases cover the store and wire executor. The 20 request and response fields
   of this cursor path have a separate conservation matrix. The remaining wire
   command fields are still pending.

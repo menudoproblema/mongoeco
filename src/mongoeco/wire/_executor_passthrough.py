@@ -55,6 +55,8 @@ async def _execute_authenticated_passthrough_command(
         context.command_document,
         result,
         cursor_store=cursor_store,
+        lsid=context.raw_body.get("lsid"),
+        connection=context.connection,
     )
 
 
@@ -79,7 +81,14 @@ def _materialize_passthrough_result(
     result: object,
     *,
     cursor_store,
+    lsid: object | None = None,
+    connection=None,
 ) -> dict[str, Any]:
     if not isinstance(result, dict):
         raise OperationFailure("wire command must resolve to a document response")
-    return cursor_store.materialize_command_result(command_document, result)
+    return cursor_store.materialize_command_result(
+        command_document,
+        result,
+        lsid=lsid,
+        connection=connection,
+    )
