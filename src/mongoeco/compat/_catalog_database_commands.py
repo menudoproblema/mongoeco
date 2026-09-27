@@ -10,7 +10,11 @@ DATABASE_COMMAND_SUPPORT_CATALOG = MappingProxyType(
         "aggregate": DatabaseCommandSupport(
             family="admin_read",
             supports_explain=True,
-            note="Compiled through database admin routing and exposed by both database.command(...) and the local wire passthrough.",
+            note=(
+                "Compiled through database admin routing and exposed by API and wire. "
+                "Top-level batchSize limits wire firstBatch only; database.command(...) "
+                "uses cursor.batchSize for local prefetch and returns the full result."
+            ),
         ),
         "buildInfo": DatabaseCommandSupport(
             family="admin_introspection",
@@ -86,7 +90,11 @@ DATABASE_COMMAND_SUPPORT_CATALOG = MappingProxyType(
         "find": DatabaseCommandSupport(
             family="admin_read",
             supports_explain=True,
-            note="Compiled through the same find operation path as the public collection surface.",
+            note=(
+                "Compiled through the collection find path. batchSize limits wire "
+                "firstBatch; database.command(...) uses it for local prefetch but "
+                "returns the full result."
+            ),
         ),
         "findAndModify": DatabaseCommandSupport(
             family="admin_find_and_modify",

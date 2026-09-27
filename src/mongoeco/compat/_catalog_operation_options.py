@@ -157,7 +157,11 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = MappingProxyType(
                 "maxTimeMS": OperationOptionSupport(_EFFECTIVE, "Enforced against local aggregate execution and explain paths."),
                 "allowDiskUse": OperationOptionSupport(_EFFECTIVE, "Applied to blocking aggregate stages through the same local spill policy as the public API."),
                 "let": OperationOptionSupport(_EFFECTIVE, "Propagated into aggregate expression evaluation and subpipelines."),
-                "batchSize": OperationOptionSupport(_EFFECTIVE, "Materialized into the command cursor surface for streamable pipelines."),
+                "batchSize": OperationOptionSupport(
+                    _EFFECTIVE,
+                    "Top-level batchSize limits the wire firstBatch; "
+                    "database.command() ignores it and uses cursor.batchSize for local prefetch.",
+                ),
             }
         ),
         "collStats": MappingProxyType(
@@ -239,7 +243,11 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = MappingProxyType(
                 "hint": OperationOptionSupport(_EFFECTIVE, "Applied to command read planning and surfaced in explain."),
                 "comment": OperationOptionSupport(_EFFECTIVE, "Recorded in engine session metadata for the command execution."),
                 "maxTimeMS": OperationOptionSupport(_EFFECTIVE, "Enforced during command read execution and explain."),
-                "batchSize": OperationOptionSupport(_EFFECTIVE, "Materialized into the command cursor surface."),
+                "batchSize": OperationOptionSupport(
+                    _EFFECTIVE,
+                    "Limits the wire firstBatch; database.command() uses it for local "
+                    "prefetch but materializes the full command result.",
+                ),
                 "let": OperationOptionSupport(_EFFECTIVE, "Propagated into command-level $expr evaluation."),
             }
         ),
