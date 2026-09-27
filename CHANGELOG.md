@@ -71,6 +71,10 @@ usa Semantic Versioning.
 - Preserve command-level `comment` in explicit session metadata after nested
   operations, including admin reads and writes. Keep `system.profile`
   observation conditional on profiling being enabled.
+- Do not advertise wire compression in `hello` or its aliases: the proxy does
+  not support `OP_COMPRESSED`. A PyMongo client configured for zlib can now
+  continue uncompressed after the handshake. `WireSurface.compression` remains
+  accepted without transport effect.
 
 ## [4.7.0] - 2026-09-13
 

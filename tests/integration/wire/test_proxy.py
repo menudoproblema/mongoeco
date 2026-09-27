@@ -14,6 +14,29 @@ from mongoeco.wire import AsyncMongoEcoProxyServer
 
 @unittest.skipIf(PyMongoClient is None, "pymongo is required for wire proxy tests")
 class WireProxyIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_proxy_does_not_negotiate_unsupported_wire_compression(self):
+        async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
+            uri = proxy.address.uri
+
+            def _exercise() -> tuple[float, str]:
+                client = PyMongoClient(
+                    uri,
+                    compressors="zlib",
+                    serverSelectionTimeoutMS=3000,
+                    directConnection=True,
+                )
+                try:
+                    ping = client.admin.command("ping")
+                    client.alpha.events.insert_one({"kind": "uncompressed"})
+                    found = client.alpha.events.find_one({"kind": "uncompressed"})
+                    return ping["ok"], found["kind"]
+                finally:
+                    client.close()
+
+            ok, kind = await asyncio.to_thread(_exercise)
+            self.assertEqual(ok, 1.0)
+            self.assertEqual(kind, "uncompressed")
+
     async def test_proxy_exposes_nested_create_indexes_noop_contract(self):
         async with AsyncMongoEcoProxyServer(engine=MemoryEngine()) as proxy:
             uri = proxy.address.uri

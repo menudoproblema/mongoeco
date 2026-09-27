@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import datetime
-from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.api._async.database_commands import build_info_result
-from mongoeco.compat import MongoDialect
-from mongoeco.types import HelloDocument
-from mongoeco.wire.connections import WireConnectionContext
 from mongoeco.wire.surface import WireSurface
+
+if TYPE_CHECKING:
+    from mongoeco.compat import MongoDialect
+    from mongoeco.types import HelloDocument
+    from mongoeco.wire.connections import WireConnectionContext
 
 
 class WireHandshakeService:
@@ -40,7 +41,6 @@ class WireHandshakeService:
             "minWireVersion": self._surface.min_wire_version,
             "maxWireVersion": self._surface.max_wire_version,
             "readOnly": False,
-            "compression": list(self._surface.compression or connection.compression),
             "localTime": datetime.datetime.now(datetime.UTC),
             "ok": 1.0,
             "version": build_info.version,

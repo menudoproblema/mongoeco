@@ -685,7 +685,7 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(document["maxMessageSizeBytes"], 456)
         self.assertEqual(document["maxWriteBatchSize"], 789)
         self.assertEqual(document["logicalSessionTimeoutMinutes"], 12)
-        self.assertEqual(document["compression"], ["snappy"])
+        self.assertNotIn("compression", document)
         self.assertTrue(document["ismaster"])
 
     def test_authentication_service_authenticates_logout_and_requires_auth(self):
@@ -934,6 +934,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(connection.last_hello_command, "hello")
         self.assertEqual(connection.client_metadata, {"application": {"name": "wire-tests"}})
         self.assertEqual(connection.compression, ("noop",))
+        self.assertNotIn("compression", result)
 
     async def test_executor_hello_does_not_promote_malformed_optional_metadata(self):
         proxy = AsyncMongoEcoProxyServer()
@@ -949,6 +950,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             connection=connection,
         )
         self.assertEqual(accepted["ok"], 1.0)
+        self.assertNotIn("compression", accepted)
 
         malformed = await proxy._executor.execute_command(
             {
@@ -963,6 +965,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(connection.hello_count, 2)
         self.assertEqual(connection.client_metadata, {"application": {"name": "valid"}})
         self.assertEqual(connection.compression, ("noop",))
+        self.assertNotIn("compression", malformed)
 
     async def test_executor_preserves_both_legacy_handshake_aliases(self):
         proxy = AsyncMongoEcoProxyServer()
@@ -971,11 +974,12 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         for alias in ("isMaster", "ismaster"):
             with self.subTest(alias=alias):
                 result = await proxy._executor.execute_command(
-                    {alias: 1, "$db": "admin"},
+                    {alias: 1, "$db": "admin", "compression": ["zlib"]},
                     connection=connection,
                 )
                 self.assertEqual(result["ok"], 1.0)
                 self.assertTrue(result["ismaster"])
+                self.assertNotIn("compression", result)
                 self.assertEqual(connection.last_hello_command, alias)
 
         self.assertEqual(connection.hello_count, 2)

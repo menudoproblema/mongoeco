@@ -50,6 +50,10 @@ catalog option acceptance alone does not establish a deployment guarantee.
   effective context fields of this cursor path have a separate conservation
   matrix. The remaining wire
   command fields are still pending.
+- Wire `hello` no longer announces client-requested compressors: the proxy
+  does not handle `OP_COMPRESSED`. Valid preferences remain connection metadata
+  and the response's `compression` field is absent. The existing
+  `WireSurface.compression` configuration is accepted without transport effect.
 
 The full [release checklist](release-checklist.md), including remote CI and
 the final installed artifact matrix, remains a gate for any later publication.

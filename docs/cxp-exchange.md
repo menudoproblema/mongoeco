@@ -264,14 +264,18 @@ inventory closes another census without proving every claimed effect. For
 `hello`, malformed optional
 client/compression metadata
 is accepted without replacing previously valid connection metadata; it does
-not assert support for those malformed values. The operational routing remains
-owned by Mongoeco. The inspected PyMongo paths send commands and consume their
-responses; the inspected Cosecha, GDT and Mochuelo checkouts do not compare
-individual Mongoeco wire command names through exchange. All 46 names therefore
-remain Mongoeco operational contracts, with no per-command exchange claim for
-those consumers. This classification does not establish that every argument or
-result field has been conserved, nor does the accessible-repository census
-establish the absence of published external consumers.
+not assert support for those malformed values. Client compression preferences
+remain connection metadata. The proxy does not handle `OP_COMPRESSED` and
+therefore omits `compression` from its `hello` response even when the client
+requests a compressor or `WireSurface.compression` is configured. That surface
+field is accepted without transport effect in this version. The operational
+routing remains owned by Mongoeco. The inspected PyMongo paths send commands
+and consume their responses; the inspected Cosecha, GDT and Mochuelo checkouts
+do not compare individual Mongoeco wire command names through exchange. All 46
+names therefore remain Mongoeco operational contracts, with no per-command
+exchange claim for those consumers. This classification does not establish
+that every argument or result field has been conserved. The accessible
+repository census does not establish the absence of published external consumers.
 Cursor IDs are scoped to the namespace that produced them. Wire `getMore`
 rejects a known ID presented with another database or collection;
 `killCursors` reports that ID as unknown in the other namespace and leaves
