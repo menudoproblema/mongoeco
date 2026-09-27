@@ -293,6 +293,45 @@ class WireProxyUnitTests(unittest.TestCase):
                 "ok": 1.0,
             },
         )
+        unpaged = store.materialize_command_result(
+            {"find": "events", "batchSize": 2},
+            {
+                "cursor": {
+                    "id": 77,
+                    "ns": "alpha.events",
+                    "firstBatch": [{"seq": 4}, {"seq": 5}],
+                },
+                "ok": 1.0,
+            },
+        )
+        self.assertEqual(unpaged["cursor"]["id"], 0)
+        zero_batch_first = store.materialize_command_result(
+            {"find": "events", "batchSize": 1},
+            {
+                "cursor": {
+                    "id": 0,
+                    "ns": "alpha.events",
+                    "firstBatch": [{"seq": 6}, {"seq": 7}, {"seq": 8}],
+                },
+                "ok": 1.0,
+            },
+        )
+        zero_batch_id = zero_batch_first["cursor"]["id"]
+        zero_batch_result = store.get_more(
+            {"getMore": zero_batch_id, "collection": "events", "batchSize": 0},
+            db_name="alpha",
+        )
+        self.assertEqual(
+            zero_batch_result,
+            {
+                "cursor": {
+                    "id": 0,
+                    "ns": "alpha.events",
+                    "nextBatch": [{"seq": 7}, {"seq": 8}],
+                },
+                "ok": 1.0,
+            },
+        )
 
     def test_kill_cursors_reports_killed_and_unknown_ids(self):
         proxy = AsyncMongoEcoProxyServer()
@@ -345,6 +384,9 @@ class WireProxyUnitTests(unittest.TestCase):
                 )
                 self.assertEqual(rejected_kill["cursorsKilled"], [])
                 self.assertEqual(rejected_kill["cursorsUnknown"], [cursor_id])
+                self.assertEqual(rejected_kill["cursorsAlive"], [])
+                self.assertEqual(rejected_kill["cursorsNotFound"], [cursor_id])
+                self.assertEqual(rejected_kill["ok"], 1.0)
 
         correct_page = store.get_more(
             {"getMore": cursor_id, "collection": "events"},
@@ -1581,6 +1623,12 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
+        with self.assertRaisesRegex(OperationFailure, "wire getMore cursor id must be an integer"):
+            await proxy._executor.execute_command(
+                {"getMore": True, "collection": "events", "$db": "alpha"},
+                connection=connection,
+            )
+
         with self.assertRaisesRegex(OperationFailure, "wire getMore requires a non-empty collection name"):
             await proxy._executor.execute_command(
                 {"getMore": 1, "collection": "", "$db": "alpha"},
@@ -1599,9 +1647,21 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 connection=connection,
             )
 
-        with self.assertRaisesRegex(OperationFailure, "wire killCursors cursor ids must be integers"):
+        with self.assertRaisesRegex(OperationFailure, "non-empty collection name"):
+            await proxy._executor.execute_command(
+                {"killCursors": "", "cursors": [], "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "cursor ids must be integers"):
             await proxy._executor.execute_command(
                 {"killCursors": "events", "cursors": ["bad"], "$db": "alpha"},
+                connection=connection,
+            )
+
+        with self.assertRaisesRegex(OperationFailure, "cursor ids must be integers"):
+            await proxy._executor.execute_command(
+                {"killCursors": "events", "cursors": [True], "$db": "alpha"},
                 connection=connection,
             )
 

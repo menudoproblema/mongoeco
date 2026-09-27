@@ -59,6 +59,11 @@ def _assert_test_reference_exists(reference: str) -> None:
     ), reference
 
 
+def _assert_test_references_exist(references: str) -> None:
+    for reference in references.split("; "):
+        _assert_test_reference_exists(reference)
+
+
 def test_wire_conservation_matrix_covers_every_advertised_command() -> None:
     with MATRIX.open(newline="", encoding="utf-8") as stream:
         rows = list(csv.DictReader(stream))
@@ -91,8 +96,8 @@ def test_wire_conservation_matrix_covers_every_advertised_command() -> None:
         )
         assert row["positive_evidence"]
         assert row["negative_evidence"]
-        _assert_test_reference_exists(row["positive_evidence"])
-        _assert_test_reference_exists(row["negative_evidence"])
+        _assert_test_references_exist(row["positive_evidence"])
+        _assert_test_references_exist(row["negative_evidence"])
 
 
 def test_wire_cursor_field_matrix_covers_request_and_result_fields() -> None:
@@ -117,5 +122,5 @@ def test_wire_cursor_field_matrix_covers_request_and_result_fields() -> None:
         for field, source in sources.items():
             assert row[field] == hashlib.sha256(source.read_bytes()).hexdigest()
         assert row["positive_evidence"] != row["negative_evidence"]
-        _assert_test_reference_exists(row["positive_evidence"])
-        _assert_test_reference_exists(row["negative_evidence"])
+        _assert_test_references_exist(row["positive_evidence"])
+        _assert_test_references_exist(row["negative_evidence"])
