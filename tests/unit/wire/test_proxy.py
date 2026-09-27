@@ -1071,6 +1071,86 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(connection.hello_count, 6)
 
+    async def test_static_admin_wire_response_fields_are_exact(self):
+        proxy = AsyncMongoEcoProxyServer(mongodb_dialect="8.0")
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        async def execute(name: str) -> dict:
+            return await proxy._executor.execute_command(
+                {name: 1, "$db": "admin"}, connection=connection
+            )
+
+        self.assertEqual(await execute("ping"), {"ok": 1.0})
+        self.assertEqual(
+            await execute("buildInfo"),
+            {
+                "version": "8.0.0",
+                "versionArray": [8, 0, 0, 0],
+                "gitVersion": "mongoeco",
+                "ok": 1.0,
+            },
+        )
+        host_info = await execute("hostInfo")
+        self.assertEqual(set(host_info), {"system", "os", "extra", "ok"})
+        self.assertEqual(
+            set(host_info["system"]),
+            {"hostname", "cpuArch", "numCores", "memSizeMB"},
+        )
+        self.assertEqual(set(host_info["os"]), {"type", "name", "version"})
+        self.assertEqual(set(host_info["extra"]), {"pythonVersion"})
+        self.assertIsInstance(host_info["system"]["hostname"], str)
+        self.assertIsInstance(host_info["system"]["cpuArch"], str)
+        self.assertGreater(host_info["system"]["numCores"], 0)
+        self.assertEqual(host_info["system"]["memSizeMB"], 0)
+        self.assertEqual(host_info["ok"], 1.0)
+
+        cmd_line = await execute("getCmdLineOpts")
+        self.assertEqual(set(cmd_line), {"argv", "parsed", "ok"})
+        self.assertIsInstance(cmd_line["argv"], list)
+        self.assertEqual(set(cmd_line["parsed"]), {"net", "storage"})
+        self.assertEqual(
+            cmd_line["parsed"],
+            {"net": {"bindIp": "127.0.0.1", "port": 0}, "storage": {}},
+        )
+        self.assertEqual(cmd_line["ok"], 1.0)
+        self.assertEqual(
+            await execute("whatsmyuri"),
+            {"you": "127.0.0.1:27017", "ok": 1.0},
+        )
+        other_connection = proxy._connections.create(("127.0.0.1", 27018))
+        self.assertEqual(
+            await proxy._executor.execute_command(
+                {"whatsmyuri": 1, "$db": "admin"},
+                connection=other_connection,
+            ),
+            {"you": "127.0.0.1:27018", "ok": 1.0},
+        )
+
+    async def test_static_admin_wire_requests_reject_invalid_flags_and_database(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        for command_name in (
+            "ping", "buildInfo", "hostInfo", "getCmdLineOpts", "whatsmyuri"
+        ):
+            for command_value in (0, "1", None):
+                with (
+                    self.subTest(command=command_name, value=command_value),
+                    self.assertRaisesRegex(
+                        OperationFailure, "requires the command value 1"
+                    ),
+                ):
+                    await proxy._executor.execute_command(
+                        {command_name: command_value, "$db": "admin"},
+                        connection=connection,
+                    )
+            with (
+                self.subTest(command=command_name, database=""),
+                self.assertRaisesRegex(OperationFailure, "non-empty string"),
+            ):
+                await proxy._executor.execute_command(
+                    {command_name: 1, "$db": ""}, connection=connection
+                )
+
     async def test_executor_wire_failpoint_is_local_fail_command_only(self):
         proxy = AsyncMongoEcoProxyServer()
         connection = proxy._connections.create(("127.0.0.1", 27017))

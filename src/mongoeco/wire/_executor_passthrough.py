@@ -51,6 +51,11 @@ async def _execute_authenticated_passthrough_command(
     auth.require_authenticated(context.connection, context.command_name)
     database = client.get_database(context.db_name)
     result = await _execute_database_command(database, context)
+    if context.command_name == "whatsmyuri":
+        if not isinstance(result, dict):
+            message = "wire command must resolve to a document response"
+            raise OperationFailure(message)
+        result = {**result, "you": context.connection.peer_address}
     return _materialize_passthrough_result(
         context.command_document,
         result,
