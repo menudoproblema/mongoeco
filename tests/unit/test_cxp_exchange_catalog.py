@@ -389,6 +389,11 @@ def test_owner_metadata_rejects_unvalidated_keys(
         validate_mongodb_metadata(capability, {**metadata, "unvalidatedClaim": True})
 
 
+def test_owner_metadata_rejects_non_string_keys_before_projection() -> None:
+    with pytest.raises(ValueError, match="string-keyed object"):
+        validate_mongodb_metadata("read", {1: "untrusted"})  # type: ignore[dict-item]
+
+
 def test_runtime_projection_omits_unobserved_metadata() -> None:
     snapshot = _provider_snapshot(None)
     assert snapshot.payload["capabilities"][0]["properties"] == {}

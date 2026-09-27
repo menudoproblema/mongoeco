@@ -13,6 +13,7 @@ from mongoeco.driver.telemetry_projector import (
     _resolve_write_operation_name,
 )
 from mongoeco.driver.telemetry_validation import driver_telemetry_issues
+from mongoeco.driver import telemetry_validation
 from mongoeco.telemetry_contract import (
     TelemetryBuffer,
     TelemetryEvent,
@@ -32,6 +33,54 @@ from mongoeco.driver.monitoring import (
 
 
 class DriverTelemetryProjectorTests(unittest.TestCase):
+    def test_owner_telemetry_rejects_a_malformed_bundled_specification(self) -> None:
+        telemetry_validation._specification.cache_clear()
+        try:
+            with patch("mongoeco.driver.telemetry_validation.files") as resources:
+                resource = resources.return_value.joinpath.return_value
+                resource.read_text.return_value = "[]"
+                with self.assertRaisesRegex(ValueError, "Invalid Mongoeco driver"):
+                    driver_telemetry_issues(TelemetrySnapshot("provider"), ("read",))
+        finally:
+            telemetry_validation._specification.cache_clear()
+
+    def test_owner_telemetry_rejects_unknown_signals_and_missing_metric_labels(
+        self,
+    ) -> None:
+        snapshot = TelemetrySnapshot(
+            provider_id="mongoeco-driver",
+            spans=(
+                TelemetrySpan(
+                    trace_id="trace",
+                    span_id="span",
+                    parent_span_id=None,
+                    name="unadvertised.span",
+                    start_time=1.0,
+                    end_time=2.0,
+                ),
+            ),
+            metrics=(
+                TelemetryMetric(name="unadvertised.metric", value=1),
+                TelemetryMetric(
+                    name="db.client.operation.duration",
+                    value=1,
+                    unit="s",
+                    labels={},
+                ),
+            ),
+            events=(TelemetryEvent(event_type="unadvertised.event"),),
+        )
+
+        permissive = driver_telemetry_issues(snapshot, ("read",))
+        self.assertTrue(any("Missing metric label" in item for item in permissive))
+        self.assertFalse(any("Unknown span" in item for item in permissive))
+        strict = driver_telemetry_issues(
+            snapshot, ("read",), reject_unknown_signals=True
+        )
+        self.assertIn("Unknown span: unadvertised.span", strict)
+        self.assertIn("Unknown metric: unadvertised.metric", strict)
+        self.assertIn("Unknown event: unadvertised.event", strict)
+
     def test_owner_telemetry_validation_rejects_missing_fields_and_wrong_unit(
         self,
     ) -> None:

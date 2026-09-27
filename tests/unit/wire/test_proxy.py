@@ -394,6 +394,24 @@ class WireProxyUnitTests(unittest.TestCase):
         )
         self.assertEqual(correct_page["cursor"]["nextBatch"], [{"seq": 2}])
 
+    def test_cursor_rejects_incomplete_authenticated_user_identity(self):
+        store = AsyncMongoEcoProxyServer()._cursor_store
+        connection = WireConnectionContext(connection_id=1)
+        connection.authenticated_users = [{"user": "ada"}]
+        with self.assertRaisesRegex(OperationFailure, "identity is incomplete"):
+            store.materialize_command_result(
+                {"find": "events", "batchSize": 1},
+                {
+                    "cursor": {
+                        "id": 0,
+                        "ns": "alpha.events",
+                        "firstBatch": [{"seq": 1}, {"seq": 2}],
+                    },
+                    "ok": 1.0,
+                },
+                connection=connection,
+            )
+
     def test_cursor_session_key_distinguishes_boolean_and_integer_values(self):
         store = AsyncMongoEcoProxyServer()._cursor_store
         first = store.materialize_command_result(

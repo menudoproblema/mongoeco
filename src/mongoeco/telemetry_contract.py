@@ -206,6 +206,9 @@ class TelemetryBuffer:
         if max_items is not None and max_items <= 0:
             msg = "TelemetryBuffer max_items must be greater than zero"
             raise ValueError(msg)
+        if overflow_policy not in ("raise", "drop_newest", "drop_oldest"):
+            msg = f"Unknown TelemetryBuffer overflow policy: {overflow_policy}"
+            raise ValueError(msg)
 
         self.provider_id = provider_id
         self.max_items = max_items
