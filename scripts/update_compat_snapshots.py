@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 import sys
@@ -15,14 +16,28 @@ from mongoeco.compat import export_full_compat_catalog, export_full_compat_catal
 
 
 def main() -> int:
-    fixtures_dir = PROJECT_ROOT / "tests" / "fixtures"
-    fixtures_dir.mkdir(parents=True, exist_ok=True)
+    parser = argparse.ArgumentParser(
+        description="Export the current exchange compatibility view."
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=PROJECT_ROOT / "dist" / "compat-catalog-current",
+        help="Destination for current exports; historical fixtures are read-only.",
+    )
+    args = parser.parse_args()
+    output_dir = args.output_dir.resolve()
+    historical = (PROJECT_ROOT / "tests" / "fixtures").resolve()
+    if output_dir == historical or historical in output_dir.parents:
+        message = "Historical compatibility fixtures are read-only"
+        raise SystemExit(message)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    (fixtures_dir / "compat_catalog_snapshot.json").write_text(
+    (output_dir / "compat_catalog_exchange_snapshot.json").write_text(
         json.dumps(export_full_compat_catalog(), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    (fixtures_dir / "compat_catalog_snapshot.md").write_text(
+    (output_dir / "compat_catalog_exchange_snapshot.md").write_text(
         export_full_compat_catalog_markdown(),
         encoding="utf-8",
     )

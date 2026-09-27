@@ -54,8 +54,10 @@ Esta lista prepara una release sin obligar a publicar nada.
   checkout contra Memory, SQLite y el canario externo.
 - abrir una copia de la fixture SQLite 4.5 y comprobar indices, Search y replay
   exacto del sufijo de outbox; verificar su SHA-256 antes y despues.
-- regenerar y revisar el catálogo de compatibilidad con
-  `python scripts/update_compat_snapshots.py`.
+- exportar y revisar el catálogo de compatibilidad vigente con
+  `python scripts/update_compat_snapshots.py`. La salida actual se escribe
+  bajo `dist/compat-catalog-current/`; los fixtures `compat_catalog_snapshot`
+  conservan la evidencia histórica del protocolo anterior y no se regeneran.
 - en CI, comparar dos builds y promover solo una pareja verificada como
   artifact inmutable para la suite completa, los smokes y Trusted Publishing;
   verificar SHA-256 e import desde `site-packages` y no reconstruir en
