@@ -72,6 +72,7 @@ class WireSpecialCommandHandlers:
         return self._cursor_store.kill_cursors(
             context.command_document,
             db_name=context.db_name,
+            lsid=context.raw_body.get("lsid"),
             connection=context.connection,
         )
 

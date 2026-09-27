@@ -143,6 +143,7 @@ class WireCursorStore:
         command_document: dict[str, Any],
         *,
         db_name: str,
+        lsid: object | None = None,
         connection: WireConnectionContext | None = None,
     ) -> dict[str, Any]:
         collection_name = command_document.get("killCursors")
@@ -154,6 +155,7 @@ class WireCursorStore:
         killed: list[int] = []
         not_found: list[int] = []
         expected_namespace = f"{db_name}.{collection_name}"
+        request_session_key = wire_session_key(lsid) if lsid is not None else None
         request_principal = _principal_key(connection)
         for cursor_id in cursors:
             if not isinstance(cursor_id, int) or isinstance(cursor_id, bool):
@@ -163,6 +165,10 @@ class WireCursorStore:
                 state is None
                 or state.namespace != expected_namespace
                 or state.principal_key != request_principal
+                or (
+                    request_session_key is not None
+                    and state.session_key != request_session_key
+                )
             ):
                 not_found.append(cursor_id)
             else:

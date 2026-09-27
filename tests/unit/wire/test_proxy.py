@@ -1654,6 +1654,17 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             },
             connection=connection,
         )
+        rejected_kill = await proxy._executor.execute_command(
+            {
+                "killCursors": "events",
+                "cursors": [another["cursor"]["id"]],
+                "$db": "alpha",
+                "lsid": {"id": "other", "tenant": "one"},
+            },
+            connection=connection,
+        )
+        self.assertEqual(rejected_kill["cursorsKilled"], [])
+        self.assertEqual(rejected_kill["cursorsUnknown"], [another["cursor"]["id"]])
         killed = await proxy._executor.execute_command(
             {
                 "killCursors": "events",
@@ -1697,6 +1708,7 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 "killCursors": "events",
                 "cursors": [second["cursor"]["id"]],
                 "$db": "alpha",
+                "lsid": {"id": "session-positive", "tenant": "one"},
             },
             connection=connection,
         )

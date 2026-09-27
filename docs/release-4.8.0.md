@@ -35,7 +35,8 @@ catalog option acceptance alone does not establish a deployment guarantee.
 - All 46 advertised wire command names are classified as Mongoeco operational
   contracts for the inspected consumers. Cursor IDs now require the creating
   namespace for `getMore` and `killCursors`; `getMore` also requires the
-  creating session identity when present, while `killCursors` may omit it.
+  creating session identity when present. `killCursors` may omit `lsid`, but
+  an included identity must match the creating session.
   Authenticated cursors stay bound to their creating user identity across
   connections.
   Bounded positive and negative

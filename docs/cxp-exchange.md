@@ -283,7 +283,8 @@ When the creating command carries `lsid`, `getMore` must carry the same
 session identity. A missing or different `lsid` is rejected without consuming
 the cursor; BSON document key order does not change identity. A cursor created
 without `lsid` likewise does not acquire a session later. `killCursors` can
-omit `lsid` as permitted by the
+omit `lsid`; when it includes one, the identity must match the creating
+session or the cursor is reported unknown and retained. Omission is permitted by the
 [MongoDB driver sessions specification](https://github.com/mongodb/specifications/blob/master/source/sessions/driver-sessions.md#sessions-and-cursors).
 This local correlation does not make a deployment-level exchange claim.
 With wire authentication enabled, a cursor also remains bound to its creating
