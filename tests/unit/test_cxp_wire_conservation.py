@@ -245,7 +245,7 @@ def test_static_admin_wire_field_matrix_covers_five_command_contracts() -> None:
         assert row["product"] == "Mongoeco"
         assert row["owner"] == "Mongoeco"
         assert row["source"] == expected_source
-        assert row["source_revision"] == "82fad46ffb67b0d5a70b180528dfcaeb094ca2f3"
+        assert row["source_revision"] == "6935227c2830d6de453f19c079d3556ef747164b"
         assert row["disposition"] == "owner_operational"
         assert row["status"] == "bounded_behavior_verified"
         assert row["meaning"]

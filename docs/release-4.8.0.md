@@ -39,7 +39,9 @@ catalog option acceptance alone does not establish a deployment guarantee.
   The 17 `comment` options retain explicit session metadata and profile only
   when profiling is enabled, through API and wire.
 - All 46 advertised wire command names are classified as Mongoeco operational
-  contracts for the inspected consumers. Cursor IDs now require the creating
+  contracts for the inspected consumers. Wire `listCommands` now reports all 46
+  implemented names, including nine wire-only handlers; the embedded API still
+  reports its 37 database commands. Cursor IDs now require the creating
   namespace for `getMore` and `killCursors`; `getMore` also requires the
   creating session identity when present. `killCursors` may omit `lsid`, but
   an included identity must match the creating session.

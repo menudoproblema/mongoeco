@@ -23,6 +23,8 @@ usa Semantic Versioning.
   absent compression and topology claims.
 - Report the actual connection peer in the wire `whatsmyuri` response and
   inventory five local wire inspection command field contracts.
+- Enumerate all 46 implemented wire commands in wire `listCommands`, including
+  nine wire-only handlers; keep the embedded database inventory at 37.
 - Preserve the historical legacy compatibility snapshots when exporting the
   current exchange view. Reject unknown telemetry buffer overflow policies
   instead of silently treating them as `drop_oldest`.

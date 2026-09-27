@@ -182,6 +182,13 @@ as warnings without changing the validation pass or making it asynchronous.
 `listCommands.supportedOptions` lists accepted names; its
 `acceptedNoopOptions` identifies these four cases explicitly. A consumer must
 not treat their presence in `supportedOptions` as evidence of an effect.
+Through the wire proxy, `listCommands.commands` reports all 46 configured,
+implemented command names, including nine commands handled only by wire
+authentication, cursor, session or transaction handlers. Their entries state
+the routing family but do not claim a complete option inventory. A restricted
+`WireSurface` yields only its implemented configured names. The embedded
+`database.command("listCommands")` reports the 37 database commands because it
+does not expose the nine wire-only handlers.
 The 71 advertised top-level options across 22 database commands are inventoried
 in [`cxp-database-command-option-conservation.csv`](cxp-database-command-option-conservation.csv).
 The four accepted no-op options have bounded behavior and wrong-type tests.
