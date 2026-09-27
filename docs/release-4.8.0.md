@@ -8,8 +8,9 @@ This version replaces Mongoeco's public legacy CXP protocol with exact
 `mongoeco.cxp.exchange` documents evaluated by CXP 5.0.0. The removal of
 legacy imports and reporting fields is a documented minor-version exception.
 The concrete replacements are in [the migration guide](cxp-c4-migration.md).
-The project requires `cxp[exchange]>=5.0.0,<6`; Mongoeco 4.7.0 is not
-compatible with CXP 5 despite its published dependency metadata.
+The project requires `cxp[exchange]>=5.0.0,<6`; CXP 5.0.0 is published.
+Mongoeco 4.7.0 is not compatible with CXP 5 despite its published dependency
+metadata. The CI constraint now pins CXP 5.0.0, matching this requirement.
 
 The owner catalog is `org.mongoeco:mongodb@1.2.0`, `cxp.catalog` spec_version
 2, with exact source references and explicit string domains. Snapshots and
@@ -26,6 +27,9 @@ catalog option acceptance alone does not establish a deployment guarantee.
   3,559 cases and the deep property profile passes four.
 - The public API manifest, public typing contract, changed-file Ruff ratchet
   and `git diff --check` pass.
+- Fresh constrained pip installations of the candidate wheel on Python 3.13
+  and 3.14 resolve published CXP 5.0.0, install the CI test and benchmark
+  dependencies, pass `pip check` and import from `site-packages`.
 - Reproducible wheel and sdist builds of the local candidate pass installed
   smoke tests with CXP 5 and Cosecha. Four isolated Python 3.13/3.14 cells
   each pass 13 consumer smokes, including complete wire `listCommands`.
@@ -69,4 +73,6 @@ catalog option acceptance alone does not establish a deployment guarantee.
 
 The full [release checklist](release-checklist.md), including remote CI and
 the final installed artifact matrix, remains a gate for any later publication.
+Remote CI and the MongoDB 7.0/8.0 differential on the final source revision
+have not yet been accredited. The locally passing gates do not authorize a tag.
 This preparation does not create a tag or authorize an upload.
