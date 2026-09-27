@@ -62,6 +62,17 @@ EFFECTIVE_VERIFIED = {
     ("distinct", "query"),
     ("distinct", "hint"),
     ("distinct", "maxTimeMS"),
+    ("collStats", "scale"),
+    ("dbStats", "scale"),
+    ("connectionStatus", "showPrivileges"),
+    ("dbHash", "collections"),
+    ("explain", "verbosity"),
+    ("profile", "slowms"),
+    ("killOp", "op"),
+    ("aggregate", "allowDiskUse"),
+    ("aggregate", "hint"),
+    ("aggregate", "let"),
+    ("aggregate", "maxTimeMS"),
 }
 COMMENT_COMMANDS = {
     "aggregate": {"aggregate": "items", "pipeline": []},
@@ -456,8 +467,8 @@ def test_explain_propagates_outer_options_with_explicit_inner_precedence(
     engine_type: type[MemoryEngine | SQLiteEngine],
     explained_command: dict[str, object],
 ) -> None:
-    outer_max_time_ms = 17
-    inner_max_time_ms = 23
+    outer_max_time_ms = 17_000
+    inner_max_time_ms = 23_000
     with MongoClient(engine_type()) as client:
         database = client.audit
         database.items.insert_one({"_id": 1, "value": 1})
@@ -502,7 +513,7 @@ def test_explain_rejects_invalid_outer_max_time_even_with_valid_inner_value(
 
 def test_explain_outer_options_are_preserved_on_wire() -> None:
     async def run() -> None:
-        outer_max_time_ms = 17
+        outer_max_time_ms = 17_000
         proxy = AsyncMongoEcoProxyServer()
         connection = proxy._connections.create(("127.0.0.1", 27017))
         result = await proxy._executor.execute_command(

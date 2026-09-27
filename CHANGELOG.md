@@ -37,10 +37,10 @@ usa Semantic Versioning.
   cases; keep this operational surface distinct from CXP deployment claims.
 - Inventory the 71 advertised top-level options of 22 database commands.
   Verify the four accepted no-op options with bounded positive and wrong-type
-  cases and twenty-four effective options with scoped positive and negative cases.
+  cases and thirty-five effective options with scoped positive and negative cases.
   For 17 additional `comment` options, verify the `system.profile` effect
   with profiling enabled and disabled; other claimed effects remain pending.
-  The remaining 26 effective options await individual option-level oracles.
+  The remaining 15 effective options await individual option-level oracles.
   Clarify that top-level `aggregate.batchSize` limits wire `firstBatch` but is
   ignored by direct `database.command()`, where `cursor.batchSize` controls
   local prefetch.
@@ -53,6 +53,12 @@ usa Semantic Versioning.
 - Verify `count` and `distinct` query, hint and deadline behavior, plus count
   skip and limit. SQLite count now passes hints to its SQL planner, interrupts
   expired SQL, and applies skip and limit in its Python fallback.
+- Verify admin command scaling, privilege visibility, selected dbHash inputs,
+  explain verbosity, profile threshold and live operation cancellation on
+  Memory and SQLite through direct API and wire execution.
+- Verify `aggregate.allowDiskUse`, `hint`, `let` and `maxTimeMS` through direct
+  API and wire execution. Aggregate explain now checks the supplied deadline
+  before and after planning instead of merely surfacing it in the report.
 
 ## [4.7.0] - 2026-09-13
 

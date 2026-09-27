@@ -836,7 +836,7 @@ async def assert_database_command_supports_explain_for_find_and_aggregate(
                                 "cursor": {"batchSize": 1},
                                 "hint": "kind_idx",
                                 "comment": "agg explain",
-                                "maxTimeMS": 50,
+                                "maxTimeMS": 5_000,
                                 "allowDiskUse": True,
                             },
                         },
@@ -859,7 +859,7 @@ async def assert_database_command_supports_explain_for_find_and_aggregate(
                 case.assertEqual(aggregate_explain["namespace"], "alpha.events")
                 case.assertEqual(aggregate_explain["hint"], "kind_idx")
                 case.assertEqual(aggregate_explain["comment"], "agg explain")
-                case.assertEqual(aggregate_explain["max_time_ms"], 50)
+                case.assertEqual(aggregate_explain["max_time_ms"], 5_000)
                 case.assertEqual(aggregate_explain["batch_size"], 1)
                 case.assertTrue(aggregate_explain["allow_disk_use"])
                 case.assertEqual(aggregate_explain["ok"], 1.0)

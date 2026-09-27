@@ -1665,7 +1665,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
             [{"$match": {"kind": "view"}}],
             hint="kind_1",
             comment="trace",
-            max_time_ms=5,
+            max_time_ms=5_000,
             batch_size=10,
             allow_disk_use=True,
             let={"tenant": "a"},
@@ -1684,7 +1684,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(explanation["pushdown"]["streamableStageCount"], 0)
         self.assertEqual(explanation["hint"], "kind_1")
         self.assertEqual(explanation["comment"], "trace")
-        self.assertEqual(explanation["max_time_ms"], 5)
+        self.assertEqual(explanation["max_time_ms"], 5_000)
         self.assertEqual(explanation["batch_size"], 10)
         self.assertTrue(explanation["allow_disk_use"])
         self.assertEqual(explanation["let"], {"tenant": "a"})
@@ -1695,7 +1695,7 @@ class AsyncAggregationCursorTests(unittest.IsolatedAsyncioTestCase):
         explain_semantics = collection._engine.explain_semantics_calls[0][2]
         self.assertEqual(explain_semantics.hint, "kind_1")
         self.assertEqual(explain_semantics.comment, "trace")
-        self.assertEqual(explain_semantics.max_time_ms, 5)
+        self.assertEqual(explain_semantics.max_time_ms, 5_000)
 
     async def test_explain_surfaces_bounded_lookup_candidate_and_runtime_fallback(
         self,

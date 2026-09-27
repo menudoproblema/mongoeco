@@ -2302,7 +2302,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
                             "cursor": {"batchSize": 1},
                             "hint": "kind_idx",
                             "comment": "agg explain",
-                            "maxTimeMS": 50,
+                            "maxTimeMS": 5_000,
                             "allowDiskUse": True,
                         }
                     }

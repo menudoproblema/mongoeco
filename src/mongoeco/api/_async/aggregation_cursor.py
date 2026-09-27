@@ -2238,6 +2238,8 @@ class AsyncAggregationCursor:
         verbosity: str = SearchExplainVerbosity.EXECUTION_STATS.value,
     ) -> dict[str, object]:
         self._ensure_session_can_use_engine()
+        deadline = operation_deadline(self._max_time_ms)
+        enforce_deadline(deadline)
         try:
             search_verbosity = SearchExplainVerbosity(verbosity)
         except (TypeError, ValueError) as error:
@@ -2282,6 +2284,7 @@ class AsyncAggregationCursor:
                 planning_issues=self._operation.planning_issues,
             ).to_document()
             explanation["cxp"] = self._cxp_explain_projection()
+            enforce_deadline(deadline)
             return explanation
         dialect = getattr(
             self._collection,
@@ -2463,6 +2466,7 @@ class AsyncAggregationCursor:
             ),
         ).to_document()
         explanation["cxp"] = self._cxp_explain_projection()
+        enforce_deadline(deadline)
         return explanation
 
     def __aiter__(self) -> AsyncIterator[Document]:
