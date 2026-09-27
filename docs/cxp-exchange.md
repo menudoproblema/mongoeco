@@ -279,6 +279,11 @@ the original cursor available. Unknown IDs still produce an empty `nextBatch`
 for `getMore`; a paginated result without a namespace is rejected before a
 cursor ID is issued. The positive and negative owner oracles cover both the cursor
 store and the command executor.
+The 20 request and result fields in this bounded cursor path are itemized in
+[`cxp-wire-cursor-field-conservation.csv`](cxp-wire-cursor-field-conservation.csv),
+including effective database scope, first and subsequent batches, and the
+four `killCursors` outcome lists. This does not cover argument or result
+fields of the other wire commands.
 
 The static `serverCount: 1` and `topologyType: unknown` values describe the
 initial local topology seed, not a Mongo deployment. A `hello` observation can

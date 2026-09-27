@@ -227,6 +227,73 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(next_page["cursor"]["id"], 0)
         self.assertEqual(next_page["cursor"]["nextBatch"], [{"seq": 3}])
 
+    def test_cursor_field_contract_exact_responses(self):
+        store = AsyncMongoEcoProxyServer()._cursor_store
+        first = store.materialize_command_result(
+            {"find": "events", "batchSize": 1},
+            {
+                "cursor": {
+                    "id": 0,
+                    "ns": "alpha.events",
+                    "firstBatch": [{"seq": 1}, {"seq": 2}, {"seq": 3}],
+                },
+                "ok": 1.0,
+            },
+        )
+        cursor_id = first["cursor"]["id"]
+        self.assertIsInstance(cursor_id, int)
+        self.assertGreater(cursor_id, 0)
+        self.assertEqual(
+            first,
+            {
+                "cursor": {
+                    "id": cursor_id,
+                    "ns": "alpha.events",
+                    "firstBatch": [{"seq": 1}],
+                },
+                "ok": 1.0,
+            },
+        )
+        second = store.get_more(
+            {"getMore": cursor_id, "collection": "events", "batchSize": 1},
+            db_name="alpha",
+        )
+        self.assertEqual(
+            second,
+            {
+                "cursor": {
+                    "id": cursor_id,
+                    "ns": "alpha.events",
+                    "nextBatch": [{"seq": 2}],
+                },
+                "ok": 1.0,
+            },
+        )
+        killed = store.kill_cursors(
+            {"killCursors": "events", "cursors": [cursor_id, 999]},
+            db_name="alpha",
+        )
+        self.assertEqual(
+            killed,
+            {
+                "cursorsKilled": [cursor_id],
+                "cursorsUnknown": [999],
+                "cursorsAlive": [],
+                "cursorsNotFound": [999],
+                "ok": 1.0,
+            },
+        )
+        self.assertEqual(
+            store.get_more(
+                {"getMore": cursor_id, "collection": "events"},
+                db_name="alpha",
+            ),
+            {
+                "cursor": {"id": 0, "ns": "alpha.events", "nextBatch": []},
+                "ok": 1.0,
+            },
+        )
+
     def test_kill_cursors_reports_killed_and_unknown_ids(self):
         proxy = AsyncMongoEcoProxyServer()
         result = proxy._cursor_store.materialize_command_result(
@@ -1428,6 +1495,42 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
             connection=connection,
         )
         self.assertEqual(correct["cursor"]["nextBatch"], [{"seq": 2}])
+
+    async def test_executor_get_more_in_same_namespace(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        connection.authenticate(
+            username="ada",
+            db="admin",
+            mechanism="SCRAM-SHA-256",
+        )
+        first = proxy._cursor_store.materialize_command_result(
+            {"find": "events", "batchSize": 1},
+            {
+                "cursor": {
+                    "id": 0,
+                    "ns": "alpha.events",
+                    "firstBatch": [{"seq": 1}, {"seq": 2}],
+                },
+                "ok": 1.0,
+            },
+        )
+        cursor_id = first["cursor"]["id"]
+        result = await proxy._executor.execute_command(
+            {"getMore": cursor_id, "collection": "events", "$db": "alpha"},
+            connection=connection,
+        )
+        self.assertEqual(
+            result,
+            {
+                "cursor": {
+                    "id": 0,
+                    "ns": "alpha.events",
+                    "nextBatch": [{"seq": 2}],
+                },
+                "ok": 1.0,
+            },
+        )
 
     async def test_executor_validates_auth_session_and_cursor_shapes_early(self):
         proxy = AsyncMongoEcoProxyServer(

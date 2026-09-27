@@ -21,7 +21,7 @@ catalog option acceptance alone does not establish a deployment guarantee.
 
 ## Current local evidence
 
-- The source suite passes: 4,614 passed, 26 skipped, 2,499 subtests passed.
+- The source suite passes: 4,617 passed, 26 skipped, 2,499 subtests passed.
 - The public API manifest, public typing contract, changed-file Ruff ratchet
   and `git diff --check` pass.
 - The previous local candidate passed installed wheel and sdist smokes with
@@ -35,7 +35,9 @@ catalog option acceptance alone does not establish a deployment guarantee.
 - All 46 advertised wire command names are classified as Mongoeco operational
   contracts for the inspected consumers. Cursor IDs now require the creating
   namespace for `getMore` and `killCursors`; bounded positive and negative
-  cases cover the store and wire executor.
+  cases cover the store and wire executor. The 20 request and response fields
+  of this cursor path have a separate conservation matrix. The remaining wire
+  command fields are still pending.
 
 The full [release checklist](release-checklist.md), including remote CI and
 the final installed artifact matrix, remains a gate for any later publication.

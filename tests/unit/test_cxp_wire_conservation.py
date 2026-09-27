@@ -14,7 +14,32 @@ from mongoeco.wire.surface import WireSurface
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MATRIX = PROJECT_ROOT / "docs" / "cxp-wire-command-conservation.csv"
+CURSOR_MATRIX = PROJECT_ROOT / "docs" / "cxp-wire-cursor-field-conservation.csv"
 EXPECTED_COMMAND_COUNT = 46
+EXPECTED_CURSOR_FIELDS = frozenset(
+    {
+        "/firstBatch/response/cursor/id",
+        "/firstBatch/response/cursor/ns",
+        "/firstBatch/response/cursor/firstBatch",
+        "/firstBatch/response/ok",
+        "/getMore/request/getMore",
+        "/getMore/request/collection",
+        "/getMore/request/batchSize",
+        "/getMore/request/effective_database",
+        "/getMore/response/cursor/id",
+        "/getMore/response/cursor/ns",
+        "/getMore/response/cursor/nextBatch",
+        "/getMore/response/ok",
+        "/killCursors/request/killCursors",
+        "/killCursors/request/cursors",
+        "/killCursors/request/effective_database",
+        "/killCursors/response/cursorsKilled",
+        "/killCursors/response/cursorsUnknown",
+        "/killCursors/response/cursorsAlive",
+        "/killCursors/response/cursorsNotFound",
+        "/killCursors/response/ok",
+    }
+)
 SHA256_HEX_LENGTH = 64
 GIT_SHA_LENGTH = 40
 
@@ -66,5 +91,31 @@ def test_wire_conservation_matrix_covers_every_advertised_command() -> None:
         )
         assert row["positive_evidence"]
         assert row["negative_evidence"]
+        _assert_test_reference_exists(row["positive_evidence"])
+        _assert_test_reference_exists(row["negative_evidence"])
+
+
+def test_wire_cursor_field_matrix_covers_request_and_result_fields() -> None:
+    with CURSOR_MATRIX.open(newline="", encoding="utf-8") as stream:
+        rows = list(csv.DictReader(stream))
+    elements = [row["element"] for row in rows]
+    assert len(elements) == len(EXPECTED_CURSOR_FIELDS)
+    assert len(elements) == len(set(elements))
+    assert set(elements) == EXPECTED_CURSOR_FIELDS
+
+    sources = {
+        "validation_sha256": PROJECT_ROOT / "src/mongoeco/wire/_executor_validation.py",
+        "context_sha256": PROJECT_ROOT / "src/mongoeco/wire/_executor_support.py",
+        "cursors_sha256": PROJECT_ROOT / "src/mongoeco/wire/cursors.py",
+    }
+    for row in rows:
+        assert row["product"] == "Mongoeco"
+        assert row["owner"] == "Mongoeco"
+        assert row["disposition"] == "owner_operational"
+        assert row["status"] == "bounded_behavior_verified"
+        assert len(row["source_revision"]) == GIT_SHA_LENGTH
+        for field, source in sources.items():
+            assert row[field] == hashlib.sha256(source.read_bytes()).hexdigest()
+        assert row["positive_evidence"] != row["negative_evidence"]
         _assert_test_reference_exists(row["positive_evidence"])
         _assert_test_reference_exists(row["negative_evidence"])
