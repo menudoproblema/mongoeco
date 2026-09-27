@@ -3819,6 +3819,8 @@ class MemoryEngine(AsyncStorageEngine):
         if operation_context is not None:
             context = operation_context.session
             operation = operation.bind(operation_context)
+        deadline = operation_deadline(operation.max_time_ms)
+        enforce_deadline(deadline)
         semantics = compile_update_semantics(
             operation,
             dialect=dialect,
@@ -3872,6 +3874,7 @@ class MemoryEngine(AsyncStorageEngine):
                     collation=semantics.collation,
                 ),
             )
+            enforce_deadline(deadline)
             if semantics.sort:
                 matching_items: list[tuple[str, object, Document]] = []
                 for storage_key, data in candidate_items:
@@ -3909,8 +3912,10 @@ class MemoryEngine(AsyncStorageEngine):
                         collation=semantics.collation,
                     )
                 ]
+                enforce_deadline(deadline)
 
             for storage_key, data in candidate_items:
+                enforce_deadline(deadline)
                 borrowed_document = self._borrow_storage_document(data)
                 if not QueryEngine.match_plan(
                     borrowed_document,
@@ -4012,6 +4017,7 @@ class MemoryEngine(AsyncStorageEngine):
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
+                    enforce_deadline(deadline)
                     result = UpdateResult(
                         matched_count=1,
                         modified_count=1 if modified else 0,
@@ -4054,6 +4060,7 @@ class MemoryEngine(AsyncStorageEngine):
                 return captured
 
             if not upsert:
+                enforce_deadline(deadline)
                 result = UpdateResult(matched_count=0, modified_count=0)
                 return MutationOutcome(result=result)
 
@@ -4136,6 +4143,7 @@ class MemoryEngine(AsyncStorageEngine):
                     index_data_view=index_data_view,
                     indexes_view=indexes_view,
                 )
+                enforce_deadline(deadline)
                 result = UpdateResult(
                     matched_count=0,
                     modified_count=0,

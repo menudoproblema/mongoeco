@@ -37,10 +37,10 @@ usa Semantic Versioning.
   cases; keep this operational surface distinct from CXP deployment claims.
 - Inventory the 71 advertised top-level options of 22 database commands.
   Verify the four accepted no-op options with bounded positive and wrong-type
-  cases and thirty-five effective options with scoped positive and negative cases.
+  cases and fifty effective options with scoped positive and negative cases.
   For 17 additional `comment` options, verify the `system.profile` effect
   with profiling enabled and disabled; other claimed effects remain pending.
-  The remaining 15 effective options await individual option-level oracles.
+  No other top-level effective options await individual oracles.
   Clarify that top-level `aggregate.batchSize` limits wire `firstBatch` but is
   ignored by direct `database.command()`, where `cursor.batchSize` controls
   local prefetch.
@@ -59,6 +59,12 @@ usa Semantic Versioning.
 - Verify `aggregate.allowDiskUse`, `hint`, `let` and `maxTimeMS` through direct
   API and wire execution. Aggregate explain now checks the supplied deadline
   before and after planning instead of merely surfacing it in the report.
+- Verify the remaining write command options through direct API and wire
+  execution: batch ordering, expression bindings, array filters, document
+  validation bypass, index deadline and find-and-modify selection controls.
+  Memory and SQLite now enforce find-and-modify update deadlines before
+  mutation and before commit, rolling back a late timeout. SQLite includes
+  worker queue wait in that deadline.
 
 ## [4.7.0] - 2026-09-13
 

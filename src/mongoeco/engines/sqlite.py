@@ -7340,6 +7340,8 @@ class SQLiteEngine(AsyncStorageEngine):
             raise OperationFailure(
                 "update operation does not include a compiled update plan",
             )
+        deadline = operation_deadline(operation.max_time_ms)
+        enforce_deadline(deadline)
         return await self._run_blocking(
             self._update_with_operation_sync,
             db_name,
@@ -7354,6 +7356,7 @@ class SQLiteEngine(AsyncStorageEngine):
             replacement_document,
             on_commit,
             operation_context,
+            deadline,
         )
 
     def _update_with_operation_sync(
@@ -7370,9 +7373,13 @@ class SQLiteEngine(AsyncStorageEngine):
         replacement_document: Document | None = None,
         on_commit: Callable[[MutationOutcome], None] | None = None,
         operation_context: OperationContext | None = None,
+        deadline: float | None = None,
     ) -> MutationOutcome:
         if operation_context is not None:
             operation = operation.bind(operation_context)
+        if deadline is None:
+            deadline = operation_deadline(operation.max_time_ms)
+        enforce_deadline(deadline)
         with self._lock:
             conn = self._require_connection(context)
             with self._bind_connection(conn):
@@ -7485,6 +7492,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         invalidate_collection_features_cache=self._invalidate_collection_features_cache,
                         replacement_document=replacement_document,
                     )
+                    enforce_deadline(deadline)
                     if result.after_document is not None and (
                         result.result.upserted_id is not None
                         or result.result.modified_count > 0
@@ -7528,6 +7536,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             result,
                             commit_sequence=commit_sequence,
                         )
+                    enforce_deadline(deadline)
                 if result.after_document is not None and on_commit is not None:
                     on_commit(result)
                 return result
