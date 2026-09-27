@@ -292,7 +292,8 @@ authenticated user identity. A different user cannot read it with `getMore`
 or remove it with `killCursors`, while the same user can continue from another
 connection. This matches the user coauthorization condition described by the
 [MongoDB server authentication design](https://github.com/mongodb/mongo/blob/master/src/mongo/db/auth/README.md).
-The 20 request and result fields in this bounded cursor path are itemized in
+The 26 request, result and effective context fields in this bounded cursor
+path are itemized in
 [`cxp-wire-cursor-field-conservation.csv`](cxp-wire-cursor-field-conservation.csv),
 including effective database scope, first and subsequent batches, and the
 four `killCursors` outcome lists. This does not cover argument or result

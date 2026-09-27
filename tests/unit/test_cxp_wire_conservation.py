@@ -22,10 +22,14 @@ EXPECTED_CURSOR_FIELDS = frozenset(
         "/firstBatch/response/cursor/ns",
         "/firstBatch/response/cursor/firstBatch",
         "/firstBatch/response/ok",
+        "/firstBatch/request/lsid",
+        "/firstBatch/context/authenticated_user",
         "/getMore/request/getMore",
         "/getMore/request/collection",
         "/getMore/request/batchSize",
         "/getMore/request/effective_database",
+        "/getMore/request/lsid",
+        "/getMore/context/authenticated_user",
         "/getMore/response/cursor/id",
         "/getMore/response/cursor/ns",
         "/getMore/response/cursor/nextBatch",
@@ -33,6 +37,8 @@ EXPECTED_CURSOR_FIELDS = frozenset(
         "/killCursors/request/killCursors",
         "/killCursors/request/cursors",
         "/killCursors/request/effective_database",
+        "/killCursors/request/lsid",
+        "/killCursors/context/authenticated_user",
         "/killCursors/response/cursorsKilled",
         "/killCursors/response/cursorsUnknown",
         "/killCursors/response/cursorsAlive",
@@ -112,6 +118,14 @@ def test_wire_cursor_field_matrix_covers_request_and_result_fields() -> None:
         "validation_sha256": PROJECT_ROOT / "src/mongoeco/wire/_executor_validation.py",
         "context_sha256": PROJECT_ROOT / "src/mongoeco/wire/_executor_support.py",
         "cursors_sha256": PROJECT_ROOT / "src/mongoeco/wire/cursors.py",
+        "session_identity_sha256": (
+            PROJECT_ROOT / "src/mongoeco/wire/_session_identity.py"
+        ),
+        "connections_sha256": PROJECT_ROOT / "src/mongoeco/wire/connections.py",
+        "handlers_sha256": PROJECT_ROOT / "src/mongoeco/wire/_executor_handlers.py",
+        "passthrough_sha256": (
+            PROJECT_ROOT / "src/mongoeco/wire/_executor_passthrough.py"
+        ),
     }
     for row in rows:
         assert row["product"] == "Mongoeco"

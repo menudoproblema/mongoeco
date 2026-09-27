@@ -1714,6 +1714,22 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(killed["cursorsKilled"], [second["cursor"]["id"]])
 
+        third = await proxy._executor.execute_command(
+            {"find": "events", "batchSize": 1, "$db": "alpha", "lsid": lsid},
+            connection=connection,
+        )
+        killed_without_lsid = await proxy._executor.execute_command(
+            {
+                "killCursors": "events",
+                "cursors": [third["cursor"]["id"]],
+                "$db": "alpha",
+            },
+            connection=connection,
+        )
+        self.assertEqual(
+            killed_without_lsid["cursorsKilled"], [third["cursor"]["id"]]
+        )
+
     async def test_executor_cursor_rejects_another_authenticated_user(self):
         proxy = AsyncMongoEcoProxyServer(
             auth_users=(WireAuthUser("ada", "secret"), WireAuthUser("bob", "secret")),

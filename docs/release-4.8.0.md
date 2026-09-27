@@ -40,8 +40,9 @@ catalog option acceptance alone does not establish a deployment guarantee.
   Authenticated cursors stay bound to their creating user identity across
   connections.
   Bounded positive and negative
-  cases cover the store and wire executor. The 20 request and response fields
-  of this cursor path have a separate conservation matrix. The remaining wire
+  cases cover the store and wire executor. The 26 request, response and
+  effective context fields of this cursor path have a separate conservation
+  matrix. The remaining wire
   command fields are still pending.
 
 The full [release checklist](release-checklist.md), including remote CI and
