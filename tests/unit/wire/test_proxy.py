@@ -1,4 +1,5 @@
 import unittest
+import datetime
 from unittest.mock import patch
 import uuid
 import struct
@@ -663,7 +664,7 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertIsNotNone(session)
 
     def test_handshake_service_uses_surface_limits(self):
-        proxy = AsyncMongoEcoProxyServer()
+        proxy = AsyncMongoEcoProxyServer(mongodb_dialect="7.0")
         connection = WireConnectionContext(connection_id=7, compression=("zlib",))
         surface = WireSurface(
             min_wire_version=1,
@@ -676,7 +677,20 @@ class WireProxyUnitTests(unittest.TestCase):
         )
         service = WireHandshakeService(proxy._client.mongodb_dialect, surface=surface)
 
+        before = datetime.datetime.now(datetime.UTC)
         document = service.build_hello_response(command_name="ismaster", body={}, connection=connection)
+        after = datetime.datetime.now(datetime.UTC)
+
+        self.assertEqual(
+            set(document),
+            {
+                "helloOk", "isWritablePrimary", "ismaster", "maxBsonObjectSize",
+                "maxMessageSizeBytes", "maxWriteBatchSize",
+                "logicalSessionTimeoutMinutes",
+                "connectionId", "minWireVersion", "maxWireVersion", "readOnly",
+                "localTime", "ok", "version", "versionArray", "gitVersion",
+            },
+        )
 
         self.assertEqual(document["connectionId"], 7)
         self.assertEqual(document["minWireVersion"], 1)
@@ -685,8 +699,30 @@ class WireProxyUnitTests(unittest.TestCase):
         self.assertEqual(document["maxMessageSizeBytes"], 456)
         self.assertEqual(document["maxWriteBatchSize"], 789)
         self.assertEqual(document["logicalSessionTimeoutMinutes"], 12)
+        self.assertTrue(document["helloOk"])
+        self.assertTrue(document["isWritablePrimary"])
+        self.assertFalse(document["readOnly"])
+        self.assertEqual(document["ok"], 1.0)
+        self.assertEqual(document["version"], "7.0.0")
+        self.assertEqual(document["versionArray"], [7, 0, 0, 0])
+        self.assertEqual(document["gitVersion"], "mongoeco")
+        self.assertLessEqual(before, document["localTime"])
+        self.assertLessEqual(document["localTime"], after)
         self.assertNotIn("compression", document)
         self.assertTrue(document["ismaster"])
+
+        modern = service.build_hello_response(
+            command_name="hello", body={}, connection=connection
+        )
+        self.assertNotIn("ismaster", modern)
+        self.assertTrue(modern["isWritablePrimary"])
+        self.assertEqual(modern["connectionId"], 7)
+        another = service.build_hello_response(
+            command_name="hello",
+            body={},
+            connection=WireConnectionContext(connection_id=8),
+        )
+        self.assertEqual(another["connectionId"], 8)
 
     def test_authentication_service_authenticates_logout_and_requires_auth(self):
         service = WireAuthenticationService(
@@ -988,6 +1024,37 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
                 {"isMASTER": 1, "$db": "admin"},
                 connection=connection,
             )
+
+    async def test_executor_hello_rejects_invalid_command_values_and_database(self):
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+
+        for command_name in ("hello", "isMaster", "ismaster"):
+            for command_value in (0, "1", None):
+                with (
+                    self.subTest(command_name=command_name, value=command_value),
+                    self.assertRaisesRegex(
+                        OperationFailure, "requires the command value 1"
+                    ),
+                ):
+                    await proxy._executor.execute_command(
+                        {command_name: command_value, "$db": "admin"},
+                        connection=connection,
+                    )
+
+        for invalid_database in ("", 7):
+            with (
+                self.subTest(database=invalid_database),
+                self.assertRaisesRegex(OperationFailure, "non-empty string"),
+            ):
+                await proxy._executor.execute_command(
+                    {"hello": 1, "$db": invalid_database},
+                    connection=connection,
+                )
+
+        self.assertEqual(connection.hello_count, 0)
+        self.assertIsNone(connection.client_metadata)
+        self.assertEqual(connection.compression, ())
 
     async def test_executor_wire_failpoint_is_local_fail_command_only(self):
         proxy = AsyncMongoEcoProxyServer()

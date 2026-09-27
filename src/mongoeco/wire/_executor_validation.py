@@ -417,6 +417,10 @@ def _make_flag_validator(command_name: str) -> _WireValidator:
 
 
 _WIRE_COMMAND_VALIDATORS: dict[str, _WireValidator] = {
+    **{
+        command_name: _make_flag_validator(command_name)
+        for command_name in ("hello", "isMaster", "ismaster")
+    },
     "authenticate": _validate_authenticate,
     "saslStart": _validate_sasl_start,
     "saslContinue": _validate_sasl_continue,
