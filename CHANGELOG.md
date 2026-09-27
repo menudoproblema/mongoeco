@@ -21,6 +21,8 @@ usa Semantic Versioning.
 - Validate the three wire `hello` command aliases before recording connection
   state, and inventory their bounded request and response fields, including
   absent compression and topology claims.
+- Report the actual connection peer in the wire `whatsmyuri` response and
+  inventory five local wire inspection command field contracts.
 - Preserve the historical legacy compatibility snapshots when exporting the
   current exchange view. Reject unknown telemetry buffer overflow policies
   instead of silently treating them as `drop_oldest`.

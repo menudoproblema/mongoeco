@@ -16,6 +16,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MATRIX = PROJECT_ROOT / "docs" / "cxp-wire-command-conservation.csv"
 CURSOR_MATRIX = PROJECT_ROOT / "docs" / "cxp-wire-cursor-field-conservation.csv"
 HELLO_MATRIX = PROJECT_ROOT / "docs" / "cxp-wire-hello-field-conservation.csv"
+STATIC_ADMIN_MATRIX = (
+    PROJECT_ROOT / "docs" / "cxp-wire-static-admin-field-conservation.csv"
+)
 EXPECTED_COMMAND_COUNT = 46
 EXPECTED_CURSOR_FIELDS = frozenset(
     {
@@ -60,6 +63,29 @@ EXPECTED_HELLO_FIELDS = frozenset(
         "/response/version", "/response/versionArray", "/response/gitVersion",
         "/response/compression", "/response/setName", "/response/hosts",
         "/response/serviceId", "/response/loadBalanced",
+    }
+)
+EXPECTED_STATIC_ADMIN_FIELDS = frozenset(
+    {
+        "/ping/request/ping", "/buildInfo/request/buildInfo",
+        "/hostInfo/request/hostInfo", "/getCmdLineOpts/request/getCmdLineOpts",
+        "/whatsmyuri/request/whatsmyuri", "/request/$db",
+        "/ping/response/ok",
+        "/buildInfo/response/version", "/buildInfo/response/versionArray",
+        "/buildInfo/response/gitVersion", "/buildInfo/response/ok",
+        "/hostInfo/response/system/hostname",
+        "/hostInfo/response/system/cpuArch",
+        "/hostInfo/response/system/numCores",
+        "/hostInfo/response/system/memSizeMB",
+        "/hostInfo/response/os/type", "/hostInfo/response/os/name",
+        "/hostInfo/response/os/version",
+        "/hostInfo/response/extra/pythonVersion", "/hostInfo/response/ok",
+        "/getCmdLineOpts/response/argv",
+        "/getCmdLineOpts/response/parsed/net/bindIp",
+        "/getCmdLineOpts/response/parsed/net/port",
+        "/getCmdLineOpts/response/parsed/storage",
+        "/getCmdLineOpts/response/ok",
+        "/whatsmyuri/response/you", "/whatsmyuri/response/ok",
     }
 )
 SHA256_HEX_LENGTH = 64
@@ -185,6 +211,46 @@ def test_wire_hello_field_matrix_covers_bounded_request_and_result_fields() -> N
         assert row["conditions_scope"]
         assert row["consumer_decision"]
         assert row["destination"]
+        for field, source in sources.items():
+            assert row[field] == hashlib.sha256(source.read_bytes()).hexdigest()
+        assert row["positive_evidence"] != row["negative_evidence"]
+        _assert_test_references_exist(row["positive_evidence"])
+        _assert_test_references_exist(row["negative_evidence"])
+
+
+def test_static_admin_wire_field_matrix_covers_five_command_contracts() -> None:
+    with STATIC_ADMIN_MATRIX.open(newline="", encoding="utf-8") as stream:
+        rows = list(csv.DictReader(stream))
+    elements = [row["element"] for row in rows]
+    assert len(elements) == len(EXPECTED_STATIC_ADMIN_FIELDS)
+    assert len(elements) == len(set(elements))
+    assert set(elements) == EXPECTED_STATIC_ADMIN_FIELDS
+
+    sources = {
+        "validation_sha256": PROJECT_ROOT / "src/mongoeco/wire/_executor_validation.py",
+        "context_sha256": PROJECT_ROOT / "src/mongoeco/wire/_executor_support.py",
+        "passthrough_sha256": (
+            PROJECT_ROOT / "src/mongoeco/wire/_executor_passthrough.py"
+        ),
+        "database_commands_sha256": (
+            PROJECT_ROOT / "src/mongoeco/api/_async/database_commands.py"
+        ),
+        "connections_sha256": PROJECT_ROOT / "src/mongoeco/wire/connections.py",
+        "routing_sha256": PROJECT_ROOT / "src/mongoeco/wire/capabilities.py",
+    }
+    expected_source = "; ".join(
+        str(path.relative_to(PROJECT_ROOT)) for path in sources.values()
+    )
+    for row in rows:
+        assert row["product"] == "Mongoeco"
+        assert row["owner"] == "Mongoeco"
+        assert row["source"] == expected_source
+        assert row["source_revision"] == "82fad46ffb67b0d5a70b180528dfcaeb094ca2f3"
+        assert row["disposition"] == "owner_operational"
+        assert row["status"] == "bounded_behavior_verified"
+        assert row["meaning"]
+        assert row["conditions_scope"]
+        assert row["consumer_decision"]
         for field, source in sources.items():
             assert row[field] == hashlib.sha256(source.read_bytes()).hexdigest()
         assert row["positive_evidence"] != row["negative_evidence"]

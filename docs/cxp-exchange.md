@@ -286,6 +286,18 @@ names therefore remain Mongoeco operational contracts, with no per-command
 exchange claim for those consumers. This classification does not establish
 that every argument or result field has been conserved. The accessible
 repository census does not establish the absence of published external consumers.
+Five local wire inspection commands (`ping`, `buildInfo`, `hostInfo`,
+`getCmdLineOpts` and `whatsmyuri`) have a separate bounded request/response
+inventory in
+[`cxp-wire-static-admin-field-conservation.csv`](cxp-wire-static-admin-field-conservation.csv).
+`buildInfo.version` describes the selected MongoDB dialect and `gitVersion`
+is a literal producer marker. `hostInfo` describes the local process;
+`memSizeMB=0` is a placeholder, not measured capacity. `getCmdLineOpts` reports
+local arguments and placeholders, not effective deployment configuration.
+Over wire, `whatsmyuri.you` now reports the current connection peer instead
+of the embedded API's `127.0.0.1:0` placeholder, matching the command's
+[current-client meaning](https://www.mongodb.com/docs/manual/reference/command/whatsmyuri/).
+These fields remain Mongoeco operational facts, not deployment claims in CXP.
 Cursor IDs are scoped to the namespace that produced them. Wire `getMore`
 rejects a known ID presented with another database or collection;
 `killCursors` reports that ID as unknown in the other namespace and leaves

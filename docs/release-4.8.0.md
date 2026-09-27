@@ -57,6 +57,11 @@ catalog option acceptance alone does not establish a deployment guarantee.
   The three command aliases reject invalid command values and databases before
   recording connection state. A separate matrix pins the bounded `hello`
   request and response fields and explicitly marks absent topology fields.
+- A separate row-level matrix pins the local wire fields of `ping`,
+  `buildInfo`, `hostInfo`, `getCmdLineOpts` and `whatsmyuri`. Wire
+  `whatsmyuri.you` now uses the current connection peer; the embedded API
+  keeps its no-connection placeholder. The other wire command fields remain
+  open in the conservation inventory.
 
 The full [release checklist](release-checklist.md), including remote CI and
 the final installed artifact matrix, remains a gate for any later publication.

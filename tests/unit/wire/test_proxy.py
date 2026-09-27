@@ -1102,11 +1102,15 @@ class WireProxyAsyncUnitTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(host_info["system"]["cpuArch"], str)
         self.assertGreater(host_info["system"]["numCores"], 0)
         self.assertEqual(host_info["system"]["memSizeMB"], 0)
+        for field_name in ("type", "name", "version"):
+            self.assertIsInstance(host_info["os"][field_name], str)
+        self.assertIsInstance(host_info["extra"]["pythonVersion"], str)
         self.assertEqual(host_info["ok"], 1.0)
 
         cmd_line = await execute("getCmdLineOpts")
         self.assertEqual(set(cmd_line), {"argv", "parsed", "ok"})
         self.assertIsInstance(cmd_line["argv"], list)
+        self.assertTrue(all(isinstance(item, str) for item in cmd_line["argv"]))
         self.assertEqual(set(cmd_line["parsed"]), {"net", "storage"})
         self.assertEqual(
             cmd_line["parsed"],
