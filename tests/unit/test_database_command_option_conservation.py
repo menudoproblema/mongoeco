@@ -20,6 +20,7 @@ from mongoeco.compat._catalog_operation_options import (
     DATABASE_COMMAND_OPTION_SUPPORT_CATALOG,
 )
 from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.wire import AsyncMongoEcoProxyServer
 
@@ -41,6 +42,44 @@ EFFECTIVE_VERIFIED = {
     ("listCollections", "nameOnly"),
     ("listDatabases", "filter"),
     ("listDatabases", "nameOnly"),
+    ("explain", "comment"),
+    ("explain", "maxTimeMS"),
+}
+COMMENT_COMMANDS = {
+    "aggregate": {"aggregate": "items", "pipeline": []},
+    "count": {"count": "items"},
+    "createIndexes": {
+        "createIndexes": "items",
+        "indexes": [{"key": {"value": 1}, "name": "new_idx"}],
+    },
+    "currentOp": {"currentOp": 1},
+    "dbHash": {"dbHash": 1},
+    "delete": {"delete": "items", "deletes": [{"q": {"_id": 1}, "limit": 1}]},
+    "distinct": {"distinct": "items", "key": "value"},
+    "dropIndexes": {"dropIndexes": "items", "index": "value_idx"},
+    "explain": {
+        "explain": {"find": "items", "filter": {}},
+        "verbosity": "queryPlanner",
+    },
+    "find": {"find": "items"},
+    "findAndModify": {
+        "findAndModify": "items",
+        "query": {"_id": 1},
+        "update": {"$set": {"value": 2}},
+    },
+    "insert": {"insert": "items", "documents": [{"_id": 2}]},
+    "killOp": {"killOp": 1, "op": "999"},
+    "listCollections": {"listCollections": 1},
+    "listDatabases": {"listDatabases": 1},
+    "listIndexes": {"listIndexes": "items"},
+    "update": {
+        "update": "items",
+        "updates": [{"q": {"_id": 1}, "u": {"$set": {"value": 2}}, "multi": False}],
+    },
+    "validate": {"validate": "items"},
+}
+PROFILE_SCOPE_VERIFIED = {
+    (command, "comment") for command in COMMENT_COMMANDS if command != "explain"
 }
 
 
@@ -95,6 +134,14 @@ def test_inventory_tracks_exact_owner_and_public_command_option_sets() -> None:
         and row["negative_evidence"]
     }
     assert verified == EFFECTIVE_VERIFIED
+    profile_verified = {
+        (row["element"].split("/")[2], row["element"].split("/")[4])
+        for row in rows
+        if row["status"] == "profile_scope_verified_other_effects_pending"
+        and row["positive_evidence"]
+        and row["negative_evidence"]
+    }
+    assert profile_verified == PROFILE_SCOPE_VERIFIED
     assert all(
         row["status"] == "option_level_oracle_pending"
         and not row["positive_evidence"]
@@ -102,7 +149,7 @@ def test_inventory_tracks_exact_owner_and_public_command_option_sets() -> None:
         for row in rows
         if row["disposition"] == "owner_claim_effective"
         and (row["element"].split("/")[2], row["element"].split("/")[4])
-        not in EFFECTIVE_VERIFIED
+        not in EFFECTIVE_VERIFIED | PROFILE_SCOPE_VERIFIED
     )
 
 
@@ -336,3 +383,129 @@ def test_aggregate_top_level_batch_size_is_wire_only() -> None:
                     "cursor": {"batchSize": "invalid"},
                 }
             )
+
+
+@pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize(
+    ["command", "command_document"], sorted(COMMENT_COMMANDS.items())
+)
+def test_comment_is_recorded_only_under_enabled_profiling(
+    engine_type: type[MemoryEngine | SQLiteEngine],
+    command: str,
+    command_document: dict[str, object],
+) -> None:
+    marker = f"audit-{command}"
+    for profiling_enabled in (False, True):
+        with MongoClient(engine_type()) as client:
+            database = client.audit
+            database.items.insert_one({"_id": 1, "value": 1})
+            database.items.create_index([("value", 1)], name="value_idx")
+            if profiling_enabled:
+                database.command({"profile": 2, "slowms": 0})
+            result = database.command({**command_document, "comment": marker})
+            if command == "explain":
+                assert result["comment"] == marker
+            events = list(database["system.profile"].find({}))
+            matches = [
+                event for event in events if event["command"].get("comment") == marker
+            ]
+            assert len(matches) == int(profiling_enabled)
+            if matches:
+                assert command in matches[0]["command"]
+
+
+@pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize(
+    "explained_command",
+    [
+        {"find": "items", "filter": {}},
+        {"aggregate": "items", "pipeline": []},
+        {"count": "items"},
+        {"distinct": "items", "key": "value"},
+        {
+            "update": "items",
+            "updates": [{"q": {"_id": 1}, "u": {"$set": {"value": 2}}}],
+        },
+        {"delete": "items", "deletes": [{"q": {"_id": 1}, "limit": 1}]},
+        {
+            "findAndModify": "items",
+            "query": {"_id": 1},
+            "update": {"$set": {"value": 2}},
+        },
+    ],
+)
+def test_explain_propagates_outer_options_with_explicit_inner_precedence(
+    engine_type: type[MemoryEngine | SQLiteEngine],
+    explained_command: dict[str, object],
+) -> None:
+    outer_max_time_ms = 17
+    inner_max_time_ms = 23
+    with MongoClient(engine_type()) as client:
+        database = client.audit
+        database.items.insert_one({"_id": 1, "value": 1})
+        outer = database.command(
+            {
+                "explain": explained_command,
+                "comment": "outer",
+                "maxTimeMS": outer_max_time_ms,
+            }
+        )
+        assert outer["comment"] == "outer"
+        assert outer["max_time_ms"] == outer_max_time_ms
+
+        inner = database.command(
+            {
+                "explain": {
+                    **explained_command,
+                    "comment": "inner",
+                    "maxTimeMS": inner_max_time_ms,
+                },
+                "comment": "outer",
+                "maxTimeMS": outer_max_time_ms,
+            }
+        )
+        assert inner["comment"] == "inner"
+        assert inner["max_time_ms"] == inner_max_time_ms
+
+
+@pytest.mark.parametrize("engine_type", [MemoryEngine, SQLiteEngine])
+@pytest.mark.parametrize("invalid", ["invalid", -1, True])
+def test_explain_rejects_invalid_outer_max_time_even_with_valid_inner_value(
+    engine_type: type[MemoryEngine | SQLiteEngine], invalid: object
+) -> None:
+    with MongoClient(engine_type()) as client, pytest.raises((TypeError, ValueError)):
+        client.audit.command(
+            {
+                "explain": {"find": "items", "maxTimeMS": 23},
+                "maxTimeMS": invalid,
+            }
+        )
+
+
+def test_explain_outer_options_are_preserved_on_wire() -> None:
+    async def run() -> None:
+        outer_max_time_ms = 17
+        proxy = AsyncMongoEcoProxyServer()
+        connection = proxy._connections.create(("127.0.0.1", 27017))
+        result = await proxy._executor.execute_command(
+            {
+                "explain": {"find": "items", "filter": {}},
+                "comment": "wire outer",
+                "maxTimeMS": outer_max_time_ms,
+                "$db": "audit",
+            },
+            connection=connection,
+        )
+        assert result["comment"] == "wire outer"
+        assert result["max_time_ms"] == outer_max_time_ms
+        with pytest.raises((TypeError, ValueError)):
+            await proxy._executor.execute_command(
+                {
+                    "explain": {"find": "items", "maxTimeMS": 23},
+                    "maxTimeMS": -1,
+                    "$db": "audit",
+                },
+                connection=connection,
+            )
+
+    asyncio.run(run())

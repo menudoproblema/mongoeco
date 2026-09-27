@@ -6,6 +6,7 @@ from hashlib import md5
 from typing import TYPE_CHECKING
 
 from mongoeco.api.admin_parsing import (
+    normalize_command_max_time_ms,
     normalize_find_and_modify_options,
     normalize_list_collections_options,
     normalize_list_databases_options,
@@ -361,6 +362,12 @@ class DatabaseAdminReadCommandService:
             raise TypeError("verbosity must be a string")
 
         explained_command_name = next(iter(explain_spec))
+        if "maxTimeMS" in spec:
+            normalize_command_max_time_ms(spec["maxTimeMS"])
+        explain_spec = dict(explain_spec)
+        for option in ("comment", "maxTimeMS"):
+            if option in spec:
+                explain_spec.setdefault(option, spec[option])
         if explained_command_name == "find":
             collection_name, operation = self._admin._command_compiler.compile_find_operation(
                 explain_spec,

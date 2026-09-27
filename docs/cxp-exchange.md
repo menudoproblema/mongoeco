@@ -185,14 +185,17 @@ not treat their presence in `supportedOptions` as evidence of an effect.
 The 71 advertised top-level options across 22 database commands are inventoried
 in [`cxp-database-command-option-conservation.csv`](cxp-database-command-option-conservation.csv).
 The four accepted no-op options have bounded behavior and wrong-type tests.
-Six effective options have scoped positive and negative cases: `filter` and
+Eight effective options have scoped positive and negative cases: `filter` and
 `nameOnly` on both listing commands, plus `batchSize` on `find` and
-`aggregate`. For `batchSize`, wire limits `firstBatch` and exposes `getMore`;
+`aggregate`, and `comment` and `maxTimeMS` on `explain`. For `batchSize`, wire limits `firstBatch` and exposes `getMore`;
 direct `database.command()` materializes the full result. Direct `find` uses
 the option for local prefetch, while direct `aggregate` ignores top-level
-`batchSize` and uses `cursor.batchSize` for that purpose. The remaining
-61 are owner claims of effective behavior whose individual positive and
-negative option-level oracles are still pending. The inventory
+`batchSize` and uses `cursor.batchSize` for that purpose. Top-level `explain`
+options propagate to supported explained commands unless an inner value is
+explicit; invalid outer `maxTimeMS` is rejected. Another 17 `comment` options
+have a verified `system.profile` effect when profiling is enabled, while their
+other claimed effects remain pending. The remaining 42 effective options lack
+individual positive and negative option-level oracles. The inventory
 does not turn these operational options into CXP compatibility guarantees.
 For `createIndexes`, `supportedOptions` lists only command-level options.
 `indexSpecFields` lists the exact accepted fields of each element of
