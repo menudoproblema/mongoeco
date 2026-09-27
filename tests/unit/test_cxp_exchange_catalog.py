@@ -40,6 +40,13 @@ from mongoeco.cxp.exchange.projection import (
 CATALOG_SPEC_VERSION = 2
 
 
+def test_unknown_profile_and_tier_names_never_fall_back() -> None:
+    with pytest.raises(ValueError, match="Unknown MongoDB profile"):
+        load_mongodb_profile("mongodb-other")
+    with pytest.raises(ValueError, match="Unknown MongoDB tier"):
+        load_mongodb_tier("premium")
+
+
 def _context() -> Document:
     return Document(
         {
