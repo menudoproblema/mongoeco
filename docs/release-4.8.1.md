@@ -2,6 +2,10 @@
 
 Fecha: 1 de octubre de 2026. Release de correccion sobre Mongoeco 4.8.0.
 
+Estado: publicada en [PyPI](https://pypi.org/project/mongoeco/4.8.1/).
+La etiqueta `v4.8.1` apunta a
+`ad90d8462d1d49a8161717271b073049ceb896d8`.
+
 ## Correcciones
 
 Un `$lookup` o `$unionWith` posterior a `$group` recibia un pipeline sin el
@@ -50,3 +54,24 @@ profundos, matriz PyMongo, benchmarks y diferenciales completos MongoDB 7/8.
 La publicacion utiliza los artefactos del commit etiquetado `v4.8.1`, despues
 de verificar los gates del workflow. El smoke de contrato desde PyPI y los
 SHA-256 del indice publico verifican la entrega final.
+
+## Evidencia de entrega
+
+- El [workflow del tag](https://github.com/menudoproblema/mongoeco/actions/runs/36851239057)
+  termino correctamente, incluida la publicacion mediante Trusted Publishing.
+- Las suites completas del wheel instalado en Python 3.13 y 3.14 pasaron:
+  4.672 tests y 3.982 subtests de pytest, y 3.587 casos de unittest.
+  La cobertura medida en Python 3.14 fue del 99,04 %.
+- Los diferenciales completos pasaron 29 casos por version contra MongoDB
+  7.0 y 8.0, sin fallos ni skips. Los property tests profundos, la matriz
+  PyMongo, los contratos publicos y la matriz de benchmarks tambien pasaron.
+- La instalacion limpia desde PyPI verifico la version 4.8.1, imports,
+  contrato CXP y `pip check`. Las regresiones de referencias posteriores a
+  `$group` pasaron desde el paquete publicado, en sync y async, Memory y
+  SQLite, con paginacion y spill, para ambas formas de `$lookup` y `$unionWith`.
+- Los SHA-256 publicados coinciden con los dos builds locales reproducibles:
+
+| Archivo | SHA-256 |
+| --- | --- |
+| `mongoeco-4.8.1-py3-none-any.whl` | `0d2e6a81cf8ba1fd98bf5bcf68b3256c10836739f92429ef474d3b2987e18c86` |
+| `mongoeco-4.8.1.tar.gz` | `b3ce72db5f9e36d4f5e5acf151e74890466de32b3a9f4468383d90717b116ff6` |
