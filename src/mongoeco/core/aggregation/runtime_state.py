@@ -6,7 +6,10 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.aggregation.evaluation_environment import scoped_environment
+from mongoeco.core.aggregation.evaluation_environment import (
+    aggregation_environment,
+    scoped_environment,
+)
 from mongoeco.core.aggregation.grouping_stages import (
     _apply_bucket,
     _apply_bucket_auto,
@@ -29,6 +32,11 @@ from mongoeco.core.aggregation.planning import (
     _require_stage,
     _require_unset_spec,
 )
+from mongoeco.core.aggregation.preparation import prepare_pipeline
+from mongoeco.core.aggregation.resources import (
+    AggregationResources,
+    scoped_resolver_kwargs,
+)
 from mongoeco.core.aggregation.runtime import (
     _CURRENT_COLLECTION_RESOLVER_KEY,
     _MISSING,
@@ -37,7 +45,6 @@ from mongoeco.core.aggregation.runtime import (
     _evaluate_expression_with_missing,
     _lookup_matches,
     _require_lookup_spec,
-    _require_pipeline_spec,
     _require_union_with_spec,
     _require_unwind_spec,
     evaluate_expression,
@@ -50,7 +57,6 @@ from mongoeco.core.aggregation.transform_stages import (
     _apply_replace_root,
     _apply_unset,
 )
-from mongoeco.core.work_control import iter_with_deadline
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.operation_limits import enforce_deadline
 from mongoeco.core.paths import (
@@ -65,6 +71,7 @@ from mongoeco.core.runtime_metadata import (
     ensure_runtime_state,
 )
 from mongoeco.core.sorting import sort_documents
+from mongoeco.core.work_control import iter_with_deadline
 from mongoeco.errors import OperationFailure
 
 
@@ -469,21 +476,15 @@ def _nested_branch_state(
 
 def _apply_facet_states(
     states: list[RuntimeDocumentState],
-    spec: object,
+    spec: dict[str, Pipeline],
     **kwargs,
 ) -> list[RuntimeDocumentState]:
-    if not isinstance(spec, dict):
-        message = "$facet requires a document specification"
-        raise OperationFailure(message)
     branches: dict[str, list[RuntimeDocumentState]] = {}
     deadline = kwargs.get("deadline")
     for field_name, pipeline in spec.items():
-        if not isinstance(field_name, str):
-            message = "$facet field names must be strings"
-            raise OperationFailure(message)
         branches[field_name] = apply_pipeline_states(
             [deepcopy(state) for state in iter_with_deadline(states, deadline)],
-            _require_pipeline_spec("$facet", pipeline),
+            pipeline,
             **kwargs,
         )
     return [_nested_branch_state(branches, deadline=deadline)]
@@ -500,16 +501,18 @@ def _apply_lookup_states(  # noqa: PLR0913
     spill_policy,
     lookup_hash_max_associations: int | None,
     deadline: float | None,
-    **_kwargs,
+    **resource_resolvers,
 ) -> list[RuntimeDocumentState]:
     lookup = _require_lookup_spec(spec)
-    if collection_resolver is None:
+    if collection_resolver is None and lookup["from"] is not None:
         message = "$lookup requires collection resolver support"
         raise OperationFailure(message)
     foreign_states = [
         ensure_runtime_state(document)
         for document in iter_with_deadline(
-            collection_resolver(lookup["from"]) or [],
+            []
+            if lookup["from"] is None
+            else (collection_resolver(lookup["from"]) or []),
             deadline,
         )
     ]
@@ -561,7 +564,9 @@ def _apply_lookup_states(  # noqa: PLR0913
             matches = apply_pipeline_states(
                 [deepcopy(candidate) for candidate in candidates],
                 lookup["pipeline"],
-                collection_resolver=collection_resolver,
+                **scoped_resolver_kwargs(
+                    collection_resolver, lookup["from"], resource_resolvers
+                ),
                 variables=scoped,
                 dialect=dialect,
                 collation=collation,
@@ -575,10 +580,14 @@ def _apply_lookup_states(  # noqa: PLR0913
                 for candidate in iter_with_deadline(candidates, deadline)
             ]
         document = state.persistence_document()
-        document[lookup["as"]] = [
-            match.persistence_document()
-            for match in iter_with_deadline(matches, deadline)
-        ]
+        set_document_value(
+            document,
+            lookup["as"],
+            [
+                match.persistence_document()
+                for match in iter_with_deadline(matches, deadline)
+            ],
+        )
         virtuals = [
             virtual
             for virtual in iter_with_deadline(
@@ -621,11 +630,12 @@ def _apply_union_states(
     **kwargs,
 ) -> list[RuntimeDocumentState]:
     union = _require_union_with_spec(spec)
-    if collection_resolver is None:
+    documents_source = bool(union["pipeline"] and "$documents" in union["pipeline"][0])
+    if collection_resolver is None and not documents_source:
         message = "$unionWith requires collection resolver support"
         raise OperationFailure(message)
     resolver_key = union["coll"] or _CURRENT_COLLECTION_RESOLVER_KEY
-    resolved = collection_resolver(resolver_key)
+    resolved = [] if documents_source else collection_resolver(resolver_key)
     foreign = (
         [deepcopy(state) for state in iter_with_deadline(states, deadline)]
         if resolved is None
@@ -638,9 +648,21 @@ def _apply_union_states(
         foreign = apply_pipeline_states(
             foreign,
             union["pipeline"],
-            collection_resolver=collection_resolver,
+            **scoped_resolver_kwargs(
+                collection_resolver,
+                union["coll"] or getattr(collection_resolver, "collection", None),
+                {
+                    key: value
+                    for key, value in kwargs.items()
+                    if key.endswith("_resolver")
+                },
+            ),
             deadline=deadline,
-            **kwargs,
+            **{
+                key: value
+                for key, value in kwargs.items()
+                if not key.endswith("_resolver")
+            },
         )
     return [deepcopy(state) for state in iter_with_deadline(states, deadline)] + foreign
 
@@ -663,6 +685,8 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
     deadline: float | None = None,
 ) -> list[RuntimeDocumentState]:
     """Execute a pipeline while keeping runtime provenance outside BSON values."""
+    pipeline = prepare_pipeline(pipeline, dialect=dialect)
+    variables = aggregation_environment(variables, collation)
     states = [
         ensure_runtime_state(document)
         for document in iter_with_deadline(documents, deadline)
@@ -681,7 +705,9 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
         "lookup_hash_max_associations": lookup_hash_max_associations,
         "deadline": deadline,
     }
-    for stage in pipeline:
+    if isinstance(collection_resolver, AggregationResources):
+        common.update(collection_resolver.resolver_kwargs())
+    for index, stage in enumerate(pipeline):
         enforce_deadline(deadline)
         operator, spec = _require_stage(stage)
         if operator in _PRESERVING_STAGES:
@@ -780,6 +806,7 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
                     spec,
                     variables,
                     dialect=dialect,
+                    collation=collation,
                     deadline=deadline,
                 )
             else:
@@ -802,7 +829,7 @@ def apply_pipeline_states(  # noqa: PLR0912, PLR0913
         else:
             output = apply_pipeline(
                 [state.persistence_document() for state in states],
-                [stage],
+                pipeline[index:index + 1],
                 **common,
             )
             states = [

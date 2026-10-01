@@ -5,12 +5,14 @@ from unittest.mock import patch
 
 import pytest
 
-import mongoeco.core.aggregation.compiled_pipeline as compiled_pipeline_module
-import mongoeco.core.aggregation.stages as aggregation_stages_module
 import mongoeco.core.filtering as filtering_module
 import mongoeco.core.operators as operators_module
 
-from mongoeco.core.aggregation import apply_pipeline, compile_pipeline
+from mongoeco.core.aggregation import (
+    apply_pipeline,
+    compile_pipeline,
+    evaluation_environment as aggregation_environment_module,
+)
 from mongoeco.core.expression_context import (
     ExpressionExecutionContext,
     ensure_expression_context,
@@ -71,13 +73,15 @@ def test_core_execution_boundaries_capture_one_context_and_propagate_it():
         }
     )
 
-    with patch.object(filtering_module, "ensure_expression_context", return_value=context) as ensure:
+    with patch.object(
+        filtering_module, "ensure_expression_context", return_value=context
+    ) as ensure:
         assert QueryEngine.match_plan({}, expr_plan)
     assert ensure.call_args_list[0].args == (None,)
     assert all(call.args == (context,) for call in ensure.call_args_list[1:])
 
     with patch.object(
-        aggregation_stages_module,
+        aggregation_environment_module,
         "ensure_expression_context",
         return_value=context,
     ) as ensure:
@@ -91,7 +95,7 @@ def test_core_execution_boundaries_capture_one_context_and_propagate_it():
     compiled = compile_pipeline([{"$set": {"at": "$$NOW"}}])
     assert compiled is not None
     with patch.object(
-        compiled_pipeline_module,
+        aggregation_environment_module,
         "ensure_expression_context",
         return_value=context,
     ) as ensure:
@@ -100,8 +104,12 @@ def test_core_execution_boundaries_capture_one_context_and_propagate_it():
     assert [document["at"] for document in transformed] == [context.now, context.now]
 
     document = {"_id": 1}
-    with patch.object(operators_module, "ensure_expression_context", return_value=context) as ensure:
-        UpdateEngine.apply_update(document, [{"$set": {"first": "$$NOW"}}, {"$set": {"second": "$$NOW"}}])
+    with patch.object(
+        operators_module, "ensure_expression_context", return_value=context
+    ) as ensure:
+        UpdateEngine.apply_update(
+            document, [{"$set": {"first": "$$NOW"}}, {"$set": {"second": "$$NOW"}}]
+        )
     ensure.assert_called_once_with(None)
     assert document["first"] == document["second"] == context.now
 

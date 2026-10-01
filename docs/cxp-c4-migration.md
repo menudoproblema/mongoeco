@@ -1,7 +1,7 @@
 # Mongoeco migration to exchange-only CXP
 
-This guide describes the exchange-only 4.8.0 source candidate on `main`. It is
-not a published release. The removal of the legacy CXP public surface is an
+This guide describes the exchange-only CXP surface published in Mongoeco
+4.8.0 and preserved in 4.8.1. The removal of the legacy CXP public surface is an
 explicit minor-version exception; the preceding published 4.7.0 still imports
 the old protocol and must not be combined with CXP 5.
 
@@ -20,14 +20,20 @@ carries a compatibility guarantee. An unreported required property remains
 indeterminate; a reported set missing a required key is incompatible.
 
 The old API fixture `tests/fixtures/public_api_manifest_v1.json` and compat
-catalog snapshots remain untouched. The source candidate manifest is
+catalog snapshots remain untouched. The exchange public API manifest is
 `tests/fixtures/public_api_manifest_exchange_source.json`; comparison records
 five removals and two additions. The exact legacy Python source and tests are
 archived in `evidence/mongoeco-legacy-cxp-python.zip`, and the old CXP guide is
 `evidence/mongoeco-legacy-cxp.md`.
 
-Before a public removal release, rebuild Mongoeco and its consumers against
+When upgrading consumers, rebuild Mongoeco and its consumers against
 the exact CXP 5.0.0 artifact, regenerate any lockfiles after publication, run
 the full installed artifact matrix and compare the final public API manifest.
-This source requires `cxp[exchange]>=5.0.0,<6` and carries the unpublished
-Mongoeco 4.8.0 version. No tag or upload is authorized by this preparation.
+Mongoeco 4.8+ requires `cxp[exchange]>=5.0.0,<6`.
+
+## Aggregation compatibility in 4.8.1
+
+Mongoeco 4.8.1 corrects joins after grouping, nested resource scopes and BSON
+comparison semantics. `$collStats.count` now returns the MongoDB-compatible
+scalar instead of a nested count document: replace `$count.count` projections
+with `$count`. Import roots, SPI v2 and persistent formats remain unchanged.

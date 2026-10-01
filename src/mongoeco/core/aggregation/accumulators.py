@@ -2,24 +2,24 @@ from __future__ import annotations
 
 import decimal
 import math
+
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass, field
-from functools import cmp_to_key
+from functools import cmp_to_key, partial
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.collation import CollationSpec
-from mongoeco.core.paths import get_document_value
-from mongoeco.core.bson_scalars import bson_add, is_bson_numeric, unwrap_bson_numeric
-from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, SortSpec, UndefinedType
-
 from mongoeco.core.aggregation.numeric_expressions import (
     _compute_percentiles,
     _parse_percentile_spec,
     _require_integral_numeric,
 )
+from mongoeco.core.bson_scalars import bson_add, is_bson_numeric, unwrap_bson_numeric
+from mongoeco.core.collation import CollationSpec, compare_with_collation
+from mongoeco.core.paths import get_document_value
+from mongoeco.errors import OperationFailure
+from mongoeco.types import Document, SortSpec, UndefinedType
 
 
 type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
@@ -237,18 +237,22 @@ def _evaluate_ordered_accumulator_input(
     return sort_spec, sort_values, output, size
 
 
-def _compare_ordered_accumulator_items(
+def _compare_ordered_accumulator_items(  # noqa: PLR0913 - comparison context
     left: tuple[list[Any], Any, int],
     right: tuple[list[Any], Any, int],
     sort_spec: SortSpec,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
     reverse_tie_break: bool = False,
 ) -> int:
     left_sort_values, _left_output, left_sequence = left
     right_sort_values, _right_output, right_sequence = right
     for index, (_field, direction) in enumerate(sort_spec):
-        comparison = dialect.policy.compare_values(left_sort_values[index], right_sort_values[index])
+        comparison = compare_with_collation(
+            left_sort_values[index], right_sort_values[index],
+            dialect=dialect, collation=collation,
+        )
         if comparison == 0:
             continue
         return comparison if direction == 1 else -comparison
@@ -259,13 +263,14 @@ def _compare_ordered_accumulator_items(
     return -1 if left_sequence < right_sequence else 1
 
 
-def _trim_ordered_accumulator(
+def _trim_ordered_accumulator(  # noqa: PLR0913 - comparison context
     state: _OrderedAccumulator,
     sort_spec: SortSpec,
     *,
     keep: int,
     bottom: bool,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> None:
     if len(state.items) <= keep:
         state.items.sort(
@@ -275,6 +280,7 @@ def _trim_ordered_accumulator(
                     right,
                     sort_spec,
                     dialect=dialect,
+                    collation=collation,
                 )
             )
         )
@@ -287,6 +293,7 @@ def _trim_ordered_accumulator(
                 right,
                 sort_spec,
                 dialect=dialect,
+                collation=collation,
                 reverse_tie_break=bottom,
             )
         )
@@ -300,6 +307,7 @@ def _trim_ordered_accumulator(
                     right,
                     sort_spec,
                     dialect=dialect,
+                    collation=collation,
                 )
             )
         )
@@ -428,7 +436,9 @@ def _apply_accumulators(
     missing_sentinel: object | None = None,
 ) -> None:
     if evaluate_expression is None or evaluate_expression_with_missing is None or append_unique_values is None or require_sort is None or resolve_aggregation_field_path is None or missing_sentinel is None:
-        from mongoeco.core.aggregation.planning import _require_sort as _default_require_sort
+        from mongoeco.core.aggregation.planning import (
+            _require_sort as _default_require_sort,
+        )
         from mongoeco.core.aggregation.runtime import (
             _MISSING as _DEFAULT_MISSING,
             _append_unique_values as _default_append_unique_values,
@@ -467,6 +477,7 @@ def _apply_accumulators(
         if missing_sentinel is None:
             missing_sentinel = _DEFAULT_MISSING
 
+    compare = partial(compare_with_collation, dialect=dialect, collation=collation)
     prepared_specs = _coerce_accumulator_specs(accumulator_specs)
     values = bucket.values if isinstance(bucket, _AccumulatorBucket) else bucket
     flags = bucket.flags if isinstance(bucket, _AccumulatorBucket) else _accumulator_flags(bucket)
@@ -491,13 +502,13 @@ def _apply_accumulators(
         elif operator == "$min":
             if value is None:
                 continue
-            if not flags.get(field, False) or dialect.policy.compare_values(value, values[field]) < 0:
+            if not flags.get(field, False) or compare(value, values[field]) < 0:
                 values[field] = deepcopy(value)
                 flags[field] = True
         elif operator == "$max":
             if value is None:
                 continue
-            if not flags.get(field, False) or dialect.policy.compare_values(value, values[field]) > 0:
+            if not flags.get(field, False) or compare(value, values[field]) > 0:
                 values[field] = deepcopy(value)
                 flags[field] = True
         elif operator == "$avg":
@@ -572,7 +583,7 @@ def _apply_accumulators(
                     continue
                 state.items.append(deepcopy(value))
                 state.items.sort(
-                    key=cmp_to_key(dialect.policy.compare_values),
+                    key=cmp_to_key(compare),
                     reverse=operator == "$maxN",
                 )
                 del state.items[state.n:]
@@ -605,6 +616,7 @@ def _apply_accumulators(
                 keep=keep,
                 bottom=operator in {"$bottom", "$bottomN"},
                 dialect=dialect,
+                collation=collation,
             )
         elif operator in {"$median", "$percentile"}:
             candidates, probabilities = _parse_percentile_spec(
@@ -731,7 +743,14 @@ def _window_sort_keys_equal(
     right: list[Any],
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> bool:
     if len(left) != len(right):
         return False
-    return all(dialect.policy.compare_values(left[index], right[index]) == 0 for index in range(len(left)))
+    return all(
+        compare_with_collation(
+            left[index], right[index], dialect=dialect, collation=collation
+        )
+        == 0
+        for index in range(len(left))
+    )

@@ -13,6 +13,7 @@ from mongoeco.core.aggregation.evaluation_environment import (
 )
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.sorting import sort_documents
+from mongoeco.core.collation import compare_with_collation
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, Regex, SortSpec, UndefinedType
 
@@ -90,7 +91,11 @@ def _hashable_set_lookup_key(value: Any, *, dialect: MongoDialect) -> tuple[str,
     return None
 
 
-def _build_set_lookup(values: list[Any], *, dialect: MongoDialect) -> tuple[set[tuple[str, Any]], list[Any]]:
+def _build_set_lookup(
+    values: list[Any], *, dialect: MongoDialect, collation=None
+) -> tuple[set[tuple[str, Any]], list[Any]]:
+    if collation is not None:
+        return set(), list(values)
     hashable_lookup: set[tuple[str, Any]] = set()
     residual: list[Any] = []
     for value in values:
@@ -108,11 +113,15 @@ def _set_contains(
     lookup: set[tuple[str, Any]],
     residual: list[Any],
     dialect: MongoDialect,
+    collation=None,
 ) -> bool:
     lookup_key = _hashable_set_lookup_key(item, dialect=dialect)
     if lookup_key is not None and lookup_key in lookup:
         return True
-    return any(QueryEngine._values_equal(item, candidate, dialect=dialect) for candidate in residual)
+    return any(
+        QueryEngine._values_equal(item, candidate, dialect=dialect, collation=collation)
+        for candidate in residual
+    )
 
 
 def evaluate_array_string_expression(
@@ -127,8 +136,11 @@ def evaluate_array_string_expression(
     require_expression_args: ExpressionArgValidator,
     missing_sentinel: object,
 ) -> Any:
+    collation = getattr(variables, "collation", None)
     if operator == "$size":
-        args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         value = evaluate_expression(document, args[0], variables)
         if value is None:
             return None
@@ -153,7 +165,9 @@ def evaluate_array_string_expression(
         return values[index]
 
     if operator == "$first":
-        args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         value = evaluate_expression(document, args[0], variables)
         if isinstance(value, list):
             return value[0] if value else None
@@ -190,15 +204,23 @@ def evaluate_array_string_expression(
         return _trim_string(value, chars, mode=mode)
 
     if operator in {"$replaceOne", "$replaceAll"}:
-        if not isinstance(spec, dict) or not {"input", "find", "replacement"} <= set(spec):
+        if not isinstance(spec, dict) or not {"input", "find", "replacement"} <= set(
+            spec
+        ):
             raise OperationFailure(f"{operator} requires input, find and replacement")
         source = evaluate_expression(document, spec["input"], variables)
         find = evaluate_expression(document, spec["find"], variables)
         replacement = evaluate_expression(document, spec["replacement"], variables)
         if source is None or find is None or replacement is None:
             return None
-        if not isinstance(source, str) or not isinstance(find, str) or not isinstance(replacement, str):
-            raise OperationFailure(f"{operator} requires string input, find and replacement")
+        if (
+            not isinstance(source, str)
+            or not isinstance(find, str)
+            or not isinstance(replacement, str)
+        ):
+            raise OperationFailure(
+                f"{operator} requires string input, find and replacement"
+            )
         return source.replace(find, replacement, 1 if operator == "$replaceOne" else -1)
 
     if operator == "$strcasecmp":
@@ -221,7 +243,9 @@ def evaluate_array_string_expression(
         if source is None:
             return ""
         if not isinstance(source, str):
-            raise OperationFailure(f"{operator} requires the first argument to evaluate to a string")
+            raise OperationFailure(
+                f"{operator} requires the first argument to evaluate to a string"
+            )
         if not isinstance(start, int) or isinstance(start, bool):
             raise OperationFailure(f"{operator} start must be an integer")
         if not isinstance(length, int) or isinstance(length, bool):
@@ -231,16 +255,22 @@ def evaluate_array_string_expression(
         return _substr_string(source, start, length)
 
     if operator in {"$strLenBytes", "$strLenCP"}:
-        args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         value = evaluate_expression_with_missing(document, args[0], variables)
         if value is missing_sentinel or value is None:
-            raise OperationFailure(f"{operator} requires a string argument, found: null")
+            raise OperationFailure(
+                f"{operator} requires a string argument, found: null"
+            )
         if not isinstance(value, str):
             raise OperationFailure(f"{operator} requires a string argument")
         return len(value.encode("utf-8")) if operator == "$strLenBytes" else len(value)
 
     if operator in {"$toLower", "$toUpper"}:
-        args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         value = evaluate_expression(document, args[0], variables)
         if value is None:
             return ""
@@ -271,14 +301,18 @@ def evaluate_array_string_expression(
         return result
 
     if operator == "$reverseArray":
-        args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         value = evaluate_expression(document, args[0], variables)
         if value is None:
             return None
         return list(reversed(deepcopy(_require_array(operator, value))))
 
     if operator in {"$allElementsTrue", "$anyElementTrue"}:
-        args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         value = evaluate_expression(document, args[0], variables)
         if value is None:
             return None
@@ -293,7 +327,12 @@ def evaluate_array_string_expression(
             value = evaluate_expression(document, item, variables)
             if value is None:
                 return None
-            _append_unique_values(result, _require_array(operator, value), dialect=dialect)
+            _append_unique_values(
+                result,
+                _require_array(operator, value),
+                dialect=dialect,
+                collation=collation,
+            )
         return result
 
     if operator in {"$setDifference", "$setIntersection"}:
@@ -306,9 +345,15 @@ def evaluate_array_string_expression(
         right_values = _require_array(operator, right)
         left_unique: list[Any] = []
         right_unique: list[Any] = []
-        _append_unique_values(left_unique, left_values, dialect=dialect)
-        _append_unique_values(right_unique, right_values, dialect=dialect)
-        right_lookup, right_residual = _build_set_lookup(right_unique, dialect=dialect)
+        _append_unique_values(
+            left_unique, left_values, dialect=dialect, collation=collation
+        )
+        _append_unique_values(
+            right_unique, right_values, dialect=dialect, collation=collation
+        )
+        right_lookup, right_residual = _build_set_lookup(
+            right_unique, dialect=dialect, collation=collation
+        )
         result: list[Any] = []
         for item in left_unique:
             in_right = _set_contains(
@@ -316,6 +361,7 @@ def evaluate_array_string_expression(
                 lookup=right_lookup,
                 residual=right_residual,
                 dialect=dialect,
+                collation=collation,
             )
             if operator == "$setDifference" and not in_right:
                 result.append(_copy_if_mutable(item))
@@ -324,40 +370,53 @@ def evaluate_array_string_expression(
         return result
 
     if operator in {"$setEquals", "$setIsSubset"}:
-        args = require_expression_args(operator, spec, 2, 2 if operator == "$setIsSubset" else None)
+        args = require_expression_args(
+            operator, spec, 2, 2 if operator == "$setIsSubset" else None
+        )
         sets: list[list[Any]] = []
         for item in args:
             value = evaluate_expression(document, item, variables)
             if value is None:
                 return None
             normalized: list[Any] = []
-            _append_unique_values(normalized, _require_array(operator, value), dialect=dialect)
+            _append_unique_values(
+                normalized,
+                _require_array(operator, value),
+                dialect=dialect,
+                collation=collation,
+            )
             sets.append(normalized)
         base = sets[0]
         if operator == "$setEquals":
             for candidate in sets[1:]:
                 if len(base) != len(candidate):
                     return False
-                candidate_lookup, candidate_residual = _build_set_lookup(candidate, dialect=dialect)
+                candidate_lookup, candidate_residual = _build_set_lookup(
+                    candidate, dialect=dialect, collation=collation
+                )
                 if any(
                     not _set_contains(
                         item,
                         lookup=candidate_lookup,
                         residual=candidate_residual,
                         dialect=dialect,
+                        collation=collation,
                     )
                     for item in base
                 ):
                     return False
             return True
         for candidate in sets[1:]:
-            candidate_lookup, candidate_residual = _build_set_lookup(candidate, dialect=dialect)
+            candidate_lookup, candidate_residual = _build_set_lookup(
+                candidate, dialect=dialect, collation=collation
+            )
             if any(
                 not _set_contains(
                     item,
                     lookup=candidate_lookup,
                     residual=candidate_residual,
                     dialect=dialect,
+                    collation=collation,
                 )
                 for item in base
             ):
@@ -370,7 +429,9 @@ def evaluate_array_string_expression(
         if raw_value is None:
             return None
         values = _require_array(operator, raw_value)
-        return _slice_array(values, args, document, variables, evaluate_expression=evaluate_expression)
+        return _slice_array(
+            values, args, document, variables, evaluate_expression=evaluate_expression
+        )
 
     if operator == "$map":
         if not isinstance(spec, dict) or "input" not in spec or "in" not in spec:
@@ -409,12 +470,16 @@ def evaluate_array_string_expression(
             scoped = scoped_environment(variables)
             scoped[alias] = item
             scoped["this"] = item
-            if dialect.policy.expression_truthy(evaluate_expression(document, spec["cond"], scoped)):
+            if dialect.policy.expression_truthy(
+                evaluate_expression(document, spec["cond"], scoped)
+            ):
                 result.append(deepcopy(item))
         return result
 
     if operator == "$reduce":
-        if not isinstance(spec, dict) or not {"input", "initialValue", "in"} <= set(spec):
+        if not isinstance(spec, dict) or not {"input", "initialValue", "in"} <= set(
+            spec
+        ):
             raise OperationFailure("$reduce requires input, initialValue and in")
         source = evaluate_expression(document, spec["input"], variables)
         if source is None:
@@ -429,7 +494,9 @@ def evaluate_array_string_expression(
         return accumulated
 
     if operator == "$objectToArray":
-        args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         raw_value = evaluate_expression(document, args[0], variables)
         if raw_value is None:
             return None
@@ -438,7 +505,9 @@ def evaluate_array_string_expression(
         return [{"k": key, "v": deepcopy(value)} for key, value in raw_value.items()]
 
     if operator == "$arrayToObject":
-        args = require_expression_args(operator, [spec] if not isinstance(spec, list) else spec, 1, 1)
+        args = require_expression_args(
+            operator, [spec] if not isinstance(spec, list) else spec, 1, 1
+        )
         raw_values = evaluate_expression(document, args[0], variables)
         if raw_values is None:
             return None
@@ -450,7 +519,9 @@ def evaluate_array_string_expression(
             elif isinstance(item, dict) and set(item) == {"k", "v"}:
                 key, value = item["k"], item["v"]
             else:
-                raise OperationFailure("$arrayToObject requires [key, value] pairs or {k, v} documents")
+                raise OperationFailure(
+                    "$arrayToObject requires [key, value] pairs or {k, v} documents"
+                )
             if not isinstance(key, str):
                 raise OperationFailure("$arrayToObject keys must be strings")
             result[key] = deepcopy(value)
@@ -465,19 +536,35 @@ def evaluate_array_string_expression(
         inputs = _require_array(operator, raw_inputs)
         arrays: list[list[Any]] = []
         for item in inputs:
-            resolved = evaluate_expression(document, item, variables) if not isinstance(item, list) else item
+            resolved = (
+                evaluate_expression(document, item, variables)
+                if not isinstance(item, list)
+                else item
+            )
             if resolved is None or resolved is missing_sentinel:
                 return None
             arrays.append(_require_array(operator, resolved))
-        use_longest = evaluate_expression(document, spec["useLongestLength"], variables) if "useLongestLength" in spec else False
+        use_longest = (
+            evaluate_expression(document, spec["useLongestLength"], variables)
+            if "useLongestLength" in spec
+            else False
+        )
         if not isinstance(use_longest, bool):
             raise OperationFailure("$zip useLongestLength must evaluate to a boolean")
-        defaults = evaluate_expression(document, spec["defaults"], variables) if "defaults" in spec else None
+        defaults = (
+            evaluate_expression(document, spec["defaults"], variables)
+            if "defaults" in spec
+            else None
+        )
         if defaults is not None and not isinstance(defaults, list):
             raise OperationFailure("$zip defaults must evaluate to an array")
         if defaults is not None and len(defaults) != len(arrays):
             raise OperationFailure("$zip defaults length must match inputs length")
-        target_length = max((len(array) for array in arrays), default=0) if use_longest else min((len(array) for array in arrays), default=0)
+        target_length = (
+            max((len(array) for array in arrays), default=0)
+            if use_longest
+            else min((len(array) for array in arrays), default=0)
+        )
         result: list[list[Any]] = []
         for index in range(target_length):
             row: list[Any] = []
@@ -508,8 +595,12 @@ def evaluate_array_string_expression(
             end = evaluate_expression(document, args[3], variables)
             if not isinstance(end, int) or isinstance(end, bool):
                 raise OperationFailure("$indexOfArray end must be an integer")
-        for index, value in enumerate(values[max(start, 0):max(end, 0)], start=max(start, 0)):
-            if QueryEngine._values_equal(value, needle, dialect=dialect):
+        for index, value in enumerate(
+            values[max(start, 0) : max(end, 0)], start=max(start, 0)
+        ):
+            if QueryEngine._values_equal(
+                value, needle, dialect=dialect, collation=collation
+            ):
                 return index
         return -1
 
@@ -521,16 +612,28 @@ def evaluate_array_string_expression(
             return None
         if not isinstance(source, str) or not isinstance(substring, str):
             raise OperationFailure(f"{operator} requires string arguments")
-        start = evaluate_expression(document, args[2], variables) if len(args) >= 3 else None
-        end = evaluate_expression(document, args[3], variables) if len(args) == 4 else None
+        start = (
+            evaluate_expression(document, args[2], variables)
+            if len(args) >= 3
+            else None
+        )
+        end = (
+            evaluate_expression(document, args[3], variables)
+            if len(args) == 4
+            else None
+        )
         if operator == "$indexOfBytes":
             source_bytes = source.encode("utf-8")
             substring_bytes = substring.encode("utf-8")
-            start_index, end_index = _normalize_index_bounds(operator, start, end, len(source_bytes))
+            start_index, end_index = _normalize_index_bounds(
+                operator, start, end, len(source_bytes)
+            )
             if start_index > end_index:
                 return -1
             return source_bytes.find(substring_bytes, start_index, end_index)
-        start_index, end_index = _normalize_index_bounds(operator, start, end, len(source))
+        start_index, end_index = _normalize_index_bounds(
+            operator, start, end, len(source)
+        )
         if start_index > end_index:
             return -1
         return source.find(substring, start_index, end_index)
@@ -538,7 +641,9 @@ def evaluate_array_string_expression(
     if operator in {"$regexMatch", "$regexFind", "$regexFindAll"}:
         if not isinstance(spec, dict) or "input" not in spec or "regex" not in spec:
             raise OperationFailure(f"{operator} requires input and regex")
-        input_value = evaluate_expression_with_missing(document, spec["input"], variables)
+        input_value = evaluate_expression_with_missing(
+            document, spec["input"], variables
+        )
         if input_value is missing_sentinel or input_value is None:
             if operator == "$regexMatch":
                 return False
@@ -548,8 +653,14 @@ def evaluate_array_string_expression(
         if not isinstance(input_value, str):
             raise OperationFailure(f"{operator} input must resolve to a string")
         regex_value = evaluate_expression(document, spec["regex"], variables)
-        options_value = evaluate_expression(document, spec["options"], variables) if "options" in spec else None
-        compiled = _compile_aggregation_regex(regex_value, options_value, operator=operator)
+        options_value = (
+            evaluate_expression(document, spec["options"], variables)
+            if "options" in spec
+            else None
+        )
+        compiled = _compile_aggregation_regex(
+            regex_value, options_value, operator=operator
+        )
         if operator == "$regexMatch":
             return compiled.search(input_value) is not None
         if operator == "$regexFind":
@@ -557,7 +668,9 @@ def evaluate_array_string_expression(
             if match is None:
                 return None
             return _build_regex_match_result(match)
-        return [_build_regex_match_result(match) for match in compiled.finditer(input_value)]
+        return [
+            _build_regex_match_result(match) for match in compiled.finditer(input_value)
+        ]
 
     if operator == "$sortArray":
         if not isinstance(spec, dict) or "input" not in spec or "sortBy" not in spec:
@@ -568,8 +681,16 @@ def evaluate_array_string_expression(
         values = deepcopy(_require_array(operator, input_value))
         sort_by = _normalize_sort_array_spec(spec["sortBy"])
         if isinstance(sort_by, int):
-            return sorted(values, key=cmp_to_key(dialect.policy.compare_values), reverse=sort_by == -1)
-        return sort_documents(values, sort_by, dialect=dialect)
+            return sorted(
+                values,
+                key=cmp_to_key(
+                    lambda left, right: compare_with_collation(
+                        left, right, dialect=dialect, collation=collation
+                    )
+                ),
+                reverse=sort_by == -1,
+            )
+        return sort_documents(values, sort_by, dialect=dialect, collation=collation)
 
     raise OperationFailure(f"Unsupported array/string expression operator: {operator}")
 
@@ -585,9 +706,15 @@ def _append_unique_values(
     values: list[Any],
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation=None,
 ) -> None:
     for value in values:
-        if any(QueryEngine._values_equal(value, existing, dialect=dialect) for existing in target):
+        if any(
+            QueryEngine._values_equal(
+                value, existing, dialect=dialect, collation=collation
+            )
+            for existing in target
+        ):
             continue
         target.append(deepcopy(value))
 

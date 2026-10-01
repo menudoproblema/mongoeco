@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from threading import RLock
 from typing import TYPE_CHECKING, Any
 
@@ -39,10 +39,18 @@ class AggregationStageExtensionRegistration:
     execution_mode: AggregationStageExecutionMode = "materializing"
 
 
+@dataclass(slots=True)
+class _AggregationStageRegistry:
+    handlers: dict[str, AggregationStageExtensionRegistration] = field(
+        default_factory=dict
+    )
+    version: int = 0
+
+
 _expression_lock = RLock()
 _stage_lock = RLock()
 _expression_handlers: dict[str, AggregationExpressionExtensionHandler] = {}
-_stage_handlers: dict[str, AggregationStageExtensionRegistration] = {}
+_stage_registry = _AggregationStageRegistry()
 
 
 def _require_operator_name(name: str) -> str:
@@ -99,16 +107,24 @@ def register_aggregation_stage(
     if execution_mode not in {"streamable", "materializing"}:
         raise ValueError("execution_mode must be 'streamable' or 'materializing'")
     with _stage_lock:
-        _stage_handlers[operator] = AggregationStageExtensionRegistration(
+        _stage_registry.handlers[operator] = AggregationStageExtensionRegistration(
             handler=handler,
             execution_mode=execution_mode,
         )
+        _stage_registry.version += 1
 
 
 def unregister_aggregation_stage(name: str) -> None:
     operator = _require_operator_name(name)
     with _stage_lock:
-        _stage_handlers.pop(operator, None)
+        _stage_registry.handlers.pop(operator, None)
+        _stage_registry.version += 1
+
+
+def _aggregation_stage_registry_version() -> int:
+    """Invalidate prepared semantics when extension registrations change."""
+    with _stage_lock:
+        return _stage_registry.version
 
 
 def get_registered_aggregation_stage(
@@ -124,7 +140,7 @@ def get_registered_aggregation_stage_registration(
     name: str,
 ) -> AggregationStageExtensionRegistration | None:
     with _stage_lock:
-        return _stage_handlers.get(name)
+        return _stage_registry.handlers.get(name)
 
 
 def registered_aggregation_stage(

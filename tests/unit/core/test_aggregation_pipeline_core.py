@@ -718,7 +718,7 @@ class AggregationPipelineCoreTests(unittest.TestCase):
             [
                 {
                     'ns': 'db.events',
-                    'count': {'count': 3},
+                    'count': 3,
                     'storageStats': {
                         'ns': 'db.events',
                         'count': 3,

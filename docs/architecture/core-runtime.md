@@ -236,6 +236,41 @@ Dentro del objetivo embebido/local, esta capa ya considera baseline:
 
 ## Aggregation
 
+Antes de seleccionar pushdown, streaming, materializacion o provenance, el cursor
+prepara recursivamente la pipeline logica. Cada stage conserva su direccion y
+posicion originales tambien en los fragmentos que construyen los planners. Las
+formas de join y las restricciones iniciales se validan sin depender de que la
+fuente produzca filas; la evaluacion de valores permanece en el runtime.
+
+La preparacion descubre dependencias por coleccion y opciones. La capa async
+liga documentos y snapshots informativos en un `AggregationResources` de la
+operacion; entrar en un subpipeline deriva el namespace foreign conservando los
+recursos ya adquiridos. Los handlers puros y las extensiones existentes conservan
+su frontera de callbacks. El descubrimiento estructural de dependencias tambien
+reconoce las formas builtin cuando una extension delega en ellas; no ejecuta el
+handler ni impone su parser. Los stages informativos comparten un parser puro
+entre preparacion y ejecucion, sin callbacks ficticios durante la validacion.
+La extension local de `$unionWith` sin `coll` ni
+`$documents` conserva compatibilidad y utiliza la coleccion del ambito actual.
+
+El contexto de preparacion conserva la coleccion, la cadena de ambitos logicos,
+la direccion y la revision del registro de extensiones. Las restricciones de
+`$facet` alcanzan todos sus descendientes, incluidos los subpipelines de joins.
+Un recorte fisico mantiene las posiciones originales; una reubicacion logica
+recalcula las direcciones, las restricciones y las dependencias del nuevo ambito.
+Cambiar dialecto o registrar o retirar una extension invalida la preparacion
+previa y vuelve a validar sin convertir un fragmento fisico en un pipeline raiz.
+
+La collation viaja en el entorno de evaluacion, separada de las variables del
+usuario. Agrupacion y particiones de ventanas utilizan identidad semantica BSON,
+incluida equivalencia numerica y collation recursiva; el digest de spill procede
+de esa misma clave. El `_id` publicado conserva el valor representativo original. Extremos,
+selectores ordenados y empates de ranking usan la misma comparacion, tambien en
+los ejecutores compilados.
+Los pipelines con `$documents` sin coleccion no necesitan un resolver; el dialecto
+8 rechaza un namespace explicito para esas fuentes independientes. `$collStats`
+publica `count` como numero, compatible con MongoDB.
+
 `core/aggregation` es un subsistema propio con varios niveles:
 
 - planning de pipeline;

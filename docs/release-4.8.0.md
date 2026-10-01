@@ -1,6 +1,10 @@
-# Release 4.8.0 — candidate preparation
+# Release 4.8.0
 
-Status: local source candidate. No tag or package publication has been made.
+Status: published on 2026-09-27. The `v4.8.0` tag points to
+`ac85cbd2907f48f386749a8b5cba27d286a8552e`.
+
+The preparation evidence below records the candidate verification before
+publication. Current aggregation corrections are in [4.8.1](release-4.8.1.md).
 
 ## Scope
 
@@ -74,8 +78,9 @@ catalog option acceptance alone does not establish a deployment guarantee.
   keeps its no-connection placeholder. The other wire command fields remain
   open in the conservation inventory.
 
-The full [release checklist](release-checklist.md), including remote CI and
-the final installed artifact matrix, remains a gate for any later publication.
-Remote CI and the MongoDB 7.0/8.0 differential on the final source revision
-have not yet been accredited. The locally passing gates do not authorize a tag.
-This preparation does not create a tag or authorize an upload.
+At the time of this candidate preparation, the full
+[release checklist](release-checklist.md), remote CI and the final installed
+artifact matrix remained publication gates. The preparation itself did not
+create a tag or authorize an upload.
+
+The published package is available on [PyPI](https://pypi.org/project/mongoeco/4.8.0/).

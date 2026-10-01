@@ -1,5 +1,3 @@
-import re
-
 from copy import deepcopy
 from typing import Any
 
@@ -18,16 +16,13 @@ from mongoeco.core.aggregation.runtime import (
     _require_union_with_spec,
     evaluate_expression,
 )
+from mongoeco.core.aggregation.resources import scoped_resolver_kwargs
+from mongoeco.core.paths import set_document_value
 from mongoeco.core.work_control import iter_with_deadline
 from mongoeco.core.collation import CollationSpec
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
-
-
-_LOOKUP_LET_VARIABLE_RE = re.compile(
-    r"^(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*$"
-)
 
 
 def _apply_lookup(
@@ -41,12 +36,17 @@ def _apply_lookup(
     spill_policy=None,
     lookup_hash_max_associations: int | None = None,
     deadline: float | None = None,
+    **resource_resolvers,
 ) -> list[Document]:
     lookup = _require_lookup_spec(spec)
-    if collection_resolver is None:
+    if collection_resolver is None and lookup["from"] is not None:
         raise OperationFailure("$lookup requires collection resolver support")
 
-    foreign_documents = list(collection_resolver(lookup["from"]) or [])
+    foreign_documents = (
+        []
+        if lookup["from"] is None
+        else list(collection_resolver(lookup["from"]) or [])
+    )
     hash_plan = None
     if "pipeline" not in lookup:
         hash_plan = build_bounded_lookup_hash_plan(
@@ -87,10 +87,6 @@ def _apply_lookup(
         if "pipeline" in lookup:
             scoped = scoped_environment(variables)
             for name, expression in lookup["let"].items():
-                if not _LOOKUP_LET_VARIABLE_RE.match(name):
-                    raise OperationFailure(
-                        "$lookup let variable names must begin with a lowercase letter or non-ascii character"
-                    )
                 scoped[name] = evaluate_expression(
                     document, expression, variables, dialect=dialect
                 )
@@ -99,7 +95,9 @@ def _apply_lookup(
             matches = apply_pipeline(
                 [deepcopy(candidate) for candidate in candidate_documents],
                 lookup["pipeline"],
-                collection_resolver=collection_resolver,
+                **scoped_resolver_kwargs(
+                    collection_resolver, lookup["from"], resource_resolvers
+                ),
                 variables=scoped,
                 dialect=dialect,
                 collation=collation,
@@ -113,7 +111,7 @@ def _apply_lookup(
                 for candidate in iter_with_deadline(candidate_documents, deadline)
             ]
         joined = deepcopy(document)
-        joined[lookup["as"]] = matches
+        set_document_value(joined, lookup["as"], matches)
         result.append(joined)
     return result
 
@@ -129,9 +127,13 @@ def _apply_union_with(
     spill_policy=None,
     lookup_hash_max_associations: int | None = None,
     deadline: float | None = None,
+    **resource_resolvers,
 ) -> list[Document]:
     union_with = _require_union_with_spec(spec)
-    if collection_resolver is None:
+    documents_source = bool(
+        union_with["pipeline"] and "$documents" in union_with["pipeline"][0]
+    )
+    if collection_resolver is None and not documents_source:
         raise OperationFailure("$unionWith requires collection resolver support")
 
     resolver_key = (
@@ -139,7 +141,9 @@ def _apply_union_with(
         if union_with["coll"] is not None
         else _CURRENT_COLLECTION_RESOLVER_KEY
     )
-    resolved_foreign_documents = collection_resolver(resolver_key)
+    resolved_foreign_documents = (
+        [] if documents_source else collection_resolver(resolver_key)
+    )
     if resolved_foreign_documents is None:
         foreign_documents = [
             deepcopy(document) for document in iter_with_deadline(documents, deadline)
@@ -158,7 +162,11 @@ def _apply_union_with(
         foreign_documents = apply_pipeline(
             foreign_documents,
             union_with["pipeline"],
-            collection_resolver=collection_resolver,
+            **scoped_resolver_kwargs(
+                collection_resolver,
+                union_with["coll"] or getattr(collection_resolver, "collection", None),
+                resource_resolvers,
+            ),
             variables=variables,
             dialect=dialect,
             collation=collation,
@@ -182,6 +190,7 @@ def _apply_facet(
     spill_policy=None,
     lookup_hash_max_associations: int | None = None,
     deadline: float | None = None,
+    **resource_resolvers,
 ) -> list[Document]:
     if not isinstance(spec, dict):
         raise OperationFailure("$facet requires a document specification")
@@ -195,6 +204,7 @@ def _apply_facet(
             list(documents),
             _require_pipeline_spec("$facet", pipeline),
             collection_resolver=collection_resolver,
+            **resource_resolvers,
             variables=variables,
             dialect=dialect,
             collation=collation,

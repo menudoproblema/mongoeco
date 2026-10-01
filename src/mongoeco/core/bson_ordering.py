@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime
-from decimal import Decimal
+from decimal import Decimal, localcontext
 import math
 import uuid
 from typing import Any
@@ -110,7 +110,11 @@ def bson_equality_key(value: Any) -> Any:
                 return ("number", "-inf" if numeric < 0 else "+inf")
         else:
             numeric = Decimal(numeric)
-        return ("number", numeric.normalize())
+        with localcontext() as context:
+            context.prec = max(34, len(numeric.as_tuple().digits))
+            return ("number", Decimal(0) if numeric == 0 else numeric.normalize())
+    if isinstance(value, (Binary, bytes)):
+        return ("binary", getattr(value, "subtype", 0), bytes(value))
     if isinstance(value, dict):
         return (
             "dict",

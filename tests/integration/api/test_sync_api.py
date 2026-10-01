@@ -10664,7 +10664,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
 
                     expected = collstats[0]
                     self.assertEqual(expected["ns"], "test.events")
-                    self.assertEqual(expected["count"], {"count": 2})
+                    self.assertEqual(expected["count"], 2)
                     self.assertEqual(
                         expected["storageStats"]["ns"],
                         "test.events",

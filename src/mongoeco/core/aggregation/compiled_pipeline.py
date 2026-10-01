@@ -5,9 +5,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.collation import CollationSpec
-from mongoeco.core.compiled_query import CompiledQuery
-from mongoeco.core.expression_context import ensure_expression_context
+from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
 from mongoeco.core.aggregation.extensions import (
     get_registered_aggregation_stage_registration,
 )
@@ -24,6 +22,8 @@ from mongoeco.core.aggregation.transform_stages import (
     _apply_project,
     _apply_unset,
 )
+from mongoeco.core.collation import CollationSpec
+from mongoeco.core.compiled_query import CompiledQuery
 from mongoeco.core.query_plan import compile_filter
 from mongoeco.core.sorting import sort_documents, sort_documents_window
 from mongoeco.core.work_control import iter_with_deadline
@@ -188,7 +188,7 @@ class CompiledPipelinePlan:
     ) -> list[Document]:
         del collection_resolver
         del spill_policy
-        variables = ensure_expression_context(variables)
+        variables = aggregation_environment(variables)
 
         result = list(iter_with_deadline(documents, deadline))
         for node in self.nodes:

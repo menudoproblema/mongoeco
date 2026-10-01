@@ -1,8 +1,10 @@
-from functools import lru_cache
 import re
 import unicodedata
+
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any
+
 
 try:
     import icu as _icu
@@ -152,10 +154,15 @@ def compare_with_collation(
     dialect: MongoDialect = MONGODB_DIALECT_70,
     collation: CollationSpec | None = None,
 ) -> int:
+    if collation is not None and isinstance(left, dict) and isinstance(right, dict):
+        return _compare_collated_documents(left, right, dialect, collation)
+    if collation is not None and isinstance(left, list) and isinstance(right, list):
+        return _compare_collated_arrays(left, right, dialect, collation)
     if collation is None or not isinstance(left, str) or not isinstance(right, str):
         return dialect.policy.compare_values(left, right)
     if _requires_icu_backend(collation) and not _can_use_icu_collation(collation):
-        raise ValueError("requested collation options require an ICU backend")
+        message = "requested collation options require an ICU backend"
+        raise ValueError(message)
     if _can_use_icu_collation(collation):
         return _compare_with_icu(left, right, collation)
     if _can_use_pyuca_collation(collation):
@@ -174,6 +181,61 @@ def compare_with_collation(
         if left > right:
             return 1
     return 0
+
+
+def _compare_collated_documents(left, right, dialect, collation):
+    for (left_key, left_value), (right_key, right_value) in zip(
+        left.items(), right.items(), strict=False
+    ):
+        if left_key != right_key:
+            return -1 if left_key < right_key else 1
+        comparison = compare_with_collation(
+            left_value, right_value, dialect=dialect, collation=collation
+        )
+        if comparison:
+            return comparison
+    return (len(left) > len(right)) - (len(left) < len(right))
+
+
+def _compare_collated_arrays(left, right, dialect, collation):
+    for left_value, right_value in zip(left, right, strict=False):
+        comparison = compare_with_collation(
+            left_value, right_value, dialect=dialect, collation=collation
+        )
+        if comparison:
+            return comparison
+    return (len(left) > len(right)) - (len(left) < len(right))
+
+
+def string_equality_key(value: str, collation: CollationSpec | None) -> object:
+    """Use the comparison backend's key for grouping, including spill."""
+    if collation is None or collation.locale == "simple":
+        return value
+    if _requires_icu_backend(collation) and not _can_use_icu_collation(collation):
+        message = "requested collation options require an ICU backend"
+        raise ValueError(message)
+    if _can_use_icu_collation(collation):
+        return bytes(
+            _get_icu_collator(
+                collation.locale,
+                collation.strength,
+                collation.case_level,
+                collation.numeric_ordering,
+                collation.backwards,
+                collation.alternate,
+                collation.max_variable,
+                collation.normalization,
+            ).getSortKey(value)
+        )
+    if _can_use_pyuca_collation(collation):
+        return _pyuca_collation_key(value, collation)
+    primary = _collation_primary_key(value, collation)
+    tertiary_strength = 3
+    return (
+        (primary, value)
+        if collation.case_level or collation.strength >= tertiary_strength
+        else primary
+    )
 
 
 def values_equal_with_collation(

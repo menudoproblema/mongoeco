@@ -69,7 +69,7 @@ MongoEco is a PEP 561 typed package. Wheels and source distributions include
 engine SPI v2, Search and conformance surfaces. CI checks those contracts with
 strict positive and negative consumer fixtures against the installed wheel.
 
-The 4.8.0 source requires `cxp[exchange]>=5.0.0,<6` and exposes its
+Mongoeco 4.8+ requires `cxp[exchange]>=5.0.0,<6` and exposes its
 `database/mongodb` contract through owner-authored exchange documents. Its
 `org.mongoeco:mongodb@1.2.0` catalog uses CXP catalog spec_version 2;
 snapshots and requirements pin that exact catalog while retaining their v1
@@ -161,10 +161,10 @@ from `mongoeco.engines`; see the
 SPI v2 is the only stable engine SPI and engine capabilities must be declared
 explicitly.
 
-## Public Surface Stability (4.8.0 source candidate)
+## Public Surface Stability (4.8+)
 
-The 4.8.0 source candidate prepares an exchange-only breaking release. It is
-not published. Its import roots are explicit:
+Mongoeco 4.8.0 introduced the exchange-only CXP surface. Its import roots are
+explicit:
 
 * stable import roots are `mongoeco`, `mongoeco.compat`, `mongoeco.cxp.exchange`,
   `mongoeco.engines` and `mongoeco.conformance`
@@ -503,13 +503,15 @@ removes the deprecated engine SPI v1 within a minor release; this documented
 exception to Semantic Versioning is a product decision, not an inferred
 compatibility guarantee.
 
-The unpublished 4.8.0 source makes a second explicit minor-version exception
+Mongoeco 4.8.0 made a second explicit minor-version exception
 for removal of its legacy CXP surface. Its exchange replacement and public
 API diff are documented in [the CXP migration guide](docs/cxp-c4-migration.md).
 
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
+* [docs/release-4.8.1.md](docs/release-4.8.1.md)
+* [docs/release-4.8.0.md](docs/release-4.8.0.md)
 * [docs/release-4.7.0.md](docs/release-4.7.0.md)
 * [docs/migrating-to-4.7.md](docs/migrating-to-4.7.md)
 * [docs/migrating-to-5.0.md](docs/migrating-to-5.0.md)

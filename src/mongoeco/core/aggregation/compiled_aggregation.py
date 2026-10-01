@@ -1,18 +1,31 @@
 import datetime
-from copy import deepcopy
 import re
+
+from copy import deepcopy
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.collation import CollationSpec
 from mongoeco.core.aggregation.accumulators import (
     _AverageAccumulator,
     _sum_accumulator_operand,
     _validate_accumulator_expression,
 )
-from mongoeco.core.aggregation.numeric_expressions import _require_numeric, _subtract_values
-from mongoeco.core.aggregation.runtime import _aggregation_key, evaluate_expression
-from mongoeco.core.bson_scalars import bson_add, bson_multiply, is_bson_numeric, unwrap_bson_numeric
+from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
+from mongoeco.core.aggregation.numeric_expressions import (
+    _require_numeric,
+    _subtract_values,
+)
+from mongoeco.core.aggregation.runtime import (
+    aggregation_equality_key,
+    evaluate_expression,
+)
+from mongoeco.core.bson_scalars import (
+    bson_add,
+    bson_multiply,
+    is_bson_numeric,
+    unwrap_bson_numeric,
+)
+from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document
 
@@ -79,22 +92,26 @@ class CompiledGroup:
         self.spec = spec
         self.dialect = dialect
         self.id_expr = spec["_id"]
-        self.accumulator_specs = {key: value for key, value in spec.items() if key != "_id"}
+        self.accumulator_specs = {
+            key: value for key, value in spec.items() if key != "_id"
+        }
         self._compiled_accumulators = [
             (field, *next(iter(accumulator_spec.items())))
             for field, accumulator_spec in self.accumulator_specs.items()
         ]
         self._context_counter = 0
         from mongoeco.core.filtering import QueryEngine
+
         self._context: dict[str, Any] = {
             "dialect": dialect,
+            "compare_with_collation": compare_with_collation,
             "bson_add": bson_add,
             "is_numeric": is_bson_numeric,
             "sum_operand": _sum_accumulator_operand,
             "unwrap": unwrap_bson_numeric,
             "evaluate_expression": evaluate_expression,
             "truthy": dialect.policy.expression_truthy,
-            "_aggregation_key": _aggregation_key,
+            "_aggregation_key": aggregation_equality_key,
             "deepcopy": deepcopy,
             "_AverageAccumulator": _AverageAccumulator,
             "_compiled_add": _compiled_add,
@@ -106,8 +123,13 @@ class CompiledGroup:
         cached = self._COMPILED_FUNCTION_CACHE.get(cache_key)
         if cached is None:
             cached = self._compile()
-            if len(self._COMPILED_FUNCTION_CACHE) >= self._COMPILED_FUNCTION_CACHE_MAXSIZE:
-                self._COMPILED_FUNCTION_CACHE.pop(next(iter(self._COMPILED_FUNCTION_CACHE)))
+            if (
+                len(self._COMPILED_FUNCTION_CACHE)
+                >= self._COMPILED_FUNCTION_CACHE_MAXSIZE
+            ):
+                self._COMPILED_FUNCTION_CACHE.pop(
+                    next(iter(self._COMPILED_FUNCTION_CACHE))
+                )
         else:
             self._COMPILED_FUNCTION_CACHE.pop(cache_key)
         self._COMPILED_FUNCTION_CACHE[cache_key] = cached
@@ -137,7 +159,9 @@ class CompiledGroup:
         variables: dict[str, Any] | None = None,
         collation: CollationSpec | None = None,
     ) -> list[Document]:
-        return self._aggregate_func(documents, variables, collation)
+        return self._aggregate_func(
+            documents, aggregation_environment(variables, collation), collation
+        )
 
     @classmethod
     def _cache_key(cls, spec: dict[str, Any], dialect: MongoDialect) -> tuple[Any, int]:
@@ -178,7 +202,10 @@ class CompiledGroup:
             "    _truthy = truthy",
             "    _agg_key = _aggregation_key",
             "    _deepcopy = deepcopy",
-            "    _compare = dialect.policy.compare_values",
+            (
+                "    _compare = lambda left, right: compare_with_collation("
+                "left, right, dialect=dialect, collation=collation)"
+            ),
             "    _avg_acc = _AverageAccumulator",
             "    groups = {}",
             "    for doc in documents:",
@@ -199,17 +226,26 @@ class CompiledGroup:
     def _compile_logic_only(self) -> list[str]:
         """Generate the body of the aggregation loop."""
         lines = []
-        accumulator_fields = [field for field, _operator, _expression in self._compiled_accumulators]
+        accumulator_fields = [
+            field for field, _operator, _expression in self._compiled_accumulators
+        ]
         accumulator_count = len(accumulator_fields)
 
-        if isinstance(self.id_expr, str) and self.id_expr.startswith("$") and not self.id_expr.startswith("$$") and "." not in self.id_expr:
+        if (
+            isinstance(self.id_expr, str)
+            and self.id_expr.startswith("$")
+            and not self.id_expr.startswith("$$")
+            and "." not in self.id_expr
+        ):
             field_name = self.id_expr[1:]
             lines.append(f"group_id = doc.get({field_name!r})")
         else:
             id_expr_key = self._store_context_value("group", "id_expr", self.id_expr)
-            lines.append(f"group_id = _evaluate(doc, {id_expr_key}, variables, dialect=dialect)")
+            lines.append(
+                f"group_id = _evaluate(doc, {id_expr_key}, variables, dialect=dialect)"
+            )
 
-        lines.append("group_key = _agg_key(group_id)")
+        lines.append("group_key = _agg_key(group_id, collation)")
 
         initial_states: list[str] = []
         for _field, operator, _expression in self._compiled_accumulators:
@@ -224,14 +260,13 @@ class CompiledGroup:
 
         lines.append("if group_key not in groups:")
         lines.append(
-            "    groups[group_key] = ["
-            + ", ".join(initial_states)
-            + ", group_id, {}]"
+            "    groups[group_key] = [" + ", ".join(initial_states) + ", group_id, {}]"
         )
         lines.append("state = groups[group_key]")
 
-        for index, (field, operator, expression) in enumerate(self._compiled_accumulators):
-
+        for index, (field, operator, expression) in enumerate(
+            self._compiled_accumulators
+        ):
             if operator == "$count":
                 lines.append(f"state[{index}] += 1")
                 continue
@@ -246,7 +281,9 @@ class CompiledGroup:
                     else:
                         lines.append("operand = _sum_operand(value)")
                         lines.append("if operand is not None:")
-                        lines.append(f"    state[{index}] = _bson_add(state[{index}], operand)")
+                        lines.append(
+                            f"    state[{index}] = _bson_add(state[{index}], operand)"
+                        )
                 case "$min" | "$max":
                     comparison = "<" if operator == "$min" else ">"
                     lines.append("if value is not None:")
@@ -257,10 +294,14 @@ class CompiledGroup:
                     lines.append(
                         f"        state[{index}] = value if isinstance(value, (int, float, str, bool)) else _deepcopy(value)"
                     )
-                    lines.append(f"        state[{accumulator_count + 1}][{field!r}] = True")
+                    lines.append(
+                        f"        state[{accumulator_count + 1}][{field!r}] = True"
+                    )
                 case "$avg":
                     lines.append("if value is not None and _is_numeric(value):")
-                    lines.append(f"    state[{index}].total = _bson_add(state[{index}].total, value)")
+                    lines.append(
+                        f"    state[{index}].total = _bson_add(state[{index}].total, value)"
+                    )
                     lines.append(f"    state[{index}].count += 1")
                 case "$addToSet":
                     lines.append(
@@ -270,13 +311,19 @@ class CompiledGroup:
                         f"    state[{index}].append(value if isinstance(value, (int, float, str, bool)) else _deepcopy(value))"
                     )
                 case "$first":
-                    lines.append(f"if not state[{accumulator_count + 1}].get({field!r}):")
+                    lines.append(
+                        f"if not state[{accumulator_count + 1}].get({field!r}):"
+                    )
                     lines.append(
                         f"    state[{index}] = value if isinstance(value, (int, float, str, bool)) else _deepcopy(value)"
                     )
-                    lines.append(f"    state[{accumulator_count + 1}][{field!r}] = True")
+                    lines.append(
+                        f"    state[{accumulator_count + 1}][{field!r}] = True"
+                    )
                 case "$last":
-                    lines.append(f"state[{index}] = value if isinstance(value, (int, float, str, bool)) else _deepcopy(value)")
+                    lines.append(
+                        f"state[{index}] = value if isinstance(value, (int, float, str, bool)) else _deepcopy(value)"
+                    )
 
         return lines
 

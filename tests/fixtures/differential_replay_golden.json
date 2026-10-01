@@ -21,6 +21,31 @@
         ]
       }
     ],
+    "aggregate_foreign_stats": {
+      "indexes": [
+        {
+          "stats": [
+            {
+              "name": "_id_"
+            },
+            {
+              "name": "foreign_only"
+            }
+          ]
+        }
+      ],
+      "count": [
+        {
+          "stats": [
+            {
+              "count": {
+                "$numberInt": "2"
+              }
+            }
+          ]
+        }
+      ]
+    },
     "aggregate_get_field_literal_name": [
       {
         "dotted": {
@@ -34,6 +59,54 @@
         }
       }
     ],
+    "aggregate_group_collection_references": {
+      "fields": [
+        {
+          "_id": "drop",
+          "profile": {
+            "joined": []
+          }
+        },
+        {
+          "_id": "keep",
+          "profile": {
+            "joined": [
+              {
+                "_id": "foreign-1"
+              }
+            ]
+          }
+        }
+      ],
+      "pipeline": [
+        {
+          "_id": "drop",
+          "joined": []
+        },
+        {
+          "_id": "keep",
+          "joined": [
+            {
+              "_id": "foreign-1"
+            }
+          ]
+        }
+      ],
+      "union": [
+        {
+          "_id": "drop"
+        },
+        {
+          "_id": "keep"
+        },
+        {
+          "_id": "keep"
+        },
+        {
+          "_id": "other"
+        }
+      ]
+    },
     "aggregate_group_shapes": [
       {
         "_id": "drop",
@@ -122,6 +195,23 @@
           }
         }
       }
+    ],
+    "aggregate_pipeline_validation": [
+      "error",
+      "error",
+      "error",
+      "error",
+      "error",
+      "ok",
+      "ok",
+      "error",
+      "error",
+      "error",
+      "error",
+      "error",
+      "error",
+      "error",
+      "ok"
     ],
     "aggregate_project_array_traversal": [
       {
@@ -227,6 +317,125 @@
         "source": "local-3"
       }
     ],
+    "aggregate_semantic_collation": {
+      "group": [
+        [
+          "ada",
+          {
+            "$numberInt": "2"
+          }
+        ],
+        [
+          "other",
+          {
+            "$numberInt": "1"
+          }
+        ]
+      ],
+      "numeric": [
+        [
+          {
+            "$numberDouble": "1.0"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        [
+          {
+            "$numberDouble": "2.0"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      ],
+      "expr": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "c"
+        }
+      ],
+      "nested_expr": [
+        {
+          "_id": "a"
+        },
+        {
+          "_id": "c"
+        }
+      ],
+      "window": [
+        [
+          "a",
+          {
+            "$numberInt": "2"
+          }
+        ],
+        [
+          "b",
+          {
+            "$numberInt": "1"
+          }
+        ],
+        [
+          "c",
+          {
+            "$numberInt": "2"
+          }
+        ]
+      ],
+      "rank": [
+        [
+          "a",
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ],
+        [
+          "b",
+          {
+            "$numberInt": "3"
+          },
+          {
+            "$numberInt": "2"
+          }
+        ],
+        [
+          "c",
+          {
+            "$numberInt": "1"
+          },
+          {
+            "$numberInt": "1"
+          }
+        ]
+      ],
+      "selectors": [
+        [
+          "a",
+          "Z",
+          [
+            "a"
+          ],
+          [
+            "Z"
+          ],
+          "a",
+          "Z",
+          [
+            "a"
+          ],
+          [
+            "Z"
+          ]
+        ]
+      ]
+    },
     "aggregate_set_add_fields": [
       {
         "_id": "local-1",

@@ -36,6 +36,8 @@ from mongoeco.core.aggregation.grouping_stages import _IncrementalGroup
 from mongoeco.core.aggregation.lookup_physical import (
     explain_lookup_physical_plans,
 )
+from mongoeco.core.aggregation.preparation import prepare_pipeline
+from mongoeco.core.aggregation.resources import AggregationResources
 from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.runtime_state import apply_pipeline_states
 from mongoeco.core.aggregation.spill import _AggregationGroupStateSerializationError
@@ -389,6 +391,13 @@ class AsyncAggregationCursor:
         return operator, spec
 
     def _effective_pipeline(self) -> Pipeline:
+        self._pipeline = prepare_pipeline(
+            self._pipeline,
+            dialect=getattr(
+                self._collection, "mongodb_dialect", MONGODB_DIALECT_70
+            ),
+            collection=getattr(self._collection, "_collection_name", None),
+        )
         leading_search = self._leading_search_stage()
         if leading_search is None:
             return self._pipeline
@@ -967,6 +976,47 @@ class AsyncAggregationCursor:
             loaded[name] = await self._load_collection_documents(name)
         return loaded
 
+    async def _load_pipeline_resources(self) -> AggregationResources:
+        """Bind the prepared dependency graph, retaining namespace ownership."""
+        self._effective_pipeline()
+        program = self._pipeline
+        loaded = {}
+        root = getattr(self._collection, "_collection_name", None)
+        snapshots = {}
+        for request in program.requests:
+            if request.operator == "documents":
+                if request.collection is not None and request.collection not in loaded:
+                    loaded[request.collection] = await self._load_collection_documents(
+                        request.collection
+                    )
+                continue
+            key = (request.collection, request.operator, request.scale)
+            if key in snapshots:
+                continue
+            pipeline = [{request.operator: {}}]
+            if request.operator == "$collStats":
+                pipeline = [{"$collStats": {"storageStats": {"scale": request.scale}}}]
+                stats = await self._load_collstats_snapshots(
+                    pipeline, request.collection
+                )
+                snapshots[key] = stats[request.scale]
+            elif request.operator == "$indexStats":
+                snapshots[key] = await self._load_index_stats_snapshot(
+                    pipeline, request.collection
+                )
+            elif request.operator == "$planCacheStats":
+                snapshots[key] = self._load_plan_cache_stats_snapshot(
+                    pipeline, request.collection
+                )
+            elif request.operator == "$listSessions":
+                snapshots[key] = self._load_list_sessions_snapshot(pipeline)
+            elif request.operator == "$currentOp":
+                snapshot = getattr(
+                    self._collection._engine, "_snapshot_active_operations", None
+                )
+                snapshots[key] = snapshot() if callable(snapshot) else []
+        return AggregationResources(loaded, root, snapshots)
+
     def _collect_collstats_scales(self, pipeline: Pipeline) -> set[int]:
         scales: set[int] = set()
         for stage in pipeline:
@@ -1009,6 +1059,7 @@ class AsyncAggregationCursor:
     async def _load_collstats_snapshots(
         self,
         pipeline: Pipeline,
+        collection_name: str | None = None,
     ) -> dict[int, Document]:
         snapshots: dict[int, Document] = {}
         scales = self._collect_collstats_scales(pipeline)
@@ -1017,7 +1068,7 @@ class AsyncAggregationCursor:
         database = self._collection.database
         for scale in sorted(scales):
             snapshot = await database._admin._collection_stats(
-                self._collection._collection_name,
+                collection_name or self._collection._collection_name,
                 scale=scale,
                 session=self._session,
             )
@@ -1033,10 +1084,17 @@ class AsyncAggregationCursor:
     async def _load_index_stats_snapshot(
         self,
         pipeline: Pipeline,
+        collection_name: str | None = None,
     ) -> list[Document]:
         if not self._collect_index_stats_requested(pipeline):
             return []
-        index_documents = await self._collection.list_indexes(
+        target = (
+            self._collection
+            if collection_name is None
+            or collection_name == self._collection._collection_name
+            else self._collection.database.get_collection(collection_name)
+        )
+        index_documents = await target.list_indexes(
             session=self._session,
         ).to_list()
         captured_at = datetime.datetime.now(datetime.UTC)
@@ -1058,6 +1116,7 @@ class AsyncAggregationCursor:
     def _load_plan_cache_stats_snapshot(
         self,
         pipeline: Pipeline,
+        collection_name: str | None = None,
     ) -> list[Document]:
         if not self._collect_plan_cache_stats_requested(pipeline):
             return []
@@ -1072,7 +1131,7 @@ class AsyncAggregationCursor:
         captured_at = datetime.datetime.now(datetime.UTC)
         return [
             {
-                "ns": f"{self._collection._db_name}.{self._collection._collection_name}",
+                "ns": f"{self._collection._db_name}.{collection_name or self._collection._collection_name}",
                 "isActive": True,
                 "isPinned": False,
                 "works": 0,
@@ -1343,67 +1402,9 @@ class AsyncAggregationCursor:
                 remaining_pipeline,
                 dialect=dialect,
             )
-            referenced_collections = await self._load_referenced_collections()
-            collstats_snapshots = await self._load_collstats_snapshots(
-                remaining_pipeline,
-            )
-            index_stats_snapshot = await self._load_index_stats_snapshot(
-                remaining_pipeline,
-            )
-            current_op_requested = self._collect_current_op_requested(
-                remaining_pipeline,
-            )
-            plan_cache_stats_snapshot = self._load_plan_cache_stats_snapshot(
-                remaining_pipeline,
-            )
-            list_sessions_requested = self._collect_list_sessions_requested(
-                remaining_pipeline,
-            )
-            list_sessions_snapshot = self._load_list_sessions_snapshot(
-                remaining_pipeline,
-            )
-            snapshot_active_operations = getattr(
-                self._collection._engine,
-                "_snapshot_active_operations",
-                None,
-            )
-            current_op_snapshot = (
-                snapshot_active_operations()
-                if current_op_requested and callable(snapshot_active_operations)
-                else []
-            )
-            enforce_deadline(deadline)
-            collection_stats_resolver = None
-            if collstats_snapshots:
-                default_collstats_snapshot = next(
-                    iter(collstats_snapshots.values()),
-                )
-                collection_stats_resolver = lambda scale: deepcopy(
-                    collstats_snapshots.get(scale, default_collstats_snapshot),
-                )
-            index_stats_resolver = None
-            if index_stats_snapshot:
-                index_stats_resolver = lambda: deepcopy(index_stats_snapshot)
-            current_op_resolver = None
-            if current_op_requested:
-                current_op_resolver = lambda: deepcopy(current_op_snapshot)
-            plan_cache_stats_resolver = None
-            if plan_cache_stats_snapshot:
-                plan_cache_stats_resolver = lambda: deepcopy(
-                    plan_cache_stats_snapshot,
-                )
-            list_sessions_resolver = None
-            if list_sessions_requested:
-                list_sessions_resolver = lambda: deepcopy(
-                    list_sessions_snapshot,
-                )
+            referenced_collections = await self._load_pipeline_resources()
             pipeline_kwargs = {
-                "collection_resolver": referenced_collections.get,
-                "collection_stats_resolver": collection_stats_resolver,
-                "index_stats_resolver": index_stats_resolver,
-                "current_op_resolver": current_op_resolver,
-                "plan_cache_stats_resolver": plan_cache_stats_resolver,
-                "list_sessions_resolver": list_sessions_resolver,
+                **referenced_collections.resolver_kwargs(),
                 "variables": self._execution_variables(),
                 "dialect": dialect,
                 "collation": self._collation,
@@ -1810,11 +1811,11 @@ class AsyncAggregationCursor:
                 deadline=deadline,
             )
         if plan.suffix:
-            referenced_collections = await self._load_referenced_collections()
+            referenced_collections = await self._load_pipeline_resources()
             result = apply_pipeline(
                 result,
                 plan.suffix,
-                collection_resolver=referenced_collections.get,
+                collection_resolver=referenced_collections,
                 variables=self._execution_variables(),
                 dialect=dialect,
                 collation=self._collation,
@@ -1856,6 +1857,9 @@ class AsyncAggregationCursor:
         page_size = self._batch_size or 256
         source = iter(documents)
         try:
+            referenced_collections = (
+                await self._load_pipeline_resources() if pipeline else {}
+            )
             while remaining_limit != 0:
                 page = list(islice(source, page_size))
                 if not page:
@@ -1863,6 +1867,7 @@ class AsyncAggregationCursor:
                 transformed = apply_pipeline(
                     page,
                     pipeline,
+                    collection_resolver=referenced_collections,
                     variables=self._execution_variables(),
                     dialect=dialect,
                     collation=self._collation,
@@ -1902,7 +1907,7 @@ class AsyncAggregationCursor:
         if plan.suffix_limit == 0:
             return
         referenced_collections = (
-            await self._load_referenced_collections() if plan.suffix else {}
+            await self._load_pipeline_resources() if plan.suffix else {}
         )
         page_size = self._batch_size or 256
         remaining_skip = plan.suffix_skip
@@ -1922,7 +1927,7 @@ class AsyncAggregationCursor:
                 transformed = apply_pipeline(
                     page,
                     plan.suffix,
-                    collection_resolver=referenced_collections.get,
+                    collection_resolver=referenced_collections,
                     variables=self._execution_variables(),
                     dialect=dialect,
                     collation=self._collation,
@@ -1997,7 +2002,7 @@ class AsyncAggregationCursor:
 
             sorted_documents = spool.finish()
             referenced_collections = (
-                await self._load_referenced_collections() if plan.suffix else {}
+                await self._load_pipeline_resources() if plan.suffix else {}
             )
             while output_window.open:
                 page = list(islice(sorted_documents, page_size))
@@ -2006,7 +2011,7 @@ class AsyncAggregationCursor:
                 transformed = apply_pipeline(
                     page,
                     plan.suffix,
-                    collection_resolver=referenced_collections.get,
+                    collection_resolver=referenced_collections,
                     variables=self._execution_variables(),
                     dialect=dialect,
                     collation=self._collation,
@@ -2040,7 +2045,7 @@ class AsyncAggregationCursor:
         if page_size is None or page_size <= 0:
             message = "windowed pipeline requires a positive batch size"
             raise RuntimeError(message)
-        referenced_collections = await self._load_referenced_collections()
+        referenced_collections = await self._load_pipeline_resources()
         source = _CursorPageSource(
             self._build_pushdown_cursor(
                 self._pushdown_find_operation(batch_size=page_size),
@@ -2056,7 +2061,7 @@ class AsyncAggregationCursor:
                 transformed = apply_pipeline(
                     page,
                     streamable_pipeline,
-                    collection_resolver=referenced_collections.get,
+                    collection_resolver=referenced_collections,
                     variables=self._execution_variables(),
                     dialect=dialect,
                     collation=self._collation,

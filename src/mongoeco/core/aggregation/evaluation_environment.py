@@ -20,10 +20,12 @@ class EvaluationEnvironment(dict[str, Any]):
         *,
         root: Document | None = None,
         current: Document | None = None,
+        collation=None,
     ) -> None:
         super().__init__(bindings or {})
         self.root = root
         self.current = current
+        self.collation = collation
         if root is not None:
             self['ROOT'] = root
         if current is not None:
@@ -38,6 +40,7 @@ class EvaluationEnvironment(dict[str, Any]):
             self,
             root=self.root,
             current=self.current,
+            collation=self.collation,
         )
 
     def with_current(self, document: Document) -> EvaluationEnvironment:
@@ -45,6 +48,7 @@ class EvaluationEnvironment(dict[str, Any]):
             self,
             root=self.root if self.root is not None else document,
             current=document,
+            collation=self.collation,
         )
 
 
@@ -72,3 +76,15 @@ def scoped_environment(
     if isinstance(variables, EvaluationEnvironment):
         return variables.with_lexicals()
     return EvaluationEnvironment(variables or {})
+
+
+def aggregation_environment(variables, collation=None) -> EvaluationEnvironment:
+    """Carry comparison policy outside user-visible lexical bindings."""
+    environment = (
+        scoped_environment(ensure_expression_context(variables))
+        if not isinstance(variables, EvaluationEnvironment)
+        else variables.with_lexicals()
+    )
+    if collation is not None:
+        environment.collation = collation
+    return environment

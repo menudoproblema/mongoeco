@@ -25,8 +25,17 @@ from mongoeco.core.bson_scalars import (
     unwrap_bson_numeric,
     validate_bson_value,
 )
+from mongoeco.core.collation import compare_with_collation
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Binary, Decimal128, Document, ObjectId, Regex, Timestamp, UndefinedType
+from mongoeco.types import (
+    Binary,
+    Decimal128,
+    Document,
+    ObjectId,
+    Regex,
+    Timestamp,
+    UndefinedType,
+)
 
 
 type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
@@ -84,7 +93,11 @@ def evaluate_scalar_expression(
             raise OperationFailure("$convert requires input and to")
         value = evaluate_expression_with_missing(document, spec["input"], variables)
         if value is missing_sentinel or value is None:
-            return evaluate_expression(document, spec["onNull"], variables) if "onNull" in spec else None
+            return (
+                evaluate_expression(document, spec["onNull"], variables)
+                if "onNull" in spec
+                else None
+            )
         target = evaluate_expression(document, spec["to"], variables)
         if isinstance(target, dict):
             target = target.get("type")
@@ -102,7 +115,9 @@ def evaluate_scalar_expression(
         try:
             if target not in aliases:
                 raise OperationFailure("$convert target type is not supported")
-            return _convert_aggregation_scalar(operator, value, aliases[target], stringify_value=stringify_value)
+            return _convert_aggregation_scalar(
+                operator, value, aliases[target], stringify_value=stringify_value
+            )
         except Exception:
             if "onError" in spec:
                 return evaluate_expression(document, spec["onError"], variables)
@@ -146,7 +161,9 @@ def evaluate_scalar_expression(
             1,
         )
         value = evaluate_expression_with_missing(document, args[0], variables)
-        return is_bson_numeric(value) or (isinstance(value, (int, float)) and not isinstance(value, bool))
+        return is_bson_numeric(value) or (
+            isinstance(value, (int, float)) and not isinstance(value, bool)
+        )
 
     if operator == "$type":
         args = require_expression_args(
@@ -170,7 +187,16 @@ def evaluate_scalar_expression(
             return None
         return stringify_value(unwrap_bson_numeric(value))
 
-    if operator in {"$toBool", "$toDate", "$toDecimal", "$toInt", "$toDouble", "$toLong", "$toObjectId", "$toUUID"}:
+    if operator in {
+        "$toBool",
+        "$toDate",
+        "$toDecimal",
+        "$toInt",
+        "$toDouble",
+        "$toLong",
+        "$toObjectId",
+        "$toUUID",
+    }:
         args = require_expression_args(
             operator,
             [spec] if not isinstance(spec, list) else spec,
@@ -190,7 +216,9 @@ def evaluate_scalar_expression(
             "$toObjectId": "objectId",
             "$toUUID": "uuid",
         }[operator]
-        return _convert_aggregation_scalar(operator, value, target, stringify_value=stringify_value)
+        return _convert_aggregation_scalar(
+            operator, value, target, stringify_value=stringify_value
+        )
 
     if operator == "$isArray":
         args = require_expression_args(
@@ -206,7 +234,12 @@ def evaluate_scalar_expression(
         args = require_expression_args(operator, spec, 2, 2)
         left = evaluate_expression(document, args[0], variables)
         right = evaluate_expression(document, args[1], variables)
-        comparison = dialect.policy.compare_values(left, right)
+        comparison = compare_with_collation(
+            left,
+            right,
+            dialect=dialect,
+            collation=getattr(variables, "collation", None),
+        )
         if comparison < 0:
             return -1
         if comparison > 0:
@@ -239,8 +272,7 @@ def _evaluate_min_max_expression(
 ) -> Any:
     if isinstance(spec, list):
         candidates = [
-            evaluate_expression_with_missing(document, item, variables)
-            for item in spec
+            evaluate_expression_with_missing(document, item, variables) for item in spec
         ]
     else:
         value = evaluate_expression_with_missing(document, spec, variables)
@@ -259,7 +291,12 @@ def _evaluate_min_max_expression(
 
     selected = comparable[0]
     for candidate in comparable[1:]:
-        comparison = dialect.policy.compare_values(candidate, selected)
+        comparison = compare_with_collation(
+            candidate,
+            selected,
+            dialect=dialect,
+            collation=getattr(variables, "collation", None),
+        )
         if (operator == "$max" and comparison > 0) or (
             operator == "$min" and comparison < 0
         ):

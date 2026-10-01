@@ -230,7 +230,7 @@ class AggregationGroupSpool:
 
     def _group_digest(self, group_id: object) -> str:
         payload = json_dumps_compact(
-            self._codec.encode({"_id": group_id}),
+            self._codec.encode({"_id": self._group_key_for_id(group_id)}),
             sort_keys=False,
         )
         return hashlib.sha256(payload.encode()).hexdigest()

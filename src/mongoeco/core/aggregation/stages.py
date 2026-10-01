@@ -16,6 +16,7 @@ from mongoeco.core.aggregation.evaluation_environment import (
     EvaluationEnvironment,
     environment_for_document,
     scoped_environment,
+    aggregation_environment,
 )
 from mongoeco.core.aggregation.extensions import (
     AggregationStageExecutionMode,
@@ -55,7 +56,9 @@ from mongoeco.core.aggregation.transform_stages import (
     _apply_sample,
     _apply_unset,
 )
-from mongoeco.core.expression_context import ensure_expression_context
+from mongoeco.core.aggregation.information_stages import parse_information_spec
+from mongoeco.core.aggregation.preparation import prepare_pipeline
+from mongoeco.core.aggregation.resources import AggregationResources
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.geo import (
     parse_geo_geometry,
@@ -268,6 +271,11 @@ def _stage_lookup(
         collation=context.collation,
         spill_policy=context.spill_policy,
         lookup_hash_max_associations=context.lookup_hash_max_associations,
+        collection_stats_resolver=context.collection_stats_resolver,
+        index_stats_resolver=context.index_stats_resolver,
+        current_op_resolver=context.current_op_resolver,
+        plan_cache_stats_resolver=context.plan_cache_stats_resolver,
+        list_sessions_resolver=context.list_sessions_resolver,
         deadline=context.deadline,
     )
 
@@ -286,6 +294,11 @@ def _stage_union_with(
         collation=context.collation,
         spill_policy=context.spill_policy,
         lookup_hash_max_associations=context.lookup_hash_max_associations,
+        collection_stats_resolver=context.collection_stats_resolver,
+        index_stats_resolver=context.index_stats_resolver,
+        current_op_resolver=context.current_op_resolver,
+        plan_cache_stats_resolver=context.plan_cache_stats_resolver,
+        list_sessions_resolver=context.list_sessions_resolver,
         deadline=context.deadline,
     )
 
@@ -352,6 +365,11 @@ def _stage_facet(
         collation=context.collation,
         spill_policy=context.spill_policy,
         lookup_hash_max_associations=context.lookup_hash_max_associations,
+        collection_stats_resolver=context.collection_stats_resolver,
+        index_stats_resolver=context.index_stats_resolver,
+        current_op_resolver=context.current_op_resolver,
+        plan_cache_stats_resolver=context.plan_cache_stats_resolver,
+        list_sessions_resolver=context.list_sessions_resolver,
         deadline=context.deadline,
     )
 
@@ -372,6 +390,7 @@ def _stage_sort_by_count(
         spec,
         context.variables,
         dialect=context.dialect,
+        collation=context.collation,
         deadline=context.deadline,
     )
 
@@ -623,51 +642,12 @@ def _stage_coll_stats(
         raise OperationFailure(
             "$collStats requires a collection stats resolver in the local runtime"
         )
-    if not isinstance(spec, dict):
-        raise OperationFailure("$collStats requires a document specification")
-    unsupported = sorted(set(spec) - {"count", "storageStats"})
-    if unsupported:
-        raise OperationFailure(
-            "$collStats local runtime supports only count and storageStats; unsupported keys: "
-            + ", ".join(unsupported)
-        )
-    if not spec:
-        raise OperationFailure(
-            "$collStats requires at least one of count or storageStats"
-        )
-
-    include_count = False
-    scale = 1
-    if "count" in spec:
-        count_spec = spec.get("count")
-        if count_spec != {}:
-            raise OperationFailure("$collStats.count must be an empty document")
-        include_count = True
-    if "storageStats" in spec:
-        storage_spec = spec.get("storageStats")
-        if not isinstance(storage_spec, dict):
-            raise OperationFailure("$collStats.storageStats must be a document")
-        unsupported_storage = sorted(set(storage_spec) - {"scale"})
-        if unsupported_storage:
-            raise OperationFailure(
-                "$collStats.storageStats local runtime supports only scale; unsupported keys: "
-                + ", ".join(unsupported_storage)
-            )
-        scale_value = storage_spec.get("scale", 1)
-        if (
-            not isinstance(scale_value, int)
-            or isinstance(scale_value, bool)
-            or scale_value <= 0
-        ):
-            raise OperationFailure(
-                "$collStats.storageStats.scale must be a positive integer"
-            )
-        scale = scale_value
+    include_count, scale = parse_information_spec("$collStats", spec)
 
     snapshot = context.collection_stats_resolver(scale)
     result: Document = {"ns": snapshot.get("ns")}
     if include_count:
-        result["count"] = {"count": snapshot.get("count", 0)}
+        result["count"] = snapshot.get("count", 0)
     if "storageStats" in spec:
         storage_stats = deepcopy(snapshot)
         storage_stats.pop("ok", None)
@@ -686,12 +666,7 @@ def _stage_index_stats(
         raise OperationFailure(
             "$indexStats requires an index stats resolver in the local runtime"
         )
-    if not isinstance(spec, dict):
-        raise OperationFailure("$indexStats requires a document specification")
-    if spec:
-        raise OperationFailure(
-            "$indexStats local runtime supports only an empty document"
-        )
+    parse_information_spec("$indexStats", spec)
 
     return [
         deepcopy(document)
@@ -713,12 +688,7 @@ def _stage_current_op(
         raise OperationFailure(
             "$currentOp requires a current operation resolver in the local runtime"
         )
-    if not isinstance(spec, dict):
-        raise OperationFailure("$currentOp requires a document specification")
-    if spec:
-        raise OperationFailure(
-            "$currentOp local runtime supports only an empty document"
-        )
+    parse_information_spec("$currentOp", spec)
 
     return [
         deepcopy(document)
@@ -743,12 +713,7 @@ def _stage_plan_cache_stats(
         raise OperationFailure(
             "$planCacheStats requires a plan cache stats resolver in the local runtime"
         )
-    if not isinstance(spec, dict):
-        raise OperationFailure("$planCacheStats requires a document specification")
-    if spec:
-        raise OperationFailure(
-            "$planCacheStats local runtime supports only an empty document"
-        )
+    parse_information_spec("$planCacheStats", spec)
 
     return [
         deepcopy(document)
@@ -772,12 +737,7 @@ def _stage_list_sessions(
         raise OperationFailure(
             "$listSessions requires a list sessions resolver in the local runtime"
         )
-    if not isinstance(spec, dict):
-        raise OperationFailure("$listSessions requires a document specification")
-    if spec:
-        raise OperationFailure(
-            "$listSessions local runtime supports only an empty document"
-        )
+    parse_information_spec("$listSessions", spec)
 
     return [
         deepcopy(document)
@@ -1113,7 +1073,15 @@ def apply_pipeline(
     lookup_hash_max_associations: int | None = None,
     deadline: float | None = None,
 ) -> list[Document]:
-    variables = ensure_expression_context(variables)
+    pipeline = prepare_pipeline(pipeline, dialect=dialect)
+    variables = aggregation_environment(variables, collation)
+    if isinstance(collection_resolver, AggregationResources):
+        bound = collection_resolver.resolver_kwargs()
+        collection_stats_resolver = bound["collection_stats_resolver"]
+        index_stats_resolver = bound["index_stats_resolver"]
+        current_op_resolver = bound["current_op_resolver"]
+        plan_cache_stats_resolver = bound["plan_cache_stats_resolver"]
+        list_sessions_resolver = bound["list_sessions_resolver"]
     compiled_plan = compile_pipeline(
         pipeline,
         dialect=dialect,
@@ -1172,7 +1140,7 @@ def apply_pipeline(
             result,
             spec,
             AggregationStageContext(
-                stage_index=index,
+                stage_index=pipeline.addresses[index].index,
                 collection_resolver=collection_resolver,
                 collection_stats_resolver=collection_stats_resolver,
                 index_stats_resolver=index_stats_resolver,

@@ -469,12 +469,12 @@ class AggregationWorkControlTests(TestCase):
     def test_group_spool_closes_child_writers_after_repartition_failure(self):
         policy = AggregationSpillPolicy(threshold=1)
         accumulator = _IncrementalGroup({"_id": "$group", "count": {"$sum": 1}})
-        accumulator.consume({"group": group} for group in range(8))
+        accumulator.consume({"group": group} for group in range(64))
         spool = policy.open_group_spool(
             group_id_for_document=accumulator.group_id,
             group_key_for_id=accumulator.group_key,
         )
-        spool.seed(accumulator.release_buckets(), next_sequence=8)
+        spool.seed(accumulator.release_buckets(), next_sequence=64)
         temp_root = Path(tempfile.gettempdir())
         before_iteration = set(temp_root.glob("*.mongoeco-agggroup"))
         partitions = spool.iter_partitions()

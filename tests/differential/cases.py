@@ -402,6 +402,268 @@ def _aggregate_union_with_shapes(collection: Any) -> list[dict[str, Any]]:
     )
 
 
+def _aggregate_group_collection_references(collection: Any) -> dict[str, Any]:
+    _seed_foreign_collection(collection)
+    grouped = [{"$group": {"_id": "$kind"}}]
+    lookup = {
+        "$lookup": {
+            "from": "foreign",
+            "localField": "_id",
+            "foreignField": "kind",
+            "as": "profile.joined",
+        }
+    }
+    correlated = {
+        "$lookup": {
+            "from": "foreign",
+            "let": {"kind": "$_id"},
+            "pipeline": [{"$match": {"$expr": {"$eq": ["$kind", "$$kind"]}}}],
+            "as": "joined",
+        }
+    }
+    return {
+        "fields": list(
+            collection.aggregate(
+                [
+                    *grouped,
+                    lookup,
+                    {"$project": {"_id": 1, "profile.joined._id": 1}},
+                    {"$sort": {"_id": 1}},
+                ]
+            )
+        ),
+        "pipeline": list(
+            collection.aggregate(
+                [
+                    *grouped,
+                    correlated,
+                    {"$project": {"_id": 1, "joined._id": 1}},
+                    {"$sort": {"_id": 1}},
+                ]
+            )
+        ),
+        "union": list(
+            collection.aggregate(
+                [
+                    *grouped,
+                    {
+                        "$unionWith": {
+                            "coll": "foreign",
+                            "pipeline": [{"$project": {"_id": "$kind"}}],
+                        }
+                    },
+                    {"$sort": {"_id": 1}},
+                ]
+            )
+        ),
+    }
+
+
+def _aggregate_semantic_collation(collection: Any) -> dict[str, Any]:
+    collation = {"locale": "en", "strength": 2}
+    result = {
+        "group": list(
+            collection.aggregate(
+                [
+                    {"$group": {"_id": "$key", "n": {"$sum": 1}}},
+                    {"$project": {"_id": {"$toLower": "$_id"}, "n": 1}},
+                    {"$sort": {"_id": 1}},
+                ],
+                collation=collation,
+            )
+        ),
+        "numeric": list(
+            collection.aggregate(
+                [
+                    {"$group": {"_id": "$value", "n": {"$sum": 1}}},
+                    {"$project": {"_id": {"$toDouble": "$_id"}, "n": 1}},
+                    {"$sort": {"_id": 1}},
+                ]
+            )
+        ),
+        "expr": list(
+            collection.aggregate(
+                [
+                    {"$match": {"$expr": {"$eq": ["$key", "ADA"]}}},
+                    {"$project": {"_id": 1}},
+                    {"$sort": {"_id": 1}},
+                ],
+                collation=collation,
+            )
+        ),
+        "nested_expr": list(
+            collection.aggregate(
+                [
+                    {"$match": {"$expr": {"$eq": [{"x": ["$key"]}, {"x": ["ADA"]}]}}},
+                    {"$project": {"_id": 1}},
+                    {"$sort": {"_id": 1}},
+                ],
+                collation=collation,
+            )
+        ),
+        "window": list(
+            collection.aggregate(
+                [
+                    {
+                        "$setWindowFields": {
+                            "partitionBy": "$value",
+                            "output": {
+                                "n": {
+                                    "$sum": 1,
+                                    "window": {"documents": ["unbounded", "unbounded"]},
+                                }
+                            },
+                        }
+                    },
+                    {"$project": {"_id": 1, "n": 1}},
+                    {"$sort": {"_id": 1}},
+                ]
+            )
+        ),
+    }
+
+    result["rank"] = [
+        [row["_id"], row["r"], row["d"]]
+        for row in collection.aggregate(
+            [
+                {
+                    "$setWindowFields": {
+                        "sortBy": {"key": 1},
+                        "output": {"r": {"$rank": {}}, "d": {"$denseRank": {}}},
+                    }
+                },
+                {"$sort": {"_id": 1}},
+            ],
+            collation=collation,
+        )
+    ]
+    selected_names = ("lo", "hi", "lowN", "highN", "top", "bottom", "topN", "bottomN")
+    selectors = {
+        "_id": None,
+        "lo": {"$min": "$mixed"},
+        "hi": {"$max": "$mixed"},
+        "lowN": {"$minN": {"input": "$mixed", "n": 1}},
+        "highN": {"$maxN": {"input": "$mixed", "n": 1}},
+        "top": {"$top": {"sortBy": {"mixed": 1}, "output": "$mixed"}},
+        "bottom": {"$bottom": {"sortBy": {"mixed": 1}, "output": "$mixed"}},
+        "topN": {"$topN": {"sortBy": {"mixed": 1}, "output": "$mixed", "n": 1}},
+        "bottomN": {"$bottomN": {"sortBy": {"mixed": 1}, "output": "$mixed", "n": 1}},
+    }
+    result["selectors"] = [
+        [row[name] for name in selected_names]
+        for row in collection.aggregate(
+            [
+                {"$set": {"mixed": {"$cond": [{"$eq": ["$value", 2]}, "Z", "a"]}}},
+                {"$group": selectors},
+            ],
+            collation=collation,
+        )
+    ]
+
+    for name in ("group", "numeric", "window"):
+        result[name] = [[row["_id"], row["n"]] for row in result[name]]
+    return result
+
+
+def _aggregate_pipeline_validation(collection: Any) -> list[str]:
+    pipelines = [
+        [{"$match": {"_id": "absent"}}, {"$group": {"_id": None}}, {"$lookup": {}}],
+        [
+            {
+                "$lookup": {
+                    "from": "foreign",
+                    "let": {"Invalid": 1},
+                    "pipeline": [],
+                    "as": "e",
+                }
+            }
+        ],
+        [
+            {
+                "$lookup": {
+                    "from": "foreign",
+                    "let": {"bad\n": 1},
+                    "pipeline": [],
+                    "as": "e",
+                }
+            }
+        ],
+        [{"$match": {}}, {"$indexStats": {}}],
+        [
+            {
+                "$lookup": {
+                    "from": "foreign",
+                    "localField": "kind",
+                    "foreignField": "kind",
+                    "as": "e",
+                    "unexpected": 1,
+                }
+            }
+        ],
+        [{"$lookup": {"pipeline": [{"$documents": [{"x": 1}]}], "as": "e"}}],
+        [{"$unionWith": {"pipeline": [{"$documents": [{"x": 1}]}]}}],
+        [{"$unionWith": {"coll": "foreign", "pipeline": [{"$documents": []}]}}],
+        [{"$facet": {"x": [{"$facet": {"y": []}}]}}],
+        [{"$facet": {"x": [{"$lookup": {
+            "from": "foreign", "pipeline": [{"$indexStats": {}}], "as": "e",
+        }}]}}],
+        [{"$facet": {"x": [{"$unionWith": {
+            "coll": "foreign", "pipeline": [{"$indexStats": {}}],
+        }}]}}],
+        [{"$match": {"_id": "absent"}}, {"$facet": {"x": [{"$lookup": {
+            "from": "foreign", "pipeline": [{"$unionWith": {
+                "coll": "foreign", "pipeline": [{"$planCacheStats": {}}],
+            }}], "as": "e",
+        }}]}}],
+        [{"$facet": {"x": [{"$lookup": {
+            "pipeline": [{"$documents": [{"seed": 1}]}], "as": "e",
+        }}]}}],
+        [{"$facet": {"x": [{"$unionWith": {
+            "pipeline": [{"$documents": [{"seed": 1}]}],
+        }}]}}],
+        [{"$facet": {"x": [{"$lookup": {
+            "from": "foreign", "pipeline": [{"$match": {}}], "as": "e",
+        }}]}}],
+    ]
+    return [
+        _write_error_flag(
+            lambda pipeline=pipeline: list(collection.aggregate(pipeline))
+        )
+        for pipeline in pipelines
+    ]
+
+
+def _aggregate_foreign_stats(collection: Any) -> dict[str, Any]:
+    foreign = _seed_foreign_collection(collection)
+    foreign.create_index("kind", name="foreign_only")
+
+    def run(stage):
+        return list(
+            collection.aggregate(
+                [
+                    {"$limit": 1},
+                    {
+                        "$lookup": {
+                            "from": "foreign",
+                            "pipeline": [
+                                stage,
+                                {"$project": {"_id": 0, "name": 1, "count": 1}},
+                                {"$sort": {"name": 1}},
+                            ],
+                            "as": "stats",
+                        }
+                    },
+                    {"$project": {"_id": 0, "stats": 1}},
+                ]
+            )
+        )
+
+    return {
+        "indexes": run({"$indexStats": {}}),
+        "count": run({"$collStats": {"count": {}}}),
+    }
+
+
 def _aggregate_merge_writeback(collection: Any) -> list[dict[str, Any]]:
     list(
         collection.aggregate(
@@ -726,6 +988,30 @@ REAL_PARITY_CASES: tuple[RealParityCase, ...] = (
         name="aggregate_union_with_shapes",
         seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
         action=_aggregate_union_with_shapes,
+    ),
+    RealParityCase(
+        name="aggregate_group_collection_references",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_group_collection_references,
+    ),
+    RealParityCase(
+        name="aggregate_semantic_collation",
+        seed_documents=[
+            {"_id": "a", "key": "Ada", "value": 1},
+            {"_id": "b", "key": "other", "value": 2},
+            {"_id": "c", "key": "ada", "value": 1.0},
+        ],
+        action=_aggregate_semantic_collation,
+    ),
+    RealParityCase(
+        name="aggregate_pipeline_validation",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_pipeline_validation,
+    ),
+    RealParityCase(
+        name="aggregate_foreign_stats",
+        seed_documents=_AGGREGATION_STAGE_DOCUMENTS,
+        action=_aggregate_foreign_stats,
     ),
     RealParityCase(
         name="aggregate_merge_writeback",

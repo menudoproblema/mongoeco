@@ -8,16 +8,37 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
-### Changed (target 4.8.0; not published)
+## [4.8.1] - 2026-10-01
+
+### Fixed
+
+- Preserve builtin resource discovery when aggregation extensions override `$lookup`, `$unionWith` or information stages, without executing extension handlers or imposing builtin parsers during preparation.
+- Apply `$facet` restrictions through all descendant pipelines, including nested facets and information or `$documents` stages reached through joins. Keep valid joins inside facets supported.
+- Reprepare pipelines when their collection, logical scope, address or extension registry changes; preserve original addresses when planners only slice or copy physical fragments. Share pure information-stage parsers between validation and execution.
+- Prepare aggregation pipelines recursively before execution so invalid join specifications, variable names and initial-only stages fail consistently on empty, batched and Search inputs. Retain logical stage positions through physical pipeline slicing.
+- Bind foreign documents and introspection snapshots by collection across nested `$lookup`, `$unionWith` and `$facet` execution; keep the local current-collection union extension scoped to its enclosing pipeline.
+- Write dotted `$lookup.as` paths as nested fields and support collection-independent `$lookup`/`$unionWith` pipelines beginning with `$documents`, including MongoDB 8 namespace validation.
+- Apply collation recursively to aggregation comparisons and membership, compiled group extrema, ordered accumulators and window rank ties, and use BSON numeric equivalence and collation keys for groups, window partitions and spill. Keep Decimal128 identity exact at full precision and canonicalize signed zero across spill partitions. Preserve binary subtypes while treating bytes and subtype-zero Binary as equivalent.
+- Return the MongoDB-compatible scalar `count` from `$collStats` instead of a nested count document. Pipelines previously using `$count.count` must use `$count`.
+- Add regression matrices and real MongoDB 7/8 differential coverage for aggregation context, joins, validation, collation and foreign introspection.
+- Load referenced collections and pass their resolver when streaming the
+  pipeline after an incremental `$group`. Both async and sync aggregation
+  cursors now support subsequent `$lookup` stages with `localField`/`foreignField`
+  or `let`/`pipeline`, including multiple lookups across output batches and
+  spilled groups. Regression coverage also preserves `$unionWith` after
+  `$group` on Memory and SQLite.
+
+## [4.8.0] - 2026-09-27
+
+### Changed
 
 - **Documented minor-version exception:** replace the public legacy CXP
   catalogs, descriptors, handshake and compatibility calculations with
   `mongoeco.cxp.exchange` owner documents and the single CXP evaluator. This
   breaks imports and reporting views from Mongoeco 4.7; the replacement and
   removed surfaces are listed in `docs/cxp-c4-migration.md`.
-- Require `cxp[exchange]>=5.0.0,<6`. Mongoeco 4.8.0 is prepared against the
-  exact local CXP 5.0.0 candidate; it is not published or authorized for
-  publication by this source change.
+- Require `cxp[exchange]>=5.0.0,<6`. Mongoeco 4.8.0 uses the
+  published CXP 5.0.0 exchange contract.
 - Validate the three wire `hello` command aliases before recording connection
   state, and inventory their bounded request and response fields, including
   absent compression and topology claims.

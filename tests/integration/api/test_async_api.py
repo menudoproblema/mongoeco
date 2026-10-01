@@ -11394,7 +11394,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                     expected = collstats[0]
                     self.assertEqual(expected["ns"], "analytics.events")
-                    self.assertEqual(expected["count"], {"count": 2})
+                    self.assertEqual(expected["count"], 2)
                     self.assertEqual(
                         expected["storageStats"]["ns"],
                         "analytics.events",

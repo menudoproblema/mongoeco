@@ -25,6 +25,7 @@ from mongoeco.core.aggregation.date_expressions import (
     evaluate_date_expression,
 )
 from mongoeco.core.aggregation.evaluation_environment import (
+    aggregation_environment,
     environment_for_document,
 )
 from mongoeco.core.aggregation.extensions import (
@@ -46,7 +47,13 @@ from mongoeco.core.bson_scalars import (
     BsonInt64,
     bson_numeric_alias,
 )
-from mongoeco.core.collation import CollationSpec
+from mongoeco.core.collation import (
+    CollationSpec,
+    compare_with_collation,
+    string_equality_key,
+)
+from mongoeco.core.bson_ordering import bson_equality_key
+from mongoeco.core.bson_scalars import is_bson_numeric
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.paths import (
     delete_document_value,
@@ -144,6 +151,29 @@ class AggregationStageContext:
     deadline: float | None = None
 
 
+def aggregation_equality_key(value: Any, collation: CollationSpec | None = None) -> Any:
+    """Semantic group identity, independent of physical numeric representation."""
+    if is_bson_numeric(value):
+        return bson_equality_key(value)
+    if isinstance(value, str):
+        return ("str", string_equality_key(value, collation))
+    if isinstance(value, dict):
+        return (
+            "dict",
+            tuple(
+                (key, aggregation_equality_key(item, collation))
+                for key, item in value.items()
+            ),
+        )
+    if isinstance(value, list):
+        return (
+            "list",
+            tuple(aggregation_equality_key(item, collation) for item in value),
+        )
+    _aggregation_key(value)  # Preserve rejection of non-BSON, unhashable scalars.
+    return bson_equality_key(value)
+
+
 def _require_unwind_spec(spec: object) -> tuple[str, bool, str | None]:
     if isinstance(spec, str):
         path = spec
@@ -179,15 +209,30 @@ def _require_unwind_spec(spec: object) -> tuple[str, bool, str | None]:
 def _require_lookup_spec(spec: object) -> dict[str, Any]:
     if not isinstance(spec, dict):
         raise OperationFailure("$lookup requires a document specification")
-    if "from" not in spec or "as" not in spec:
+    if set(spec) - {"from", "as", "localField", "foreignField", "let", "pipeline"}:
+        raise OperationFailure("$lookup contains unsupported arguments")
+    documents_source = (
+        isinstance(spec.get("pipeline"), list)
+        and bool(spec["pipeline"])
+        and isinstance(spec["pipeline"][0], dict)
+        and "$documents" in spec["pipeline"][0]
+    )
+    if ("from" not in spec and not documents_source) or "as" not in spec:
         raise OperationFailure("$lookup requires from and as")
-    from_collection = spec["from"]
+    from_collection = spec.get("from")
+    if "from" in spec and from_collection is None:
+        raise OperationFailure("$lookup from and as must be non-empty strings")
     output_field = spec["as"]
     if not all(
-        isinstance(value, str) and value for value in (from_collection, output_field)
+        isinstance(value, str) and value
+        for value in (
+            (from_collection, output_field)
+            if from_collection is not None
+            else (output_field,)
+        )
     ):
         raise OperationFailure("$lookup from and as must be non-empty strings")
-    if from_collection.startswith("$"):
+    if from_collection is not None and from_collection.startswith("$"):
         raise OperationFailure(
             "$lookup from must be a collection name, not a path expression",
         )
@@ -200,6 +245,15 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
         let_spec = spec.get("let", {})
         if not isinstance(let_spec, dict):
             raise OperationFailure("$lookup let must be a document")
+        for name in let_spec:
+            if not isinstance(name, str) or not re.fullmatch(
+                r"(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*", name
+            ):
+                message = (
+                    "$lookup let variable names must begin with a lowercase "
+                    "letter or non-ascii character"
+                )
+                raise OperationFailure(message)
         lookup = {
             "from": from_collection,
             "as": output_field,
@@ -213,19 +267,7 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
                 "$lookup localField and foreignField must be provided together",
             )
         if has_local:
-            local_field = spec["localField"]
-            foreign_field = spec["foreignField"]
-            if not all(
-                isinstance(value, str) and value
-                for value in (local_field, foreign_field)
-            ):
-                raise OperationFailure(
-                    "$lookup fields must be non-empty strings",
-                )
-            if local_field.startswith("$") or foreign_field.startswith("$"):
-                raise OperationFailure(
-                    "$lookup localField and foreignField must be field paths, not path expressions",
-                )
+            local_field, foreign_field = _require_lookup_fields(spec)
             lookup["localField"] = local_field
             lookup["foreignField"] = foreign_field
         return lookup
@@ -236,17 +278,9 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
             "$lookup requires from, localField, foreignField and as",
         )
     if "let" in spec:
-        raise OperationFailure("$lookup let requires pipeline form")
-    local_field = spec["localField"]
-    foreign_field = spec["foreignField"]
-    if not all(
-        isinstance(value, str) and value for value in (local_field, foreign_field)
-    ):
-        raise OperationFailure("$lookup fields must be non-empty strings")
-    if local_field.startswith("$") or foreign_field.startswith("$"):
-        raise OperationFailure(
-            "$lookup localField and foreignField must be field paths, not path expressions",
-        )
+        message = "$lookup let requires pipeline form"
+        raise OperationFailure(message)
+    local_field, foreign_field = _require_lookup_fields(spec)
     return {
         "from": from_collection,
         "as": output_field,
@@ -255,13 +289,30 @@ def _require_lookup_spec(spec: object) -> dict[str, Any]:
     }
 
 
+def _require_lookup_fields(spec):
+    local_field = spec["localField"]
+    foreign_field = spec["foreignField"]
+    if not all(
+        isinstance(value, str) and value for value in (local_field, foreign_field)
+    ):
+        message = "$lookup fields must be non-empty strings"
+        raise OperationFailure(message)
+    if local_field.startswith("$") or foreign_field.startswith("$"):
+        message = (
+            "$lookup localField and foreignField must be field paths, "
+            "not path expressions"
+        )
+        raise OperationFailure(message)
+    return local_field, foreign_field
+
+
 def _require_union_with_spec(spec: object) -> dict[str, Any]:
     if isinstance(spec, str):
         if not spec:
             raise OperationFailure(
                 "$unionWith collection name must be a non-empty string",
             )
-        return {"coll": spec, "pipeline": []}
+        spec = {"coll": spec}
     if not isinstance(spec, dict):
         raise OperationFailure(
             "$unionWith requires a collection name string or a document specification",
@@ -385,12 +436,19 @@ def _compare_values(
     operator: str,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> bool:
     if operator == "$eq":
-        return QueryEngine._values_equal(left, right, dialect=dialect)
+        return QueryEngine._values_equal(
+            left, right, dialect=dialect, collation=collation
+        )
     if operator == "$ne":
-        return not QueryEngine._values_equal(left, right, dialect=dialect)
-    comparison = dialect.policy.compare_values(left, right)
+        return not QueryEngine._values_equal(
+            left, right, dialect=dialect, collation=collation
+        )
+    comparison = compare_with_collation(
+        left, right, dialect=dialect, collation=collation
+    )
     return {
         "$gt": comparison > 0,
         "$gte": comparison >= 0,
@@ -685,7 +743,10 @@ def evaluate_expression(
     variables: Mapping[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
 ) -> Any:
+    if collation is not None:
+        variables = aggregation_environment(variables, collation)
     variables = _variables_for_document(document, variables)
 
     if isinstance(expression, str):
@@ -890,6 +951,7 @@ def evaluate_expression(
                             right,
                             comparison_operator,
                             dialect=dialect,
+                            collation=getattr(variables, "collation", None),
                         )
                     ),
                     expression_truthy=lambda value: _expression_truthy(

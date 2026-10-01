@@ -27,8 +27,9 @@ from mongoeco.core.aggregation.accumulators import (
     _window_sort_key_values,
     _window_sort_keys_equal,
 )
+from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
 from mongoeco.core.aggregation.runtime import (
-    _aggregation_key,
+    aggregation_equality_key,
     _append_unique_values,
     _resolve_aggregation_field_path,
     _MISSING,
@@ -287,6 +288,7 @@ def _build_accumulator_runtime(
             current_expression,
             current_variables,
             dialect=dialect,
+            collation=collation,
         )
 
     def _evaluate_with_missing(
@@ -433,6 +435,7 @@ def _precompute_window_ranks(
     window_sort_keys: list[list[Any]],
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
     deadline: float | None = None,
 ) -> tuple[list[int], list[int]]:
     if not window_sort_keys:
@@ -446,7 +449,9 @@ def _precompute_window_ranks(
         iter_with_deadline(window_sort_keys[1:], deadline),
         start=1,
     ):
-        if not _window_sort_keys_equal(candidate_key, previous_key, dialect=dialect):
+        if not _window_sort_keys_equal(
+            candidate_key, previous_key, dialect=dialect, collation=collation
+        ):
             dense_rank += 1
             rank = index + 1
             previous_key = candidate_key
@@ -501,7 +506,7 @@ class _IncrementalGroup:
             message = "$group requires a document specification with _id"
             raise OperationFailure(message)
         self._id_expression = spec["_id"]
-        self._variables = variables
+        self._variables = aggregation_environment(variables, collation)
         self._dialect = dialect
         self._collation = collation
         self._deadline = deadline
@@ -532,9 +537,8 @@ class _IncrementalGroup:
             dialect=self._dialect,
         )
 
-    @staticmethod
-    def group_key(group_id: Any) -> Any:
-        return _aggregation_key(group_id)
+    def group_key(self, group_id: Any) -> Any:
+        return aggregation_equality_key(group_id, self._collation)
 
     def consume(self, documents: Iterable[Document]) -> None:
         for document in iter_with_deadline(documents, self._deadline):
@@ -816,6 +820,7 @@ def _apply_set_window_fields(  # noqa: PLR0913
     collation: CollationSpec | None = None,
     deadline: float | None = None,
 ) -> list[Document]:
+    variables = aggregation_environment(variables, collation)
     if not isinstance(spec, dict) or "output" not in spec:
         raise OperationFailure("$setWindowFields requires output")
     output = spec["output"]
@@ -882,7 +887,9 @@ def _apply_set_window_fields(  # noqa: PLR0913
             if "partitionBy" in spec
             else None
         )
-        partitions.setdefault(_aggregation_key(partition_key), []).append(document)
+        partitions.setdefault(
+            aggregation_equality_key(partition_key, collation), []
+        ).append(document)
 
     result: list[Document] = []
     for partition_documents in iter_with_deadline(partitions.values(), deadline):
@@ -891,6 +898,7 @@ def _apply_set_window_fields(  # noqa: PLR0913
                 partition_documents,
                 sort_spec,
                 dialect=dialect,
+                collation=collation,
                 deadline=deadline,
             )
             if sort_spec is not None
@@ -907,6 +915,7 @@ def _apply_set_window_fields(  # noqa: PLR0913
         ranks, dense_ranks = _precompute_window_ranks(
             window_sort_keys,
             dialect=dialect,
+            collation=collation,
             deadline=deadline,
         )
         last_index = len(ordered) - 1
@@ -1099,12 +1108,13 @@ def _apply_count(documents: list[Document], spec: object) -> list[Document]:
     return [{spec: len(documents)}]
 
 
-def _apply_sort_by_count(
+def _apply_sort_by_count(  # noqa: PLR0913 - shared execution context
     documents: list[Document],
     spec: object,
     variables: dict[str, Any] | None = None,
     *,
     dialect: MongoDialect = MONGODB_DIALECT_70,
+    collation: CollationSpec | None = None,
     deadline: float | None = None,
 ) -> list[Document]:
     grouped = _apply_group(
@@ -1112,12 +1122,13 @@ def _apply_sort_by_count(
         {"_id": spec, "count": {"$sum": 1}},
         variables,
         dialect=dialect,
-        collation=None,
+        collation=collation,
         deadline=deadline,
     )
     return sort_documents(
         grouped,
         [("count", -1), ("_id", 1)],
         dialect=dialect,
+        collation=collation,
         deadline=deadline,
     )
