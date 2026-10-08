@@ -34,6 +34,21 @@ UNDEFINED_VARIABLE_ERROR = MongoErrorDescriptor(
     name="UndefinedVariable",
     code=17276,
 )
+EMPTY_GROUP_FIELD_ERROR = MongoErrorDescriptor(
+    name="EmptyGroupField",
+    code=12116300,
+    code_name="Location12116300",
+)
+DENSIFY_FIELD_PREFIX_ERROR = MongoErrorDescriptor(
+    name="DensifyFieldPrefix",
+    code=8993000,
+    code_name="Location8993000",
+)
+DENSIFY_PARTITION_PREFIX_ERROR = MongoErrorDescriptor(
+    name="DensifyPartitionPrefix",
+    code=9554500,
+    code_name="Location9554500",
+)
 
 ERROR_DESCRIPTORS: dict[str, MongoErrorDescriptor] = {
     descriptor.name: descriptor
@@ -45,6 +60,9 @@ ERROR_DESCRIPTORS: dict[str, MongoErrorDescriptor] = {
         WRITE_ERROR,
         OPERATION_FAILURE,
         UNDEFINED_VARIABLE_ERROR,
+        EMPTY_GROUP_FIELD_ERROR,
+        DENSIFY_FIELD_PREFIX_ERROR,
+        DENSIFY_PARTITION_PREFIX_ERROR,
     )
 }
 

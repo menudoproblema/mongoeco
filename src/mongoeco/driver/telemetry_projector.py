@@ -192,6 +192,9 @@ def _build_pending_telemetry(event: CommandStartedEvent) -> _PendingTelemetry | 
     classification = _classify_command(event)
     if classification is None:
         return None
+    if event.operation_id is not None:
+        classification["span_attributes"]["db.operation.id"] = event.operation_id
+        classification["event_payload"]["db.operation.id"] = event.operation_id
     return _PendingTelemetry(
         trace_id=event.request_id or "",
         span_name=classification["span_name"],

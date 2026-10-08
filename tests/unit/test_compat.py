@@ -18,6 +18,7 @@ from mongoeco.compat import (
     MONGODB_DIALECT_HOOK_NAMES,
     MONGODB_DIALECT_70,
     MONGODB_DIALECT_80,
+    MONGODB_DIALECT_90,
     MONGODB_DIALECT_ALIASES,
     MONGODB_DIALECT_BEHAVIOR_FLAGS,
     MONGODB_DIALECT_CAPABILITIES,
@@ -27,11 +28,13 @@ from mongoeco.compat import (
     MongoDialect,
     MongoDialect70,
     MongoDialect80,
+    MongoDialect90,
     MongoDialectResolution,
     PYMONGO_PROFILE_49,
     PYMONGO_PROFILE_411,
     PYMONGO_PROFILE_413,
     PYMONGO_PROFILE_417,
+    PYMONGO_PROFILE_418,
     PYMONGO_PROFILE_ALIASES,
     PYMONGO_PROFILE_BEHAVIOR_FLAGS,
     PYMONGO_PROFILE_CAPABILITIES,
@@ -87,103 +90,8 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = (
 )
 export_local_runtime_subset_catalog = catalog_export.export_local_runtime_subset_catalog
 
-_OPTION_DELTAS_AFTER_HISTORICAL_SNAPSHOT = (
-    (
-        'listCollections',
-        'authorizedCollections',
-        'Accepted for wire/API parity and preserved in the normalized command options.',
-        (
-            'Accepted and type-checked for wire/API parity; local namespace '
-            'listing does not apply an authorization filter.'
-        ),
-    ),
-    (
-        'validate',
-        'background',
-        'Validated and surfaced in the validation snapshot contract.',
-        (
-            'Accepted and type-checked; validation reports a warning and runs '
-            'synchronously.'
-        ),
-    ),
-    (
-        'validate',
-        'full',
-        'Controls whether the validation snapshot requests the expanded pass.',
-        (
-            'Accepted and type-checked; validation reports a warning and performs '
-            'the same local pass.'
-        ),
-    ),
-    (
-        'validate',
-        'scandata',
-        (
-            'Controls whether storage-engine level scan metadata is requested '
-            'in the validation snapshot.'
-        ),
-        (
-            'Accepted and type-checked; validation reports a warning and performs '
-            'the same local scan.'
-        ),
-    ),
-)
 
-_NEW_OPERATION_OPTIONS_AFTER_HISTORICAL_SNAPSHOT = (
-    (
-        'create_index',
-        'background',
-        (
-            'Accepted and type-checked for API parity; it does not schedule '
-            'a background index build.'
-        ),
-    ),
-    (
-        'create_index',
-        'wildcard_projection',
-        (
-            'Accepted and type-checked for API parity; the projection is '
-            'not passed to the engine.'
-        ),
-    ),
-)
 
-_BATCH_SIZE_SCOPE_DELTAS = (
-    (
-        'aggregate',
-        (
-            'Compiled through database admin routing and exposed by both '
-            'database.command(...) and the local wire passthrough.'
-        ),
-        (
-            'Compiled through database admin routing and exposed by API and wire. '
-            'Top-level batchSize limits wire firstBatch only; database.command(...) '
-            'uses cursor.batchSize for local prefetch and returns the full result.'
-        ),
-        'Materialized into the command cursor surface for streamable pipelines.',
-        (
-            'Top-level batchSize limits the wire firstBatch; database.command() '
-            'ignores it and uses cursor.batchSize for local prefetch.'
-        ),
-    ),
-    (
-        'find',
-        (
-            'Compiled through the same find operation path as the public '
-            'collection surface.'
-        ),
-        (
-            'Compiled through the collection find path. batchSize limits wire '
-            'firstBatch; database.command(...) uses it for local prefetch but '
-            'returns the full result.'
-        ),
-        'Materialized into the command cursor surface.',
-        (
-            'Limits the wire firstBatch; database.command() uses it for local '
-            'prefetch but materializes the full command result.'
-        ),
-    ),
-)
 
 
 class _FlatComparable:
@@ -243,83 +151,60 @@ class CompatResolutionTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             _sort_update_path_items_default({1: "broken"})
 
-    def test_exported_full_catalog_matches_versioned_snapshot_fixture(self):
-        snapshot_path = Path("tests/fixtures/compat_catalog_snapshot.json")
-        expected = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    def test_exported_full_catalog_matches_current_and_historical_contracts(self):
         current = export_full_compat_catalog()
-        expected.pop("cxp")
-        exchange = current.pop("exchange")
-        old_mock_safe = expected.pop("mock_safe_profile")
-        new_mock_safe = current.pop("mock_safe_profile")
-        failpoint = current["database_commands"].pop("configureFailPoint")
-        for command, option, old_note, new_note in (
-            _OPTION_DELTAS_AFTER_HISTORICAL_SNAPSHOT
-        ):
-            self.assertEqual(
-                expected['database_command_options'][command][option],
-                {'note': old_note, 'status': 'effective'},
-            )
-            self.assertEqual(
-                current['database_command_options'][command][option],
-                {'note': new_note, 'status': 'accepted-noop'},
-            )
-            current['database_command_options'][command][option] = (
-                expected['database_command_options'][command][option]
-            )
-        for operation, option, note in _NEW_OPERATION_OPTIONS_AFTER_HISTORICAL_SNAPSHOT:
-            self.assertNotIn(option, expected['operation_options'][operation])
-            self.assertEqual(
-                current['operation_options'][operation].pop(option),
-                {'note': note, 'status': 'accepted-noop'},
-            )
-        for (
-            command,
-            old_command_note,
-            new_command_note,
-            old_option_note,
-            new_option_note,
-        ) in _BATCH_SIZE_SCOPE_DELTAS:
-            self.assertEqual(
-                expected['database_commands'][command]['note'], old_command_note
-            )
-            self.assertEqual(
-                current['database_commands'][command]['note'], new_command_note
-            )
-            current['database_commands'][command]['note'] = old_command_note
-            self.assertEqual(
-                expected['database_command_options'][command]['batchSize'],
-                {'note': old_option_note, 'status': 'effective'},
-            )
-            self.assertEqual(
-                current['database_command_options'][command]['batchSize'],
-                {'note': new_option_note, 'status': 'effective'},
-            )
-            current['database_command_options'][command]['batchSize']['note'] = (
-                old_option_note
-            )
-        self.assertEqual(
-            failpoint,
-            {
-                "family": "admin_control",
-                "supports_wire": True,
-                "supports_explain": False,
-                "supports_comment": False,
-                "supported_options": [],
-                "note": (
-                    "Local test-only failCommand control; no general MongoDB "
-                    "failpoint or distributed server behavior is claimed."
-                ),
-            },
+        expected = json.loads(
+            Path(
+                "tests/snapshots/compat-current/compat_catalog_exchange_snapshot.json"
+            ).read_text()
         )
         self.assertEqual(current, expected)
-        self.assertEqual(exchange, export_exchange_catalog())
-        self.assertEqual(exchange["catalog"]["document_type"], "cxp.catalog")
-        self.assertIn("mongodb-mock-safe", exchange["profiles"])
-        self.assertEqual(new_mock_safe["verdict"], "compatible")
-        self.assertEqual(new_mock_safe["catalog"]["name"], "mongodb")
+        historical = json.loads(
+            Path("tests/fixtures/compat_catalog_snapshot.json").read_text()
+        )
+        deltas = json.loads(
+            Path("tests/snapshots/compat-current/historical_deltas.json").read_text()
+        )
+        expected_contract = {
+            key: deepcopy(value)
+            for key, value in historical.items()
+            if key not in {"cxp", "mock_safe_profile"}
+        }
+        actual_contract = {
+            key: value
+            for key, value in current.items()
+            if key not in {"exchange", "mock_safe_profile"}
+        }
+        paths = [tuple(delta["path"]) for delta in deltas["deltas"]]
+        self.assertEqual(len(paths), len(set(paths)))
+        for delta in deltas["deltas"]:
+            parent = expected_contract
+            for key in delta["path"][:-1]:
+                parent = parent[key]
+            key = delta["path"][-1]
+            if delta["operation"] == "add":
+                self.assertNotIn(key, parent)
+            else:
+                self.assertEqual(parent[key], delta["before"])
+            if delta["operation"] == "remove":
+                del parent[key]
+            else:
+                parent[key] = delta["after"]
+        self.assertEqual(actual_contract, expected_contract)
+        self.assertEqual(current["exchange"], export_exchange_catalog())
+        self.assertEqual(current["exchange"]["catalog"]["document_type"], "cxp.catalog")
+        self.assertIn("mongodb-mock-safe", current["exchange"]["profiles"])
+        self.assertEqual(current["mock_safe_profile"]["verdict"], "compatible")
+        self.assertEqual(current["mock_safe_profile"]["catalog"]["name"], "mongodb")
         self.assertEqual(
-            {item["capabilityName"] for item in new_mock_safe["requirements"]},
-            {item["capabilityName"] for item in old_mock_safe["requirements"]},
+            {
+                item["capabilityName"]
+                for item in current["mock_safe_profile"]["requirements"]
+            },
+            {
+                item["capabilityName"]
+                for item in historical["mock_safe_profile"]["requirements"]
+            },
         )
 
     def test_catalog_module_is_thin_public_composer(self):
@@ -334,13 +219,34 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(non_import_nodes, [])
 
     def test_catalog_data_is_split_by_version_axis(self):
-        self.assertIs(catalog_data.DATABASE_COMMAND_SUPPORT_CATALOG, catalog_database_commands.DATABASE_COMMAND_SUPPORT_CATALOG)
-        self.assertIs(catalog_data.MONGODB_DIALECT_CATALOG, catalog_dialects.MONGODB_DIALECT_CATALOG)
-        self.assertIs(catalog_data.MONGODB_DIALECT_ALIASES, catalog_dialects.MONGODB_DIALECT_ALIASES)
-        self.assertIs(catalog_data.SUPPORTED_MONGODB_MAJORS, catalog_dialects.SUPPORTED_MONGODB_MAJORS)
-        self.assertIs(catalog_data.PYMONGO_PROFILE_CATALOG, catalog_profiles.PYMONGO_PROFILE_CATALOG)
-        self.assertIs(catalog_data.PYMONGO_PROFILE_ALIASES, catalog_profiles.PYMONGO_PROFILE_ALIASES)
-        self.assertIs(catalog_data.SUPPORTED_PYMONGO_MAJORS, catalog_profiles.SUPPORTED_PYMONGO_MAJORS)
+        self.assertIs(
+            catalog_data.DATABASE_COMMAND_SUPPORT_CATALOG,
+            catalog_database_commands.DATABASE_COMMAND_SUPPORT_CATALOG,
+        )
+        self.assertIs(
+            catalog_data.MONGODB_DIALECT_CATALOG,
+            catalog_dialects.MONGODB_DIALECT_CATALOG,
+        )
+        self.assertIs(
+            catalog_data.MONGODB_DIALECT_ALIASES,
+            catalog_dialects.MONGODB_DIALECT_ALIASES,
+        )
+        self.assertIs(
+            catalog_data.SUPPORTED_MONGODB_MAJORS,
+            catalog_dialects.SUPPORTED_MONGODB_MAJORS,
+        )
+        self.assertIs(
+            catalog_data.PYMONGO_PROFILE_CATALOG,
+            catalog_profiles.PYMONGO_PROFILE_CATALOG,
+        )
+        self.assertIs(
+            catalog_data.PYMONGO_PROFILE_ALIASES,
+            catalog_profiles.PYMONGO_PROFILE_ALIASES,
+        )
+        self.assertIs(
+            catalog_data.SUPPORTED_PYMONGO_MAJORS,
+            catalog_profiles.SUPPORTED_PYMONGO_MAJORS,
+        )
         self.assertIs(
             catalog_data.OPERATION_OPTION_SUPPORT_CATALOG,
             catalog_operation_options.OPERATION_OPTION_SUPPORT_CATALOG,
@@ -350,57 +256,13 @@ class CompatResolutionTests(unittest.TestCase):
             catalog_operation_options.DATABASE_COMMAND_OPTION_SUPPORT_CATALOG,
         )
 
-    def test_exported_markdown_catalog_matches_snapshot_fixture(self):
-        snapshot_path = Path("tests/fixtures/compat_catalog_snapshot.md")
-        expected = snapshot_path.read_text(encoding="utf-8")
-        current = export_full_compat_catalog_markdown()
-        for _, option, old_note, new_note in _OPTION_DELTAS_AFTER_HISTORICAL_SNAPSHOT:
-            old_line = f'- `{option}`: `status`="effective", `note`="{old_note}"'
-            new_line = f'- `{option}`: `status`="accepted-noop", `note`="{new_note}"'
-            self.assertEqual(expected.count(old_line), 1)
-            self.assertEqual(current.count(new_line), 1)
-            current = current.replace(new_line, old_line, 1)
-        for _, option, note in _NEW_OPERATION_OPTIONS_AFTER_HISTORICAL_SNAPSHOT:
-            new_line = f'- `{option}`: `status`="accepted-noop", `note`="{note}"\n'
-            self.assertEqual(current.count(new_line), 1)
-            current = current.replace(new_line, '', 1)
-        for (
-            _, old_command_note, new_command_note, old_option_note, new_option_note
-        ) in _BATCH_SIZE_SCOPE_DELTAS:
-            for old_line, new_line in (
-                (f'- `note`: `{old_command_note}`', f'- `note`: `{new_command_note}`'),
-                (
-                    f'- `batchSize`: `status`="effective", `note`="{old_option_note}"',
-                    f'- `batchSize`: `status`="effective", `note`="{new_option_note}"',
-                ),
-            ):
-                self.assertEqual(expected.count(old_line), 1)
-                self.assertEqual(current.count(new_line), 1)
-                current = current.replace(new_line, old_line, 1)
-        suffix = "## Local Runtime Subsets\n"
-        failpoint_section = (
-            "### `configureFailPoint`\n"
-            "- `family`: `admin_control`\n"
-            "- `supports_wire`: `True`\n"
-            "- `supports_explain`: `False`\n"
-            "- `supports_comment`: `False`\n"
-            "- `supported_options`: _empty_\n"
-            "- `note`: `Local test-only failCommand control; no general "
-            "MongoDB failpoint or distributed server behavior is claimed.`\n\n"
-        )
-        self.assertEqual(current.count(failpoint_section), 1)
-        self.assertEqual(
-            current.replace(failpoint_section, "", 1).split("## CXP Exchange")[0],
-            expected.split("## CXP")[0],
-        )
-        self.assertEqual(current.split(suffix)[1], expected.split(suffix)[1])
-        self.assertIn("## Mock Safe Profile", current)
-        self.assertIn("## CXP Exchange", current)
-        self.assertIn("`read`", current)
-
-
-
-
+    def test_exported_markdown_catalog_matches_current_snapshot_fixture(self):
+        expected = Path(
+            "tests/snapshots/compat-current/compat_catalog_exchange_snapshot.md"
+        ).read_text()
+        self.assertEqual(export_full_compat_catalog_markdown(), expected)
+        # Historical semantic conservation is checked structurally above;
+        # rendering changes cannot hide unexpected catalog changes.
 
     def test_export_mock_safe_profile_catalog_is_supported_and_strict(self):
         profile = export_mock_safe_profile_catalog()
@@ -499,9 +361,23 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertEqual(DEFAULT_PYMONGO_PROFILE, '4.9')
         self.assertEqual(AUTO_INSTALLED_PYMONGO_PROFILE, 'auto-installed')
         self.assertEqual(STRICT_AUTO_INSTALLED_PYMONGO_PROFILE, 'strict-auto-installed')
-        self.assertEqual(MONGODB_DIALECT_HOOK_NAMES, ('null_query_matches_undefined',))
-        self.assertEqual(PYMONGO_PROFILE_HOOK_NAMES, ('supports_update_one_sort',))
-        self.assertEqual(SUPPORTED_MONGODB_MAJORS, frozenset({7, 8}))
+        self.assertEqual(MONGODB_DIALECT_HOOK_NAMES, (
+            'null_query_matches_undefined', 'rejects_empty_group_fields',
+            'validates_densify_partition_paths', 'validates_aggregation_syntax_early',
+            'documents_join_omits_collection_namespace',
+            'supports_array_index_variables', 'uses_extended_conversions',
+            'uses_server_densify_bounds', 'densify_equal_bounds_are_empty',
+            'densify_full_nonadvancing_step_errors',
+            'densify_empty_partition_generates_values', 'supports_date_range_windows',
+            'limits_trim_chars', 'rejects_cluster_time_expression',
+            'list_indexes_includes_simple_collation',
+            'rejects_unimplemented_wildcard_projection',
+            'merge_insert_preserves_incoming_field_order',
+        ))
+        self.assertEqual(PYMONGO_PROFILE_HOOK_NAMES, (
+            'supports_update_one_sort', 'rejects_reserved_aggregation_keywords',
+        ))
+        self.assertEqual(SUPPORTED_MONGODB_MAJORS, frozenset({7, 8, 9}))
         self.assertEqual(SUPPORTED_PYMONGO_MAJORS, frozenset({4}))
 
     def test_catalog_singletons_are_the_official_instances(self):
@@ -749,9 +625,24 @@ class CompatResolutionTests(unittest.TestCase):
 
     def test_resolve_mongodb_dialect_rejects_unsupported_values(self):
         with self.assertRaises(ValueError):
-            resolve_mongodb_dialect('9.0')
+            resolve_mongodb_dialect('10.0')
         with self.assertRaises(ValueError):
             resolve_mongodb_dialect('auto-server')
+
+    def test_mongodb90_is_an_exact_explicit_dialect_with_independent_profile(self):
+        for alias in ('9', '9.0'):
+            resolution = resolve_mongodb_dialect_resolution(alias)
+            self.assertIs(resolution.resolved_dialect, MONGODB_DIALECT_90)
+            self.assertEqual(resolution.requested, alias)
+            self.assertEqual(resolution.resolution_mode, 'explicit-alias')
+        instance = MongoDialect90()
+        self.assertIs(resolve_mongodb_dialect(instance), instance)
+        self.assertEqual(instance.behavior_flags(), MONGODB_DIALECT_90.behavior_flags())
+        self.assertEqual(instance.policy_spec, MONGODB_DIALECT_80.policy_spec)
+        self.assertIs(MONGODB_DIALECTS['9.0'], MONGODB_DIALECT_90)
+        self.assertEqual(resolve_pymongo_profile().key, '4.9')
+        with self.assertRaises(ValueError):
+            resolve_mongodb_dialect('9.1')
 
     def test_resolve_pymongo_profile_uses_baseline_by_default(self):
         self.assertIs(resolve_pymongo_profile(), PYMONGO_PROFILE_49)
@@ -980,11 +871,11 @@ class CompatResolutionTests(unittest.TestCase):
         self.assertIs(resolution.resolved_profile, PYMONGO_PROFILE_417)
         self.assertEqual(resolution.resolution_mode, 'auto-exact')
 
-    @patch('mongoeco.compat.registry.importlib_metadata.version', return_value='4.18.0')
+    @patch('mongoeco.compat.registry.importlib_metadata.version', return_value='4.19.0')
     def test_auto_installed_falls_back_to_latest_known_profile_in_same_major(self, _version):
         resolution = resolve_pymongo_profile_resolution('auto-installed')
 
-        self.assertIs(resolution.resolved_profile, PYMONGO_PROFILE_417)
+        self.assertIs(resolution.resolved_profile, PYMONGO_PROFILE_418)
         self.assertEqual(resolution.resolution_mode, 'auto-compatible-minor-fallback')
 
     @patch('mongoeco.compat.registry.importlib_metadata.version', return_value='4.14.0')

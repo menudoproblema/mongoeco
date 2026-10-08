@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-from mongoeco.compat._catalog_constants import PYMONGO_CAP_UPDATE_ONE_SORT
+from mongoeco.compat._catalog_constants import (
+    PYMONGO_CAP_RESERVED_AGGREGATION_KEYWORDS,
+    PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX,
+    PYMONGO_CAP_UPDATE_ONE_SORT,
+)
 from mongoeco.compat._catalog_models import PyMongoProfileCatalogEntry
 
 PYMONGO_PROFILE_CATALOG = MappingProxyType(
@@ -38,11 +42,36 @@ PYMONGO_PROFILE_CATALOG = MappingProxyType(
             behavior_flags=MappingProxyType({"supports_update_one_sort": True}),
             capabilities=frozenset({PYMONGO_CAP_UPDATE_ONE_SORT}),
         ),
+        "4.18": PyMongoProfileCatalogEntry(
+            key="4.18",
+            driver_series="4.x",
+            label="PyMongo 4.18",
+            aliases=("4.18",),
+            behavior_flags=MappingProxyType(
+                {
+                    "supports_update_one_sort": True,
+                    "rejects_reserved_aggregation_keywords": True,
+                }
+            ),
+            capabilities=frozenset(
+                {
+                    PYMONGO_CAP_UPDATE_ONE_SORT,
+                    PYMONGO_CAP_RESERVED_AGGREGATION_KEYWORDS,
+                    PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX,
+                }
+            ),
+        ),
     }
 )
 
 PYMONGO_PROFILE_ALIASES = MappingProxyType(
-    {alias: entry.key for entry in PYMONGO_PROFILE_CATALOG.values() for alias in entry.aliases}
+    {
+        alias: entry.key
+        for entry in PYMONGO_PROFILE_CATALOG.values()
+        for alias in entry.aliases
+    }
 )
 
-SUPPORTED_PYMONGO_MAJORS = frozenset(int(key.split(".", 1)[0]) for key in PYMONGO_PROFILE_CATALOG)
+SUPPORTED_PYMONGO_MAJORS = frozenset(
+    int(key.split(".", 1)[0]) for key in PYMONGO_PROFILE_CATALOG
+)

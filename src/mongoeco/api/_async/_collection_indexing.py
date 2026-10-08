@@ -1,22 +1,66 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 import time
+
+from typing import TYPE_CHECKING
 
 from mongoeco.api._async.index_cursor import AsyncIndexCursor
 from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor
+from mongoeco.core.collation import normalize_collation
 from mongoeco.core.expression_context import execution_now_scope
 from mongoeco.core.operation_limits import enforce_deadline, operation_deadline
-from mongoeco.session import ClientSession
-from mongoeco.types import (
-    Document,
-    IndexInformation,
-    IndexKeySpec,
-    SearchIndexModel,
-)
+from mongoeco.errors import OperationFailure
+from mongoeco.types import SearchIndexModel
+from mongoeco._types.indexes import default_index_name
+
 
 if TYPE_CHECKING:
     from mongoeco.api._async.collection import AsyncCollection
+    from mongoeco.session import ClientSession
+    from mongoeco.types import Document, IndexInformation, IndexKeySpec
+
+
+def _validate_wildcard_projection(collection, projection):
+    if projection is not None and collection._mongodb_dialect.behavior_flag(
+        "rejects_unimplemented_wildcard_projection", default=False
+    ):
+        message = "wildcardProjection is outside Mongoeco's supported index subset"
+        raise OperationFailure(message)
+
+
+def _project_index_document(collection, document):
+    if collection._mongodb_dialect.behavior_flag(
+        "list_indexes_includes_simple_collation", default=False
+    ):
+        document = dict(document)
+        document.setdefault("collation", {"locale": "simple"})
+    return collection._apply_codec_options_to_document(document)
+
+
+async def _index_collation_for_create(collection, keys, collation, session):
+    if keys == [("_id", 1)] and (
+        collation is None or normalize_collation(collation).locale == "simple"
+    ):
+        # The SPI's builtin definition is immutable and intrinsically unique.
+        return None
+    if not collection._mongodb_dialect.behavior_flag(
+        "list_indexes_includes_simple_collation", default=False
+    ):
+        return collation
+    if collation is not None and normalize_collation(collation).locale != "simple":
+        return collation
+    # Reuse the stored spelling for an equivalent existing simple index.
+    # Listing metadata never rewrites catalog entries or changes identity.
+    existing = await collection._engine.list_indexes(
+        collection._db_name, collection._collection_name, context=session
+    )
+    for index in existing:
+        stored = index.get("collation")
+        if index["key"] == dict(keys) and (
+            stored is None or normalize_collation(stored).locale == "simple"
+        ):
+            return stored
+    return collation
 
 
 async def create_index(
@@ -45,6 +89,7 @@ async def create_index(
         raise TypeError("background must be a bool")
     if wildcard_projection is not None and not isinstance(wildcard_projection, dict):
         raise TypeError("wildcard_projection must be a dict or None")
+    _validate_wildcard_projection(collection, wildcard_projection)
     normalized_partial_filter = (
         None
         if partial_filter_expression is None
@@ -52,13 +97,29 @@ async def create_index(
     )
     expire_after_seconds = collection._normalize_expire_after_seconds(expire_after_seconds)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
+    collation = await _index_collation_for_create(
+        collection, normalized_keys, collation, session
+    )
+    builtin_id = normalized_keys == [("_id", 1)]
+    if builtin_id:
+        if not isinstance(unique, bool):
+            message = "unique must be a bool"
+            raise TypeError(message)
+        if name is not None and (not isinstance(name, str) or not name):
+            message = "name must be a non-empty string"
+            code, code_name = (
+                (14, "TypeMismatch") if not isinstance(name, str)
+                else (67, "CannotCreateIndex")
+            )
+            raise OperationFailure(message, code=code, details={"codeName": code_name})
+    requested_name = name or default_index_name(normalized_keys)
     with execution_now_scope(collection._resolve_now()):
         created_name = await collection._engine.create_index(
         collection._db_name,
         collection._collection_name,
         normalized_keys,
-        unique=unique,
-        name=name,
+        unique=True if builtin_id else unique,
+        name="_id_" if builtin_id else name,
         sparse=sparse,
         hidden=hidden,
         collation=collation,
@@ -76,7 +137,7 @@ async def create_index(
         max_time_ms=max_time_ms,
         session=session,
     )
-    return created_name
+    return requested_name if builtin_id else created_name
 
 
 async def create_indexes(
@@ -89,6 +150,8 @@ async def create_indexes(
 ) -> list[str]:
     collection._ensure_session_active(session)
     models = collection._normalize_index_models(indexes)
+    for model in models:
+        _validate_wildcard_projection(collection, model.wildcard_projection)
     max_time_ms = collection._normalize_max_time_ms(max_time_ms)
     deadline = operation_deadline(max_time_ms)
     existing = await collection._engine.index_information(
@@ -110,15 +173,19 @@ async def create_indexes(
                 )
             )
             with execution_now_scope(execution_now):
+                collation = await _index_collation_for_create(
+                    collection, index.keys, index.collation, session
+                )
+                builtin_id = index.keys == [("_id", 1)]
                 name = await collection._engine.create_index(
                 collection._db_name,
                 collection._collection_name,
                 index.keys,
-                unique=index.unique,
-                name=index.name,
+                unique=True if builtin_id else index.unique,
+                name="_id_" if builtin_id else index.name,
                 sparse=index.sparse,
                 hidden=index.hidden,
-                collation=index.collation,
+                collation=collation,
                 partial_filter_expression=normalized_partial_filter,
                 expire_after_seconds=index.expire_after_seconds,
                 weights=index.weights,
@@ -145,7 +212,7 @@ async def create_indexes(
                 except Exception:
                     pass
             raise
-        names.append(name)
+        names.append(index.resolved_name if builtin_id else name)
         if name not in existing and name not in created_names:
             created_names.append(name)
     collection._record_operation_metadata(
@@ -176,7 +243,7 @@ def list_indexes(
             context=session,
         )
         return [
-            collection._apply_codec_options_to_document(document)
+            _project_index_document(collection, document)
             for document in documents
         ]
 
@@ -201,7 +268,7 @@ async def index_information(
         context=session,
     )
     return {
-        name: collection._apply_codec_options_to_document(document)
+        name: _project_index_document(collection, document)
         for name, document in information.items()
     }
 

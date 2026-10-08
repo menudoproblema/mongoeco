@@ -158,6 +158,7 @@ class DatabaseAdminCommandCompiler:
             collection_name,
             compile_aggregate_operation(
                 pipeline,
+                collection=collection_name,
                 collation=spec.get("collation"),
                 hint=self.normalize_hint(spec.get(hint_field)),
                 comment=spec.get(comment_field),

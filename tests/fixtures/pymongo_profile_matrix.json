@@ -3,7 +3,8 @@
     "PyMongo 4.9.2",
     "PyMongo 4.11.3",
     "PyMongo 4.13.2",
-    "PyMongo 4.17.0"
+    "PyMongo 4.17.0",
+    "PyMongo 4.18.2"
   ],
   "scope": {
     "write_methods": [
@@ -91,7 +92,15 @@
       "bulk_write.ReplaceOne.sort"
     ]
   },
-  "confirmed_unsupported_in_4_9_to_4_17": {
+  "confirmed_profile_rejections": {
+    "4.18_plus": [
+      "aggregate.aggregate",
+      "aggregate_raw_batches.aggregate",
+      "list_search_indexes.aggregate",
+      "list_search_indexes.pipeline"
+    ]
+  },
+  "confirmed_unsupported_in_4_9_to_4_18": {
     "update_one": [
       "max_time_ms"
     ],
@@ -106,6 +115,12 @@
     ],
     "delete_many": [
       "max_time_ms"
+    ],
+    "aggregate": [
+      "duplicate_pipeline"
+    ],
+    "aggregate_raw_batches": [
+      "duplicate_pipeline"
     ]
   }
 }

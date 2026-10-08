@@ -5029,6 +5029,16 @@
                 "kind": "positional_or_keyword",
                 "name": "raw_options",
                 "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": true,
+                  "rendered": "'str | None'"
+                },
+                "default": "None",
+                "kind": "positional_or_keyword",
+                "name": "srv_allowed_hosts_suffix",
+                "required": false
               }
             ],
             "return": {
@@ -5282,6 +5292,15 @@
               "default": "<factory:builtins.dict>",
               "name": "raw_options",
               "required": false
+            },
+            {
+              "annotation": {
+                "nullable": true,
+                "rendered": "'str | None'"
+              },
+              "default": "None",
+              "name": "srv_allowed_hosts_suffix",
+              "required": false
             }
           ],
           "kind": "class",
@@ -5344,6 +5363,9 @@
               "kind": "attribute"
             },
             "socket_timeout_ms": {
+              "kind": "attribute"
+            },
+            "srv_allowed_hosts_suffix": {
               "kind": "attribute"
             },
             "srv_max_hosts": {
@@ -9953,6 +9975,16 @@
                   "kind": "keyword_only",
                   "name": "session",
                   "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "'object'"
+                  },
+                  "default": null,
+                  "kind": "var_keyword",
+                  "name": "kwargs",
+                  "required": true
                 }
               ],
               "return": {
@@ -16286,6 +16318,16 @@
                   "kind": "keyword_only",
                   "name": "session",
                   "required": false
+                },
+                {
+                  "annotation": {
+                    "nullable": false,
+                    "rendered": "object"
+                  },
+                  "default": null,
+                  "kind": "var_keyword",
+                  "name": "kwargs",
+                  "required": true
                 }
               ],
               "return": {
@@ -18959,6 +19001,7 @@
         "MONGODB_DIALECTS",
         "MONGODB_DIALECT_70",
         "MONGODB_DIALECT_80",
+        "MONGODB_DIALECT_90",
         "MONGODB_DIALECT_ALIASES",
         "MONGODB_DIALECT_BEHAVIOR_FLAGS",
         "MONGODB_DIALECT_CAPABILITIES",
@@ -18968,6 +19011,7 @@
         "MongoDialect",
         "MongoDialect70",
         "MongoDialect80",
+        "MongoDialect90",
         "MongoDialectResolution",
         "OPERATION_OPTION_SUPPORT",
         "OperationOptionSupport",
@@ -18978,6 +19022,7 @@
         "PYMONGO_PROFILE_411",
         "PYMONGO_PROFILE_413",
         "PYMONGO_PROFILE_417",
+        "PYMONGO_PROFILE_418",
         "PYMONGO_PROFILE_49",
         "PYMONGO_PROFILE_ALIASES",
         "PYMONGO_PROFILE_BEHAVIOR_FLAGS",
@@ -18987,6 +19032,7 @@
         "PyMongoProfile411",
         "PyMongoProfile413",
         "PyMongoProfile417",
+        "PyMongoProfile418",
         "PyMongoProfile49",
         "PyMongoProfileResolution",
         "STRICT_AUTO_INSTALLED_PYMONGO_PROFILE",
@@ -19379,6 +19425,12 @@
           "kind": "value",
           "qualifiedName": "MongoDialect80",
           "valueType": "MongoDialect80"
+        },
+        "MONGODB_DIALECT_90": {
+          "definedIn": "mongoeco.compat.base",
+          "kind": "value",
+          "qualifiedName": "MongoDialect90",
+          "valueType": "MongoDialect90"
         },
         "MONGODB_DIALECT_ALIASES": {
           "definedIn": "builtins",
@@ -20731,6 +20783,196 @@
           "protocol": false,
           "qualifiedName": "MongoDialect80"
         },
+        "MongoDialect90": {
+          "callable": {
+            "async": false,
+            "parameters": [
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "str"
+                },
+                "default": "'9.0'",
+                "kind": "positional_or_keyword",
+                "name": "key",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "str"
+                },
+                "default": "'9.0'",
+                "kind": "positional_or_keyword",
+                "name": "server_version",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "str"
+                },
+                "default": "'MongoDB 9.0'",
+                "kind": "positional_or_keyword",
+                "name": "label",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "mappingproxy"
+                },
+                "default": "<builtins.mappingproxy>",
+                "kind": "positional_or_keyword",
+                "name": "catalog_behavior_flags",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "mongoeco.compat._catalog_models.MongoBehaviorPolicySpec"
+                },
+                "default": "<mongoeco.compat._catalog_models.MongoBehaviorPolicySpec>",
+                "kind": "positional_or_keyword",
+                "name": "catalog_policy_spec",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "frozenset[str]"
+                },
+                "default": "<builtins.frozenset>",
+                "kind": "positional_or_keyword",
+                "name": "catalog_capabilities",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": true,
+                  "rendered": "frozenset[str] | None"
+                },
+                "default": "None",
+                "kind": "positional_or_keyword",
+                "name": "catalog_query_field_operators",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": true,
+                  "rendered": "frozenset[str] | None"
+                },
+                "default": "None",
+                "kind": "positional_or_keyword",
+                "name": "catalog_update_operators",
+                "required": false
+              }
+            ],
+            "return": {
+              "nullable": true,
+              "rendered": "None"
+            },
+            "signatureAvailable": true
+          },
+          "dataclass": true,
+          "definedIn": "mongoeco.compat.base",
+          "fields": [
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "str"
+              },
+              "default": "'9.0'",
+              "name": "key",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "str"
+              },
+              "default": "'9.0'",
+              "name": "server_version",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "str"
+              },
+              "default": "'MongoDB 9.0'",
+              "name": "label",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "mappingproxy"
+              },
+              "default": "<builtins.mappingproxy>",
+              "name": "catalog_behavior_flags",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "mongoeco.compat._catalog_models.MongoBehaviorPolicySpec"
+              },
+              "default": "<mongoeco.compat._catalog_models.MongoBehaviorPolicySpec>",
+              "name": "catalog_policy_spec",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "frozenset[str]"
+              },
+              "default": "<builtins.frozenset>",
+              "name": "catalog_capabilities",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": true,
+                "rendered": "frozenset[str] | None"
+              },
+              "default": "None",
+              "name": "catalog_query_field_operators",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": true,
+                "rendered": "frozenset[str] | None"
+              },
+              "default": "None",
+              "name": "catalog_update_operators",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": true,
+                "rendered": "mongoeco.compat.base.MongoBehaviorPolicy | None"
+              },
+              "default": "None",
+              "name": "_base_policy_cache",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": true,
+                "rendered": "mongoeco.compat.base.MongoBehaviorPolicy | None"
+              },
+              "default": "None",
+              "name": "_policy_cache",
+              "required": false
+            }
+          ],
+          "kind": "class",
+          "members": {},
+          "protocol": false,
+          "qualifiedName": "MongoDialect90"
+        },
         "MongoDialectResolution": {
           "callable": {
             "async": false,
@@ -20989,6 +21231,12 @@
           "kind": "value",
           "qualifiedName": "PyMongoProfile417",
           "valueType": "PyMongoProfile417"
+        },
+        "PYMONGO_PROFILE_418": {
+          "definedIn": "mongoeco.compat.base",
+          "kind": "value",
+          "qualifiedName": "PyMongoProfile418",
+          "valueType": "PyMongoProfile418"
         },
         "PYMONGO_PROFILE_49": {
           "definedIn": "mongoeco.compat.base",
@@ -21643,6 +21891,121 @@
           "members": {},
           "protocol": false,
           "qualifiedName": "PyMongoProfile417"
+        },
+        "PyMongoProfile418": {
+          "callable": {
+            "async": false,
+            "parameters": [
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "str"
+                },
+                "default": "'4.18'",
+                "kind": "positional_or_keyword",
+                "name": "key",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "str"
+                },
+                "default": "'4.x'",
+                "kind": "positional_or_keyword",
+                "name": "driver_series",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "str"
+                },
+                "default": "'PyMongo 4.18'",
+                "kind": "positional_or_keyword",
+                "name": "label",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "mappingproxy"
+                },
+                "default": "<builtins.mappingproxy>",
+                "kind": "positional_or_keyword",
+                "name": "catalog_behavior_flags",
+                "required": false
+              },
+              {
+                "annotation": {
+                  "nullable": false,
+                  "rendered": "frozenset[str]"
+                },
+                "default": "<builtins.frozenset>",
+                "kind": "positional_or_keyword",
+                "name": "catalog_capabilities",
+                "required": false
+              }
+            ],
+            "return": {
+              "nullable": true,
+              "rendered": "None"
+            },
+            "signatureAvailable": true
+          },
+          "dataclass": true,
+          "definedIn": "mongoeco.compat.base",
+          "fields": [
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "str"
+              },
+              "default": "'4.18'",
+              "name": "key",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "str"
+              },
+              "default": "'4.x'",
+              "name": "driver_series",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "str"
+              },
+              "default": "'PyMongo 4.18'",
+              "name": "label",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "mappingproxy"
+              },
+              "default": "<builtins.mappingproxy>",
+              "name": "catalog_behavior_flags",
+              "required": false
+            },
+            {
+              "annotation": {
+                "nullable": false,
+                "rendered": "frozenset[str]"
+              },
+              "default": "<builtins.frozenset>",
+              "name": "catalog_capabilities",
+              "required": false
+            }
+          ],
+          "kind": "class",
+          "members": {},
+          "protocol": false,
+          "qualifiedName": "PyMongoProfile418"
         },
         "PyMongoProfile49": {
           "callable": {
@@ -37184,7 +37547,7 @@
       }
     }
   },
-  "packageVersion": "4.8.1",
+  "packageVersion": "4.9.0",
   "resources": [
     "py.typed",
     "compat/resources/deprecations-v1.json",

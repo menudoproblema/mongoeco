@@ -1,0 +1,708 @@
+{
+  "deltas": [
+    {
+      "after": "Top-level batchSize limits the wire firstBatch; database.command() ignores it and uses cursor.batchSize for local prefetch.",
+      "before": "Materialized into the command cursor surface for streamable pipelines.",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "aggregate",
+        "batchSize",
+        "note"
+      ]
+    },
+    {
+      "after": "Limits the wire firstBatch; database.command() uses it for local prefetch but materializes the full command result.",
+      "before": "Materialized into the command cursor surface.",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "find",
+        "batchSize",
+        "note"
+      ]
+    },
+    {
+      "after": "Accepted and type-checked for wire/API parity; local namespace listing does not apply an authorization filter.",
+      "before": "Accepted for wire/API parity and preserved in the normalized command options.",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "listCollections",
+        "authorizedCollections",
+        "note"
+      ]
+    },
+    {
+      "after": "accepted-noop",
+      "before": "effective",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "listCollections",
+        "authorizedCollections",
+        "status"
+      ]
+    },
+    {
+      "after": "Accepted and type-checked; validation reports a warning and runs synchronously.",
+      "before": "Validated and surfaced in the validation snapshot contract.",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "validate",
+        "background",
+        "note"
+      ]
+    },
+    {
+      "after": "accepted-noop",
+      "before": "effective",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "validate",
+        "background",
+        "status"
+      ]
+    },
+    {
+      "after": "Accepted and type-checked; validation reports a warning and performs the same local pass.",
+      "before": "Controls whether the validation snapshot requests the expanded pass.",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "validate",
+        "full",
+        "note"
+      ]
+    },
+    {
+      "after": "accepted-noop",
+      "before": "effective",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "validate",
+        "full",
+        "status"
+      ]
+    },
+    {
+      "after": "Accepted and type-checked; validation reports a warning and performs the same local scan.",
+      "before": "Controls whether storage-engine level scan metadata is requested in the validation snapshot.",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "validate",
+        "scandata",
+        "note"
+      ]
+    },
+    {
+      "after": "accepted-noop",
+      "before": "effective",
+      "operation": "replace",
+      "path": [
+        "database_command_options",
+        "validate",
+        "scandata",
+        "status"
+      ]
+    },
+    {
+      "after": "Compiled through database admin routing and exposed by API and wire. Top-level batchSize limits wire firstBatch only; database.command(...) uses cursor.batchSize for local prefetch and returns the full result.",
+      "before": "Compiled through database admin routing and exposed by both database.command(...) and the local wire passthrough.",
+      "operation": "replace",
+      "path": [
+        "database_commands",
+        "aggregate",
+        "note"
+      ]
+    },
+    {
+      "after": {
+        "family": "admin_control",
+        "note": "Local test-only failCommand control; no general MongoDB failpoint or distributed server behavior is claimed.",
+        "supported_options": [],
+        "supports_comment": false,
+        "supports_explain": false,
+        "supports_wire": true
+      },
+      "operation": "add",
+      "path": [
+        "database_commands",
+        "configureFailPoint"
+      ]
+    },
+    {
+      "after": "Compiled through the collection find path. batchSize limits wire firstBatch; database.command(...) uses it for local prefetch but returns the full result.",
+      "before": "Compiled through the same find operation path as the public collection surface.",
+      "operation": "replace",
+      "path": [
+        "database_commands",
+        "find",
+        "note"
+      ]
+    },
+    {
+      "after": [
+        "null_query_matches_undefined",
+        "rejects_empty_group_fields",
+        "validates_densify_partition_paths",
+        "validates_aggregation_syntax_early",
+        "documents_join_omits_collection_namespace",
+        "supports_array_index_variables",
+        "uses_extended_conversions",
+        "uses_server_densify_bounds",
+        "densify_equal_bounds_are_empty",
+        "densify_full_nonadvancing_step_errors",
+        "densify_empty_partition_generates_values",
+        "supports_date_range_windows",
+        "limits_trim_chars",
+        "rejects_cluster_time_expression",
+        "list_indexes_includes_simple_collation",
+        "rejects_unimplemented_wildcard_projection",
+        "merge_insert_preserves_incoming_field_order"
+      ],
+      "before": [
+        "null_query_matches_undefined"
+      ],
+      "operation": "replace",
+      "path": [
+        "hooks",
+        "mongodb_dialect"
+      ]
+    },
+    {
+      "after": [
+        "supports_update_one_sort",
+        "rejects_reserved_aggregation_keywords"
+      ],
+      "before": [
+        "supports_update_one_sort"
+      ],
+      "operation": "replace",
+      "path": [
+        "hooks",
+        "pymongo_profile"
+      ]
+    },
+    {
+      "after": true,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "7.0",
+        "behavior_flags",
+        "densify_empty_partition_generates_values"
+      ]
+    },
+    {
+      "after": false,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "7.0",
+        "behavior_flags",
+        "densify_equal_bounds_are_empty"
+      ]
+    },
+    {
+      "after": false,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "7.0",
+        "behavior_flags",
+        "documents_join_omits_collection_namespace"
+      ]
+    },
+    {
+      "after": true,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "7.0",
+        "behavior_flags",
+        "uses_server_densify_bounds"
+      ]
+    },
+    {
+      "after": false,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "8.0",
+        "behavior_flags",
+        "densify_empty_partition_generates_values"
+      ]
+    },
+    {
+      "after": true,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "8.0",
+        "behavior_flags",
+        "densify_equal_bounds_are_empty"
+      ]
+    },
+    {
+      "after": true,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "8.0",
+        "behavior_flags",
+        "documents_join_omits_collection_namespace"
+      ]
+    },
+    {
+      "after": true,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "8.0",
+        "behavior_flags",
+        "uses_server_densify_bounds"
+      ]
+    },
+    {
+      "after": {
+        "aggregation_expression_operators": [
+          "$abs",
+          "$add",
+          "$all",
+          "$allElementsTrue",
+          "$and",
+          "$anyElementTrue",
+          "$arrayElemAt",
+          "$arrayToObject",
+          "$avg",
+          "$binarySize",
+          "$bitAnd",
+          "$bitNot",
+          "$bitOr",
+          "$bitXor",
+          "$bsonSize",
+          "$ceil",
+          "$cmp",
+          "$concat",
+          "$concatArrays",
+          "$cond",
+          "$convert",
+          "$dateAdd",
+          "$dateDiff",
+          "$dateFromParts",
+          "$dateFromString",
+          "$dateSubtract",
+          "$dateToParts",
+          "$dateToString",
+          "$dateTrunc",
+          "$dayOfMonth",
+          "$dayOfWeek",
+          "$dayOfYear",
+          "$divide",
+          "$elemMatch",
+          "$eq",
+          "$exists",
+          "$exp",
+          "$filter",
+          "$first",
+          "$firstN",
+          "$floor",
+          "$getField",
+          "$gt",
+          "$gte",
+          "$hour",
+          "$ifNull",
+          "$in",
+          "$indexOfArray",
+          "$indexOfBytes",
+          "$indexOfCP",
+          "$isArray",
+          "$isNumber",
+          "$isoDayOfWeek",
+          "$isoWeek",
+          "$isoWeekYear",
+          "$lastN",
+          "$let",
+          "$literal",
+          "$ln",
+          "$log",
+          "$log10",
+          "$lt",
+          "$lte",
+          "$ltrim",
+          "$map",
+          "$max",
+          "$maxN",
+          "$median",
+          "$mergeObjects",
+          "$millisecond",
+          "$min",
+          "$minN",
+          "$minute",
+          "$mod",
+          "$month",
+          "$multiply",
+          "$ne",
+          "$nin",
+          "$objectToArray",
+          "$or",
+          "$percentile",
+          "$pow",
+          "$rand",
+          "$range",
+          "$reduce",
+          "$regexFind",
+          "$regexFindAll",
+          "$regexMatch",
+          "$replaceAll",
+          "$replaceOne",
+          "$reverseArray",
+          "$round",
+          "$rtrim",
+          "$second",
+          "$setDifference",
+          "$setEquals",
+          "$setField",
+          "$setIntersection",
+          "$setIsSubset",
+          "$setUnion",
+          "$size",
+          "$slice",
+          "$sortArray",
+          "$split",
+          "$sqrt",
+          "$stdDevPop",
+          "$stdDevSamp",
+          "$strLenBytes",
+          "$strLenCP",
+          "$strcasecmp",
+          "$substr",
+          "$substrBytes",
+          "$substrCP",
+          "$subtract",
+          "$sum",
+          "$switch",
+          "$toBool",
+          "$toDate",
+          "$toDecimal",
+          "$toDouble",
+          "$toInt",
+          "$toLong",
+          "$toLower",
+          "$toObjectId",
+          "$toString",
+          "$toUUID",
+          "$toUpper",
+          "$trim",
+          "$trunc",
+          "$type",
+          "$unsetField",
+          "$week",
+          "$year",
+          "$zip"
+        ],
+        "aggregation_stages": [
+          "$addFields",
+          "$bucket",
+          "$bucketAuto",
+          "$collStats",
+          "$count",
+          "$currentOp",
+          "$densify",
+          "$documents",
+          "$facet",
+          "$fill",
+          "$geoNear",
+          "$group",
+          "$indexStats",
+          "$limit",
+          "$listSessions",
+          "$lookup",
+          "$match",
+          "$merge",
+          "$planCacheStats",
+          "$project",
+          "$redact",
+          "$replaceRoot",
+          "$replaceWith",
+          "$sample",
+          "$set",
+          "$setWindowFields",
+          "$skip",
+          "$sort",
+          "$sortByCount",
+          "$unionWith",
+          "$unset",
+          "$unwind"
+        ],
+        "aliases": [
+          "9",
+          "9.0"
+        ],
+        "behavior_flags": {
+          "densify_empty_partition_generates_values": false,
+          "densify_equal_bounds_are_empty": true,
+          "documents_join_omits_collection_namespace": true,
+          "limits_trim_chars": true,
+          "list_indexes_includes_simple_collation": true,
+          "merge_insert_preserves_incoming_field_order": true,
+          "null_query_matches_undefined": false,
+          "rejects_cluster_time_expression": true,
+          "rejects_empty_group_fields": true,
+          "rejects_unimplemented_wildcard_projection": true,
+          "supports_array_index_variables": true,
+          "supports_date_range_windows": true,
+          "uses_extended_conversions": true,
+          "uses_server_densify_bounds": true,
+          "validates_aggregation_syntax_early": true,
+          "validates_densify_partition_paths": true
+        },
+        "capabilities": [
+          "aggregation.array_index_variables",
+          "aggregation.convert.base",
+          "aggregation.date_range_windows",
+          "aggregation.to_string.extended",
+          "indexes.simple_collation_metadata"
+        ],
+        "group_accumulators": [
+          "$addToSet",
+          "$avg",
+          "$bottom",
+          "$bottomN",
+          "$count",
+          "$first",
+          "$firstN",
+          "$last",
+          "$lastN",
+          "$max",
+          "$maxN",
+          "$median",
+          "$mergeObjects",
+          "$min",
+          "$minN",
+          "$percentile",
+          "$push",
+          "$stdDevPop",
+          "$stdDevSamp",
+          "$sum",
+          "$top",
+          "$topN"
+        ],
+        "label": "MongoDB 9.0",
+        "policy_spec": {
+          "comparison_mode": "bson-total-order",
+          "equality_mode": "bson-structural",
+          "expression_truthiness": "mongo-default",
+          "null_query_matches_undefined": false,
+          "projection_flag_mode": "bool-or-binary-int",
+          "update_path_sort_mode": "numeric-then-lex"
+        },
+        "query_field_operators": [
+          "$all",
+          "$bitsAllClear",
+          "$bitsAllSet",
+          "$bitsAnyClear",
+          "$bitsAnySet",
+          "$cmp",
+          "$elemMatch",
+          "$eq",
+          "$exists",
+          "$geoIntersects",
+          "$geoWithin",
+          "$gt",
+          "$gte",
+          "$in",
+          "$lt",
+          "$lte",
+          "$mod",
+          "$ne",
+          "$near",
+          "$nearSphere",
+          "$nin",
+          "$not",
+          "$options",
+          "$regex",
+          "$size",
+          "$type"
+        ],
+        "query_top_level_operators": [
+          "$and",
+          "$comment",
+          "$expr",
+          "$jsonSchema",
+          "$nor",
+          "$or",
+          "$text",
+          "$where"
+        ],
+        "server_version": "9.0",
+        "system_variables": [
+          "$$NOW"
+        ],
+        "update_operators": [
+          "$addToSet",
+          "$bit",
+          "$currentDate",
+          "$inc",
+          "$max",
+          "$min",
+          "$mul",
+          "$pop",
+          "$pull",
+          "$pullAll",
+          "$push",
+          "$rename",
+          "$set",
+          "$setOnInsert",
+          "$unset"
+        ],
+        "window_accumulators": [
+          "$addToSet",
+          "$avg",
+          "$bottom",
+          "$bottomN",
+          "$count",
+          "$denseRank",
+          "$derivative",
+          "$documentNumber",
+          "$expMovingAvg",
+          "$first",
+          "$firstN",
+          "$integral",
+          "$last",
+          "$lastN",
+          "$linearFill",
+          "$locf",
+          "$max",
+          "$maxN",
+          "$median",
+          "$min",
+          "$minN",
+          "$percentile",
+          "$push",
+          "$rank",
+          "$shift",
+          "$stdDevPop",
+          "$stdDevSamp",
+          "$sum",
+          "$top",
+          "$topN"
+        ]
+      },
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "9.0"
+      ]
+    },
+    {
+      "after": {
+        "note": "Accepted and type-checked for API parity; it does not schedule a background index build.",
+        "status": "accepted-noop"
+      },
+      "operation": "add",
+      "path": [
+        "operation_options",
+        "create_index",
+        "background"
+      ]
+    },
+    {
+      "after": {
+        "note": "Accepted and type-checked for API parity in dialects 7.0/8.0; the projection is not passed to the engine. Mongoeco's supported subset under dialect 9.0 rejects it before index creation; MongoDB itself supports wildcardProjection.",
+        "status": "accepted-noop"
+      },
+      "operation": "add",
+      "path": [
+        "operation_options",
+        "create_index",
+        "wildcard_projection"
+      ]
+    },
+    {
+      "after": {
+        "aliases": [
+          "4.18"
+        ],
+        "behavior_flags": {
+          "rejects_reserved_aggregation_keywords": true,
+          "supports_update_one_sort": true
+        },
+        "capabilities": [
+          "aggregate.reserved_keywords_validation",
+          "update_one.sort",
+          "uri.srv_allowed_hosts_suffix"
+        ],
+        "driver_series": "4.x",
+        "label": "PyMongo 4.18"
+      },
+      "operation": "add",
+      "path": [
+        "pymongo_profiles",
+        "4.18"
+      ]
+    },
+    {
+      "after": [
+        7,
+        8,
+        9
+      ],
+      "before": [
+        7,
+        8
+      ],
+      "operation": "replace",
+      "path": [
+        "supported_majors",
+        "mongodb"
+      ]
+    },
+    {
+      "after": false,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "7.0",
+        "behavior_flags",
+        "densify_full_nonadvancing_step_errors"
+      ]
+    },
+    {
+      "after": true,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "8.0",
+        "behavior_flags",
+        "densify_full_nonadvancing_step_errors"
+      ]
+    },
+    {
+      "after": true,
+      "operation": "add",
+      "path": [
+        "mongodb_dialects",
+        "9.0",
+        "behavior_flags",
+        "densify_full_nonadvancing_step_errors"
+      ]
+    }
+  ],
+  "excluded_sections": {
+    "current": [
+      "exchange",
+      "mock_safe_profile"
+    ],
+    "historical": [
+      "cxp",
+      "mock_safe_profile"
+    ]
+  },
+  "historical_fixture": "compat_catalog_snapshot.json"
+}

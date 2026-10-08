@@ -6,21 +6,35 @@ from copy import deepcopy
 from dataclasses import dataclass
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.aggregation.accumulators import _validate_empty_group_fields
+from mongoeco.core.aggregation.array_string_expressions import (
+    array_variable_names,
+    validate_trim_chars,
+)
 from mongoeco.core.aggregation.extensions import (
     _aggregation_stage_registry_version,
+    get_registered_aggregation_expression_operator,
     get_registered_aggregation_stage_registration,
 )
+from mongoeco.core.aggregation.grouping_stages import validate_date_range_window
 from mongoeco.core.aggregation.information_stages import (
     INFORMATION_STAGES,
     parse_information_spec,
 )
-from mongoeco.core.aggregation.planning import _require_stage
+from mongoeco.core.aggregation.planning import (
+    _require_stage,
+    _validate_densify_partition_paths,
+    _validate_densify_range,
+)
 from mongoeco.core.aggregation.runtime import (
     _MISSING,
     _REMOVE,
+    _parse_variable_reference,
+    _validate_variable_path,
     _require_lookup_spec,
     _require_union_with_spec,
 )
+from mongoeco.core.aggregation.scalar_expressions import validate_convert_spec
 from mongoeco.errors import OperationFailure
 
 
@@ -53,6 +67,7 @@ class PreparationContext:
     scopes: tuple[str, ...]
     path: tuple[object, ...]
     registry_version: int
+    variables: frozenset[str] = frozenset()
 
 
 class PreparedStage(dict):
@@ -147,6 +162,7 @@ def _prepare_join(operator, spec, *, dialect, address, context):
             collection=foreign,
             scope=(*context.scopes, operator),
             path=(*address.path, f"{operator}.pipeline"),
+            variables=context.variables | frozenset(spec.get("let", {})),
         )
         namespace = spec.get("from") if operator == "$lookup" else spec["coll"]
         _validate_documents_namespace(namespace, spec["pipeline"], dialect, operator)
@@ -170,6 +186,7 @@ def _prepare_facet(spec, *, dialect, address, context):
             collection=context.collection,
             scope=(*context.scopes, "$facet"),
             path=(*address.path, "$facet", branch),
+            variables=context.variables,
         )
     return spec
 
@@ -238,13 +255,181 @@ def _discover_stage_requests(operator, spec, collection):
     return requests
 
 
-def prepare_pipeline(
+_GLOBAL_EXPRESSION_VARIABLES = frozenset(
+    {
+        "ROOT",
+        "CURRENT",
+        "NOW",
+        "REMOVE",
+        "KEEP",
+        "PRUNE",
+        "DESCEND",
+        "CLUSTER_TIME",
+    }
+)
+
+
+def _validate_array_expression_scope(operator, spec, dialect, variables):
+    names = array_variable_names(operator, spec, dialect=dialect)
+    _validate_expression_variables(spec["input"], dialect, variables)
+    if operator == "$reduce":
+        _validate_expression_variables(spec["initialValue"], dialect, variables)
+    if operator == "$filter" and "limit" in spec:
+        _validate_expression_variables(spec["limit"], dialect, variables)
+    body = spec["cond"] if operator == "$filter" else spec["in"]
+    _validate_expression_variables(body, dialect, variables | frozenset(names.values()))
+
+
+def _validate_variable_reference(expression, variables, dialect):
+    if expression.startswith("$$"):
+        name, path = _parse_variable_reference(expression)
+        if name == "CLUSTER_TIME" and dialect.behavior_flag(
+            "rejects_cluster_time_expression", default=False
+        ):
+            message = (
+                "Builtin variable '$$CLUSTER_TIME' is not available "
+                "on a standalone runtime"
+            )
+            raise OperationFailure(
+                message, code=10071200, details={"codeName": "Location10071200"}
+            )
+        if name not in variables | _GLOBAL_EXPRESSION_VARIABLES:
+            message = f"Use of undefined variable: {name}"
+            raise OperationFailure(
+                message, code=17276, details={"codeName": "Location17276"}
+            )
+        _validate_variable_path(expression, path)
+
+
+def _validate_expression_variables(expression, dialect, variables):
+    if isinstance(expression, str):
+        _validate_variable_reference(expression, variables, dialect)
+        return
+    if isinstance(expression, list):
+        for item in expression:
+            _validate_expression_variables(item, dialect, variables)
+        return
+    if not isinstance(expression, dict):
+        return
+    if len(expression) == 1:
+        operator, spec = next(iter(expression.items()))
+        if (
+            operator in {"$literal", "$const"}
+            or get_registered_aggregation_expression_operator(operator) is not None
+        ):
+            return
+        if operator in {"$map", "$filter", "$reduce"}:
+            _validate_array_expression_scope(operator, spec, dialect, variables)
+            return
+        if (
+            operator == "$let"
+            and isinstance(spec, dict)
+            and isinstance(spec.get("vars"), dict)
+        ):
+            for value in spec["vars"].values():
+                _validate_expression_variables(value, dialect, variables)
+            _validate_expression_variables(
+                spec.get("in"), dialect, variables | frozenset(spec["vars"])
+            )
+            return
+    for value in expression.values():
+        _validate_expression_variables(value, dialect, variables)
+    if "$convert" in expression and dialect.behavior_flag(
+        "uses_extended_conversions", default=False
+    ):
+        validate_convert_spec(expression["$convert"])
+    _validate_static_trim_expression(expression, dialect)
+
+
+def _validate_static_trim_expression(expression, dialect):
+    for operator in ("$trim", "$ltrim", "$rtrim"):
+        spec = expression.get(operator)
+        if not isinstance(spec, dict) or spec.get("input") is None:
+            continue
+        chars = spec.get("chars")
+        constant = isinstance(chars, dict) and (
+            set(chars) == {"$literal"} or set(chars) == {"$const"}
+        )
+        if constant:
+            chars = next(iter(chars.values()))
+        if isinstance(chars, str) and (constant or not chars.startswith("$")):
+            validate_trim_chars(chars, dialect=dialect)
+
+
+def _validate_match_expression_variables(spec, dialect, variables):
+    if not isinstance(spec, dict):
+        return
+    for key, value in spec.items():
+        if key == "$expr":
+            _validate_expression_variables(value, dialect, variables)
+        elif key in {"$and", "$or", "$nor"} and isinstance(value, list):
+            for clause in value:
+                _validate_match_expression_variables(clause, dialect, variables)
+
+
+def _validate_stage_expression_variables(operator, spec, dialect, variables):
+    if not dialect.behavior_flag("validates_aggregation_syntax_early", default=False):
+        return
+    if operator == "$match":
+        _validate_match_expression_variables(spec, dialect, variables)
+    elif operator in {
+        "$project",
+        "$set",
+        "$addFields",
+        "$group",
+        "$redact",
+        "$replaceRoot",
+        "$replaceWith",
+    }:
+        _validate_expression_variables(spec, dialect, variables)
+    elif operator == "$lookup" and isinstance(spec, dict):
+        _validate_expression_variables(spec.get("let", {}), dialect, variables)
+    elif operator in {"$bucket", "$bucketAuto"} and isinstance(spec, dict):
+        _validate_expression_variables(spec.get("groupBy"), dialect, variables)
+        _validate_expression_variables(spec.get("output", {}), dialect, variables)
+    elif operator == "$setWindowFields" and isinstance(spec, dict):
+        if dialect.behavior_flag("supports_date_range_windows", default=False):
+            outputs = spec.get("output", {})
+            if not isinstance(outputs, dict):
+                message = "$setWindowFields output must be a document"
+                raise OperationFailure(
+                    message, code=14, details={"codeName": "TypeMismatch"}
+                )
+            for output in outputs.values():
+                if isinstance(output, dict):
+                    validate_date_range_window(output.get("window"))
+        _validate_expression_variables(spec.get("partitionBy"), dialect, variables)
+        _validate_expression_variables(spec.get("output", {}), dialect, variables)
+
+
+def _prepare_builtin_stage(operator, spec, *, dialect, address, context):
+    _validate_placement(operator, address, context.scopes)
+    if operator in {"$lookup", "$unionWith"}:
+        spec = _prepare_join(
+            operator, spec, dialect=dialect, address=address, context=context
+        )
+    elif operator == "$facet":
+        spec = _prepare_facet(spec, dialect=dialect, address=address, context=context)
+    elif operator in INFORMATION_STAGES:
+        parse_information_spec(operator, spec)
+    elif operator == "$group":
+        _validate_empty_group_fields(spec, dialect=dialect)
+    elif operator == "$densify":
+        _validate_densify_partition_paths(spec, dialect=dialect)
+        if isinstance(spec, dict):
+            _validate_densify_range(spec.get("range"))
+    _validate_stage_expression_variables(operator, spec, dialect, context.variables)
+    return spec
+
+
+def prepare_pipeline(  # noqa: PLR0913 - logical address and lexical scope boundary
     pipeline,
     *,
     dialect=MONGODB_DIALECT_70,
     collection=_UNSPECIFIED,
     scope=_UNSPECIFIED,
     path=_UNSPECIFIED,
+    variables=_UNSPECIFIED,
 ):
     """Parse built-in join shapes before selecting a physical execution strategy."""
     previous = (
@@ -266,8 +451,14 @@ def prepare_pipeline(
         )
     if path is _UNSPECIFIED:
         path = previous.path if previous is not None else ()
+    if variables is _UNSPECIFIED:
+        variables = previous.variables if previous is not None else frozenset()
     context = PreparationContext(
-        collection, scopes, path, _aggregation_stage_registry_version()
+        collection,
+        scopes,
+        path,
+        _aggregation_stage_registry_version(),
+        frozenset(variables),
     )
     relocating = previous is not None and (
         previous.collection != collection
@@ -290,17 +481,9 @@ def prepare_pipeline(
             else getattr(stage, "address", StageAddress((*path, index), index))
         )
         if get_registered_aggregation_stage_registration(operator) is None:
-            _validate_placement(operator, address, scopes)
-            if operator in {"$lookup", "$unionWith"}:
-                spec = _prepare_join(
-                    operator, spec, dialect=dialect, address=address, context=context
-                )
-            elif operator == "$facet":
-                spec = _prepare_facet(
-                    spec, dialect=dialect, address=address, context=context
-                )
-            elif operator in INFORMATION_STAGES:
-                parse_information_spec(operator, spec)
+            spec = _prepare_builtin_stage(
+                operator, spec, dialect=dialect, address=address, context=context
+            )
         requests.extend(_discover_stage_requests(operator, spec, collection))
         stages.append(PreparedStage(operator, spec, address, context))
         addresses.append(address)
@@ -316,7 +499,9 @@ def _validate_documents_namespace(
         collection is not None
         and pipeline
         and "$documents" in pipeline[0]
-        and dialect.server_version.startswith("8.")
+        and dialect.behavior_flag(
+            "documents_join_omits_collection_namespace", default=False
+        )
     ):
         message = f"{operator} with $documents must omit its collection namespace"
         raise OperationFailure(message)

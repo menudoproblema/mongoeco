@@ -4,8 +4,12 @@ from typing import assert_type
 
 from mongoeco import AsyncMongoClient, MongoClient, ObjectId, ObjectIdLike
 from mongoeco.compat import (
+    MONGODB_DIALECT_90,
+    PYMONGO_PROFILE_418,
     DeprecationEntry,
     DeprecationStatus,
+    MongoDialect90,
+    PyMongoProfile418,
     compare_public_api_manifests,
     deprecation_catalog,
     deprecation_entries,
@@ -45,6 +49,8 @@ sync_client = MongoClient()
 async_client = AsyncMongoClient()
 assert_type(sync_client, MongoClient)
 assert_type(async_client, AsyncMongoClient)
+assert_type(MONGODB_DIALECT_90, MongoDialect90)
+assert_type(PYMONGO_PROFILE_418, PyMongoProfile418)
 
 
 class CompatibleObjectId:

@@ -20,9 +20,16 @@ GIT_SHA_LENGTH = 40
 
 
 def _reference_exists(reference: str) -> bool:
-    path_text, class_name, method_name = reference.split("::")
+    path_text, *names = reference.split("::")
     source_path = PROJECT_ROOT / path_text
     tree = ast.parse(source_path.read_text(encoding="utf-8"))
+    if len(names) == 1:
+        return any(
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == names[0]
+            for node in tree.body
+        )
+    class_name, method_name = names
     return any(
         isinstance(node, ast.ClassDef)
         and node.name == class_name
@@ -54,7 +61,11 @@ def test_index_model_conservation_matrix_covers_every_field() -> None:
         assert row["product"] == row["owner"] == "Mongoeco"
         assert len(row["source_revision"]) == GIT_SHA_LENGTH
         assert "owner operational" in row["disposition"]
-        if name in NOOP_FIELDS:
+        if name == "wildcard_projection":
+            assert row["status"] == (
+                "bounded accepted-noop verified for 7.0/8.0; rejected for 9.0"
+            )
+        elif name in NOOP_FIELDS:
             assert row["status"] == "bounded accepted-noop verified"
         else:
             assert row["status"] == "forwarded; engine effect outside this inventory"

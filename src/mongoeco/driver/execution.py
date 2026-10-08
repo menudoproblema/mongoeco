@@ -3,8 +3,10 @@ from __future__ import annotations
 import asyncio
 import time
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from inspect import signature
 from typing import Any, Protocol
+from uuid import uuid4
 
 from mongoeco.driver.monitoring import (
     CommandFailedEvent,
@@ -26,8 +28,7 @@ from mongoeco.errors import (
 
 
 class AsyncCommandTransport(Protocol):
-    async def send(self, execution: PreparedRequestExecution) -> dict[str, Any]:
-        ...
+    async def send(self, execution: PreparedRequestExecution) -> dict[str, Any]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +82,27 @@ def classify_request_exception(
     )
 
 
+def _prepares_operation_identity(prepare_execution, plan, operation_id):
+    # Public callbacks from earlier releases accept only attempt_number.
+    # Inspect before invoking: retrying after TypeError could acquire twice.
+    try:
+        signature(prepare_execution).bind(
+            plan, attempt_number=1, operation_id=operation_id
+        )
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+async def _prepare_attempt(prepare, plan, attempt_number, operation_id, accepts_id):
+    if accepts_id:
+        return await prepare(
+            plan, attempt_number=attempt_number, operation_id=operation_id
+        )
+    execution = await prepare(plan, attempt_number=attempt_number)
+    return replace(execution, operation_id=operation_id)
+
+
 async def execute_request_pipeline(
     *,
     plan: RequestExecutionPlan,
@@ -90,13 +112,20 @@ async def execute_request_pipeline(
     transport: AsyncCommandTransport,
     monitor: DriverMonitor | None = None,
     inject_failure=None,
+    operation_id: str | None = None,
 ) -> RequestExecutionResult:
+    operation_id = uuid4().hex if operation_id is None else operation_id
+    prepares_operation_id = _prepares_operation_identity(
+        prepare_execution, plan, operation_id
+    )
     attempts: list[RequestAttempt] = []
     max_attempts = len(plan.candidate_servers) or 1
     if _retry_enabled(plan):
         max_attempts = max(max_attempts, 2)
     for attempt_number in range(1, max_attempts + 1):
-        execution = await prepare_execution(plan, attempt_number=attempt_number)
+        execution = await _prepare_attempt(
+            prepare_execution, plan, attempt_number, operation_id, prepares_operation_id
+        )
         started_at = time.perf_counter()
         should_discard = False
         try:
@@ -112,6 +141,7 @@ async def execute_request_pipeline(
                         read_only=plan.request.read_only,
                         session_id=plan.request.session_id,
                         request_id=execution.request_id,
+                        operation_id=execution.operation_id,
                     )
                 )
             if inject_failure is not None:
@@ -141,10 +171,27 @@ async def execute_request_pipeline(
                         duration_ms=(time.perf_counter() - started_at) * 1000,
                         session_id=plan.request.session_id,
                         request_id=execution.request_id,
+                        operation_id=execution.operation_id,
                     )
                 )
         except asyncio.CancelledError:
             should_discard = True
+            if monitor is not None:
+                monitor.emit(
+                    CommandFailedEvent(
+                        database=plan.request.database,
+                        command_name=plan.request.command_name,
+                        failure="CancelledError: request execution cancelled",
+                        server_address=execution.selected_server.address,
+                        connection_id=execution.connection.connection_id,
+                        attempt_number=execution.attempt_number,
+                        duration_ms=(time.perf_counter() - started_at) * 1000,
+                        retryable=False,
+                        session_id=plan.request.session_id,
+                        request_id=execution.request_id,
+                        operation_id=execution.operation_id,
+                    )
+                )
             raise
         except Exception as exc:
             outcome = classify_request_exception(exc, plan=plan)
@@ -168,6 +215,7 @@ async def execute_request_pipeline(
                         retryable=outcome.retryable,
                         session_id=plan.request.session_id,
                         request_id=execution.request_id,
+                        operation_id=execution.operation_id,
                     )
                 )
         finally:
@@ -190,7 +238,9 @@ async def execute_request_pipeline(
             trace = RequestExecutionTrace(tuple(attempts))
             return RequestExecutionResult(outcome=outcome, trace=trace)
     trace = RequestExecutionTrace(tuple(attempts))
-    fallback = trace.final_outcome or RequestOutcome(server_address=None, ok=False, error="request execution failed")
+    fallback = trace.final_outcome or RequestOutcome(
+        server_address=None, ok=False, error="request execution failed"
+    )
     return RequestExecutionResult(outcome=fallback, trace=trace)
 
 
@@ -204,9 +254,13 @@ async def _send_with_timeout(
     if timeout_ms is None:
         return await transport.send(execution)
     try:
-        return await asyncio.wait_for(transport.send(execution), timeout=timeout_ms / 1000)
+        return await asyncio.wait_for(
+            transport.send(execution), timeout=timeout_ms / 1000
+        )
     except TimeoutError as exc:
-        raise ExecutionTimeout("socket timeout expired during request execution") from exc
+        raise ExecutionTimeout(
+            "socket timeout expired during request execution"
+        ) from exc
 
 
 def _is_retryable_exception(exc: Exception, *, plan: RequestExecutionPlan) -> bool:
@@ -223,4 +277,8 @@ def _is_retryable_exception(exc: Exception, *, plan: RequestExecutionPlan) -> bo
 
 
 def _retry_enabled(plan: RequestExecutionPlan) -> bool:
-    return plan.retry_policy.retry_reads if plan.request.read_only else plan.retry_policy.retry_writes
+    return (
+        plan.retry_policy.retry_reads
+        if plan.request.read_only
+        else plan.retry_policy.retry_writes
+    )

@@ -4,6 +4,7 @@ from typing import Mapping
 
 from mongoeco.compat.base import PyMongoProfile
 from mongoeco.compat.operation_support import OPERATION_OPTION_SUPPORT
+from mongoeco.errors import ConfigurationError
 
 
 ARG_UNSET = object()
@@ -30,12 +31,33 @@ class PublicOperationSpec:
     aliases: Mapping[str, str] = field(default_factory=dict)
     required_arguments: frozenset[str] = frozenset()
     sort_depends_on_profile: bool = False
+    is_aggregation_helper: bool = False
 
 
 def unexpected_keyword_error(operation: str, option: str) -> TypeError:
     return TypeError(
         f"{operation}() got an unexpected keyword argument '{option}'"
     )
+
+
+def _validate_aggregation_keywords(
+    spec: PublicOperationSpec,
+    extra_kwargs: Mapping[str, object],
+    profile: PyMongoProfile | None,
+) -> None:
+    if (
+        spec.is_aggregation_helper
+        and profile is not None
+        and profile.behavior_flag(
+            "rejects_reserved_aggregation_keywords", default=False
+        )
+    ):
+        for name in ("aggregate", "pipeline"):
+            if name in extra_kwargs:
+                message = (
+                    f"{name} cannot be passed to {spec.name}() as a keyword argument"
+                )
+                raise ConfigurationError(message)
 
 
 def normalize_public_operation_arguments(
@@ -45,6 +67,7 @@ def normalize_public_operation_arguments(
     extra_kwargs: Mapping[str, object],
     profile: PyMongoProfile | None = None,
 ) -> dict[str, object]:
+    _validate_aggregation_keywords(spec, extra_kwargs, profile)
     normalized: dict[str, object] = {}
     aliases = dict(spec.aliases)
     kwargs = {
@@ -144,6 +167,7 @@ def normalize_aggregate_operation_arguments(
     let: object | None,
     session: object | None,
     extra_kwargs: Mapping[str, object],
+    profile: PyMongoProfile | None = None,
 ) -> dict[str, object]:
     return normalize_public_operation_arguments(
         PublicOperationSpec(
@@ -151,6 +175,7 @@ def normalize_aggregate_operation_arguments(
             allowed_options=_AGGREGATE_OPTIONS,
             aliases=_AGGREGATE_ALIAS,
             required_arguments=frozenset({'pipeline'}),
+            is_aggregation_helper=True,
         ),
         explicit={
             'pipeline': pipeline,
@@ -164,7 +189,15 @@ def normalize_aggregate_operation_arguments(
             'session': session,
         },
         extra_kwargs=extra_kwargs,
+        profile=profile,
     )
+
+
+COLLECTION_LIST_SEARCH_INDEXES_SPEC = PublicOperationSpec(
+    name="list_search_indexes",
+    allowed_options=frozenset(),
+    is_aggregation_helper=True,
+)
 
 
 def _assert_catalog_alignment(

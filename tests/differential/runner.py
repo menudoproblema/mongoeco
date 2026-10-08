@@ -8,6 +8,7 @@ from tests.differential.cases import REAL_PARITY_CASES
 TARGET_MODULES = {
     "7.0": ("tests.differential.mongodb7_real_parity.MongoDB7RealParityTests"),
     "8.0": ("tests.differential.mongodb8_real_parity.MongoDB8RealParityTests"),
+    "9.0": ("tests.differential.mongodb9_real_parity.MongoDB9RealParityTests"),
 }
 
 
@@ -49,19 +50,22 @@ def build_suite(
     suite = unittest.defaultTestLoader.loadTestsFromName(
         TARGET_MODULES[target],
     )
-    if not case_filter:
-        return suite
-
     filtered = unittest.TestSuite()
+    major, minor = (int(part) for part in target.split("."))
+    applicable = set(available_case_names((major, minor)))
     patterns = [
-        fragment.strip() for fragment in case_filter.split(",") if fragment.strip()
+        fragment.strip()
+        for fragment in (case_filter or "*").split(",")
+        if fragment.strip()
     ]
     for test in _iter_cases(suite):
         method_name = getattr(test, "_testMethodName", "")
         case_name = method_name.removeprefix("test_").removesuffix(
             "_matches_real_mongodb",
         )
-        if any(fnmatch.fnmatch(case_name, pattern) for pattern in patterns):
+        if case_name in applicable and any(
+            fnmatch.fnmatch(case_name, pattern) for pattern in patterns
+        ):
             filtered.addTest(test)
     if filtered.countTestCases() == 0:
         message = f"case filter matched no differential cases: {case_filter}"

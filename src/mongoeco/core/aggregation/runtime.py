@@ -488,19 +488,73 @@ def _append_unique_values(
         target.append(deepcopy(value))
 
 
+def _parse_variable_reference(expression: str) -> tuple[str, str]:
+    name, _, path = expression[2:].partition(".")
+    if not name:
+        message = "empty variable names are not allowed"
+        raise OperationFailure(
+            message,
+            code=9,
+            details={"codeName": "FailedToParse"},
+        )
+    if not ((name[0].isascii() and name[0].isalpha()) or not name[0].isascii()):
+        message = f"'{name}' starts with an invalid character for a variable name"
+        raise OperationFailure(
+            message,
+            code=9, details={"codeName": "FailedToParse"},
+        )
+    for character in name:
+        if character.isascii() and not (character.isalnum() or character == "_"):
+            message = f"'{name}' contains an invalid character for a variable name"
+            raise OperationFailure(
+                message,
+                code=9, details={"codeName": "FailedToParse"},
+            )
+    return name, path
+
+
+def _validate_variable_path(expression, path):
+    # Undefined variables fail before their path is parsed by the server.
+    if "." not in expression:
+        return
+    if expression.endswith("."):
+        code, message = 40353, "FieldPath must not end with a '.'"
+    elif any(not part for part in path.split(".")):
+        code, message = 15998, "FieldPath field names may not be empty strings"
+    elif any(part.startswith("$") for part in path.split(".")):
+        code, message = 16410, "FieldPath field names may not start with '$'"
+    elif "\x00" in path:
+        code, message = 16411, "FieldPath field names may not contain null bytes"
+    else:
+        return
+    raise OperationFailure(message, code=code, details={"codeName": f"Location{code}"})
+
+
 def _resolve_variable_expression(
     expression: str,
     variables: Mapping[str, Any],
+    *, dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> Any:
-    name_and_path = expression[2:]
-    name, _, path = name_and_path.partition(".")
-    if name == "REMOVE":
-        return _REMOVE if not path else _MISSING
-    if name not in variables:
+    name, path = _parse_variable_reference(expression)
+    if name == "CLUSTER_TIME" and dialect.behavior_flag(
+        "rejects_cluster_time_expression", default=False
+    ):
+        message = (
+            "Builtin variable '$$CLUSTER_TIME' is not available "
+            "on a standalone runtime"
+        )
+        raise OperationFailure(
+            message, code=10071200, details={"codeName": "Location10071200"}
+        )
+    if name != "REMOVE" and name not in variables:
         raise OperationFailure(
             f"Use of undefined variable: {name}",
             code=17276,
+            details={"codeName": "Location17276"},
         )
+    _validate_variable_path(expression, path)
+    if name == "REMOVE":
+        return _REMOVE if not path else _MISSING
     value = variables[name]
     if not path:
         return value
@@ -726,7 +780,7 @@ def _evaluate_expression_with_missing(
     variables = _variables_for_document(document, variables)
     if isinstance(expression, str):
         if expression.startswith("$$"):
-            return _resolve_variable_expression(expression, variables)
+            return _resolve_variable_expression(expression, variables, dialect=dialect)
         if expression.startswith("$"):
             return _resolve_aggregation_field_path(document, expression[1:])
     return evaluate_expression(
@@ -751,7 +805,7 @@ def evaluate_expression(
 
     if isinstance(expression, str):
         if expression.startswith("$$"):
-            value = _resolve_variable_expression(expression, variables)
+            value = _resolve_variable_expression(expression, variables, dialect=dialect)
             return None if value is _MISSING else value
         if expression.startswith("$"):
             value = _resolve_aggregation_field_path(document, expression[1:])

@@ -9,6 +9,7 @@ import json
 import time
 
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -1054,20 +1055,24 @@ def test_sqlite_count_interrupts_expired_sql_statement() -> None:
         )
         calls = 0
 
-        def slow_extract(document: str, path: str) -> object:
+        def tracked_extract(document: str, path: str) -> object:
             nonlocal calls
             calls += 1
-            time.sleep(0.00005)
             return json.loads(document).get(path.removeprefix("$."))
 
         connection = engine._connection
         assert connection is not None
-        connection.create_function("json_extract", 2, slow_extract)
+        connection.create_function("json_extract", 2, tracked_extract)
         request = {"count": "items", "query": {"kind": "view"}}
         assert database.command(request)["n"] == document_count
         baseline_calls = calls
         calls = 0
-        with pytest.raises(ExecutionTimeout):
+        clock = SimpleNamespace(monotonic=lambda: calls / 1000, time=time.time)
+        with (
+            patch("mongoeco.core.operation_limits.time", clock),
+            patch("mongoeco.engines.sqlite.time", clock),
+            pytest.raises(ExecutionTimeout),
+        ):
             database.command({**request, "maxTimeMS": 20})
         assert 0 < calls < baseline_calls
-        assert database.command({"count": "items"})["n"] == document_count
+        assert database.command(request)["n"] == document_count

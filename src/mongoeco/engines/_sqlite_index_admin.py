@@ -203,7 +203,9 @@ def create_index(
                 or index.get("bucket_size") != definition.bucket_size
             ):
                 raise OperationFailure(
-                    f"Conflicting index definition for '{index_name}'"
+                    f"Conflicting index definition for '{index_name}'",
+                    code=86,
+                    details={"codeName": "IndexKeySpecsConflict"},
                 )
             return index_name
         if index["key"] == normalized_keys:

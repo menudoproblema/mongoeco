@@ -1692,8 +1692,10 @@ class RequestExecutionPipelineTests(unittest.TestCase):
             def __init__(self):
                 self.calls = []
 
-            async def prepare(self, current_plan, *, attempt_number):
-                self.calls.append(("prepare", current_plan, attempt_number))
+            async def prepare(self, current_plan, *, attempt_number, operation_id=None):
+                self.calls.append(
+                    ("prepare", current_plan, attempt_number, operation_id)
+                )
                 return "prepared"
 
             async def complete(self, execution):
@@ -1716,7 +1718,7 @@ class RequestExecutionPipelineTests(unittest.TestCase):
 
         self.assertEqual(prepared, "prepared")
         self.assertEqual(result, "result")
-        self.assertEqual(fake.calls[0], ("prepare", plan, 2))
+        self.assertEqual(fake.calls[0], ("prepare", plan, 2, None))
         self.assertEqual(fake.calls[1], ("complete", "prepared"))
         self.assertEqual(fake.calls[2], ("discard", "broken"))
         self.assertEqual(fake.calls[3][0], "execute")

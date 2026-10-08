@@ -1,8 +1,9 @@
+import re
+import threading
+
 from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
-import re
-import threading
 
 from mongoeco.api.argument_validation import (
     HintSpec,
@@ -12,18 +13,19 @@ from mongoeco.api.argument_validation import (
 )
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation import Pipeline
-from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.aggregation.extensions import get_registered_aggregation_stage
+from mongoeco.core.aggregation.preparation import PreparedPipeline, prepare_pipeline
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import normalize_collation
+from mongoeco.core.expression_context import ExpressionExecutionContext
+from mongoeco.core.json_compat import json_dumps_compact
+from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.operators import (
     CompiledExecutableUpdatePlan,
     CompiledUpdateOperator,
     CompiledUpdatePlan,
     UpdateEngine,
 )
-from mongoeco.core.expression_context import ExpressionExecutionContext
-from mongoeco.core.json_compat import json_dumps_compact
-from mongoeco.core.operation_context import OperationContext
 from mongoeco.core.query_plan import QueryNode, compile_filter
 from mongoeco.core.search import (
     TEXT_SCORE_FIELD,
@@ -34,7 +36,16 @@ from mongoeco.core.search import (
 from mongoeco.core.update_paths import CompiledUpdateInstruction
 from mongoeco.core.validation import is_filter, is_projection
 from mongoeco.errors import OperationFailure
-from mongoeco.types import ArrayFilters, CollationDocument, Filter, PlanningIssue, PlanningMode, Projection, SortSpec, Update
+from mongoeco.types import (
+    ArrayFilters,
+    CollationDocument,
+    Filter,
+    PlanningIssue,
+    PlanningMode,
+    Projection,
+    SortSpec,
+    Update,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -200,6 +211,7 @@ class AggregateOperation:
             return replace(self, context=context, let=context.expressions)
         compiled = compile_aggregate_operation(
             self.pipeline,
+            collection=getattr(self.pipeline, "collection", None),
             collation=context.collation,
             hint=self.hint,
             comment=self.comment,
@@ -551,6 +563,7 @@ def compile_update_operation(
 def compile_aggregate_operation(
     pipeline: object,
     *,
+    collection: str | None = None,
     collation: object | None = None,
     hint: object | None = None,
     comment: object | None = None,
@@ -563,8 +576,18 @@ def compile_aggregate_operation(
 ) -> AggregateOperation:
     if not isinstance(pipeline, list):
         raise TypeError("pipeline must be a list")
-    normalized_pipeline = DocumentCodec.to_internal(pipeline)
+    normalized_pipeline = (
+        pipeline if isinstance(pipeline, PreparedPipeline)
+        else DocumentCodec.to_internal(pipeline)
+    )
     validate_search_stage_pipeline(normalized_pipeline)
+    if dialect.behavior_flag('validates_aggregation_syntax_early', default=False):
+        normalized_pipeline = prepare_pipeline(
+            normalized_pipeline,
+            dialect=dialect,
+            collection=collection,
+            variables=frozenset(_normalize_let(let) or {}),
+        )
     return AggregateOperation(
         pipeline=normalized_pipeline,
         collation=_normalize_collation(collation),

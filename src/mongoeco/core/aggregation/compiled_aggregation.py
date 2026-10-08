@@ -9,6 +9,7 @@ from mongoeco.core.aggregation.accumulators import (
     _AverageAccumulator,
     _sum_accumulator_operand,
     _validate_accumulator_expression,
+    _validate_empty_group_fields,
 )
 from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
 from mongoeco.core.aggregation.numeric_expressions import (
@@ -91,6 +92,7 @@ class CompiledGroup:
     ) -> None:
         self.spec = spec
         self.dialect = dialect
+        _validate_empty_group_fields(spec, dialect=dialect)
         self.id_expr = spec["_id"]
         self.accumulator_specs = {
             key: value for key, value in spec.items() if key != "_id"

@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import datetime
 import decimal
+import json
 import math
 import random
 import re
 import uuid
+
 from collections.abc import Callable
 from copy import deepcopy
 from typing import Any
@@ -13,18 +15,19 @@ from typing import Any
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation.date_expressions import _to_utc_naive
 from mongoeco.core.bson_scalars import (
-    BsonDecimal128,
-    BsonDouble,
-    BsonInt32,
-    BsonInt64,
     INT32_MAX,
     INT32_MIN,
     INT64_MAX,
     INT64_MIN,
+    BsonDecimal128,
+    BsonDouble,
+    BsonInt32,
+    BsonInt64,
     is_bson_numeric,
     unwrap_bson_numeric,
     validate_bson_value,
 )
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import compare_with_collation
 from mongoeco.errors import OperationFailure
 from mongoeco.types import (
@@ -89,6 +92,9 @@ def evaluate_scalar_expression(
         return random.random()
 
     if operator == "$convert":
+        extended = dialect.behavior_flag("uses_extended_conversions", default=False)
+        if extended:
+            validate_convert_spec(spec)
         if not isinstance(spec, dict) or "input" not in spec or "to" not in spec:
             raise OperationFailure("$convert requires input and to")
         value = evaluate_expression_with_missing(document, spec["input"], variables)
@@ -99,6 +105,8 @@ def evaluate_scalar_expression(
                 else None
             )
         target = evaluate_expression(document, spec["to"], variables)
+        if extended:
+            _validate_convert_target(target)
         if isinstance(target, dict):
             target = target.get("type")
         if not isinstance(target, str):
@@ -112,9 +120,20 @@ def evaluate_scalar_expression(
             "objectId": "objectId",
             "string": "string",
         }
+        if extended:
+            aliases["decimal"] = "decimal"
+        base = None
+        if extended and "base" in spec:
+            base = _conversion_base(
+                evaluate_expression(document, spec["base"], variables)
+            )
         try:
             if target not in aliases:
                 raise OperationFailure("$convert target type is not supported")
+            if extended:
+                return _convert_extended_scalar(
+                    value, aliases[target], base=base, stringify_value=stringify_value
+                )
             return _convert_aggregation_scalar(
                 operator, value, aliases[target], stringify_value=stringify_value
             )
@@ -185,6 +204,8 @@ def evaluate_scalar_expression(
         value = evaluate_expression(document, args[0], variables)
         if value is None:
             return None
+        if dialect.behavior_flag("uses_extended_conversions", default=False):
+            return _extended_string(value, stringify_value=stringify_value)
         return stringify_value(unwrap_bson_numeric(value))
 
     if operator in {
@@ -358,6 +379,134 @@ def _parse_base10_int_string(operator: str, value: str) -> int:
     if not text or not re.fullmatch(r"[+-]?\d+", text):
         raise OperationFailure(f"{operator} cannot convert the string value")
     return int(text, 10)
+
+
+def validate_convert_spec(spec: object) -> None:
+    """Reject deferred extensions before rows or onError can mask them."""
+    if not isinstance(spec, dict) or not {"input", "to"} <= spec.keys():
+        message = "$convert requires input and to"
+        raise OperationFailure(message)
+    allowed = {"input", "to", "base", "onError", "onNull"}
+    for parameter in spec:
+        if parameter not in allowed:
+            message = (
+                f"$convert parameter {parameter!r} is outside "
+                "Mongoeco's supported subset"
+            )
+            raise OperationFailure(message)
+    _validate_convert_target(spec["to"])
+
+
+def _validate_convert_target(target: object) -> None:
+    if isinstance(target, dict) and not any(key.startswith("$") for key in target):
+        if set(target) != {"type"}:
+            message = "$convert target options are outside Mongoeco's supported subset"
+            raise OperationFailure(message)
+        target = target["type"]
+    if isinstance(target, str) and target in {"array", "object", "binData"}:
+        message = f"$convert to {target!r} is outside Mongoeco's supported subset"
+        raise OperationFailure(message)
+
+
+def _conversion_base(value: object) -> int | None:
+    value = unwrap_bson_numeric(DocumentCodec.to_internal(value))
+    if isinstance(value, Decimal128):
+        value = value.to_decimal()
+    if value is None:
+        return None
+    if (
+        not isinstance(value, bool)
+        and isinstance(value, (int, float, decimal.Decimal))
+        and value in (2, 8, 10, 16)
+    ):
+        return int(value)
+    message = "In $convert, 'base' argument is not a valid base"
+    raise OperationFailure(
+        message,
+        code=3501301, details={"codeName": "Location3501301"},
+    )
+
+
+def _extended_string(value: Any, *, stringify_value: Stringifier) -> str:
+    value = unwrap_bson_numeric(DocumentCodec.to_internal(value))
+    if isinstance(value, dict):
+        return "{" + ",".join(
+            json.dumps(key, ensure_ascii=False)
+            + ":" + _extended_json_value(item, stringify_value)
+            for key, item in value.items()
+        ) + "}"
+    if isinstance(value, list):
+        return "[" + ",".join(
+            _extended_json_value(item, stringify_value) for item in value
+        ) + "]"
+    # MaxKey and MinKey remain optional BSON types owned by the codec.
+    if type(value).__module__ in {"bson.max_key", "bson.min_key"}:
+        return type(value).__name__
+    return stringify_value(value)
+
+
+def _extended_json_value(value: Any, stringify_value: Stringifier) -> str:
+    value = unwrap_bson_numeric(value)
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (dict, list)):
+        return _extended_string(value, stringify_value=stringify_value)
+    if isinstance(value, (int, float, decimal.Decimal, Decimal128)):
+        return stringify_value(value)
+    return json.dumps(
+        _extended_string(value, stringify_value=stringify_value), ensure_ascii=False
+    )
+
+
+def _convert_base_value(value: Any, target: str, base: int) -> Any:
+    if isinstance(value, str) and target in {"int", "long", "double", "decimal"}:
+        digits = {2: "01", 8: "0-7", 10: "0-9", 16: "0-9a-fA-F"}[base]
+        if re.fullmatch(f"[+-]?[{digits}]+", value) is None:
+            message = "$convert cannot convert the string in the specified base"
+            raise OperationFailure(
+                message, code=241, details={"codeName": "ConversionFailure"}
+            )
+        return int(value, base)
+    if (
+        target == "string"
+        and isinstance(value, (int, float, decimal.Decimal))
+        and not isinstance(value, bool)
+    ):
+        # The server also accepts integral double/decimal values within Int32.
+        if (
+            not math.isfinite(value)
+            or int(value) != value
+            or (
+                not isinstance(value, int)
+                and not INT32_MIN <= value <= INT32_MAX
+            )
+        ):
+            message = "$convert base conversion to string requires an integer input"
+            raise OperationFailure(
+                message, code=241, details={"codeName": "ConversionFailure"}
+            )
+        value = int(value)
+        return format(value, {2: "b", 8: "o", 10: "d", 16: "X"}[base])
+    return value
+
+
+def _convert_extended_scalar(
+    value: Any, target: str, *, base: int | None, stringify_value: Stringifier
+) -> Any:
+    value = unwrap_bson_numeric(DocumentCodec.to_internal(value))
+    if isinstance(value, Decimal128):
+        value = value.to_decimal()
+    if base is not None:
+        value = _convert_base_value(value, target, base)
+    if target == "string":
+        return _extended_string(value, stringify_value=stringify_value)
+    if isinstance(value, decimal.Decimal) and target in {"int", "long", "double"}:
+        value = float(value) if target == "double" else int(value)
+    return _convert_aggregation_scalar(
+        "$convert", value, target, stringify_value=stringify_value
+    )
 
 
 def _convert_aggregation_scalar(

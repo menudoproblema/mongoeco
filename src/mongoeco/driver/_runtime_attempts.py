@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 from mongoeco.driver.execution import (
     RequestExecutionResult,
@@ -39,7 +40,13 @@ class RuntimeAttemptLifecycle:
         self._resolve_plan = resolve_plan
         self._failpoints = failpoints
 
-    async def prepare(self, plan: "RequestExecutionPlan", *, attempt_number: int) -> "PreparedRequestExecution":
+    async def prepare(
+        self,
+        plan: "RequestExecutionPlan",
+        *,
+        attempt_number: int,
+        operation_id: str | None = None,
+    ) -> "PreparedRequestExecution":
         from mongoeco.driver.requests import PreparedRequestExecution
 
         plan = self._resolve_plan(plan)
@@ -52,6 +59,7 @@ class RuntimeAttemptLifecycle:
             selected_server=selected_server,
             connection=lease,
             attempt_number=attempt_number,
+            operation_id=uuid4().hex if operation_id is None else operation_id,
         )
         self._monitor.emit(
             ServerSelectedEvent(
@@ -62,6 +70,7 @@ class RuntimeAttemptLifecycle:
                 read_only=plan.request.read_only,
                 session_id=plan.request.session_id,
                 request_id=execution.request_id,
+                operation_id=execution.operation_id,
             )
         )
         self._monitor.emit(
@@ -73,6 +82,7 @@ class RuntimeAttemptLifecycle:
                 attempt_number=attempt_number,
                 session_id=plan.request.session_id,
                 request_id=execution.request_id,
+                operation_id=execution.operation_id,
             )
         )
         return execution
@@ -88,6 +98,7 @@ class RuntimeAttemptLifecycle:
                 attempt_number=execution.attempt_number,
                 session_id=execution.plan.request.session_id,
                 request_id=execution.request_id,
+                operation_id=execution.operation_id,
             )
         )
 
@@ -95,6 +106,7 @@ class RuntimeAttemptLifecycle:
         await self._connections.discard_async(execution.connection)
 
     async def execute(self, plan: "RequestExecutionPlan", *, transport) -> RequestExecutionResult:
+        operation_id = uuid4().hex
         resolved_plan = self._resolve_plan(plan)
         forced_reason = None
         if self._failpoints is not None:
@@ -113,6 +125,7 @@ class RuntimeAttemptLifecycle:
                     read_only=resolved_plan.request.read_only,
                     session_id=resolved_plan.request.session_id,
                     request_id=None,
+                    operation_id=operation_id,
                 )
             )
             error = ServerSelectionTimeoutError(forced_reason)
@@ -136,6 +149,7 @@ class RuntimeAttemptLifecycle:
                     read_only=resolved_plan.request.read_only,
                     session_id=resolved_plan.request.session_id,
                     request_id=None,
+                    operation_id=operation_id,
                 )
             )
             error = ServerSelectionTimeoutError(reason)
@@ -145,6 +159,7 @@ class RuntimeAttemptLifecycle:
             )
         return await execute_request_pipeline(
             plan=resolved_plan,
+            operation_id=operation_id,
             prepare_execution=self.prepare,
             complete_execution=self.complete,
             discard_execution=self.discard,

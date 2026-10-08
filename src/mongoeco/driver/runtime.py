@@ -4,6 +4,8 @@ import asyncio
 
 from typing import TYPE_CHECKING, Any
 
+from mongoeco.compat import PyMongoProfile, resolve_pymongo_profile
+from mongoeco.compat._catalog_constants import PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX
 from mongoeco.driver._runtime_attempts import RuntimeAttemptLifecycle
 from mongoeco.driver._runtime_plan_resolution import resolve_runtime_execution_plan
 from mongoeco.driver._runtime_planning import build_runtime_command_plan
@@ -15,6 +17,7 @@ from mongoeco.driver.discovery import (
     SrvResolution,
     materialize_srv_uri,
     resolve_srv_dns,
+    resolve_srv_public,
     resolve_srv_seeds,
 )
 from mongoeco.driver.execution import (
@@ -58,12 +61,16 @@ from mongoeco.driver.uri import (
     build_write_concern_from_uri,
     parse_mongo_uri,
 )
-from mongoeco.session import ClientSession  # noqa: TC001 - exported annotations are introspectable
+from mongoeco.errors import ConfigurationError
+from mongoeco.session import (
+    ClientSession,  # noqa: TC001 - exported annotations are introspectable
+)
 from mongoeco.types import (  # noqa: TC001 - exported annotations are introspectable
     ReadConcern,
     ReadPreference,
     WriteConcern,
 )
+
 
 if TYPE_CHECKING:
     from mongoeco.driver.transports import WireProtocolCommandTransport
@@ -79,9 +86,22 @@ class DriverRuntime:
         read_preference: ReadPreference,
         srv_records: tuple[tuple[str, int | None], ...] | None = None,
         srv_resolver=None,
+        pymongo_profile: PyMongoProfile | str | None = None,
     ):
         self._uri = parse_mongo_uri(uri)
-        if srv_records is None:
+        profile = resolve_pymongo_profile(pymongo_profile)
+        public_srv = profile.supports(PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX)
+        if self._uri.options.srv_allowed_hosts_suffix is not None and (
+            not public_srv or srv_records is not None or srv_resolver is not None
+        ):
+            message = (
+                'srvAllowedHostsSuffix requires the public resolver '
+                'and PyMongo profile 4.18'
+            )
+            raise ConfigurationError(message)
+        if public_srv and srv_records is None and srv_resolver is None:
+            resolution = resolve_srv_public(self._uri)
+        elif srv_records is None:
             resolution = resolve_srv_dns(self._uri, resolver=srv_resolver) if self._uri.scheme == "mongodb+srv" else None
         else:
             resolution = resolve_srv_seeds(
@@ -157,8 +177,11 @@ class DriverRuntime:
         plan: RequestExecutionPlan,
         *,
         attempt_number: int,
+        operation_id: str | None = None,
     ) -> PreparedRequestExecution:
-        return await self._attempts.prepare(plan, attempt_number=attempt_number)
+        return await self._attempts.prepare(
+            plan, attempt_number=attempt_number, operation_id=operation_id
+        )
 
     async def complete_request_execution(self, execution: PreparedRequestExecution) -> None:
         await self._attempts.complete(execution)

@@ -1,46 +1,66 @@
+import calendar
 import datetime
+import decimal
 import math
+
 from collections.abc import Iterable
 from copy import deepcopy
 from functools import cmp_to_key
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.collation import CollationSpec, compare_with_collation
-from mongoeco.core.paths import get_document_value, set_document_value
-from mongoeco.core.sorting import sort_documents
-from mongoeco.core.work_control import DeadlineCheckpoint, iter_with_deadline
-from mongoeco.errors import OperationFailure
-from mongoeco.types import Document
-
 from mongoeco.core.aggregation.accumulators import (
     _AccumulatorBucket,
     _apply_accumulators,
     _create_accumulator_state,
     _finalize_accumulators,
     _prepare_accumulator_specs,
+    _require_range_bound,
+    _require_window_output_spec,
     _reset_accumulator_bucket,
     _resolve_range_value,
     _resolve_window_index,
-    _require_range_bound,
-    _require_window_output_spec,
+    _validate_empty_group_fields,
     _window_sort_key_values,
     _window_sort_keys_equal,
 )
-from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
-from mongoeco.core.aggregation.runtime import (
-    aggregation_equality_key,
-    _append_unique_values,
-    _resolve_aggregation_field_path,
-    _MISSING,
-    evaluate_expression,
-    _evaluate_expression_with_missing,
-)
-from mongoeco.core.aggregation.planning import _require_sort
 from mongoeco.core.aggregation.compiled_aggregation import CompiledGroup
+from mongoeco.core.aggregation.date_expressions import _require_date_unit
+from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
+from mongoeco.core.aggregation.numeric_expressions import _require_integral_numeric
+from mongoeco.core.aggregation.planning import _require_sort
+from mongoeco.core.aggregation.runtime import (
+    _MISSING,
+    _append_unique_values,
+    _evaluate_expression_with_missing,
+    _resolve_aggregation_field_path,
+    aggregation_equality_key,
+    evaluate_expression,
+)
+from mongoeco.core.bson_scalars import unwrap_bson_numeric
+from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.collation import CollationSpec, compare_with_collation
+from mongoeco.core.paths import get_document_value, set_document_value
+from mongoeco.core.sorting import sort_documents
+from mongoeco.core.work_control import DeadlineCheckpoint, iter_with_deadline
+from mongoeco.errors import OperationFailure
+from mongoeco.types import Decimal128, Document
 
 
 _UNEVALUATED_GROUP_ID = object()
+_WINDOW_RANGE_BOUND_COUNT = 2
+_DATE_WINDOW_UNIT_MILLISECONDS = {
+    "millisecond": 1,
+    "second": 1000,
+    "minute": 60000,
+    "hour": 3600000,
+    "day": 86400000,
+    "week": 604800000,
+}
+_DAYS_BEFORE_MONTH = (0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334)
+_BSON_EPOCH_ORDINAL = datetime.date(1970, 1, 1).toordinal()
+_MAX_DATE_ADD_YEARS = ((2**64 - 1) // 86400000 + 1) // 365 + 1
+_FEBRUARY = 2
 
 
 def _copy_if_mutable(value: Any) -> Any:
@@ -325,6 +345,7 @@ def _resolve_set_window_documents(
     sort_spec: list[tuple[str, int]] | None,
     *,
     deadline: float | None = None,
+    dialect: MongoDialect = MONGODB_DIALECT_70,
 ) -> list[Document]:
     if window is None:
         return ordered
@@ -361,9 +382,13 @@ def _resolve_set_window_documents(
     range_window = window.get("range")
     if not isinstance(range_window, list) or len(range_window) != 2:
         raise OperationFailure("$setWindowFields requires a two-item range window")
+    sort_field = sort_spec[0][0]
+    if "unit" in window and dialect.behavior_flag(
+        "supports_date_range_windows", default=False
+    ):
+        return _date_window_documents(ordered, document, sort_field, window, deadline)
     lower_bound = _require_range_bound(range_window[0])
     upper_bound = _require_range_bound(range_window[1])
-    sort_field = sort_spec[0][0]
     found_current, current_value = get_document_value(document, sort_field)
     if (
         not found_current
@@ -392,6 +417,131 @@ def _resolve_set_window_documents(
         if lower_value <= numeric_candidate <= upper_value:
             window_documents.append(candidate)
     return window_documents
+
+
+def validate_date_range_window(window: object) -> None:
+    if not isinstance(window, dict) or "unit" not in window:
+        return
+    _require_date_unit("$setWindowFields", window["unit"])
+    bounds = window.get("range")
+    if (
+        not isinstance(bounds, list)
+        or len(bounds) != _WINDOW_RANGE_BOUND_COUNT
+        or "documents" in window
+    ):
+        message = "$setWindowFields date windows require a two-item range"
+        raise OperationFailure(message)
+    for bound in bounds:
+        _date_window_bound(bound)
+
+
+def _date_window_bound(bound):
+    if bound in ("unbounded", "current"):
+        return bound
+    value = unwrap_bson_numeric(DocumentCodec.to_internal(bound))
+    if isinstance(value, Decimal128):
+        value = value.to_decimal()
+    if isinstance(value, decimal.Decimal) and value.is_finite() and int(value) == value:
+        value = int(value)
+    try:
+        value = _require_integral_numeric("$setWindowFields", value)
+        if not -(2**31) <= value < 2**31:
+            message = "date range bound exceeds Int32"
+            raise OperationFailure(message)
+        return value
+    except OperationFailure:
+        message = "With 'unit', range-based bounds must be an integer"
+        raise OperationFailure(
+            message, code=9, details={"codeName": "FailedToParse"}
+        ) from None
+
+
+def _date_window_milliseconds(value, *, year=None, month=None):
+    """UTC comparison coordinate, including calendar bounds outside datetime."""
+    year = value.year if year is None else year
+    month = value.month if month is None else month
+    day = min(value.day, calendar.monthrange(year, month)[1])
+    previous_year = year - 1
+    ordinal = (
+        previous_year * 365
+        + previous_year // 4
+        - previous_year // 100
+        + previous_year // 400
+        + _DAYS_BEFORE_MONTH[month - 1]
+        + day
+        + int(month > _FEBRUARY and calendar.isleap(year))
+    )
+    milliseconds = (
+        (ordinal - _BSON_EPOCH_ORDINAL) * 86400000
+        + value.hour * 3600000
+        + value.minute * 60000
+        + value.second * 1000
+        + value.microsecond // 1000
+    )
+    offset = value.utcoffset()
+    if offset is not None:
+        milliseconds -= offset // datetime.timedelta(milliseconds=1)
+    return milliseconds
+
+
+def _date_window_limit(current, unit, bound, *, lower):
+    if bound == "unbounded":
+        return -math.inf if lower else math.inf
+    coordinate = _date_window_milliseconds(current)
+    if bound == "current":
+        return coordinate
+    if unit in _DATE_WINDOW_UNIT_MILLISECONDS:
+        return coordinate + bound * _DATE_WINDOW_UNIT_MILLISECONDS[unit]
+    # Only calendar units can exceed the server's Date_t with an Int32 offset.
+    # The guards follow dateAdd, independently of Python's much smaller range.
+    if unit == "year" and not -_MAX_DATE_ADD_YEARS < bound < _MAX_DATE_ADD_YEARS:
+        message = f"invalid dateAdd 'amount' parameter value: {bound} {unit}"
+        raise OperationFailure(
+            message,
+            code=5976500,
+            details={"codeName": "Location5976500"},
+        )
+    month_index = (
+        current.year * 12
+        + current.month
+        - 1
+        + bound
+        * {
+            "month": 1,
+            "quarter": 3,
+            "year": 12,
+        }[unit]
+    )
+    year, month = divmod(month_index, 12)
+    result = _date_window_milliseconds(current, year=year, month=month + 1)
+    if not -(2**63) <= result < 2**63:
+        message = "dateAdd overflowed"
+        raise OperationFailure(
+            message,
+            code=5166406,
+            details={"codeName": "Location5166406"},
+        )
+    return result
+
+
+def _date_window_documents(ordered, document, sort_field, window, deadline):
+    validate_date_range_window(window)
+    found, current = get_document_value(document, sort_field)
+    if not found or not isinstance(current, datetime.datetime):
+        message = "$setWindowFields date range windows require date sort values"
+        raise OperationFailure(message)
+    lower, upper = (_date_window_bound(bound) for bound in window["range"])
+    lower_value = _date_window_limit(current, window["unit"], lower, lower=True)
+    upper_value = _date_window_limit(current, window["unit"], upper, lower=False)
+    result = []
+    for candidate in iter_with_deadline(ordered, deadline):
+        found, value = get_document_value(candidate, sort_field)
+        if not found or not isinstance(value, datetime.datetime):
+            message = "$setWindowFields date range windows require date sort values"
+            raise OperationFailure(message)
+        if lower_value <= _date_window_milliseconds(value) <= upper_value:
+            result.append(candidate)
+    return result
 
 
 def _find_bucket_index(
@@ -472,6 +622,8 @@ def _apply_group(  # noqa: PLR0913
     if not isinstance(spec, dict) or "_id" not in spec:
         raise OperationFailure("$group requires a document specification with _id")
 
+    _validate_empty_group_fields(spec, dialect=dialect)
+
     if deadline is None and CompiledGroup.supports(spec):
         try:
             compiled = CompiledGroup(spec, dialect=dialect)
@@ -506,6 +658,7 @@ class _IncrementalGroup:
             message = "$group requires a document specification with _id"
             raise OperationFailure(message)
         self._id_expression = spec["_id"]
+        _validate_empty_group_fields(spec, dialect=dialect)
         self._variables = aggregation_environment(variables, collation)
         self._dialect = dialect
         self._collation = collation
@@ -1029,6 +1182,7 @@ def _apply_set_window_fields(  # noqa: PLR0913
                     window,
                     sort_spec,
                     deadline=deadline,
+                    dialect=dialect,
                 )
                 if operator in {"$derivative", "$integral"}:
                     if sort_spec is None:

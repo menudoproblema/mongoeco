@@ -304,6 +304,7 @@ class AsyncAggregationCursor:
         if not isinstance(operation, AggregateOperation):
             operation = compile_aggregate_operation(
                 operation,
+                collection=getattr(collection, "_collection_name", None),
                 hint=hint,
                 comment=comment,
                 max_time_ms=max_time_ms,
@@ -397,6 +398,7 @@ class AsyncAggregationCursor:
                 self._collection, "mongodb_dialect", MONGODB_DIALECT_70
             ),
             collection=getattr(self._collection, "_collection_name", None),
+            variables=frozenset(self._execution_context.bindings),
         )
         leading_search = self._leading_search_stage()
         if leading_search is None:

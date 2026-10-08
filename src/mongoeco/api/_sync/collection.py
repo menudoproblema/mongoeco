@@ -20,6 +20,7 @@ from mongoeco.api.public_api import (
     COLLECTION_FIND_ONE_SPEC,
     COLLECTION_FIND_RAW_BATCHES_SPEC,
     COLLECTION_FIND_SPEC,
+    COLLECTION_LIST_SEARCH_INDEXES_SPEC,
     COLLECTION_REPLACE_ONE_SPEC,
     COLLECTION_UPDATE_MANY_SPEC,
     COLLECTION_UPDATE_ONE_SPEC,
@@ -361,6 +362,7 @@ class Collection:
             let=let,
             session=session,
             extra_kwargs=kwargs,
+            profile=self._client.pymongo_profile,
         )
         return AggregationCursor(
             self._client,
@@ -455,6 +457,7 @@ class Collection:
             let=let,
             session=session,
             extra_kwargs=kwargs,
+            profile=self._client.pymongo_profile,
         )
         return RawBatchCursor(
             self._client,
@@ -1092,7 +1095,14 @@ class Collection:
         *,
         comment: object | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> SearchIndexCursor:
+        normalize_public_operation_arguments(
+            COLLECTION_LIST_SEARCH_INDEXES_SPEC,
+            explicit={},
+            extra_kwargs=kwargs,
+            profile=self._client.pymongo_profile,
+        )
         return SearchIndexCursor(
             self._client,
             self._async_collection().list_search_indexes(

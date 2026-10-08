@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 from typing import Literal
 from urllib.parse import parse_qsl, unquote, urlsplit
 
-from mongoeco.types import ReadPreference, WriteConcern, ReadConcern
+from mongoeco.errors import ConfigurationError
+from mongoeco.types import ReadConcern, ReadPreference, WriteConcern
 
 
 type MongoScheme = Literal["mongodb", "mongodb+srv"]
@@ -70,6 +71,7 @@ class MongoClientOptions:
     srv_service_name: str | None = None
     srv_max_hosts: int | None = None
     raw_options: dict[str, str] = field(default_factory=dict)
+    srv_allowed_hosts_suffix: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -165,6 +167,12 @@ def _parse_seeds(hostinfo: str, *, scheme: MongoScheme) -> tuple[MongoUriSeed, .
 
 
 def _parse_client_options(option_pairs: list[tuple[str, str]]) -> MongoClientOptions:
+    suffix_values = [
+        value for key, value in option_pairs if key.lower() == 'srvallowedhostssuffix'
+    ]
+    if len(suffix_values) > 1 or (suffix_values and not suffix_values[0].strip('.')):
+        message = 'srvAllowedHostsSuffix must be a single non-empty domain'
+        raise ConfigurationError(message)
     raw_options = {key: value for key, value in option_pairs}
     grouped_options: dict[str, list[str]] = {}
     for key, value in option_pairs:
@@ -287,6 +295,7 @@ def _parse_client_options(option_pairs: list[tuple[str, str]]) -> MongoClientOpt
         srv_service_name=raw_options.get("srvServiceName"),
         srv_max_hosts=_get_int("srvMaxHosts", None),
         raw_options=raw_options,
+        srv_allowed_hosts_suffix=suffix_values[0] if suffix_values else None,
     )
 
 
@@ -316,6 +325,9 @@ def _finalize_client_options(
     options: MongoClientOptions,
 ) -> MongoClientOptions:
     del default_database
+    if options.srv_allowed_hosts_suffix is not None and scheme != 'mongodb+srv':
+        message = 'srvAllowedHostsSuffix requires mongodb+srv://'
+        raise ConfigurationError(message)
     tls = options.tls
     if scheme == "mongodb+srv" and not options.raw_options.get("tls") and not options.raw_options.get("ssl"):
         tls = MongoTlsOptions(
@@ -362,6 +374,7 @@ def _finalize_client_options(
         srv_service_name=options.srv_service_name,
         srv_max_hosts=options.srv_max_hosts,
         raw_options=options.raw_options,
+        srv_allowed_hosts_suffix=options.srv_allowed_hosts_suffix,
     )
 
 

@@ -55,6 +55,7 @@ from mongoeco.api.public_api import (
     ARG_UNSET,
     COLLECTION_FIND_RAW_BATCHES_SPEC,
     COLLECTION_FIND_SPEC,
+    COLLECTION_LIST_SEARCH_INDEXES_SPEC,
     normalize_aggregate_operation_arguments,
     normalize_public_operation_arguments,
 )
@@ -1281,9 +1282,11 @@ class AsyncCollection:
             let=let,
             session=session,
             extra_kwargs=kwargs,
+            profile=self._pymongo_profile,
         )
         operation = compile_aggregate_operation(
             DocumentCodec.to_internal(options["pipeline"]),
+            collection=self._collection_name,
             collation=options.get("collation"),
             hint=options.get("hint"),
             comment=options.get("comment"),
@@ -1384,6 +1387,7 @@ class AsyncCollection:
             let=let,
             session=session,
             extra_kwargs=kwargs,
+            profile=self._pymongo_profile,
         )
         cursor = self.aggregate(
             options["pipeline"],
@@ -1991,7 +1995,14 @@ class AsyncCollection:
         *,
         comment: object | None = None,
         session: ClientSession | None = None,
+        **kwargs: object,
     ) -> AsyncSearchIndexCursor:
+        normalize_public_operation_arguments(
+            COLLECTION_LIST_SEARCH_INDEXES_SPEC,
+            explicit={},
+            extra_kwargs=kwargs,
+            profile=self._pymongo_profile,
+        )
         return _collection_indexing.list_search_indexes(
             self,
             name=name,

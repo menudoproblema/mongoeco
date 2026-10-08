@@ -133,7 +133,7 @@ OPERATION_OPTION_SUPPORT_CATALOG = MappingProxyType(
                 ),
                 "wildcard_projection": OperationOptionSupport(
                     _ACCEPTED_NOOP,
-                    "Accepted and type-checked for API parity; the projection is not passed to the engine.",
+                    "Accepted and type-checked for API parity in dialects 7.0/8.0; the projection is not passed to the engine. Mongoeco's supported subset under dialect 9.0 rejects it before index creation; MongoDB itself supports wildcardProjection.",
                 ),
             }
         ),

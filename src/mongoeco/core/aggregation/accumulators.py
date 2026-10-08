@@ -18,6 +18,7 @@ from mongoeco.core.aggregation.numeric_expressions import (
 from mongoeco.core.bson_scalars import bson_add, is_bson_numeric, unwrap_bson_numeric
 from mongoeco.core.collation import CollationSpec, compare_with_collation
 from mongoeco.core.paths import get_document_value
+from mongoeco.error_catalog import EMPTY_GROUP_FIELD_ERROR
 from mongoeco.errors import OperationFailure
 from mongoeco.types import Document, SortSpec, UndefinedType
 
@@ -313,6 +314,16 @@ def _trim_ordered_accumulator(  # noqa: PLR0913 - comparison context
         )
     else:
         del state.items[keep:]
+
+
+def _validate_empty_group_fields(spec: object, *, dialect: MongoDialect) -> None:
+    if (
+        dialect.behavior_flag('rejects_empty_group_fields', default=False)
+        and isinstance(spec, dict)
+        and '' in spec
+    ):
+        message = "The field name '' cannot be an empty string"
+        raise OperationFailure(message, descriptor=EMPTY_GROUP_FIELD_ERROR)
 
 
 def _prepare_accumulator_specs(

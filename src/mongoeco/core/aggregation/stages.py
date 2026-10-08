@@ -41,9 +41,12 @@ from mongoeco.core.aggregation.planning import (
     _require_non_negative_int,
     _require_sort,
     _require_stage,
+    _validate_densify_partition_paths,
+    _validate_densify_range,
 )
 from mongoeco.core.aggregation.runtime import (
     AggregationStageContext,
+    aggregation_equality_key,
     _apply_unwind,
     evaluate_expression,
 )
@@ -57,7 +60,10 @@ from mongoeco.core.aggregation.transform_stages import (
     _apply_unset,
 )
 from mongoeco.core.aggregation.information_stages import parse_information_spec
-from mongoeco.core.aggregation.preparation import prepare_pipeline
+from mongoeco.core.aggregation.preparation import (
+    _GLOBAL_EXPRESSION_VARIABLES,
+    prepare_pipeline,
+)
 from mongoeco.core.aggregation.resources import AggregationResources
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.geo import (
@@ -410,11 +416,79 @@ def _stage_set_window_fields(
     )
 
 
-def _stage_densify(
+def _group_densify_documents(documents, field, partition_by_fields, unit, context):
+    grouped = {}
+    passthrough = []
+    for document in iter_with_deadline(documents, context.deadline):
+        found, value = get_document_value(document, field)
+        if not found or value is None:
+            passthrough.append(document)
+            continue
+        _require_densify_value(document, field)
+        if isinstance(value, datetime.datetime) != (unit is not None):
+            message = "$densify values must agree with the date unit in range"
+            raise OperationFailure(
+                message, code=6053600, details={"codeName": "Location6053600"}
+            )
+        partition = tuple(
+            get_document_value(document, path) for path in partition_by_fields
+        )
+        key = tuple(
+            (found, aggregation_equality_key(value, context.collation))
+            for found, value in partition
+        )
+        grouped.setdefault(key, (partition, []))[1].append(document)
+    return grouped, passthrough
+
+
+def _densify_partitions(
+    documents, field, partition_by_fields, range_spec, context
+):
+    bounds = range_spec["bounds"]
+    unit = range_spec.get("unit")
+    grouped, passthrough = _group_densify_documents(
+        documents, field, partition_by_fields, unit, context
+    )
+    if (
+        not grouped
+        and isinstance(bounds, list)
+        and (
+            not partition_by_fields
+            or context.dialect.behavior_flag(
+                "densify_empty_partition_generates_values", default=False
+            )
+        )
+    ):
+        grouped.setdefault((), ((), []))
+    full_bounds = None
+    if bounds == "full" and grouped:
+        values = [
+            _require_densify_value(document, field)
+            for _, partition_documents in grouped.values()
+            for document in iter_with_deadline(partition_documents, context.deadline)
+        ]
+        full_bounds = (min(values), max(values))
+    return grouped, full_bounds, passthrough
+
+
+def _densify_next_date_reaches_bound(current, upper, step, unit, bounds):
+    if not isinstance(current, datetime.datetime) or not isinstance(
+        upper, datetime.datetime
+    ):
+        return False
+    microsecond = datetime.timedelta(microseconds=1)
+    unit_size = _densify_datetime_delta(1, unit) // microsecond
+    delta = round(step * unit_size)
+    distance = (upper - current) // microsecond
+    return delta > distance or (delta == distance and bounds != "full")
+
+
+def _stage_densify(  # noqa: PLR0915 - preserve originals and bound generation in one stage
     documents: list[Document],
     spec: object,
     context: AggregationStageContext,
 ) -> list[Document]:
+    _validate_densify_partition_paths(spec, dialect=context.dialect)
     if not isinstance(spec, dict):
         raise OperationFailure("$densify requires a document specification")
     field = spec.get("field")
@@ -439,16 +513,22 @@ def _stage_densify(
     unit = range_spec.get("unit")
     if unit is not None and not isinstance(unit, str):
         raise OperationFailure("$densify range.unit must be a string")
+    _validate_densify_range(range_spec)
 
-    grouped: dict[tuple[object, ...], list[Document]] = {}
+    grouped, full_bounds, passthrough = _densify_partitions(
+        documents, field, partition_by_fields, range_spec, context
+    )
+    equal_bounds_are_empty = context.dialect.behavior_flag(
+        "densify_equal_bounds_are_empty",
+        default=context.dialect.behavior_flag(
+            "uses_server_densify_bounds", default=False
+        ),
+    )
     checkpoint = DeadlineCheckpoint(context.deadline)
-    for document in iter_with_deadline(documents, context.deadline):
-        key = tuple(_partition_value(document, path) for path in partition_by_fields)
-        grouped.setdefault(key, []).append(document)
 
-    result: list[Document] = []
+    result: list[Document] = list(passthrough)
     for partition_key, partition_documents in iter_with_deadline(
-        grouped.items(),
+        grouped.values(),
         context.deadline,
     ):
 
@@ -464,25 +544,57 @@ def _stage_densify(
             _require_densify_value(document, field): document
             for document in iter_with_deadline(ordered, context.deadline)
         }
-        ordered_values = list(present_values)
-        lower, upper = _resolve_densify_bounds(bounds, ordered_values)
+        if not ordered and bounds == "full":
+            continue
+        lower, upper = full_bounds or _resolve_densify_bounds(
+            bounds, list(present_values)
+        )
+        partition_result = list(ordered)
         current = lower
-        while _densify_value_leq(current, upper):
+        generate_equal_bound = (
+            isinstance(bounds, list) and lower == upper and not equal_bounds_are_empty
+        )
+        while _densify_value_leq(current, upper) and (
+            bounds == "full" or current != upper or generate_equal_bound
+        ):
             checkpoint()
-            existing = present_values.get(current)
-            if existing is not None:
-                result.append(existing)
-            else:
+            if current not in present_values:
                 synthetic: Document = {}
-                for path, value in zip(
+                for path, (found, value) in zip(
                     partition_by_fields, partition_key, strict=False
                 ):
-                    if value is not None:
+                    if found:
                         set_document_value(synthetic, path, deepcopy(value))
                 set_document_value(synthetic, field, current)
-                result.append(synthetic)
-            current = _advance_densify_value(current, step, unit)
+                partition_result.append(synthetic)
+            if generate_equal_bound or current == upper:
+                if (
+                    bounds == "full"
+                    and context.dialect.behavior_flag(
+                        "densify_full_nonadvancing_step_errors", default=False
+                    )
+                    and not isinstance(current, datetime.datetime)
+                ):
+                    _require_densify_progress(current, current + step)
+                break
+            # No next value is needed once it reaches the exclusive bound.
+            # Compare the distance before constructing a possibly unrepresentable date.
+            if _densify_next_date_reaches_bound(current, upper, step, unit, bounds):
+                break
+            next_value = _advance_densify_value(current, step, unit)
+            _require_densify_progress(current, next_value)
+            current = next_value
+        partition_result.sort(key=_densify_sort_key)
+        result.extend(partition_result)
     return result
+
+
+def _require_densify_progress(current, next_value):
+    if next_value == current:
+        message = "$densify step cannot advance within numeric precision"
+        raise OperationFailure(
+            message, code=5897900, details={"codeName": "Location5897900"}
+        )
 
 
 def _stage_fill(
@@ -851,7 +963,9 @@ def _require_densify_value(document: Document, field: str) -> object:
         value, bool
     ):
         raise OperationFailure(
-            "$densify currently supports numeric or date values only"
+            "$densify currently supports numeric or date values only",
+            code=5733201,
+            details={"codeName": "Location5733201"},
         )
     return value
 
@@ -1073,7 +1187,18 @@ def apply_pipeline(
     lookup_hash_max_associations: int | None = None,
     deadline: float | None = None,
 ) -> list[Document]:
-    pipeline = prepare_pipeline(pipeline, dialect=dialect)
+    pipeline = (
+        prepare_pipeline(pipeline, dialect=dialect)
+        if variables is None else
+        prepare_pipeline(
+            pipeline, dialect=dialect,
+            # Runtime frames include NOW/ROOT/etc. Those universally available
+            # names are not additions to the pipeline's declared lexical scope.
+            variables=(set(variables) - _GLOBAL_EXPRESSION_VARIABLES)
+            | (getattr(getattr(pipeline, "context", None), "variables", frozenset())
+               & _GLOBAL_EXPRESSION_VARIABLES),
+        )
+    )
     variables = aggregation_environment(variables, collation)
     if isinstance(collection_resolver, AggregationResources):
         bound = collection_resolver.resolver_kwargs()

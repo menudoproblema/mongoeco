@@ -110,10 +110,17 @@ def materialize_replacement_document(
     return materialized
 
 
-def materialize_merge_insert_document(document: dict[str, Any]) -> dict[str, Any]:
+def materialize_merge_insert_document(
+    document: dict[str, Any], *, dialect: Any = None
+) -> dict[str, Any]:
     """Apply MongoDB's update-style field ordering for a merge upsert."""
     materialized = {"_id": deepcopy(document["_id"])}
-    for key in sorted(key for key in document if key != "_id"):
+    keys = [key for key in document if key != "_id"]
+    if dialect is None or not dialect.behavior_flag(
+        "merge_insert_preserves_incoming_field_order", default=False
+    ):
+        keys.sort()
+    for key in keys:
         materialized[key] = deepcopy(document[key])
     return materialized
 

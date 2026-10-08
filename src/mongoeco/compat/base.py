@@ -506,6 +506,20 @@ class MongoDialect80(MongoDialect):
 
 
 @dataclass(frozen=True, slots=True)
+class MongoDialect90(MongoDialect80):
+    key: str = '9.0'
+    server_version: str = '9.0'
+    label: str = 'MongoDB 9.0'
+    catalog_behavior_flags: MappingProxyType = (
+        MONGODB_DIALECT_CATALOG['9.0'].behavior_flags
+    )
+    catalog_policy_spec: MongoBehaviorPolicySpec = (
+        MONGODB_DIALECT_CATALOG['9.0'].policy_spec or MongoBehaviorPolicySpec()
+    )
+    catalog_capabilities: frozenset[str] = MONGODB_DIALECT_CATALOG['9.0'].capabilities
+
+
+@dataclass(frozen=True, slots=True)
 class PyMongoProfile:
     """Describe la superficie pública objetivo compatible con PyMongo.
 
@@ -584,18 +598,32 @@ class PyMongoProfile417(PyMongoProfile413):
     catalog_capabilities: frozenset[str] = PYMONGO_PROFILE_CATALOG['4.17'].capabilities
 
 
+@dataclass(frozen=True, slots=True)
+class PyMongoProfile418(PyMongoProfile417):
+    key: str = '4.18'
+    driver_series: str = '4.x'
+    label: str = 'PyMongo 4.18'
+    catalog_behavior_flags: MappingProxyType = (
+        PYMONGO_PROFILE_CATALOG['4.18'].behavior_flags
+    )
+    catalog_capabilities: frozenset[str] = PYMONGO_PROFILE_CATALOG['4.18'].capabilities
+
+
 MONGODB_DIALECT_70 = MongoDialect70()
 MONGODB_DIALECT_80 = MongoDialect80()
+MONGODB_DIALECT_90 = MongoDialect90()
 
 PYMONGO_PROFILE_49 = PyMongoProfile49()
 PYMONGO_PROFILE_411 = PyMongoProfile411()
 PYMONGO_PROFILE_413 = PyMongoProfile413()
 PYMONGO_PROFILE_417 = PyMongoProfile417()
+PYMONGO_PROFILE_418 = PyMongoProfile418()
 
 MONGODB_DIALECTS = MappingProxyType(
     {
         MONGODB_DIALECT_70.key: MONGODB_DIALECT_70,
         MONGODB_DIALECT_80.key: MONGODB_DIALECT_80,
+        MONGODB_DIALECT_90.key: MONGODB_DIALECT_90,
     }
 )
 
@@ -617,6 +645,7 @@ PYMONGO_PROFILES = MappingProxyType(
         PYMONGO_PROFILE_411.key: PYMONGO_PROFILE_411,
         PYMONGO_PROFILE_413.key: PYMONGO_PROFILE_413,
         PYMONGO_PROFILE_417.key: PYMONGO_PROFILE_417,
+        PYMONGO_PROFILE_418.key: PYMONGO_PROFILE_418,
     }
 )
 

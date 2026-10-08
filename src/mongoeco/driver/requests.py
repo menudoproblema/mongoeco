@@ -4,11 +4,24 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
 
-from mongoeco.driver.connections import ConnectionLease
-from mongoeco.driver.policies import ConcernPolicy, RetryPolicy, SelectionPolicy, TimeoutPolicy
-from mongoeco.driver.security import AuthPolicy, TlsPolicy
-from mongoeco.driver.topology import ServerDescription, TopologyDescription
-from mongoeco.session import ClientSession
+from mongoeco.driver.connections import (  # noqa: TC001 - public runtime annotations
+    ConnectionLease,
+)
+from mongoeco.driver.policies import (  # noqa: TC001 - public runtime annotations
+    ConcernPolicy,
+    RetryPolicy,
+    SelectionPolicy,
+    TimeoutPolicy,
+)
+from mongoeco.driver.security import (  # noqa: TC001 - public runtime annotations
+    AuthPolicy,
+    TlsPolicy,
+)
+from mongoeco.driver.topology import (  # noqa: TC001 - public runtime annotations
+    ServerDescription,
+    TopologyDescription,
+)
+from mongoeco.session import ClientSession  # noqa: TC001 - public runtime annotations
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,3 +71,4 @@ class PreparedRequestExecution:
     connection: ConnectionLease
     attempt_number: int = 1
     request_id: str = field(default_factory=lambda: uuid4().hex)
+    operation_id: str = field(default_factory=lambda: uuid4().hex)

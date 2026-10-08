@@ -1,16 +1,27 @@
 from __future__ import annotations
 
+import datetime
+import math
+
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+from mongoeco.core.bson_scalars import bson_numeric_alias
+from mongoeco.error_catalog import (
+    DENSIFY_FIELD_PREFIX_ERROR,
+    DENSIFY_PARTITION_PREFIX_ERROR,
+)
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, Filter, Projection, SortSpec
+from mongoeco.types import (  # noqa: TC001 - public runtime annotations
+    Document, Filter, Projection, SortSpec,
+)
 
 
 type PipelineStage = dict[str, Any]
 type Pipeline = list[PipelineStage]
+_DENSIFY_BOUNDS_COUNT = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +32,84 @@ class AggregationPushdown:
     skip: int
     limit: int | None
     remaining_pipeline: Pipeline
+
+
+def _densify_range_error(message, code):
+    code_name = {9: "FailedToParse", 14: "TypeMismatch"}.get(code, f"Location{code}")
+    raise OperationFailure(message, code=code, details={"codeName": code_name})
+
+
+def _validate_densify_range(range_spec):
+    """Validate literals independently of whether any input row exists."""
+    if not isinstance(range_spec, dict):
+        return
+    step = range_spec.get("step")
+    alias = bson_numeric_alias(step)
+    if alias is None or isinstance(step, bool):
+        _densify_range_error("$densify range.step must be a positive number", 14)
+    if not step > 0:
+        _densify_range_error("$densify range.step must be a positive number", 5733401)
+    unit = range_spec.get("unit")
+    if unit is not None:
+        if not isinstance(unit, str):
+            _densify_range_error("$densify range.unit must be a string", 14)
+        if unit not in {
+            "millisecond", "second", "minute", "hour", "day", "week",
+            "month", "quarter", "year",
+        }:
+            _densify_range_error(f"unknown time unit value: {unit}", 9)
+        if not math.isfinite(step) or step != int(step):
+            _densify_range_error("$densify date step must be a whole number", 6586400)
+    bounds = range_spec.get("bounds")
+    _validate_densify_bounds(bounds, alias, unit)
+
+
+def _validate_densify_bounds(bounds, alias, unit):
+    if isinstance(bounds, str) and bounds in {"full", "partition"}:
+        return
+    if not isinstance(bounds, list) or len(bounds) != _DENSIFY_BOUNDS_COUNT:
+        _densify_range_error(
+            "$densify bounds must be full, partition, or a pair", 5946802
+        )
+    dates = all(isinstance(value, datetime.datetime) for value in bounds)
+    numbers = all(bson_numeric_alias(value) is not None for value in bounds)
+    if not dates and not numbers:
+        _densify_range_error("$densify bounds must both be dates or numeric", 5733406)
+    if bounds[0] > bounds[1]:
+        _densify_range_error("$densify bounds must be ascending", 5733402)
+    if numbers:
+        if unit is not None:
+            _densify_range_error(
+                "$densify numeric bounds may not specify a unit", 5733409
+            )
+        if any(bson_numeric_alias(value) != alias for value in bounds):
+            _densify_range_error(
+                "$densify bounds and step must have the same type", 5876900
+            )
+    elif unit is None:
+        _densify_range_error("$densify date bounds require a unit", 5733410)
+
+
+def _validate_densify_partition_paths(spec: object, *, dialect: MongoDialect) -> None:
+    if not dialect.behavior_flag('validates_densify_partition_paths', default=False):
+        return
+    if not isinstance(spec, dict):
+        return
+    field = spec.get('field')
+    partitions = spec.get('partitionByFields', [])
+    if not isinstance(field, str) or not isinstance(partitions, list):
+        return
+    for partition in partitions:
+        if not isinstance(partition, str):
+            continue
+        if partition == field or partition.startswith(field + '.'):
+            message = '$densify field must not be a prefix of a partitionByFields path'
+            raise OperationFailure(message, descriptor=DENSIFY_FIELD_PREFIX_ERROR)
+        if field.startswith(partition + '.'):
+            message = (
+                '$densify partitionByFields must not be a prefix of the field path'
+            )
+            raise OperationFailure(message, descriptor=DENSIFY_PARTITION_PREFIX_ERROR)
 
 
 def _require_stage(stage: object) -> tuple[str, object]:

@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Sequence
 
-from mongoeco.driver.uri import MongoUri, MongoUriSeed
+from mongoeco.driver.uri import MongoClientOptions, MongoUri, MongoUriSeed
+from mongoeco.errors import ConfigurationError
 
 
 @dataclass(frozen=True, slots=True)
@@ -13,6 +14,51 @@ class SrvResolution:
     resolved_seeds: tuple[MongoUriSeed, ...]
     max_hosts: int | None = None
     txt_options: dict[str, str] | None = None
+    effective_options: MongoClientOptions | None = None
+
+
+def resolve_srv_public(uri: MongoUri) -> SrvResolution | None:
+    """Delegate DNS and suffix validation to the driver's public API."""
+    if uri.scheme != "mongodb+srv":
+        return None
+    missing_driver_message = "PyMongo >= 4.18 is required for public SRV resolution"
+    try:
+        import pymongo  # noqa: PLC0415 - optional dependency
+
+        from pymongo.errors import (  # noqa: PLC0415 - optional dependency
+            ConfigurationError as DriverConfigurationError,
+        )
+        from pymongo.uri_parser import parse_uri  # noqa: PLC0415
+    except ImportError as exc:
+        raise ConfigurationError(missing_driver_message) from exc
+    if pymongo.version_tuple[:2] < (4, 18):
+        raise ConfigurationError(missing_driver_message)
+    try:
+        result = parse_uri(
+            uri.original,
+            connect_timeout=uri.options.connect_timeout_ms / 1000,
+            srv_service_name=uri.options.srv_service_name,
+            srv_max_hosts=uri.options.srv_max_hosts,
+            srv_allowed_hosts_suffix=uri.options.srv_allowed_hosts_suffix,
+        )
+    except DriverConfigurationError as exc:
+        raise ConfigurationError(str(exc)) from exc
+    options = result["options"]
+    effective_options = replace(
+        uri.options,
+        replica_set=options.get("replicaSet"),
+        auth=replace(uri.options.auth, source=options.get("authSource")),
+        load_balanced=bool(options.get("loadBalanced", False)),
+    )
+    return SrvResolution(
+        original_hostname=uri.seeds[0].host,
+        service_name=uri.options.srv_service_name or "mongodb",
+        resolved_seeds=tuple(
+            MongoUriSeed(host, port) for host, port in result["nodelist"]
+        ),
+        max_hosts=uri.options.srv_max_hosts,
+        effective_options=effective_options,
+    )
 
 
 def resolve_srv_seeds(
@@ -32,7 +78,11 @@ def resolve_srv_seeds(
         normalized: list[MongoUriSeed] = []
         for seed in srv_records:
             if isinstance(seed, MongoUriSeed):
-                normalized.append(MongoUriSeed(seed.host, seed.port if seed.port is not None else 27017))
+                normalized.append(
+                    MongoUriSeed(
+                        seed.host, seed.port if seed.port is not None else 27017
+                    )
+                )
             else:
                 host, port = seed
                 normalized.append(MongoUriSeed(host, 27017 if port is None else port))
@@ -59,7 +109,9 @@ def resolve_srv_dns(
         try:
             import dns.resolver  # type: ignore[import-not-found]
         except Exception as exc:  # pragma: no cover
-            raise RuntimeError("dnspython is required for real SRV DNS resolution") from exc
+            raise RuntimeError(
+                "dnspython is required for real SRV DNS resolution"
+            ) from exc
 
         resolver = dns.resolver.resolve
     hostname = uri.seeds[0].host
@@ -89,7 +141,11 @@ def resolve_srv_dns(
         if not strings:
             continue
         for item in strings:
-            raw = item.decode("utf-8") if isinstance(item, (bytes, bytearray)) else str(item)
+            raw = (
+                item.decode("utf-8")
+                if isinstance(item, (bytes, bytearray))
+                else str(item)
+            )
             for part in raw.split("&"):
                 if "=" not in part:
                     continue
@@ -115,6 +171,8 @@ def materialize_srv_uri(
     if resolution is None:
         return uri
     effective_uri = replace(uri, seeds=resolution.resolved_seeds)
+    if resolution.effective_options is not None:
+        return replace(effective_uri, options=resolution.effective_options)
     if not resolution.txt_options:
         return effective_uri
     options = effective_uri.options

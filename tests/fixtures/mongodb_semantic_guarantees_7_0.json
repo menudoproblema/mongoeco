@@ -1,0 +1,1779 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "7.0",
+  "cases": {
+    "densify_bad_bounds_empty": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5946802"
+      },
+      "code_name": "Location5946802",
+      "error_labels": [],
+      "message": "Bounds string must either be 'full' or 'partition'"
+    },
+    "densify_bool": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "14"
+      },
+      "code_name": "TypeMismatch",
+      "error_labels": [],
+      "message": "BSON field '$densify.range.step' is the wrong type 'bool', expected types '[int, decimal, double, long']"
+    },
+    "densify_date_field_numeric_bounds": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "6053600"
+      },
+      "code_name": "Location6053600",
+      "error_labels": [],
+      "message": "PlanExecutor error during aggregation :: caused by :: Encountered date densify value in collection when step does not have a date unit."
+    },
+    "densify_date_full_without_unit": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "6053600"
+      },
+      "code_name": "Location6053600",
+      "error_labels": [],
+      "message": "PlanExecutor error during aggregation :: caused by :: Encountered date densify value in collection when step does not have a date unit."
+    },
+    "densify_date_inf_step": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "6586400"
+      },
+      "code_name": "Location6586400",
+      "error_labels": [],
+      "message": "The step parameter in a range statement must be a whole number when densifying a date range"
+    },
+    "densify_date_integral_float_step": {
+      "ok": true,
+      "result": [
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "1767225600000"
+            }
+          }
+        }
+      ]
+    },
+    "densify_date_without_unit": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5733410"
+      },
+      "code_name": "Location5733410",
+      "error_labels": [],
+      "message": "A bounding array of dates must specify a unit"
+    },
+    "densify_empty_numeric_with_unit": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5733409"
+      },
+      "code_name": "Location5733409",
+      "error_labels": [],
+      "message": "Numeric bounds may not have unit parameter"
+    },
+    "densify_float": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5876900"
+      },
+      "code_name": "Location5876900",
+      "error_labels": [],
+      "message": "Upper bound, lower bound, and step must all have the same type"
+    },
+    "densify_float_float_bounds": {
+      "ok": true,
+      "result": [
+        {
+          "n": {
+            "$numberDouble": "0.0"
+          }
+        },
+        {
+          "n": {
+            "$numberDouble": "0.5"
+          }
+        },
+        {
+          "n": {
+            "$numberDouble": "1.0"
+          }
+        },
+        {
+          "n": {
+            "$numberDouble": "1.5"
+          }
+        },
+        {
+          "n": {
+            "$numberDouble": "2.0"
+          }
+        },
+        {
+          "n": {
+            "$numberDouble": "2.5"
+          }
+        }
+      ]
+    },
+    "densify_full_infinity": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "original",
+          "n": {
+            "$numberDouble": "Infinity"
+          }
+        }
+      ]
+    },
+    "densify_full_large_float": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "original",
+          "n": {
+            "$numberDouble": "1e+20"
+          }
+        }
+      ]
+    },
+    "densify_inf_double": {
+      "ok": true,
+      "result": [
+        {
+          "n": {
+            "$numberDouble": "0.0"
+          }
+        }
+      ]
+    },
+    "densify_inf_step": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5876900"
+      },
+      "code_name": "Location5876900",
+      "error_labels": [],
+      "message": "Upper bound, lower bound, and step must all have the same type"
+    },
+    "densify_int_float_bounds": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5876900"
+      },
+      "code_name": "Location5876900",
+      "error_labels": [],
+      "message": "Upper bound, lower bound, and step must all have the same type"
+    },
+    "densify_invalid_unit": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "unknown time unit value: bad"
+    },
+    "densify_missing_explicit": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "m"
+        },
+        {
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "densify_missing_field": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "missing",
+          "payload": "keep"
+        },
+        {
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "densify_missing_partition_explicit": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "m",
+          "p": "a"
+        },
+        {
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "densify_mixed_bounds": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5733406"
+      },
+      "code_name": "Location5733406",
+      "error_labels": [],
+      "message": "A bounding array must contain either both dates or both numeric types"
+    },
+    "densify_mixed_full": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "6053600"
+      },
+      "code_name": "Location6053600",
+      "error_labels": [],
+      "message": "PlanExecutor error during aggregation :: caused by :: Encountered date densify value in collection when step does not have a date unit."
+    },
+    "densify_nan_step": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5733401"
+      },
+      "code_name": "Location5733401",
+      "error_labels": [],
+      "message": "The step parameter in a range statement must be a strictly positive numeric value"
+    },
+    "densify_negative": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5733401"
+      },
+      "code_name": "Location5733401",
+      "error_labels": [],
+      "message": "The step parameter in a range statement must be a strictly positive numeric value"
+    },
+    "densify_non_numeric_field": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5733201"
+      },
+      "code_name": "Location5733201",
+      "error_labels": [],
+      "message": "PlanExecutor error during aggregation :: caused by :: Densify field type must be numeric or a date"
+    },
+    "densify_nonintegral_date_step": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "6586400"
+      },
+      "code_name": "Location6586400",
+      "error_labels": [],
+      "message": "The step parameter in a range statement must be a whole number when densifying a date range"
+    },
+    "densify_null_field": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "null",
+          "n": null,
+          "payload": "keep"
+        },
+        {
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "densify_number_field_date_bounds": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "6053600"
+      },
+      "code_name": "Location6053600",
+      "error_labels": [],
+      "message": "PlanExecutor error during aggregation :: caused by :: Encountered numeric densify value in collection when step has a date unit."
+    },
+    "densify_numeric_full_unit": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "6053600"
+      },
+      "code_name": "Location6053600",
+      "error_labels": [],
+      "message": "PlanExecutor error during aggregation :: caused by :: Encountered numeric densify value in collection when step has a date unit."
+    },
+    "densify_numeric_with_unit": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5733409"
+      },
+      "code_name": "Location5733409",
+      "error_labels": [],
+      "message": "Numeric bounds may not have unit parameter"
+    },
+    "densify_only_missing_full": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "missing"
+        }
+      ]
+    },
+    "densify_only_null_full": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "null",
+          "n": null
+        }
+      ]
+    },
+    "densify_partition_array": {
+      "ok": true,
+      "result": [
+        {
+          "p": [
+            {
+              "$numberInt": "1"
+            }
+          ],
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "p": [
+            {
+              "$numberInt": "1"
+            }
+          ],
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          },
+          "p": [
+            {
+              "$numberInt": "1"
+            }
+          ]
+        }
+      ]
+    },
+    "densify_partition_document": {
+      "ok": true,
+      "result": [
+        {
+          "p": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "p": {
+            "k": {
+              "$numberInt": "1"
+            }
+          },
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          },
+          "p": {
+            "k": {
+              "$numberInt": "1"
+            }
+          }
+        }
+      ]
+    },
+    "densify_partition_missing": {
+      "ok": true,
+      "result": [
+        {
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "0",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "densify_partition_missing_null": {
+      "ok": true,
+      "result": [
+        {
+          "p": null,
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "_id": "1",
+          "n": {
+            "$numberInt": "1"
+          },
+          "p": null
+        },
+        {
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "0",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "p": null,
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ]
+    },
+    "densify_partition_null": {
+      "ok": true,
+      "result": [
+        {
+          "p": null,
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "p": null,
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          },
+          "p": null
+        }
+      ]
+    },
+    "densify_reversed_bounds": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5733402"
+      },
+      "code_name": "Location5733402",
+      "error_labels": [],
+      "message": "A bounding array must be an ascending array of either two dates or two numbers"
+    },
+    "densify_step_fraction_date": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "6586400"
+      },
+      "code_name": "Location6586400",
+      "error_labels": [],
+      "message": "The step parameter in a range statement must be a whole number when densifying a date range"
+    },
+    "densify_str": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "14"
+      },
+      "code_name": "TypeMismatch",
+      "error_labels": [],
+      "message": "BSON field '$densify.range.step' is the wrong type 'string', expected types '[int, decimal, double, long']"
+    },
+    "densify_zero": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5733401"
+      },
+      "code_name": "Location5733401",
+      "error_labels": [],
+      "message": "The step parameter in a range statement must be a strictly positive numeric value"
+    },
+    "variable_$$": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: empty variable names are not allowed"
+    },
+    "variable_$$1bad": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: '1bad' starts with an invalid character for a user variable name"
+    },
+    "variable_$$ROOT.": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "40353"
+      },
+      "code_name": "Location40353",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: FieldPath must not end with a '.'."
+    },
+    "variable_$$ROOT..n": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "15998"
+      },
+      "code_name": "Location15998",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: FieldPath field names may not be empty strings."
+    },
+    "variable_$$bad space": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: 'bad space' contains an invalid character for a variable name: ' '"
+    },
+    "variable_$$unknown": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "17276"
+      },
+      "code_name": "Location17276",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: Use of undefined variable: unknown"
+    },
+    "variable_dollar": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: 'a$b' contains an invalid character for a variable name: '$'"
+    },
+    "variable_non_ascii": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "17276"
+      },
+      "code_name": "Location17276",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: Use of undefined variable: \u00e1"
+    },
+    "variable_pathdollar": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "16410"
+      },
+      "code_name": "Location16410",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: FieldPath field names may not start with '$'. Consider using $getField or $setField."
+    },
+    "variable_pathnull": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "16411"
+      },
+      "code_name": "Location16411",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: FieldPath field names may not contain '"
+    },
+    "variable_systeminvalid": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: 'ROOT space' contains an invalid character for a variable name: ' '"
+    },
+    "variable_underscore": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: '_foo' starts with an invalid character for a user variable name"
+    },
+    "variable_unknownbadpath": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "17276"
+      },
+      "code_name": "Location17276",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: Use of undefined variable: unknown"
+    },
+    "variable_upper": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "17276"
+      },
+      "code_name": "Location17276",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: Use of undefined variable: FOO"
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "7.0.43",
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "43"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "aarch64",
+        "cc": "/Applications/Xcode13.2.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang: Apple clang version 13.0.0 (clang-1300.0.29.30)",
+        "ccflags": "-Wno-error=unknown-warning-option -isysroot /Applications/Xcode13.2.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.0 --target=darwin20.0.0 -arch arm64 -Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -fno-omit-frame-pointer -fno-strict-aliasing -O2 -Wno-unused-local-typedefs -Wno-unused-function -Wno-unused-private-field -Wno-deprecated-declarations -Wno-tautological-constant-out-of-range-compare -Wno-tautological-constant-compare -Wno-tautological-unsigned-zero-compare -Wno-tautological-unsigned-enum-zero-compare -Wno-unused-const-variable -Wno-missing-braces -Wno-inconsistent-missing-override -Wno-potentially-evaluated-expression -Wno-unused-lambda-capture -Wunguarded-availability -fstack-protector-strong -fno-limit-debug-info -Wimplicit-fallthrough",
+        "cxx": "/Applications/Xcode13.2.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++: Apple clang version 13.0.0 (clang-1300.0.29.30)",
+        "cxxflags": "-Werror=unused-result -Woverloaded-virtual -Wpessimizing-move -Wno-undefined-var-template -Wno-instantiation-after-specialization -fsized-deallocation -Wno-defaulted-function-deleted -Wunused-exception-parameter -Wno-deprecated -stdlib=libc++ -std=c++20",
+        "linkflags": "-Wl,-syslibroot,/Applications/Xcode13.2.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.0 --target=darwin20.0.0 -arch arm64 -Wl,-fatal_warnings -Wl,-bind_at_load -fstack-protector-strong -stdlib=libc++",
+        "target_arch": "aarch64",
+        "target_os": "macOS",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG ASIO_HAS_STD_INVOKE_RESULT ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberInt": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.18.2",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/semantic_guarantee_cases.py",
+    "sha256": "dfff6da17d1f7dcfb77b4eed27502d7369a0b01fd8d1463cf0b661ddee591f86"
+  },
+  "case_manifests": [
+    {
+      "name": "densify_missing_field",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "missing",
+          "payload": "keep"
+        },
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "densify_missing_field"
+    },
+    {
+      "name": "densify_null_field",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "null",
+          "n": null,
+          "payload": "keep"
+        },
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "densify_null_field"
+    },
+    {
+      "name": "densify_only_missing_full",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "missing"
+        }
+      ],
+      "selector": "densify_only_missing_full"
+    },
+    {
+      "name": "densify_only_null_full",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "null",
+          "n": null
+        }
+      ],
+      "selector": "densify_only_null_full"
+    },
+    {
+      "name": "densify_partition_null",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          },
+          "p": null
+        }
+      ],
+      "selector": "densify_partition_null"
+    },
+    {
+      "name": "densify_partition_document",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          },
+          "p": {
+            "k": {
+              "$numberInt": "1"
+            }
+          }
+        }
+      ],
+      "selector": "densify_partition_document"
+    },
+    {
+      "name": "densify_partition_array",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          },
+          "p": [
+            {
+              "$numberInt": "1"
+            }
+          ]
+        }
+      ],
+      "selector": "densify_partition_array"
+    },
+    {
+      "name": "densify_numeric_with_unit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "densify_numeric_with_unit"
+    },
+    {
+      "name": "densify_empty_numeric_with_unit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_empty_numeric_with_unit"
+    },
+    {
+      "name": "densify_bad_bounds_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_bad_bounds_empty"
+    },
+    {
+      "name": "densify_reversed_bounds",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "densify_reversed_bounds"
+    },
+    {
+      "name": "densify_nonintegral_date_step",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$date": {
+              "$numberLong": "1767225600000"
+            }
+          }
+        }
+      ],
+      "selector": "densify_nonintegral_date_step"
+    },
+    {
+      "name": "densify_nan_step",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "densify_nan_step"
+    },
+    {
+      "name": "densify_inf_step",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "densify_inf_step"
+    },
+    {
+      "name": "densify_non_numeric_field",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": "invalid"
+        }
+      ],
+      "selector": "densify_non_numeric_field"
+    },
+    {
+      "name": "variable_$$1bad",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "variable_$$1bad"
+    },
+    {
+      "name": "variable_$$bad space",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "variable_$$bad space"
+    },
+    {
+      "name": "variable_$$ROOT.",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "variable_$$ROOT."
+    },
+    {
+      "name": "variable_$$ROOT..n",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "variable_$$ROOT..n"
+    },
+    {
+      "name": "variable_$$unknown",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "variable_$$unknown"
+    },
+    {
+      "name": "variable_$$",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "valid",
+          "n": {
+            "$numberInt": "2"
+          }
+        }
+      ],
+      "selector": "variable_$$"
+    },
+    {
+      "name": "densify_zero",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_zero"
+    },
+    {
+      "name": "densify_negative",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_negative"
+    },
+    {
+      "name": "densify_bool",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_bool"
+    },
+    {
+      "name": "densify_str",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_str"
+    },
+    {
+      "name": "densify_float",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_float"
+    },
+    {
+      "name": "densify_int_float_bounds",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_int_float_bounds"
+    },
+    {
+      "name": "densify_float_float_bounds",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_float_float_bounds"
+    },
+    {
+      "name": "densify_inf_double",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_inf_double"
+    },
+    {
+      "name": "densify_date_without_unit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_date_without_unit"
+    },
+    {
+      "name": "densify_invalid_unit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_invalid_unit"
+    },
+    {
+      "name": "densify_mixed_bounds",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_mixed_bounds"
+    },
+    {
+      "name": "densify_step_fraction_date",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_step_fraction_date"
+    },
+    {
+      "name": "densify_partition_missing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "n": {
+            "$numberInt": "2"
+          },
+          "_id": "0"
+        }
+      ],
+      "selector": "densify_partition_missing"
+    },
+    {
+      "name": "densify_partition_missing_null",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "n": {
+            "$numberInt": "2"
+          },
+          "_id": "0"
+        },
+        {
+          "n": {
+            "$numberInt": "1"
+          },
+          "p": null,
+          "_id": "1"
+        }
+      ],
+      "selector": "densify_partition_missing_null"
+    },
+    {
+      "name": "densify_missing_explicit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "m"
+        }
+      ],
+      "selector": "densify_missing_explicit"
+    },
+    {
+      "name": "densify_missing_partition_explicit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "m",
+          "p": "a"
+        }
+      ],
+      "selector": "densify_missing_partition_explicit"
+    },
+    {
+      "name": "variable_underscore",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a"
+        }
+      ],
+      "selector": "variable_underscore"
+    },
+    {
+      "name": "variable_upper",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a"
+        }
+      ],
+      "selector": "variable_upper"
+    },
+    {
+      "name": "variable_non_ascii",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a"
+        }
+      ],
+      "selector": "variable_non_ascii"
+    },
+    {
+      "name": "variable_dollar",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a"
+        }
+      ],
+      "selector": "variable_dollar"
+    },
+    {
+      "name": "variable_pathdollar",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a"
+        }
+      ],
+      "selector": "variable_pathdollar"
+    },
+    {
+      "name": "variable_pathnull",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a"
+        }
+      ],
+      "selector": "variable_pathnull"
+    },
+    {
+      "name": "variable_unknownbadpath",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a"
+        }
+      ],
+      "selector": "variable_unknownbadpath"
+    },
+    {
+      "name": "variable_systeminvalid",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a"
+        }
+      ],
+      "selector": "variable_systeminvalid"
+    },
+    {
+      "name": "densify_numeric_full_unit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "n": {
+            "$numberInt": "2"
+          },
+          "_id": "0"
+        }
+      ],
+      "selector": "densify_numeric_full_unit"
+    },
+    {
+      "name": "densify_date_full_without_unit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "1767225600000"
+            }
+          },
+          "_id": "0"
+        }
+      ],
+      "selector": "densify_date_full_without_unit"
+    },
+    {
+      "name": "densify_date_inf_step",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_date_inf_step"
+    },
+    {
+      "name": "densify_date_integral_float_step",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_date_integral_float_step"
+    },
+    {
+      "name": "densify_mixed_full",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "n": {
+            "$numberInt": "2"
+          },
+          "_id": "0"
+        },
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "1767225600000"
+            }
+          },
+          "_id": "1"
+        }
+      ],
+      "selector": "densify_mixed_full"
+    },
+    {
+      "name": "densify_date_field_numeric_bounds",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "1767225600000"
+            }
+          },
+          "_id": "0"
+        }
+      ],
+      "selector": "densify_date_field_numeric_bounds"
+    },
+    {
+      "name": "densify_number_field_date_bounds",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "n": {
+            "$numberInt": "2"
+          },
+          "_id": "0"
+        }
+      ],
+      "selector": "densify_number_field_date_bounds"
+    },
+    {
+      "name": "densify_full_large_float",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "original",
+          "n": {
+            "$numberDouble": "1e+20"
+          }
+        }
+      ],
+      "selector": "densify_full_large_float"
+    },
+    {
+      "name": "densify_full_infinity",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "original",
+          "n": {
+            "$numberDouble": "Infinity"
+          }
+        }
+      ],
+      "selector": "densify_full_infinity"
+    }
+  ]
+}

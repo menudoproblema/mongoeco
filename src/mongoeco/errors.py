@@ -8,6 +8,7 @@ except Exception:  # pragma: no cover - pymongo is optional
     _ConnectionFailureBase = Exception
     _ServerSelectionTimeoutErrorBase = Exception
     _InvalidOperationBase = Exception
+    _ConfigurationErrorBase = Exception
     _CollectionInvalidBase = Exception
     _OperationFailureBase = Exception
     _WriteErrorBase = Exception
@@ -20,6 +21,7 @@ else:  # pragma: no cover - behavior exercised in environments with pymongo
     _ConnectionFailureBase = _pymongo_errors.ConnectionFailure
     _ServerSelectionTimeoutErrorBase = _pymongo_errors.ServerSelectionTimeoutError
     _InvalidOperationBase = _pymongo_errors.InvalidOperation
+    _ConfigurationErrorBase = _pymongo_errors.ConfigurationError
     _CollectionInvalidBase = _pymongo_errors.CollectionInvalid
     _OperationFailureBase = _pymongo_errors.OperationFailure
     _WriteErrorBase = _pymongo_errors.WriteError
@@ -96,6 +98,10 @@ class PyMongoError(MongoEcoError, _PyMongoErrorBase):
 
     def __init__(self, message: str = "", error_labels: tuple[str, ...] = ()) -> None:
         _init_pymongo_error(self, message, error_labels=error_labels)
+
+
+class ConfigurationError(PyMongoError, _ConfigurationErrorBase):
+    """Se produce cuando las opciones del cliente no son válidas."""
 
 
 class ConnectionFailure(PyMongoError, _ConnectionFailureBase):

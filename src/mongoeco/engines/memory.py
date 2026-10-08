@@ -3413,7 +3413,9 @@ class MemoryEngine(AsyncStorageEngine):
                 if when_not_matched != "insert":
                     return MergeOutcome(matched=False, applied=False)
                 next_document = (
-                    materialize_merge_insert_document(document)
+                    materialize_merge_insert_document(
+                        document, dialect=effective_dialect
+                    )
                     if when_matched == "merge"
                     else deepcopy(document)
                 )
@@ -4600,6 +4602,8 @@ class MemoryEngine(AsyncStorageEngine):
                         ):
                             raise OperationFailure(
                                 f"Conflicting index definition for '{index_name}'",
+                                code=86,
+                                details={"codeName": "IndexKeySpecsConflict"},
                             )
                         return index_name
                     if index["key"] == normalized_keys:

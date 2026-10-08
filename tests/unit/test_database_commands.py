@@ -271,6 +271,7 @@ class AsyncDatabaseCommandServiceTests(unittest.TestCase):
             )
 
         client = MongoClient(MemoryEngine())
+        self.addCleanup(client.close)
         self.assertEqual(
             client["db"].command({
                 "createIndexes": "items",

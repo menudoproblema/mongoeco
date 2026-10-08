@@ -5478,7 +5478,9 @@ class SQLiteEngine(AsyncStorageEngine):
                                 applied=False,
                             )
                         next_document = (
-                            materialize_merge_insert_document(document)
+                            materialize_merge_insert_document(
+                                document, dialect=effective_dialect
+                            )
                             if when_matched == "merge"
                             else deepcopy(document)
                         )

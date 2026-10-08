@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import decimal
 import re
 import uuid
+
 from collections.abc import Callable
 from copy import deepcopy
 from functools import cmp_to_key
@@ -11,11 +13,13 @@ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
 from mongoeco.core.aggregation.evaluation_environment import (
     scoped_environment,
 )
+from mongoeco.core.bson_scalars import INT32_MAX, INT32_MIN, unwrap_bson_numeric
+from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.collation import compare_with_collation
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.sorting import sort_documents
-from mongoeco.core.collation import compare_with_collation
 from mongoeco.errors import OperationFailure
-from mongoeco.types import Document, Regex, SortSpec, UndefinedType
+from mongoeco.types import Decimal128, Document, Regex, SortSpec, UndefinedType
 
 
 type ExpressionEvaluator = Callable[[Document, object, dict[str, Any] | None], Any]
@@ -75,7 +79,107 @@ def _copy_if_mutable(value: Any) -> Any:
     return value
 
 
-def _hashable_set_lookup_key(value: Any, *, dialect: MongoDialect) -> tuple[str, Any] | None:
+def array_variable_names(
+    operator: str, spec: object, *, dialect: MongoDialect
+) -> dict[str, str]:
+    """Validate the array frame once, including expressions over no rows."""
+    if not dialect.behavior_flag("supports_array_index_variables", default=False):
+        return {}
+    required = {
+        "$map": {"input", "in"},
+        "$filter": {"input", "cond"},
+        "$reduce": {"input", "initialValue", "in"},
+    }[operator]
+    allowed = required | {"as", "arrayIndexAs"}
+    if operator == "$filter":
+        allowed.add("limit")
+    elif operator == "$reduce":
+        allowed.add("valueAs")
+    if not isinstance(spec, dict) or not required <= spec.keys():
+        message = f"{operator} requires {', '.join(sorted(required))}"
+        raise OperationFailure(message)
+    for key in spec:
+        if key not in allowed:
+            code = {"$map": 16879, "$filter": 28647, "$reduce": 40076}[operator]
+            message = f"Unrecognized parameter to {operator}: {key}"
+            raise OperationFailure(
+                message, code=code, details={"codeName": f"Location{code}"}
+            )
+    names = {
+        "as": spec.get("as", "this"),
+        "arrayIndexAs": spec.get("arrayIndexAs", "IDX"),
+    }
+    if operator == "$reduce":
+        names["valueAs"] = spec.get("valueAs", "value")
+    for parameter, name in names.items():
+        if parameter not in spec:
+            continue
+        if (
+            not isinstance(name, str)
+            or re.fullmatch(
+                r"(?:[a-z]|[^\x00-\x7f])(?:[A-Za-z0-9_]|[^\x00-\x7f])*", name
+            )
+            is None
+        ):
+            message = f"{operator} {parameter} must name a valid user variable"
+            raise OperationFailure(
+                message, code=9, details={"codeName": "FailedToParse"}
+            )
+    if len(set(names.values())) != len(names):
+        code = {"$map": 9375801, "$filter": 9375802, "$reduce": 9298401}[operator]
+        message = f"{operator} cannot define variables with the same name"
+        raise OperationFailure(
+            message, code=code, details={"codeName": f"Location{code}"}
+        )
+    return names
+
+
+def _filter_limit(value: object) -> int | None:
+    if value is None:
+        return None
+    value = unwrap_bson_numeric(DocumentCodec.to_internal(value))
+    if isinstance(value, Decimal128):
+        value = value.to_decimal()
+    try:
+        valid = (
+            not isinstance(value, bool)
+            and isinstance(value, (int, float, decimal.Decimal))
+            and INT32_MIN <= value <= INT32_MAX
+            and int(value) == value
+        )
+    except decimal.InvalidOperation:
+        valid = False
+    if not valid:
+        message = "$filter: limit must be represented as a 32-bit integral value"
+        raise OperationFailure(
+            message, code=327391, details={"codeName": "Location327391"}
+        )
+    if value <= 0:
+        message = "$filter: limit must be greater than 0"
+        raise OperationFailure(
+            message, code=327392, details={"codeName": "Location327392"}
+        )
+    return int(value)
+
+
+_TRIM_CHARS_MAX_BYTES = 4096
+
+
+def validate_trim_chars(chars: object, *, dialect: MongoDialect) -> None:
+    if (
+        dialect.behavior_flag("limits_trim_chars", default=False)
+        and isinstance(chars, str)
+        and len(chars.encode("utf-8")) > _TRIM_CHARS_MAX_BYTES
+    ):
+        message = "$trim requires 'chars' to be not greater than 4096 bytes"
+        raise OperationFailure(
+            message, code=12066800, details={"codeName": "Location12066800"}
+        )
+
+
+def _hashable_set_lookup_key(
+    value: Any, *, dialect: MongoDialect
+) -> tuple[str, Any] | None:
     if dialect is not MONGODB_DIALECT_70:
         return None
     if value is None:
@@ -200,6 +304,7 @@ def evaluate_array_string_expression(
                 return None
             if not isinstance(chars, str):
                 raise OperationFailure(f"{operator} chars must evaluate to a string")
+            validate_trim_chars(chars, dialect=dialect)
         mode = {"$trim": "both", "$ltrim": "left", "$rtrim": "right"}[operator]
         return _trim_string(value, chars, mode=mode)
 
@@ -434,6 +539,7 @@ def evaluate_array_string_expression(
         )
 
     if operator == "$map":
+        names = array_variable_names(operator, spec, dialect=dialect)
         if not isinstance(spec, dict) or "input" not in spec or "in" not in spec:
             raise OperationFailure("$map requires input and in")
         source = evaluate_expression(document, spec["input"], variables)
@@ -444,39 +550,55 @@ def evaluate_array_string_expression(
         if not isinstance(alias, str):
             raise OperationFailure("$map as must be a string")
         result = []
-        for item in source:
+        for index, item in enumerate(source):
             scoped = scoped_environment(variables)
             scoped_item = _copy_if_mutable(item)
             scoped[alias] = scoped_item
             if alias == "this":
                 scoped["this"] = scoped_item
-            else:
+            elif not names:
                 scoped.pop("this", None)
+            if names:
+                scoped[names["arrayIndexAs"]] = index
             result.append(evaluate_expression(document, spec["in"], scoped))
         return result
 
     if operator == "$filter":
+        names = array_variable_names(operator, spec, dialect=dialect)
         if not isinstance(spec, dict) or "input" not in spec or "cond" not in spec:
             raise OperationFailure("$filter requires input and cond")
         source = evaluate_expression(document, spec["input"], variables)
         if source is None:
             return None
         source = _require_array(operator, source)
+        if names and not source:
+            return []
         alias = spec.get("as", "this")
         if not isinstance(alias, str):
             raise OperationFailure("$filter as must be a string")
+        limit = (
+            _filter_limit(evaluate_expression(document, spec["limit"], variables))
+            if names and "limit" in spec
+            else None
+        )
         result = []
-        for item in source:
+        for index, item in enumerate(source):
             scoped = scoped_environment(variables)
             scoped[alias] = item
-            scoped["this"] = item
+            if not names or alias == "this":
+                scoped["this"] = item
+            if names:
+                scoped[names["arrayIndexAs"]] = index
             if dialect.policy.expression_truthy(
                 evaluate_expression(document, spec["cond"], scoped)
             ):
                 result.append(deepcopy(item))
+                if limit is not None and len(result) >= limit:
+                    break
         return result
 
     if operator == "$reduce":
+        names = array_variable_names(operator, spec, dialect=dialect)
         if not isinstance(spec, dict) or not {"input", "initialValue", "in"} <= set(
             spec
         ):
@@ -486,10 +608,12 @@ def evaluate_array_string_expression(
             return None
         source = _require_array(operator, source)
         accumulated = evaluate_expression(document, spec["initialValue"], variables)
-        for item in source:
+        for index, item in enumerate(source):
             scoped = scoped_environment(variables)
-            scoped["value"] = accumulated
-            scoped["this"] = item
+            scoped[names.get("valueAs", "value")] = accumulated
+            scoped[names.get("as", "this")] = item
+            if names:
+                scoped[names["arrayIndexAs"]] = index
             accumulated = evaluate_expression(document, spec["in"], scoped)
         return accumulated
 
@@ -774,7 +898,9 @@ def _substr_string(value: str, start: int, length: int) -> str:
         offset += len(char.encode("utf-8"))
         boundaries.add(offset)
     if start not in boundaries or end not in boundaries:
-        raise OperationFailure("$substr byte offsets must align with UTF-8 code point boundaries")
+        raise OperationFailure(
+            "$substr byte offsets must align with UTF-8 code point boundaries"
+        )
     return raw[start:end].decode("utf-8")
 
 
@@ -785,7 +911,9 @@ def _substr_code_points(value: str, start: int, length: int) -> str:
     return value[start:end]
 
 
-def _normalize_index_bounds(operator: str, start: Any, end: Any, upper_bound: int) -> tuple[int, int]:
+def _normalize_index_bounds(
+    operator: str, start: Any, end: Any, upper_bound: int
+) -> tuple[int, int]:
     if start is None:
         start_index = 0
     else:
@@ -815,7 +943,9 @@ def _trim_string(value: str, chars: str | None, *, mode: str) -> str:
             while start < end and (value[start].isspace() or value[start] == "\x00"):
                 start += 1
         if mode in {"right", "both"}:
-            while end > start and (value[end - 1].isspace() or value[end - 1] == "\x00"):
+            while end > start and (
+                value[end - 1].isspace() or value[end - 1] == "\x00"
+            ):
                 end -= 1
         return value[start:end]
     if mode == "left":
@@ -825,7 +955,9 @@ def _trim_string(value: str, chars: str | None, *, mode: str) -> str:
     return value.strip(chars)
 
 
-def _compile_aggregation_regex(regex_value: Any, options_value: Any, *, operator: str) -> re.Pattern[str]:
+def _compile_aggregation_regex(
+    regex_value: Any, options_value: Any, *, operator: str
+) -> re.Pattern[str]:
     supported = {"i": re.IGNORECASE, "m": re.MULTILINE, "s": re.DOTALL, "x": re.VERBOSE}
     flags = 0
     pattern: str
@@ -833,20 +965,28 @@ def _compile_aggregation_regex(regex_value: Any, options_value: Any, *, operator
         raise OperationFailure(f"{operator} options must be a string")
     if isinstance(regex_value, Regex):
         if options_value not in {None, ""}:
-            raise OperationFailure(f"{operator} cannot specify options in both regex and options")
+            raise OperationFailure(
+                f"{operator} cannot specify options in both regex and options"
+            )
         return regex_value.compile()
     if isinstance(regex_value, re.Pattern):
         if options_value not in {None, ""}:
-            raise OperationFailure(f"{operator} cannot specify options in both regex and options")
+            raise OperationFailure(
+                f"{operator} cannot specify options in both regex and options"
+            )
         disallowed_flags = regex_value.flags & (re.DOTALL | re.VERBOSE)
         if disallowed_flags:
-            raise OperationFailure(f"{operator} regex patterns only support embedded i and m options")
+            raise OperationFailure(
+                f"{operator} regex patterns only support embedded i and m options"
+            )
         flags = regex_value.flags & (re.IGNORECASE | re.MULTILINE)
         pattern = regex_value.pattern
     elif isinstance(regex_value, str):
         pattern = regex_value
     else:
-        raise OperationFailure(f"{operator} regex must resolve to a string or regex pattern")
+        raise OperationFailure(
+            f"{operator} regex must resolve to a string or regex pattern"
+        )
     if options_value:
         for option in options_value:
             if option not in supported:

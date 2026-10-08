@@ -491,6 +491,7 @@ class AsyncMongoClient:
         self._transaction_options = normalize_transaction_options(transaction_options)
         self._driver_runtime = DriverRuntime(
             uri=uri,
+            pymongo_profile=self._pymongo_profile,
             write_concern=self._write_concern,
             read_concern=self._read_concern,
             read_preference=self._read_preference,

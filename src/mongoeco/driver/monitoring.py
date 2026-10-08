@@ -14,6 +14,7 @@ class ServerSelectedEvent:
     read_only: bool
     session_id: str | None = None
     request_id: str | None = None
+    operation_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +28,7 @@ class ServerSelectionFailedEvent:
     read_only: bool
     session_id: str | None = None
     request_id: str | None = None
+    operation_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +51,7 @@ class ConnectionCheckedOutEvent:
     attempt_number: int
     session_id: str | None = None
     request_id: str | None = None
+    operation_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +63,7 @@ class ConnectionCheckedInEvent:
     attempt_number: int
     session_id: str | None = None
     request_id: str | None = None
+    operation_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +77,7 @@ class CommandStartedEvent:
     read_only: bool
     session_id: str | None = None
     request_id: str | None = None
+    operation_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,6 +91,7 @@ class CommandSucceededEvent:
     duration_ms: float
     session_id: str | None = None
     request_id: str | None = None
+    operation_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +106,7 @@ class CommandFailedEvent:
     retryable: bool
     session_id: str | None = None
     request_id: str | None = None
+    operation_id: str | None = None
 
 
 DriverEvent = (
