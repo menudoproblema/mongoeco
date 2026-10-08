@@ -1,0 +1,17 @@
+[
+  {
+    "port": 29017,
+    "dbpath": "/private/tmp/mongoeco-support-20261008/servers/db-7.0",
+    "shutdown_verified": true
+  },
+  {
+    "port": 29018,
+    "dbpath": "/private/tmp/mongoeco-support-20261008/servers/db-8.0",
+    "shutdown_verified": true
+  },
+  {
+    "port": 29019,
+    "dbpath": "/private/tmp/mongoeco-support-20261008/servers/db-9.0",
+    "shutdown_verified": true
+  }
+]

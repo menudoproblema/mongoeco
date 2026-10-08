@@ -1,0 +1,20 @@
+{
+  "7": {
+    "port": 29217,
+    "dbPath": "/private/tmp/mongoeco-490-20261008/db7",
+    "remaining_test_databases": [],
+    "shutdown": "verified unavailable"
+  },
+  "8": {
+    "port": 29218,
+    "dbPath": "/private/tmp/mongoeco-490-20261008/db8",
+    "remaining_test_databases": [],
+    "shutdown": "verified unavailable"
+  },
+  "9": {
+    "port": 29219,
+    "dbPath": "/private/tmp/mongoeco-490-20261008/db9",
+    "remaining_test_databases": [],
+    "shutdown": "verified unavailable"
+  }
+}

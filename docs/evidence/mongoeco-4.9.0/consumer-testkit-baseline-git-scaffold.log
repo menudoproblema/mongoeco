@@ -1,0 +1,26 @@
+F....................................................................... [ 53%]
+...............................................................          [100%]
+=================================== FAILURES ===================================
+______________ test_same_types_reuse_plan_without_reusing_values _______________
+
+    def test_same_types_reuse_plan_without_reusing_values() -> None:
+        first = _ValueService('first')
+        second = _ValueService('second')
+    
+        for expected in (first, second):
+            scope = ApplicationTestScope()
+            with scope.activate():
+                scope.bind(_ValueService, expected)
+                assert scope.resolve(_ValueService) is expected
+                assert scope._lazy_scope is not None
+                assert scope._lazy_scope._container is not None
+                assert (
+>                   scope._lazy_scope._container._plan.exports[0].contract_ref
+                    == _ValueService.dependency_contract_ref
+                )
+E               AttributeError: 'DependencyExportV1' object has no attribute 'contract_ref'
+
+../adoption-baseline/gdynamics-testing/packages/mochuelo-testkit/tests/test_application_plan_cache.py:141: AttributeError
+=========================== short test summary info ============================
+FAILED test_application_plan_cache.py::test_same_types_reuse_plan_without_reusing_values
+1 failed, 134 passed in 1.19s

@@ -1,0 +1,1329 @@
+{
+  "case_filter": null,
+  "cases": [
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "boolean_filter_matrix",
+      "seed_documents": [
+        {
+          "_id": "active-work-open",
+          "completed_at": null,
+          "items": [
+            {
+              "enrollment_task_id": "soft",
+              "exposed_at": "2024-01-01 12:00:00"
+            }
+          ],
+          "planning_status": "active",
+          "score": 8,
+          "task_type": "work_unit"
+        },
+        {
+          "_id": "missing-status-open",
+          "completed_at": null,
+          "items": [
+            {
+              "enrollment_task_id": "soft"
+            }
+          ],
+          "score": 3,
+          "task_type": "content_update"
+        },
+        {
+          "_id": "retired-work-open",
+          "completed_at": null,
+          "items": [
+            {
+              "enrollment_task_id": "soft",
+              "exposed_at": "2024-01-02 12:00:00"
+            }
+          ],
+          "planning_status": "retired",
+          "score": 9,
+          "task_type": "work_unit"
+        },
+        {
+          "_id": "active-work-done",
+          "completed_at": "2024-01-03 12:00:00",
+          "items": [
+            {
+              "enrollment_task_id": "soft",
+              "exposed_at": "2024-01-04 12:00:00"
+            }
+          ],
+          "planning_status": "active",
+          "score": 5,
+          "task_type": "work_unit"
+        },
+        {
+          "_id": "pending-quiz-open",
+          "completed_at": null,
+          "items": [],
+          "planning_status": "pending",
+          "score": 7,
+          "task_type": "quiz"
+        },
+        {
+          "_id": "active-update-open",
+          "completed_at": null,
+          "items": [
+            {
+              "enrollment_task_id": "soft",
+              "exposed_at": null
+            }
+          ],
+          "planning_status": "active",
+          "score": 6,
+          "task_type": "content_update"
+        }
+      ],
+      "selector": "boolean_filter_matrix"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "find_expr_compare_fields",
+      "seed_documents": [
+        {
+          "_id": "1",
+          "budget": 10,
+          "spent": 12
+        },
+        {
+          "_id": "2",
+          "budget": 10,
+          "spent": 8
+        }
+      ],
+      "selector": "find_expr_compare_fields"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "find_subdocument_order_sensitive_equality",
+      "seed_documents": [
+        {
+          "_id": "ordered",
+          "value": {
+            "a": 1,
+            "b": 2
+          }
+        },
+        {
+          "_id": "reordered",
+          "value": {
+            "a": 1,
+            "b": 2
+          }
+        }
+      ],
+      "selector": "find_subdocument_order_sensitive_equality"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "find_all_with_multiple_elem_match",
+      "seed_documents": [
+        {
+          "_id": "1",
+          "items": [
+            {
+              "kind": "a",
+              "qty": 1
+            },
+            {
+              "kind": "b",
+              "qty": 2
+            },
+            {
+              "kind": "b",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "_id": "2",
+          "items": [
+            {
+              "kind": "a",
+              "qty": 1
+            },
+            {
+              "kind": "b",
+              "qty": 2
+            }
+          ]
+        }
+      ],
+      "selector": "find_all_with_multiple_elem_match"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "find_implicit_regex_literal",
+      "seed_documents": [
+        {
+          "_id": "1",
+          "name": "MongoDB"
+        },
+        {
+          "_id": "2",
+          "name": "Postgres"
+        }
+      ],
+      "selector": "find_implicit_regex_literal"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "find_in_with_regex_literals",
+      "seed_documents": [
+        {
+          "_id": "1",
+          "tags": [
+            "beta",
+            "stable"
+          ]
+        },
+        {
+          "_id": "2",
+          "tags": [
+            "alpha",
+            "stable"
+          ]
+        }
+      ],
+      "selector": "find_in_with_regex_literals"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "update_add_to_set_document_order_sensitive",
+      "seed_documents": [
+        {
+          "_id": "1",
+          "items": [
+            {
+              "kind": "a",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "selector": "update_add_to_set_document_order_sensitive"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "update_set_on_insert_id_matches_filter",
+      "seed_documents": [],
+      "selector": "update_set_on_insert_id_matches_filter"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "update_pipeline_project_preserves_id",
+      "seed_documents": [
+        {
+          "_id": "1",
+          "legacy": true,
+          "name": "Ada"
+        }
+      ],
+      "selector": "update_pipeline_project_preserves_id"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "update_pipeline_rejects_id_change",
+      "seed_documents": [
+        {
+          "_id": "1",
+          "name": "Ada"
+        }
+      ],
+      "selector": "update_pipeline_rejects_id_change"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "insert_rejects_root_array_id",
+      "seed_documents": [],
+      "selector": "insert_rejects_root_array_id"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "find_expr_truthiness_array",
+      "seed_documents": [
+        {
+          "_id": "array",
+          "flag": []
+        },
+        {
+          "_id": "zero",
+          "flag": 0
+        },
+        {
+          "_id": "false",
+          "flag": false
+        },
+        {
+          "_id": "string",
+          "flag": ""
+        }
+      ],
+      "selector": "find_expr_truthiness_array"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_project_array_traversal",
+      "seed_documents": [
+        {
+          "_id": "1",
+          "items": [
+            {
+              "kind": "a"
+            },
+            {
+              "kind": "b"
+            }
+          ]
+        },
+        {
+          "_id": "2",
+          "items": [
+            {
+              "kind": "c"
+            }
+          ]
+        }
+      ],
+      "selector": "aggregate_project_array_traversal"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_get_field_literal_name",
+      "seed_documents": [
+        {
+          "$price": 2,
+          "_id": "1",
+          "a.b.c": 1,
+          "x..y": 3
+        }
+      ],
+      "selector": "aggregate_get_field_literal_name"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_project_shapes",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_project_shapes"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_set_add_fields",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_set_add_fields"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_unset_shapes",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_unset_shapes"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_replace_root",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_replace_root"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_replace_with",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_replace_with"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_unwind_fanout",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_unwind_fanout"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_group_shapes",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_group_shapes"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_facet_shapes",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_facet_shapes"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_lookup_shapes",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_lookup_shapes"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_union_with_shapes",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_union_with_shapes"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_group_collection_references",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_group_collection_references"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_semantic_collation",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "key": "Ada",
+          "value": 1
+        },
+        {
+          "_id": "b",
+          "key": "other",
+          "value": 2
+        },
+        {
+          "_id": "c",
+          "key": "ada",
+          "value": 1.0
+        }
+      ],
+      "selector": "aggregate_semantic_collation"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_pipeline_validation",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_pipeline_validation"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_foreign_stats",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_foreign_stats"
+    },
+    {
+      "min_version": [
+        7,
+        0
+      ],
+      "name": "aggregate_merge_writeback",
+      "seed_documents": [
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-1",
+          "items": [
+            {
+              "value": "a"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 1
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 1
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-2",
+          "items": [],
+          "kind": "drop",
+          "nested": {
+            "remove": "legacy",
+            "value": 2
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 2
+          }
+        },
+        {
+          "__mongoeco_user_data": {
+            "kept": true
+          },
+          "_id": "local-3",
+          "kind": "keep",
+          "nested": {
+            "remove": "legacy",
+            "value": 3
+          },
+          "obsolete": true,
+          "searchHighlights": {
+            "caller": 3
+          }
+        }
+      ],
+      "selector": "aggregate_merge_writeback"
+    }
+  ],
+  "duration_seconds": 2.461305856704712,
+  "errors": [],
+  "expected_tests": 29,
+  "failures": [],
+  "preflight_error": null,
+  "runtime": {
+    "build_info": {
+      "allocator": "system",
+      "bits": 64,
+      "buildEnvironment": {
+        "cc": "/Applications/Xcode13.2.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang: Apple clang version 13.0.0 (clang-1300.0.29.30)",
+        "ccflags": "-Wno-error=unknown-warning-option -isysroot /Applications/Xcode13.2.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.0 --target=darwin20.0.0 -arch arm64 -Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -fno-omit-frame-pointer -fno-strict-aliasing -O2 -Wno-unused-local-typedefs -Wno-unused-function -Wno-unused-private-field -Wno-deprecated-declarations -Wno-tautological-constant-out-of-range-compare -Wno-tautological-constant-compare -Wno-tautological-unsigned-zero-compare -Wno-tautological-unsigned-enum-zero-compare -Wno-unused-const-variable -Wno-missing-braces -Wno-inconsistent-missing-override -Wno-potentially-evaluated-expression -Wno-unused-lambda-capture -Wunguarded-availability -fstack-protector-strong -fno-limit-debug-info -Wimplicit-fallthrough",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG ASIO_HAS_STD_INVOKE_RESULT ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5",
+        "cxx": "/Applications/Xcode13.2.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++: Apple clang version 13.0.0 (clang-1300.0.29.30)",
+        "cxxflags": "-Werror=unused-result -Woverloaded-virtual -Wpessimizing-move -Wno-undefined-var-template -Wno-instantiation-after-specialization -fsized-deallocation -Wno-defaulted-function-deleted -Wunused-exception-parameter -Wno-deprecated -stdlib=libc++ -std=c++20",
+        "distarch": "aarch64",
+        "distmod": "",
+        "linkflags": "-Wl,-syslibroot,/Applications/Xcode13.2.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.0 --target=darwin20.0.0 -arch arm64 -Wl,-fatal_warnings -Wl,-bind_at_load -fstack-protector-strong -stdlib=libc++",
+        "target_arch": "aarch64",
+        "target_os": "macOS"
+      },
+      "debug": false,
+      "gitVersion": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+      "javascriptEngine": "mozjs",
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "maxBsonObjectSize": 16777216,
+      "modules": [],
+      "ok": 1.0,
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "sysInfo": "deprecated",
+      "version": "7.0.43",
+      "versionArray": [
+        7,
+        0,
+        43,
+        0
+      ]
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.18.2",
+    "python": "3.14.5"
+  },
+  "seed": 42,
+  "skipped": [],
+  "successful": true,
+  "target": "7.0",
+  "tests_run": 29
+}

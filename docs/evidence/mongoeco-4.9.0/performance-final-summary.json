@@ -1,0 +1,496 @@
+{
+  "rows": [
+    {
+      "engine": "memory",
+      "workload": "simple_aggregation",
+      "task": "simple_aggregation_topk",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 0.074,
+      "wall_mean_candidate_seconds": 0.0624,
+      "wall_mean_delta_percent": -15.67567567567567,
+      "cpu_user_mean_baseline_seconds": 0.072,
+      "cpu_user_mean_candidate_seconds": 0.064,
+      "cpu_sys_mean_baseline_seconds": 0.002,
+      "cpu_sys_mean_candidate_seconds": 0.002,
+      "rss_peak_baseline_mb": 167.89,
+      "rss_peak_candidate_mb": 131.75
+    },
+    {
+      "engine": "memory",
+      "workload": "materializing_aggregation",
+      "task": "materializing_aggregation_group_sort",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 0.4981,
+      "wall_mean_candidate_seconds": 0.4227,
+      "wall_mean_delta_percent": -15.137522585826135,
+      "cpu_user_mean_baseline_seconds": 0.496,
+      "cpu_user_mean_candidate_seconds": 0.418,
+      "cpu_sys_mean_baseline_seconds": 0.002,
+      "cpu_sys_mean_candidate_seconds": 0.002,
+      "rss_peak_baseline_mb": 183.34,
+      "rss_peak_candidate_mb": 147.27
+    },
+    {
+      "engine": "memory",
+      "workload": "aggregation_spill_diagnostics",
+      "task": "group_low_cardinality_first",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 0.2816,
+      "wall_mean_candidate_seconds": 0.2149,
+      "wall_mean_delta_percent": -23.686079545454554,
+      "cpu_user_mean_baseline_seconds": 0.28,
+      "cpu_user_mean_candidate_seconds": 0.214,
+      "cpu_sys_mean_baseline_seconds": 0.002,
+      "cpu_sys_mean_candidate_seconds": 0.0,
+      "rss_peak_baseline_mb": 189.33,
+      "rss_peak_candidate_mb": 160.59
+    },
+    {
+      "engine": "memory",
+      "workload": "aggregation_spill_diagnostics",
+      "task": "group_high_cardinality_first",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 1.9394,
+      "wall_mean_candidate_seconds": 1.393,
+      "wall_mean_delta_percent": -28.173661957306383,
+      "cpu_user_mean_baseline_seconds": 1.826,
+      "cpu_user_mean_candidate_seconds": 1.376,
+      "cpu_sys_mean_baseline_seconds": 0.026,
+      "cpu_sys_mean_candidate_seconds": 0.02,
+      "rss_peak_baseline_mb": 189.47,
+      "rss_peak_candidate_mb": 160.86
+    },
+    {
+      "engine": "memory",
+      "workload": "secondary_lookup_indexed",
+      "task": "secondary_lookup_indexed_1k",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 0.2169,
+      "wall_mean_candidate_seconds": 0.153,
+      "wall_mean_delta_percent": -29.460580912863076,
+      "cpu_user_mean_baseline_seconds": 0.18,
+      "cpu_user_mean_candidate_seconds": 0.13,
+      "cpu_sys_mean_baseline_seconds": 0.024,
+      "cpu_sys_mean_candidate_seconds": 0.02,
+      "rss_peak_baseline_mb": 214.91,
+      "rss_peak_candidate_mb": 186.44
+    },
+    {
+      "engine": "memory",
+      "workload": "cursor_consumption",
+      "task": "cursor_consumption_first_200",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 0.0384,
+      "wall_mean_candidate_seconds": 0.0298,
+      "wall_mean_delta_percent": -22.395833333333325,
+      "cpu_user_mean_baseline_seconds": 0.032,
+      "cpu_user_mean_candidate_seconds": 0.022,
+      "cpu_sys_mean_baseline_seconds": 0.004,
+      "cpu_sys_mean_candidate_seconds": 0.0,
+      "rss_peak_baseline_mb": 410.92,
+      "rss_peak_candidate_mb": 395.38
+    },
+    {
+      "engine": "memory",
+      "workload": "cursor_consumption",
+      "task": "cursor_consumption_materialized_200",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 5.9968,
+      "wall_mean_candidate_seconds": 4.8761,
+      "wall_mean_delta_percent": -18.688300426894344,
+      "cpu_user_mean_baseline_seconds": 5.752,
+      "cpu_user_mean_candidate_seconds": 4.676,
+      "cpu_sys_mean_baseline_seconds": 0.08,
+      "cpu_sys_mean_candidate_seconds": 0.052,
+      "rss_peak_baseline_mb": 423.91,
+      "rss_peak_candidate_mb": 406.2
+    },
+    {
+      "engine": "sqlite",
+      "workload": "simple_aggregation",
+      "task": "simple_aggregation_topk",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 0.0331,
+      "wall_mean_candidate_seconds": 0.0326,
+      "wall_mean_delta_percent": -1.5105740181268867,
+      "cpu_user_mean_baseline_seconds": 0.03,
+      "cpu_user_mean_candidate_seconds": 0.032,
+      "cpu_sys_mean_baseline_seconds": 0.002,
+      "cpu_sys_mean_candidate_seconds": 0.004,
+      "rss_peak_baseline_mb": 175.73,
+      "rss_peak_candidate_mb": 165.52
+    },
+    {
+      "engine": "sqlite",
+      "workload": "materializing_aggregation",
+      "task": "materializing_aggregation_group_sort",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 0.4021,
+      "wall_mean_candidate_seconds": 0.3983,
+      "wall_mean_delta_percent": -0.9450385476249767,
+      "cpu_user_mean_baseline_seconds": 0.38,
+      "cpu_user_mean_candidate_seconds": 0.374,
+      "cpu_sys_mean_baseline_seconds": 0.008,
+      "cpu_sys_mean_candidate_seconds": 0.008,
+      "rss_peak_baseline_mb": 193.41,
+      "rss_peak_candidate_mb": 188.28
+    },
+    {
+      "engine": "sqlite",
+      "workload": "aggregation_spill_diagnostics",
+      "task": "group_low_cardinality_first",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 0.1939,
+      "wall_mean_candidate_seconds": 0.1849,
+      "wall_mean_delta_percent": -4.641567818463111,
+      "cpu_user_mean_baseline_seconds": 0.17,
+      "cpu_user_mean_candidate_seconds": 0.164,
+      "cpu_sys_mean_baseline_seconds": 0.01,
+      "cpu_sys_mean_candidate_seconds": 0.01,
+      "rss_peak_baseline_mb": 196.52,
+      "rss_peak_candidate_mb": 195.23
+    },
+    {
+      "engine": "sqlite",
+      "workload": "aggregation_spill_diagnostics",
+      "task": "group_high_cardinality_first",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 1.5668,
+      "wall_mean_candidate_seconds": 1.4291,
+      "wall_mean_delta_percent": -8.788613735001272,
+      "cpu_user_mean_baseline_seconds": 1.424,
+      "cpu_user_mean_candidate_seconds": 1.368,
+      "cpu_sys_mean_baseline_seconds": 0.032,
+      "cpu_sys_mean_candidate_seconds": 0.022,
+      "rss_peak_baseline_mb": 196.89,
+      "rss_peak_candidate_mb": 197.41
+    },
+    {
+      "engine": "sqlite",
+      "workload": "secondary_lookup_indexed",
+      "task": "secondary_lookup_indexed_1k",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 0.3694,
+      "wall_mean_candidate_seconds": 0.3641,
+      "wall_mean_delta_percent": -1.4347590687601608,
+      "cpu_user_mean_baseline_seconds": 0.232,
+      "cpu_user_mean_candidate_seconds": 0.23,
+      "cpu_sys_mean_baseline_seconds": 0.038,
+      "cpu_sys_mean_candidate_seconds": 0.038,
+      "rss_peak_baseline_mb": 217.28,
+      "rss_peak_candidate_mb": 215.95
+    },
+    {
+      "engine": "sqlite",
+      "workload": "cursor_consumption",
+      "task": "cursor_consumption_first_200",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 0.0755,
+      "wall_mean_candidate_seconds": 0.0709,
+      "wall_mean_delta_percent": -6.092715231788071,
+      "cpu_user_mean_baseline_seconds": 0.046,
+      "cpu_user_mean_candidate_seconds": 0.046,
+      "cpu_sys_mean_baseline_seconds": 0.012,
+      "cpu_sys_mean_candidate_seconds": 0.01,
+      "rss_peak_baseline_mb": 634.55,
+      "rss_peak_candidate_mb": 604.69
+    },
+    {
+      "engine": "sqlite",
+      "workload": "cursor_consumption",
+      "task": "cursor_consumption_materialized_200",
+      "result_and_plan_metadata_equal": true,
+      "wall_mean_baseline_seconds": 8.4395,
+      "wall_mean_candidate_seconds": 8.1538,
+      "wall_mean_delta_percent": -3.385271639315124,
+      "cpu_user_mean_baseline_seconds": 6.808,
+      "cpu_user_mean_candidate_seconds": 6.632,
+      "cpu_sys_mean_baseline_seconds": 0.916,
+      "cpu_sys_mean_candidate_seconds": 0.854,
+      "rss_peak_baseline_mb": 893.14,
+      "rss_peak_candidate_mb": 891.86
+    }
+  ],
+  "comparator_unchanged": true,
+  "all_contracts_pass": true,
+  "all_metadata_equal": true,
+  "limits": [
+    "Local sequential measurements with warmup 1 and five repetitions per task; not a statistical global non-regression guarantee or causal attribution.",
+    "OS load and cache effects are uncontrolled; earlier baseline host activity may contribute to differences.",
+    "RSS sampled every 5ms may miss transients; neither peak nor delta establishes a memory bound.",
+    "Main simple_aggregation explain does not select streaming batches; the supplemental benchmark proves that route separately.",
+    "9.0 enables new validation, adding real cost versus 7.0; no published 4.8.1 dialect 9 baseline exists.",
+    "Microsecond index timing is noisy; deterministic 9.0 catalog reads (1 ordinary recreation, 3 for a three-index batch) preserve equivalence and are not bypassed.",
+    "Supplemental streaming consumes 20000 full documents in batches of 128; bags preserve multiplicity because natural order is not promised.",
+    "Baseline and candidate streaming harness use the shared batch_size argument and explicit try/finally cursor close; the published wheel lacks the tested context-manager protocol. Initial harness errors are preserved as diagnostics."
+  ],
+  "streaming": [
+    {
+      "engine": "memory",
+      "baseline_wall_median_ns": 212077584,
+      "candidate_wall_median_ns": 253979625,
+      "wall_delta_percent": 19.757883039633263,
+      "baseline_cpu_median_ns": 208156000,
+      "candidate_cpu_median_ns": 248427000,
+      "batch_stream_opens": 6,
+      "all_results_equal": true,
+      "all_physical_plan_keys_equal": true
+    },
+    {
+      "engine": "sqlite",
+      "baseline_wall_median_ns": 279526000,
+      "candidate_wall_median_ns": 380919458,
+      "wall_delta_percent": 36.27335489364138,
+      "baseline_cpu_median_ns": 258523000,
+      "candidate_cpu_median_ns": 347040000,
+      "batch_stream_opens": 6,
+      "all_results_equal": true,
+      "all_physical_plan_keys_equal": true
+    }
+  ],
+  "semantic_micro_workloads": [
+    {
+      "engine": "memory",
+      "task": "prepared_aggregation",
+      "baseline_wall_median_ns": 9575916,
+      "candidate_wall_median_ns": 10169333,
+      "wall_delta_percent": 6.1969737412065795,
+      "baseline_cpu_median_ns": 9555000,
+      "candidate_cpu_median_ns": 10140000
+    },
+    {
+      "engine": "memory",
+      "task": "ordinary_convert",
+      "baseline_wall_median_ns": 9951875,
+      "candidate_wall_median_ns": 10286500,
+      "wall_delta_percent": 3.3624317025686024,
+      "baseline_cpu_median_ns": 9741000,
+      "candidate_cpu_median_ns": 10047000
+    },
+    {
+      "engine": "memory",
+      "task": "direct_find_convert",
+      "baseline_wall_median_ns": 15621083,
+      "candidate_wall_median_ns": 16402417,
+      "wall_delta_percent": 5.001791489104823,
+      "baseline_cpu_median_ns": 15359000,
+      "candidate_cpu_median_ns": 16125000
+    },
+    {
+      "engine": "memory",
+      "task": "ordinary_index_recreation",
+      "baseline_wall_median_ns": 62250,
+      "candidate_wall_median_ns": 82041,
+      "wall_delta_percent": 31.792771084337357,
+      "baseline_cpu_median_ns": 40000,
+      "candidate_cpu_median_ns": 54000
+    },
+    {
+      "engine": "sqlite",
+      "task": "prepared_aggregation",
+      "baseline_wall_median_ns": 12332292,
+      "candidate_wall_median_ns": 12272750,
+      "wall_delta_percent": -0.48281373811129846,
+      "baseline_cpu_median_ns": 11479000,
+      "candidate_cpu_median_ns": 11451000
+    },
+    {
+      "engine": "sqlite",
+      "task": "ordinary_convert",
+      "baseline_wall_median_ns": 12364209,
+      "candidate_wall_median_ns": 12748125,
+      "wall_delta_percent": 3.105059126709997,
+      "baseline_cpu_median_ns": 11353000,
+      "candidate_cpu_median_ns": 11604000
+    },
+    {
+      "engine": "sqlite",
+      "task": "direct_find_convert",
+      "baseline_wall_median_ns": 22200167,
+      "candidate_wall_median_ns": 22712166,
+      "wall_delta_percent": 2.3062844527250714,
+      "baseline_cpu_median_ns": 21092000,
+      "candidate_cpu_median_ns": 21575000
+    },
+    {
+      "engine": "sqlite",
+      "task": "ordinary_index_recreation",
+      "baseline_wall_median_ns": 154958,
+      "candidate_wall_median_ns": 137542,
+      "wall_delta_percent": -11.239174485989755,
+      "baseline_cpu_median_ns": 116000,
+      "candidate_cpu_median_ns": 93000
+    }
+  ],
+  "deterministic_work": {
+    "baseline_default": {
+      "memory": {
+        "stage_parse_calls": 2,
+        "copy_walk_calls": 7,
+        "convert_static_validations": null,
+        "convert_direct_validations": null,
+        "find_convert_direct_validations": null,
+        "convert_counter_limit": "Published 4.8.1 uses inline validation; the new helper counters are unavailable, not zero.",
+        "ordinary_index_list_reads": 0,
+        "ordinary_batch_list_reads": 0
+      },
+      "sqlite": {
+        "stage_parse_calls": 2,
+        "copy_walk_calls": 7,
+        "convert_static_validations": null,
+        "convert_direct_validations": null,
+        "find_convert_direct_validations": null,
+        "convert_counter_limit": "Published 4.8.1 uses inline validation; the new helper counters are unavailable, not zero.",
+        "ordinary_index_list_reads": 0,
+        "ordinary_batch_list_reads": 0
+      }
+    },
+    "candidate_default": {
+      "memory": {
+        "stage_parse_calls": 2,
+        "copy_walk_calls": 7,
+        "convert_static_validations": 0,
+        "convert_direct_validations": 0,
+        "find_convert_direct_validations": 0,
+        "ordinary_index_list_reads": 0,
+        "ordinary_batch_list_reads": 0
+      },
+      "sqlite": {
+        "stage_parse_calls": 2,
+        "copy_walk_calls": 7,
+        "convert_static_validations": 0,
+        "convert_direct_validations": 0,
+        "find_convert_direct_validations": 0,
+        "ordinary_index_list_reads": 0,
+        "ordinary_batch_list_reads": 0
+      }
+    },
+    "candidate_9": {
+      "memory": {
+        "stage_parse_calls": 2,
+        "copy_walk_calls": 7,
+        "convert_static_validations": 1,
+        "convert_direct_validations": 1000,
+        "find_convert_direct_validations": 1000,
+        "ordinary_index_list_reads": 1,
+        "ordinary_batch_list_reads": 3
+      },
+      "sqlite": {
+        "stage_parse_calls": 2,
+        "copy_walk_calls": 7,
+        "convert_static_validations": 1,
+        "convert_direct_validations": 1000,
+        "find_convert_direct_validations": 1000,
+        "ordinary_index_list_reads": 1,
+        "ordinary_batch_list_reads": 3
+      }
+    }
+  },
+  "actual_spill": {
+    "baseline_and_candidate": "one group spool per engine at 20000 rows, threshold 10000; no leaked temporary files"
+  },
+  "equivalent_dependencies_except_mongoeco": 74,
+  "streaming_rounds": [
+    {
+      "round": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "engine": "memory",
+      "wall_delta_percent": 19.757883039633263,
+      "baseline_wall_median_ns": 212077584,
+      "candidate_wall_median_ns": 253979625,
+      "baseline_cpu_median_ns": 208156000,
+      "candidate_cpu_median_ns": 248427000
+    },
+    {
+      "round": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "engine": "memory",
+      "wall_delta_percent": -0.9944096619702081,
+      "baseline_wall_median_ns": 272963458,
+      "candidate_wall_median_ns": 270249083,
+      "baseline_cpu_median_ns": 265333000,
+      "candidate_cpu_median_ns": 265958000
+    },
+    {
+      "round": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "engine": "memory",
+      "wall_delta_percent": -10.596419860444705,
+      "baseline_wall_median_ns": 277969667,
+      "candidate_wall_median_ns": 248514834,
+      "baseline_cpu_median_ns": 272926000,
+      "candidate_cpu_median_ns": 244561000
+    },
+    {
+      "round": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "engine": "sqlite",
+      "wall_delta_percent": 36.27335489364138,
+      "baseline_wall_median_ns": 279526000,
+      "candidate_wall_median_ns": 380919458,
+      "baseline_cpu_median_ns": 258523000,
+      "candidate_cpu_median_ns": 347040000
+    },
+    {
+      "round": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "engine": "sqlite",
+      "wall_delta_percent": -8.569682663953504,
+      "baseline_wall_median_ns": 362431250,
+      "candidate_wall_median_ns": 331372042,
+      "baseline_cpu_median_ns": 342083000,
+      "candidate_cpu_median_ns": 299662000
+    },
+    {
+      "round": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "engine": "sqlite",
+      "wall_delta_percent": -1.4499447658418152,
+      "baseline_wall_median_ns": 319038084,
+      "candidate_wall_median_ns": 314412208,
+      "baseline_cpu_median_ns": 300064000,
+      "candidate_cpu_median_ns": 293490000
+    }
+  ],
+  "streaming_pooled": [
+    {
+      "engine": "memory",
+      "repetitions_per_package": 15,
+      "baseline_wall_median_ns": 265424375,
+      "candidate_wall_median_ns": 253979625,
+      "baseline_cpu_median_ns": 261182000,
+      "candidate_cpu_median_ns": 248427000
+    },
+    {
+      "engine": "sqlite",
+      "repetitions_per_package": 15,
+      "baseline_wall_median_ns": 319038084,
+      "candidate_wall_median_ns": 331372042,
+      "baseline_cpu_median_ns": 300064000,
+      "candidate_cpu_median_ns": 300015000
+    }
+  ],
+  "streaming_investigation": {
+    "initial_positive_delta": "Preserved, not discarded. Opposite-order and alternating repeats show mixed deltas; no stable regression inferred.",
+    "profile": "Same prepare calls 160, stage parse 317 and copy calls 790 on 20000 rows. Total calls 4524691 versus 4526123; profiler changes timing and is diagnostic only.",
+    "scope_cost": "The additional general-context construction preserves lexical authority; no validation removed to improve the timing."
+  }
+}

@@ -1,0 +1,193 @@
+{
+  "schema": "mongoeco-semantic-work-measurement/1",
+  "version": "4.9.0",
+  "module": "/private/tmp/mongoeco-490-20261008/benchmark-candidate-env/lib/python3.14/site-packages/mongoeco/__init__.py",
+  "python": "3.14.5",
+  "dialect": "7.0",
+  "profile": "4.9",
+  "size": 1000,
+  "warmup": 1,
+  "repetitions": 5,
+  "harness_sha256": "7008a9b72cee2da0c69d7d6b50a406830ca7066917e55eecc64f72469d46a183",
+  "dataset_sha256": "81f74fa84773545dfbb412ef2ed4330f8fd7ff6b93db1e846847fe2b4d4e7ffb",
+  "engines": {
+    "memory": {
+      "counts": {
+        "stage_parse_calls": 2,
+        "copy_walk_calls": 7,
+        "convert_static_validations": 0,
+        "convert_direct_validations": 0,
+        "find_convert_direct_validations": 0,
+        "ordinary_index_list_reads": 0,
+        "ordinary_batch_list_reads": 0
+      },
+      "measurements": {
+        "prepared_aggregation": {
+          "wall_ns": [
+            10138166,
+            10596083,
+            10169333,
+            10236333,
+            10008500
+          ],
+          "cpu_ns": [
+            10112000,
+            10559000,
+            10140000,
+            10231000,
+            9995000
+          ],
+          "wall_median_ns": 10169333,
+          "cpu_median_ns": 10140000,
+          "result_sha256": "a425f42af5eb23c1fd902f8d6e71314ee3acb377b39fa7f3f8e0a7a5a72044ed"
+        },
+        "ordinary_convert": {
+          "wall_ns": [
+            10305959,
+            10172417,
+            10286500,
+            10134000,
+            10379875
+          ],
+          "cpu_ns": [
+            10077000,
+            9980000,
+            10047000,
+            9945000,
+            10149000
+          ],
+          "wall_median_ns": 10286500,
+          "cpu_median_ns": 10047000,
+          "result_sha256": "7f4c3f3b97946b5452e5a8e20165863717e00804706a8bf4746b3cf2a46db929"
+        },
+        "direct_find_convert": {
+          "wall_ns": [
+            16516458,
+            16402417,
+            16572292,
+            16395000,
+            16377792
+          ],
+          "cpu_ns": [
+            16215000,
+            16125000,
+            16245000,
+            16091000,
+            16078000
+          ],
+          "wall_median_ns": 16402417,
+          "cpu_median_ns": 16125000,
+          "result_sha256": "81f74fa84773545dfbb412ef2ed4330f8fd7ff6b93db1e846847fe2b4d4e7ffb"
+        },
+        "ordinary_index_recreation": {
+          "wall_ns": [
+            93916,
+            67959,
+            69334,
+            82041,
+            117625
+          ],
+          "cpu_ns": [
+            71000,
+            47000,
+            48000,
+            54000,
+            94000
+          ],
+          "wall_median_ns": 82041,
+          "cpu_median_ns": 54000,
+          "result_sha256": "00b00189cbb551c9ad307aab2b0d47b2192638f38b60127c1b602060fbaa74ec"
+        }
+      }
+    },
+    "sqlite": {
+      "counts": {
+        "stage_parse_calls": 2,
+        "copy_walk_calls": 7,
+        "convert_static_validations": 0,
+        "convert_direct_validations": 0,
+        "find_convert_direct_validations": 0,
+        "ordinary_index_list_reads": 0,
+        "ordinary_batch_list_reads": 0
+      },
+      "measurements": {
+        "prepared_aggregation": {
+          "wall_ns": [
+            12034208,
+            12529792,
+            12069500,
+            12272750,
+            26498708
+          ],
+          "cpu_ns": [
+            11224000,
+            11695000,
+            11281000,
+            11451000,
+            25579000
+          ],
+          "wall_median_ns": 12272750,
+          "cpu_median_ns": 11451000,
+          "result_sha256": "a425f42af5eb23c1fd902f8d6e71314ee3acb377b39fa7f3f8e0a7a5a72044ed"
+        },
+        "ordinary_convert": {
+          "wall_ns": [
+            12748125,
+            12996000,
+            12965541,
+            12574208,
+            12560667
+          ],
+          "cpu_ns": [
+            11604000,
+            11877000,
+            11903000,
+            11566000,
+            11555000
+          ],
+          "wall_median_ns": 12748125,
+          "cpu_median_ns": 11604000,
+          "result_sha256": "7f4c3f3b97946b5452e5a8e20165863717e00804706a8bf4746b3cf2a46db929"
+        },
+        "direct_find_convert": {
+          "wall_ns": [
+            22712166,
+            22993458,
+            22625333,
+            22553041,
+            22780125
+          ],
+          "cpu_ns": [
+            21575000,
+            21868000,
+            21520000,
+            21445000,
+            21683000
+          ],
+          "wall_median_ns": 22712166,
+          "cpu_median_ns": 21575000,
+          "result_sha256": "81f74fa84773545dfbb412ef2ed4330f8fd7ff6b93db1e846847fe2b4d4e7ffb"
+        },
+        "ordinary_index_recreation": {
+          "wall_ns": [
+            188042,
+            139083,
+            136875,
+            137542,
+            131000
+          ],
+          "cpu_ns": [
+            144000,
+            92000,
+            97000,
+            93000,
+            87000
+          ],
+          "wall_median_ns": 137542,
+          "cpu_median_ns": 93000,
+          "result_sha256": "00b00189cbb551c9ad307aab2b0d47b2192638f38b60127c1b602060fbaa74ec"
+        }
+      }
+    }
+  }
+}

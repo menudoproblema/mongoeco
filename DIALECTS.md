@@ -248,12 +248,18 @@ El catálogo oficial hardcoded del repo modela hoy:
 * `4.9` como baseline de API pública
 * `4.11` como primer perfil con delta activo: `update_one(sort=...)`
 * `4.13` como perfil posterior compatible, hoy sin un segundo delta activo adicional
+* `4.17` como perfil posterior compatible
+* `4.18` con validación temprana de argumentos reservados de agregación
 
 La autodetección `pymongo_profile="auto-installed"` mapea:
 
 * `4.9` a `4.10` -> `PyMongoProfile49`
 * `4.11` a `4.12` -> `PyMongoProfile411`
-* `4.13+` -> `PyMongoProfile413`
+* `4.13` a `4.16` -> `PyMongoProfile413`
+* `4.17` -> `PyMongoProfile417`
+* `4.18` -> `PyMongoProfile418`
+* minor posteriores dentro de `4.x` -> último perfil conocido, con metadata
+  explícita de fallback; el modo estricto exige una minor registrada
 
 Versiones anteriores a `4.9` y series mayores desconocidas no se aceptan silenciosamente.
 
@@ -372,16 +378,24 @@ El repositorio ya incluye una capa opcional compartida:
 * `tests/differential/_real_parity_base.py`
 * `tests/differential/mongodb7_real_parity.py`
 * `tests/differential/mongodb8_real_parity.py`
+* `tests/differential/mongodb9_real_parity.py`
 * `scripts/run_mongodb_real_differential.py`
 * `scripts/run_mongodb7_differential.py`
 * `scripts/run_mongodb8_differential.py`
 
-Esta capa compara `mongoeco` contra un servidor real de MongoDB 7.0 u 8.0 en
+Esta capa compara `mongoeco` contra un servidor real de MongoDB 7.0, 8.0 o 9.0 en
 casos de alto riesgo semántico.
 
-La evolución prevista es:
+El runner exige una suite no vacía, conexión efectiva, versión y FCV exactas,
+y cero omisiones. Los deltas 8.0→9.0 tienen un corpus independiente de 154
+casos por versión, capturado también en 7.0; las fixtures históricas se
+conservan. Véase [captura y reproducción](docs/mongodb9-pymongo418.md).
 
-* matriz explícita de divergencias por dialecto
+El corpus de revisión añade 72 casos por versión; los de garantías 4.9.0
+añaden 54 casos semánticos y cuatro de índices. La
+[matriz vigente de cobertura efectiva](docs/evidence/mongoeco-4.9.0/capture-coverage.json)
+identifica exactamente qué dialectos, fachadas, motores y rutas comparan cada
+captura y cuáles son únicamente caracterización o comparaciones de un subset.
 
 ### Filosofía de cobertura
 
@@ -417,10 +431,10 @@ completa. Deben modelar:
 
 * **CI normal**:
   suite local principal
-* **CI extendida**:
-  diferencial contra MongoDB 7.0 real
-* **CI opcional o nocturna**:
-  diferencial contra MongoDB 8.0 real
+* **CI diferencial**: matriz compartida contra MongoDB 7.0, 8.0 y 9.0,
+  con imágenes fijadas por digest y FCV comprobada. Es obligatoria al entregar
+  una release y se ejecuta también semanalmente o por etiqueta de PR.
+* **Perfiles PyMongo**: cinco versiones oficiales en entornos independientes.
 
 Esto evita convertir cada PR en una batería pesada de integración externa.
 
@@ -443,11 +457,18 @@ En el punto actual del proyecto:
 
 * la baseline efectiva es **MongoDB 7.0**
 * la suite local principal está verde y con cobertura completa
-* existe un arnés diferencial opcional compartido para MongoDB 7.0 y 8.0
+* existe un arnés diferencial compartido para MongoDB 7.0, 8.0 y 9.0
 * la arquitectura de dialectos y perfiles de PyMongo ya existe como capa de
   ejecución pública y como punto de extensión del core
 * ya hay un primer delta versionado registrado en el catálogo oficial y
   conectado a comportamiento activo del motor
+
+`MongoDialect90` incorpora políticas compartidas para variables de arrays,
+conversiones escalares con base, ventanas de fechas, densify, validaciones de
+shape y metadata de índices. Hereda el subset de 8.0 y conserva el fallback
+semántico de SQLite; no amplía el SPI ni las capacidades wire. Los límites y
+las pruebas que acreditan cada diferencia viven en
+[la guía 9.0/4.18](docs/mongodb9-pymongo418.md).
 
 Esto permite cerrar la fase actual sin rediseñar la suite, y a la vez deja una
 dirección clara para soportar MongoDB 8/9 y compatibilidad de API con PyMongo

@@ -1,0 +1,6 @@
+4.9.0 7.0 {'memory': {'stage_parse_calls': 2, 'copy_walk_calls': 7, 'convert_static_validations': 0, 'convert_direct_validations': 0, 'find_convert_direct_validations': 0, 'ordinary_index_list_reads': 0, 'ordinary_batch_list_reads': 0}, 'sqlite': {'stage_parse_calls': 2, 'copy_walk_calls': 7, 'convert_static_validations': 0, 'convert_direct_validations': 0, 'find_convert_direct_validations': 0, 'ordinary_index_list_reads': 0, 'ordinary_batch_list_reads': 0}}
+semantic7 changed module unexecuted
+4.9.0 9.0 {'memory': {'stage_parse_calls': 2, 'copy_walk_calls': 7, 'convert_static_validations': 1, 'convert_direct_validations': 1000, 'find_convert_direct_validations': 1000, 'ordinary_index_list_reads': 1, 'ordinary_batch_list_reads': 3}, 'sqlite': {'stage_parse_calls': 2, 'copy_walk_calls': 7, 'convert_static_validations': 1, 'convert_direct_validations': 1000, 'find_convert_direct_validations': 1000, 'ordinary_index_list_reads': 1, 'ordinary_batch_list_reads': 3}}
+semantic9 changed module unexecuted
+4.9.0 {'memory': (6, 212210625), 'sqlite': (6, 268069958)}
+streaming changed module unexecuted

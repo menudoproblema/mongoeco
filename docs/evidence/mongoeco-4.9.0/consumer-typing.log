@@ -1,0 +1,4 @@
+consumer_typing.py:2: error: Skipping analyzing "cosecha.provider.mongodb": module is installed, but missing library stubs or py.typed marker  [import-untyped]
+consumer_typing.py:2: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+consumer_typing.py:3: error: Skipping analyzing "mochuelo_testkit.utils": module is installed, but missing library stubs or py.typed marker  [import-untyped]
+Found 2 errors in 1 file (checked 1 source file)

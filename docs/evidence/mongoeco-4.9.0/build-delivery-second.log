@@ -1,0 +1,1234 @@
+* Getting build dependencies for sdist...
+running egg_info
+creating src/mongoeco.egg-info
+writing src/mongoeco.egg-info/PKG-INFO
+writing dependency_links to src/mongoeco.egg-info/dependency_links.txt
+writing requirements to src/mongoeco.egg-info/requires.txt
+writing top-level names to src/mongoeco.egg-info/top_level.txt
+writing manifest file 'src/mongoeco.egg-info/SOURCES.txt'
+reading manifest file 'src/mongoeco.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+writing manifest file 'src/mongoeco.egg-info/SOURCES.txt'
+* Building sdist...
+running sdist
+running egg_info
+writing src/mongoeco.egg-info/PKG-INFO
+writing dependency_links to src/mongoeco.egg-info/dependency_links.txt
+writing requirements to src/mongoeco.egg-info/requires.txt
+writing top-level names to src/mongoeco.egg-info/top_level.txt
+reading manifest file 'src/mongoeco.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+writing manifest file 'src/mongoeco.egg-info/SOURCES.txt'
+running check
+creating mongoeco-4.9.0
+creating mongoeco-4.9.0/src/mongoeco
+creating mongoeco-4.9.0/src/mongoeco.egg-info
+creating mongoeco-4.9.0/src/mongoeco/_change_streams
+creating mongoeco-4.9.0/src/mongoeco/_types
+creating mongoeco-4.9.0/src/mongoeco/api
+creating mongoeco-4.9.0/src/mongoeco/api/_async
+creating mongoeco-4.9.0/src/mongoeco/api/_sync
+creating mongoeco-4.9.0/src/mongoeco/compat
+creating mongoeco-4.9.0/src/mongoeco/compat/resources
+creating mongoeco-4.9.0/src/mongoeco/compat/schemas
+creating mongoeco-4.9.0/src/mongoeco/conformance
+creating mongoeco-4.9.0/src/mongoeco/conformance/schemas
+creating mongoeco-4.9.0/src/mongoeco/core
+creating mongoeco-4.9.0/src/mongoeco/core/aggregation
+creating mongoeco-4.9.0/src/mongoeco/cxp
+creating mongoeco-4.9.0/src/mongoeco/cxp/exchange
+creating mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+creating mongoeco-4.9.0/src/mongoeco/driver
+creating mongoeco-4.9.0/src/mongoeco/driver/resources
+creating mongoeco-4.9.0/src/mongoeco/engines
+creating mongoeco-4.9.0/src/mongoeco/wire
+copying files to mongoeco-4.9.0...
+copying CHANGELOG.md -> mongoeco-4.9.0
+copying COMPATIBILITY.md -> mongoeco-4.9.0
+copying DIALECTS.md -> mongoeco-4.9.0
+copying LICENSE -> mongoeco-4.9.0
+copying MANIFEST.in -> mongoeco-4.9.0
+copying README.md -> mongoeco-4.9.0
+copying TODO.md -> mongoeco-4.9.0
+copying pyproject.toml -> mongoeco-4.9.0
+copying src/mongoeco/__init__.py -> mongoeco-4.9.0/src/mongoeco
+copying src/mongoeco/_version.py -> mongoeco-4.9.0/src/mongoeco
+copying src/mongoeco/change_streams.py -> mongoeco-4.9.0/src/mongoeco
+copying src/mongoeco/error_catalog.py -> mongoeco-4.9.0/src/mongoeco
+copying src/mongoeco/errors.py -> mongoeco-4.9.0/src/mongoeco
+copying src/mongoeco/py.typed -> mongoeco-4.9.0/src/mongoeco
+copying src/mongoeco/session.py -> mongoeco-4.9.0/src/mongoeco
+copying src/mongoeco/session_guards.py -> mongoeco-4.9.0/src/mongoeco
+copying src/mongoeco/telemetry_contract.py -> mongoeco-4.9.0/src/mongoeco
+copying src/mongoeco/types.py -> mongoeco-4.9.0/src/mongoeco
+copying src/mongoeco.egg-info/PKG-INFO -> mongoeco-4.9.0/src/mongoeco.egg-info
+copying src/mongoeco.egg-info/SOURCES.txt -> mongoeco-4.9.0/src/mongoeco.egg-info
+copying src/mongoeco.egg-info/dependency_links.txt -> mongoeco-4.9.0/src/mongoeco.egg-info
+copying src/mongoeco.egg-info/requires.txt -> mongoeco-4.9.0/src/mongoeco.egg-info
+copying src/mongoeco.egg-info/top_level.txt -> mongoeco-4.9.0/src/mongoeco.egg-info
+copying src/mongoeco/_change_streams/cursor.py -> mongoeco-4.9.0/src/mongoeco/_change_streams
+copying src/mongoeco/_change_streams/hub.py -> mongoeco-4.9.0/src/mongoeco/_change_streams
+copying src/mongoeco/_change_streams/journal.py -> mongoeco-4.9.0/src/mongoeco/_change_streams
+copying src/mongoeco/_change_streams/models.py -> mongoeco-4.9.0/src/mongoeco/_change_streams
+copying src/mongoeco/_change_streams/pipeline.py -> mongoeco-4.9.0/src/mongoeco/_change_streams
+copying src/mongoeco/_types/__init__.py -> mongoeco-4.9.0/src/mongoeco/_types
+copying src/mongoeco/_types/_bson_objectid.py -> mongoeco-4.9.0/src/mongoeco/_types
+copying src/mongoeco/_types/_bson_values.py -> mongoeco-4.9.0/src/mongoeco/_types
+copying src/mongoeco/_types/aliases.py -> mongoeco-4.9.0/src/mongoeco/_types
+copying src/mongoeco/_types/bson.py -> mongoeco-4.9.0/src/mongoeco/_types
+copying src/mongoeco/_types/concerns.py -> mongoeco-4.9.0/src/mongoeco/_types
+copying src/mongoeco/_types/documents.py -> mongoeco-4.9.0/src/mongoeco/_types
+copying src/mongoeco/_types/indexes.py -> mongoeco-4.9.0/src/mongoeco/_types
+copying src/mongoeco/_types/writes.py -> mongoeco-4.9.0/src/mongoeco/_types
+copying src/mongoeco/api/__init__.py -> mongoeco-4.9.0/src/mongoeco/api
+copying src/mongoeco/api/admin_parsing.py -> mongoeco-4.9.0/src/mongoeco/api
+copying src/mongoeco/api/argument_validation.py -> mongoeco-4.9.0/src/mongoeco/api
+copying src/mongoeco/api/operations.py -> mongoeco-4.9.0/src/mongoeco/api
+copying src/mongoeco/api/public_api.py -> mongoeco-4.9.0/src/mongoeco/api
+copying src/mongoeco/api/_async/__init__.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_active_operations.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_bulk.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_indexing.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_modify.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_reads.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_runtime.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_watch.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_admin_command_compiler.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_admin_namespace.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_admin_read_commands.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_admin_routing.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_admin_write_commands.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_command_contract.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/_materialized_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/aggregation_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/client.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/collection.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/database_admin.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/database_commands.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/index_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/listing_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/raw_batch_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_async/search_index_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_async
+copying src/mongoeco/api/_sync/__init__.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/_finalization.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/_materialized_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/aggregation_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/client.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/collection.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/database_admin.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/database_commands.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/index_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/listing_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/raw_batch_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/search_index_cursor.py -> mongoeco-4.9.0/src/mongoeco/api/_sync
+copying src/mongoeco/compat/__init__.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/_catalog_constants.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/_catalog_data.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/_catalog_database_commands.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/_catalog_dialects.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/_catalog_export.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/_catalog_models.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/_catalog_operation_options.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/_catalog_operators.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/_catalog_profiles.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/_catalog_runtime_subsets.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/base.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/catalog.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/deprecations.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/operation_support.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/public_api.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/registry.py -> mongoeco-4.9.0/src/mongoeco/compat
+copying src/mongoeco/compat/resources/deprecations-v1.json -> mongoeco-4.9.0/src/mongoeco/compat/resources
+copying src/mongoeco/compat/resources/runtime-subsets-v1.json -> mongoeco-4.9.0/src/mongoeco/compat/resources
+copying src/mongoeco/compat/schemas/deprecations-v1.schema.json -> mongoeco-4.9.0/src/mongoeco/compat/schemas
+copying src/mongoeco/conformance/__init__.py -> mongoeco-4.9.0/src/mongoeco/conformance
+copying src/mongoeco/conformance/__main__.py -> mongoeco-4.9.0/src/mongoeco/conformance
+copying src/mongoeco/conformance/cli.py -> mongoeco-4.9.0/src/mongoeco/conformance
+copying src/mongoeco/conformance/factories.py -> mongoeco-4.9.0/src/mongoeco/conformance
+copying src/mongoeco/conformance/models.py -> mongoeco-4.9.0/src/mongoeco/conformance
+copying src/mongoeco/conformance/provider.py -> mongoeco-4.9.0/src/mongoeco/conformance
+copying src/mongoeco/conformance/pytest.py -> mongoeco-4.9.0/src/mongoeco/conformance
+copying src/mongoeco/conformance/runner.py -> mongoeco-4.9.0/src/mongoeco/conformance
+copying src/mongoeco/conformance/schema.py -> mongoeco-4.9.0/src/mongoeco/conformance
+copying src/mongoeco/conformance/schemas/conformance-report-v1.json -> mongoeco-4.9.0/src/mongoeco/conformance/schemas
+copying src/mongoeco/core/__init__.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/_filtering_matching.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/_filtering_specials.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/_filtering_support.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/_public_materialization.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/_search_contract.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/bson_ordering.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/bson_scalars.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/codec.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/collation.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/compiled_query.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/expression_context.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/filtering.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/geo.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/identity.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/json_compat.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/operation_context.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/operation_limits.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/operators.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/paths.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/projections.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/query_operators.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/query_plan.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/runtime_metadata.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/schema_validation.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/search.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/search_execution.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/search_filter_prefilter.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/search_models.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/search_planning.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/sorting.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/sql_translation.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/update_array_operators.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/update_paths.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/update_scalar_operators.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/upserts.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/validation.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/work_control.py -> mongoeco-4.9.0/src/mongoeco/core
+copying src/mongoeco/core/aggregation/__init__.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/accumulators.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/array_string_expressions.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/compiled_aggregation.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/compiled_pipeline.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/control_object_expressions.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/cost.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/date_expressions.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/evaluation_environment.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/extensions.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/grouping_stages.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/information_stages.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/join_stages.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/lookup_physical.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/numeric_expressions.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/planning.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/preparation.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/resources.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/runtime.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/runtime_state.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/scalar_expressions.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/spill.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/stages.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/transform_stages.py -> mongoeco-4.9.0/src/mongoeco/core/aggregation
+copying src/mongoeco/cxp/__init__.py -> mongoeco-4.9.0/src/mongoeco/cxp
+copying src/mongoeco/cxp/exchange/__init__.py -> mongoeco-4.9.0/src/mongoeco/cxp/exchange
+copying src/mongoeco/cxp/exchange/documents.py -> mongoeco-4.9.0/src/mongoeco/cxp/exchange
+copying src/mongoeco/cxp/exchange/metadata.py -> mongoeco-4.9.0/src/mongoeco/cxp/exchange
+copying src/mongoeco/cxp/exchange/projection.py -> mongoeco-4.9.0/src/mongoeco/cxp/exchange
+copying src/mongoeco/cxp/exchange/snapshot.py -> mongoeco-4.9.0/src/mongoeco/cxp/exchange
+copying src/mongoeco/cxp/exchange/data/catalog.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/declared-snapshot.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/operational-metadata.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-aggregate-rich.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-core.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-mock-safe.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-platform.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-search.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-text-search.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/tier-core.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/tier-platform.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/tier-search.json -> mongoeco-4.9.0/src/mongoeco/cxp/exchange/data
+copying src/mongoeco/driver/__init__.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/_runtime_attempts.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/_runtime_plan_resolution.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/_runtime_planning.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/_topology_reducer.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/connections.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/discovery.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/execution.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/failpoints.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/monitoring.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/policies.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/requests.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/runtime.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/security.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/telemetry_projector.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/telemetry_validation.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/topology.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/topology_monitor.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/transports.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/uri.py -> mongoeco-4.9.0/src/mongoeco/driver
+copying src/mongoeco/driver/resources/telemetry-spec-v1.json -> mongoeco-4.9.0/src/mongoeco/driver/resources
+copying src/mongoeco/engines/__init__.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_active_operations.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_change_dispatch.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_executor_admission.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_memory_collection.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_memory_search_runtime.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_memory_vector_runtime.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_runtime_metrics.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_shared_namespace_admin.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_shared_runtime.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_shared_search_admin.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_shared_ttl.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_admin_runtime.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_bulk.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_catalog.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_compound_prefilter.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_compound_ranking.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_connection.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_explain_contract.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_fast_paths.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_index_admin.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_index_catalog.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_index_runtime.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_modify_ops.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_namespace_admin.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_outbox.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_plan_heuristics.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_read_execution.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_read_fast_path_runtime.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_read_ops.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_read_runtime.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_reader.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_runtime.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_search_admin.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_search_backend.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_search_runtime.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_session_runtime.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_vector_backend.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_write_ops.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_write_scope.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_vector_index_cache.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_vector_query_cache.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/_vector_ranking.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/adapter.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/base.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/capabilities.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/memory.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/mvcc.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/profiling.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/results.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/semantic_core.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/snapshots.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/sqlite.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/sqlite_planner.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/sqlite_query.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/engines/virtual_indexes.py -> mongoeco-4.9.0/src/mongoeco/engines
+copying src/mongoeco/wire/__init__.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/_executor_handlers.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/_executor_passthrough.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/_executor_support.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/_executor_validation.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/_session_identity.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/auth.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/bson_bridge.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/capabilities.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/connections.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/cursors.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/executor.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/handshake.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/protocol.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/proxy.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/requests.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/scram.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/sessions.py -> mongoeco-4.9.0/src/mongoeco/wire
+copying src/mongoeco/wire/surface.py -> mongoeco-4.9.0/src/mongoeco/wire
+Writing mongoeco-4.9.0/setup.cfg
+Creating tar archive
+removing 'mongoeco-4.9.0' (and everything under it)
+* Getting build dependencies for wheel...
+running egg_info
+writing src/mongoeco.egg-info/PKG-INFO
+writing dependency_links to src/mongoeco.egg-info/dependency_links.txt
+writing requirements to src/mongoeco.egg-info/requires.txt
+writing top-level names to src/mongoeco.egg-info/top_level.txt
+reading manifest file 'src/mongoeco.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+writing manifest file 'src/mongoeco.egg-info/SOURCES.txt'
+* Building wheel...
+running bdist_wheel
+running build
+running build_py
+creating build/lib/mongoeco
+copying src/mongoeco/session_guards.py -> build/lib/mongoeco
+copying src/mongoeco/_version.py -> build/lib/mongoeco
+copying src/mongoeco/change_streams.py -> build/lib/mongoeco
+copying src/mongoeco/session.py -> build/lib/mongoeco
+copying src/mongoeco/__init__.py -> build/lib/mongoeco
+copying src/mongoeco/types.py -> build/lib/mongoeco
+copying src/mongoeco/telemetry_contract.py -> build/lib/mongoeco
+copying src/mongoeco/errors.py -> build/lib/mongoeco
+copying src/mongoeco/error_catalog.py -> build/lib/mongoeco
+creating build/lib/mongoeco/compat
+copying src/mongoeco/compat/catalog.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/_catalog_operation_options.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/_catalog_export.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/public_api.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/operation_support.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/_catalog_data.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/registry.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/_catalog_models.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/_catalog_constants.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/__init__.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/deprecations.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/_catalog_profiles.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/_catalog_runtime_subsets.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/_catalog_dialects.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/_catalog_operators.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/_catalog_database_commands.py -> build/lib/mongoeco/compat
+copying src/mongoeco/compat/base.py -> build/lib/mongoeco/compat
+creating build/lib/mongoeco/core
+copying src/mongoeco/core/geo.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/update_scalar_operators.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/query_operators.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/update_paths.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/work_control.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/paths.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/sql_translation.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/filtering.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/query_plan.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/_public_materialization.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/json_compat.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/sorting.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/__init__.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/collation.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/search_filter_prefilter.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/_filtering_specials.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/runtime_metadata.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/_filtering_support.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/bson_scalars.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/operation_context.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/search_planning.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/search_execution.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/operation_limits.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/upserts.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/update_array_operators.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/bson_ordering.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/expression_context.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/search.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/_filtering_matching.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/compiled_query.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/projections.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/operators.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/codec.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/search_models.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/identity.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/_search_contract.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/schema_validation.py -> build/lib/mongoeco/core
+copying src/mongoeco/core/validation.py -> build/lib/mongoeco/core
+creating build/lib/mongoeco/wire
+copying src/mongoeco/wire/auth.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/handshake.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/_session_identity.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/sessions.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/proxy.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/protocol.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/cursors.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/connections.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/__init__.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/_executor_validation.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/bson_bridge.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/_executor_handlers.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/_executor_passthrough.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/capabilities.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/requests.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/scram.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/_executor_support.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/surface.py -> build/lib/mongoeco/wire
+copying src/mongoeco/wire/executor.py -> build/lib/mongoeco/wire
+creating build/lib/mongoeco/_change_streams
+copying src/mongoeco/_change_streams/journal.py -> build/lib/mongoeco/_change_streams
+copying src/mongoeco/_change_streams/models.py -> build/lib/mongoeco/_change_streams
+copying src/mongoeco/_change_streams/hub.py -> build/lib/mongoeco/_change_streams
+copying src/mongoeco/_change_streams/pipeline.py -> build/lib/mongoeco/_change_streams
+copying src/mongoeco/_change_streams/cursor.py -> build/lib/mongoeco/_change_streams
+creating build/lib/mongoeco/driver
+copying src/mongoeco/driver/telemetry_validation.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/failpoints.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/execution.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/_runtime_plan_resolution.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/discovery.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/_runtime_attempts.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/monitoring.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/_runtime_planning.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/security.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/connections.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/__init__.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/runtime.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/uri.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/_topology_reducer.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/topology_monitor.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/topology.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/transports.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/telemetry_projector.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/requests.py -> build/lib/mongoeco/driver
+copying src/mongoeco/driver/policies.py -> build/lib/mongoeco/driver
+creating build/lib/mongoeco/_types
+copying src/mongoeco/_types/bson.py -> build/lib/mongoeco/_types
+copying src/mongoeco/_types/documents.py -> build/lib/mongoeco/_types
+copying src/mongoeco/_types/__init__.py -> build/lib/mongoeco/_types
+copying src/mongoeco/_types/aliases.py -> build/lib/mongoeco/_types
+copying src/mongoeco/_types/writes.py -> build/lib/mongoeco/_types
+copying src/mongoeco/_types/_bson_objectid.py -> build/lib/mongoeco/_types
+copying src/mongoeco/_types/indexes.py -> build/lib/mongoeco/_types
+copying src/mongoeco/_types/concerns.py -> build/lib/mongoeco/_types
+copying src/mongoeco/_types/_bson_values.py -> build/lib/mongoeco/_types
+creating build/lib/mongoeco/cxp
+copying src/mongoeco/cxp/__init__.py -> build/lib/mongoeco/cxp
+creating build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_plan_heuristics.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_admin_runtime.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_search_backend.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_reader.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/snapshots.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_shared_ttl.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_compound_ranking.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_compound_prefilter.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_shared_search_admin.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_shared_namespace_admin.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_session_runtime.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/memory.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/results.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_memory_collection.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_runtime.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_catalog.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/adapter.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_read_ops.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/sqlite_query.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_connection.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_search_runtime.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_vector_query_cache.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/sqlite_planner.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_fast_paths.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/__init__.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_read_runtime.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_search_admin.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_outbox.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/mvcc.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_shared_runtime.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_memory_search_runtime.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_executor_admission.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_active_operations.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/sqlite.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_read_fast_path_runtime.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_change_dispatch.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_vector_ranking.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_namespace_admin.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/capabilities.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/virtual_indexes.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_vector_backend.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_index_catalog.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_write_ops.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_index_runtime.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_write_scope.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_index_admin.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_bulk.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_memory_vector_runtime.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_runtime_metrics.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/semantic_core.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_read_execution.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_modify_ops.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_vector_index_cache.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/base.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/_sqlite_explain_contract.py -> build/lib/mongoeco/engines
+copying src/mongoeco/engines/profiling.py -> build/lib/mongoeco/engines
+creating build/lib/mongoeco/api
+copying src/mongoeco/api/public_api.py -> build/lib/mongoeco/api
+copying src/mongoeco/api/__init__.py -> build/lib/mongoeco/api
+copying src/mongoeco/api/operations.py -> build/lib/mongoeco/api
+copying src/mongoeco/api/admin_parsing.py -> build/lib/mongoeco/api
+copying src/mongoeco/api/argument_validation.py -> build/lib/mongoeco/api
+creating build/lib/mongoeco/conformance
+copying src/mongoeco/conformance/runner.py -> build/lib/mongoeco/conformance
+copying src/mongoeco/conformance/models.py -> build/lib/mongoeco/conformance
+copying src/mongoeco/conformance/provider.py -> build/lib/mongoeco/conformance
+copying src/mongoeco/conformance/__init__.py -> build/lib/mongoeco/conformance
+copying src/mongoeco/conformance/factories.py -> build/lib/mongoeco/conformance
+copying src/mongoeco/conformance/cli.py -> build/lib/mongoeco/conformance
+copying src/mongoeco/conformance/pytest.py -> build/lib/mongoeco/conformance
+copying src/mongoeco/conformance/__main__.py -> build/lib/mongoeco/conformance
+copying src/mongoeco/conformance/schema.py -> build/lib/mongoeco/conformance
+creating build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/spill.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/date_expressions.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/evaluation_environment.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/join_stages.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/__init__.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/scalar_expressions.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/runtime_state.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/control_object_expressions.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/runtime.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/stages.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/extensions.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/compiled_aggregation.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/numeric_expressions.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/information_stages.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/compiled_pipeline.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/grouping_stages.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/planning.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/resources.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/accumulators.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/array_string_expressions.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/cost.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/transform_stages.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/preparation.py -> build/lib/mongoeco/core/aggregation
+copying src/mongoeco/core/aggregation/lookup_physical.py -> build/lib/mongoeco/core/aggregation
+creating build/lib/mongoeco/cxp/exchange
+copying src/mongoeco/cxp/exchange/metadata.py -> build/lib/mongoeco/cxp/exchange
+copying src/mongoeco/cxp/exchange/documents.py -> build/lib/mongoeco/cxp/exchange
+copying src/mongoeco/cxp/exchange/__init__.py -> build/lib/mongoeco/cxp/exchange
+copying src/mongoeco/cxp/exchange/projection.py -> build/lib/mongoeco/cxp/exchange
+copying src/mongoeco/cxp/exchange/snapshot.py -> build/lib/mongoeco/cxp/exchange
+creating build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_runtime.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/aggregation_cursor.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_admin_read_commands.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_materialized_cursor.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_watch.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_reads.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/search_index_cursor.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/client.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_modify.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/__init__.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/listing_cursor.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/database_admin.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_admin_routing.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/raw_batch_cursor.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_active_operations.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/index_cursor.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_command_contract.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_admin_command_compiler.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/collection.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_admin_namespace.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_bulk.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_collection_indexing.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/database_commands.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/cursor.py -> build/lib/mongoeco/api/_async
+copying src/mongoeco/api/_async/_database_admin_write_commands.py -> build/lib/mongoeco/api/_async
+creating build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/aggregation_cursor.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/_materialized_cursor.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/search_index_cursor.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/client.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/__init__.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/listing_cursor.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/database_admin.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/raw_batch_cursor.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/index_cursor.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/collection.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/database_commands.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/cursor.py -> build/lib/mongoeco/api/_sync
+copying src/mongoeco/api/_sync/_finalization.py -> build/lib/mongoeco/api/_sync
+running egg_info
+writing src/mongoeco.egg-info/PKG-INFO
+writing dependency_links to src/mongoeco.egg-info/dependency_links.txt
+writing requirements to src/mongoeco.egg-info/requires.txt
+writing top-level names to src/mongoeco.egg-info/top_level.txt
+reading manifest file 'src/mongoeco.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+writing manifest file 'src/mongoeco.egg-info/SOURCES.txt'
+copying src/mongoeco/py.typed -> build/lib/mongoeco
+creating build/lib/mongoeco/compat/resources
+copying src/mongoeco/compat/resources/runtime-subsets-v1.json -> build/lib/mongoeco/compat/resources
+copying src/mongoeco/compat/resources/deprecations-v1.json -> build/lib/mongoeco/compat/resources
+creating build/lib/mongoeco/compat/schemas
+copying src/mongoeco/compat/schemas/deprecations-v1.schema.json -> build/lib/mongoeco/compat/schemas
+creating build/lib/mongoeco/driver/resources
+copying src/mongoeco/driver/resources/telemetry-spec-v1.json -> build/lib/mongoeco/driver/resources
+creating build/lib/mongoeco/conformance/schemas
+copying src/mongoeco/conformance/schemas/conformance-report-v1.json -> build/lib/mongoeco/conformance/schemas
+creating build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-search.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/tier-core.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/declared-snapshot.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/operational-metadata.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-text-search.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/tier-platform.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-core.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-aggregate-rich.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-platform.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/profile-mongodb-mock-safe.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/catalog.json -> build/lib/mongoeco/cxp/exchange/data
+copying src/mongoeco/cxp/exchange/data/tier-search.json -> build/lib/mongoeco/cxp/exchange/data
+installing to build/bdist.macosx-15.0-arm64/wheel
+running install
+running install_lib
+creating build/bdist.macosx-15.0-arm64/wheel
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco
+copying build/lib/mongoeco/session_guards.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/compat
+copying build/lib/mongoeco/compat/catalog.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/_catalog_operation_options.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/_catalog_export.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/public_api.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/operation_support.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/_catalog_data.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/registry.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/_catalog_models.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/_catalog_constants.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/compat/resources
+copying build/lib/mongoeco/compat/resources/runtime-subsets-v1.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat/resources
+copying build/lib/mongoeco/compat/resources/deprecations-v1.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat/resources
+copying build/lib/mongoeco/compat/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/compat/schemas
+copying build/lib/mongoeco/compat/schemas/deprecations-v1.schema.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat/schemas
+copying build/lib/mongoeco/compat/deprecations.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/_catalog_profiles.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/_catalog_runtime_subsets.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/_catalog_dialects.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/_catalog_operators.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/_catalog_database_commands.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+copying build/lib/mongoeco/compat/base.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/compat
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/core
+copying build/lib/mongoeco/core/geo.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/update_scalar_operators.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/spill.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/date_expressions.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/evaluation_environment.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/join_stages.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/scalar_expressions.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/runtime_state.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/control_object_expressions.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/stages.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/extensions.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/compiled_aggregation.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/numeric_expressions.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/information_stages.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/compiled_pipeline.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/grouping_stages.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/planning.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/resources.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/accumulators.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/array_string_expressions.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/cost.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/transform_stages.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/preparation.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/aggregation/lookup_physical.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core/aggregation
+copying build/lib/mongoeco/core/query_operators.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/update_paths.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/work_control.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/paths.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/sql_translation.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/filtering.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/query_plan.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/_public_materialization.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/json_compat.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/sorting.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/collation.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/search_filter_prefilter.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/_filtering_specials.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/runtime_metadata.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/_filtering_support.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/bson_scalars.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/operation_context.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/search_planning.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/search_execution.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/operation_limits.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/upserts.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/update_array_operators.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/bson_ordering.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/expression_context.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/search.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/_filtering_matching.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/compiled_query.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/projections.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/operators.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/codec.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/search_models.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/identity.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/_search_contract.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/schema_validation.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+copying build/lib/mongoeco/core/validation.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/core
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/wire
+copying build/lib/mongoeco/wire/auth.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/handshake.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/_session_identity.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/sessions.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/proxy.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/protocol.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/cursors.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/connections.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/_executor_validation.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/bson_bridge.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/_executor_handlers.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/_executor_passthrough.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/capabilities.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/requests.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/scram.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/_executor_support.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/surface.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+copying build/lib/mongoeco/wire/executor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/wire
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/_change_streams
+copying build/lib/mongoeco/_change_streams/journal.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_change_streams
+copying build/lib/mongoeco/_change_streams/models.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_change_streams
+copying build/lib/mongoeco/_change_streams/hub.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_change_streams
+copying build/lib/mongoeco/_change_streams/pipeline.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_change_streams
+copying build/lib/mongoeco/_change_streams/cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_change_streams
+copying build/lib/mongoeco/_version.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/driver
+copying build/lib/mongoeco/driver/telemetry_validation.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/failpoints.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/execution.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/_runtime_plan_resolution.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/discovery.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/_runtime_attempts.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/monitoring.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/_runtime_planning.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/driver/resources
+copying build/lib/mongoeco/driver/resources/telemetry-spec-v1.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver/resources
+copying build/lib/mongoeco/driver/security.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/connections.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/uri.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/_topology_reducer.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/topology_monitor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/topology.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/transports.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/telemetry_projector.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/requests.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+copying build/lib/mongoeco/driver/policies.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/driver
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/_types
+copying build/lib/mongoeco/_types/bson.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_types
+copying build/lib/mongoeco/_types/documents.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_types
+copying build/lib/mongoeco/_types/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_types
+copying build/lib/mongoeco/_types/aliases.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_types
+copying build/lib/mongoeco/_types/writes.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_types
+copying build/lib/mongoeco/_types/_bson_objectid.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_types
+copying build/lib/mongoeco/_types/indexes.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_types
+copying build/lib/mongoeco/_types/concerns.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_types
+copying build/lib/mongoeco/_types/_bson_values.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/_types
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/cxp
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/cxp/exchange
+copying build/lib/mongoeco/cxp/exchange/metadata.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange
+copying build/lib/mongoeco/cxp/exchange/documents.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange
+copying build/lib/mongoeco/cxp/exchange/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange
+copying build/lib/mongoeco/cxp/exchange/projection.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/profile-mongodb-search.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/tier-core.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/declared-snapshot.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/operational-metadata.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/profile-mongodb-text-search.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/tier-platform.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/profile-mongodb-core.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/profile-mongodb-aggregate-rich.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/profile-mongodb-platform.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/profile-mongodb-mock-safe.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/catalog.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/data/tier-search.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange/data
+copying build/lib/mongoeco/cxp/exchange/snapshot.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp/exchange
+copying build/lib/mongoeco/cxp/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/cxp
+copying build/lib/mongoeco/change_streams.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco
+copying build/lib/mongoeco/session.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco
+copying build/lib/mongoeco/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco
+copying build/lib/mongoeco/types.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_plan_heuristics.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_admin_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_search_backend.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_reader.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/snapshots.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_shared_ttl.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_compound_ranking.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_compound_prefilter.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_shared_search_admin.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_shared_namespace_admin.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_session_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/memory.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/results.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_memory_collection.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_catalog.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/adapter.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_read_ops.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/sqlite_query.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_connection.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_search_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_vector_query_cache.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/sqlite_planner.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_fast_paths.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_read_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_search_admin.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_outbox.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/mvcc.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_shared_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_memory_search_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_executor_admission.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_active_operations.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/sqlite.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_read_fast_path_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_change_dispatch.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_vector_ranking.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_namespace_admin.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/capabilities.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/virtual_indexes.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_vector_backend.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_index_catalog.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_write_ops.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_index_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_write_scope.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_index_admin.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_bulk.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_memory_vector_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_runtime_metrics.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/semantic_core.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_read_execution.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_modify_ops.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_vector_index_cache.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/base.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/_sqlite_explain_contract.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/engines/profiling.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/engines
+copying build/lib/mongoeco/py.typed -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/api
+copying build/lib/mongoeco/api/public_api.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_collection_runtime.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/aggregation_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_database_admin_read_commands.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_materialized_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_collection_watch.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_collection_reads.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/search_index_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/client.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_collection_modify.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/listing_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/database_admin.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_database_admin_routing.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/raw_batch_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_active_operations.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/index_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_database_command_contract.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_database_admin_command_compiler.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/collection.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_database_admin_namespace.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_collection_bulk.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_collection_indexing.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/database_commands.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/_async/_database_admin_write_commands.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_async
+copying build/lib/mongoeco/api/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api
+copying build/lib/mongoeco/api/operations.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api
+copying build/lib/mongoeco/api/admin_parsing.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/aggregation_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/_materialized_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/search_index_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/client.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/listing_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/database_admin.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/raw_batch_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/index_cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/collection.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/database_commands.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/cursor.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/_sync/_finalization.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api/_sync
+copying build/lib/mongoeco/api/argument_validation.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/api
+copying build/lib/mongoeco/telemetry_contract.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco
+copying build/lib/mongoeco/errors.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco
+copying build/lib/mongoeco/error_catalog.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/conformance
+copying build/lib/mongoeco/conformance/runner.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/conformance
+copying build/lib/mongoeco/conformance/models.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/conformance
+copying build/lib/mongoeco/conformance/provider.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/conformance
+copying build/lib/mongoeco/conformance/__init__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/conformance
+copying build/lib/mongoeco/conformance/factories.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/conformance
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco/conformance/schemas
+copying build/lib/mongoeco/conformance/schemas/conformance-report-v1.json -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/conformance/schemas
+copying build/lib/mongoeco/conformance/cli.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/conformance
+copying build/lib/mongoeco/conformance/pytest.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/conformance
+copying build/lib/mongoeco/conformance/__main__.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/conformance
+copying build/lib/mongoeco/conformance/schema.py -> build/bdist.macosx-15.0-arm64/wheel/./mongoeco/conformance
+running install_egg_info
+Copying src/mongoeco.egg-info to build/bdist.macosx-15.0-arm64/wheel/./mongoeco-4.9.0-py3.14.egg-info
+running install_scripts
+creating build/bdist.macosx-15.0-arm64/wheel/mongoeco-4.9.0.dist-info/WHEEL
+creating '/private/tmp/mongoeco-490-20261008/dist-delivery-second/.tmp-07scmaz6/mongoeco-4.9.0-py3-none-any.whl' and adding 'build/bdist.macosx-15.0-arm64/wheel' to it
+adding 'mongoeco/__init__.py'
+adding 'mongoeco/_version.py'
+adding 'mongoeco/change_streams.py'
+adding 'mongoeco/error_catalog.py'
+adding 'mongoeco/errors.py'
+adding 'mongoeco/py.typed'
+adding 'mongoeco/session.py'
+adding 'mongoeco/session_guards.py'
+adding 'mongoeco/telemetry_contract.py'
+adding 'mongoeco/types.py'
+adding 'mongoeco/_change_streams/cursor.py'
+adding 'mongoeco/_change_streams/hub.py'
+adding 'mongoeco/_change_streams/journal.py'
+adding 'mongoeco/_change_streams/models.py'
+adding 'mongoeco/_change_streams/pipeline.py'
+adding 'mongoeco/_types/__init__.py'
+adding 'mongoeco/_types/_bson_objectid.py'
+adding 'mongoeco/_types/_bson_values.py'
+adding 'mongoeco/_types/aliases.py'
+adding 'mongoeco/_types/bson.py'
+adding 'mongoeco/_types/concerns.py'
+adding 'mongoeco/_types/documents.py'
+adding 'mongoeco/_types/indexes.py'
+adding 'mongoeco/_types/writes.py'
+adding 'mongoeco/api/__init__.py'
+adding 'mongoeco/api/admin_parsing.py'
+adding 'mongoeco/api/argument_validation.py'
+adding 'mongoeco/api/operations.py'
+adding 'mongoeco/api/public_api.py'
+adding 'mongoeco/api/_async/__init__.py'
+adding 'mongoeco/api/_async/_active_operations.py'
+adding 'mongoeco/api/_async/_collection_bulk.py'
+adding 'mongoeco/api/_async/_collection_indexing.py'
+adding 'mongoeco/api/_async/_collection_modify.py'
+adding 'mongoeco/api/_async/_collection_reads.py'
+adding 'mongoeco/api/_async/_collection_runtime.py'
+adding 'mongoeco/api/_async/_collection_watch.py'
+adding 'mongoeco/api/_async/_database_admin_command_compiler.py'
+adding 'mongoeco/api/_async/_database_admin_namespace.py'
+adding 'mongoeco/api/_async/_database_admin_read_commands.py'
+adding 'mongoeco/api/_async/_database_admin_routing.py'
+adding 'mongoeco/api/_async/_database_admin_write_commands.py'
+adding 'mongoeco/api/_async/_database_command_contract.py'
+adding 'mongoeco/api/_async/_materialized_cursor.py'
+adding 'mongoeco/api/_async/aggregation_cursor.py'
+adding 'mongoeco/api/_async/client.py'
+adding 'mongoeco/api/_async/collection.py'
+adding 'mongoeco/api/_async/cursor.py'
+adding 'mongoeco/api/_async/database_admin.py'
+adding 'mongoeco/api/_async/database_commands.py'
+adding 'mongoeco/api/_async/index_cursor.py'
+adding 'mongoeco/api/_async/listing_cursor.py'
+adding 'mongoeco/api/_async/raw_batch_cursor.py'
+adding 'mongoeco/api/_async/search_index_cursor.py'
+adding 'mongoeco/api/_sync/__init__.py'
+adding 'mongoeco/api/_sync/_finalization.py'
+adding 'mongoeco/api/_sync/_materialized_cursor.py'
+adding 'mongoeco/api/_sync/aggregation_cursor.py'
+adding 'mongoeco/api/_sync/client.py'
+adding 'mongoeco/api/_sync/collection.py'
+adding 'mongoeco/api/_sync/cursor.py'
+adding 'mongoeco/api/_sync/database_admin.py'
+adding 'mongoeco/api/_sync/database_commands.py'
+adding 'mongoeco/api/_sync/index_cursor.py'
+adding 'mongoeco/api/_sync/listing_cursor.py'
+adding 'mongoeco/api/_sync/raw_batch_cursor.py'
+adding 'mongoeco/api/_sync/search_index_cursor.py'
+adding 'mongoeco/compat/__init__.py'
+adding 'mongoeco/compat/_catalog_constants.py'
+adding 'mongoeco/compat/_catalog_data.py'
+adding 'mongoeco/compat/_catalog_database_commands.py'
+adding 'mongoeco/compat/_catalog_dialects.py'
+adding 'mongoeco/compat/_catalog_export.py'
+adding 'mongoeco/compat/_catalog_models.py'
+adding 'mongoeco/compat/_catalog_operation_options.py'
+adding 'mongoeco/compat/_catalog_operators.py'
+adding 'mongoeco/compat/_catalog_profiles.py'
+adding 'mongoeco/compat/_catalog_runtime_subsets.py'
+adding 'mongoeco/compat/base.py'
+adding 'mongoeco/compat/catalog.py'
+adding 'mongoeco/compat/deprecations.py'
+adding 'mongoeco/compat/operation_support.py'
+adding 'mongoeco/compat/public_api.py'
+adding 'mongoeco/compat/registry.py'
+adding 'mongoeco/compat/resources/deprecations-v1.json'
+adding 'mongoeco/compat/resources/runtime-subsets-v1.json'
+adding 'mongoeco/compat/schemas/deprecations-v1.schema.json'
+adding 'mongoeco/conformance/__init__.py'
+adding 'mongoeco/conformance/__main__.py'
+adding 'mongoeco/conformance/cli.py'
+adding 'mongoeco/conformance/factories.py'
+adding 'mongoeco/conformance/models.py'
+adding 'mongoeco/conformance/provider.py'
+adding 'mongoeco/conformance/pytest.py'
+adding 'mongoeco/conformance/runner.py'
+adding 'mongoeco/conformance/schema.py'
+adding 'mongoeco/conformance/schemas/conformance-report-v1.json'
+adding 'mongoeco/core/__init__.py'
+adding 'mongoeco/core/_filtering_matching.py'
+adding 'mongoeco/core/_filtering_specials.py'
+adding 'mongoeco/core/_filtering_support.py'
+adding 'mongoeco/core/_public_materialization.py'
+adding 'mongoeco/core/_search_contract.py'
+adding 'mongoeco/core/bson_ordering.py'
+adding 'mongoeco/core/bson_scalars.py'
+adding 'mongoeco/core/codec.py'
+adding 'mongoeco/core/collation.py'
+adding 'mongoeco/core/compiled_query.py'
+adding 'mongoeco/core/expression_context.py'
+adding 'mongoeco/core/filtering.py'
+adding 'mongoeco/core/geo.py'
+adding 'mongoeco/core/identity.py'
+adding 'mongoeco/core/json_compat.py'
+adding 'mongoeco/core/operation_context.py'
+adding 'mongoeco/core/operation_limits.py'
+adding 'mongoeco/core/operators.py'
+adding 'mongoeco/core/paths.py'
+adding 'mongoeco/core/projections.py'
+adding 'mongoeco/core/query_operators.py'
+adding 'mongoeco/core/query_plan.py'
+adding 'mongoeco/core/runtime_metadata.py'
+adding 'mongoeco/core/schema_validation.py'
+adding 'mongoeco/core/search.py'
+adding 'mongoeco/core/search_execution.py'
+adding 'mongoeco/core/search_filter_prefilter.py'
+adding 'mongoeco/core/search_models.py'
+adding 'mongoeco/core/search_planning.py'
+adding 'mongoeco/core/sorting.py'
+adding 'mongoeco/core/sql_translation.py'
+adding 'mongoeco/core/update_array_operators.py'
+adding 'mongoeco/core/update_paths.py'
+adding 'mongoeco/core/update_scalar_operators.py'
+adding 'mongoeco/core/upserts.py'
+adding 'mongoeco/core/validation.py'
+adding 'mongoeco/core/work_control.py'
+adding 'mongoeco/core/aggregation/__init__.py'
+adding 'mongoeco/core/aggregation/accumulators.py'
+adding 'mongoeco/core/aggregation/array_string_expressions.py'
+adding 'mongoeco/core/aggregation/compiled_aggregation.py'
+adding 'mongoeco/core/aggregation/compiled_pipeline.py'
+adding 'mongoeco/core/aggregation/control_object_expressions.py'
+adding 'mongoeco/core/aggregation/cost.py'
+adding 'mongoeco/core/aggregation/date_expressions.py'
+adding 'mongoeco/core/aggregation/evaluation_environment.py'
+adding 'mongoeco/core/aggregation/extensions.py'
+adding 'mongoeco/core/aggregation/grouping_stages.py'
+adding 'mongoeco/core/aggregation/information_stages.py'
+adding 'mongoeco/core/aggregation/join_stages.py'
+adding 'mongoeco/core/aggregation/lookup_physical.py'
+adding 'mongoeco/core/aggregation/numeric_expressions.py'
+adding 'mongoeco/core/aggregation/planning.py'
+adding 'mongoeco/core/aggregation/preparation.py'
+adding 'mongoeco/core/aggregation/resources.py'
+adding 'mongoeco/core/aggregation/runtime.py'
+adding 'mongoeco/core/aggregation/runtime_state.py'
+adding 'mongoeco/core/aggregation/scalar_expressions.py'
+adding 'mongoeco/core/aggregation/spill.py'
+adding 'mongoeco/core/aggregation/stages.py'
+adding 'mongoeco/core/aggregation/transform_stages.py'
+adding 'mongoeco/cxp/__init__.py'
+adding 'mongoeco/cxp/exchange/__init__.py'
+adding 'mongoeco/cxp/exchange/documents.py'
+adding 'mongoeco/cxp/exchange/metadata.py'
+adding 'mongoeco/cxp/exchange/projection.py'
+adding 'mongoeco/cxp/exchange/snapshot.py'
+adding 'mongoeco/cxp/exchange/data/catalog.json'
+adding 'mongoeco/cxp/exchange/data/declared-snapshot.json'
+adding 'mongoeco/cxp/exchange/data/operational-metadata.json'
+adding 'mongoeco/cxp/exchange/data/profile-mongodb-aggregate-rich.json'
+adding 'mongoeco/cxp/exchange/data/profile-mongodb-core.json'
+adding 'mongoeco/cxp/exchange/data/profile-mongodb-mock-safe.json'
+adding 'mongoeco/cxp/exchange/data/profile-mongodb-platform.json'
+adding 'mongoeco/cxp/exchange/data/profile-mongodb-search.json'
+adding 'mongoeco/cxp/exchange/data/profile-mongodb-text-search.json'
+adding 'mongoeco/cxp/exchange/data/tier-core.json'
+adding 'mongoeco/cxp/exchange/data/tier-platform.json'
+adding 'mongoeco/cxp/exchange/data/tier-search.json'
+adding 'mongoeco/driver/__init__.py'
+adding 'mongoeco/driver/_runtime_attempts.py'
+adding 'mongoeco/driver/_runtime_plan_resolution.py'
+adding 'mongoeco/driver/_runtime_planning.py'
+adding 'mongoeco/driver/_topology_reducer.py'
+adding 'mongoeco/driver/connections.py'
+adding 'mongoeco/driver/discovery.py'
+adding 'mongoeco/driver/execution.py'
+adding 'mongoeco/driver/failpoints.py'
+adding 'mongoeco/driver/monitoring.py'
+adding 'mongoeco/driver/policies.py'
+adding 'mongoeco/driver/requests.py'
+adding 'mongoeco/driver/runtime.py'
+adding 'mongoeco/driver/security.py'
+adding 'mongoeco/driver/telemetry_projector.py'
+adding 'mongoeco/driver/telemetry_validation.py'
+adding 'mongoeco/driver/topology.py'
+adding 'mongoeco/driver/topology_monitor.py'
+adding 'mongoeco/driver/transports.py'
+adding 'mongoeco/driver/uri.py'
+adding 'mongoeco/driver/resources/telemetry-spec-v1.json'
+adding 'mongoeco/engines/__init__.py'
+adding 'mongoeco/engines/_active_operations.py'
+adding 'mongoeco/engines/_change_dispatch.py'
+adding 'mongoeco/engines/_executor_admission.py'
+adding 'mongoeco/engines/_memory_collection.py'
+adding 'mongoeco/engines/_memory_search_runtime.py'
+adding 'mongoeco/engines/_memory_vector_runtime.py'
+adding 'mongoeco/engines/_runtime_metrics.py'
+adding 'mongoeco/engines/_shared_namespace_admin.py'
+adding 'mongoeco/engines/_shared_runtime.py'
+adding 'mongoeco/engines/_shared_search_admin.py'
+adding 'mongoeco/engines/_shared_ttl.py'
+adding 'mongoeco/engines/_sqlite_admin_runtime.py'
+adding 'mongoeco/engines/_sqlite_bulk.py'
+adding 'mongoeco/engines/_sqlite_catalog.py'
+adding 'mongoeco/engines/_sqlite_compound_prefilter.py'
+adding 'mongoeco/engines/_sqlite_compound_ranking.py'
+adding 'mongoeco/engines/_sqlite_connection.py'
+adding 'mongoeco/engines/_sqlite_explain_contract.py'
+adding 'mongoeco/engines/_sqlite_fast_paths.py'
+adding 'mongoeco/engines/_sqlite_index_admin.py'
+adding 'mongoeco/engines/_sqlite_index_catalog.py'
+adding 'mongoeco/engines/_sqlite_index_runtime.py'
+adding 'mongoeco/engines/_sqlite_modify_ops.py'
+adding 'mongoeco/engines/_sqlite_namespace_admin.py'
+adding 'mongoeco/engines/_sqlite_outbox.py'
+adding 'mongoeco/engines/_sqlite_plan_heuristics.py'
+adding 'mongoeco/engines/_sqlite_read_execution.py'
+adding 'mongoeco/engines/_sqlite_read_fast_path_runtime.py'
+adding 'mongoeco/engines/_sqlite_read_ops.py'
+adding 'mongoeco/engines/_sqlite_read_runtime.py'
+adding 'mongoeco/engines/_sqlite_reader.py'
+adding 'mongoeco/engines/_sqlite_runtime.py'
+adding 'mongoeco/engines/_sqlite_search_admin.py'
+adding 'mongoeco/engines/_sqlite_search_backend.py'
+adding 'mongoeco/engines/_sqlite_search_runtime.py'
+adding 'mongoeco/engines/_sqlite_session_runtime.py'
+adding 'mongoeco/engines/_sqlite_vector_backend.py'
+adding 'mongoeco/engines/_sqlite_write_ops.py'
+adding 'mongoeco/engines/_sqlite_write_scope.py'
+adding 'mongoeco/engines/_vector_index_cache.py'
+adding 'mongoeco/engines/_vector_query_cache.py'
+adding 'mongoeco/engines/_vector_ranking.py'
+adding 'mongoeco/engines/adapter.py'
+adding 'mongoeco/engines/base.py'
+adding 'mongoeco/engines/capabilities.py'
+adding 'mongoeco/engines/memory.py'
+adding 'mongoeco/engines/mvcc.py'
+adding 'mongoeco/engines/profiling.py'
+adding 'mongoeco/engines/results.py'
+adding 'mongoeco/engines/semantic_core.py'
+adding 'mongoeco/engines/snapshots.py'
+adding 'mongoeco/engines/sqlite.py'
+adding 'mongoeco/engines/sqlite_planner.py'
+adding 'mongoeco/engines/sqlite_query.py'
+adding 'mongoeco/engines/virtual_indexes.py'
+adding 'mongoeco/wire/__init__.py'
+adding 'mongoeco/wire/_executor_handlers.py'
+adding 'mongoeco/wire/_executor_passthrough.py'
+adding 'mongoeco/wire/_executor_support.py'
+adding 'mongoeco/wire/_executor_validation.py'
+adding 'mongoeco/wire/_session_identity.py'
+adding 'mongoeco/wire/auth.py'
+adding 'mongoeco/wire/bson_bridge.py'
+adding 'mongoeco/wire/capabilities.py'
+adding 'mongoeco/wire/connections.py'
+adding 'mongoeco/wire/cursors.py'
+adding 'mongoeco/wire/executor.py'
+adding 'mongoeco/wire/handshake.py'
+adding 'mongoeco/wire/protocol.py'
+adding 'mongoeco/wire/proxy.py'
+adding 'mongoeco/wire/requests.py'
+adding 'mongoeco/wire/scram.py'
+adding 'mongoeco/wire/sessions.py'
+adding 'mongoeco/wire/surface.py'
+adding 'mongoeco-4.9.0.dist-info/licenses/LICENSE'
+adding 'mongoeco-4.9.0.dist-info/METADATA'
+adding 'mongoeco-4.9.0.dist-info/WHEEL'
+adding 'mongoeco-4.9.0.dist-info/top_level.txt'
+adding 'mongoeco-4.9.0.dist-info/RECORD'
+removing build/bdist.macosx-15.0-arm64/wheel
+Successfully built mongoeco-4.9.0.tar.gz and mongoeco-4.9.0-py3-none-any.whl

@@ -1,0 +1,2 @@
+# Preserve the reviewed validation logs alongside their receipt.
+!*.log

@@ -1,0 +1,3512 @@
+{
+  "source": "real-mongodb",
+  "targetDialect": "9.0",
+  "cases": {
+    "densify_dates": {
+      "ok": true,
+      "result": [
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "1767225600000"
+            }
+          }
+        },
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "1767312000000"
+            }
+          }
+        },
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "1767398400000"
+            }
+          }
+        },
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "1767484800000"
+            }
+          }
+        }
+      ]
+    },
+    "densify_dates_large_step": {
+      "ok": true,
+      "result": [
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        }
+      ]
+    },
+    "densify_dates_partition_full": {
+      "ok": true,
+      "result": [
+        {
+          "p": "a",
+          "n": {
+            "$date": {
+              "$numberLong": "1767225600000"
+            }
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$date": {
+              "$numberLong": "1767312000000"
+            }
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$date": {
+              "$numberLong": "1767398400000"
+            }
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$date": {
+              "$numberLong": "1767225600000"
+            }
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$date": {
+              "$numberLong": "1767312000000"
+            }
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$date": {
+              "$numberLong": "1767398400000"
+            }
+          }
+        }
+      ]
+    },
+    "densify_dates_upper_python_boundary": {
+      "ok": true,
+      "result": [
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "n": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ]
+    },
+    "densify_duplicates": {
+      "ok": true,
+      "result": [
+        {
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "3"
+          }
+        }
+      ]
+    },
+    "densify_equal_existing_duplicates": {
+      "ok": true,
+      "result": [
+        {
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "n": {
+            "$numberInt": "1"
+          }
+        }
+      ]
+    },
+    "densify_facet_outside": {
+      "ok": true,
+      "result": [
+        {
+          "values": [
+            {
+              "n": {
+                "$numberInt": "-1"
+              }
+            },
+            {
+              "n": {
+                "$numberInt": "0"
+              }
+            },
+            {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            {
+              "n": {
+                "$numberInt": "2"
+              }
+            },
+            {
+              "n": {
+                "$numberInt": "4"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "densify_full_empty": {
+      "ok": true,
+      "result": []
+    },
+    "densify_partition_empty": {
+      "ok": true,
+      "result": []
+    },
+    "densify_partition_explicit": {
+      "ok": true,
+      "result": [
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "5"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "0"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "5"
+          }
+        }
+      ]
+    },
+    "densify_partition_full": {
+      "ok": true,
+      "result": [
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "5"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "4"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "5"
+          }
+        }
+      ]
+    },
+    "densify_partition_local": {
+      "ok": true,
+      "result": [
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "2"
+          }
+        },
+        {
+          "p": "a",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "p": "b",
+          "n": {
+            "$numberInt": "5"
+          }
+        }
+      ]
+    },
+    "index_id_batch": {
+      "before": {
+        "ok": true,
+        "result": []
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": [
+            "_id_1",
+            "n_1"
+          ]
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          },
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "n_1",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_named_existing": {
+      "before": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": "_id_"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_named_fresh": {
+      "before": {
+        "ok": true,
+        "result": []
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": "_id_"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_named_simple_existing": {
+      "before": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": "_id_"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_named_simple_fresh": {
+      "before": {
+        "ok": true,
+        "result": []
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": "_id_"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_omitted_existing": {
+      "before": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": "_id_1"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_omitted_fresh": {
+      "before": {
+        "ok": true,
+        "result": []
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": "_id_1"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_simple_existing": {
+      "before": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": "_id_1"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_simple_fresh": {
+      "before": {
+        "ok": true,
+        "result": []
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": "_id_1"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_unique_false_existing": {
+      "before": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      },
+      "calls": [
+        {
+          "ok": false,
+          "error_type": "OperationFailure",
+          "code": {
+            "$numberInt": "197"
+          },
+          "code_name": "InvalidIndexSpecificationOption",
+          "error_labels": [],
+          "message": "The field 'unique' is not valid for an _id index specification. Specification: { unique: false, name: \"_id_1\", key: { _id: 1 }, v: 2 }"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_unique_false_fresh": {
+      "before": {
+        "ok": true,
+        "result": []
+      },
+      "calls": [
+        {
+          "ok": false,
+          "error_type": "OperationFailure",
+          "code": {
+            "$numberInt": "197"
+          },
+          "code_name": "InvalidIndexSpecificationOption",
+          "error_labels": [],
+          "message": "The field 'unique' is not valid for an _id index specification. Specification: { unique: false, name: \"_id_1\", key: { _id: 1 }, v: 2 }"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": []
+      }
+    },
+    "index_id_unique_true_existing": {
+      "before": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      },
+      "calls": [
+        {
+          "ok": false,
+          "error_type": "OperationFailure",
+          "code": {
+            "$numberInt": "197"
+          },
+          "code_name": "InvalidIndexSpecificationOption",
+          "error_labels": [],
+          "message": "The field 'unique' is not valid for an _id index specification. Specification: { unique: true, name: \"_id_1\", key: { _id: 1 }, v: 2 }"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_id_unique_true_fresh": {
+      "before": {
+        "ok": true,
+        "result": []
+      },
+      "calls": [
+        {
+          "ok": false,
+          "error_type": "OperationFailure",
+          "code": {
+            "$numberInt": "197"
+          },
+          "code_name": "InvalidIndexSpecificationOption",
+          "error_labels": [],
+          "message": "The field 'unique' is not valid for an _id index specification. Specification: { unique: true, name: \"_id_1\", key: { _id: 1 }, v: 2 }"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": []
+      }
+    },
+    "index_metadata_roundtrip": {
+      "metadata": [
+        {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": {
+            "_id": {
+              "$numberInt": "1"
+            }
+          },
+          "name": "_id_",
+          "collation": {
+            "locale": "simple"
+          }
+        },
+        {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": {
+            "n": {
+              "$numberInt": "1"
+            }
+          },
+          "name": "n_1",
+          "collation": {
+            "locale": "simple"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "ok": true,
+          "result": "_id_"
+        },
+        {
+          "ok": true,
+          "result": "n_1"
+        }
+      ],
+      "after": [
+        {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": {
+            "_id": {
+              "$numberInt": "1"
+            }
+          },
+          "name": "_id_",
+          "collation": {
+            "locale": "simple"
+          }
+        },
+        {
+          "v": {
+            "$numberInt": "2"
+          },
+          "key": {
+            "n": {
+              "$numberInt": "1"
+            }
+          },
+          "name": "n_1",
+          "collation": {
+            "locale": "simple"
+          }
+        }
+      ]
+    },
+    "index_simple_batch": {
+      "before": {
+        "ok": true,
+        "result": []
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": [
+            "n_1",
+            "p_1"
+          ]
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          },
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "n_1",
+            "collation": {
+              "locale": "simple"
+            }
+          },
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "p": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "p_1",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_simple_explicit_then_implicit": {
+      "before": {
+        "ok": true,
+        "result": []
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": "n_1"
+        },
+        {
+          "ok": true,
+          "result": "n_1"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          },
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "n_1",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "index_simple_recreate": {
+      "before": {
+        "ok": true,
+        "result": []
+      },
+      "calls": [
+        {
+          "ok": true,
+          "result": "n_1"
+        },
+        {
+          "ok": true,
+          "result": "n_1"
+        }
+      ],
+      "after": {
+        "ok": true,
+        "result": [
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "_id": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "_id_",
+            "collation": {
+              "locale": "simple"
+            }
+          },
+          {
+            "v": {
+              "$numberInt": "2"
+            },
+            "key": {
+              "n": {
+                "$numberInt": "1"
+              }
+            },
+            "name": "n_1",
+            "collation": {
+              "locale": "simple"
+            }
+          }
+        ]
+      }
+    },
+    "variable_const_empty": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "seed",
+          "v": "$$"
+        }
+      ]
+    },
+    "variable_empty": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: empty variable names are not allowed"
+    },
+    "variable_empty_dot": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: empty variable names are not allowed"
+    },
+    "variable_empty_dotted": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: empty variable names are not allowed"
+    },
+    "variable_empty_find_expr": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "empty variable names are not allowed"
+    },
+    "variable_empty_no_input": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: empty variable names are not allowed"
+    },
+    "variable_let_empty_reference": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: empty variable names are not allowed"
+    },
+    "variable_literal_empty": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "seed",
+          "v": "$$"
+        }
+      ]
+    },
+    "variable_unknown": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "17276"
+      },
+      "code_name": "Location17276",
+      "error_labels": [],
+      "message": "Invalid $project :: caused by :: Use of undefined variable: unknown"
+    },
+    "window_calendar_exact_membership": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0",
+            "1",
+            "2"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        {
+          "_id": "2",
+          "members": [
+            "2",
+            "3"
+          ]
+        },
+        {
+          "_id": "3",
+          "members": [
+            "3"
+          ]
+        }
+      ]
+    },
+    "window_current_unbounded_extremes": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0",
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        {
+          "_id": "2",
+          "members": [
+            "2",
+            "3"
+          ]
+        },
+        {
+          "_id": "3",
+          "members": [
+            "3"
+          ]
+        }
+      ]
+    },
+    "window_int32_extreme_day_lower": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        }
+      ]
+    },
+    "window_int32_extreme_day_upper": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        }
+      ]
+    },
+    "window_int32_extreme_month_lower": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        }
+      ]
+    },
+    "window_int32_extreme_month_upper": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        }
+      ]
+    },
+    "window_int32_extreme_quarter_lower": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5166406"
+      },
+      "code_name": "Location5166406",
+      "error_labels": [],
+      "message": "Executor error during aggregate command on namespace: mongoeco_replay_capture_c947c44eb74e49439d6cdd71edc2b186.cases :: caused by :: dateAdd overflowed"
+    },
+    "window_int32_extreme_quarter_upper": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5166406"
+      },
+      "code_name": "Location5166406",
+      "error_labels": [],
+      "message": "Executor error during aggregate command on namespace: mongoeco_replay_capture_ce1b6a592a6e43688942526abf6dd03f.cases :: caused by :: dateAdd overflowed"
+    },
+    "window_int32_extreme_week_lower": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        }
+      ]
+    },
+    "window_int32_extreme_week_upper": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        }
+      ]
+    },
+    "window_int32_extreme_year_lower": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5976500"
+      },
+      "code_name": "Location5976500",
+      "error_labels": [],
+      "message": "Executor error during aggregate command on namespace: mongoeco_replay_capture_cd12d54ba4a443448535016ff81c9b40.cases :: caused by :: invalid dateAdd 'amount' parameter value: -2147483648 year"
+    },
+    "window_int32_extreme_year_upper": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "5976500"
+      },
+      "code_name": "Location5976500",
+      "error_labels": [],
+      "message": "Executor error during aggregate command on namespace: mongoeco_replay_capture_8b1bb1800796453186abb3ac7b7e1246.cases :: caused by :: invalid dateAdd 'amount' parameter value: 2147483647 year"
+    },
+    "window_invalid_offset_above_int32": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "With 'unit', range-based bounds must be an integer"
+    },
+    "window_invalid_offset_below_int32": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "With 'unit', range-based bounds must be an integer"
+    },
+    "window_invalid_offset_int64": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "9"
+      },
+      "code_name": "FailedToParse",
+      "error_labels": [],
+      "message": "With 'unit', range-based bounds must be an integer"
+    },
+    "window_lower_day": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "0",
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_lower_hour": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "0",
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_lower_millisecond": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_lower_minute": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "0",
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_lower_month": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "0",
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_lower_quarter": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "0",
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_lower_second": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "0",
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_lower_week": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "0",
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_lower_year": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "0",
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_unbounded_current_extremes": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "0",
+            "1"
+          ]
+        },
+        {
+          "_id": "2",
+          "members": [
+            "0",
+            "1",
+            "2"
+          ]
+        },
+        {
+          "_id": "3",
+          "members": [
+            "0",
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      ]
+    },
+    "window_upper_day": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0",
+            "1"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_upper_hour": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0",
+            "1"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_upper_millisecond": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_upper_minute": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0",
+            "1"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_upper_month": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0",
+            "1"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_upper_quarter": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0",
+            "1"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_upper_second": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0",
+            "1"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_upper_week": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0",
+            "1"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1"
+          ]
+        }
+      ]
+    },
+    "window_upper_year": {
+      "ok": true,
+      "result": [
+        {
+          "_id": "0",
+          "members": [
+            "0",
+            "1"
+          ]
+        },
+        {
+          "_id": "1",
+          "members": [
+            "1"
+          ]
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        {
+          "$numberInt": "9"
+        },
+        {
+          "$numberInt": "0"
+        },
+        {
+          "$numberInt": "2"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": {
+        "$numberInt": "64"
+      },
+      "debug": false,
+      "maxBsonObjectSize": {
+        "$numberLong": "16777216"
+      },
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": {
+        "$numberDouble": "1.0"
+      }
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.18.2",
+    "python": "3.14.5"
+  },
+  "corpus": {
+    "path": "tests/differential/review_improvement_cases.py",
+    "sha256": "5f7cfeb5ee0cc82a83d523f23775f91c1c4b1fe6cd3eb4cf4e10f343aef2633c"
+  },
+  "case_manifests": [
+    {
+      "name": "densify_full_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_full_empty"
+    },
+    {
+      "name": "densify_dates_partition_full",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "p": "a",
+          "n": {
+            "$date": {
+              "$numberLong": "1767225600000"
+            }
+          }
+        },
+        {
+          "_id": "b",
+          "p": "b",
+          "n": {
+            "$date": {
+              "$numberLong": "1767398400000"
+            }
+          }
+        }
+      ],
+      "selector": "densify_dates_partition_full"
+    },
+    {
+      "name": "densify_duplicates",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "c",
+          "n": {
+            "$numberInt": "3"
+          }
+        }
+      ],
+      "selector": "densify_duplicates"
+    },
+    {
+      "name": "densify_partition_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_partition_empty"
+    },
+    {
+      "name": "densify_partition_explicit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "p": "a",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "p": "a",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "c",
+          "p": "b",
+          "n": {
+            "$numberInt": "5"
+          }
+        }
+      ],
+      "selector": "densify_partition_explicit"
+    },
+    {
+      "name": "densify_partition_full",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "p": "a",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "p": "a",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "c",
+          "p": "b",
+          "n": {
+            "$numberInt": "5"
+          }
+        }
+      ],
+      "selector": "densify_partition_full"
+    },
+    {
+      "name": "densify_partition_local",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "p": "a",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "p": "a",
+          "n": {
+            "$numberInt": "3"
+          }
+        },
+        {
+          "_id": "c",
+          "p": "b",
+          "n": {
+            "$numberInt": "5"
+          }
+        }
+      ],
+      "selector": "densify_partition_local"
+    },
+    {
+      "name": "densify_equal_existing_duplicates",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "b",
+          "n": {
+            "$numberInt": "1"
+          }
+        }
+      ],
+      "selector": "densify_equal_existing_duplicates"
+    },
+    {
+      "name": "densify_dates",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "n": {
+            "$date": {
+              "$numberLong": "1767225600000"
+            }
+          }
+        },
+        {
+          "_id": "b",
+          "n": {
+            "$date": {
+              "$numberLong": "1767484800000"
+            }
+          }
+        }
+      ],
+      "selector": "densify_dates"
+    },
+    {
+      "name": "densify_dates_upper_python_boundary",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "n": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "densify_dates_upper_python_boundary"
+    },
+    {
+      "name": "densify_dates_large_step",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "densify_dates_large_step"
+    },
+    {
+      "name": "densify_facet_outside",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "a",
+          "n": {
+            "$numberInt": "-1"
+          }
+        },
+        {
+          "_id": "b",
+          "n": {
+            "$numberInt": "1"
+          }
+        },
+        {
+          "_id": "c",
+          "n": {
+            "$numberInt": "4"
+          }
+        }
+      ],
+      "selector": "densify_facet_outside"
+    },
+    {
+      "name": "window_upper_millisecond",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_upper_millisecond"
+    },
+    {
+      "name": "window_upper_second",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_upper_second"
+    },
+    {
+      "name": "window_upper_minute",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_upper_minute"
+    },
+    {
+      "name": "window_upper_hour",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_upper_hour"
+    },
+    {
+      "name": "window_upper_day",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_upper_day"
+    },
+    {
+      "name": "window_upper_week",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_upper_week"
+    },
+    {
+      "name": "window_upper_month",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_upper_month"
+    },
+    {
+      "name": "window_upper_quarter",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_upper_quarter"
+    },
+    {
+      "name": "window_upper_year",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_upper_year"
+    },
+    {
+      "name": "window_lower_millisecond",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_lower_millisecond"
+    },
+    {
+      "name": "window_lower_second",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_lower_second"
+    },
+    {
+      "name": "window_lower_minute",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_lower_minute"
+    },
+    {
+      "name": "window_lower_hour",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_lower_hour"
+    },
+    {
+      "name": "window_lower_day",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_lower_day"
+    },
+    {
+      "name": "window_lower_week",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_lower_week"
+    },
+    {
+      "name": "window_lower_month",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_lower_month"
+    },
+    {
+      "name": "window_lower_quarter",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_lower_quarter"
+    },
+    {
+      "name": "window_lower_year",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_lower_year"
+    },
+    {
+      "name": "window_calendar_exact_membership",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "1706659200000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "1709078400000"
+            }
+          }
+        },
+        {
+          "_id": "2",
+          "date": {
+            "$date": {
+              "$numberLong": "1709164800000"
+            }
+          }
+        },
+        {
+          "_id": "3",
+          "date": {
+            "$date": {
+              "$numberLong": "1709251200000"
+            }
+          }
+        }
+      ],
+      "selector": "window_calendar_exact_membership"
+    },
+    {
+      "name": "window_current_unbounded_extremes",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        },
+        {
+          "_id": "2",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "3",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_current_unbounded_extremes"
+    },
+    {
+      "name": "window_unbounded_current_extremes",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135596800000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "-62135510400000"
+            }
+          }
+        },
+        {
+          "_id": "2",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "3",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_unbounded_current_extremes"
+    },
+    {
+      "name": "window_invalid_offset_above_int32",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_invalid_offset_above_int32"
+    },
+    {
+      "name": "window_invalid_offset_below_int32",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_invalid_offset_below_int32"
+    },
+    {
+      "name": "window_invalid_offset_int64",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402128000000"
+            }
+          }
+        },
+        {
+          "_id": "1",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_invalid_offset_int64"
+    },
+    {
+      "name": "window_int32_extreme_day_lower",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_int32_extreme_day_lower"
+    },
+    {
+      "name": "window_int32_extreme_day_upper",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_int32_extreme_day_upper"
+    },
+    {
+      "name": "window_int32_extreme_week_lower",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_int32_extreme_week_lower"
+    },
+    {
+      "name": "window_int32_extreme_week_upper",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_int32_extreme_week_upper"
+    },
+    {
+      "name": "window_int32_extreme_month_lower",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_int32_extreme_month_lower"
+    },
+    {
+      "name": "window_int32_extreme_month_upper",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_int32_extreme_month_upper"
+    },
+    {
+      "name": "window_int32_extreme_quarter_lower",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_int32_extreme_quarter_lower"
+    },
+    {
+      "name": "window_int32_extreme_quarter_upper",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_int32_extreme_quarter_upper"
+    },
+    {
+      "name": "window_int32_extreme_year_lower",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_int32_extreme_year_lower"
+    },
+    {
+      "name": "window_int32_extreme_year_upper",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "0",
+          "date": {
+            "$date": {
+              "$numberLong": "253402214400000"
+            }
+          }
+        }
+      ],
+      "selector": "window_int32_extreme_year_upper"
+    },
+    {
+      "name": "variable_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "seed"
+        }
+      ],
+      "selector": "variable_empty"
+    },
+    {
+      "name": "variable_empty_dotted",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "seed"
+        }
+      ],
+      "selector": "variable_empty_dotted"
+    },
+    {
+      "name": "variable_empty_dot",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "seed"
+        }
+      ],
+      "selector": "variable_empty_dot"
+    },
+    {
+      "name": "variable_unknown",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "seed"
+        }
+      ],
+      "selector": "variable_unknown"
+    },
+    {
+      "name": "variable_literal_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "seed"
+        }
+      ],
+      "selector": "variable_literal_empty"
+    },
+    {
+      "name": "variable_const_empty",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "seed"
+        }
+      ],
+      "selector": "variable_const_empty"
+    },
+    {
+      "name": "variable_let_empty_reference",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "seed"
+        }
+      ],
+      "selector": "variable_let_empty_reference"
+    },
+    {
+      "name": "variable_empty_no_input",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "variable_empty_no_input"
+    },
+    {
+      "name": "variable_empty_find_expr",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [
+        {
+          "_id": "seed"
+        }
+      ],
+      "selector": "variable_empty_find_expr"
+    },
+    {
+      "name": "index_id_omitted_fresh",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_omitted_fresh"
+    },
+    {
+      "name": "index_id_named_fresh",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_named_fresh"
+    },
+    {
+      "name": "index_id_unique_false_fresh",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_unique_false_fresh"
+    },
+    {
+      "name": "index_id_unique_true_fresh",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_unique_true_fresh"
+    },
+    {
+      "name": "index_id_simple_fresh",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_simple_fresh"
+    },
+    {
+      "name": "index_id_named_simple_fresh",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_named_simple_fresh"
+    },
+    {
+      "name": "index_id_omitted_existing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_omitted_existing"
+    },
+    {
+      "name": "index_id_named_existing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_named_existing"
+    },
+    {
+      "name": "index_id_unique_false_existing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_unique_false_existing"
+    },
+    {
+      "name": "index_id_unique_true_existing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_unique_true_existing"
+    },
+    {
+      "name": "index_id_simple_existing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_simple_existing"
+    },
+    {
+      "name": "index_id_named_simple_existing",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_named_simple_existing"
+    },
+    {
+      "name": "index_simple_recreate",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_simple_recreate"
+    },
+    {
+      "name": "index_simple_explicit_then_implicit",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_simple_explicit_then_implicit"
+    },
+    {
+      "name": "index_simple_batch",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_simple_batch"
+    },
+    {
+      "name": "index_id_batch",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_id_batch"
+    },
+    {
+      "name": "index_metadata_roundtrip",
+      "min_version": [
+        {
+          "$numberInt": "7"
+        },
+        {
+          "$numberInt": "0"
+        }
+      ],
+      "seed_documents": [],
+      "selector": "index_metadata_roundtrip"
+    }
+  ]
+}

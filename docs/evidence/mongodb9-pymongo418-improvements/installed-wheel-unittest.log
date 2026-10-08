@@ -1,0 +1,208 @@
+.......................................Executing <Task pending name='Task-1610' coro=<AsyncApiIntegrationTests.test_aggregate_explain_reports_pipeline_pushdown_summary() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:3197> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.234 seconds
+....Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:239> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 2.276 seconds
+Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:771> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.153 seconds
+Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:899> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.300 seconds
+Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:1709> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.101 seconds
+Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:2074> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.153 seconds
+Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:2294> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.307 seconds
+Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:2347> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.151 seconds
+............................................................................................................................Executing <Task pending name='Task-2567' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_count_distinct_and_find_and_modify() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:5099> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.219 seconds
+Executing <Task pending name='Task-2567' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_count_distinct_and_find_and_modify() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:5099> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.148 seconds
+.Executing <Task pending name='Task-2572' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_find_and_aggregate() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:5081> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.148 seconds
+Executing <Task pending name='Task-2572' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_find_and_aggregate() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:5081> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.148 seconds
+.Executing <Task pending name='Task-2577' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_update_and_delete() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:5090> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.146 seconds
+Executing <Task pending name='Task-2577' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_update_and_delete() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_async_api.py:5090> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.149 seconds
+.............................................................................................................................Executing <Task finished name='Task-3458' coro=<DeterministicCostContractTests.test_search_cost_contract_is_stable_across_engines_and_surfaces() done, defined at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_deterministic_cost_contracts.py:92> result=None created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.154 seconds
+...................................Executing <Task pending name='Task-3764' coro=<EngineParityTests.test_database_command_surface_matches_in_memory_and_sqlite_for_admin_subsets() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_engine_parity.py:2273> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.150 seconds
+Executing <Task pending name='Task-3764' coro=<EngineParityTests.test_database_command_surface_matches_in_memory_and_sqlite_for_admin_subsets() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_engine_parity.py:2273> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.152 seconds
+........................................Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_engine_parity.py:1427> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.897 seconds
+Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_engine_parity.py:1658> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.301 seconds
+Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_engine_parity.py:1427> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.150 seconds
+...........Executing <Task pending name='Task-4151' coro=<EngineParityTests.test_vector_search_results_and_explain_are_repeatable_and_engine_equivalent() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_engine_parity.py:2053> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.150 seconds
+Executing <Task pending name='Task-4151' coro=<EngineParityTests.test_vector_search_results_and_explain_are_repeatable_and_engine_equivalent() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_engine_parity.py:2053> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.150 seconds
+...........................................Executing <Task pending name='Task-5006' coro=<AsyncSearchPlanningEquivalenceTests.test_optimized_and_reference_modes_are_equivalent() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_search_planning_equivalence.py:139> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.297 seconds
+Executing <Task pending name='Task-5006' coro=<AsyncSearchPlanningEquivalenceTests.test_optimized_and_reference_modes_are_equivalent() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_search_planning_equivalence.py:139> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.226 seconds
+.....Executing <Task pending name='Task-5110' coro=<AsyncSearchRegressionTests.test_search_plan_is_shared_by_execution_and_explain() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_search_regressions.py:81> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.222 seconds
+Executing <Task pending name='Task-5110' coro=<AsyncSearchRegressionTests.test_search_plan_is_shared_by_execution_and_explain() running at /Users/uve/Proyectos/mongoeco/tests/integration/api/test_search_regressions.py:116> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.150 seconds
+...........................................................................................................................................................................................................................................................................................................................Executing <Task finished name='Task-8785' coro=<AsyncAggregationCursorTests.test_async_aggregation_cursor_explain_surfaces_deferred_reason_details() done, defined at /Users/uve/Proyectos/mongoeco/tests/unit/api/test_aggregation_cursor.py:1824> result=None created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.110 seconds
+.............Executing <Task finished name='Task-8848' coro=<AsyncAggregationCursorTests.test_explain_surfaces_bounded_lookup_candidate_and_runtime_fallback() done, defined at /Users/uve/Proyectos/mongoeco/tests/unit/api/test_aggregation_cursor.py:1700> result=None created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.147 seconds
+....................Executing <Task finished name='Task-8949' coro=<AsyncAggregationCursorTests.test_partial_partitioned_group_output_cleans_owned_temporaries() done, defined at /Users/uve/Proyectos/mongoeco/tests/unit/api/test_aggregation_cursor.py:2100> result=None created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.110 seconds
+..............................................................................................................................................................................................................................................Executing <Task finished name='Task-10007' coro=<CursorUnitTests.test_async_cursor_private_helpers_cover_issue_messages_and_planning_mode_resolution() done, defined at /Users/uve/Proyectos/mongoeco/tests/unit/api/test_cursors.py:310> result=None created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.297 seconds
+................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................F...............Benchmark contract failed: engine 'memory-sync' failed: boom
+...................................................................................s.......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................{
+  "memory-sync": {
+    "error": "boom"
+  }
+}
+{
+  "schema": "mongoeco-benchmark-report/v2",
+  "environment": {
+    "python": "3.14.5",
+    "pythonImplementation": "CPython",
+    "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "sqlite": "3.53.4",
+    "jsonBackend": "stdlib",
+    "mongoeco": "4.8.1",
+    "dependencies": {
+      "mongomock": "4.3.0",
+      "orjson": null,
+      "psutil": "7.2.2",
+      "pymongo": "4.18.2",
+      "usearch": "2.26.0"
+    },
+    "executable": "/private/tmp/mongoeco-improvements-20261008/installed-wheel314/bin/python"
+  },
+  "source": {
+    "gitRevision": "aa626c51fea8a055510f89a2acf2f8ed1ce33761",
+    "gitDirty": true,
+    "mongoecoModule": "/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/__init__.py",
+    "harnessSha256": "sha256:a46f2e9c5ecbf5811289439caba8210f62a24928d1a5ad295da6a7337e8b3de3",
+    "datasetSha256": "sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63"
+  },
+  "config": {
+    "size": 1,
+    "warmup": 0,
+    "repetitions": 1,
+    "workloads": [
+      "secondary_lookup_indexed",
+      "secondary_lookup_unindexed",
+      "secondary_lookup_diagnostics",
+      "simple_aggregation",
+      "materializing_aggregation",
+      "aggregation_spill_diagnostics",
+      "sort_limit",
+      "cursor_consumption",
+      "filter_selectivity",
+      "predicate_diagnostics",
+      "sort_shape_diagnostics"
+    ],
+    "rssPeakSamplingIntervalMs": 5.0
+  },
+  "results": {
+    "memory-sync": {
+      "error": "boom"
+    }
+  }
+}
+# Benchmark Report
+
+## Environment
+
+- Generated at: 2026-10-08T12:40:34.102805+00:00
+- Python: 3.14.5
+- Platform: macOS-15.6-arm64-arm-64bit-Mach-O
+- Dataset size: 1
+- Warmup runs: 0
+- Measured repetitions: 1
+- Workloads: secondary_lookup_indexed, secondary_lookup_unindexed, secondary_lookup_diagnostics, simple_aggregation, materializing_aggregation, aggregation_spill_diagnostics, sort_limit, cursor_consumption, filter_selectivity, predicate_diagnostics, sort_shape_diagnostics
+- JSON backend: stdlib
+- MONGOECO_JSON_BACKEND: unset
+- Git revision: `aa626c51fea8a055510f89a2acf2f8ed1ce33761`
+- Git worktree dirty: `True`
+- Report schema: `mongoeco-benchmark-report/v2`
+- Harness SHA-256: `sha256:a46f2e9c5ecbf5811289439caba8210f62a24928d1a5ad295da6a7337e8b3de3`
+- Dataset SHA-256: `sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63`
+- RSS peak sampling interval: `5.0 ms`
+- psutil: `7.2.2`
+- mongomock: `4.3.0`
+- orjson: `not installed`
+
+## secondary_lookup_indexed
+
+## secondary_lookup_unindexed
+
+## secondary_lookup_diagnostics
+
+## simple_aggregation
+
+## materializing_aggregation
+
+## aggregation_spill_diagnostics
+
+## sort_limit
+
+## cursor_consumption
+
+## filter_selectivity
+
+## predicate_diagnostics
+
+## sort_shape_diagnostics
+
+Executing <Task pending name='Task-12954' coro=<SQLiteOutboxTests.test_crashed_dispatch_is_replayed_after_lease_expiry() running at /Users/uve/Proyectos/mongoeco/tests/unit/core/test_sqlite_outbox.py:1725> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:991, Task.task_wakeup()] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:459> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.302 seconds
+................................Executing <Task finished name='Task-13114' coro=<SQLiteOutboxTests.test_shared_file_serializes_dispatch_across_processes() done, defined at /Users/uve/Proyectos/mongoeco/tests/unit/core/test_sqlite_outbox.py:1584> result=None created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:109> took 0.697 seconds
+....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................s....unittest.case.FunctionTestCase (fail_preflight)
+real MongoDB preflight ... ERROR
+
+======================================================================
+ERROR: unittest.case.FunctionTestCase (fail_preflight)
+real MongoDB preflight
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/uve/Proyectos/mongoeco/scripts/run_mongodb_real_differential.py", line 116, in fail_preflight
+    raise cause
+  File "/Users/uve/Proyectos/mongoeco/scripts/run_mongodb_real_differential.py", line 109, in main
+    runtime = inspect_server_runtime(
+        os.environ["MONGOECO_REAL_MONGODB_URI"], parsed.target
+    )
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/mock.py", line 1241, in _execute_mock_call
+    raise effect
+RuntimeError: cannot connect to real MongoDB
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (errors=1)
+.differential suite resolved to zero tests
+.unittest.case.FunctionTestCase (<lambda>) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+OK
+.unittest.case.FunctionTestCase (skipped) ... skipped 'connection failed after preflight'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+OK (skipped=1)
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:758: ResourceWarning: unclosed event loop <_UnixSelectorEventLoop running=False closed=False debug=False>
+  _warn(f"unclosed event loop {self!r}", ResourceWarning, source=self)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.case filter matched no differential cases
+...............................................................................................................................................................................................................................................................................................................
+======================================================================
+FAIL: test_group_spool_recursively_bounds_partition_key_sets (unit.core.test_aggregation_work_control.AggregationWorkControlTests.test_group_spool_recursively_bounds_partition_key_sets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/uve/Proyectos/mongoeco/tests/unit/core/test_aggregation_work_control.py", line 348, in test_group_spool_recursively_bounds_partition_key_sets
+    self.assertEqual(set(temp_root.glob("*.mongoeco-agggroup")), before)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the second set but not the first:
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmpj4lawsen.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmpniblfie6.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmpy__o54se.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmp2fjbzr5i.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmp6nht_3ib.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmp0dvehaoe.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmpg817j1f6.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmpyanb0jlv.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmpqj4kpw4w.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmpr2hz0f3l.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmp3u1zn9sn.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmpf6k3ses0.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmptnf3cp7q.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmp7iukp2ps.mongoeco-agggroup')
+PosixPath('/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/tmpm32ahmgy.mongoeco-agggroup')
+
+----------------------------------------------------------------------
+Ran 3596 tests in 50.859s
+
+FAILED (failures=1, skipped=2)

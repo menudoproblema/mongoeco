@@ -1,0 +1,131 @@
+{
+  "7": {
+    "server": "7.0.43",
+    "fcv": {
+      "version": "7.0"
+    },
+    "pymongo": "4.18.2",
+    "strict_tests": 29,
+    "unexpected_skips": 0,
+    "corpora": {
+      "review": {
+        "cases": 72,
+        "fresh_capture_sha256": "977e833d32b2b6837be9b692618dca9ed567ed88f64f878ae27b04605f78e531",
+        "corpus": {
+          "path": "tests/differential/review_improvement_cases.py",
+          "sha256": "5f7cfeb5ee0cc82a83d523f23775f91c1c4b1fe6cd3eb4cf4e10f343aef2633c"
+        }
+      },
+      "version-deltas": {
+        "cases": 154,
+        "fresh_capture_sha256": "ec251d0c3affc15fc541bda99fa58708951e0635bb0665998c8d8546f508edc5",
+        "corpus": {
+          "path": "tests/differential/version_delta_cases.py",
+          "sha256": "b0a224e2177ee7cfc70f5c854d5fb3a0d55aba7af7d6e7e3082b1abeb2f050d5"
+        }
+      },
+      "semantic-guarantees": {
+        "cases": 54,
+        "fresh_capture_sha256": "1e47b929637905dd67e5b2a124cbbb9a24b149e863ae62bd968e29faeb620c24",
+        "corpus": {
+          "path": "tests/differential/semantic_guarantee_cases.py",
+          "sha256": "dfff6da17d1f7dcfb77b4eed27502d7369a0b01fd8d1463cf0b661ddee591f86"
+        }
+      },
+      "index-guarantees": {
+        "cases": 4,
+        "fresh_capture_sha256": "76b92a0dacac68b705173c9545e55cd4295d07c968cfca94f3971fc9fae21cf2",
+        "corpus": {
+          "path": "tests/differential/index_guarantee_cases.py",
+          "sha256": "1c07c046961e72dfbecdce3ec69c2b00d1da7d07147ae96d057d86fe2abf0701"
+        }
+      }
+    }
+  },
+  "8": {
+    "server": "8.0.32",
+    "fcv": {
+      "version": "8.0"
+    },
+    "pymongo": "4.18.2",
+    "strict_tests": 29,
+    "unexpected_skips": 0,
+    "corpora": {
+      "review": {
+        "cases": 72,
+        "fresh_capture_sha256": "0937c54cc8da5bde997cf1e24ab9bfda73f8ee6d79209f9f8817de66aa6cef09",
+        "corpus": {
+          "path": "tests/differential/review_improvement_cases.py",
+          "sha256": "5f7cfeb5ee0cc82a83d523f23775f91c1c4b1fe6cd3eb4cf4e10f343aef2633c"
+        }
+      },
+      "version-deltas": {
+        "cases": 154,
+        "fresh_capture_sha256": "a81c9bd2a52d620f36d915468f3b84c0d3841580fa902c89eb9d3e2985d513fc",
+        "corpus": {
+          "path": "tests/differential/version_delta_cases.py",
+          "sha256": "b0a224e2177ee7cfc70f5c854d5fb3a0d55aba7af7d6e7e3082b1abeb2f050d5"
+        }
+      },
+      "semantic-guarantees": {
+        "cases": 54,
+        "fresh_capture_sha256": "a2fcd3077df924d1b88bbea9f76694ce90183a60915aeff3b59ccbdbba850d3a",
+        "corpus": {
+          "path": "tests/differential/semantic_guarantee_cases.py",
+          "sha256": "dfff6da17d1f7dcfb77b4eed27502d7369a0b01fd8d1463cf0b661ddee591f86"
+        }
+      },
+      "index-guarantees": {
+        "cases": 4,
+        "fresh_capture_sha256": "8810afafc5ba294cee33c486451a758e7b7d6d0be6472c2a8b5aa087933655d1",
+        "corpus": {
+          "path": "tests/differential/index_guarantee_cases.py",
+          "sha256": "1c07c046961e72dfbecdce3ec69c2b00d1da7d07147ae96d057d86fe2abf0701"
+        }
+      }
+    }
+  },
+  "9": {
+    "server": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    },
+    "pymongo": "4.18.2",
+    "strict_tests": 29,
+    "unexpected_skips": 0,
+    "corpora": {
+      "review": {
+        "cases": 72,
+        "fresh_capture_sha256": "125ae9970a222f7648c29a5b7670361eb33616d5afe073e90fdb2f0bd1045c71",
+        "corpus": {
+          "path": "tests/differential/review_improvement_cases.py",
+          "sha256": "5f7cfeb5ee0cc82a83d523f23775f91c1c4b1fe6cd3eb4cf4e10f343aef2633c"
+        }
+      },
+      "version-deltas": {
+        "cases": 154,
+        "fresh_capture_sha256": "89018a39e5f627fe30be04e05826e375e6b156bf9f95722b4f97399106797014",
+        "corpus": {
+          "path": "tests/differential/version_delta_cases.py",
+          "sha256": "b0a224e2177ee7cfc70f5c854d5fb3a0d55aba7af7d6e7e3082b1abeb2f050d5"
+        }
+      },
+      "semantic-guarantees": {
+        "cases": 54,
+        "fresh_capture_sha256": "021f8b7aacc3084d5ca3fe2924b836c7ff5eea20de62229437b293442366d877",
+        "corpus": {
+          "path": "tests/differential/semantic_guarantee_cases.py",
+          "sha256": "dfff6da17d1f7dcfb77b4eed27502d7369a0b01fd8d1463cf0b661ddee591f86"
+        }
+      },
+      "index-guarantees": {
+        "cases": 4,
+        "fresh_capture_sha256": "3f2d312576513bc84f1c3e46dc90a71a87f9d4900498efc7424439b19174bc52",
+        "corpus": {
+          "path": "tests/differential/index_guarantee_cases.py",
+          "sha256": "1c07c046961e72dfbecdce3ec69c2b00d1da7d07147ae96d057d86fe2abf0701"
+        }
+      }
+    }
+  }
+}

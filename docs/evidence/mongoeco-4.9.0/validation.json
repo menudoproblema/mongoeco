@@ -1,0 +1,377 @@
+{
+  "schema": "mongoeco-candidate-validation/1",
+  "version": "4.9.0",
+  "state": "prepared and locally verified; not committed, tagged or published",
+  "generated_at": "2026-10-08T16:04:08.130029+00:00",
+  "base": "aa626c51fea8a055510f89a2acf2f8ed1ce33761",
+  "last_release": "v4.8.1",
+  "initial_workset_manifest_sha256": "23883e922bb1fb23957dadba65228ad904590aed1d6478eb2d950ba4bd907feb",
+  "initial_workset_files_preserved": 777,
+  "historical_fixture_hashes_unchanged": 15,
+  "artifacts": {
+    "mongoeco-4.9.0-py3-none-any.whl": {
+      "path": "/Users/uve/Proyectos/mongoeco/dist/4.9.0-candidate/mongoeco-4.9.0-py3-none-any.whl",
+      "sha256": "4d96655423e1bd83448f100514567a0c303dd3b5f1bd58fc490dc06a57022bdf"
+    },
+    "mongoeco-4.9.0.tar.gz": {
+      "path": "/Users/uve/Proyectos/mongoeco/dist/4.9.0-candidate/mongoeco-4.9.0.tar.gz",
+      "sha256": "21e77eea54c09e21422d31a24acc03338bbc7aaffe6dcfff1d5f2dfe59a7a0e0"
+    }
+  },
+  "gates": [
+    {
+      "gate": "pytest Python 3.13 / 3.14 installed wheel",
+      "result": "8803 passed / 30 expected skips / 3990 subtests each",
+      "evidence": [
+        "pytest-final313.log",
+        "pytest-final314.log",
+        "corrected-wheel313-identity.json",
+        "corrected-wheel314-identity.json"
+      ]
+    },
+    {
+      "gate": "coverage >=99 without new exclusions",
+      "result": {
+        "covered_lines": 42780,
+        "num_statements": 43208,
+        "percent_covered": 99.00944269579708,
+        "percent_covered_display": "99.01",
+        "missing_lines": 428,
+        "excluded_lines": 882,
+        "percent_statements_covered": 99.00944269579708,
+        "percent_statements_covered_display": "99.01"
+      },
+      "evidence": [
+        "coverage-final314.json"
+      ]
+    },
+    {
+      "gate": "unittest",
+      "result": "3596 tests; 2 expected skips; OK",
+      "evidence": [
+        "unittest-final.log"
+      ]
+    },
+    {
+      "gate": "properties ci / deep",
+      "result": "9 passed each; shrinking enabled",
+      "evidence": [
+        "property-ci-final.log",
+        "property-deep-final.log"
+      ]
+    },
+    {
+      "gate": "lint ratchet last release",
+      "result": "78 changed Python files; unchanged baseline; v4.8.1",
+      "evidence": [
+        "lint-callback-final.log"
+      ]
+    },
+    {
+      "gate": "typing / manifest / exports source and installed wheel",
+      "result": "positive and negative contract canaries pass; current and historical snapshots active",
+      "evidence": [
+        "typing-final-source.log",
+        "manifest-final-source.log",
+        "typing-wheel-final.log",
+        "manifest-wheel-final.log",
+        "exports-wheel-final.log"
+      ]
+    },
+    {
+      "gate": "conformance Memory / SQLite / external SPI canary",
+      "result": "10/10; 10/10; 5 passed plus 5 not applicable; no failures/errors",
+      "evidence": [
+        "conformance-memory-final.json",
+        "conformance-sqlite-final.json",
+        "conformance-external-final.json"
+      ]
+    },
+    {
+      "gate": "isolated installed owner consumers",
+      "result": "provider default/explicit 21 each (130 managed-server cases deselected); testkit 135 each; gdt 39; typing canary passes; full resolution pip check",
+      "evidence": [
+        "consumer-corrected-status.json",
+        "consumer-adoption-final.json",
+        "consumer-final-pip-check.log",
+        "corrected-consumer-identity.json"
+      ]
+    },
+    {
+      "gate": "strict native 7 / 8 / 9 and four corpora",
+      "result": "29 live parity cases per version; 284 fresh capture comparisons per version; zero unexpected omissions; stable exact FCV",
+      "evidence": [
+        "native-final-verification.json",
+        "native-cleanup-final.json",
+        "capture-coverage.json"
+      ]
+    },
+    {
+      "gate": "five isolated PyMongo versions",
+      "result": "exact curated summary; no indeterminate results",
+      "evidence": [
+        "profile-matrix-full.json",
+        "profile-matrix-summary.json"
+      ]
+    },
+    {
+      "gate": "SQLite 4.5 original preservation",
+      "result": "6 tests pass using copies; original hash unchanged",
+      "evidence": [
+        "sqlite45-final.log",
+        "sqlite45-original-integrity.json"
+      ]
+    },
+    {
+      "gate": "minimum dependencies / clean wheel and final sdist",
+      "result": "full public resolution without internal constraints; optional modules absent in minimal lane; final sdist package bytes match wheel",
+      "evidence": [
+        "minimal313-result.json",
+        "clean-wheel-final-identity.json",
+        "clean-delivery-sdist-identity.json",
+        "clean-delivery-sdist-smoke.json",
+        "clean-callback-wheel-install.log",
+        "clean-callback-sdist-install.log"
+      ]
+    },
+    {
+      "gate": "two reproducible builds and twine",
+      "result": {
+        "mongoeco-4.9.0-py3-none-any.whl": "4d96655423e1bd83448f100514567a0c303dd3b5f1bd58fc490dc06a57022bdf",
+        "mongoeco-4.9.0.tar.gz": "21e77eea54c09e21422d31a24acc03338bbc7aaffe6dcfff1d5f2dfe59a7a0e0"
+      },
+      "evidence": [
+        "build-callback-artifacts.log",
+        "distribution-callback-hashes.json",
+        "distribution-current-source-identity.json"
+      ]
+    },
+    {
+      "gate": "performance / outcome / plans / deterministic work",
+      "result": "14 main tasks strict comparison; additional streaming three rounds of 5 reps each; spill actually observed and cleaned; all samples and limitations retained",
+      "evidence": [
+        "performance-final-summary.json",
+        "performance-causal-reuse.json",
+        "timed-wheel314-identity.json",
+        "benchmark-corrected-memory.json",
+        "benchmark-corrected-sqlite.json"
+      ]
+    },
+    {
+      "gate": "CI / documentation / final diff review",
+      "result": "3 YAML / 75 shell / 4 embedded Python parse; local gates only; no hosted CI run; final source diff reviewed",
+      "evidence": [
+        "ci-config-validation.json"
+      ]
+    }
+  ],
+  "guarantees_preserved": [
+    "defaults MongoDB 7.0 / PyMongo 4.9",
+    "separate server dialect / Python profile / wire capabilities",
+    "Engine SPI v2 / search-v1 / CXP exchange / persistent formats",
+    "sync-async and promised Memory-SQLite paths",
+    "lexical bindings, namespace, placement, resources, deadlines, cleanup and validation precedence",
+    "direct convert and group guards, SRV, versioned merge order, independent public flags",
+    "public preparation callbacks retain the historical call shape and resource ownership"
+  ],
+  "observable_corrections": [
+    "densify 7/8 now preserves original documents and multiplicity, half-open explicit bounds, empty ranges and native version deltas",
+    "date window comparisons accept valid internal limits outside Python datetime range",
+    "empty/malformed variable names and paths have native error classification and precedence",
+    "builtin id recreation returns requested names with immutable storage identity; conflicting index definitions code 86"
+  ],
+  "limits": [
+    "431 of 852 matrix rows remain captured-only; full BSON wrapper identity and all mapping-order semantics are not claimed by normalized value comparisons",
+    "full native index metadata and explicit unique semantics are outside declared parity; deliberate product extensions preserved",
+    "owner adoption not applied: pins, SDK constraint, explicit configuration wiring and preexisting CXP test adaptation remain owner work",
+    "performance does not establish global non-regression, causal speedup or memory bounds; positive and negative timing deltas retained",
+    "CI hosted execution and publication are outside this local preparation"
+  ],
+  "pending_required_work": [],
+  "publication_performed": false,
+  "owner_repositories_modified": false,
+  "final_workset_manifest_sha256": "d5202f264a774f7e2506dc77d2c726031a7fe3bb3e90f279d595dac1cef975eb",
+  "evidence_files": {
+    "baseline-pypi-metadata.json": "ec74e2a190a1734e876472437e37d0963586b61cca5dc3e8032c8dcc5f76ddc6",
+    "benchmark-baseline-final-identity.json": "c5af21069d983aaf4f78f648e2ac9124ad5b0fe0e5c015c1cc4fe3646d87ac72",
+    "benchmark-baseline-memory.json": "b4ee5e68dedd39ead93fd2fcc4f4f35922ccc832301d128cccbef17eea3c6580",
+    "benchmark-baseline-memory.md": "85cf6cf94fc480a0865b8bf3ef7906c07274a976df4fee2f0540456cc10aeea8",
+    "benchmark-baseline-sqlite-report.json": "98c4fa68bc148c40ab109a728e9cbfc2400fbb8ae5ba9447a5100eb430efde3a",
+    "benchmark-baseline-sqlite-report.md": "8aee6b5f70f2ecfd410fd0243b0aed8dff5a7fdf9a884ec37d98f8e9d0372724",
+    "benchmark-baseline-sqlite.json": "742729b37d798f3806abdaaa1cadaf2b7e834afb1acdb413edc6193fba60e1be",
+    "benchmark-corrected-memory.json": "f80c5bfdcd79037174e54801539ed535b1527bc5d8fc584c72ba4b09cde579e3",
+    "benchmark-corrected-memory.log": "3a09238bdf2e8a3d6a091a93b604e702afc15d7c491ac0cf108bd1f965b65380",
+    "benchmark-corrected-memory.md": "558dd6d18e0fa507a8f28436238c0bd85ff6d4bf6738930d24b08978493a92dd",
+    "benchmark-corrected-sqlite.json": "160bf9c49fea81a71be86de46dc0401a650079c0cbdcbdd4ac9737fbe75b6f32",
+    "benchmark-corrected-sqlite.log": "9198867c156406b10799a91b8bab774ab76e21639203673f614df450fc0970f0",
+    "benchmark-corrected-sqlite.md": "57b695c9e2337f01bce09f1c318c553f633a8ebc53f344671afa9d4512ca82a7",
+    "build-callback-artifacts.log": "8c9080e7a91844f04fd228dfce6cb57ee84e7a35c64999b48a8a6712ac013965",
+    "build-callback-first.log": "d250650bea571d4f7c14ee87718d83f4a3ad3cb36cfa63f1066f83e44ae3e92d",
+    "build-callback-second.log": "8e09501d4dc755462f1e90681cff817de14d2f1d8a40c87a5c9d069331ad031e",
+    "build-delivery-artifacts.log": "0a56abbf12676646b23328dc0f7f59e5560e329accf9672bfb82278d4005035b",
+    "build-delivery-first.log": "bbb66e2e1a5d0eea5104c517fe1c342494a63a25147cd53d7b8ea6cee35e431b",
+    "build-delivery-second.log": "6a4b48f45ed09d1c94a324c81615e54f8156ae275df6bc9946631d9b47221f86",
+    "build_callback_candidate.py": "ca306be82b58eb95d514254311385aeb237a372da38b8fa2d897df6f943d06db",
+    "build_delivery_candidate.py": "4d2862e9583d3d9441445b69030ad7a726e0f01a620188f7d937e6ec16331e5a",
+    "callback-close-status.json": "39d48873c32bec88aff11c8eebce55dcc9ca0b6cbd3c1f9594e4ebf5b835daf6",
+    "callback-close-summary.log": "abc4f956364d6164ece26eac73c39303c426132be47635e5c0047db3b9b678bf",
+    "capture-coverage.json": "c54b6a68782ef44287316e92a793489ea9c21e70fafe59c6febb07a635f82706",
+    "ci-config-final.log": "250a4ed53c367069844d3dfa2cb947301b6b469617fc5b31aba63df3a098440a",
+    "ci-config-validation.json": "bd191be0ca5695d8f8c6e3e231096b431d2112a139cc3acafb20fa71eb2cac09",
+    "clean-callback-install-summary.log": "4c0f39f1533907eed079c62d0ed2a0963e72111168f7151070bbcdf24ceb287e",
+    "clean-callback-sdist-identity.json": "17c0b125fb5f6b192a5d5847588ea3638e1a1e2016b10db9a182b67d33ddddf8",
+    "clean-callback-sdist-install.log": "9f6157d8b806e84088b61efb567d2e09a7d50b4f7703beb2dfab819c889d8142",
+    "clean-callback-sdist-smoke.json": "8c97247f5dad8ce07fc2d68c29af101ee64d2d40eb803b569cd369f0363cbae1",
+    "clean-callback-wheel-identity.json": "ca4988562b6385bc07c01ad40ac6f0b0fcddbce45c447e1a538813c7f4c75a0b",
+    "clean-callback-wheel-install.log": "a03288b15221fbf91810a04fb3071f9a278e180f9089773d0d61f3d2818ad644",
+    "clean-callback-wheel-smoke.json": "2c5dc328312201a871fba10a9f7d02ce826b1e76da87284cf9396cf368282415",
+    "clean-delivery-sdist-identity.json": "17c0b125fb5f6b192a5d5847588ea3638e1a1e2016b10db9a182b67d33ddddf8",
+    "clean-delivery-sdist-install.log": "1ec555596dbca0eb93c9011e670610e5b7e1352051fa26832182a9a5aaefa211",
+    "clean-delivery-sdist-pip-check.log": "9870e9845e6d7e202d212272e86638744ef82c253275a89b0f651a3ecbfd1c43",
+    "clean-delivery-sdist-smoke.json": "8c97247f5dad8ce07fc2d68c29af101ee64d2d40eb803b569cd369f0363cbae1",
+    "clean-delivery-sdist-smoke.log": "23d16be875f7f66b86b1c50db81200f6aef880aa5abb626829ca364529c2ac81",
+    "clean-wheel-final-identity.json": "ca4988562b6385bc07c01ad40ac6f0b0fcddbce45c447e1a538813c7f4c75a0b",
+    "clean-wheel-final-pip-check.log": "5234d8d6d3b2a811922ce7f1ed0c0ddfc74cc12059347264a6a05f401bcd95d2",
+    "clean-wheel-smoke.log": "132452d2fffafa23664ca535d5f05433a4cf0d2613113ec997d7b65067efcaaa",
+    "close_evidence.py": "fb9b4f2e770bd0ddc0dd3da5e0ebafbf043be7832e60c25c70c07bb8f484e28f",
+    "compose_benchmark_report.py": "6ff83c7a4a1eafd79a477aa155b0b0d7eefffd448bcca687d94d8e2874009ef1",
+    "conformance-external-final.json": "9bc56382ed9387f1cabc203aa93b54613a703b9b1e730fc08d20a5efbf32fe2f",
+    "conformance-external-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "conformance-memory-final.json": "677d1f731623e0f46dd05d0a73acffcdb8812618527832c35bf5ef3b27c27206",
+    "conformance-memory-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "conformance-sqlite-final.json": "09df790d2a8caf54d8ce0945f74e8ef04b744e566b3ba9c142ad8e52b806aa9a",
+    "conformance-sqlite-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "consumer-adoption-final.json": "c94f0babe9e12edf723299ce319893b9b94ce15ea7f20f28c63fa3669566d427",
+    "consumer-callback-summary.log": "9c779a6ff4c8423bded77799206b1925cbd08c800c28b8a8ef118e00b81dc158",
+    "consumer-census.json": "0ec54cae57798ce30df9931a6dce19b042788b2fb817e5975f506328a1c5aaeb",
+    "consumer-corrected-gdt.log": "f6ff70e1e048e002315b763c84c7a0c0fc5689786f1a8fda6e38cd48345a0583",
+    "consumer-corrected-provider-default.log": "a272811ef31ba7a74ab31758f9895dd293fd9d22c94516a088dd8d5b14b8b8e7",
+    "consumer-corrected-provider-explicit.log": "f2a0c815f43b509198126f5cd634daa38aebf0d9bcfdd9b393d1fd80ed7095a5",
+    "consumer-corrected-status.json": "268fa71674c131ad56f5d5ac6f9531fad4c3537beab036beb68859bb5a6804e8",
+    "consumer-corrected-summary.log": "9c779a6ff4c8423bded77799206b1925cbd08c800c28b8a8ef118e00b81dc158",
+    "consumer-corrected-testkit-default.log": "ecb9e35ad57cc899dce8b0da0b34a2d3b5b32850e91487d90170a84c09b31a5b",
+    "consumer-corrected-testkit-explicit.log": "f71387f3f4321f87bcd93389def88daa3d17b18b06def66baaec33010f647a25",
+    "consumer-corrected-typing.log": "5d4b6d285b77932e3d08212c3b4974d0a803f98ec60408ac6ccf6a063fa6c19e",
+    "consumer-final-pip-check.log": "d020e5931c7d1069b26b0e4eb4c9f2546b521ac7cfb8f6879f2323a1bf5f7b1d",
+    "consumer-preexisting-test-adaptation.json": "35d78c632c35cfd044eeac5e376f14732134a35d94898e7e8b41f213ba6e452f",
+    "consumer-sdk-pin-adaptation.json": "d5a037b7b51c7adaa403027e118f9412b3dc33e4ff7047182b987d8aec694734",
+    "consumer-sdk418-install.log": "7d15331472e76c6877772bbbab9bcc3ce87c965d0820e07a77f3ec62567a1b79",
+    "consumer-testkit-baseline-adapted.log": "8d2d415a46d24eec674232471f1f83e114dc04cfc0bff8743bef24a25ec4e883",
+    "consumer-testkit-baseline-git-scaffold.log": "ecf4097d7a762490a75663611fdce34f1360b1d8dc3a0b437d452dff227f87f7",
+    "consumer-testkit-baseline-injected-sqlite.log": "4a242051a94adb8e160e748207efc16a879b4dd80afcc4a5161d35efdca9b428",
+    "consumer-testkit-final-adapted.log": "08626f8957cfc90d54cd19d1142534b791df1d9bf7770b39b287526e5a46a08f",
+    "consumer-testkit-final-git-scaffold.log": "2c9cc587a61d97e8031459862c9561c65c4ccef157cc3d7c7fb6b404d856d4c1",
+    "consumer-testkit-final-sdk418-explicit-sqlite.log": "a7403dc0e64db45295bc819c5e85564189cfeed196e59c09ea34139f63796005",
+    "consumer-typing.log": "ddf97bebdf414b0f9261af86774191ee306f9d5b6a76de7849e9e06de7d02e7f",
+    "consumer_explicit_profiles.py": "dc846a8902d76099340ef39ed87ca3776b41bb100e603dfec608c8eac1846d95",
+    "contract-gate-status.json": "80632a49a795d2573c1277bc40e75dd6a34fbcc6c35f05515fdbf9ec853282eb",
+    "corrected-consumer-identity.json": "7db0fb88bb6efa7f5c7f0aa969156c747e8eb78186d069ce06d90e19922ec895",
+    "corrected-wheel313-identity.json": "8228eeedd8c6c54f1ce648b6b077bb31c6936260c1198faaa289658a5d2a3a79",
+    "corrected-wheel314-identity.json": "d4556137ec162906fff3469ae0d5cdf0edd96f05f5ce97d75e81ed2885dbd6db",
+    "coverage-final314.json": "6cda36ff9327b3a5c7ed03fd5801758214a0b5420f011885cf83d3b02fe826e2",
+    "delivery-inventory-authorized-final.log": "8b70812a5675e15dbde3d9656f9b443c5c1c3b71c956f35de4b94d1b3dc0f1cc",
+    "diagnostic-source-before-corrected-wheel.log": "80cb7f0e979a31e62c5833f5859b00909aa64cb56113c3bed9a034f793ef7646",
+    "distribution-callback-hashes.json": "fd523b8e1402337dec9d4c3f7bdbeb078e71721029684e48d2168716bff9cf8c",
+    "distribution-current-source-identity.json": "019f4b8abdd02dba0616c6041acf89c467b7c5532197fd69594a157955c9c9b5",
+    "distribution-delivery-hashes.json": "2eb5614e33772e7da2e20ff2d6fe5ab175b79e9d57ceb842117f9181ef404b65",
+    "exports-wheel-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "external-consumer-final.log": "fc0c13553ba47169d65e86792f4e9596b2898ce0179b93599fce7a45d263530f",
+    "final-workset.json": "d5202f264a774f7e2506dc77d2c726031a7fe3bb3e90f279d595dac1cef975eb",
+    "impact-census.md": "3b6b4083702228d8c6fc93e02e323dabd6c0276c6a2313e49fb79ee384f1a788",
+    "initial-workset.json": "23883e922bb1fb23957dadba65228ad904590aed1d6478eb2d950ba4bd907feb",
+    "initial.diff": "7bbc0331d456c7aac730f4a263cea70d8ce94ae777d4f7c59329e18583e58b0f",
+    "lint-callback-final.log": "29718d9b6cfe68e98db071f210ead7432c899dc92ce0e5263b0b4199a1409416",
+    "lint-capture-corrected.log": "29718d9b6cfe68e98db071f210ead7432c899dc92ce0e5263b0b4199a1409416",
+    "loop-finalizer-diagnostics.jsonl": "e9da2e743bf7dcf4650f251fcf9598b27124668291af057f0c68f77191c7939c",
+    "manifest-final-source.log": "3c70e7c5dc9b8641d082109a9d551c026c8bc7f11d2628b17d067186ab7979c0",
+    "manifest-wheel-final.log": "3c70e7c5dc9b8641d082109a9d551c026c8bc7f11d2628b17d067186ab7979c0",
+    "measure_semantic_work.py": "7008a9b72cee2da0c69d7d6b50a406830ca7066917e55eecc64f72469d46a183",
+    "measure_streamed_aggregation.py": "7afbf353f3cbe63a909ca68ad1562eeea2bf5297982146f0c298a2f498a2c98c",
+    "minimal313-install.log": "5d2cd5c15cb71d44a7370cbd95d05090a8e643efaf2fd68bd5bbfb7db2401bc6",
+    "minimal313-result.json": "2c5dc328312201a871fba10a9f7d02ce826b1e76da87284cf9396cf368282415",
+    "minimal313-result.log": "d3a617f7cd0fae5cbbd0428d6ab2ef0c703d14be1b04c34e1b6d6249667558a9",
+    "native-callback-recapture-summary.log": "e19b5a51de531c0cf762ec708c5fe8aa212d47f673cdbd2e1fc5f9b3ed465426",
+    "native-cleanup-final.json": "41aacae0b931991a00d4160db2be12a93e0a8f486c15d4a6fa0024ea59415cac",
+    "native-final-verification.json": "bbcb94aecab5e3ce229a4de4325ad730c6f0d89d15f9b0b0b278cca626064f0b",
+    "native7-index-guarantees-final.json": "76b92a0dacac68b705173c9545e55cd4295d07c968cfca94f3971fc9fae21cf2",
+    "native7-index-guarantees-final.log": "bd652016fba469d34c186074c76ebc53c3519d00ffce44c50c34bab89f97facd",
+    "native7-review-final.json": "977e833d32b2b6837be9b692618dca9ed567ed88f64f878ae27b04605f78e531",
+    "native7-review-final.log": "37ede50170d1b3d9ef4e39b9e45d2c26ffe922ad488216b9fe7fabfab019d3f7",
+    "native7-semantic-guarantees-final.json": "1e47b929637905dd67e5b2a124cbbb9a24b149e863ae62bd968e29faeb620c24",
+    "native7-semantic-guarantees-final.log": "8d43a91285a4fac350e8e8bd662a283e3e38734ff26bb7a47907868c7684995a",
+    "native7-version-deltas-final.json": "ec251d0c3affc15fc541bda99fa58708951e0635bb0665998c8d8546f508edc5",
+    "native7-version-deltas-final.log": "74be555847e4182c2efb5adf02fcc1b58bbe02ebd44a0e95c9682e9273dd8240",
+    "native7-wheel-final.json": "c2cd7d10ffad766449de594b5fc34f5bde87f9dafb0e116355b4c5c92fa6303b",
+    "native7-wheel-final.log": "b33110554938ad376a3d465817dc7006b41bfeac66c8d570c15212b3f85a0bea",
+    "native8-index-guarantees-final.json": "8810afafc5ba294cee33c486451a758e7b7d6d0be6472c2a8b5aa087933655d1",
+    "native8-index-guarantees-final.log": "3412910e250199e821e10f081be3e060b8c8ea96ae582dfc7cfc0e26a893d1e6",
+    "native8-review-final.json": "0937c54cc8da5bde997cf1e24ab9bfda73f8ee6d79209f9f8817de66aa6cef09",
+    "native8-review-final.log": "0c078275191ead85b7084d2f25c8676feb87d40af433fef2b20a8caf7bc335a0",
+    "native8-semantic-guarantees-final.json": "a2fcd3077df924d1b88bbea9f76694ce90183a60915aeff3b59ccbdbba850d3a",
+    "native8-semantic-guarantees-final.log": "943abd0e44cf2ac068c1f610930306507aedf6556d445be177dfb922b8a1ea6d",
+    "native8-version-deltas-final.json": "a81c9bd2a52d620f36d915468f3b84c0d3841580fa902c89eb9d3e2985d513fc",
+    "native8-version-deltas-final.log": "85d0004715f96ac561aaeffa753133544034c8f790e9a7d1189f5bd2b3a040e8",
+    "native8-wheel-final.json": "7e2579c55ab6999ede2511c162ad7ebf0cd8a532cf33255834857ca296b9a490",
+    "native8-wheel-final.log": "168e840f07d66d6ca47d4448e8f252b5bea010d6cc3d8879f49fc3448fe7e1bf",
+    "native9-index-guarantees-final.json": "3f2d312576513bc84f1c3e46dc90a71a87f9d4900498efc7424439b19174bc52",
+    "native9-index-guarantees-final.log": "27d48aaedaffc065ba220eef4aa7bcbeb944ac5ad16c2f50a8bc42b782d0d298",
+    "native9-review-final.json": "125ae9970a222f7648c29a5b7670361eb33616d5afe073e90fdb2f0bd1045c71",
+    "native9-review-final.log": "f2a7c1c97f5052040a0e9802f57053a23579f626a290d031ab413969c4936de8",
+    "native9-semantic-guarantees-final.json": "021f8b7aacc3084d5ca3fe2924b836c7ff5eea20de62229437b293442366d877",
+    "native9-semantic-guarantees-final.log": "2e50a9264b59e595ca918bff79d7ef172b1d9b212c2367a3c4e9614c0d28ac34",
+    "native9-version-deltas-final.json": "89018a39e5f627fe30be04e05826e375e6b156bf9f95722b4f97399106797014",
+    "native9-version-deltas-final.log": "88670581fe94faa3a4af404145fd460f575269d8ef5c126a3170a24d0fd7543e",
+    "native9-wheel-final.json": "bd8a9df388ce8e2729ce2ccb0c8e8ee59d8440086b15f37aa058745ad474f91d",
+    "native9-wheel-final.log": "a5eb0d53b2ec8579d5f1fbcfad62f3241667ce79e078c1f46a22937728c51659",
+    "observe_spill.py": "da70a841fc0ca4df476084c1ef58733886add0cf766c75ed05043885906ffc57",
+    "performance-baseline-spill.json": "f16900139449041938a41bb9e9bf722c828d828b94a8ec59bbc44e7d735746f2",
+    "performance-baseline-spill.log": "2563a1b05b8bbef04a09a80465f129c53cda647cfe370f6968dfa4a59345055c",
+    "performance-baseline-streaming.json": "301dafa695b7df58cb504a2621db709cc2cf7a9c80429991c40a59f0ebe03a96",
+    "performance-baseline-streaming.log": "4b471e020ae7302d9b54be5182780cb2b3a8edc0044ef45aadf5413bf84f81e3",
+    "performance-candidate-spill.json": "0b71da42756c51680c20ab2f24ab3160ea8d3a172c6f1c081053c755d309640d",
+    "performance-candidate-spill.log": "c36ac5c0f92f22dbcc6fece84278779ebe505fd38903fe57979dd0b108f03672",
+    "performance-candidate-streaming.json": "62e796f70a9f672e707e5c317400d238ee2ebf4bf5d28509dc0a41b468035d5e",
+    "performance-candidate-streaming.log": "69302d36a57d1fbc75693f7c84c14517a564dbb4db083c5e4299e26e0bff0f06",
+    "performance-causal-reuse.json": "1c5464d0650c4e7a0911780eab93cf0b0ac3ab639094bd4bba8e6695c343b649",
+    "performance-causal-reuse.log": "716f0fb64cefb34872bb6f77070c499df849ce10567780f8a0f696cb9b4bae81",
+    "performance-final-summary.json": "e885cd8a97344a988deee41086b968799dcc81d37224c7122e17d1e4512b010b",
+    "performance-main-comparison.json": "609a34eb5e0a0e7903f9bbd8793f0329c666c2f44c8039163d38791176af1c9f",
+    "performance-supplement-summary.log": "9c6e2a899b14d7b07c915fa9d982e9378bc4ac836af78b94c5b88e6736a82c10",
+    "performance-supplemental-causal-reuse.json": "a634c521a0000a8fafc2bf7759fe2757ca45df7bbf884e64694536222e485795",
+    "performance-supplemental-causal-reuse.log": "9b95ed53d3bd2808439743e9528eeafde9ab23449875afd3fe66ac59fb07b725",
+    "profile-matrix-final.log": "302de089b28ecfe794cbaf5ad4dac3dfff62e72bc9bfb957ecc22ec7ccb8c0d7",
+    "profile-matrix-full.json": "302de089b28ecfe794cbaf5ad4dac3dfff62e72bc9bfb957ecc22ec7ccb8c0d7",
+    "profile-matrix-summary.json": "1e5655a198a853ab5f31ebb5b3633048664993fa9d0da73a3d3d66a4663dc9a3",
+    "profile_streaming.py": "8173632d32cc20984a5af4ae0ba92228cd7ad3f7c965467e0183128d0d9f9d81",
+    "property-ci-final.log": "5ac761b2c74bef30668494c6a16b478777d4fa5c47bd3dfe5e614776bdc73306",
+    "property-deep-final.log": "fa3b24e9da12b55df6edb191536624e4ea0aa8435f5ddcd3e430c027efd848c3",
+    "public-callback-authorized-focused.log": "320fd739ebfc2d6a39de47680588bb8324fe6f895471316f700fefd5d027f359",
+    "public-callback-regression-final.log": "c16e476727b44651fa5f7dfdcafb51f1ac3060244911f7766ff0b1b89f467249",
+    "pytest-final313.log": "5fc3a5df433957ae35bec87073e81695d64f972a18b7fdb078e64e39a28f4384",
+    "pytest-final314.log": "6fb9d56530e164c809fdd573e0d1de4ce0748f1392a7e04f0daac12f7e8909b4",
+    "recheck_streaming.py": "5cf54297f3ef3c6d8dbcdc8f564576ae17f19b078d523787e488dc5dd5524618",
+    "semantic-work-baseline.json": "425ee58d1843cd8e8241f84a02094141c8b5938f59b746dfa773538d76377e65",
+    "semantic-work-corrected7.json": "3cb993fdf3babfb0ca3627948568f00e29af02f62cfebcadb3a9fcd1dc660c1d",
+    "semantic-work-corrected9.json": "730652c4214d7997427c7b82db12ad43cabcf47f158ac533083d7e1447e65cbf",
+    "sqlite45-final.log": "aa779ab29c79464be52ac99280231538603b6da668a0df6198c317b8cd352bc7",
+    "sqlite45-original-integrity.json": "eb803ef83ebd6a37307ee309a45a925db8c4b2779d6512a4585b08923ce8398a",
+    "streaming-baseline-profile.log": "e613ec2931fc560ed6edfed5ea80b71616a65d68dece9bd9c898273708d9a3ca",
+    "streaming-candidate-profile.log": "db0e2b25637e3830d4dfee921883cc5262dacd0c2b8efd2b8b58f023b970b141",
+    "streaming-profile-diagnostic.json": "abd1038b91b84add1dd7ef15a7879dcf33e6e90aeffe26408e698a144390f9f2",
+    "streaming-recheck-2-baseline.json": "db7ff5ca2dfc60fc464184b52d42dafad689810c328915e8f7b7d45eaeb564f2",
+    "streaming-recheck-2-candidate.json": "2189a7a60219f818cd692aebb47780169be1567a02525d77034a83ca07267e8f",
+    "streaming-recheck-3-baseline.json": "3d9b7adbbd260bb593742c925b6644bb40583ccc052f616a9e4b90079678bb6e",
+    "streaming-recheck-3-candidate.json": "ab64d607ca04067d68865d95c5466b70e14de1c99baf58f4bc8996db78730ee1",
+    "streaming-recheck-summary.log": "cc0c7685bb2863cdb7cd710d91c9fcb99f6a5b9a78e39bb115355516c2ca914c",
+    "timed-wheel314-identity.json": "a475e1f1c6371c314ff0c8e50d3197c68ccf50798c7d645bc9b28639f0b717d7",
+    "transitive-owner-census.json": "f3baf789e34411d3d183f9498cdd36150192b03dd02f851fd610757bb30e2e14",
+    "typing-final-source.log": "4d683e340dd9524c34b6ced54db418f16a69ca360019b27dba0141e1fde50a3e",
+    "typing-wheel-final.log": "4d683e340dd9524c34b6ced54db418f16a69ca360019b27dba0141e1fde50a3e",
+    "unittest-final.log": "3828c56f8437a3208bcba0b668d8f33094793ba81f23afc8ebd2a909ecfaae61",
+    "verify_installed_identity.py": "5c040af353a65d8b5b8a59f79ae1aef4f65cb3c993a62b91a300baa4f5ae16d3",
+    "verify_minimal.py": "5fe19e4ea16b981fc24a9bf8d774fbfca34abf3860d2ae0d770d13894f4d93c1",
+    "verify_native_final.py": "6d8795d517f93073d623282c82a5a6bfb9557dbe52d0f018fc376955465ba4b8",
+    "verify_performance_causal_reuse.py": "4c392d71ae27f177a308c2a96b6f7fe6d3b04bcfc9bd5eacb0d0c592541bf4ef",
+    "verify_supplemental_causal_reuse.py": "36bb2022451055ebc64f7f2f35644dd66e7c52a0870bf607b5052fc8a4a39123"
+  }
+}

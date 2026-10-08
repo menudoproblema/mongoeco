@@ -57,7 +57,7 @@ La versión instalada de `pymongo` **no** decide la semántica del servidor Mong
 
 ### Variables de ejecución
 
-Los dialectos MongoDB `7.0` y `8.0` declaran `$$NOW` como variable de sistema
+Los dialectos MongoDB `7.0`, `8.0` y `9.0` declaran `$$NOW` como variable de sistema
 efectiva. Cada comando real captura una fecha UTC naïve, truncada a milisegundos,
 y reutiliza ese valor en sus filtros `$expr`, actualizaciones por pipeline,
 agregaciones y subpipelines. Esta semántica pertenece al dialecto MongoDB y no
@@ -247,6 +247,9 @@ Esto implica:
 * `vectorSearch` usa ya ANN local con `usearch` en `SQLiteEngine` y baseline
   exacta en `MemoryEngine`;
 * `$merge`, `$densify` y `$fill` existen como subset explícito;
+  `$densify` conserva originales en 7/8/9 y usa límites globales para `full`.
+  Sus correcciones intencionales y deltas de bounds iguales/particiones vacías
+  se detallan en [la guía 9.0/4.18](docs/mongodb9-pymongo418.md);
 * los pipeline-style updates ya están soportados end-to-end para su subset;
 * geoespacial entra ya como subset local amplio y planar;
 * `$text` clásico existe ya como subset local explícito, con `textScore`
@@ -431,11 +434,14 @@ Hoy el catálogo oficial incluye:
 
 * `7.0`
 * `8.0`
+* `9.0`
 
 Regla práctica:
 
 * `7.0` es la baseline de desarrollo
 * `8.0` se trata como compatibilidad adicional con deltas explícitos
+* `9.0` conserva ese subset y aplica las diferencias verificadas descritas
+  en [la guía de soporte 9.0/4.18](docs/mongodb9-pymongo418.md)
 * la selección del dialecto es explícita; `mongoeco` no autodetecta servidor en el flujo normal
 * no existe catálogo oficial para versiones anteriores a `7.0`
 
@@ -474,6 +480,7 @@ Hoy el catálogo oficial incluye:
 * `4.11`
 * `4.13`
 * `4.17`
+* `4.18`
 
 Regla práctica:
 
@@ -481,6 +488,10 @@ Regla práctica:
 * `4.11` activa el primer delta real: `update_one(sort=...)`
 * `4.13` queda disponible como perfil posterior compatible
 * `4.17` queda disponible como perfil posterior compatible
+* `4.18` rechaza con `ConfigurationError` los argumentos reservados
+  `aggregate` y `pipeline` reenviados como opciones de agregación, también en
+  `aggregate_raw_batches` y helpers de índices Search. Un argumento Python
+  duplicado conserva `TypeError`.
 * no existe catálogo oficial para perfiles anteriores a `4.9`
 
 ## 5. Autodetección de PyMongo instalada
@@ -931,6 +942,18 @@ en `client.sdam_capabilities()`, para que el proceso pueda distinguir entre:
 * awareness de metadatos de elección
 * ausencia deliberada de SDAM completo y `hello` long-polling
 
+En el perfil `4.18`, la resolución SRV normal utiliza la API pública
+`pymongo.uri_parser.parse_uri`, incluyendo la validación de dominios,
+`srvAllowedHostsSuffix` y opciones TXT. Requiere PyMongo 4.18 o posterior.
+Los resolvers inyectados siguen sirviendo para simulación local; se rechaza
+`srvAllowedHostsSuffix` con ellos porque no garantizan la validación oficial.
+
+Los eventos del driver comparten un `operation_id` por ejecución lógica,
+incluidos sus retries; cada intento tiene un `request_id` distinto. Invocar de
+nuevo el mismo plan crea otra identidad lógica. La telemetría conserva ambos
+IDs en eventos y spans, sin convertirlos en etiquetas de métricas. Cancelar
+un envío termina su evento una vez y descarta la conexión adquirida.
+
 ## 11. Verificación contractual contra PyMongo real
 
 La ampliación de superficie pública no debe decidirse por memoria ni por lectura
@@ -947,9 +970,15 @@ Uso recomendado:
 python3 scripts/run_pymongo_profile_matrix.py
 ```
 
-El script crea entornos aislados para `PyMongo 4.9`, `4.11` y `4.13`, ejecuta
+El script crea entornos aislados para `PyMongo 4.9.2`, `4.11.3`, `4.13.2`,
+`4.17.0` y `4.18.2`, ejecuta
 una sonda de aceptación de parámetros reales y devuelve un JSON con los
 resultados.
+
+Un timeout de selección solo demuestra que el argumento pasó la validación
+local del driver; no acredita ejecución en el servidor. `ConfigurationError`
+es rechazo y cualquier resultado indeterminado impide clasificarlo como
+aceptación.
 
 El JSON versionado en `tests/fixtures/` actúa como snapshot contractual del
 último contraste validado y debe actualizarse cuando cambie la matriz real.

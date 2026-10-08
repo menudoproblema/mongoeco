@@ -1,7 +1,7 @@
 # Real MongoDB Differential Testing
 
 MongoEco keeps general MongoDB semantics under a recurrent differential suite
-against Community Server 7.0 and 8.0. Atlas Search is not part of this suite;
+against Community Server 7.0, 8.0 and 9.0. Atlas Search is not part of this suite;
 its local subset is governed by `search-v1` normative tests.
 
 The `MongoDB Differential` workflow runs weekly, through `workflow_dispatch`,
@@ -33,6 +33,11 @@ writeback. `REAL_CAPTURE_PENDING_CASES` identifies executable cases not yet
 present in the checked-in real-server replay fixture. Local engine parity does
 not remove a case from that set; only a successful real capture may do so.
 
-Tagged releases call this workflow as a required reusable job for both MongoDB
-7.0 and 8.0. Publication cannot start unless the differential matrix, the
+Tagged releases call this workflow as a required reusable job for MongoDB
+7.0, 8.0 and 9.0. Publication cannot start unless the differential matrix, the
 artifact build and the installed-wheel test jobs have all succeeded.
+
+Versioned native corpora also cover server deltas, review improvements and
+4.9 semantic guarantees. Every capture stores server/FCV/SDK and corpus identity;
+its coverage matrix identifies the effective consumer and comparison scope.
+Stored observations without a consumer remain characterization, not parity.

@@ -1,0 +1,17 @@
+{
+  "7": {
+    "cases": 72,
+    "fresh_native_output_rechecked": true,
+    "successful_payloads_not_normalized": true
+  },
+  "8": {
+    "cases": 72,
+    "fresh_native_output_rechecked": true,
+    "successful_payloads_not_normalized": true
+  },
+  "9": {
+    "cases": 72,
+    "fresh_native_output_rechecked": true,
+    "successful_payloads_not_normalized": true
+  }
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "port": 29117,
+    "dbpath": "/private/tmp/mongoeco-improvements-20261008/db7",
+    "shutdown_verified": true
+  },
+  {
+    "port": 29118,
+    "dbpath": "/private/tmp/mongoeco-improvements-20261008/db8",
+    "shutdown_verified": true
+  },
+  {
+    "port": 29119,
+    "dbpath": "/private/tmp/mongoeco-improvements-20261008/db9",
+    "shutdown_verified": true
+  }
+]

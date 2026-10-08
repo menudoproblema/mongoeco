@@ -1,0 +1,10 @@
+Using Python 3.14.5 environment at: /private/tmp/mongoeco-490-20261008/consumer-env
+Resolved 38 packages in 631ms
+   Building mochuelo @ file:///private/tmp/mongoeco-490-20261008/adoption/mochuelo-framework
+      Built mochuelo @ file:///private/tmp/mongoeco-490-20261008/adoption/mochuelo-framework
+Prepared 1 package in 1.06s
+Uninstalled 2 packages in 155ms
+Installed 2 packages in 8ms
+ ~ mochuelo==1.0.0 (from file:///private/tmp/mongoeco-490-20261008/adoption/mochuelo-framework)
+ - pymongo==4.17.0
+ + pymongo==4.18.2

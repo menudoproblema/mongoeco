@@ -1,0 +1,33 @@
+{
+  "dataset_sha256": "ad8ffc09196ee2aacb67ad3be0676c6b2094a51ffd47b51645d0554d7fd09c32",
+  "engines": {
+    "memory": {
+      "aggregate_median_ns": 2646083,
+      "convert_direct_validations": 250,
+      "convert_median_ns": 3586958,
+      "convert_static_validations": 2,
+      "copy_walk_calls": 14,
+      "index_explicit_median_ns": 133854,
+      "index_reads_explicit_recreate": 1,
+      "index_reads_implicit_recreate": 0,
+      "index_reads_three_item_batch": 3,
+      "stage_validations": 4
+    },
+    "sqlite": {
+      "aggregate_median_ns": 4177917,
+      "convert_direct_validations": 250,
+      "convert_median_ns": 5180395,
+      "convert_static_validations": 2,
+      "copy_walk_calls": 14,
+      "index_explicit_median_ns": 242958,
+      "index_reads_explicit_recreate": 1,
+      "index_reads_implicit_recreate": 0,
+      "index_reads_three_item_batch": 3,
+      "stage_validations": 4
+    }
+  },
+  "python": "3.14.5",
+  "repetitions": 20,
+  "source": "/private/tmp/mongoeco-improvements-20261008/baseline-src",
+  "source_sha256": "ccc0328c34de334f1c72ae8fc4dc9b1a902c65f99ffeb0b5805bdc5cefed2296"
+}

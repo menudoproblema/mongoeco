@@ -1,0 +1,116 @@
+{
+  "owners": {
+    "cosecha": {
+      "path": "/Users/uve/Proyectos/gdynamics/cosecha",
+      "current_head": "50e07684745715cc8a5f5dd3f1bcc53c09a7ff6f",
+      "current_status": "M CHANGELOG.md\n M packages/cosecha-core/docs/index.md\n M packages/cosecha-core/pyproject.toml\n M packages/cosecha/tests/test_packaging.py\n?? cosecha",
+      "owner_main": "02ee53e74ab78f3208731f6389c1318f574015f4",
+      "packages": {
+        "cosecha-provider-mongodb": {
+          "current_dependencies": [
+            "cosecha-core~=0.0.1",
+            "mongoeco==4.7.0",
+            "psutil>=7.0.0",
+            "pymongo>=4.16.0"
+          ],
+          "owner_dependencies": [
+            "cosecha-core~=0.0.1",
+            "mongoeco==4.8.0",
+            "psutil>=7.0.0",
+            "pymongo>=4.16.0"
+          ],
+          "owner_pyproject_sha256": "db205ab555a85cf7bf0f484555698abfa312f793f14d19a1c7fd01ff819cdd64"
+        }
+      }
+    },
+    "gdynamics-testing": {
+      "path": "/Users/uve/Proyectos/gdynamics/gdynamics-testing",
+      "current_head": "b61602f3e8471a14bfe9f8ea502339db736a91c1",
+      "current_status": "?? gdynamics-testing",
+      "owner_main": "0c51ffc50a719674a6e773f7ba5099dc5ceaaa75",
+      "packages": {
+        "mochuelo-testkit": {
+          "current_dependencies": [
+            "mochuelo>=1.0.0,<2.0.0",
+            "mongoeco==4.7.0",
+            "pytest"
+          ],
+          "owner_dependencies": [
+            "mochuelo>=1.0.0,<2.0.0",
+            "mongoeco==4.8.0",
+            "pytest"
+          ],
+          "owner_pyproject_sha256": "7d43a4db7ab5892ebae635b21ca07d1c84c075b7a096dae0b5d80668caadf225"
+        },
+        "gdynamics-testing": {
+          "current_dependencies": [
+            "cosecha-core>=0.0.3,<0.1.0",
+            "cosecha-engine-gherkin==0.0.5",
+            "gherkin-official==42.0.1",
+            "libcst>=1.9.0,<2.0.0",
+            "mochuelo-testkit>=1.0.0,<2.0.0"
+          ],
+          "owner_dependencies": [
+            "cosecha-core>=0.0.3,<0.1.0",
+            "cosecha-engine-gherkin==0.0.5",
+            "gherkin-official==42.0.1",
+            "libcst>=1.9.0,<2.0.0",
+            "mochuelo-testkit>=1.0.0,<2.0.0"
+          ],
+          "owner_pyproject_sha256": "349d57822b7f9ae62462cb26b5e83683eec9f44400cb7cd90795817c3e96d910"
+        }
+      }
+    }
+  },
+  "owner_repositories_unchanged": true,
+  "pin_adaptations": [
+    {
+      "package": "cosecha-provider-mongodb",
+      "before_sha256": "db205ab555a85cf7bf0f484555698abfa312f793f14d19a1c7fd01ff819cdd64",
+      "after_sha256": "92080255dfabb3a3ee0b6059deb2036556375b3e1b16f5b45c91e4321d6617a7",
+      "old": "mongoeco==4.8.0",
+      "new": "mongoeco==4.9.0"
+    },
+    {
+      "package": "mochuelo-testkit",
+      "before_sha256": "7d43a4db7ab5892ebae635b21ca07d1c84c075b7a096dae0b5d80668caadf225",
+      "after_sha256": "d237e7885b780fb317314f9a2a84b5f0134f66447853c3149b0a951aab6e4981",
+      "old": "mongoeco==4.8.0",
+      "new": "mongoeco==4.9.0"
+    }
+  ],
+  "sdk_pin": {
+    "file": "/private/tmp/mongoeco-490-20261008/adoption/mochuelo-framework/pyproject.toml",
+    "old": "pymongo==4.17.0",
+    "new": "pymongo==4.18.2",
+    "before_sha256": "e56af84f01c30ea54d3a19239b09b7ba97aba563cd75eefa96a09f3c103294b9",
+    "after_sha256": "af080904f111b735fe81c6816919155866adef20ee55fb97ccbea29b1afd67a9",
+    "scope": "ephemeral owner snapshot only; native owner pin unchanged"
+  },
+  "preexisting_cxp_test_adaptation": [
+    {
+      "lane": "adoption",
+      "file": "/private/tmp/mongoeco-490-20261008/adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_application_plan_cache.py",
+      "before_sha256": "e0e8f6952b3b7801a1876ce8efe4aebc87e310788397c954e1ccfe9b0cfe6ca6",
+      "after_sha256": "2d5c2d916abe076d4eac8e7a1d45d758af8487b5cd65c9c735925124f6015eec",
+      "old": "scope._lazy_scope._container._plan.exports[0].contract_ref",
+      "new": "scope._lazy_scope._container._plan.exports[0].provider_target.dependency_contract_ref",
+      "reason": "Preserve the dependency identity assertion using the current owner DependencyExportV1.provider_target schema; raw failure reproduced identically with published 4.8.1 and candidate 4.9.0."
+    },
+    {
+      "lane": "adoption-baseline",
+      "file": "/private/tmp/mongoeco-490-20261008/adoption-baseline/gdynamics-testing/packages/mochuelo-testkit/tests/test_application_plan_cache.py",
+      "before_sha256": "e0e8f6952b3b7801a1876ce8efe4aebc87e310788397c954e1ccfe9b0cfe6ca6",
+      "after_sha256": "2d5c2d916abe076d4eac8e7a1d45d758af8487b5cd65c9c735925124f6015eec",
+      "old": "scope._lazy_scope._container._plan.exports[0].contract_ref",
+      "new": "scope._lazy_scope._container._plan.exports[0].provider_target.dependency_contract_ref",
+      "reason": "Preserve the dependency identity assertion using the current owner DependencyExportV1.provider_target schema; raw failure reproduced identically with published 4.8.1 and candidate 4.9.0."
+    }
+  ],
+  "profile_injection_plugin_sha256": "dc846a8902d76099340ef39ed87ca3776b41bb100e603dfec608c8eac1846d95",
+  "limits": [
+    "Explicit 9.0/4.18 selection exercised by constructor injection in temporary copies; owner configuration does not yet expose it.",
+    "Provider tests choose Memory and SQLite; testkit factory only offers Memory. Forced SQLite without entering connection context fails identically on baseline and candidate and is not claimed.",
+    "Owners lack py.typed; canary follows installed annotations, not advertised typing metadata."
+  ]
+}

@@ -1,0 +1,284 @@
+{
+  "sqlite-sync": {
+    "simple_aggregation": {
+      "simple_aggregation_topk": {
+        "repetitions": 5,
+        "wall_time_mean_sec": 0.0331,
+        "wall_time_median_sec": 0.033,
+        "wall_time_min_sec": 0.0328,
+        "wall_time_max_sec": 0.0337,
+        "cpu_user_mean_sec": 0.03,
+        "cpu_sys_mean_sec": 0.002,
+        "rss_delta_mean_mb": 0.07,
+        "rss_peak_max_mb": 175.73,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter>sort>slice>project",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 0,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "sort",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "slice",
+              "detail": null
+            },
+            {
+              "runtime": "python",
+              "operation": "project",
+              "detail": null
+            }
+          ],
+          "pipeline_shape": "match-sort-limit-project",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:cb163390c0b47e45cf2397b0aca407cb34d6b0777ff6cc6fc7a55bab32cbc6a5",
+          "outcome_items": 10
+        }
+      }
+    },
+    "materializing_aggregation": {
+      "materializing_aggregation_group_sort": {
+        "repetitions": 5,
+        "wall_time_mean_sec": 0.4021,
+        "wall_time_median_sec": 0.4015,
+        "wall_time_min_sec": 0.4008,
+        "wall_time_max_sec": 0.404,
+        "cpu_user_mean_sec": 0.38,
+        "cpu_sys_mean_sec": 0.008,
+        "rss_delta_mean_mb": 0.31,
+        "rss_peak_max_mb": 193.41,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": true,
+          "partitioned_group_state_candidate": true,
+          "streaming_group_output_candidate": true,
+          "incremental_sort_input": false,
+          "streaming_sort_output": true,
+          "remaining_stage_count": 3,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pipeline_shape": "match-group-sort-limit",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:35e669202e98c33c220d2ff1148ec8adedd943181e64415a2f4de913afee925c",
+          "outcome_items": 6
+        }
+      }
+    },
+    "aggregation_spill_diagnostics": {
+      "group_low_cardinality_first": {
+        "repetitions": 5,
+        "wall_time_mean_sec": 0.1939,
+        "wall_time_median_sec": 0.1931,
+        "wall_time_min_sec": 0.1897,
+        "wall_time_max_sec": 0.1994,
+        "cpu_user_mean_sec": 0.17,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 196.52,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": true,
+          "partitioned_group_state_candidate": true,
+          "streaming_group_output_candidate": true,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pipeline_shape": "group-low-cardinality-first",
+          "expected_group_cardinality": 6,
+          "spill_threshold": 10000,
+          "spill_expected": false,
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:8047826e33f9e8fee7db494a52dfd2a0da111735fbef294dc0a6db3cc48ff07e",
+          "outcome_items": 2
+        }
+      },
+      "group_high_cardinality_first": {
+        "repetitions": 5,
+        "wall_time_mean_sec": 1.5668,
+        "wall_time_median_sec": 1.5563,
+        "wall_time_min_sec": 1.5461,
+        "wall_time_max_sec": 1.6135,
+        "cpu_user_mean_sec": 1.424,
+        "cpu_sys_mean_sec": 0.032,
+        "rss_delta_mean_mb": 0.72,
+        "rss_peak_max_mb": 196.89,
+        "metadata": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": true,
+          "partitioned_group_state_candidate": true,
+          "streaming_group_output_candidate": true,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pipeline_shape": "group-high-cardinality-first",
+          "expected_group_cardinality": 20000,
+          "spill_threshold": 10000,
+          "spill_expected": true,
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:ce16e420692e739d95d4ab8de057a432f36338df2b7b2c0e9b58789da49e0c05",
+          "outcome_items": 2
+        }
+      }
+    },
+    "secondary_lookup_indexed": {
+      "secondary_lookup_indexed_1k": {
+        "repetitions": 5,
+        "wall_time_mean_sec": 0.3694,
+        "wall_time_median_sec": 0.3672,
+        "wall_time_min_sec": 0.3573,
+        "wall_time_max_sec": 0.3834,
+        "cpu_user_mean_sec": 0.232,
+        "cpu_sys_mean_sec": 0.038,
+        "rss_delta_mean_mb": -1.39,
+        "rss_peak_max_mb": 217.28,
+        "metadata": {
+          "summary": "sqlite/sql opaque",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": 1,
+          "physical_plan": null,
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "sql",
+          "query_shape": "username equality",
+          "index_expected": true,
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:fc175e3eb8c7fb62199136a3cb774a1c2069ce165833dd5f06c709bc70871f7c",
+          "outcome_items": 1000
+        }
+      }
+    },
+    "cursor_consumption": {
+      "cursor_consumption_first_200": {
+        "repetitions": 5,
+        "wall_time_mean_sec": 0.0755,
+        "wall_time_median_sec": 0.0695,
+        "wall_time_min_sec": 0.0683,
+        "wall_time_max_sec": 0.0926,
+        "cpu_user_mean_sec": 0.046,
+        "cpu_sys_mean_sec": 0.012,
+        "rss_delta_mean_mb": -10.4,
+        "rss_peak_max_mb": 634.55,
+        "metadata": {
+          "summary": "sqlite/sql opaque",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": null,
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "city equality",
+          "index_expected": true,
+          "consumption_mode": "first",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:555c47b4bea768c930a2f6fd324946997b68165f7b734e2265f522d67cd60bca",
+          "outcome_items": 200
+        }
+      },
+      "cursor_consumption_materialized_200": {
+        "repetitions": 5,
+        "wall_time_mean_sec": 8.4395,
+        "wall_time_median_sec": 8.0873,
+        "wall_time_min_sec": 7.895,
+        "wall_time_max_sec": 9.1396,
+        "cpu_user_mean_sec": 6.808,
+        "cpu_sys_mean_sec": 0.916,
+        "rss_delta_mean_mb": 380.79,
+        "rss_peak_max_mb": 893.14,
+        "metadata": {
+          "summary": "sqlite/sql opaque",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "limit": null,
+          "physical_plan": null,
+          "pushdown_mode": "sql-exact",
+          "residual_required": false,
+          "filter_owner": "sql",
+          "sort_owner": "none",
+          "window_owner": "none",
+          "query_shape": "city equality",
+          "index_expected": true,
+          "consumption_mode": "materialized",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:8b035b619181265d0cbd462a33a58fdb966afd5fc2fe0407acb13e5f8e5e61c0",
+          "outcome_items": 200
+        }
+      }
+    }
+  }
+}

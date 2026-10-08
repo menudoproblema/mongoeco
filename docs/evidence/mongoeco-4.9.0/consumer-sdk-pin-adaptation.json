@@ -1,0 +1,8 @@
+{
+  "file": "/private/tmp/mongoeco-490-20261008/adoption/mochuelo-framework/pyproject.toml",
+  "old": "pymongo==4.17.0",
+  "new": "pymongo==4.18.2",
+  "before_sha256": "e56af84f01c30ea54d3a19239b09b7ba97aba563cd75eefa96a09f3c103294b9",
+  "after_sha256": "af080904f111b735fe81c6816919155866adef20ee55fb97ccbea29b1afd67a9",
+  "scope": "ephemeral owner snapshot only; native owner pin unchanged"
+}

@@ -1,0 +1,155 @@
+{
+  "version": "4.9.0",
+  "size": 20000,
+  "results": {
+    "memory": {
+      "group_spool_open_calls": [
+        {
+          "threshold": 10000,
+          "phase": "open_group_spool"
+        }
+      ],
+      "tasks": {
+        "group_low_cardinality_first": {
+          "summary": "memory/python scan>filter",
+          "engine": "memory",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": true,
+          "partitioned_group_state_candidate": true,
+          "streaming_group_output_candidate": true,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pipeline_shape": "group-low-cardinality-first",
+          "expected_group_cardinality": 6,
+          "spill_threshold": 10000,
+          "spill_expected": false,
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:8047826e33f9e8fee7db494a52dfd2a0da111735fbef294dc0a6db3cc48ff07e",
+          "outcome_items": 2
+        },
+        "group_high_cardinality_first": {
+          "summary": "memory/python scan>filter",
+          "engine": "memory",
+          "strategy": "python",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": true,
+          "partitioned_group_state_candidate": true,
+          "streaming_group_output_candidate": true,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": [
+            {
+              "runtime": "python",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "python",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pipeline_shape": "group-high-cardinality-first",
+          "expected_group_cardinality": 20000,
+          "spill_threshold": 10000,
+          "spill_expected": true,
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:ce16e420692e739d95d4ab8de057a432f36338df2b7b2c0e9b58789da49e0c05",
+          "outcome_items": 2
+        }
+      }
+    },
+    "sqlite": {
+      "group_spool_open_calls": [
+        {
+          "threshold": 10000,
+          "phase": "open_group_spool"
+        }
+      ],
+      "tasks": {
+        "group_low_cardinality_first": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": true,
+          "partitioned_group_state_candidate": true,
+          "streaming_group_output_candidate": true,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pipeline_shape": "group-low-cardinality-first",
+          "expected_group_cardinality": 6,
+          "spill_threshold": 10000,
+          "spill_expected": false,
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:8047826e33f9e8fee7db494a52dfd2a0da111735fbef294dc0a6db3cc48ff07e",
+          "outcome_items": 2
+        },
+        "group_high_cardinality_first": {
+          "summary": "sqlite/sql scan>filter",
+          "engine": "sqlite",
+          "strategy": "sql",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": true,
+          "partitioned_group_state_candidate": true,
+          "streaming_group_output_candidate": true,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": [
+            {
+              "runtime": "sql",
+              "operation": "scan",
+              "detail": null
+            },
+            {
+              "runtime": "sql",
+              "operation": "filter",
+              "detail": null
+            }
+          ],
+          "pipeline_shape": "group-high-cardinality-first",
+          "expected_group_cardinality": 20000,
+          "spill_threshold": 10000,
+          "spill_expected": true,
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:ce16e420692e739d95d4ab8de057a432f36338df2b7b2c0e9b58789da49e0c05",
+          "outcome_items": 2
+        }
+      }
+    }
+  },
+  "new_temp_files_after_cleanup": []
+}

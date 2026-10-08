@@ -1,0 +1,63 @@
+{
+  "cosecha": {
+    "path": "/Users/uve/Proyectos/gdynamics/cosecha",
+    "current_head": "50e07684745715cc8a5f5dd3f1bcc53c09a7ff6f",
+    "current_status": "M CHANGELOG.md\n M packages/cosecha-core/docs/index.md\n M packages/cosecha-core/pyproject.toml\n M packages/cosecha/tests/test_packaging.py\n?? cosecha",
+    "owner_main": "02ee53e74ab78f3208731f6389c1318f574015f4",
+    "packages": {
+      "cosecha-provider-mongodb": {
+        "current_dependencies": [
+          "cosecha-core~=0.0.1",
+          "mongoeco==4.7.0",
+          "psutil>=7.0.0",
+          "pymongo>=4.16.0"
+        ],
+        "owner_dependencies": [
+          "cosecha-core~=0.0.1",
+          "mongoeco==4.8.0",
+          "psutil>=7.0.0",
+          "pymongo>=4.16.0"
+        ],
+        "owner_pyproject_sha256": "db205ab555a85cf7bf0f484555698abfa312f793f14d19a1c7fd01ff819cdd64"
+      }
+    }
+  },
+  "gdynamics-testing": {
+    "path": "/Users/uve/Proyectos/gdynamics/gdynamics-testing",
+    "current_head": "b61602f3e8471a14bfe9f8ea502339db736a91c1",
+    "current_status": "?? gdynamics-testing",
+    "owner_main": "0c51ffc50a719674a6e773f7ba5099dc5ceaaa75",
+    "packages": {
+      "mochuelo-testkit": {
+        "current_dependencies": [
+          "mochuelo>=1.0.0,<2.0.0",
+          "mongoeco==4.7.0",
+          "pytest"
+        ],
+        "owner_dependencies": [
+          "mochuelo>=1.0.0,<2.0.0",
+          "mongoeco==4.8.0",
+          "pytest"
+        ],
+        "owner_pyproject_sha256": "7d43a4db7ab5892ebae635b21ca07d1c84c075b7a096dae0b5d80668caadf225"
+      },
+      "gdynamics-testing": {
+        "current_dependencies": [
+          "cosecha-core>=0.0.3,<0.1.0",
+          "cosecha-engine-gherkin==0.0.5",
+          "gherkin-official==42.0.1",
+          "libcst>=1.9.0,<2.0.0",
+          "mochuelo-testkit>=1.0.0,<2.0.0"
+        ],
+        "owner_dependencies": [
+          "cosecha-core>=0.0.3,<0.1.0",
+          "cosecha-engine-gherkin==0.0.5",
+          "gherkin-official==42.0.1",
+          "libcst>=1.9.0,<2.0.0",
+          "mochuelo-testkit>=1.0.0,<2.0.0"
+        ],
+        "owner_pyproject_sha256": "349d57822b7f9ae62462cb26b5e83683eec9f44400cb7cd90795817c3e96d910"
+      }
+    }
+  }
+}

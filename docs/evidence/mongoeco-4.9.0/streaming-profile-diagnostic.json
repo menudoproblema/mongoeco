@@ -1,0 +1,134 @@
+{
+  "diagnostic_only": true,
+  "timing_instrumentation_changes_cost": true,
+  "rows": [
+    {
+      "lane": "baseline",
+      "total_calls": 4524691,
+      "primitive_calls": 4284039,
+      "profile_total_seconds": 0.8096642119999998,
+      "functions": [
+        {
+          "file": "compiled_pipeline.py",
+          "function": "execute",
+          "calls": 157,
+          "self_seconds": 0.000340275,
+          "cumulative_seconds": 0.49238775500000004
+        },
+        {
+          "file": "planning.py",
+          "function": "_require_stage",
+          "calls": 317,
+          "self_seconds": 0.00034679100000000005,
+          "cumulative_seconds": 0.000574367
+        },
+        {
+          "file": "preparation.py",
+          "function": "_copy_spec",
+          "calls": 790,
+          "self_seconds": 0.000647476,
+          "cumulative_seconds": 0.0009239440000000001
+        },
+        {
+          "file": "runtime.py",
+          "function": "_variables_for_document",
+          "calls": 80000,
+          "self_seconds": 0.017964736000000002,
+          "cumulative_seconds": 0.08840305400000001
+        },
+        {
+          "file": "transform_stages.py",
+          "function": "_apply_add_fields",
+          "calls": 20157,
+          "self_seconds": 0.029467988,
+          "cumulative_seconds": 0.47920104300000005
+        },
+        {
+          "file": "stages.py",
+          "function": "apply_pipeline",
+          "calls": 157,
+          "self_seconds": 0.000619836,
+          "cumulative_seconds": 0.5001537500000001
+        },
+        {
+          "file": "aggregation_cursor.py",
+          "function": "_stream_windowed_pipeline",
+          "calls": 20001,
+          "self_seconds": 0.010091513,
+          "cumulative_seconds": 0.771018595
+        },
+        {
+          "file": "preparation.py",
+          "function": "prepare_pipeline",
+          "calls": 160,
+          "self_seconds": 0.0011681970000000002,
+          "cumulative_seconds": 0.003513804
+        }
+      ]
+    },
+    {
+      "lane": "candidate",
+      "total_calls": 4526123,
+      "primitive_calls": 4285471,
+      "profile_total_seconds": 0.8203676330000008,
+      "functions": [
+        {
+          "file": "planning.py",
+          "function": "_require_stage",
+          "calls": 317,
+          "self_seconds": 0.000353271,
+          "cumulative_seconds": 0.0005775050000000001
+        },
+        {
+          "file": "transform_stages.py",
+          "function": "_apply_add_fields",
+          "calls": 20157,
+          "self_seconds": 0.028660208000000003,
+          "cumulative_seconds": 0.475249028
+        },
+        {
+          "file": "stages.py",
+          "function": "apply_pipeline",
+          "calls": 157,
+          "self_seconds": 0.001033457,
+          "cumulative_seconds": 0.49701184000000004
+        },
+        {
+          "file": "runtime.py",
+          "function": "_variables_for_document",
+          "calls": 80000,
+          "self_seconds": 0.018284749,
+          "cumulative_seconds": 0.08909270500000001
+        },
+        {
+          "file": "compiled_pipeline.py",
+          "function": "execute",
+          "calls": 157,
+          "self_seconds": 0.00032401500000000003,
+          "cumulative_seconds": 0.48827287500000005
+        },
+        {
+          "file": "preparation.py",
+          "function": "_copy_spec",
+          "calls": 790,
+          "self_seconds": 0.000669365,
+          "cumulative_seconds": 0.0009452900000000001
+        },
+        {
+          "file": "preparation.py",
+          "function": "prepare_pipeline",
+          "calls": 160,
+          "self_seconds": 0.00127209,
+          "cumulative_seconds": 0.0041098720000000005
+        },
+        {
+          "file": "aggregation_cursor.py",
+          "function": "_stream_windowed_pipeline",
+          "calls": 20001,
+          "self_seconds": 0.010154351,
+          "cumulative_seconds": 0.773582855
+        }
+      ]
+    }
+  ]
+}

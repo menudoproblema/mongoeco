@@ -1,0 +1,43 @@
+         4526123 function calls (4285471 primitive calls) in 0.820 seconds
+
+   Ordered by: cumulative time
+   List reduced from 389 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      2/1    0.003    0.001    0.830    0.830 profile_streaming.py:7(action)
+    20001    0.006    0.000    0.828    0.000 aggregation_cursor.py:41(__next__)
+    20001    0.002    0.000    0.821    0.000 aggregation_cursor.py:12(_pull_chunk)
+      157    0.000    0.000    0.818    0.005 client.py:663(_run)
+      157    0.001    0.000    0.818    0.005 client.py:261(run)
+      157    0.000    0.000    0.817    0.005 client.py:94(_run_direct)
+      157    0.001    0.000    0.816    0.005 runners.py:87(run)
+      157    0.000    0.000    0.813    0.005 base_events.py:683(run_until_complete)
+      157    0.000    0.000    0.812    0.005 base_events.py:672(run_forever)
+      314    0.001    0.000    0.811    0.003 base_events.py:1977(_run_once)
+      314    0.000    0.000    0.795    0.003 events.py:92(_run)
+      314    0.000    0.000    0.795    0.003 {method 'run' of '_contextvars.Context' objects}
+      157    0.007    0.000    0.793    0.005 aggregation_cursor.py:21(_pull)
+    20001    0.004    0.000    0.784    0.000 aggregation_cursor.py:2482(__anext__)
+    20001    0.006    0.000    0.780    0.000 aggregation_cursor.py:214(__anext__)
+    20001    0.010    0.000    0.774    0.000 aggregation_cursor.py:2036(_stream_windowed_pipeline)
+      157    0.001    0.000    0.497    0.003 stages.py:1173(apply_pipeline)
+      157    0.000    0.000    0.488    0.003 compiled_pipeline.py:180(execute)
+      157    0.005    0.000    0.488    0.003 compiled_pipeline.py:54(apply)
+    20000    0.005    0.000    0.480    0.000 compiled_pipeline.py:291(_add_fields_step)
+    20157    0.029    0.000    0.475    0.000 transform_stages.py:114(_apply_add_fields)
+    20000    0.009    0.000    0.381    0.000 runtime.py:773(_evaluate_expression_with_missing)
+60000/20000    0.061    0.000    0.336    0.000 runtime.py:794(evaluate_expression)
+    20000    0.034    0.000    0.248    0.000 numeric_expressions.py:69(evaluate_numeric_expression)
+      158    0.000    0.000    0.152    0.001 aggregation_cursor.py:184(pull)
+      158    0.005    0.000    0.152    0.001 cursor.py:143(pull_chunk)
+      157    0.000    0.000    0.144    0.001 cursor.py:181(_fill_buffer)
+      157    0.007    0.000    0.143    0.001 cursor.py:397(_fetch_batch)
+    20001    0.008    0.000    0.133    0.000 snapshots.py:95(__anext__)
+  1666142    0.099    0.000    0.129    0.000 {built-in method builtins.isinstance}
+    20001    0.010    0.000    0.123    0.000 memory.py:3672(_scan)
+    40000    0.008    0.000    0.113    0.000 codec.py:634(to_public)
+    40000    0.062    0.000    0.104    0.000 codec.py:684(_to_public_copy_on_write)
+    40000    0.009    0.000    0.100    0.000 runtime.py:1051(<lambda>)
+    80000    0.018    0.000    0.089    0.000 runtime.py:567(_variables_for_document)
+
+

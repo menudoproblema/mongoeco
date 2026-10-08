@@ -1,0 +1,26 @@
+Using CPython 3.13.15 interpreter at: /opt/homebrew/opt/python@3.13/bin/python3.13
+Creating virtual environment at: /private/tmp/mongoeco-490-20261008/clean-callback-wheel-env
+Activate with: source /private/tmp/mongoeco-490-20261008/clean-callback-wheel-env/bin/activate
+Using Python 3.13.15 environment at: /private/tmp/mongoeco-490-20261008/clean-callback-wheel-env
+Resolved 15 packages in 13ms
+Installed 15 packages in 66ms
+ + attrs==26.1.0
+ + cxp==5.0.0
+ + jsonschema==4.26.0
+ + jsonschema-specifications==2025.9.1
+ + mongoeco==4.9.0 (from file:///private/tmp/mongoeco-490-20261008/dist-callback-first/mongoeco-4.9.0-py3-none-any.whl)
+ + msgspec==0.22.0
+ + numkong==7.8.5
+ + numpy==2.5.3
+ + pyuca==1.2
+ + referencing==0.37.0
+ + rfc8785==0.1.4
+ + rpds-py==2026.9.1
+ + shapely==2.2.0
+ + tqdm==4.70.1
+ + usearch==2.26.4
+Using Python 3.13.15 environment at: /private/tmp/mongoeco-490-20261008/clean-callback-wheel-env
+Checked 15 packages in 1ms
+All installed packages are compatible
+4.9.0 /private/tmp/mongoeco-490-20261008/clean-callback-wheel-env/lib/python3.13/site-packages/mongoeco/__init__.py 4d96655423e1bd83448f100514567a0c303dd3b5f1bd58fc490dc06a57022bdf 273
+{'version': '4.9.0', 'module': '/private/tmp/mongoeco-490-20261008/clean-callback-wheel-env/lib/python3.13/site-packages/mongoeco/__init__.py', 'optional_modules_absent': ['pymongo', 'bson', 'orjson', 'hypothesis'], 'checks': [{'engine': 'MemoryEngine', 'dialect': '7.0', 'profile': '4.9', 'sync_async': 'passed'}, {'engine': 'MemoryEngine', 'dialect': '9.0', 'profile': '4.18', 'sync_async': 'passed'}, {'engine': 'SQLiteEngine', 'dialect': '7.0', 'profile': '4.9', 'sync_async': 'passed'}, {'engine': 'SQLiteEngine', 'dialect': '9.0', 'profile': '4.18', 'sync_async': 'passed'}]}

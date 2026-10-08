@@ -1,0 +1,72 @@
+{
+  "measured_wheel_sha256": "e6d60d984da63faf6f181c6b8742b74f2411f3b5f06106c50ad9f841de9829d8",
+  "final_wheel_sha256": "4d96655423e1bd83448f100514567a0c303dd3b5f1bd58fc490dc06a57022bdf",
+  "only_changed_package_files": [
+    "mongoeco/driver/execution.py"
+  ],
+  "actual_final_package_import": "/private/tmp/mongoeco-490-20261008/benchmark-candidate-env/lib/python3.14/site-packages/mongoeco/__init__.py",
+  "unchanged_measured_modules_byte_identical": 272,
+  "workloads": [
+    {
+      "engine": "memory",
+      "workload": "simple_aggregation",
+      "size": 20000,
+      "changed_execution_pipeline_calls": 0
+    },
+    {
+      "engine": "memory",
+      "workload": "materializing_aggregation",
+      "size": 20000,
+      "changed_execution_pipeline_calls": 0
+    },
+    {
+      "engine": "memory",
+      "workload": "aggregation_spill_diagnostics",
+      "size": 20000,
+      "changed_execution_pipeline_calls": 0
+    },
+    {
+      "engine": "memory",
+      "workload": "secondary_lookup_indexed",
+      "size": 20000,
+      "changed_execution_pipeline_calls": 0
+    },
+    {
+      "engine": "memory",
+      "workload": "cursor_consumption",
+      "size": 20000,
+      "changed_execution_pipeline_calls": 0
+    },
+    {
+      "engine": "sqlite",
+      "workload": "simple_aggregation",
+      "size": 20000,
+      "changed_execution_pipeline_calls": 0
+    },
+    {
+      "engine": "sqlite",
+      "workload": "materializing_aggregation",
+      "size": 20000,
+      "changed_execution_pipeline_calls": 0
+    },
+    {
+      "engine": "sqlite",
+      "workload": "aggregation_spill_diagnostics",
+      "size": 20000,
+      "changed_execution_pipeline_calls": 0
+    },
+    {
+      "engine": "sqlite",
+      "workload": "secondary_lookup_indexed",
+      "size": 20000,
+      "changed_execution_pipeline_calls": 0
+    },
+    {
+      "engine": "sqlite",
+      "workload": "cursor_consumption",
+      "size": 20000,
+      "changed_execution_pipeline_calls": 0
+    }
+  ],
+  "decision": "Original timed samples remain applicable to the same effective workload implementation; final driver pipeline proven unexecuted. Verification run is not substituted for warmup/five-repetition timing."
+}

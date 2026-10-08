@@ -1,0 +1,20 @@
+[
+  {
+    "lane": "adoption",
+    "file": "/private/tmp/mongoeco-490-20261008/adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_application_plan_cache.py",
+    "before_sha256": "e0e8f6952b3b7801a1876ce8efe4aebc87e310788397c954e1ccfe9b0cfe6ca6",
+    "after_sha256": "2d5c2d916abe076d4eac8e7a1d45d758af8487b5cd65c9c735925124f6015eec",
+    "old": "scope._lazy_scope._container._plan.exports[0].contract_ref",
+    "new": "scope._lazy_scope._container._plan.exports[0].provider_target.dependency_contract_ref",
+    "reason": "Preserve the dependency identity assertion using the current owner DependencyExportV1.provider_target schema; raw failure reproduced identically with published 4.8.1 and candidate 4.9.0."
+  },
+  {
+    "lane": "adoption-baseline",
+    "file": "/private/tmp/mongoeco-490-20261008/adoption-baseline/gdynamics-testing/packages/mochuelo-testkit/tests/test_application_plan_cache.py",
+    "before_sha256": "e0e8f6952b3b7801a1876ce8efe4aebc87e310788397c954e1ccfe9b0cfe6ca6",
+    "after_sha256": "2d5c2d916abe076d4eac8e7a1d45d758af8487b5cd65c9c735925124f6015eec",
+    "old": "scope._lazy_scope._container._plan.exports[0].contract_ref",
+    "new": "scope._lazy_scope._container._plan.exports[0].provider_target.dependency_contract_ref",
+    "reason": "Preserve the dependency identity assertion using the current owner DependencyExportV1.provider_target schema; raw failure reproduced identically with published 4.8.1 and candidate 4.9.0."
+  }
+]

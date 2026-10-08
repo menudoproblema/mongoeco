@@ -1,0 +1,174 @@
+{
+  "checks": [
+    {
+      "applicable": true,
+      "capability": "spi-v2",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.007875030860304832,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-core:capabilities",
+      "name": "capabilities",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-core",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "typed-outcomes",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.26916712522506714,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-core:crud-outcomes",
+      "name": "crud-outcomes",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-core",
+      "status": "passed"
+    },
+    {
+      "applicable": false,
+      "capability": "batch-inserts",
+      "cleanupError": null,
+      "detail": "engine does not declare batch insert support",
+      "durationMs": 0.0,
+      "evidence": {
+        "capabilityDeclared": false
+      },
+      "id": "spi-v2-core:batch-outcomes",
+      "name": "batch-outcomes",
+      "passed": false,
+      "phase": "contract",
+      "profile": "spi-v2-core",
+      "status": "not-applicable"
+    },
+    {
+      "applicable": true,
+      "capability": "operation-context",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.016707926988601685,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-core:operation-context",
+      "name": "operation-context",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-core",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "atomic-conditional-mutation",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.6291668396443129,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-atomicity:compare-and-set",
+      "name": "compare-and-set",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-atomicity",
+      "status": "passed"
+    },
+    {
+      "applicable": false,
+      "capability": "injected-clock",
+      "cleanupError": null,
+      "detail": "engine does not declare injected-clock support",
+      "durationMs": 0.0,
+      "evidence": {
+        "capabilityDeclared": false
+      },
+      "id": "spi-v2-clock:injected-clock",
+      "name": "injected-clock",
+      "passed": false,
+      "phase": "contract",
+      "profile": "spi-v2-clock",
+      "status": "not-applicable"
+    },
+    {
+      "applicable": true,
+      "capability": "stable-snapshot",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.21979189477860928,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-snapshots:stable-snapshot",
+      "name": "stable-snapshot",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-snapshots",
+      "status": "passed"
+    },
+    {
+      "applicable": false,
+      "capability": "sequenced-change-delivery",
+      "cleanupError": null,
+      "detail": "engine does not declare monotonic change delivery",
+      "durationMs": 0.0,
+      "evidence": {
+        "capabilityDeclared": false
+      },
+      "id": "spi-v2-change-delivery:change-delivery-contract",
+      "name": "change-delivery-contract",
+      "passed": false,
+      "phase": "contract",
+      "profile": "spi-v2-change-delivery",
+      "status": "not-applicable"
+    },
+    {
+      "applicable": false,
+      "capability": "sequenced-change-delivery",
+      "cleanupError": null,
+      "detail": "engine does not declare monotonic change delivery",
+      "durationMs": 0.0,
+      "evidence": {
+        "capabilityDeclared": false
+      },
+      "id": "spi-v2-change-delivery:change-delivery-recovery",
+      "name": "change-delivery-recovery",
+      "passed": false,
+      "phase": "contract",
+      "profile": "spi-v2-change-delivery",
+      "status": "not-applicable"
+    },
+    {
+      "applicable": false,
+      "capability": "search-v1",
+      "cleanupError": null,
+      "detail": "engine does not declare Search support",
+      "durationMs": 0.0,
+      "evidence": {
+        "capabilityDeclared": false
+      },
+      "id": "search-v1:search-contract",
+      "name": "search-contract",
+      "passed": false,
+      "phase": "contract",
+      "profile": "search-v1",
+      "status": "not-applicable"
+    }
+  ],
+  "contractVersion": "spi-v2",
+  "passed": true,
+  "provider": "tests.consumer.engine_canary:ExternalCanaryEngine",
+  "schemaVersion": "mongoeco-conformance-report/v1",
+  "summary": {
+    "error": 0,
+    "failed": 0,
+    "not-applicable": 5,
+    "passed": 5
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "tooling_first": {
+    "build": "1.5.0",
+    "setuptools": "84.0.0",
+    "wheel": "0.48.0",
+    "twine": "7.0.0"
+  },
+  "tooling_second": {
+    "build": "1.5.0",
+    "setuptools": "84.0.0",
+    "wheel": "0.48.0",
+    "twine": "7.0.0"
+  },
+  "sdist_inputs_identical": [
+    "pyproject.toml",
+    "README.md",
+    "CHANGELOG.md",
+    "COMPATIBILITY.md",
+    "DIALECTS.md"
+  ],
+  "hashes": {
+    "mongoeco-4.8.1-py3-none-any.whl": "1ea246c26ed65a754ec157cc44aaf7c93e9db6baae27bbf4cf7643b9c1f649db",
+    "mongoeco-4.8.1.tar.gz": "a090c7a5abccaf0e149055f0549f89b2cf20864d15965a1d3df27f7d6f8c0c09"
+  }
+}

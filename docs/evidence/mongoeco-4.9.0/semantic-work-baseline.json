@@ -1,0 +1,195 @@
+{
+  "schema": "mongoeco-semantic-work-measurement/1",
+  "version": "4.8.1",
+  "module": "/private/tmp/mongoeco-490-20261008/benchmark-baseline-env/lib/python3.14/site-packages/mongoeco/__init__.py",
+  "python": "3.14.5",
+  "dialect": "7.0",
+  "profile": "4.9",
+  "size": 1000,
+  "warmup": 1,
+  "repetitions": 5,
+  "harness_sha256": "7008a9b72cee2da0c69d7d6b50a406830ca7066917e55eecc64f72469d46a183",
+  "dataset_sha256": "81f74fa84773545dfbb412ef2ed4330f8fd7ff6b93db1e846847fe2b4d4e7ffb",
+  "engines": {
+    "memory": {
+      "counts": {
+        "stage_parse_calls": 2,
+        "copy_walk_calls": 7,
+        "convert_static_validations": null,
+        "convert_direct_validations": null,
+        "find_convert_direct_validations": null,
+        "convert_counter_limit": "Published 4.8.1 uses inline validation; the new helper counters are unavailable, not zero.",
+        "ordinary_index_list_reads": 0,
+        "ordinary_batch_list_reads": 0
+      },
+      "measurements": {
+        "prepared_aggregation": {
+          "wall_ns": [
+            9820750,
+            9870666,
+            9488750,
+            9498875,
+            9575916
+          ],
+          "cpu_ns": [
+            9810000,
+            9871000,
+            9477000,
+            9472000,
+            9555000
+          ],
+          "wall_median_ns": 9575916,
+          "cpu_median_ns": 9555000,
+          "result_sha256": "a425f42af5eb23c1fd902f8d6e71314ee3acb377b39fa7f3f8e0a7a5a72044ed"
+        },
+        "ordinary_convert": {
+          "wall_ns": [
+            9974875,
+            10046209,
+            9951875,
+            9752667,
+            9922375
+          ],
+          "cpu_ns": [
+            9772000,
+            9839000,
+            9741000,
+            9549000,
+            9717000
+          ],
+          "wall_median_ns": 9951875,
+          "cpu_median_ns": 9741000,
+          "result_sha256": "7f4c3f3b97946b5452e5a8e20165863717e00804706a8bf4746b3cf2a46db929"
+        },
+        "direct_find_convert": {
+          "wall_ns": [
+            15711500,
+            15621083,
+            15707459,
+            15620958,
+            15607833
+          ],
+          "cpu_ns": [
+            15412000,
+            15359000,
+            15421000,
+            15330000,
+            15318000
+          ],
+          "wall_median_ns": 15621083,
+          "cpu_median_ns": 15359000,
+          "result_sha256": "81f74fa84773545dfbb412ef2ed4330f8fd7ff6b93db1e846847fe2b4d4e7ffb"
+        },
+        "ordinary_index_recreation": {
+          "wall_ns": [
+            85250,
+            65292,
+            61917,
+            62250,
+            61334
+          ],
+          "cpu_ns": [
+            63000,
+            43000,
+            40000,
+            40000,
+            39000
+          ],
+          "wall_median_ns": 62250,
+          "cpu_median_ns": 40000,
+          "result_sha256": "00b00189cbb551c9ad307aab2b0d47b2192638f38b60127c1b602060fbaa74ec"
+        }
+      }
+    },
+    "sqlite": {
+      "counts": {
+        "stage_parse_calls": 2,
+        "copy_walk_calls": 7,
+        "convert_static_validations": null,
+        "convert_direct_validations": null,
+        "find_convert_direct_validations": null,
+        "convert_counter_limit": "Published 4.8.1 uses inline validation; the new helper counters are unavailable, not zero.",
+        "ordinary_index_list_reads": 0,
+        "ordinary_batch_list_reads": 0
+      },
+      "measurements": {
+        "prepared_aggregation": {
+          "wall_ns": [
+            12651208,
+            12151584,
+            12332292,
+            11625917,
+            23141875
+          ],
+          "cpu_ns": [
+            11706000,
+            11233000,
+            11479000,
+            10819000,
+            22316000
+          ],
+          "wall_median_ns": 12332292,
+          "cpu_median_ns": 11479000,
+          "result_sha256": "a425f42af5eb23c1fd902f8d6e71314ee3acb377b39fa7f3f8e0a7a5a72044ed"
+        },
+        "ordinary_convert": {
+          "wall_ns": [
+            12260625,
+            12094875,
+            12364209,
+            12427667,
+            12540834
+          ],
+          "cpu_ns": [
+            11266000,
+            11094000,
+            11353000,
+            11422000,
+            11471000
+          ],
+          "wall_median_ns": 12364209,
+          "cpu_median_ns": 11353000,
+          "result_sha256": "7f4c3f3b97946b5452e5a8e20165863717e00804706a8bf4746b3cf2a46db929"
+        },
+        "direct_find_convert": {
+          "wall_ns": [
+            22116667,
+            22200167,
+            22027333,
+            22366500,
+            22616208
+          ],
+          "cpu_ns": [
+            21060000,
+            21092000,
+            20964000,
+            21308000,
+            21486000
+          ],
+          "wall_median_ns": 22200167,
+          "cpu_median_ns": 21092000,
+          "result_sha256": "81f74fa84773545dfbb412ef2ed4330f8fd7ff6b93db1e846847fe2b4d4e7ffb"
+        },
+        "ordinary_index_recreation": {
+          "wall_ns": [
+            181542,
+            125750,
+            165042,
+            154958,
+            139375
+          ],
+          "cpu_ns": [
+            145000,
+            89000,
+            126000,
+            116000,
+            102000
+          ],
+          "wall_median_ns": 154958,
+          "cpu_median_ns": 116000,
+          "result_sha256": "00b00189cbb551c9ad307aab2b0d47b2192638f38b60127c1b602060fbaa74ec"
+        }
+      }
+    }
+  }
+}

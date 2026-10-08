@@ -78,9 +78,9 @@ coherente despues de `4.7.0`.
 
 Pendientes:
 
-* registrar en PyPI el Trusted Publisher para `menudoproblema/mongoeco`,
-  `.github/workflows/ci.yml` y el environment `pypi`; hasta entonces el job de
-  publicacion OIDC falla con `invalid-publisher` y exige el fallback manual;
+* comprobar la configuración del Trusted Publisher en cada release. La
+  publicación OIDC de 4.8.1 ya funcionó; su cierre está documentado en
+  [release-4.8.1](docs/release-4.8.1.md);
 * seguir revisando packaging y metadatos en cada release;
 * mantener documentacion publica de uso, alcance y posicionamiento;
 * ejecutar el roadmap verificable de `docs/roadmap-5.0.md` sin ampliar el
@@ -114,12 +114,12 @@ Ya no forman parte del backlog pendiente básico:
 * índices `hidden` como metadata administrativa local;
 * recorte explícito de ambigüedad pública en `3.x`:
   * surface raíz estable y deliberadamente curada en `mongoeco`,
-    `mongoeco.compat` y `mongoeco.cxp`;
+    `mongoeco.compat` y `mongoeco.cxp.exchange`;
   * aliases legacy de transport en `mongoeco.*` retirados; imports de
     transport concentrados en `mongoeco.driver`.
-  * cierre del contrato CXP-first: `mongoeco.cxp` como fuente canónica del
-    catálogo `database/mongodb` y `mongoeco.compat` como capa de proyección
-    pública sobre esa fuente.
+  * contrato CXP exchange de 4.8: `mongoeco.cxp.exchange` exporta
+    el catálogo `database/mongodb`; `mongoeco.compat` mantiene la proyección
+    pública. Los import roots CXP anteriores se retiraron según la guía C4.
   * metadata pública por operación en CXP/compat cerrada como contrato
     tooling-grade para `profiles`, `operations` y `telemetry` (sin heurísticas
     implícitas en tooling).

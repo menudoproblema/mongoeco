@@ -1,0 +1,23 @@
+Using Python 3.13.15 environment at: /private/tmp/mongoeco-490-20261008/minimal313-env
+Resolved 15 packages in 307ms
+Downloading shapely (1.5MiB)
+Downloading numpy (5.2MiB)
+ Downloaded shapely
+ Downloaded numpy
+Prepared 6 packages in 242ms
+Installed 15 packages in 37ms
+ + attrs==26.1.0
+ + cxp==5.0.0
+ + jsonschema==4.26.0
+ + jsonschema-specifications==2025.9.1
+ + mongoeco==4.9.0 (from file:///private/tmp/mongoeco-490-20261008/dist-corrected-first/mongoeco-4.9.0-py3-none-any.whl)
+ + msgspec==0.22.0
+ + numkong==7.8.5
+ + numpy==2.5.3
+ + pyuca==1.2
+ + referencing==0.37.0
+ + rfc8785==0.1.4
+ + rpds-py==2026.9.1
+ + shapely==2.2.0
+ + tqdm==4.70.1
+ + usearch==2.26.4

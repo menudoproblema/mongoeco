@@ -1,0 +1,78 @@
+Requirement already satisfied: pip in /private/tmp/mongoeco-support-20261008/installed-wheel-delivery/lib/python3.14/site-packages (26.1.1)
+Collecting pip
+  Using cached pip-26.2.1-py3-none-any.whl.metadata (4.6 kB)
+Using cached pip-26.2.1-py3-none-any.whl (1.8 MB)
+Installing collected packages: pip
+  Attempting uninstall: pip
+    Found existing installation: pip 26.1.1
+    Uninstalling pip-26.1.1:
+      Successfully uninstalled pip-26.1.1
+Successfully installed pip-26.2.1
+WARNING: Cache entry deserialization failed, entry ignored
+WARNING: Cache entry deserialization failed, entry ignored
+Processing /private/tmp/mongoeco-support-20261008/dist-first/mongoeco-4.8.1-py3-none-any.whl (from mongoeco==4.8.1)
+Collecting cxp<6,>=5.0.0 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached cxp-5.0.0-py3-none-any.whl.metadata (4.2 kB)
+Collecting msgspec<1,>=0.20 (from mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached msgspec-0.22.0-cp314-cp314-macosx_11_0_arm64.whl.metadata (6.0 kB)
+Collecting pyuca<2,>=1.2 (from mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached pyuca-1.2-py2.py3-none-any.whl.metadata (649 bytes)
+Collecting rpds-py<2027,>=0.27 (from mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached rpds_py-2026.9.1-cp314-cp314-macosx_11_0_arm64.whl.metadata (4.1 kB)
+Collecting shapely<3,>=2.1 (from mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached shapely-2.2.0-cp314-cp314-macosx_11_0_arm64.whl.metadata (6.7 kB)
+Collecting usearch<3,>=2.23 (from mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached usearch-2.26.4-cp314-cp314-macosx_11_0_arm64.whl.metadata (35 kB)
+Collecting jsonschema<5,>=4.26 (from mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+Collecting pytest<10,>=8 (from mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+Collecting referencing<1,>=0.35 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+Collecting rfc8785<1,>=0.1.4 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached rfc8785-0.1.4-py3-none-any.whl.metadata (3.4 kB)
+Collecting attrs>=22.2.0 (from jsonschema<5,>=4.26->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5,>=4.26->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+Collecting iniconfig>=1.0.1 (from pytest<10,>=8->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+Collecting packaging>=22 (from pytest<10,>=8->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Collecting pluggy<2,>=1.5 (from pytest<10,>=8->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting pygments>=2.7.2 (from pytest<10,>=8->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting numpy>=1.26 (from shapely<3,>=2.1->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached numpy-2.5.3-cp314-cp314-macosx_14_0_arm64.whl.metadata (6.6 kB)
+Collecting tqdm (from usearch<3,>=2.23->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+Collecting numkong (from usearch<3,>=2.23->mongoeco==4.8.1->mongoeco==4.8.1)
+  Using cached numkong-7.8.5-cp314-cp314-macosx_15_0_arm64.whl
+Using cached cxp-5.0.0-py3-none-any.whl (58 kB)
+Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+Using cached msgspec-0.22.0-cp314-cp314-macosx_11_0_arm64.whl (193 kB)
+Using cached pytest-9.1.1-py3-none-any.whl (386 kB)
+Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+Using cached pyuca-1.2-py2.py3-none-any.whl (1.5 MB)
+Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+Using cached rfc8785-0.1.4-py3-none-any.whl (9.2 kB)
+Using cached rpds_py-2026.9.1-cp314-cp314-macosx_11_0_arm64.whl (341 kB)
+Using cached shapely-2.2.0-cp314-cp314-macosx_11_0_arm64.whl (1.6 MB)
+Using cached usearch-2.26.4-cp314-cp314-macosx_11_0_arm64.whl (453 kB)
+Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+Using cached iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+Using cached numpy-2.5.3-cp314-cp314-macosx_14_0_arm64.whl (5.4 MB)
+Using cached packaging-26.3-py3-none-any.whl (129 kB)
+Using cached pygments-2.21.0-py3-none-any.whl (1.3 MB)
+Using cached tqdm-4.70.1-py3-none-any.whl (80 kB)
+Installing collected packages: pyuca, tqdm, rpds-py, rfc8785, pygments, pluggy, packaging, numpy, numkong, msgspec, iniconfig, attrs, usearch, shapely, referencing, pytest, cxp, jsonschema-specifications, jsonschema, mongoeco
+
+Successfully installed attrs-26.1.0 cxp-5.0.0 iniconfig-2.3.1 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mongoeco-4.8.1 msgspec-0.22.0 numkong-7.8.5 numpy-2.5.3 packaging-26.3 pluggy-1.6.0 pygments-2.21.0 pytest-9.1.1 pyuca-1.2 referencing-0.37.0 rfc8785-0.1.4 rpds-py-2026.9.1 shapely-2.2.0 tqdm-4.70.1 usearch-2.26.4
+version 4.8.1
+module /private/tmp/mongoeco-support-20261008/installed-wheel-delivery/lib/python3.14/site-packages/mongoeco/__init__.py
+unicode_collation True
+find_one {'_id': '1', 'kind': 'view', 'count': 1}
+docs [{'_id': '1', 'kind': 'view', 'count': 1}]
+PASS mongoeco.engines:MemoryEngine [spi-v2] passed=4, failed=0, error=0, not-applicable=0

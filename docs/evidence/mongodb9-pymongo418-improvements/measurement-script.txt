@@ -1,0 +1,59 @@
+import hashlib
+import json
+import platform
+import statistics
+import sys
+import time
+
+from pathlib import Path
+from unittest.mock import patch
+
+source = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(source))
+
+from mongoeco import IndexModel, MongoClient
+from mongoeco.core.aggregation import preparation, scalar_expressions
+from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.sqlite import SQLiteEngine
+
+assert Path(sys.modules['mongoeco'].__file__).is_relative_to(source)
+documents = [{'_id': index, 'n': index, 'input': '10'} for index in range(250)]
+pipeline = [{'$match': {'$expr': {'$eq': ['$n', '$$wanted']}}}, {'$project': {'n': 1}}]
+convert = [{'$project': {'v': {'$convert': {'input': '$input', 'to': 'int'}}}}]
+result = {'python': platform.python_version(), 'source': str(source), 'dataset_sha256': hashlib.sha256(json.dumps(documents, sort_keys=True).encode()).hexdigest(), 'repetitions': 20, 'engines': {}}
+entries = [(str(p.relative_to(source)), hashlib.sha256(p.read_bytes()).hexdigest()) for p in sorted(source.rglob('*')) if p.is_file() and '__pycache__' not in p.parts]
+result['source_sha256'] = hashlib.sha256(json.dumps(entries).encode()).hexdigest()
+for backend, engine_type in [('memory', MemoryEngine), ('sqlite', SQLiteEngine)]:
+    engine = engine_type()
+    with MongoClient(engine, mongodb_dialect='9.0') as client:
+        records = client.test.records
+        records.insert_many(documents)
+        with patch.object(preparation, '_prepare_builtin_stage', wraps=preparation._prepare_builtin_stage) as stages, patch.object(preparation, '_copy_spec', wraps=preparation._copy_spec) as copies:
+            assert list(records.aggregate(pipeline, let={'wanted': 2})) == [{'_id': 2, 'n': 2}]
+            metrics = {'stage_validations': stages.call_count, 'copy_walk_calls': copies.call_count}
+        with patch.object(preparation, 'validate_convert_spec', wraps=preparation.validate_convert_spec) as static, patch.object(scalar_expressions, 'validate_convert_spec', wraps=scalar_expressions.validate_convert_spec) as direct:
+            values = list(records.aggregate(convert))
+            assert len(values) == len(documents)
+            assert all(item['v'] == 10 for item in values)
+            metrics['convert_static_validations'] = static.call_count
+            metrics['convert_direct_validations'] = direct.call_count
+        records.create_index('n')
+        with patch.object(engine, 'list_indexes', wraps=engine.list_indexes) as reads:
+            records.create_index('n')
+            metrics['index_reads_implicit_recreate'] = reads.call_count
+        with patch.object(engine, 'list_indexes', wraps=engine.list_indexes) as reads:
+            records.create_index('n', collation={'locale': 'simple'})
+            metrics['index_reads_explicit_recreate'] = reads.call_count
+        with patch.object(engine, 'list_indexes', wraps=engine.list_indexes) as reads:
+            records.create_indexes([IndexModel(f'k{i}', collation={'locale': 'simple'}) for i in range(3)])
+            metrics['index_reads_three_item_batch'] = reads.call_count
+        for name, action in [('aggregate', lambda: list(records.aggregate(pipeline, let={'wanted': 2}))), ('convert', lambda: list(records.aggregate(convert))), ('index_explicit', lambda: records.create_index('n', collation={'locale': 'simple'}))]:
+            action()
+            durations = []
+            for _ in range(result['repetitions']):
+                start = time.perf_counter_ns()
+                action()
+                durations.append(time.perf_counter_ns() - start)
+            metrics[f'{name}_median_ns'] = int(statistics.median(durations))
+        result['engines'][backend] = metrics
+Path(sys.argv[2]).write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')

@@ -1,0 +1,648 @@
+............................FFFFFFF.......F............................. [ 53%]
+..........................................................F....          [100%]
+=================================== FAILURES ===================================
+_____________ test_mochuelo_models_provides_a_real_isolated_model ______________
+
+mochuelo_models = <mochuelo_testkit.fixtures.MochueloModels object at 0x1195d5dc0>
+
+    @pytest.mark.asyncio
+    @pytest.mark.mochuelo_models_at(datetime(2026, 12, 31, 23, 59, tzinfo=UTC))
+    async def test_mochuelo_models_provides_a_real_isolated_model(
+        mochuelo_models,
+    ) -> None:
+        model = await mochuelo_models.provide(StubModel)
+    
+>       await model.insert({'id': 'item-1', 'name': 'Item 1'})
+
+../adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_fixtures.py:114: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../consumer-env/lib/python3.14/site-packages/mochuelo/models/models.py:206: in insert
+    return await instance.insert()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/models/instances.py:88: in insert
+    inserted_data = await query.execute()
+                    ^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/queries/base.py:34: in execute
+    return await self.model.storage.execute_query(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/storage.py:2009: in execute_query
+    return await handler(query)
+           ^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/storage.py:800: in _handle_insert_one
+    result: InsertOneResult = await insert_one(document=document)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/utils.py:138: in invoke
+    result = await method(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/collection.py:896: in insert_one
+    outcome = await self._runtime.engine_insert_document(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:513: in engine_insert_document
+    self._prepare_engine_change_delivery(operation_context)
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:67: in _prepare_engine_change_delivery
+    self._engine_spi.prepare_change_delivery(change_hub)
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/adapter.py:318: in prepare_change_delivery
+    checkpoint = register(
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4756: in register_change_consumer
+    with self._change_delivery_storage(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mongoeco.engines.sqlite.SQLiteEngine object at 0x11b352e40>
+allow_transactional_registration = True
+
+    @contextmanager
+    def _change_delivery_storage(
+        self,
+        *,
+        allow_transactional_registration: bool = False,
+    ):
+        dedicated = self._change_delivery_connection
+        lock = self._change_delivery_lock if dedicated is not None else self._lock
+        with lock:
+            conn = dedicated or self._connection
+            if conn is None:
+                message = "SQLiteEngine must be connected for change delivery"
+>               raise RuntimeError(message)
+E               RuntimeError: SQLiteEngine must be connected for change delivery
+
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4734: RuntimeError
+________________ test_mochuelo_models_uses_the_default_datetime ________________
+
+mochuelo_models = <mochuelo_testkit.fixtures.MochueloModels object at 0x11cfbff40>
+
+    @pytest.mark.asyncio
+    async def test_mochuelo_models_uses_the_default_datetime(
+        mochuelo_models,
+    ) -> None:
+        model = await mochuelo_models.provide(StubModel)
+    
+>       await model.insert({'id': 'item-1', 'name': 'Item 1'})
+
+../adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_fixtures.py:134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../consumer-env/lib/python3.14/site-packages/mochuelo/models/models.py:206: in insert
+    return await instance.insert()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/models/instances.py:88: in insert
+    inserted_data = await query.execute()
+                    ^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/queries/base.py:34: in execute
+    return await self.model.storage.execute_query(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/storage.py:2009: in execute_query
+    return await handler(query)
+           ^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/storage.py:800: in _handle_insert_one
+    result: InsertOneResult = await insert_one(document=document)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/utils.py:138: in invoke
+    result = await method(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/collection.py:896: in insert_one
+    outcome = await self._runtime.engine_insert_document(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:513: in engine_insert_document
+    self._prepare_engine_change_delivery(operation_context)
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:67: in _prepare_engine_change_delivery
+    self._engine_spi.prepare_change_delivery(change_hub)
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/adapter.py:318: in prepare_change_delivery
+    checkpoint = register(
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4756: in register_change_consumer
+    with self._change_delivery_storage(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mongoeco.engines.sqlite.SQLiteEngine object at 0x11b352900>
+allow_transactional_registration = True
+
+    @contextmanager
+    def _change_delivery_storage(
+        self,
+        *,
+        allow_transactional_registration: bool = False,
+    ):
+        dedicated = self._change_delivery_connection
+        lock = self._change_delivery_lock if dedicated is not None else self._lock
+        with lock:
+            conn = dedicated or self._connection
+            if conn is None:
+                message = "SQLiteEngine must be connected for change delivery"
+>               raise RuntimeError(message)
+E               RuntimeError: SQLiteEngine must be connected for change delivery
+
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4734: RuntimeError
+_____ test_mochuelo_models_provisions_unique_indexes_and_translates_errors _____
+
+mochuelo_models = <mochuelo_testkit.fixtures.MochueloModels object at 0x11d89b1c0>
+
+    @pytest.mark.asyncio
+    async def test_mochuelo_models_provisions_unique_indexes_and_translates_errors(
+        mochuelo_models,
+    ) -> None:
+>       model = await mochuelo_models.provide(UniqueStubModel)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_fixtures.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/fixtures.py:170: in provide
+    await ensure_model_indexes_v1(
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/mongodb.py:80: in ensure_model_indexes_v1
+    return await apply_prepared_model_indexes_v1(database, manifest)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/mongodb.py:67: in apply_prepared_model_indexes_v1
+    return await provision_mongo_indexes(
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/provisioning.py:197: in provision_mongo_indexes
+    report = await reconciler.apply_create_only(
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/index_reconciliation.py:325: in apply_create_only
+    return await observe_mongo_index_reconciliation(
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/index_telemetry.py:33: in observe_mongo_index_reconciliation
+    result = await action
+             ^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/index_reconciliation.py:337: in _apply_create_only
+    await self._assert_databases_unlocked()
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/index_reconciliation.py:510: in _assert_databases_unlocked
+    await locks.assert_unlocked(realm, provider_id, database_id)
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/index_operations.py:114: in assert_unlocked
+    document = await database.get_collection(
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/utils.py:138: in invoke
+    result = await method(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/collection.py:1192: in find_one
+    return await _collection_reads.find_one(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_reads.py:100: in find_one
+    document = await collection._runtime.engine_get_document(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:602: in engine_get_document
+    return await self._engine_spi.get_document(
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/adapter.py:628: in get_document
+    return await method(
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:7197: in get_document
+    return await self._run_blocking(
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:840: in _run_blocking
+    return await asyncio.shield(submitted)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py:86: in run
+    result = ctx.run(self.task)
+             ^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py:73: in run
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:5838: in _get_document_sync
+    conn = self._require_connection(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:1079: in _require_connection
+    return self._session_runtime.require_connection(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mongoeco.engines._sqlite_session_runtime.SQLiteSessionRuntime object at 0x11b53df90>
+context = None
+
+    def require_connection(
+        self, context: ClientSession | None = None
+    ) -> sqlite3.Connection:
+        thread_bound = getattr(self._engine._thread_local, "connection", None)
+        if thread_bound is not None:
+            self._ensure_transaction_session_can_use_engine(context)
+            self._ensure_write_state_usable(thread_bound)
+            return thread_bound
+        if self._engine._connection is None:
+            msg = "SQLiteEngine is not connected"
+>           raise RuntimeError(msg)
+E           RuntimeError: SQLiteEngine is not connected
+
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/_sqlite_session_runtime.py:188: RuntimeError
+_________ test_mochuelo_models_resolves_store_now_after_advancing_time _________
+
+mochuelo_models = <mochuelo_testkit.fixtures.MochueloModels object at 0x11d857a00>
+
+    @pytest.mark.asyncio
+    async def test_mochuelo_models_resolves_store_now_after_advancing_time(
+        mochuelo_models,
+    ) -> None:
+        model = await mochuelo_models.provide(StubModel)
+>       await model.insert({'id': 'item-1', 'name': 'Item 1'})
+
+../adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_fixtures.py:156: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../consumer-env/lib/python3.14/site-packages/mochuelo/models/models.py:206: in insert
+    return await instance.insert()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/models/instances.py:88: in insert
+    inserted_data = await query.execute()
+                    ^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/queries/base.py:34: in execute
+    return await self.model.storage.execute_query(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/storage.py:2009: in execute_query
+    return await handler(query)
+           ^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo/storages/mongodb/storage.py:800: in _handle_insert_one
+    result: InsertOneResult = await insert_one(document=document)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/utils.py:138: in invoke
+    result = await method(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/collection.py:896: in insert_one
+    outcome = await self._runtime.engine_insert_document(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:513: in engine_insert_document
+    self._prepare_engine_change_delivery(operation_context)
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:67: in _prepare_engine_change_delivery
+    self._engine_spi.prepare_change_delivery(change_hub)
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/adapter.py:318: in prepare_change_delivery
+    checkpoint = register(
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4756: in register_change_consumer
+    with self._change_delivery_storage(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mongoeco.engines.sqlite.SQLiteEngine object at 0x11b352660>
+allow_transactional_registration = True
+
+    @contextmanager
+    def _change_delivery_storage(
+        self,
+        *,
+        allow_transactional_registration: bool = False,
+    ):
+        dedicated = self._change_delivery_connection
+        lock = self._change_delivery_lock if dedicated is not None else self._lock
+        with lock:
+            conn = dedicated or self._connection
+            if conn is None:
+                message = "SQLiteEngine must be connected for change delivery"
+>               raise RuntimeError(message)
+E               RuntimeError: SQLiteEngine must be connected for change delivery
+
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4734: RuntimeError
+_____________ test_mongodb_failpoints_use_the_models_owned_client ______________
+
+mochuelo_models = <mochuelo_testkit.fixtures.MochueloModels object at 0x11d62e940>
+mongodb_failpoints = <mongoeco.driver.failpoints.DriverFailpointController object at 0x11b6f1940>
+
+    @pytest.mark.asyncio
+    async def test_mongodb_failpoints_use_the_models_owned_client(
+        mochuelo_models,
+        mongodb_failpoints,
+    ) -> None:
+        collection = mochuelo_models.database.get_collection('failpoint_items')
+    
+        mongodb_failpoints.inject_server_selection_timeout(
+            command_names=('insert',),
+            times=1,
+        )
+        with pytest.raises(ServerSelectionTimeoutError):
+            await collection.insert_one({'_id': 'not-written'})
+>       result = await collection.insert_one({'_id': 'written'})
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_fixtures.py:182: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/utils.py:138: in invoke
+    result = await method(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/collection.py:896: in insert_one
+    outcome = await self._runtime.engine_insert_document(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:513: in engine_insert_document
+    self._prepare_engine_change_delivery(operation_context)
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:67: in _prepare_engine_change_delivery
+    self._engine_spi.prepare_change_delivery(change_hub)
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/adapter.py:318: in prepare_change_delivery
+    checkpoint = register(
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4756: in register_change_consumer
+    with self._change_delivery_storage(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mongoeco.engines.sqlite.SQLiteEngine object at 0x11b351550>
+allow_transactional_registration = True
+
+    @contextmanager
+    def _change_delivery_storage(
+        self,
+        *,
+        allow_transactional_registration: bool = False,
+    ):
+        dedicated = self._change_delivery_connection
+        lock = self._change_delivery_lock if dedicated is not None else self._lock
+        with lock:
+            conn = dedicated or self._connection
+            if conn is None:
+                message = "SQLiteEngine must be connected for change delivery"
+>               raise RuntimeError(message)
+E               RuntimeError: SQLiteEngine must be connected for change delivery
+
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4734: RuntimeError
+_________ test_mongodb_failpoints_filter_and_propagate_driver_failures _________
+
+mochuelo_models = <mochuelo_testkit.fixtures.MochueloModels object at 0x11d6c30c0>
+mongodb_failpoints = <mongoeco.driver.failpoints.DriverFailpointController object at 0x11b5d4170>
+
+    @pytest.mark.asyncio
+    async def test_mongodb_failpoints_filter_and_propagate_driver_failures(
+        mochuelo_models,
+        mongodb_failpoints,
+    ) -> None:
+        collection = mochuelo_models.database.get_collection('failpoint_items')
+>       await collection.insert_one({'_id': 'item', 'state': 'pending'})
+
+../adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_fixtures.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/utils.py:138: in invoke
+    result = await method(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/collection.py:896: in insert_one
+    outcome = await self._runtime.engine_insert_document(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:513: in engine_insert_document
+    self._prepare_engine_change_delivery(operation_context)
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:67: in _prepare_engine_change_delivery
+    self._engine_spi.prepare_change_delivery(change_hub)
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/adapter.py:318: in prepare_change_delivery
+    checkpoint = register(
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4756: in register_change_consumer
+    with self._change_delivery_storage(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mongoeco.engines.sqlite.SQLiteEngine object at 0x11b351e80>
+allow_transactional_registration = True
+
+    @contextmanager
+    def _change_delivery_storage(
+        self,
+        *,
+        allow_transactional_registration: bool = False,
+    ):
+        dedicated = self._change_delivery_connection
+        lock = self._change_delivery_lock if dedicated is not None else self._lock
+        with lock:
+            conn = dedicated or self._connection
+            if conn is None:
+                message = "SQLiteEngine must be connected for change delivery"
+>               raise RuntimeError(message)
+E               RuntimeError: SQLiteEngine must be connected for change delivery
+
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4734: RuntimeError
+___________ test_mongodb_failpoints_reset_between_fixture_instances ____________
+
+configured_pytester = <Pytester PosixPath('/private/tmp/pytest-of-uve/pytest-44/test_mongodb_failpoints_reset_between_fixture_instances0')>
+
+    def test_mongodb_failpoints_reset_between_fixture_instances(
+        configured_pytester: pytest.Pytester,
+    ) -> None:
+        pytester = configured_pytester
+        pytester.makepyfile(
+            """
+            import asyncio
+    
+    
+            def test_first(mongodb_failpoints):
+                mongodb_failpoints.inject_server_selection_timeout(times=1)
+    
+    
+            def test_second(mochuelo_models):
+                async def insert():
+                    collection = mochuelo_models.database.get_collection('items')
+                    await collection.insert_one({'_id': 'written'})
+    
+                asyncio.run(insert())
+            """,
+        )
+    
+        result = pytester.runpytest('-q')
+    
+>       result.assert_outcomes(passed=2)
+E       AssertionError: assert {'passed': 1,...rors': 0, ...} == {'passed': 2,...rors': 0, ...}
+E         
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {'passed': 1} != {'passed': 2}
+E         {'failed': 1} != {'failed': 0}
+E         Use -v to get more diff
+
+/private/tmp/mongoeco-490-20261008/adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_fixtures.py:247: AssertionError
+----------------------------- Captured stdout call -----------------------------
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_________________________________ test_second __________________________________
+
+mochuelo_models = <mochuelo_testkit.fixtures.MochueloModels object at 0x11b6174c0>
+
+    def test_second(mochuelo_models):
+        async def insert():
+            collection = mochuelo_models.database.get_collection('items')
+            await collection.insert_one({'_id': 'written'})
+    
+>       asyncio.run(insert())
+
+test_mongodb_failpoints_reset_between_fixture_instances.py:13: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+test_mongodb_failpoints_reset_between_fixture_instances.py:11: in insert
+    await collection.insert_one({'_id': 'written'})
+../../../mongoeco-490-20261008/consumer-env/lib/python3.14/site-packages/mochuelo_testkit/utils.py:138: in invoke
+    result = await method(
+../../../mongoeco-490-20261008/consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/collection.py:896: in insert_one
+    outcome = await self._runtime.engine_insert_document(
+../../../mongoeco-490-20261008/consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:513: in engine_insert_document
+    self._prepare_engine_change_delivery(operation_context)
+../../../mongoeco-490-20261008/consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:67: in _prepare_engine_change_delivery
+    self._engine_spi.prepare_change_delivery(change_hub)
+../../../mongoeco-490-20261008/consumer-env/lib/python3.14/site-packages/mongoeco/engines/adapter.py:318: in prepare_change_delivery
+    checkpoint = register(
+../../../mongoeco-490-20261008/consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4756: in register_change_consumer
+    with self._change_delivery_storage(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mongoeco.engines.sqlite.SQLiteEngine object at 0x11b670830>
+allow_transactional_registration = True
+
+    @contextmanager
+    def _change_delivery_storage(
+        self,
+        *,
+        allow_transactional_registration: bool = False,
+    ):
+        dedicated = self._change_delivery_connection
+        lock = self._change_delivery_lock if dedicated is not None else self._lock
+        with lock:
+            conn = dedicated or self._connection
+            if conn is None:
+                message = "SQLiteEngine must be connected for change delivery"
+>               raise RuntimeError(message)
+E               RuntimeError: SQLiteEngine must be connected for change delivery
+
+../../../mongoeco-490-20261008/consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4734: RuntimeError
+=========================== short test summary info ============================
+FAILED test_mongodb_failpoints_reset_between_fixture_instances.py::test_second
+1 failed, 1 passed in 0.10s
+__________ test_mongodb_mock_database_exposes_async_database_contract __________
+
+    def test_mongodb_mock_database_exposes_async_database_contract() -> None:
+        async def assert_contract() -> None:
+            database = mongodb_mock_database('testkit_mongodb_mock')
+    
+            try:
+                database.assert_owning_loop()
+                collection = database.get_collection('items')
+    
+                result = await collection.insert_one(
+                    {'_id': 'item-1', 'name': 'Item 1'},
+                )
+                await collection.insert_one(
+                    {'_id': 'item-2', 'name': 'Item 2'},
+                )
+                await collection.update_one(
+                    {'_id': 'item-2'},
+                    {'$set': {'name': 'Item 2 updated'}},
+                )
+                stored = await collection.find_one({'_id': 'item-1'})
+                count = await collection.count_documents({'_id': 'item-1'})
+                sorted_items = await mongo_find_many(
+                    collection,
+                    {},
+                    sort=(('_id', -1),),
+                    limit=1,
+                )
+            finally:
+                close_mongodb_mock_instance(database)
+    
+            assert result.inserted_id == 'item-1'
+            assert stored == {'_id': 'item-1', 'name': 'Item 1'}
+            assert count == 1
+            assert sorted_items == [
+                {'_id': 'item-2', 'name': 'Item 2 updated'},
+            ]
+    
+>       asyncio.run(assert_contract())
+
+../adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_import_smoke.py:81: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+../adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_import_smoke.py:53: in assert_contract
+    result = await collection.insert_one(
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/utils.py:138: in invoke
+    result = await method(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/collection.py:896: in insert_one
+    outcome = await self._runtime.engine_insert_document(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:513: in engine_insert_document
+    self._prepare_engine_change_delivery(operation_context)
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:67: in _prepare_engine_change_delivery
+    self._engine_spi.prepare_change_delivery(change_hub)
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/adapter.py:318: in prepare_change_delivery
+    checkpoint = register(
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4756: in register_change_consumer
+    with self._change_delivery_storage(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mongoeco.engines.sqlite.SQLiteEngine object at 0x11b6702f0>
+allow_transactional_registration = True
+
+    @contextmanager
+    def _change_delivery_storage(
+        self,
+        *,
+        allow_transactional_registration: bool = False,
+    ):
+        dedicated = self._change_delivery_connection
+        lock = self._change_delivery_lock if dedicated is not None else self._lock
+        with lock:
+            conn = dedicated or self._connection
+            if conn is None:
+                message = "SQLiteEngine must be connected for change delivery"
+>               raise RuntimeError(message)
+E               RuntimeError: SQLiteEngine must be connected for change delivery
+
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4734: RuntimeError
+__________ test_mongodb_mock_isolates_driver_failpoints_per_database ___________
+
+    @pytest.mark.asyncio
+    async def test_mongodb_mock_isolates_driver_failpoints_per_database():
+        first_database = mongodb_mock_database('first_failpoints')
+        second_database = mongodb_mock_database('second_failpoints')
+        first_collection = first_database.get_collection('items')
+        second_collection = second_database.get_collection('items')
+        try:
+            first_database.driver_failpoints.inject_server_selection_timeout(
+                command_names=('insert',),
+                times=1,
+            )
+    
+            with pytest.raises(ServerSelectionTimeoutError):
+                await first_collection.insert_one({'_id': 'first'})
+>           result = await second_collection.insert_one({'_id': 'second'})
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../adoption/gdynamics-testing/packages/mochuelo-testkit/tests/test_utils.py:1026: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../consumer-env/lib/python3.14/site-packages/mochuelo_testkit/utils.py:138: in invoke
+    result = await method(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/collection.py:896: in insert_one
+    outcome = await self._runtime.engine_insert_document(
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:513: in engine_insert_document
+    self._prepare_engine_change_delivery(operation_context)
+../consumer-env/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py:67: in _prepare_engine_change_delivery
+    self._engine_spi.prepare_change_delivery(change_hub)
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/adapter.py:318: in prepare_change_delivery
+    checkpoint = register(
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4756: in register_change_consumer
+    with self._change_delivery_storage(
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <mongoeco.engines.sqlite.SQLiteEngine object at 0x11b670c20>
+allow_transactional_registration = True
+
+    @contextmanager
+    def _change_delivery_storage(
+        self,
+        *,
+        allow_transactional_registration: bool = False,
+    ):
+        dedicated = self._change_delivery_connection
+        lock = self._change_delivery_lock if dedicated is not None else self._lock
+        with lock:
+            conn = dedicated or self._connection
+            if conn is None:
+                message = "SQLiteEngine must be connected for change delivery"
+>               raise RuntimeError(message)
+E               RuntimeError: SQLiteEngine must be connected for change delivery
+
+../consumer-env/lib/python3.14/site-packages/mongoeco/engines/sqlite.py:4734: RuntimeError
+=========================== short test summary info ============================
+FAILED test_fixtures.py::test_mochuelo_models_provides_a_real_isolated_model
+FAILED test_fixtures.py::test_mochuelo_models_uses_the_default_datetime - Run...
+FAILED test_fixtures.py::test_mochuelo_models_provisions_unique_indexes_and_translates_errors
+FAILED test_fixtures.py::test_mochuelo_models_resolves_store_now_after_advancing_time
+FAILED test_fixtures.py::test_mongodb_failpoints_use_the_models_owned_client
+FAILED test_fixtures.py::test_mongodb_failpoints_filter_and_propagate_driver_failures
+FAILED test_fixtures.py::test_mongodb_failpoints_reset_between_fixture_instances
+FAILED test_import_smoke.py::test_mongodb_mock_database_exposes_async_database_contract
+FAILED test_utils.py::test_mongodb_mock_isolates_driver_failpoints_per_database
+9 failed, 126 passed in 2.38s

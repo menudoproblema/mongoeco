@@ -1,0 +1,347 @@
+{
+  "schema": "mongoeco-benchmark-report/v2",
+  "environment": {
+    "python": "3.14.5",
+    "pythonImplementation": "CPython",
+    "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "sqlite": "3.53.4",
+    "jsonBackend": "stdlib",
+    "mongoeco": "4.8.1",
+    "dependencies": {
+      "mongomock": "4.3.0",
+      "orjson": "3.11.9",
+      "psutil": "7.2.2",
+      "pymongo": "4.18.2",
+      "usearch": "2.25.3"
+    },
+    "executable": "/private/tmp/mongoeco-490-20261008/benchmark-baseline-env/bin/python"
+  },
+  "source": {
+    "gitRevision": "aa626c51fea8a055510f89a2acf2f8ed1ce33761",
+    "gitDirty": true,
+    "mongoecoModule": "/private/tmp/mongoeco-490-20261008/benchmark-baseline-env/lib/python3.14/site-packages/mongoeco/__init__.py",
+    "harnessSha256": "sha256:a46f2e9c5ecbf5811289439caba8210f62a24928d1a5ad295da6a7337e8b3de3",
+    "datasetSha256": "sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63"
+  },
+  "config": {
+    "size": 20000,
+    "warmup": 1,
+    "repetitions": 5,
+    "workloads": [
+      "simple_aggregation",
+      "materializing_aggregation",
+      "aggregation_spill_diagnostics",
+      "secondary_lookup_indexed",
+      "cursor_consumption"
+    ],
+    "rssPeakSamplingIntervalMs": 5.0
+  },
+  "results": {
+    "memory-sync": {
+      "simple_aggregation": {
+        "simple_aggregation_topk": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.074,
+          "wall_time_median_sec": 0.0692,
+          "wall_time_min_sec": 0.0672,
+          "wall_time_max_sec": 0.0949,
+          "cpu_user_mean_sec": 0.072,
+          "cpu_sys_mean_sec": 0.002,
+          "rss_delta_mean_mb": 5.47,
+          "rss_peak_max_mb": 167.89,
+          "metadata": {
+            "summary": "memory/python scan>filter>sort>project>slice",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "sort",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "project",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "slice",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "match-sort-limit-project",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:cb163390c0b47e45cf2397b0aca407cb34d6b0777ff6cc6fc7a55bab32cbc6a5",
+            "outcome_items": 10
+          }
+        }
+      },
+      "materializing_aggregation": {
+        "materializing_aggregation_group_sort": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.4981,
+          "wall_time_median_sec": 0.4916,
+          "wall_time_min_sec": 0.4828,
+          "wall_time_max_sec": 0.5315,
+          "cpu_user_mean_sec": 0.496,
+          "cpu_sys_mean_sec": 0.002,
+          "rss_delta_mean_mb": 0.2,
+          "rss_peak_max_mb": 183.34,
+          "metadata": {
+            "summary": "memory/python scan>filter",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": true,
+            "remaining_stage_count": 3,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "match-group-sort-limit",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:a08795c43d7c91284df16ea8d0670c67ab410c5b574ad5d61f602fd2552ffb88",
+            "outcome_items": 6
+          }
+        }
+      },
+      "aggregation_spill_diagnostics": {
+        "group_low_cardinality_first": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.2816,
+          "wall_time_median_sec": 0.271,
+          "wall_time_min_sec": 0.2446,
+          "wall_time_max_sec": 0.3394,
+          "cpu_user_mean_sec": 0.28,
+          "cpu_sys_mean_sec": 0.002,
+          "rss_delta_mean_mb": 0.12,
+          "rss_peak_max_mb": 189.33,
+          "metadata": {
+            "summary": "memory/python scan>filter",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 1,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "group-low-cardinality-first",
+            "expected_group_cardinality": 6,
+            "spill_threshold": 10000,
+            "spill_expected": false,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:8047826e33f9e8fee7db494a52dfd2a0da111735fbef294dc0a6db3cc48ff07e",
+            "outcome_items": 2
+          }
+        },
+        "group_high_cardinality_first": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 1.9394,
+          "wall_time_median_sec": 1.9386,
+          "wall_time_min_sec": 1.6727,
+          "wall_time_max_sec": 2.2608,
+          "cpu_user_mean_sec": 1.826,
+          "cpu_sys_mean_sec": 0.026,
+          "rss_delta_mean_mb": 1.03,
+          "rss_peak_max_mb": 189.47,
+          "metadata": {
+            "summary": "memory/python scan>filter",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 1,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "group-high-cardinality-first",
+            "expected_group_cardinality": 20000,
+            "spill_threshold": 10000,
+            "spill_expected": true,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:ce16e420692e739d95d4ab8de057a432f36338df2b7b2c0e9b58789da49e0c05",
+            "outcome_items": 2
+          }
+        }
+      },
+      "secondary_lookup_indexed": {
+        "secondary_lookup_indexed_1k": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.2169,
+          "wall_time_median_sec": 0.2019,
+          "wall_time_min_sec": 0.1904,
+          "wall_time_max_sec": 0.2546,
+          "cpu_user_mean_sec": 0.18,
+          "cpu_sys_mean_sec": 0.024,
+          "rss_delta_mean_mb": 0.0,
+          "rss_peak_max_mb": 214.91,
+          "metadata": {
+            "summary": "memory/python scan>filter>slice",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "limit": 1,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "slice",
+                "detail": null
+              }
+            ],
+            "query_shape": "username equality",
+            "index_expected": true,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:fc175e3eb8c7fb62199136a3cb774a1c2069ce165833dd5f06c709bc70871f7c",
+            "outcome_items": 1000
+          }
+        }
+      },
+      "cursor_consumption": {
+        "cursor_consumption_first_200": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.0384,
+          "wall_time_median_sec": 0.0375,
+          "wall_time_min_sec": 0.0353,
+          "wall_time_max_sec": 0.0423,
+          "cpu_user_mean_sec": 0.032,
+          "cpu_sys_mean_sec": 0.004,
+          "rss_delta_mean_mb": -1.6,
+          "rss_peak_max_mb": 410.92,
+          "metadata": {
+            "summary": "memory/python scan>filter",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "limit": null,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "query_shape": "city equality",
+            "index_expected": true,
+            "consumption_mode": "first",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:7e0a0548b3ce070c95ed3b6ae1819e7aef04405dbe15b0a96f8ccbc972a67262",
+            "outcome_items": 200
+          }
+        },
+        "cursor_consumption_materialized_200": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 5.9968,
+          "wall_time_median_sec": 5.9322,
+          "wall_time_min_sec": 5.6612,
+          "wall_time_max_sec": 6.4887,
+          "cpu_user_mean_sec": 5.752,
+          "cpu_sys_mean_sec": 0.08,
+          "rss_delta_mean_mb": 29.82,
+          "rss_peak_max_mb": 423.91,
+          "metadata": {
+            "summary": "memory/python scan>filter",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "limit": null,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "query_shape": "city equality",
+            "index_expected": true,
+            "consumption_mode": "materialized",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:8b035b619181265d0cbd462a33a58fdb966afd5fc2fe0407acb13e5f8e5e61c0",
+            "outcome_items": 200
+          }
+        }
+      }
+    }
+  }
+}

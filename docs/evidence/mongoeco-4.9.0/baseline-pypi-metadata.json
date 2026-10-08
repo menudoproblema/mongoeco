@@ -1,0 +1,144 @@
+{
+  "info": {
+    "author": "Vicente Ruiz",
+    "author_email": null,
+    "bugtrack_url": null,
+    "classifiers": [
+      "Development Status :: 5 - Production/Stable",
+      "Intended Audience :: Developers",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.13",
+      "Programming Language :: Python :: 3.14",
+      "Topic :: Database",
+      "Topic :: Software Development :: Testing",
+      "Typing :: Typed"
+    ],
+    "description": "# mongoeco\n\n`mongoeco` is an async-first local MongoDB mock/runtime for tests, local\ndevelopment and embedded workflows, with a MongoDB-like surface and pluggable\nstorage engines.\n\nIt is built for local development, test environments, embedded persistence and\ncompatibility work where a PyMongo-shaped API is useful without requiring a\nreal MongoDB server for every workflow. It uses CXP to expose its\n`database/mongodb` capabilities in a structured way for tooling and\ninteroperability.\n\n## Current Scope\n\nWhat is already in place:\n\n* async and sync client APIs\n* memory and SQLite engines\n* transactional local sessions and local admin/runtime introspection\n* aggregation runtime with pushdown and spill guardrails\n* a structured CXP capability export for the local `database/mongodb` surface\n* compatibility modeling across MongoDB dialects and PyMongo profiles\n* local wire/driver runtime\n* local geospatial, classic `$text`, `$search` and ANN-backed `$vectorSearch`\n\nWhat this is not:\n\n* a drop-in replacement for a production MongoDB cluster\n* a full Atlas Search implementation\n* a geodesic geospatial engine\n* a full-text/vector engine with server-grade scaling guarantees\n\n## When To Use `mongoeco`\n\n`mongoeco` fits well when you want:\n\n* a local `database/mongodb` runtime for development or CI;\n* a local PyMongo-like runtime without a server process;\n* more semantic fidelity than a lightweight mock;\n* embedded persistence with either memory or SQLite;\n* local `$text`, `$search` and `$vectorSearch` without standing up a server;\n* explicit compatibility and `explain()` diagnostics instead of opaque best\n  effort behavior.\n\nReference:\n\n* [docs/use-cases.md](docs/use-cases.md)\n* [docs/use-cases/embedded-app.md](docs/use-cases/embedded-app.md)\n* [docs/use-cases/test-runtime.md](docs/use-cases/test-runtime.md)\n* [docs/use-cases/local-search-and-retrieval.md](docs/use-cases/local-search-and-retrieval.md)\n* [docs/comparisons.md](docs/comparisons.md)\n\n## Installation\n\nEditable local install:\n\n```bash\npython -m pip install -e .\n```\n\nDevelopment install:\n\n```bash\npython -m pip install -e .[dev]\n```\n\nMongoEco is a PEP 561 typed package. Wheels and source distributions include\n`py.typed`; the supported typing boundary covers the documented client,\nengine SPI v2, Search and conformance surfaces. CI checks those contracts with\nstrict positive and negative consumer fixtures against the installed wheel.\n\nMongoeco 4.8+ requires `cxp[exchange]>=5.0.0,<6` and exposes its\n`database/mongodb` contract through owner-authored exchange documents. Its\n`org.mongoeco:mongodb@1.2.0` catalog uses CXP catalog spec_version 2;\nsnapshots and requirements pin that exact catalog while retaining their v1\ndocument formats.\nReference:\n\n* [docs/cxp-exchange.md](docs/cxp-exchange.md)\n\nThe public compatibility export and the top-level `cxp` blocks surfaced by\n`find(...).explain()` / `aggregate(...).explain()` are now projected from that\ncanonical CXP capability model.\n\nThe public CXP story now includes canonical first-level operation bindings as\nwell:\n\n* `read` -> `find`, `find_one`, `count_documents`, `estimated_document_count`,\n  `distinct`\n* `write` -> `insert_one`, `insert_many`, `update_one`, `update_many`,\n  `replace_one`, `delete_one`, `delete_many`, `bulk_write`\n* `aggregation` -> `aggregate`\n* `change_streams` -> `watch`\n* `transactions` -> `start_session`, `with_transaction`\n\nFor `search` and `vector_search`, `mongoeco` still binds the public operation\n`aggregate` and uses metadata to describe the supported stage-level subset.\nThat metadata also carries operation-level hints such as result shape, scope,\nsession support and core accepted inputs for `read`, `write` and\n`aggregation`.\n\nFor reusable profile gates, the practical split is now:\n\n* `mongodb-text-search` when you need textual `$search` without requiring\n  `vector_search`;\n* `mongodb-search` when you need both textual and vector search;\n* `mongodb-platform` when you need the broader platform surface, including\n  canonical metadata for collation, persistence and topology discovery.\n\nThe exchange documents publish these named profiles with exact catalog pins.\nThe `cxp` block in `explain()` carries their evaluated verdicts for the declared\nlibrary snapshot; it does not infer a minimal profile from a query path.\nConsumers can load each profile from `mongoeco.cxp.exchange` and evaluate it\nwith a context that explicitly states accepted provenance. The compat report\nembeds the same documents through `export_exchange_catalog()`.\nOperational telemetry shape requirements live in Mongoeco's driver resources\nand are validated separately from component compatibility.\n\nThe root `mongoeco` package is intentionally narrower than the full runtime\ninternals. It centers on:\n\n* clients and session entry points\n* common BSON-facing types and operation models\n* URI/configuration helpers needed by the main runtime surface\n\nCompatibility tooling and the canonical MongoDB CXP contract surface live in\ntheir own packages:\n\n* `mongoeco.compat`\n* `mongoeco.cxp.exchange`\n* `mongoeco.engines` for the public storage-engine SPI v2\n* `mongoeco.conformance` for versioned engine contract validation\n\nLower-level driver/runtime details remain available from subpackages such as\n`mongoeco.driver`.\n\n`mongoeco.compat` follows the same idea: the top-level package keeps the\ncatalog exports, profile resolution helpers and option-support surface, while\nmore tactical constants and raw catalog data stay in explicit submodules.\nIt also exposes `deprecation_entries()` and `public_api_manifest()` so release\ntooling can inspect planned removals and the semantic 4.x surface without\nscraping documentation.\nThe catalog lifecycle is documented in\n[docs/deprecations.md](docs/deprecations.md).\n\nImport guidance by layer:\n\n* use `mongoeco` for clients, sessions, BSON-facing types and URI/config helpers\n* use `mongoeco.compat` for dialect/profile resolution and compat/tooling exports\n* use `mongoeco.cxp.exchange` for pinned MongoDB compatibility documents\n* use `mongoeco.engines` and `mongoeco.conformance` for third-party storage\n  engines and their public contract tests\n* use `mongoeco.driver` and `mongoeco.wire` only when you intentionally need\n  lower-level runtime surfaces\n\nCustom storage engines should implement the versioned SPI v2 contract. The\npublic capability, outcome, operation-context and snapshot types are exported\nfrom `mongoeco.engines`; see the\n[SPI v2 contract](docs/architecture/engine-spi-v2.md) and the\n[MongoEco 4.7 migration guide](docs/migrating-to-4.7.md). Starting with 4.7,\nSPI v2 is the only stable engine SPI and engine capabilities must be declared\nexplicitly.\n\n## Public Surface Stability (4.8+)\n\nMongoeco 4.8.0 introduced the exchange-only CXP surface. Its import roots are\nexplicit:\n\n* stable import roots are `mongoeco`, `mongoeco.compat`, `mongoeco.cxp.exchange`,\n  `mongoeco.engines` and `mongoeco.conformance`\n* each root surface is curated through its `__all__`\n* lower-level runtime symbols stay in explicit subpackages\n\nThe root package no longer exposes transport aliases. Import transport classes\nfrom `mongoeco.driver` directly.\n\n`mongoeco` does not ship a live CXP provider wrapper for its clients. Instead,\nit exposes the canonical catalog and projects the active capability path\nthrough `compat` and `explain()`. External systems can wrap `mongoeco` if they\nwant to negotiate profiles or instantiate resources through CXP.\n\n`mongoeco.cxp.exchange` is the canonical compatibility source. `mongoeco.compat`\nexports those exact documents in its reporting view.\nSee the [CXP removal migration guide](docs/cxp-c4-migration.md) for import and\nreporting changes.\n\nThe direct path for CXP-facing tooling is:\n\n```python\nfrom mongoeco import MongoClient\nfrom mongoeco.compat import export_exchange_catalog\nfrom mongoeco.engines.memory import MemoryEngine\n\n\nprint(export_exchange_catalog()[\"catalog_sha256\"])\n\nwith MongoClient(MemoryEngine()) as client:\n    collection = client.get_database(\"demo\").get_collection(\"items\")\n    collection.insert_one({\"_id\": 1, \"score\": 8})\n    explain = collection.aggregate([{\"$match\": {\"score\": {\"$gte\": 8}}}]).explain()\n    print(explain[\"cxp\"])\n```\n\nThe base package now includes `pyuca` as a runtime dependency so Unicode\ncollations keep a deterministic UCA-backed behavior even when `PyICU` is not\ninstalled.\n\nAdvanced ICU collation backend (optional):\n\n```bash\npython -m pip install PyICU\n```\n\nCollation backend policy:\n\n* `PyICU` stays optional by contract: it is never required for the supported\n  baseline subset\n* `PyICU` if available: preferred backend, including advanced collation knobs\n  such as `backwards`, `alternate`, `maxVariable` and `normalization`\n* `pyuca` fallback: Unicode collation for the supported basic subset\n  (`locale=en`, `strength`, `caseLevel`, `numericOrdering`)\n* if advanced knobs are requested without `PyICU`, `mongoeco` raises an error\n  instead of silently ignoring them\n\nOptional fast JSON backend:\n\n```bash\npython -m pip install -e .[json-fast]\n```\n\n`mongoeco` uses the standard library `json` module by default, even if\n`orjson` is installed. You can choose the backend at process start with\n`MONGOECO_JSON_BACKEND`:\n\n* `stdlib`: always use the standard library JSON backend\n* `orjson`: require `orjson` and use it\n* `auto`: use `orjson` when available, otherwise fall back to `stdlib`\n\nExample:\n\n```bash\nMONGOECO_JSON_BACKEND=orjson python your_app.py\n```\n\nRuntime behavior highlights:\n\n* the `simple` collation keeps using the BSON/Python baseline comparator and\n  rejects Unicode tailoring knobs such as `caseLevel` or `numericOrdering`\n* the currently supported locale surface is `simple` and `en`\n* the currently supported strengths are `1`, `2` and `3`\n* `numericOrdering` and `caseLevel` are supported for `locale=en`\n* `PyICU` and `pyuca` are intentionally close, but may still differ on\n  advanced tailoring details outside the currently supported locale surface\n* local change streams retain a bounded in-memory history; the retention size\n  can be tuned with `change_stream_history_size` on async/sync clients and on\n  direct async database/collection constructors\n* local change streams can also persist that retained history to a journal file\n  with `change_stream_journal_path`, allowing `resume_after` / `start_after`\n  to survive client recreation inside the same local environment\n* the journal can also be hardened with `change_stream_journal_fsync=True`\n  and bounded by size with `change_stream_journal_max_bytes`\n* when journaling is enabled, `mongoeco` keeps an incremental event log and\n  compacts it back into a retained snapshot as the local history rolls forward;\n  each log entry carries an integrity checksum and truncated tail writes are\n  ignored on reload\n* clients, databases and direct collections expose `change_stream_state()` so\n  local retained history, journal files and compaction progress can be\n  inspected at runtime\n* clients, databases and direct collections also expose\n  `change_stream_backend_info()`, which makes the contract explicit:\n  change streams are local, optionally persistent via journal, resumable inside\n  that local environment, and not distributed across nodes\n* the local driver now starts non-direct single-seed topologies as\n  provisional `UNKNOWN` and relies on `hello` discovery to converge towards\n  `standalone`, `replicaSet` or `sharded` topology shapes\n* retryable reads and writes now apply to real wire connection failures too:\n  connect/read/write socket errors are normalized to `ConnectionFailure`\n* replica-set discovery also tracks per-server health states (`healthy`,\n  `recovering`, `degraded`, `unreachable`) and uses them to prefer healthier\n  candidates when ordering eligible servers\n* clients expose `sdam_capabilities()` so the supported SDAM subset is\n  inspectable at runtime instead of being implicit in the implementation\n* `mongoeco.collation_backend_info()` reports the active Unicode backend,\n  while `mongoeco.collation_capabilities_info()` reports the supported locale\n  surface and which advanced knobs require `PyICU`\n\n## Quick Start\n\nAsync with the in-memory engine:\n\n```python\nimport asyncio\n\nfrom mongoeco import AsyncMongoClient\nfrom mongoeco.engines.memory import MemoryEngine\n\n\nasync def main() -> None:\n    async with AsyncMongoClient(MemoryEngine()) as client:\n        collection = client.demo.users\n        await collection.insert_one({\"_id\": \"1\", \"name\": \"Ada\"})\n        document = await collection.find_one({\"name\": \"Ada\"})\n        print(document)\n\n\nasyncio.run(main())\n```\n\nSync with SQLite:\n\n```python\nfrom mongoeco import MongoClient\nfrom mongoeco.engines.sqlite import SQLiteEngine\n\n\nwith MongoClient(SQLiteEngine(\"mongoeco.db\")) as client:\n    collection = client.demo.users\n    collection.insert_one({\"_id\": \"1\", \"name\": \"Ada\"})\n    print(collection.find_one({\"_id\": \"1\"}))\n```\n\n## Examples\n\nExecutable examples live under [examples/README.md](examples/README.md):\n\n* [memory_quickstart.py](examples/memory_quickstart.py)\n* [sqlite_embedded_app.py](examples/sqlite_embedded_app.py)\n* [test_runtime_local.py](examples/test_runtime_local.py)\n* [search_and_vector_local.py](examples/search_and_vector_local.py)\n* [vector_search_diagnostics.py](examples/vector_search_diagnostics.py)\n* [cxp_adapter.py](examples/cxp_adapter.py)\n\nThe local `$search` subset now includes:\n\n* `text`\n* `phrase` with optional `slop`\n* `autocomplete`\n* `wildcard`\n* `regex`\n* `exists`\n* `in`\n* `equals`\n* `range`\n* `near`\n* `compound`\n* this local textual tier is now considered closed in its documented subset;\n  what remains is advanced Atlas-like behavior, not the daily embedded\n  perimeter.\n* the advanced local subset now also exposes:\n  * `autocomplete.tokenOrder` with `any` / `sequential`\n  * `regex.flags` with `i` / `m` / `s` / `x`\n  * `wildcard.allowAnalyzedField`\n  * `$search.count`, `$search.highlight` and `$search.facet` as local\n    stage options; highlight metadata is projectable through\n    `$meta: \"searchHighlights\"`, while the legacy `searchHighlights` field is\n    injected only when it does not collide with user data\n  * `$searchMeta` typed count/facet collectors and\n    `explain(\"queryPlanner\"|\"executionStats\")`; legacy previews remain only as\n    deprecated 4.x aliases\n\nExamples worth showing first:\n\n* [test_runtime_local.py](examples/test_runtime_local.py)\n  demonstrates `MemoryEngine` and `SQLiteEngine` as local contract runtimes\n  with the same `$search.phrase` behavior.\n* [search_and_vector_local.py](examples/search_and_vector_local.py)\n  demonstrates exact `phrase` versus `phrase.slop`, numeric `near`, richer\n  local search field mappings including explicit `document` and\n  `embeddedDocuments` paths, parent-path resolution for `metadata` and\n  `contributors`, numeric/date `near`, parent-path `exists` over structured\n  mappings, parent-path `autocomplete` / `wildcard` / `regex` over structured\n  mappings with resolved descendant leaf paths in `explain()`, explicit\n  operator `querySemantics`, consistent\n  scalar `pathSummary` metadata for `equals` / `range` / `near`, scalar filters\n  over embedded-document paths, `searchHighlights` in local result documents,\n  `count` / `facet` previews in `explain()`, and a local\n  `compound` query with visible embedded path/ranking explain metadata plus\n  `equals` + `in` + `range` + `near` + `exists` + `regex`.\n* [vector_search_diagnostics.py](examples/vector_search_diagnostics.py)\n  compares `MemoryEngine` and `SQLiteEngine` for local hybrid retrieval,\n  including `scoreBreakdown`, `candidatePlan`, `hybridRetrieval`,\n  `pruningSummary`, `prefilterSources`, projected `vectorSearchScore`,\n  residual filtering and exact fallback in local `$vectorSearch`.\n* [cxp_adapter.py](examples/cxp_adapter.py)\n  demonstrates the canonical CXP `database/mongodb` catalog and the `cxp`\n  projection exposed by `aggregate(...).explain()`.\n\n## Compatibility\n\n`mongoeco` now exposes three public contract layers:\n\n* the canonical CXP capability model for `database/mongodb`\n* MongoDB server semantics through `mongodb_dialect`\n* PyMongo surface compatibility through `pymongo_profile`\n\nPlanning mode is a third, separate concern:\n\n* `STRICT` fails fast when a query, update or aggregation shape is not\n  executable under the current runtime\n* `RELAXED` preserves the request metadata and reports `planning_issues`\n  instead of compiling an executable plan for unsupported shapes\n\nSee:\n\n* [COMPATIBILITY.md](COMPATIBILITY.md)\n* [DIALECTS.md](DIALECTS.md)\n* [docs/architecture/index.md](docs/architecture/index.md)\n* [docs/comparisons.md](docs/comparisons.md)\n\n## Testing\n\nThe repository uses `pytest` as the primary test runner:\n\n```bash\npython -m pip install -e .[dev,wire]\npython -m pytest -q\n```\n\nContract-testing rule for new features:\n\n* every new public feature should land with async/sync parity coverage when\n  both surfaces expose it\n* engine-visible behavior should also add cross-engine parity coverage for\n  `MemoryEngine` and `SQLiteEngine` whenever the contract is meant to be shared\n* regressions caused by facade reconstruction (`with_options()`, `database`,\n  `get_collection()`, `rename()`) should be fixed with explicit tests for the\n  inherited runtime options involved, not only with the implementation change\n* feature work that changes public errors or degraded planning behavior should\n  pin the relevant user-facing message or error shape in tests\n\nArchitecture reference:\n\n* [docs/architecture/index.md](docs/architecture/index.md)\n\nExternal storage engines can validate SPI v2 with the framework-neutral public\nkit documented in [docs/engine-conformance.md](docs/engine-conformance.md). The\noptional `engine-testing` extra adds the pytest assertion helper without making\npytest a runtime dependency. The repository also keeps an independent canary\nengine that imports only `mongoeco.engines`; `scripts/smoke_external_engine.py`\nexecutes it against the installed distribution.\n\nThe same runner is available as a stable CLI layer:\n\n```bash\npython -m mongoeco.conformance package.engine:factory \\\n  --format json \\\n  --output conformance.json \\\n  --require-success\n```\n\nSearch planning and runtime provenance additionally use deterministic\nHypothesis suites. The default `ci` profile is small, reproducible and runs on\neach PR; the scheduled `Contract fuzz` workflow selects the deeper profile.\nPlanner regressions block on semantic plan and work counters, not elapsed wall\ntime. Benchmarks remain trend evidence rather than timing gates.\n\n## Benchmarks\n\nThere is a benchmark harness under\n[benchmarks/README.md](benchmarks/README.md) intended for reproducible local\nprofiling, regression tracking and community-facing performance analysis.\n\nQuick smoke run:\n\n```bash\npython -m benchmarks.run \\\n  --engine all \\\n  --size 1000 \\\n  --warmup 0 \\\n  --repetitions 1\n```\n\nThe harness currently covers:\n\n* reads and point lookups;\n* sort/limit and cursor materialization;\n* mostly-streamable vs materializing aggregation;\n* targeted local `search` and `vectorSearch` diagnostics.\n\nCurrent rule of thumb from local diagnostics:\n\n* `MemoryEngine` remains strongest on many Python-baseline filter paths;\n* `SQLiteEngine` is strongest when it can push work to SQL, FTS5 or `usearch`;\n* `wildcard`, `exists`, `in`, `equals`, `range` and some `compound` search shapes in\n  SQLite now use a mix of materialized candidate prefilters and exact Python\n  matching, depending on the operator/backend path;\n* `vectorSearch` on SQLite is already materially faster than the exact\n  baseline when the ANN backend is materialized.\n* the public vector diagnostics also expose `similarity`, effective\n  `numCandidates`, candidate evaluation counts and exact fallback reasons in\n  benchmark metadata, so benchmark discussions can stay concrete instead of\n  anecdotal.\n\nFor anything you plan to cite publicly, use the reproducible commands in\n[benchmarks/README.md](benchmarks/README.md) instead of copying ad hoc local\nnumbers into docs.\n\n## Project Status\n\nMongoEco 4.x is a stable package line governed by Semantic Versioning. The\npublic API and engine SPI v2 are supported contracts. MongoEco 4.7 deliberately\nremoves the deprecated engine SPI v1 within a minor release; this documented\nexception to Semantic Versioning is a product decision, not an inferred\ncompatibility guarantee.\n\nMongoeco 4.8.0 made a second explicit minor-version exception\nfor removal of its legacy CXP surface. Its exchange replacement and public\nAPI diff are documented in [the CXP migration guide](docs/cxp-c4-migration.md).\n\nRelease-readiness checklist:\n\n* [docs/release-checklist.md](docs/release-checklist.md)\n* [docs/release-4.8.1.md](docs/release-4.8.1.md)\n* [docs/release-4.8.0.md](docs/release-4.8.0.md)\n* [docs/release-4.7.0.md](docs/release-4.7.0.md)\n* [docs/migrating-to-4.7.md](docs/migrating-to-4.7.md)\n* [docs/migrating-to-5.0.md](docs/migrating-to-5.0.md)\n* [docs/roadmap-5.0.md](docs/roadmap-5.0.md)\n* [TODO.md](TODO.md)\n* [MISSING_FEATURES.md](MISSING_FEATURES.md)\n\n## License\n\nThis project is licensed under the Apache License 2.0. See\n[LICENSE](LICENSE).\n",
+    "description_content_type": "text/markdown",
+    "docs_url": null,
+    "download_url": null,
+    "downloads": {
+      "last_day": -1,
+      "last_month": -1,
+      "last_week": -1
+    },
+    "dynamic": [
+      "License-File"
+    ],
+    "home_page": null,
+    "keywords": "mongodb, pymongo, testing, sqlite, embedded-database",
+    "license": null,
+    "license_expression": "Apache-2.0",
+    "license_files": [
+      "LICENSE"
+    ],
+    "maintainer": null,
+    "maintainer_email": null,
+    "name": "mongoeco",
+    "package_url": "https://pypi.org/project/mongoeco/",
+    "platform": null,
+    "project_url": "https://pypi.org/project/mongoeco/",
+    "project_urls": null,
+    "provides_extra": [
+      "dev",
+      "engine-testing",
+      "mongodb7",
+      "mongodb8",
+      "mongodb-real",
+      "wire",
+      "json-fast"
+    ],
+    "release_url": "https://pypi.org/project/mongoeco/4.8.1/",
+    "requires_dist": [
+      "cxp[exchange]<6,>=5.0.0",
+      "msgspec<1,>=0.20",
+      "pyuca<2,>=1.2",
+      "rpds-py<2027,>=0.27",
+      "shapely<3,>=2.1",
+      "usearch<3,>=2.23",
+      "build; extra == \"dev\"",
+      "coverage; extra == \"dev\"",
+      "hypothesis<6.166,>=6.165; extra == \"dev\"",
+      "jsonschema<5,>=4.26; extra == \"dev\"",
+      "mypy<2.4,>=2.3; extra == \"dev\"",
+      "pre-commit; extra == \"dev\"",
+      "pytest; extra == \"dev\"",
+      "pytest-cov; extra == \"dev\"",
+      "ruff==0.16.2; extra == \"dev\"",
+      "twine; extra == \"dev\"",
+      "jsonschema<5,>=4.26; extra == \"engine-testing\"",
+      "pytest<10,>=8; extra == \"engine-testing\"",
+      "pymongo<5,>=4.9; extra == \"mongodb7\"",
+      "pymongo<5,>=4.9; extra == \"mongodb8\"",
+      "pymongo<5,>=4.9; extra == \"mongodb-real\"",
+      "pymongo<5,>=4.9; extra == \"wire\"",
+      "orjson<4,>=3.11; extra == \"json-fast\""
+    ],
+    "requires_python": ">=3.13",
+    "summary": "Async-first MongoDB-like persistence library with pluggable storage engines.",
+    "version": "4.8.1",
+    "yanked": false,
+    "yanked_reason": null
+  },
+  "last_serial": 41681606,
+  "ownership": {
+    "organization": null,
+    "roles": [
+      {
+        "role": "Owner",
+        "user": "menudoproblema"
+      }
+    ]
+  },
+  "urls": [
+    {
+      "comment_text": null,
+      "core-metadata": {
+        "sha256": "02f1b34ae2f30e28353fe7165f0427e1f2fc5dcc0c42f1f1351bf20e83c006d4"
+      },
+      "digests": {
+        "blake2b_256": "e18f0a17df04d6785f9078997a4af85f7edb7d3ea4ac38824793e81d3828445b",
+        "md5": "f680b1016a0aa19ad8df68ee76701637",
+        "sha256": "0d2e6a81cf8ba1fd98bf5bcf68b3256c10836739f92429ef474d3b2987e18c86"
+      },
+      "downloads": -1,
+      "filename": "mongoeco-4.8.1-py3-none-any.whl",
+      "has_sig": false,
+      "md5_digest": "f680b1016a0aa19ad8df68ee76701637",
+      "packagetype": "bdist_wheel",
+      "python_version": "py3",
+      "requires_python": ">=3.13",
+      "size": 745175,
+      "upload_time": "2026-10-01T10:56:03",
+      "upload_time_iso_8601": "2026-10-01T10:56:03.511964Z",
+      "url": "https://files.pythonhosted.org/packages/e1/8f/0a17df04d6785f9078997a4af85f7edb7d3ea4ac38824793e81d3828445b/mongoeco-4.8.1-py3-none-any.whl",
+      "yanked": false,
+      "yanked_reason": null
+    },
+    {
+      "comment_text": null,
+      "core-metadata": false,
+      "digests": {
+        "blake2b_256": "1ffef4a4b964ac0c228f0d5067e0967b95e7e584a0b1c52bb0c0c4b2199e574b",
+        "md5": "7a99daa70a37fffd6b4bf579501f2206",
+        "sha256": "b3ce72db5f9e36d4f5e5acf151e74890466de32b3a9f4468383d90717b116ff6"
+      },
+      "downloads": -1,
+      "filename": "mongoeco-4.8.1.tar.gz",
+      "has_sig": false,
+      "md5_digest": "7a99daa70a37fffd6b4bf579501f2206",
+      "packagetype": "sdist",
+      "python_version": "source",
+      "requires_python": ">=3.13",
+      "size": 687973,
+      "upload_time": "2026-10-01T10:56:05",
+      "upload_time_iso_8601": "2026-10-01T10:56:05.354383Z",
+      "url": "https://files.pythonhosted.org/packages/1f/fe/f4a4b964ac0c228f0d5067e0967b95e7e584a0b1c52bb0c0c4b2199e574b/mongoeco-4.8.1.tar.gz",
+      "yanked": false,
+      "yanked_reason": null
+    }
+  ],
+  "vulnerabilities": []
+}

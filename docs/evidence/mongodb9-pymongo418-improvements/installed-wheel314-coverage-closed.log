@@ -1,0 +1,370 @@
+................................. [  0%]
+...................................................................................................... [  2%]
+.......................................................................................................... [  3%]
+................................................................................. [  5%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+.............................................................................................................................. [ 10%]
+........................................................ [ 11%]
+........................................................................ [ 13%]
+...................................................................................................................... [ 14%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................ [ 25%]
+.......................................................................................................................... [ 27%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+.................................. [ 33%]
+........................................................................ [ 34%]
+.............................................................. [ 35%]
+........................ [ 35%]
+.................................................................................. [ 37%]
+.......................... [ 37%]
+.......................................................................................... [ 39%]
+............................................ [ 39%]
+............................................................. [ 40%]
+....................................................................................................... [ 42%]
+.................................................................... [ 43%]
+........................................................................ [ 44%]
+........................................................... [ 45%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+.................................................................. [ 49%]
+...................................................................................................................................................................... [ 52%]
+............................................................. [ 53%]
+.................................................................... [ 54%]
+...................................s............................... [ 55%]
+......................................................... [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 62%]
+.................................................................................................................... [ 63%]
+................................................................. [ 65%]
+........................................................................ [ 66%]
+........................................................................................................................ [ 68%]
+............................................................................................................. [ 69%]
+............................................................................ [ 71%]
+.................................................................... [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 77%]
+................................................... [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+................................................................ [ 82%]
+..................................................... [ 83%]
+........................................................................ [ 84%]
+..................................................................... [ 85%]
+........................................................................ [ 86%]
+.......................................................... [ 87%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+...................................................................s [ 93%]
+ssssssssssssssssssssssssssss....................................................... [ 95%]
+........................................................................ [ 96%]
+.............................................................................................. [ 97%]
+.................................................................... [ 98%]
+..................................................................     [100%]
+=============================== warnings summary ===============================
+tests/unit/test_differential.py::MongoRealParityBase::test_aggregate_get_field_literal_name_matches_real_mongodb
+  /private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/_pytest/unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored while calling deallocator <function BaseEventLoop.__del__ at 0x106b0afb0>: None
+  
+  Traceback (most recent call last):
+    File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 760, in __del__
+      self.close()
+      ~~~~~~~~~~^^
+    File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/unix_events.py", line 70, in close
+      super().close()
+      ~~~~~~~~~~~~~^^
+    File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/selector_events.py", line 105, in close
+      super().close()
+      ~~~~~~~~~~~~~^^
+    File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 738, in close
+      raise RuntimeError("Cannot close a running event loop")
+  RuntimeError: Cannot close a running event loop
+  
+  
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.14.5-final-0 _______________
+
+Name                                                                                                                                                  Stmts   Miss   Cover
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/__init__.py                                         17      1  94.12%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_change_streams/cursor.py                          134      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_change_streams/hub.py                             399      9  97.74%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_change_streams/journal.py                          61      1  98.36%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_change_streams/models.py                           55      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_change_streams/pipeline.py                         40      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_types/__init__.py                                  17      2  88.24%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_types/_bson_objectid.py                           115      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_types/_bson_values.py                              99      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_types/aliases.py                                   30      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_types/bson.py                                       3      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_types/concerns.py                                 215      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_types/documents.py                                689      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_types/indexes.py                                  458      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_types/writes.py                                    87      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/_version.py                                          2      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/__init__.py                                     13      2  84.62%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/__init__.py                              12      1  91.67%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_active_operations.py                    18      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_collection_bulk.py                     207      2  99.03%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_collection_indexing.py                 150      2  98.67%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_collection_modify.py                   194     14  92.78%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_collection_reads.py                     79      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_collection_runtime.py                  300      8  97.33%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_collection_watch.py                     21      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_database_admin_command_compiler.py      85      1  98.82%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_database_admin_namespace.py             91      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_database_admin_read_commands.py        202      4  98.02%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_database_admin_routing.py               95      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_database_admin_write_commands.py       218      4  98.17%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_database_command_contract.py            52      1  98.08%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/_materialized_cursor.py                  49      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/aggregation_cursor.py                  1071      3  99.72%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/client.py                               395      3  99.24%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/collection.py                           601     27  95.51%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/cursor.py                               485     12  97.53%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/database_admin.py                       250      1  99.60%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/database_commands.py                    704      1  99.86%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/index_cursor.py                           8      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/listing_cursor.py                         8      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/raw_batch_cursor.py                      66      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_async/search_index_cursor.py                    8      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/__init__.py                               12      2  83.33%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/_finalization.py                           9      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/_materialized_cursor.py                   38      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/aggregation_cursor.py                    195      4  97.95%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/client.py                                537      7  98.70%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/collection.py                            198      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/cursor.py                                284     12  95.77%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/database_admin.py                         37      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/database_commands.py                      15      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/index_cursor.py                            7      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/listing_cursor.py                          7      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/raw_batch_cursor.py                       23      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/_sync/search_index_cursor.py                     7      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/admin_parsing.py                               175      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/argument_validation.py                          54      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/operations.py                                  442      1  99.77%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/api/public_api.py                                   93      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/change_streams.py                                    7      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/__init__.py                                  21      1  95.24%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/_catalog_constants.py                        10      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/_catalog_data.py                              6      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/_catalog_database_commands.py                 4      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/_catalog_dialects.py                         26      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/_catalog_export.py                          145      3  97.93%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/_catalog_models.py                           46      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/_catalog_operation_options.py                 7      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/_catalog_operators.py                         8      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/_catalog_profiles.py                          7      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/_catalog_runtime_subsets.py                   1      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/base.py                                     407      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/catalog.py                                    4      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/deprecations.py                              91      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/operation_support.py                         11      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/public_api.py                               164      2  98.78%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/compat/registry.py                                  73      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/conformance/__init__.py                              7      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/conformance/__main__.py                              3      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/conformance/cli.py                                 109      6  94.50%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/conformance/factories.py                           141      4  97.16%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/conformance/models.py                              157      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/conformance/provider.py                             58      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/conformance/pytest.py                                4      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/conformance/runner.py                              326      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/conformance/schema.py                               10      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/__init__.py                                     0      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/_filtering_matching.py                        178      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/_filtering_specials.py                        242      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/_filtering_support.py                         189      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/_public_materialization.py                     38      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/_search_contract.py                             4      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/__init__.py                        21      2  90.48%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/accumulators.py                   431      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/array_string_expressions.py       655      4  99.39%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/compiled_aggregation.py           230      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/compiled_pipeline.py              174      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/control_object_expressions.py     200      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/cost.py                            18      1  94.44%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/date_expressions.py               387      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/evaluation_environment.py          34      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/extensions.py                      80      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/grouping_stages.py                589      4  99.32%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/information_stages.py              37      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/join_stages.py                     66      2  96.97%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/lookup_physical.py                110      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/numeric_expressions.py            322      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/planning.py                       169      3  98.22%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/preparation.py                    276      1  99.64%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/resources.py                       26      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/runtime.py                        497      7  98.59%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/runtime_state.py                  278      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/scalar_expressions.py             410      2  99.51%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/spill.py                          348      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/stages.py                         491      3  99.39%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/aggregation/transform_stages.py               123      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/bson_ordering.py                               86      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/bson_scalars.py                               352      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/codec.py                                      442      2  99.55%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/collation.py                                  259      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/compiled_query.py                             105      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/expression_context.py                         100      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/filtering.py                                  188      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/geo.py                                         95      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/identity.py                                    99      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/json_compat.py                                 30      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/operation_context.py                           82      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/operation_limits.py                             9      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/operators.py                                  343      9  97.38%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/paths.py                                      141      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/projections.py                                286      1  99.65%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/query_operators.py                             19      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/query_plan.py                                 427      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/runtime_metadata.py                           177      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/schema_validation.py                          356      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/search.py                                    2137      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/search_execution.py                           108      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/search_filter_prefilter.py                    261      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/search_models.py                              568      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/search_planning.py                            338      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/sorting.py                                    155      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/sql_translation.py                             29      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/update_array_operators.py                     174      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/update_paths.py                               118      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/update_scalar_operators.py                    165      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/upserts.py                                     51      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/validation.py                                  10      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/core/work_control.py                                24      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/cxp/__init__.py                                      1      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/cxp/exchange/__init__.py                             5      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/cxp/exchange/documents.py                           24      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/cxp/exchange/metadata.py                           244      4  98.36%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/cxp/exchange/projection.py                          46      2  95.65%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/cxp/exchange/snapshot.py                            83      2  97.59%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/__init__.py                                  25      1  96.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/_runtime_attempts.py                         44      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/_runtime_plan_resolution.py                  11      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/_runtime_planning.py                          5      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/_topology_reducer.py                        140      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/connections.py                              285      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/discovery.py                                105      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/execution.py                                102      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/failpoints.py                                85      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/monitoring.py                               119      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/policies.py                                 105      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/requests.py                                  49      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/runtime.py                                  156      4  97.44%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/security.py                                  46      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/telemetry_projector.py                      201      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/telemetry_validation.py                      69      3  95.65%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/topology.py                                 109      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/topology_monitor.py                          43      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/transports.py                               185      4  97.84%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/driver/uri.py                                      250      2  99.20%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/__init__.py                                 13      2  84.62%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_active_operations.py                       75      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_change_dispatch.py                         47      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_executor_admission.py                      85      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_memory_collection.py                      476      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_memory_search_runtime.py                  272      7  97.43%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_memory_vector_runtime.py                  308      2  99.35%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_runtime_metrics.py                         32      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_shared_namespace_admin.py                  33      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_shared_runtime.py                           3      3   0.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_shared_search_admin.py                     24      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_shared_ttl.py                              24      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_admin_runtime.py                    48      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_bulk.py                             55      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_catalog.py                          33      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_compound_prefilter.py              261      2  99.23%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_compound_ranking.py                310      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_connection.py                       39      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_explain_contract.py                 92      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_fast_paths.py                      141      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_index_admin.py                     177      2  98.87%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_index_catalog.py                    75      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_index_runtime.py                   107      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_modify_ops.py                      176     11  93.75%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_namespace_admin.py                  94      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_outbox.py                          247      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_plan_heuristics.py                  29      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_read_execution.py                   88      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_read_fast_path_runtime.py           64      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_read_ops.py                         39      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_read_runtime.py                     36      2  94.44%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_reader.py                          210      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_runtime.py                          36      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_search_admin.py                     46      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_search_backend.py                   22      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_search_runtime.py                  723     21  97.10%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_session_runtime.py                 167      2  98.80%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_vector_backend.py                  168      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_write_ops.py                       101      2  98.02%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_sqlite_write_scope.py                      45      1  97.78%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_vector_index_cache.py                     115      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_vector_query_cache.py                     120      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/_vector_ranking.py                          29      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/adapter.py                                 313      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/base.py                                     46      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/capabilities.py                             94      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/memory.py                                 2148     76  96.46%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/mvcc.py                                     26      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/profiling.py                                60      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/results.py                                 161      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/semantic_core.py                           234      2  99.15%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/snapshots.py                               200      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/sqlite.py                                 2668     80  97.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/sqlite_planner.py                          206      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/sqlite_query.py                            592      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/engines/virtual_indexes.py                         255      1  99.61%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/error_catalog.py                                    40      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/errors.py                                           97      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/session.py                                         292      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/session_guards.py                                   18      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/telemetry_contract.py                              170      3  98.24%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/types.py                                             2      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/__init__.py                                    12      1  91.67%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/_executor_handlers.py                          41      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/_executor_passthrough.py                       53      2  96.23%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/_executor_support.py                           84      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/_executor_validation.py                       274      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/_session_identity.py                           19      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/auth.py                                       121      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/bson_bridge.py                                 99      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/capabilities.py                                26      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/connections.py                                 54      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/cursors.py                                    115      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/executor.py                                    38      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/handshake.py                                   16      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/protocol.py                                   176      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/proxy.py                                      100      2  98.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/requests.py                                    17      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/scram.py                                      167      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/sessions.py                                    67      0 100.00%
+/private/tmp/mongoeco-improvements-20261008/installed-wheel314/lib/python3.14/site-packages/mongoeco/wire/surface.py                                     23      0 100.00%
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+TOTAL                                                                                                                                                 43092    428  99.01%
+Coverage JSON written to file /private/tmp/mongoeco-improvements-20261008/coverage-wheel314-closed.json
+Required test coverage of 99.0% reached. Total coverage: 99.01%
+6056 passed, 30 skipped, 1 warning, 3990 subtests passed in 108.10s (0:01:48)

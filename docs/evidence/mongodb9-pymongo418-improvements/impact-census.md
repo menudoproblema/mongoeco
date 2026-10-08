@@ -1,0 +1,7 @@
+# Impact census
+
+Primary owner: mongoeco compatibility catalog, aggregate preparation/runtime, API/command/wire boundaries, Memory/SQLite engines, native differential runner and fixture consumers. Entrypoints: sync/async aggregate and find expr, native index commands, Engine SPI v2, exported dialect hook metadata. Guarantees: original document preservation, static syntax errors on empty input, direct evaluator guards, full preparation context and registry invalidation, index metadata/storage identity, strict native runner, optional PyMongo. Fallback: preserve public SRV adapter, convert/group guards and current simple-collation adaptation until equivalence is measured. Gates: seven blocks in docs/mongodb9-pymongo418-improvements-progress.md.
+
+Read-only consumer references located outside this workset: gdynamics-cutover/gdynamics-testing/packages/mochuelo-testkit (mongoeco 4.6.0) and gdynamics/worktrees/skills-v2-cosecha/packages/cosecha-provider-mongodb (4.7.0). No mongodb_dialect or uses_server_densify_bounds usage found in their source; these checkouts establish dependency exposure only, not adoption of this candidate. No consumer edits or adoption transition authorized/needed; external conformance canary remains a candidate gate.
+
+No persistence/SPI/search-v1/CXP/default changes authorized. Deferred operators, including out and partition bounds, stay outside advertised subset. Captured native-only cases must receive explicit disposition rather than count as local parity.
