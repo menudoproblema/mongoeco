@@ -48,6 +48,19 @@ sanity:minimal-imports:
     - python -m pip install -e '.[dev]'
     - python -m unittest tests.unit.test_optional_bson_imports tests.unit.test_module_imports tests.unit.test_public_exports
 
+quality:pymongo-profiles:
+  extends: .python-job
+  stage: quality
+  script:
+    - mkdir -p reports/pymongo
+    - python scripts/run_pymongo_profile_matrix.py --output reports/pymongo/raw.json --summary-output reports/pymongo/summary.json
+    - diff -u tests/fixtures/pymongo_profile_matrix.json reports/pymongo/summary.json
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - reports/pymongo/
+
 quality:compile:
   extends: .python-job
   stage: quality
@@ -76,7 +89,7 @@ test:pytest:
       - PYTHON_VERSION: ["3.13", "3.14"]
   coverage: '/^TOTAL\s+.*\s+(\d+(?:\.\d+)?)%$/'
   script:
-    - python -m pip install -e '.[dev,wire,json-fast]'
+    - python -m pip install -c requirements/ci-constraints.txt -e '.[dev,wire,json-fast]'
     - python -m pip install -r benchmarks/requirements.txt
     - mkdir -p reports
     - python -m pytest --junitxml=reports/pytest.xml --cov=src/mongoeco --cov-report=xml:reports/coverage.xml --cov-report=term-missing --cov-fail-under=99 -q
@@ -105,12 +118,24 @@ test:unittest-discovery:
     - when: manual
       allow_failure: true
 
+test:property-deep:
+  extends: .python-job
+  stage: test
+  variables:
+    PYTHON_VERSION: "3.14"
+    MONGOECO_HYPOTHESIS_PROFILE: deep
+  script:
+    - python -m pip install -c requirements/ci-constraints.txt -e '.[dev]'
+    - python -m pytest tests/property -q
+
 contract:compat-snapshots:
   extends: .python-job
   stage: contract
   script:
     - python -m pip install -e '.[dev,wire]'
     - python scripts/update_compat_snapshots.py
+    - cmp dist/compat-catalog-current/compat_catalog_exchange_snapshot.json tests/snapshots/compat-current/compat_catalog_exchange_snapshot.json
+    - cmp dist/compat-catalog-current/compat_catalog_exchange_snapshot.md tests/snapshots/compat-current/compat_catalog_exchange_snapshot.md
     - git diff --exit-code -- tests/fixtures/compat_catalog_snapshot.json tests/fixtures/compat_catalog_snapshot.md
 
 contract:pypi-release:
@@ -155,7 +180,7 @@ diagnostics:benchmark-smoke:
   variables:
     PYTHON_VERSION: "3.14"
   script:
-    - python -m pip install -e '.[dev,wire,json-fast]'
+    - python -m pip install -c requirements/ci-constraints.txt -e '.[dev,wire,json-fast]'
     - python -m pip install -r benchmarks/requirements.txt
     - mkdir -p reports/benchmarks
     - python -m benchmarks.run --engine memory-sync --size 250 --warmup 0 --repetitions 1 --workload search_diagnostics --workload vector_search_diagnostics --format json > reports/benchmarks/memory-search-vector.json
@@ -175,10 +200,15 @@ diagnostics:benchmark-smoke:
   stage: external
   variables:
     MONGOECO_REAL_MONGODB_URI: "mongodb://mongodb:27017"
+    MONGOECO_TEST_INSTALLED_ARTIFACT: "1"
+  needs:
+    - job: package:dist
+      artifacts: true
   before_script:
     - python -VV
     - python -m pip install --upgrade pip
-    - python -m pip install -e '.[dev,mongodb-real]'
+    - python -m pip install -c requirements/ci-constraints.txt dist/mongoeco-*.whl pymongo unittest-xml-reporting
+    - python -c 'import mongoeco; from pathlib import Path; assert "site-packages" in Path(mongoeco.__file__).resolve().parts, mongoeco.__file__'
     - |
       python - <<'PY'
       import os
@@ -191,9 +221,12 @@ diagnostics:benchmark-smoke:
       last_error = None
       while time.time() < deadline:
           try:
-              client = MongoClient(uri, serverSelectionTimeoutMS=1000)
-              client.admin.command("ping")
-              print("mongodb", client.server_info().get("version"))
+              with MongoClient(uri, serverSelectionTimeoutMS=1000) as client:
+                  client.admin.command("ping")
+                  target = os.environ["MONGOECO_REAL_MONGODB_TARGET"]
+                  assert client.server_info()["versionArray"][:2] == [int(x) for x in target.split(".")]
+                  client.admin.command({"setFeatureCompatibilityVersion": target, "confirm": True})
+                  assert client.admin.command({"getParameter": 1, "featureCompatibilityVersion": 1})["featureCompatibilityVersion"] == {"version": target}
               break
           except Exception as exc:
               last_error = exc
@@ -207,18 +240,26 @@ diagnostics:benchmark-smoke:
     - when: manual
       allow_failure: true
 
-external:mongodb7-differential:
+external:mongodb-differential:
   extends: .real-mongodb-differential
+  parallel:
+    matrix:
+      - MONGOECO_REAL_MONGODB_TARGET: ["7.0"]
+        MONGOECO_MONGODB_IMAGE: ["mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72"]
+      - MONGOECO_REAL_MONGODB_TARGET: ["8.0"]
+        MONGOECO_MONGODB_IMAGE: ["mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66"]
+      - MONGOECO_REAL_MONGODB_TARGET: ["9.0"]
+        MONGOECO_MONGODB_IMAGE: ["mongo:9.0.2-noble@sha256:61dd87ff554dc20386c63ebe1f7ede27314370ad5a7bf357c685fab424672158"]
   services:
-    - name: mongo:7.0
+    - name: "$MONGOECO_MONGODB_IMAGE"
       alias: mongodb
   script:
-    - python scripts/run_mongodb7_differential.py
-
-external:mongodb8-differential:
-  extends: .real-mongodb-differential
-  services:
-    - name: mongo:8.0
-      alias: mongodb
-  script:
-    - python scripts/run_mongodb8_differential.py
+    - mkdir -p reports/mongodb/junit
+    - python scripts/run_mongodb_real_differential.py "$MONGOECO_REAL_MONGODB_TARGET" --json-report reports/mongodb/report.json --junit-dir reports/mongodb/junit
+    - python scripts/capture_differential_replay_golden.py --target "$MONGOECO_REAL_MONGODB_TARGET" --case-set review-improvements --output reports/mongodb/review-capture.json --check "tests/fixtures/mongodb_review_improvements_$(echo "$MONGOECO_REAL_MONGODB_TARGET" | tr . _).json"
+    - for CASE_SET in version-deltas semantic-guarantees index-guarantees; do FIXTURE_SET=$(echo "$CASE_SET" | tr - _); python scripts/capture_differential_replay_golden.py --target "$MONGOECO_REAL_MONGODB_TARGET" --case-set "$CASE_SET" --output "reports/mongodb/${CASE_SET}-capture.json" --check "tests/fixtures/mongodb_${FIXTURE_SET}_$(echo "$MONGOECO_REAL_MONGODB_TARGET" | tr . _).json" || exit 1; done
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - reports/mongodb/

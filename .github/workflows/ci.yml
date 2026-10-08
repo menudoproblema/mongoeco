@@ -9,6 +9,29 @@ on:
   pull_request:
 
 jobs:
+  pymongo-profiles:
+    name: Isolated PyMongo API profiles
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+      - name: Probe every supported driver independently
+        run: |
+          mkdir -p artifacts/pymongo
+          python scripts/run_pymongo_profile_matrix.py \
+            --output artifacts/pymongo/raw.json \
+            --summary-output artifacts/pymongo/summary.json
+          diff -u tests/fixtures/pymongo_profile_matrix.json artifacts/pymongo/summary.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: pymongo-profile-evidence
+          path: artifacts/pymongo/
+          if-no-files-found: error
+
   minimal-imports:
     name: Minimal imports (Python 3.13)
     runs-on: ubuntu-latest
@@ -191,15 +214,28 @@ jobs:
           BASE_REF="$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^)"
           python scripts/check_lint_ratchet.py --base-ref "$BASE_REF"
 
-      - name: Enforce source coverage floor
+      - name: Run complete pytest suite on Python 3.13
+        if: matrix.python-version == '3.13'
+        run: python -m pytest -q
+
+      - name: Enforce installed package coverage floor
         if: matrix.python-version == '3.14'
         run: python -m pytest --cov=mongoeco --cov-report=term -q
+
+      - name: Exercise deep property profile
+        if: matrix.python-version == '3.14'
+        env:
+          MONGOECO_HYPOTHESIS_PROFILE: deep
+        run: python -m pytest tests/property -q
 
       - name: Regenerate compat snapshots
         run: python scripts/update_compat_snapshots.py
 
       - name: Verify compat snapshots are committed
-        run: git diff --exit-code -- tests/fixtures/compat_catalog_snapshot.json tests/fixtures/compat_catalog_snapshot.md
+        run: |
+          cmp dist/compat-catalog-current/compat_catalog_exchange_snapshot.json tests/snapshots/compat-current/compat_catalog_exchange_snapshot.json
+          cmp dist/compat-catalog-current/compat_catalog_exchange_snapshot.md tests/snapshots/compat-current/compat_catalog_exchange_snapshot.md
+          git diff --exit-code -- tests/fixtures/compat_catalog_snapshot.json tests/fixtures/compat_catalog_snapshot.md
 
       - name: Benchmark smoke (memory search/vector)
         if: matrix.python-version == '3.14'
@@ -234,7 +270,11 @@ jobs:
   release-differential:
     name: Required MongoDB release differential
     if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - build
     uses: ./.github/workflows/mongodb-differential.yml
+    with:
+      distribution_artifact: release-distributions
 
   publish:
     name: Publish tagged release

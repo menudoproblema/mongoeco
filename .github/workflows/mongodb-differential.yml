@@ -6,6 +6,11 @@ on:
       case_filter:
         required: false
         type: string
+      distribution_artifact:
+        description: Immutable wheel artifact produced by the release build
+        required: false
+        default: ""
+        type: string
   workflow_dispatch:
     inputs:
       case_filter:
@@ -31,10 +36,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ["7.0", "8.0"]
+        include:
+          - target: "7.0"
+            image: mongo:7.0.43-jammy@sha256:f71f6d0913c945096cd058557cbadf4ad435007f378d84b3c4c636c928735e72
+          - target: "8.0"
+            image: mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66
+          - target: "9.0"
+            image: mongo:9.0.2-noble@sha256:61dd87ff554dc20386c63ebe1f7ede27314370ad5a7bf357c685fab424672158
     services:
       mongodb:
-        image: mongo:${{ matrix.target }}
+        image: ${{ matrix.image }}
         ports:
           - 27017:27017
         options: >-
@@ -46,6 +57,7 @@ jobs:
       MONGOECO_REAL_MONGODB_URI: mongodb://localhost:27017
       MONGOECO_REAL_MONGODB_TARGET: ${{ matrix.target }}
       MONGOECO_DIFFERENTIAL_SEED: "42"
+      MONGOECO_TEST_INSTALLED_ARTIFACT: ${{ inputs.distribution_artifact != '' && '1' || '0' }}
     steps:
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -56,10 +68,50 @@ jobs:
           python-version: "3.14"
 
       - name: Install differential dependencies
+        if: inputs.distribution_artifact == ''
         run: |
-          python -m pip install ".[mongodb-real]" unittest-xml-reporting
+          python -m pip install -c requirements/ci-constraints.txt ".[mongodb-real]" unittest-xml-reporting
+
+      - name: Download immutable release distributions
+        if: inputs.distribution_artifact != ''
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: ${{ inputs.distribution_artifact }}
+          path: dist
+
+      - name: Download distribution manifest
+        if: inputs.distribution_artifact != ''
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: release-distribution-manifest
+          path: artifact-manifest
+
+      - name: Verify and install the release wheel
+        if: inputs.distribution_artifact != ''
+        run: |
+          sha256sum -c artifact-manifest/SHA256SUMS
+          WHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"
+          python -m pip install -c requirements/ci-constraints.txt "${WHEEL}[mongodb-real]" unittest-xml-reporting
+          python - <<'PY'
+          from pathlib import Path
+          import mongoeco
+          assert 'site-packages' in Path(mongoeco.__file__).resolve().parts, mongoeco.__file__
+          PY
+
+      - name: Establish and verify the requested FCV
+        run: |
+          python - <<'PY'
+          import os
+          from pymongo import MongoClient
+          target = os.environ["MONGOECO_REAL_MONGODB_TARGET"]
+          with MongoClient(os.environ["MONGOECO_REAL_MONGODB_URI"]) as client:
+              assert client.server_info()["versionArray"][:2] == [int(x) for x in target.split(".")]
+              client.admin.command({"setFeatureCompatibilityVersion": target, "confirm": True})
+              assert client.admin.command({"getParameter": 1, "featureCompatibilityVersion": 1})["featureCompatibilityVersion"] == {"version": target}
+          PY
 
       - name: Run reproducible differential suite
+        shell: bash
         env:
           CASE_FILTER: ${{ inputs.case_filter }}
         run: |
@@ -74,6 +126,23 @@ jobs:
             --json-report "artifacts/${{ matrix.target }}/report.json" \
             --junit-dir "artifacts/${{ matrix.target }}/junit" \
               2>&1 | tee "artifacts/${{ matrix.target }}/run.log"
+
+      - name: Verify review expectations against the native server
+        run: |
+          TARGET_SUFFIX="${MONGOECO_REAL_MONGODB_TARGET//./_}"
+          python scripts/capture_differential_replay_golden.py \
+            --target "$MONGOECO_REAL_MONGODB_TARGET" \
+            --case-set review-improvements \
+            --output "artifacts/${{ matrix.target }}/review-capture.json" \
+            --check "tests/fixtures/mongodb_review_improvements_${TARGET_SUFFIX}.json"
+          for CASE_SET in version-deltas semantic-guarantees index-guarantees; do
+            FIXTURE_SET="${CASE_SET//-/_}"
+            python scripts/capture_differential_replay_golden.py \
+              --target "$MONGOECO_REAL_MONGODB_TARGET" \
+              --case-set "$CASE_SET" \
+              --output "artifacts/${{ matrix.target }}/${CASE_SET}-capture.json" \
+              --check "tests/fixtures/mongodb_${FIXTURE_SET}_${TARGET_SUFFIX}.json"
+          done
 
       - name: Record exact MongoDB runtime
         if: always()
