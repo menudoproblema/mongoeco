@@ -3,14 +3,31 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
+from urllib.request import urlopen
 
 
 _PYPI_SIMPLE_INDEX = "https://pypi.org/simple"
+_PYPI_PROJECT_METADATA = "https://pypi.org/pypi/mongoeco/json"
+
+
+def _latest_published_version() -> str:
+    with urlopen(_PYPI_PROJECT_METADATA, timeout=30) as response:
+        metadata = json.load(response)
+    info = metadata["info"]
+    version = info["version"]
+    if info["name"] != "mongoeco" or not isinstance(version, str) or not version:
+        message = "Invalid Mongoeco project metadata from PyPI"
+        raise ValueError(message)
+    if not any(not artifact["yanked"] for artifact in metadata["urls"]):
+        message = "Latest Mongoeco release has no non-yanked distributions"
+        raise ValueError(message)
+    return version
 
 
 def _run(command: list[str], *, cwd: Path | None = None) -> None:
@@ -124,10 +141,15 @@ def main() -> int:
             "smoke de imports/contrato CXP publicado."
         ),
     )
-    parser.add_argument(
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument(
         "--version",
-        required=True,
         help="Version exacta de mongoeco a instalar desde PyPI.",
+    )
+    selection.add_argument(
+        "--latest",
+        action="store_true",
+        help="Selecciona la versión publicada desde PyPI, independiente de tags Git.",
     )
     parser.add_argument(
         "--venv",
@@ -139,6 +161,9 @@ def main() -> int:
         help="Conserva el venv al terminar.",
     )
     args = parser.parse_args()
+    version = _latest_published_version() if args.latest else args.version
+    sys.stdout.write(f"Verifying published Mongoeco {version} from PyPI\n")
+    sys.stdout.flush()
 
     if args.venv:
         venv_root = Path(args.venv).expanduser().resolve()
@@ -155,17 +180,15 @@ def main() -> int:
             shutil.rmtree(venv_root)
         _run([sys.executable, "-m", "venv", str(venv_root)])
         _install_from_pypi(pip_bin, "--upgrade", "pip")
-        if args.version == "4.7.0":
+        if version == "4.7.0":
             # Preserve evidence for the historical release without carrying its
             # protocol implementation into the current package. Its published
             # dependency metadata does not exclude incompatible CXP 5.
-            _install_from_pypi(
-                pip_bin, "mongoeco==4.7.0", "cxp[exchange]==4.3.0"
-            )
+            _install_from_pypi(pip_bin, "mongoeco==4.7.0", "cxp[exchange]==4.3.0")
             script = _published_47_contract_smoke_script()
         else:
-            _install_from_pypi(pip_bin, f"mongoeco=={args.version}")
-            script = f"EXPECTED_VERSION = {args.version!r}\n{_contract_smoke_script()}"
+            _install_from_pypi(pip_bin, f"mongoeco=={version}")
+            script = f"EXPECTED_VERSION = {version!r}\n{_contract_smoke_script()}"
         _run([str(python_bin), "-c", script], cwd=Path("/tmp"))
     finally:
         if not keep_venv:

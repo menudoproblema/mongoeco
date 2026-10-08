@@ -87,8 +87,7 @@ jobs:
 
       - name: Validate published PyPI artifact contract
         run: |
-          VERSION="$(git describe --tags --abbrev=0 --match 'v[0-9]*')"
-          python scripts/smoke_pypi_contract.py --version "${VERSION#v}"
+          python scripts/smoke_pypi_contract.py --latest
 
   build:
     name: Build and reproduce release artifacts
@@ -281,6 +280,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     needs:
       - build
+      - pymongo-profiles
       - minimal-imports
       - test
       - release-differential

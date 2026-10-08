@@ -39,7 +39,7 @@ def _to_jsonable(value):
 
 
 def _capture_expectation(value):
-    """Ignore incidental names, IDs and scan time in the index-build prefix."""
+    """Compare native errors without incidental IDs, time or type-list order."""
     if isinstance(value, list):
         return [_capture_expectation(item) for item in value]
     if isinstance(value, dict):
@@ -70,6 +70,25 @@ def _capture_expectation(value):
                 r"\1DURATION\2",
                 result["message"],
             )
+            if (
+                result.get("code") == {"$numberInt": "14"}
+                and result.get("code_name") == "TypeMismatch"
+            ):
+                match = re.fullmatch(
+                    r"BSON field '\$densify\.range\.step' is the wrong type "
+                    r"'(?P<received>[^']+)', expected types "
+                    r"'\[(?P<expected>[a-z]+(?:, [a-z]+)*)(?P<closing>'\]|\]')",
+                    result["message"],
+                )
+                if match is not None:
+                    # Native builds enumerate the same BSON types in different
+                    # orders. Preserve membership and multiplicity, never sets.
+                    result["message"] = {
+                        "field": "$densify.range.step",
+                        "received_type": match["received"],
+                        "expected_types": sorted(match["expected"].split(", ")),
+                        "type_list_closing": match["closing"],
+                    }
         return result
     return value
 
