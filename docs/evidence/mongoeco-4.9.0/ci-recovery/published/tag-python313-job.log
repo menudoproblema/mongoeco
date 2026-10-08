@@ -1,0 +1,1097 @@
+﻿2026-10-08T17:22:46.3175930Z Current runner version: '2.337.0'
+2026-10-08T17:22:46.3197971Z ##[group]Runner Image Provisioner
+2026-10-08T17:22:46.3198744Z Hosted Compute Agent
+2026-10-08T17:22:46.3199309Z Version: 20261002.596
+2026-10-08T17:22:46.3199950Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+2026-10-08T17:22:46.3200823Z Build Date: 2026-10-02T22:28:27Z
+2026-10-08T17:22:46.3201391Z Worker ID: {37975b33-ed2e-4159-9989-0e0841308f08}
+2026-10-08T17:22:46.3201955Z Region: westus3
+2026-10-08T17:22:46.3202746Z Cloud: Azure
+2026-10-08T17:22:46.3203195Z ##[endgroup]
+2026-10-08T17:22:46.3204633Z ##[group]Operating System
+2026-10-08T17:22:46.3205211Z Ubuntu
+2026-10-08T17:22:46.3205640Z 24.04.5
+2026-10-08T17:22:46.3206087Z LTS
+2026-10-08T17:22:46.3206564Z ##[endgroup]
+2026-10-08T17:22:46.3207037Z ##[group]Runner Image
+2026-10-08T17:22:46.3207590Z Image: ubuntu-24.04
+2026-10-08T17:22:46.3208060Z Version: 20261004.327.1
+2026-10-08T17:22:46.3209133Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261004.327/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-08T17:22:46.3210362Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261004.327
+2026-10-08T17:22:46.3211195Z ##[endgroup]
+2026-10-08T17:22:46.3212268Z ##[group]GITHUB_TOKEN Permissions
+2026-10-08T17:22:46.3214044Z Contents: read
+2026-10-08T17:22:46.3214570Z Metadata: read
+2026-10-08T17:22:46.3215084Z Packages: read
+2026-10-08T17:22:46.3215555Z ##[endgroup]
+2026-10-08T17:22:46.3217181Z Secret source: Actions
+2026-10-08T17:22:46.3218034Z Cache mode: write
+2026-10-08T17:22:46.3218735Z Prepare workflow directory
+2026-10-08T17:22:46.3541223Z Prepare all required actions
+2026-10-08T17:22:46.3596104Z Getting action download info
+2026-10-08T17:22:46.6610433Z Download action repository 'actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09' (SHA:fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09)
+2026-10-08T17:22:46.7558489Z Download action repository 'actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1' (SHA:ece7cb06caefa5fff74198d8649806c4678c61a1)
+2026-10-08T17:22:46.8658685Z Download action repository 'actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0' (SHA:634f93cb2916e3fdff6788551b99b062d0335ce0)
+2026-10-08T17:22:47.7228294Z Complete job name: Test (Python 3.13)
+2026-10-08T17:22:47.7958047Z ##[group]Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+2026-10-08T17:22:47.7958908Z with:
+2026-10-08T17:22:47.7959286Z   fetch-depth: 0
+2026-10-08T17:22:47.7959702Z   repository: menudoproblema/mongoeco
+2026-10-08T17:22:47.7963128Z   token: ***
+2026-10-08T17:22:47.7963514Z   ssh-strict: true
+2026-10-08T17:22:47.7963895Z   ssh-user: git
+2026-10-08T17:22:47.7964281Z   persist-credentials: true
+2026-10-08T17:22:47.7964699Z   clean: true
+2026-10-08T17:22:47.7965076Z   sparse-checkout-cone-mode: true
+2026-10-08T17:22:47.7965518Z   fetch-tags: false
+2026-10-08T17:22:47.7965902Z   show-progress: true
+2026-10-08T17:22:47.7966285Z   lfs: false
+2026-10-08T17:22:47.7966659Z   submodules: false
+2026-10-08T17:22:47.7967055Z   set-safe-directory: true
+2026-10-08T17:22:47.7967507Z   allow-unsafe-pr-checkout: false
+2026-10-08T17:22:47.7968124Z env:
+2026-10-08T17:22:47.7968493Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:22:47.7968959Z ##[endgroup]
+2026-10-08T17:22:47.8812994Z Syncing repository: menudoproblema/mongoeco
+2026-10-08T17:22:47.8815280Z ##[group]Getting Git version info
+2026-10-08T17:22:47.8816251Z Working directory is '/home/runner/work/mongoeco/mongoeco'
+2026-10-08T17:22:47.8817696Z [command]/usr/bin/git version
+2026-10-08T17:22:47.8860777Z git version 2.55.0
+2026-10-08T17:22:47.8876258Z ##[endgroup]
+2026-10-08T17:22:47.8887682Z Temporarily overriding HOME='/home/runner/work/_temp/68a1183f-ba2e-4daf-b41b-b570f36251e1' before making global git config changes
+2026-10-08T17:22:47.8889778Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-08T17:22:47.8891437Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mongoeco/mongoeco
+2026-10-08T17:22:47.8939533Z Deleting the contents of '/home/runner/work/mongoeco/mongoeco'
+2026-10-08T17:22:47.8943218Z ##[group]Initializing the repository
+2026-10-08T17:22:47.8947079Z [command]/usr/bin/git init /home/runner/work/mongoeco/mongoeco
+2026-10-08T17:22:47.9051593Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-08T17:22:47.9053365Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-08T17:22:47.9054179Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-08T17:22:47.9054874Z hint: call:
+2026-10-08T17:22:47.9055235Z hint:
+2026-10-08T17:22:47.9055722Z hint: 	git config --global init.defaultBranch <name>
+2026-10-08T17:22:47.9056255Z hint:
+2026-10-08T17:22:47.9056750Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-08T17:22:47.9057552Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-08T17:22:47.9058191Z hint:
+2026-10-08T17:22:47.9058556Z hint: 	git branch -m <name>
+2026-10-08T17:22:47.9058981Z hint:
+2026-10-08T17:22:47.9059508Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-08T17:22:47.9064750Z Initialized empty Git repository in /home/runner/work/mongoeco/mongoeco/.git/
+2026-10-08T17:22:47.9074549Z [command]/usr/bin/git remote add origin https://github.com/menudoproblema/mongoeco
+2026-10-08T17:22:47.9123634Z ##[endgroup]
+2026-10-08T17:22:47.9124671Z ##[group]Disabling automatic garbage collection
+2026-10-08T17:22:47.9125600Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-08T17:22:47.9164061Z ##[endgroup]
+2026-10-08T17:22:47.9165050Z ##[group]Setting up auth
+2026-10-08T17:22:47.9166033Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-08T17:22:47.9274124Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-08T17:22:47.9799747Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-08T17:22:47.9831936Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-08T17:22:48.0021751Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-08T17:22:48.0053179Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-08T17:22:48.0248745Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-08T17:22:48.0285040Z ##[endgroup]
+2026-10-08T17:22:48.0285755Z ##[group]Fetching the repository
+2026-10-08T17:22:48.0293087Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-10-08T17:22:50.2771321Z From https://github.com/menudoproblema/mongoeco
+2026-10-08T17:22:50.2773606Z  * [new branch]      main       -> origin/main
+2026-10-08T17:22:50.2774685Z  * [new tag]         v3.1.0     -> v3.1.0
+2026-10-08T17:22:50.2775833Z  * [new tag]         v3.2.0     -> v3.2.0
+2026-10-08T17:22:50.2776759Z  * [new tag]         v3.3.0     -> v3.3.0
+2026-10-08T17:22:50.2777476Z  * [new tag]         v3.5.0     -> v3.5.0
+2026-10-08T17:22:50.2778209Z  * [new tag]         v3.5.1     -> v3.5.1
+2026-10-08T17:22:50.2778937Z  * [new tag]         v3.6.0     -> v3.6.0
+2026-10-08T17:22:50.2779616Z  * [new tag]         v4.0.0     -> v4.0.0
+2026-10-08T17:22:50.2780304Z  * [new tag]         v4.1.0     -> v4.1.0
+2026-10-08T17:22:50.2781283Z  * [new tag]         v4.1.1     -> v4.1.1
+2026-10-08T17:22:50.2782181Z  * [new tag]         v4.2.0     -> v4.2.0
+2026-10-08T17:22:50.2782882Z  * [new tag]         v4.2.1     -> v4.2.1
+2026-10-08T17:22:50.2783601Z  * [new tag]         v4.3.0     -> v4.3.0
+2026-10-08T17:22:50.2784702Z  * [new tag]         v4.4.0     -> v4.4.0
+2026-10-08T17:22:50.2785570Z  * [new tag]         v4.5.0     -> v4.5.0
+2026-10-08T17:22:50.2786339Z  * [new tag]         v4.6.0     -> v4.6.0
+2026-10-08T17:22:50.2787112Z  * [new tag]         v4.6.1     -> v4.6.1
+2026-10-08T17:22:50.2787869Z  * [new tag]         v4.7.0     -> v4.7.0
+2026-10-08T17:22:50.2788625Z  * [new tag]         v4.8.0     -> v4.8.0
+2026-10-08T17:22:50.2789406Z  * [new tag]         v4.8.1     -> v4.8.1
+2026-10-08T17:22:50.2790270Z  * [new tag]         v4.9.0     -> v4.9.0
+2026-10-08T17:22:50.2793686Z [command]/usr/bin/git tag --list v4.9.0
+2026-10-08T17:22:50.2829161Z v4.9.0
+2026-10-08T17:22:50.2838287Z [command]/usr/bin/git rev-parse refs/tags/v4.9.0
+2026-10-08T17:22:50.2861939Z dbe2eea4b2d5c1efb1634e9dec678b5e41156378
+2026-10-08T17:22:50.2870610Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +7612872b5052c25de223825cd881445cc6f106f1:refs/tags/v4.9.0
+2026-10-08T17:22:50.3627430Z From https://github.com/menudoproblema/mongoeco
+2026-10-08T17:22:50.3629784Z  t [tag update]      7612872b5052c25de223825cd881445cc6f106f1 -> v4.9.0
+2026-10-08T17:22:50.3634402Z ##[endgroup]
+2026-10-08T17:22:50.3636042Z ##[group]Determining the checkout info
+2026-10-08T17:22:50.3638029Z ##[endgroup]
+2026-10-08T17:22:50.3639491Z [command]/usr/bin/git sparse-checkout disable
+2026-10-08T17:22:50.4135528Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-08T17:22:50.4333416Z ##[group]Checking out the ref
+2026-10-08T17:22:50.4336233Z [command]/usr/bin/git checkout --progress --force refs/tags/v4.9.0
+2026-10-08T17:22:50.5343702Z Note: switching to 'refs/tags/v4.9.0'.
+2026-10-08T17:22:50.5344045Z 
+2026-10-08T17:22:50.5344295Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-08T17:22:50.5344880Z changes and commit them, and you can discard any commits you make in this
+2026-10-08T17:22:50.5345458Z state without impacting any branches by switching back to a branch.
+2026-10-08T17:22:50.5345875Z 
+2026-10-08T17:22:50.5346105Z If you want to create a new branch to retain commits you create, you may
+2026-10-08T17:22:50.5346658Z do so (now or later) by using -c with the switch command. Example:
+2026-10-08T17:22:50.5347085Z 
+2026-10-08T17:22:50.5347185Z   git switch -c <new-branch-name>
+2026-10-08T17:22:50.5347320Z 
+2026-10-08T17:22:50.5347430Z Or undo this operation with:
+2026-10-08T17:22:50.5347562Z 
+2026-10-08T17:22:50.5347634Z   git switch -
+2026-10-08T17:22:50.5347742Z 
+2026-10-08T17:22:50.5347910Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-08T17:22:50.5348147Z 
+2026-10-08T17:22:50.5348301Z HEAD is now at 7612872 docs(release): record 4.9.0 pipeline recovery evidence
+2026-10-08T17:22:50.5373209Z ##[endgroup]
+2026-10-08T17:22:50.5617343Z [command]/usr/bin/git log -1 --format=%H
+2026-10-08T17:22:50.5644064Z 7612872b5052c25de223825cd881445cc6f106f1
+2026-10-08T17:22:50.5879204Z ##[group]Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+2026-10-08T17:22:50.5879544Z with:
+2026-10-08T17:22:50.5879711Z   python-version: 3.13
+2026-10-08T17:22:50.5879891Z   check-latest: false
+2026-10-08T17:22:50.5881829Z   token: ***
+2026-10-08T17:22:50.5882168Z   update-environment: true
+2026-10-08T17:22:50.5882364Z   allow-prereleases: false
+2026-10-08T17:22:50.5882559Z   freethreaded: false
+2026-10-08T17:22:50.5882739Z env:
+2026-10-08T17:22:50.5882912Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:22:50.5883125Z ##[endgroup]
+2026-10-08T17:22:50.6901483Z ##[group]Installed versions
+2026-10-08T17:22:50.6977008Z Successfully set up CPython (3.13.16)
+2026-10-08T17:22:50.6977581Z ##[endgroup]
+2026-10-08T17:22:50.7117195Z ##[group]Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+2026-10-08T17:22:50.7117538Z with:
+2026-10-08T17:22:50.7117716Z   name: release-distributions
+2026-10-08T17:22:50.7117909Z   path: dist
+2026-10-08T17:22:50.7118074Z   merge-multiple: false
+2026-10-08T17:22:50.7118270Z   repository: menudoproblema/mongoeco
+2026-10-08T17:22:50.7118660Z   run-id: 37816027502
+2026-10-08T17:22:50.7118823Z env:
+2026-10-08T17:22:50.7118983Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:22:50.7119230Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:50.7119577Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:22:50.7119905Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:50.7120199Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:50.7120484Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:50.7120805Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:22:50.7121054Z ##[endgroup]
+2026-10-08T17:22:50.8326507Z Downloading single artifact
+2026-10-08T17:22:50.8440737Z (node:2087) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-08T17:22:50.8441625Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-08T17:22:51.0664071Z Preparing to download the following artifacts:
+2026-10-08T17:22:51.0664893Z - release-distributions (ID: 11567516104, Size: 1436805, Expected Digest: sha256:52b0bbac34c5a96f948c287b8e4187d3d41e847637f9d8403c0021d1d85ae178)
+2026-10-08T17:22:51.3027506Z Redirecting to blob download url: https://productionresultssa7.blob.core.windows.net/actions-results/0cb35956-abcd-8e7e-9fb9-157378bde759/workflow-job-run-1f6210f5-8a60-513c-be3c-85b941cabca3/artifacts/f26d0cb0ba1e9fd789de20f0f4bd6c7d894c964a0a5d8c868c48e73d7fa69c46.zip
+2026-10-08T17:22:51.3028586Z Starting download of artifact to: /home/runner/work/mongoeco/mongoeco/dist
+2026-10-08T17:22:51.5405225Z (node:2087) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-10-08T17:22:51.9406516Z SHA256 digest of downloaded artifact is 52b0bbac34c5a96f948c287b8e4187d3d41e847637f9d8403c0021d1d85ae178
+2026-10-08T17:22:51.9407101Z Artifact download completed successfully.
+2026-10-08T17:22:51.9407348Z Total of 1 artifact(s) downloaded
+2026-10-08T17:22:51.9412227Z Download artifact has finished successfully
+2026-10-08T17:22:51.9535093Z ##[group]Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+2026-10-08T17:22:51.9535422Z with:
+2026-10-08T17:22:51.9535608Z   name: release-distribution-manifest
+2026-10-08T17:22:51.9535832Z   path: artifact-manifest
+2026-10-08T17:22:51.9536026Z   merge-multiple: false
+2026-10-08T17:22:51.9536227Z   repository: menudoproblema/mongoeco
+2026-10-08T17:22:51.9536434Z   run-id: 37816027502
+2026-10-08T17:22:51.9536604Z env:
+2026-10-08T17:22:51.9536765Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:22:51.9537030Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:51.9537381Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:22:51.9537724Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:51.9538037Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:51.9538335Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:51.9538650Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:22:51.9538905Z ##[endgroup]
+2026-10-08T17:22:52.0708062Z Downloading single artifact
+2026-10-08T17:22:52.0819198Z (node:2099) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-08T17:22:52.0819870Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-08T17:22:52.3179092Z Preparing to download the following artifacts:
+2026-10-08T17:22:52.3179897Z - release-distribution-manifest (ID: 11567018007, Size: 275, Expected Digest: sha256:ab71320222a46ee295dd0dead8dec4d1ef47d922053647e57d0bd3e92093c99b)
+2026-10-08T17:22:52.5578520Z Redirecting to blob download url: https://productionresultssa7.blob.core.windows.net/actions-results/0cb35956-abcd-8e7e-9fb9-157378bde759/workflow-job-run-1f6210f5-8a60-513c-be3c-85b941cabca3/artifacts/5506a40141b9dcd509f88698d50c81d9076d24b6031975733f9bfd771562cafe.zip
+2026-10-08T17:22:52.5580589Z Starting download of artifact to: /home/runner/work/mongoeco/mongoeco/artifact-manifest
+2026-10-08T17:22:52.7533554Z (node:2099) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-10-08T17:22:52.7560689Z SHA256 digest of downloaded artifact is ab71320222a46ee295dd0dead8dec4d1ef47d922053647e57d0bd3e92093c99b
+2026-10-08T17:22:52.7561394Z Artifact download completed successfully.
+2026-10-08T17:22:52.7561735Z Total of 1 artifact(s) downloaded
+2026-10-08T17:22:52.7565705Z Download artifact has finished successfully
+2026-10-08T17:22:52.7687840Z ##[group]Run sha256sum -c artifact-manifest/SHA256SUMS
+2026-10-08T17:22:52.7688247Z [36;1msha256sum -c artifact-manifest/SHA256SUMS[0m
+2026-10-08T17:22:52.7688611Z [36;1mWHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"[0m
+2026-10-08T17:22:52.7689041Z [36;1mpython -m pip install coverage hypothesis jsonschema mypy pytest pytest-cov ruff[0m
+2026-10-08T17:22:52.7689450Z [36;1mpython -m pip install "${WHEEL}[wire]"[0m
+2026-10-08T17:22:52.7689770Z [36;1mpython -m pip install -r benchmarks/requirements.txt[0m
+2026-10-08T17:22:53.0056154Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:22:53.0056384Z env:
+2026-10-08T17:22:53.0056586Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:22:53.0056885Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:53.0057259Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:22:53.0057616Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:53.0057984Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:53.0058312Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:22:53.0058651Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:22:53.0077888Z   PIP_CONSTRAINT: /home/runner/work/mongoeco/mongoeco/requirements/ci-constraints.txt
+2026-10-08T17:22:53.0078300Z ##[endgroup]
+2026-10-08T17:22:53.0865957Z dist/mongoeco-4.9.0-py3-none-any.whl: OK
+2026-10-08T17:22:53.0870305Z dist/mongoeco-4.9.0.tar.gz: OK
+2026-10-08T17:22:54.2708781Z Collecting coverage
+2026-10-08T17:22:54.3112781Z   Downloading coverage-7.15.4-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (8.6 kB)
+2026-10-08T17:22:54.5410607Z Collecting hypothesis
+2026-10-08T17:22:54.5449154Z   Downloading hypothesis-6.165.9-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.7 kB)
+2026-10-08T17:22:54.6122650Z Collecting jsonschema
+2026-10-08T17:22:54.6151569Z   Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+2026-10-08T17:22:54.7006069Z Collecting mypy
+2026-10-08T17:22:54.7036647Z   Downloading mypy-2.3.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-10-08T17:22:54.7423775Z Collecting pytest
+2026-10-08T17:22:54.7454785Z   Downloading pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+2026-10-08T17:22:54.7631923Z Collecting pytest-cov
+2026-10-08T17:22:54.7659430Z   Downloading pytest_cov-7.1.0-py3-none-any.whl.metadata (32 kB)
+2026-10-08T17:22:55.0156908Z Collecting ruff
+2026-10-08T17:22:55.0197324Z   Downloading ruff-0.16.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (26 kB)
+2026-10-08T17:22:55.0433887Z Collecting sortedcontainers<3.0.0,>=2.1.0 (from hypothesis)
+2026-10-08T17:22:55.0462970Z   Downloading sortedcontainers-2.4.0-py2.py3-none-any.whl.metadata (10 kB)
+2026-10-08T17:22:55.0642518Z Collecting attrs>=22.2.0 (from jsonschema)
+2026-10-08T17:22:55.0671660Z   Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+2026-10-08T17:22:55.0840742Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema)
+2026-10-08T17:22:55.0870375Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2026-10-08T17:22:55.2725201Z Collecting referencing>=0.28.4 (from jsonschema)
+2026-10-08T17:22:55.2752842Z   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2026-10-08T17:22:55.4948836Z Collecting rpds-py>=0.25.0 (from jsonschema)
+2026-10-08T17:22:55.4980951Z   Downloading rpds_py-2026.6.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2026-10-08T17:22:55.5422427Z Collecting typing_extensions>=4.6.0 (from mypy)
+2026-10-08T17:22:55.5451206Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+2026-10-08T17:22:55.5605781Z Collecting mypy_extensions>=1.0.0 (from mypy)
+2026-10-08T17:22:55.5638322Z   Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+2026-10-08T17:22:55.7603079Z Collecting pathspec>=1.0.0 (from mypy)
+2026-10-08T17:22:55.7631667Z   Downloading pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+2026-10-08T17:22:55.8660322Z Collecting librt>=0.13.0 (from mypy)
+2026-10-08T17:22:55.8697782Z   Downloading librt-0.15.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (1.3 kB)
+2026-10-08T17:22:56.0238261Z Collecting ast-serialize<1.0.0,>=0.6.0 (from mypy)
+2026-10-08T17:22:56.0270412Z   Downloading ast_serialize-0.8.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.4 kB)
+2026-10-08T17:22:56.3177295Z Collecting iniconfig>=1.0.1 (from pytest)
+2026-10-08T17:22:56.3230883Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-10-08T17:22:56.5809259Z Collecting packaging>=22 (from pytest)
+2026-10-08T17:22:56.5839979Z   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+2026-10-08T17:22:57.2385091Z Collecting pluggy<2,>=1.5 (from pytest)
+2026-10-08T17:22:57.2415154Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-10-08T17:22:57.5944002Z Collecting pygments>=2.7.2 (from pytest)
+2026-10-08T17:22:57.5976288Z   Downloading pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+2026-10-08T17:22:57.6478218Z Downloading coverage-7.15.4-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (256 kB)
+2026-10-08T17:22:57.6780403Z Downloading hypothesis-6.165.9-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.2 MB)
+2026-10-08T17:22:57.9574785Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 5.2 MB/s  0:00:00
+2026-10-08T17:22:57.9609658Z Downloading sortedcontainers-2.4.0-py2.py3-none-any.whl (29 kB)
+2026-10-08T17:22:57.9677951Z Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-10-08T17:22:58.0432239Z Downloading mypy-2.3.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (15.2 MB)
+2026-10-08T17:22:58.6563214Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.2/15.2 MB 24.6 MB/s  0:00:00
+2026-10-08T17:22:58.6596102Z Downloading ast_serialize-0.8.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.3 MB)
+2026-10-08T17:22:58.7141382Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 19.0 MB/s  0:00:00
+2026-10-08T17:22:58.7172769Z Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+2026-10-08T17:22:58.7571622Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-10-08T17:22:58.7866193Z Downloading pytest_cov-7.1.0-py3-none-any.whl (22 kB)
+2026-10-08T17:22:58.8962763Z Downloading ruff-0.16.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.5 MB)
+2026-10-08T17:22:59.4745494Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.5/11.5 MB 19.5 MB/s  0:00:00
+2026-10-08T17:22:59.4778051Z Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-10-08T17:22:59.5150326Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-10-08T17:22:59.5458698Z Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-10-08T17:22:59.7553721Z Downloading librt-0.15.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (531 kB)
+2026-10-08T17:22:59.9427703Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 531.7/531.7 kB 1.5 MB/s  0:00:00
+2026-10-08T17:22:59.9462868Z Downloading mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+2026-10-08T17:22:59.9654649Z Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-10-08T17:22:59.9856394Z Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+2026-10-08T17:22:59.9956790Z Downloading pygments-2.20.0-py3-none-any.whl (1.2 MB)
+2026-10-08T17:23:00.0228910Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 39.1 MB/s  0:00:00
+2026-10-08T17:23:00.0260752Z Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-10-08T17:23:00.0356381Z Downloading rpds_py-2026.6.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (365 kB)
+2026-10-08T17:23:00.0544855Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-10-08T17:23:00.1999997Z Installing collected packages: sortedcontainers, typing_extensions, ruff, rpds-py, pygments, pluggy, pathspec, packaging, mypy_extensions, librt, iniconfig, hypothesis, coverage, attrs, ast-serialize, referencing, pytest, mypy, pytest-cov, jsonschema-specifications, jsonschema
+2026-10-08T17:23:03.4577118Z 
+2026-10-08T17:23:03.4598782Z Successfully installed ast-serialize-0.8.0 attrs-26.1.0 coverage-7.15.4 hypothesis-6.165.9 iniconfig-2.3.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 librt-0.15.0 mypy-2.3.1 mypy_extensions-1.1.0 packaging-26.3 pathspec-1.1.1 pluggy-1.6.0 pygments-2.20.0 pytest-9.1.1 pytest-cov-7.1.0 referencing-0.37.0 rpds-py-2026.6.3 ruff-0.16.2 sortedcontainers-2.4.0 typing_extensions-4.16.0
+2026-10-08T17:23:03.8359211Z Processing ./dist/mongoeco-4.9.0-py3-none-any.whl (from mongoeco==4.9.0)
+2026-10-08T17:23:03.8858840Z Collecting cxp<6,>=5.0.0 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:03.9431269Z   Downloading cxp-5.0.0-py3-none-any.whl.metadata (4.2 kB)
+2026-10-08T17:23:03.9974523Z Collecting msgspec<1,>=0.20 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:04.0074605Z   Downloading msgspec-0.21.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.8 kB)
+2026-10-08T17:23:04.0180039Z Collecting pyuca<2,>=1.2 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:04.0281317Z   Downloading pyuca-1.2-py2.py3-none-any.whl.metadata (649 bytes)
+2026-10-08T17:23:04.0305892Z Requirement already satisfied: rpds-py<2027,>=0.27 in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (from mongoeco==4.9.0->mongoeco==4.9.0) (2026.6.3)
+2026-10-08T17:23:04.0840178Z Collecting shapely<3,>=2.1 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:04.0940602Z   Downloading shapely-2.1.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (6.8 kB)
+2026-10-08T17:23:04.3083642Z Collecting usearch<3,>=2.23 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:04.3190116Z   Downloading usearch-2.26.0-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (33 kB)
+2026-10-08T17:23:04.5218733Z Collecting pymongo<5,>=4.9 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:04.5324185Z   Downloading pymongo-4.18.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (10 kB)
+2026-10-08T17:23:04.5381342Z Requirement already satisfied: jsonschema<5,>=4.23 in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco==4.9.0) (4.26.0)
+2026-10-08T17:23:04.5386540Z Requirement already satisfied: referencing<1,>=0.35 in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco==4.9.0) (0.37.0)
+2026-10-08T17:23:04.5449665Z Collecting rfc8785<1,>=0.1.4 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:04.5547959Z   Downloading rfc8785-0.1.4-py3-none-any.whl.metadata (3.4 kB)
+2026-10-08T17:23:04.6085806Z Requirement already satisfied: attrs>=22.2.0 in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (from jsonschema<5,>=4.23->cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco==4.9.0) (26.1.0)
+2026-10-08T17:23:04.6089661Z Requirement already satisfied: jsonschema-specifications>=2023.03.6 in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (from jsonschema<5,>=4.23->cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco==4.9.0) (2025.9.1)
+2026-10-08T17:23:04.6404320Z Collecting dnspython<3.0.0,>=2.7.0 (from pymongo<5,>=4.9->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:04.6503759Z   Downloading dnspython-2.8.0-py3-none-any.whl.metadata (5.7 kB)
+2026-10-08T17:23:04.8318844Z Collecting numpy>=1.21 (from shapely<3,>=2.1->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:04.8419006Z   Downloading numpy-2.5.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-10-08T17:23:04.8592928Z Collecting tqdm (from usearch<3,>=2.23->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:04.8692819Z   Downloading tqdm-4.70.0-py3-none-any.whl.metadata (57 kB)
+2026-10-08T17:23:04.9521243Z Collecting numkong (from usearch<3,>=2.23->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:23:04.9626204Z   Downloading numkong-7.8.0-cp313-cp313-manylinux_2_28_x86_64.whl.metadata (86 kB)
+2026-10-08T17:23:04.9897573Z Downloading cxp-5.0.0-py3-none-any.whl (58 kB)
+2026-10-08T17:23:05.0017327Z Downloading msgspec-0.21.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (225 kB)
+2026-10-08T17:23:05.0217227Z Downloading pymongo-4.18.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.0 MB)
+2026-10-08T17:23:05.0702901Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.0/1.0 MB 17.6 MB/s  0:00:00
+2026-10-08T17:23:05.0803526Z Downloading dnspython-2.8.0-py3-none-any.whl (331 kB)
+2026-10-08T17:23:05.0926682Z Downloading pyuca-1.2-py2.py3-none-any.whl (1.5 MB)
+2026-10-08T17:23:05.1067840Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 98.4 MB/s  0:00:00
+2026-10-08T17:23:05.1165209Z Downloading rfc8785-0.1.4-py3-none-any.whl (9.2 kB)
+2026-10-08T17:23:05.1277042Z Downloading shapely-2.1.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (3.1 MB)
+2026-10-08T17:23:05.1568114Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.1/3.1 MB 103.6 MB/s  0:00:00
+2026-10-08T17:23:05.2356380Z Downloading usearch-2.26.0-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (2.4 MB)
+2026-10-08T17:23:05.3963977Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.4/2.4 MB 13.4 MB/s  0:00:00
+2026-10-08T17:23:05.4063588Z Downloading numpy-2.5.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+2026-10-08T17:23:05.5288583Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.7/16.7 MB 136.9 MB/s  0:00:00
+2026-10-08T17:23:05.6089217Z Downloading numkong-7.8.0-cp313-cp313-manylinux_2_28_x86_64.whl (10.5 MB)
+2026-10-08T17:23:06.7859741Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.5/10.5 MB 8.7 MB/s  0:00:01
+2026-10-08T17:23:06.7960751Z Downloading tqdm-4.70.0-py3-none-any.whl (80 kB)
+2026-10-08T17:23:07.1824685Z Installing collected packages: pyuca, tqdm, rfc8785, numpy, numkong, msgspec, dnspython, usearch, shapely, pymongo, cxp, mongoeco
+2026-10-08T17:23:10.6976989Z 
+2026-10-08T17:23:10.7004780Z Successfully installed cxp-5.0.0 dnspython-2.8.0 mongoeco-4.9.0 msgspec-0.21.1 numkong-7.8.0 numpy-2.5.2 pymongo-4.18.2 pyuca-1.2 rfc8785-0.1.4 shapely-2.1.2 tqdm-4.70.0 usearch-2.26.0
+2026-10-08T17:23:11.1421334Z Collecting psutil>=5.9.0 (from -r benchmarks/requirements.txt (line 1))
+2026-10-08T17:23:11.1979686Z   Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+2026-10-08T17:23:11.3538053Z Collecting mongomock>=4.1.2 (from -r benchmarks/requirements.txt (line 2))
+2026-10-08T17:23:11.3640215Z   Downloading mongomock-4.3.0-py2.py3-none-any.whl.metadata (12 kB)
+2026-10-08T17:23:11.5505697Z Collecting tabulate>=0.9.0 (from -r benchmarks/requirements.txt (line 3))
+2026-10-08T17:23:11.5607319Z   Downloading tabulate-0.10.0-py3-none-any.whl.metadata (40 kB)
+2026-10-08T17:23:11.5705842Z Requirement already satisfied: packaging in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (from mongomock>=4.1.2->-r benchmarks/requirements.txt (line 2)) (26.3)
+2026-10-08T17:23:11.5922578Z Collecting pytz (from mongomock>=4.1.2->-r benchmarks/requirements.txt (line 2))
+2026-10-08T17:23:11.6022166Z   Downloading pytz-2026.3.post1-py2.py3-none-any.whl.metadata (22 kB)
+2026-10-08T17:23:11.7675490Z Collecting sentinels (from mongomock>=4.1.2->-r benchmarks/requirements.txt (line 2))
+2026-10-08T17:23:11.7772164Z   Downloading sentinels-1.1.1-py3-none-any.whl.metadata (3.0 kB)
+2026-10-08T17:23:11.7902512Z Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+2026-10-08T17:23:11.8117729Z Downloading mongomock-4.3.0-py2.py3-none-any.whl (64 kB)
+2026-10-08T17:23:11.8234660Z Downloading tabulate-0.10.0-py3-none-any.whl (39 kB)
+2026-10-08T17:23:11.8349006Z Downloading pytz-2026.3.post1-py2.py3-none-any.whl (508 kB)
+2026-10-08T17:23:12.0296205Z Downloading sentinels-1.1.1-py3-none-any.whl (3.7 kB)
+2026-10-08T17:23:12.0860677Z Installing collected packages: pytz, tabulate, sentinels, psutil, mongomock
+2026-10-08T17:23:12.2649758Z 
+2026-10-08T17:23:12.2680124Z Successfully installed mongomock-4.3.0 psutil-7.2.2 pytz-2026.3.post1 sentinels-1.1.1 tabulate-0.10.0
+2026-10-08T17:23:12.3176595Z ##[group]Run python - <<'PY'
+2026-10-08T17:23:12.3176866Z [36;1mpython - <<'PY'[0m
+2026-10-08T17:23:12.3177072Z [36;1mfrom pathlib import Path[0m
+2026-10-08T17:23:12.3177298Z [36;1mimport mongoeco[0m
+2026-10-08T17:23:12.3177484Z [36;1m[0m
+2026-10-08T17:23:12.3177693Z [36;1mmodule_path = Path(mongoeco.__file__).resolve()[0m
+2026-10-08T17:23:12.3178030Z [36;1massert 'site-packages' in module_path.parts, module_path[0m
+2026-10-08T17:23:12.3178311Z [36;1mprint(module_path)[0m
+2026-10-08T17:23:12.3178513Z [36;1mPY[0m
+2026-10-08T17:23:12.3236113Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:23:12.3236335Z env:
+2026-10-08T17:23:12.3236519Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:23:12.3236810Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:12.3237211Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:23:12.3237556Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:12.3237885Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:12.3238202Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:12.3238519Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:23:12.3238791Z ##[endgroup]
+2026-10-08T17:23:12.3509818Z /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/mongoeco/__init__.py
+2026-10-08T17:23:12.3565667Z ##[group]Run python scripts/check_public_typing.py
+2026-10-08T17:23:12.3565996Z [36;1mpython scripts/check_public_typing.py[0m
+2026-10-08T17:23:12.3617968Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:23:12.3618184Z env:
+2026-10-08T17:23:12.3618373Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:23:12.3618657Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:12.3619039Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:23:12.3619379Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:12.3619692Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:12.3619991Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:12.3620298Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:23:12.3620562Z ##[endgroup]
+2026-10-08T17:23:24.5657405Z public typing contract passed: positive=1, negative-errors=14
+2026-10-08T17:23:24.5729492Z ##[group]Run python scripts/smoke_external_engine.py
+2026-10-08T17:23:24.5729833Z [36;1mpython scripts/smoke_external_engine.py[0m
+2026-10-08T17:23:24.5786765Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:23:24.5786986Z env:
+2026-10-08T17:23:24.5787171Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:23:24.5787465Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:24.5787816Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:23:24.5788338Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:24.5788660Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:24.5788973Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:24.5789288Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:23:24.5789552Z ##[endgroup]
+2026-10-08T17:23:25.0443257Z PASS external-canary [spi-v2] passed=5, failed=0, error=0, not-applicable=5
+2026-10-08T17:23:25.0970007Z ##[group]Run python scripts/update_public_api_manifest.py --check
+2026-10-08T17:23:25.0970409Z [36;1mpython scripts/update_public_api_manifest.py --check[0m
+2026-10-08T17:23:25.1027752Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:23:25.1027965Z env:
+2026-10-08T17:23:25.1028148Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:23:25.1028444Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:25.1028802Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:23:25.1029160Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:25.1029476Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:25.1029787Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:25.1030097Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:23:25.1030362Z ##[endgroup]
+2026-10-08T17:23:25.6583840Z public API manifest is current
+2026-10-08T17:23:25.7247648Z ##[group]Run python -m unittest discover -s tests -p 'test*.py'
+2026-10-08T17:23:25.7248468Z [36;1mpython -m unittest discover -s tests -p 'test*.py'[0m
+2026-10-08T17:23:25.7314657Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:23:25.7314986Z env:
+2026-10-08T17:23:25.7315282Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:23:25.7315714Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:25.7326963Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:23:25.7327499Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:25.7327970Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:25.7328397Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:23:25.7328827Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:23:25.7329231Z ##[endgroup]
+2026-10-08T17:23:28.3081093Z ................................Executing <Task pending name='Task-663' coro=<AsyncAggregationSemanticContextTests.test_routes_share_semantics_and_validation() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_aggregation_semantic_context.py:372> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.126 seconds
+2026-10-08T17:23:29.8366318Z .......Executing <Task pending name='Task-1610' coro=<AsyncApiIntegrationTests.test_aggregate_explain_reports_pipeline_pushdown_summary() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:3197> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.442 seconds
+2026-10-08T17:23:29.9757784Z Executing <Task pending name='Task-1610' coro=<AsyncApiIntegrationTests.test_aggregate_explain_reports_pipeline_pushdown_summary() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:3197> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.129 seconds
+2026-10-08T17:23:33.9966881Z ....Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:239> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 3.980 seconds
+2026-10-08T17:23:34.1484491Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:484> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:34.2811487Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:542> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.129 seconds
+2026-10-08T17:23:34.4134471Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:606> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.129 seconds
+2026-10-08T17:23:34.5474889Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:657> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:34.6806474Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:703> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:34.8253425Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:771> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.140 seconds
+2026-10-08T17:23:34.9593886Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:784> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:35.0911631Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:805> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:35.2251644Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:845> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:35.3580379Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:883> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:35.5041663Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:1034> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:35.6511321Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:1370> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:35.7831873Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:1417> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:35.9183288Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:1578> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:36.0508805Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:1625> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:36.1875283Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:1709> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:36.3239087Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:1811> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:36.4591689Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:1910> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:36.5966945Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2028> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:36.7275088Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2074> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:36.8603201Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2153> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:36.9936566Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2170> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:37.4528536Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2247> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.458 seconds
+2026-10-08T17:23:37.7188293Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2315> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.265 seconds
+2026-10-08T17:23:37.8513103Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2347> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:37.9847602Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2387> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:38.1199970Z Executing <Task pending name='Task-1636' coro=<AsyncApiIntegrationTests.test_aggregate_search_executes_text_search_and_rejects_invalid_runtime() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:239> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:39.6385202Z ..............................................................................................Executing <Task pending name='Task-2353' coro=<AsyncApiIntegrationTests.test_collection_supports_multi_field_local_text_indexes() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:10912> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:39.7790915Z Executing <Task pending name='Task-2353' coro=<AsyncApiIntegrationTests.test_collection_supports_multi_field_local_text_indexes() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:10912> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:39.9149691Z .Executing <Task pending name='Task-2360' coro=<AsyncApiIntegrationTests.test_collection_supports_text_and_geo_special_index_key_types() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:10879> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.133 seconds
+2026-10-08T17:23:40.0570379Z Executing <Task pending name='Task-2360' coro=<AsyncApiIntegrationTests.test_collection_supports_text_and_geo_special_index_key_types() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:10879> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.129 seconds
+2026-10-08T17:23:40.1936166Z .Executing <Task pending name='Task-2373' coro=<AsyncApiIntegrationTests.test_collection_text_index_supports_weights_and_language_metadata() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:10978> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:40.3349080Z Executing <Task pending name='Task-2373' coro=<AsyncApiIntegrationTests.test_collection_text_index_supports_weights_and_language_metadata() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:10978> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:40.4721919Z .Executing <Task pending name='Task-2380' coro=<AsyncApiIntegrationTests.test_collection_text_query_hint_selects_text_index_and_rejects_non_text_hint() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:11205> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:40.6204731Z Executing <Task pending name='Task-2380' coro=<AsyncApiIntegrationTests.test_collection_text_query_hint_selects_text_index_and_rejects_non_text_hint() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:11205> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:40.7582228Z .Executing <Task pending name='Task-2399' coro=<AsyncApiIntegrationTests.test_collection_text_query_supports_phrase_and_exclusion_semantics() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:11051> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:40.8993284Z Executing <Task pending name='Task-2399' coro=<AsyncApiIntegrationTests.test_collection_text_query_supports_phrase_and_exclusion_semantics() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:11051> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:41.6151943Z ..........................Executing <Task pending name='Task-2567' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_count_distinct_and_find_and_modify() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:5099> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.388 seconds
+2026-10-08T17:23:41.8860856Z Executing <Task pending name='Task-2567' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_count_distinct_and_find_and_modify() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:5099> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.263 seconds
+2026-10-08T17:23:42.0174327Z Executing <Task pending name='Task-2567' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_count_distinct_and_find_and_modify() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:5099> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.129 seconds
+2026-10-08T17:23:42.2815541Z .Executing <Task pending name='Task-2572' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_find_and_aggregate() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:5081> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.261 seconds
+2026-10-08T17:23:42.4248195Z Executing <Task pending name='Task-2572' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_find_and_aggregate() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:5081> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.133 seconds
+2026-10-08T17:23:42.5566758Z Executing <Task pending name='Task-2572' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_find_and_aggregate() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:5081> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:42.8202233Z .Executing <Task pending name='Task-2577' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_update_and_delete() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:5090> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.260 seconds
+2026-10-08T17:23:43.0879282Z Executing <Task pending name='Task-2577' coro=<AsyncApiIntegrationTests.test_database_command_supports_explain_for_update_and_delete() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:5090> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.260 seconds
+2026-10-08T17:23:43.8121028Z .............................................Executing <Task pending name='Task-2905' coro=<AsyncApiIntegrationTests.test_find_with_comment_and_max_time_updates_session_state_and_explain() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:10631> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.128 seconds
+2026-10-08T17:23:43.9514238Z Executing <Task pending name='Task-2905' coro=<AsyncApiIntegrationTests.test_find_with_comment_and_max_time_updates_session_state_and_explain() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:10631> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.129 seconds
+2026-10-08T17:23:44.0902372Z ...Executing <Task pending name='Task-2922' coro=<AsyncApiIntegrationTests.test_hint_requires_existing_index_and_is_reflected_in_explain() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:11747> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:44.2317131Z Executing <Task pending name='Task-2922' coro=<AsyncApiIntegrationTests.test_hint_requires_existing_index_and_is_reflected_in_explain() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:11747> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.129 seconds
+2026-10-08T17:23:44.6374450Z ..........................Executing <Task pending name='Task-3075' coro=<AsyncApiIntegrationTests.test_search_document_mapping_and_date_near_keep_parity_between_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2995> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.136 seconds
+2026-10-08T17:23:44.7862808Z Executing <Task pending name='Task-3075' coro=<AsyncApiIntegrationTests.test_search_document_mapping_and_date_near_keep_parity_between_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:3174> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.129 seconds
+2026-10-08T17:23:44.9302667Z .Executing <Task pending name='Task-3080' coro=<AsyncApiIntegrationTests.test_search_embedded_documents_mapping_keeps_parity_between_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2669> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.140 seconds
+2026-10-08T17:23:45.0887121Z Executing <Task pending name='Task-3080' coro=<AsyncApiIntegrationTests.test_search_embedded_documents_mapping_keeps_parity_between_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2669> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:45.3143827Z ...Executing <Task pending name='Task-3095' coro=<AsyncApiIntegrationTests.test_search_phrase_slop_keeps_parity_between_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2527> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.134 seconds
+2026-10-08T17:23:45.4606300Z Executing <Task pending name='Task-3095' coro=<AsyncApiIntegrationTests.test_search_phrase_slop_keeps_parity_between_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_async_api.py:2527> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.128 seconds
+2026-10-08T17:23:46.8588918Z ...............................................Executing <Task pending name='Task-3458' coro=<DeterministicCostContractTests.test_search_cost_contract_is_stable_across_engines_and_surfaces() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_deterministic_cost_contracts.py:97> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.133 seconds
+2026-10-08T17:23:46.9987403Z Executing <Task pending name='Task-3458' coro=<DeterministicCostContractTests.test_search_cost_contract_is_stable_across_engines_and_surfaces() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_deterministic_cost_contracts.py:97> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.128 seconds
+2026-10-08T17:23:47.2711173Z Executing <Task finished name='Task-3458' coro=<DeterministicCostContractTests.test_search_cost_contract_is_stable_across_engines_and_surfaces() done, defined at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_deterministic_cost_contracts.py:92> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.271 seconds
+2026-10-08T17:23:47.4105630Z .Executing <Task pending name='Task-3473' coro=<DeterministicCostContractTests.test_sqlite_exact_find_owns_filter_sort_and_window() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_deterministic_cost_contracts.py:65> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.127 seconds
+2026-10-08T17:23:48.1053213Z .................................Executing <Task pending name='Task-3759' coro=<EngineParityTests.test_database_command_list_and_explain_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1389> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:48.2450598Z Executing <Task pending name='Task-3759' coro=<EngineParityTests.test_database_command_list_and_explain_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1389> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:48.5067988Z .Executing <Task pending name='Task-3764' coro=<EngineParityTests.test_database_command_surface_matches_in_memory_and_sqlite_for_admin_subsets() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:2273> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.259 seconds
+2026-10-08T17:23:48.7801144Z Executing <Task pending name='Task-3764' coro=<EngineParityTests.test_database_command_surface_matches_in_memory_and_sqlite_for_admin_subsets() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:2273> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.257 seconds
+2026-10-08T17:23:51.1088267Z ........................................Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1427> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 1.572 seconds
+2026-10-08T17:23:51.2798968Z Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1640> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:51.4114977Z Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1643> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:51.5409841Z Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1646> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.129 seconds
+2026-10-08T17:23:51.6743151Z Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1649> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:52.0655900Z Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1658> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.391 seconds
+2026-10-08T17:23:52.1984882Z Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1661> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:52.3315550Z Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1674> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:52.4747163Z Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1694> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.142 seconds
+2026-10-08T17:23:52.6081020Z Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1715> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:52.7369270Z Executing <Task pending name='Task-4090' coro=<EngineParityTests.test_search_and_vector_search_contracts_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1427> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.128 seconds
+2026-10-08T17:23:53.1531933Z ...........Executing <Task pending name='Task-4151' coro=<EngineParityTests.test_vector_search_results_and_explain_are_repeatable_and_engine_equivalent() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:2053> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.264 seconds
+2026-10-08T17:23:53.2950849Z Executing <Task pending name='Task-4151' coro=<EngineParityTests.test_vector_search_results_and_explain_are_repeatable_and_engine_equivalent() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:2134> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:23:53.4261879Z Executing <Task pending name='Task-4151' coro=<EngineParityTests.test_vector_search_results_and_explain_are_repeatable_and_engine_equivalent() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:2053> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.128 seconds
+2026-10-08T17:23:53.5680808Z .Executing <Task pending name='Task-4156' coro=<EngineParityTests.test_vector_search_tie_order_and_explain_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1884> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.139 seconds
+2026-10-08T17:23:53.7107853Z Executing <Task pending name='Task-4156' coro=<EngineParityTests.test_vector_search_tie_order_and_explain_match_in_memory_and_sqlite() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_engine_parity.py:1884> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:55.6189745Z ..........................................Executing <Task pending name='Task-5006' coro=<AsyncSearchPlanningEquivalenceTests.test_optimized_and_reference_modes_are_equivalent() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_planning_equivalence.py:139> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.527 seconds
+2026-10-08T17:23:55.8112537Z Executing <Task pending name='Task-5006' coro=<AsyncSearchPlanningEquivalenceTests.test_optimized_and_reference_modes_are_equivalent() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_planning_equivalence.py:238> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:55.9435923Z Executing <Task pending name='Task-5006' coro=<AsyncSearchPlanningEquivalenceTests.test_optimized_and_reference_modes_are_equivalent() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_planning_equivalence.py:253> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:56.2062762Z Executing <Task pending name='Task-5006' coro=<AsyncSearchPlanningEquivalenceTests.test_optimized_and_reference_modes_are_equivalent() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_planning_equivalence.py:139> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.262 seconds
+2026-10-08T17:23:57.2510456Z ...Executing <Task pending name='Task-5096' coro=<AsyncSearchRegressionTests.test_pending_index_never_fabricates_execution_stats() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_regressions.py:241> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.133 seconds
+2026-10-08T17:23:57.3892804Z Executing <Task pending name='Task-5096' coro=<AsyncSearchRegressionTests.test_pending_index_never_fabricates_execution_stats() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_regressions.py:254> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:23:57.5390292Z .Executing <Task pending name='Task-5101' coro=<AsyncSearchRegressionTests.test_search_boundaries_remain_equivalent_and_collision_free() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_regressions.py:259> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.146 seconds
+2026-10-08T17:23:57.6993852Z Executing <Task pending name='Task-5101' coro=<AsyncSearchRegressionTests.test_search_boundaries_remain_equivalent_and_collision_free() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_regressions.py:331> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.133 seconds
+2026-10-08T17:23:58.1148379Z .Executing <Task pending name='Task-5110' coro=<AsyncSearchRegressionTests.test_search_plan_is_shared_by_execution_and_explain() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_regressions.py:81> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.396 seconds
+2026-10-08T17:23:58.3849587Z Executing <Task pending name='Task-5110' coro=<AsyncSearchRegressionTests.test_search_plan_is_shared_by_execution_and_explain() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_regressions.py:116> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.262 seconds
+2026-10-08T17:23:58.5182648Z Executing <Task pending name='Task-5110' coro=<AsyncSearchRegressionTests.test_search_plan_is_shared_by_execution_and_explain() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_regressions.py:81> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:23:58.6545416Z .Executing <Task pending name='Task-5115' coro=<AsyncSearchRegressionTests.test_vector_downstream_match_remains_after_top_k() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_regressions.py:396> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.133 seconds
+2026-10-08T17:23:58.7949432Z Executing <Task pending name='Task-5115' coro=<AsyncSearchRegressionTests.test_vector_downstream_match_remains_after_top_k() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_search_regressions.py:396> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:24:00.1650372Z ................Executing <Task pending name='Task-5261' coro=<AsyncSQLitePushdownEquivalenceTests.test_unprofitable_conjunct_shape_stays_on_exact_python_fallback() running at /home/runner/work/mongoeco/mongoeco/tests/integration/api/test_sqlite_pushdown_equivalence.py:27> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.134 seconds
+2026-10-08T17:24:15.4319356Z ...................................................................................................................................................................................................................................................................................Executing <Task pending name='Task-8649' coro=<AsyncMongoEcoProxyServer._handle_connection() running at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/mongoeco/wire/proxy.py:116> wait_for=<Future pending cb=[Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[StreamReaderProtocol.connection_made.<locals>.callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/streams.py:242] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/streams.py:255> took 0.131 seconds
+2026-10-08T17:24:15.5778672Z .Executing <Task pending name='Task-8659' coro=<AsyncMongoEcoProxyServer._handle_connection() running at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/mongoeco/wire/proxy.py:116> wait_for=<Future pending cb=[Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[StreamReaderProtocol.connection_made.<locals>.callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/streams.py:242] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/streams.py:255> took 0.130 seconds
+2026-10-08T17:24:15.8067947Z ....................Executing <Task finished name='Task-8775' coro=<AsyncAggregationCursorTests.test_async_aggregation_cursor_explain_covers_search_fallback_and_first_empty_profile() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_aggregation_cursor.py:1752> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.133 seconds
+2026-10-08T17:24:15.9380822Z .Executing <Task finished name='Task-8780' coro=<AsyncAggregationCursorTests.test_async_aggregation_cursor_explain_includes_engine_plan_and_options() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_aggregation_cursor.py:1659> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:24:16.0681318Z .Executing <Task finished name='Task-8785' coro=<AsyncAggregationCursorTests.test_async_aggregation_cursor_explain_surfaces_deferred_reason_details() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_aggregation_cursor.py:1824> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.129 seconds
+2026-10-08T17:24:17.7421490Z .............Executing <Task finished name='Task-8848' coro=<AsyncAggregationCursorTests.test_explain_surfaces_bounded_lookup_candidate_and_runtime_fallback() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_aggregation_cursor.py:1700> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.265 seconds
+2026-10-08T17:24:17.8760389Z .Executing <Task finished name='Task-8853' coro=<AsyncAggregationCursorTests.test_group_consumes_finite_source_pages_without_materializing_input() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_aggregation_cursor.py:1943> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:24:18.0469684Z ...............Executing <Task finished name='Task-8927' coro=<AsyncAggregationCursorTests.test_materialize_rejects_large_blocking_pipeline_without_spill_budget() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_aggregation_cursor.py:1882> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:24:18.2900106Z .....Executing <Task finished name='Task-8954' coro=<AsyncAggregationCursorTests.test_partitioned_group_preserves_accumulators_and_first_seen_order() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_aggregation_cursor.py:2019> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.144 seconds
+2026-10-08T17:24:18.4350082Z ..........Executing <Task finished name='Task-9000' coro=<AsyncAggregationCursorTests.test_sort_consumes_finite_source_pages_and_preserves_global_windows() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_aggregation_cursor.py:2123> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.131 seconds
+2026-10-08T17:24:18.5802398Z ..........Executing <Task finished name='Task-9050' coro=<AsyncAggregationCursorTests.test_streaming_batch_execution_falls_back_for_global_pipeline_stages() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_aggregation_cursor.py:1633> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.132 seconds
+2026-10-08T17:24:18.9980676Z ...........................................................................................................................................................................................................Executing <Task finished name='Task-9924' coro=<CursorUnitTests.test_async_cursor_clone_rewind_alive_and_explain() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_cursors.py:840> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:24:19.5524436Z ..............Executing <Task finished name='Task-10007' coro=<CursorUnitTests.test_async_cursor_private_helpers_cover_issue_messages_and_planning_mode_resolution() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_cursors.py:310> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.532 seconds
+2026-10-08T17:24:19.6935657Z ......Executing <Task finished name='Task-10041' coro=<CursorUnitTests.test_async_cursor_rewind_clears_active_iterator_and_explain_handles_planning_issues() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/api/test_cursors.py:1024> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.130 seconds
+2026-10-08T17:24:21.5421102Z ..........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................Benchmark contract failed: engine 'memory-sync' failed: boom
+2026-10-08T17:24:30.2037654Z ...................................................................................s......................................................................................................................................................................................................................................................................................................Executing <Task finished name='Task-11091' coro=<MemoryEngineTests.test_indexed_equality_preserves_multikey_virtual_and_collation_semantics() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/core/test_memory_engine.py:2671> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 0.134 seconds
+2026-10-08T17:24:33.0591207Z {
+2026-10-08T17:24:33.0591487Z   "memory-sync": {
+2026-10-08T17:24:33.0592223Z     "error": "boom"
+2026-10-08T17:24:33.0592475Z   }
+2026-10-08T17:24:33.0592666Z }
+2026-10-08T17:24:33.0592850Z {
+2026-10-08T17:24:33.0593110Z   "schema": "mongoeco-benchmark-report/v2",
+2026-10-08T17:24:33.0593449Z   "environment": {
+2026-10-08T17:24:33.0593704Z     "python": "3.13.16",
+2026-10-08T17:24:33.0593982Z     "pythonImplementation": "CPython",
+2026-10-08T17:24:33.0594368Z     "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+2026-10-08T17:24:33.0594737Z     "machine": "x86_64",
+2026-10-08T17:24:33.0595015Z     "sqlite": "3.45.1",
+2026-10-08T17:24:33.0595269Z     "jsonBackend": "stdlib",
+2026-10-08T17:24:33.0595567Z     "mongoeco": "4.9.0",
+2026-10-08T17:24:33.0595833Z     "dependencies": {
+2026-10-08T17:24:33.0596109Z       "mongomock": "4.3.0",
+2026-10-08T17:24:33.0596383Z       "orjson": null,
+2026-10-08T17:24:33.0596642Z       "psutil": "7.2.2",
+2026-10-08T17:24:33.0596918Z       "pymongo": "4.18.2",
+2026-10-08T17:24:33.0597204Z       "usearch": "2.26.0"
+2026-10-08T17:24:33.0597470Z     },
+2026-10-08T17:24:33.0597820Z     "executable": "/opt/hostedtoolcache/Python/3.13.16/x64/bin/python"
+2026-10-08T17:24:33.0598198Z   },
+2026-10-08T17:24:33.0598363Z   "source": {
+2026-10-08T17:24:33.0598586Z     "gitRevision": "7612872b5052c25de223825cd881445cc6f106f1",
+2026-10-08T17:24:33.0598867Z     "gitDirty": true,
+2026-10-08T17:24:33.0599239Z     "mongoecoModule": "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/mongoeco/__init__.py",
+2026-10-08T17:24:33.0599801Z     "harnessSha256": "sha256:a46f2e9c5ecbf5811289439caba8210f62a24928d1a5ad295da6a7337e8b3de3",
+2026-10-08T17:24:33.0600315Z     "datasetSha256": "sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63"
+2026-10-08T17:24:33.0600664Z   },
+2026-10-08T17:24:33.0600831Z   "config": {
+2026-10-08T17:24:33.0601025Z     "size": 1,
+2026-10-08T17:24:33.0601199Z     "warmup": 0,
+2026-10-08T17:24:33.0601381Z     "repetitions": 1,
+2026-10-08T17:24:33.0601573Z     "workloads": [
+2026-10-08T17:24:33.0601764Z       "secondary_lookup_indexed",
+2026-10-08T17:24:33.0602167Z       "secondary_lookup_unindexed",
+2026-10-08T17:24:33.0602477Z       "secondary_lookup_diagnostics",
+2026-10-08T17:24:33.0602700Z       "simple_aggregation",
+2026-10-08T17:24:33.0602902Z       "materializing_aggregation",
+2026-10-08T17:24:33.0603128Z       "aggregation_spill_diagnostics",
+2026-10-08T17:24:33.0603337Z       "sort_limit",
+2026-10-08T17:24:33.0603520Z       "cursor_consumption",
+2026-10-08T17:24:33.0603713Z       "filter_selectivity",
+2026-10-08T17:24:33.0604124Z       "predicate_diagnostics",
+2026-10-08T17:24:33.0604336Z       "sort_shape_diagnostics"
+2026-10-08T17:24:33.0604525Z     ],
+2026-10-08T17:24:33.0604695Z     "rssPeakSamplingIntervalMs": 5.0
+2026-10-08T17:24:33.0604914Z   },
+2026-10-08T17:24:33.0605064Z   "results": {
+2026-10-08T17:24:33.0605233Z     "memory-sync": {
+2026-10-08T17:24:33.0605420Z       "error": "boom"
+2026-10-08T17:24:33.0605593Z     }
+2026-10-08T17:24:33.0605747Z   }
+2026-10-08T17:24:33.0605893Z }
+2026-10-08T17:24:33.0606052Z # Benchmark Report
+2026-10-08T17:24:33.0606162Z 
+2026-10-08T17:24:33.0606237Z ## Environment
+2026-10-08T17:24:33.0606331Z 
+2026-10-08T17:24:33.0606440Z - Generated at: 2026-10-08T17:24:21.549377+00:00
+2026-10-08T17:24:33.0606676Z - Python: 3.13.16
+2026-10-08T17:24:33.0606913Z - Platform: Linux-6.17.0-1022-azure-x86_64-with-glibc2.39
+2026-10-08T17:24:33.0607164Z - Dataset size: 1
+2026-10-08T17:24:33.0607341Z - Warmup runs: 0
+2026-10-08T17:24:33.0607528Z - Measured repetitions: 1
+2026-10-08T17:24:33.0608338Z - Workloads: secondary_lookup_indexed, secondary_lookup_unindexed, secondary_lookup_diagnostics, simple_aggregation, materializing_aggregation, aggregation_spill_diagnostics, sort_limit, cursor_consumption, filter_selectivity, predicate_diagnostics, sort_shape_diagnostics
+2026-10-08T17:24:33.0609419Z - JSON backend: stdlib
+2026-10-08T17:24:33.0609660Z - MONGOECO_JSON_BACKEND: unset
+2026-10-08T17:24:33.0609909Z - Git revision: `7612872b5052c25de223825cd881445cc6f106f1`
+2026-10-08T17:24:33.0610291Z - Git worktree dirty: `True`
+2026-10-08T17:24:33.0610531Z - Report schema: `mongoeco-benchmark-report/v2`
+2026-10-08T17:24:33.0610921Z - Harness SHA-256: `sha256:a46f2e9c5ecbf5811289439caba8210f62a24928d1a5ad295da6a7337e8b3de3`
+2026-10-08T17:24:33.0611413Z - Dataset SHA-256: `sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63`
+2026-10-08T17:24:33.0611779Z - RSS peak sampling interval: `5.0 ms`
+2026-10-08T17:24:33.0612100Z - psutil: `7.2.2`
+2026-10-08T17:24:33.0612275Z - mongomock: `4.3.0`
+2026-10-08T17:24:33.0612466Z - orjson: `not installed`
+2026-10-08T17:24:33.0612591Z 
+2026-10-08T17:24:33.0612677Z ## secondary_lookup_indexed
+2026-10-08T17:24:33.0612797Z 
+2026-10-08T17:24:33.0612884Z ## secondary_lookup_unindexed
+2026-10-08T17:24:33.0613015Z 
+2026-10-08T17:24:33.0613098Z ## secondary_lookup_diagnostics
+2026-10-08T17:24:33.0613225Z 
+2026-10-08T17:24:33.0613305Z ## simple_aggregation
+2026-10-08T17:24:33.0613582Z 
+2026-10-08T17:24:33.0613695Z ## materializing_aggregation
+2026-10-08T17:24:33.0613891Z 
+2026-10-08T17:24:33.0614022Z ## aggregation_spill_diagnostics
+2026-10-08T17:24:33.0614241Z 
+2026-10-08T17:24:33.0614343Z ## sort_limit
+2026-10-08T17:24:33.0614495Z 
+2026-10-08T17:24:33.0614615Z ## cursor_consumption
+2026-10-08T17:24:33.0614779Z 
+2026-10-08T17:24:33.0614896Z ## filter_selectivity
+2026-10-08T17:24:33.0615060Z 
+2026-10-08T17:24:33.0615176Z ## predicate_diagnostics
+2026-10-08T17:24:33.0615359Z 
+2026-10-08T17:24:33.0615440Z ## sort_shape_diagnostics
+2026-10-08T17:24:33.0615568Z 
+2026-10-08T17:24:34.0378522Z .................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................Executing <Task pending name='Task-12954' coro=<SQLiteOutboxTests.test_crashed_dispatch_is_replayed_after_lease_expiry() running at /home/runner/work/mongoeco/mongoeco/tests/unit/core/test_sqlite_outbox.py:1725> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/tasks.py:984, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:460> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 1.221 seconds
+2026-10-08T17:24:35.8618658Z ................................Executing <Task finished name='Task-13114' coro=<SQLiteOutboxTests.test_shared_file_serializes_dispatch_across_processes() done, defined at /home/runner/work/mongoeco/mongoeco/tests/unit/core/test_sqlite_outbox.py:1584> result=None created at /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/asyncio/runners.py:101> took 1.074 seconds
+2026-10-08T17:24:41.1525898Z ....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................s....unittest.case.FunctionTestCase (fail_preflight)
+2026-10-08T17:24:41.1530481Z real MongoDB preflight ... ERROR
+2026-10-08T17:24:41.1530712Z 
+2026-10-08T17:24:41.1530861Z ======================================================================
+2026-10-08T17:24:41.1531348Z ERROR: unittest.case.FunctionTestCase (fail_preflight)
+2026-10-08T17:24:41.1531756Z real MongoDB preflight
+2026-10-08T17:24:41.1532270Z ----------------------------------------------------------------------
+2026-10-08T17:24:41.1532563Z Traceback (most recent call last):
+2026-10-08T17:24:41.1539164Z   File "/home/runner/work/mongoeco/mongoeco/scripts/run_mongodb_real_differential.py", line 116, in fail_preflight
+2026-10-08T17:24:41.1539670Z     raise cause
+2026-10-08T17:24:41.1540077Z   File "/home/runner/work/mongoeco/mongoeco/scripts/run_mongodb_real_differential.py", line 109, in main
+2026-10-08T17:24:41.1540492Z     runtime = inspect_server_runtime(
+2026-10-08T17:24:41.1540779Z         os.environ["MONGOECO_REAL_MONGODB_URI"], parsed.target
+2026-10-08T17:24:41.1541044Z     )
+2026-10-08T17:24:41.1541407Z   File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/unittest/mock.py", line 1169, in __call__
+2026-10-08T17:24:41.1541804Z     return self._mock_call(*args, **kwargs)
+2026-10-08T17:24:41.1542261Z            ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+2026-10-08T17:24:41.1542660Z   File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/unittest/mock.py", line 1173, in _mock_call
+2026-10-08T17:24:41.1543059Z     return self._execute_mock_call(*args, **kwargs)
+2026-10-08T17:24:41.1543316Z            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+2026-10-08T17:24:41.1543802Z   File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/unittest/mock.py", line 1234, in _execute_mock_call
+2026-10-08T17:24:41.1544198Z     raise effect
+2026-10-08T17:24:41.1544403Z RuntimeError: cannot connect to real MongoDB
+2026-10-08T17:24:41.1544563Z 
+2026-10-08T17:24:41.1544699Z ----------------------------------------------------------------------
+2026-10-08T17:24:41.1544970Z Ran 1 test in 0.001s
+2026-10-08T17:24:41.1545084Z 
+2026-10-08T17:24:41.1545160Z FAILED (errors=1)
+2026-10-08T17:24:41.1548903Z .differential suite resolved to zero tests
+2026-10-08T17:24:41.1559988Z .unittest.case.FunctionTestCase (<lambda>) ... ok
+2026-10-08T17:24:41.1560282Z 
+2026-10-08T17:24:41.1560471Z ----------------------------------------------------------------------
+2026-10-08T17:24:41.1560893Z Ran 1 test in 0.000s
+2026-10-08T17:24:41.1561053Z 
+2026-10-08T17:24:41.1561164Z OK
+2026-10-08T17:24:41.1577827Z .unittest.case.FunctionTestCase (skipped) ... skipped 'connection failed after preflight'
+2026-10-08T17:24:41.1578655Z 
+2026-10-08T17:24:41.1578853Z ----------------------------------------------------------------------
+2026-10-08T17:24:41.1579261Z Ran 1 test in 0.000s
+2026-10-08T17:24:41.1579432Z 
+2026-10-08T17:24:41.1579540Z OK (skipped=1)
+2026-10-08T17:24:41.1596716Z .case filter matched no differential cases
+2026-10-08T17:25:12.0913755Z ...............................................................................................................................................................................................................................................................................................................
+2026-10-08T17:25:12.0914782Z ----------------------------------------------------------------------
+2026-10-08T17:25:12.0915241Z Ran 3596 tests in 104.610s
+2026-10-08T17:25:12.0915429Z 
+2026-10-08T17:25:12.0915540Z OK (skipped=2)
+2026-10-08T17:25:12.3265024Z ##[group]Run BASE_REF="$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^)"
+2026-10-08T17:25:12.3265495Z [36;1mBASE_REF="$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^)"[0m
+2026-10-08T17:25:12.3265886Z [36;1mpython scripts/check_lint_ratchet.py --base-ref "$BASE_REF"[0m
+2026-10-08T17:25:12.3323115Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:25:12.3323336Z env:
+2026-10-08T17:25:12.3323523Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:25:12.3323810Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:25:12.3324176Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:25:12.3324519Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:25:12.3324830Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:25:12.3325146Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:25:12.3325489Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:25:12.3325758Z ##[endgroup]
+2026-10-08T17:25:13.6065694Z lint ratchet passed for 81 changed Python files
+2026-10-08T17:25:13.6198350Z ##[group]Run python -m pytest -q
+2026-10-08T17:25:13.6198640Z [36;1mpython -m pytest -q[0m
+2026-10-08T17:25:13.6255079Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:25:13.6255291Z env:
+2026-10-08T17:25:13.6255470Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:25:13.6255748Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:25:13.6256111Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:25:13.6256455Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:25:13.6256769Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:25:13.6257069Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:25:13.6257379Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:25:13.6257657Z ##[endgroup]
+2026-10-08T17:25:18.3699244Z ................................. [  0%]
+2026-10-08T17:25:20.5495785Z ............................................ [  0%]
+2026-10-08T17:25:29.5021386Z ........................ [  1%]
+2026-10-08T17:25:35.1149012Z ...................................................................................................................................................... [  2%]
+2026-10-08T17:25:38.3522435Z .................................................................................. [  3%]
+2026-10-08T17:25:38.8048159Z ..................................................................................................................................... [  5%]
+2026-10-08T17:25:39.1681165Z ........................................................................ [  6%]
+2026-10-08T17:25:39.5338394Z ........................................................................ [  6%]
+2026-10-08T17:25:41.9235190Z .............................................................. [  7%]
+2026-10-08T17:25:47.1385691Z ................................................................ [  8%]
+2026-10-08T17:25:48.3407672Z ........................................................ [  8%]
+2026-10-08T17:25:50.8601553Z ........................................................................ [  9%]
+2026-10-08T17:25:51.2861714Z ........................................................................ [ 10%]
+2026-10-08T17:25:52.6831123Z ...................................................................................................................... [ 11%]
+2026-10-08T17:25:52.9072849Z ........................................................................ [ 12%]
+2026-10-08T17:25:53.1514054Z ........................................................................ [ 13%]
+2026-10-08T17:25:53.4087208Z ........................................................................ [ 14%]
+2026-10-08T17:25:53.8210874Z ........................................................................ [ 15%]
+2026-10-08T17:25:54.1074220Z ........................................................................ [ 15%]
+2026-10-08T17:25:54.3813220Z ........................................................................ [ 16%]
+2026-10-08T17:25:54.6560087Z ........................................................................ [ 17%]
+2026-10-08T17:25:54.8371419Z ........................................................................ [ 18%]
+2026-10-08T17:25:55.2673553Z ........................................................................ [ 19%]
+2026-10-08T17:25:55.9195407Z ........................ [ 19%]
+2026-10-08T17:25:56.5612971Z .......................................................................................................................... [ 20%]
+2026-10-08T17:25:56.8761710Z ........................................................................ [ 21%]
+2026-10-08T17:25:57.2046585Z ........................................................................ [ 22%]
+2026-10-08T17:25:57.5207686Z ........................................................................ [ 23%]
+2026-10-08T17:25:57.7610829Z ........................................................................ [ 24%]
+2026-10-08T17:26:02.6618712Z .................................. [ 24%]
+2026-10-08T17:26:02.9691008Z ........................................................................ [ 25%]
+2026-10-08T17:26:03.2403882Z ........................................................................ [ 26%]
+2026-10-08T17:26:03.5118277Z ........................................................................ [ 26%]
+2026-10-08T17:26:03.7936567Z ........................................................................ [ 27%]
+2026-10-08T17:26:04.0500743Z ........................................................................ [ 28%]
+2026-10-08T17:26:04.2426835Z ........................................................................ [ 29%]
+2026-10-08T17:26:04.4525403Z ........................................................................ [ 30%]
+2026-10-08T17:26:04.6898400Z ........................................................................ [ 30%]
+2026-10-08T17:26:04.9219957Z ........................................................................ [ 31%]
+2026-10-08T17:26:05.1809561Z ........................................................................ [ 32%]
+2026-10-08T17:26:05.4301387Z ........................................................................ [ 33%]
+2026-10-08T17:26:05.6786732Z ........................................................................ [ 34%]
+2026-10-08T17:26:05.9260714Z ........................................................................ [ 35%]
+2026-10-08T17:26:06.1584197Z ........................................................................ [ 35%]
+2026-10-08T17:26:06.3399472Z ........................................................................ [ 36%]
+2026-10-08T17:26:06.5209464Z ........................................................................ [ 37%]
+2026-10-08T17:26:06.7024472Z ........................................................................ [ 38%]
+2026-10-08T17:26:06.8921465Z ........................................................................ [ 39%]
+2026-10-08T17:26:07.1128349Z ........................................................................ [ 39%]
+2026-10-08T17:26:07.2960941Z ........................................................................ [ 40%]
+2026-10-08T17:26:07.4725231Z ........................................................................ [ 41%]
+2026-10-08T17:26:07.6674918Z ........................................................................ [ 42%]
+2026-10-08T17:26:07.9578250Z ........................................................................ [ 43%]
+2026-10-08T17:26:08.2362465Z ........................................................................ [ 43%]
+2026-10-08T17:26:08.4967308Z ........................................................................ [ 44%]
+2026-10-08T17:26:08.7363624Z ........................................................................ [ 45%]
+2026-10-08T17:26:08.9848108Z ........................................................................ [ 46%]
+2026-10-08T17:26:09.2316871Z ........................................................................ [ 47%]
+2026-10-08T17:26:09.4765995Z ........................................................................ [ 48%]
+2026-10-08T17:26:09.7208086Z ........................................................................ [ 48%]
+2026-10-08T17:26:09.9798294Z ........................................................................ [ 49%]
+2026-10-08T17:26:10.1800278Z ........................................................................ [ 50%]
+2026-10-08T17:26:10.4426329Z ........................................................................ [ 51%]
+2026-10-08T17:26:10.7232381Z ........................................................................ [ 52%]
+2026-10-08T17:26:10.9935240Z ........................................................................ [ 52%]
+2026-10-08T17:26:12.3795421Z ........................................................................ [ 53%]
+2026-10-08T17:26:19.0520335Z ........................................................................ [ 54%]
+2026-10-08T17:26:27.9944364Z .............................................................. [ 55%]
+2026-10-08T17:26:28.1969231Z ........................ [ 55%]
+2026-10-08T17:26:31.9688910Z .................................................................................. [ 56%]
+2026-10-08T17:26:32.6785838Z .......................... [ 56%]
+2026-10-08T17:26:34.5668555Z .......................................................................................... [ 57%]
+2026-10-08T17:26:55.3433977Z ............................................ [ 58%]
+2026-10-08T17:26:58.0393576Z ............................................................. [ 58%]
+2026-10-08T17:26:58.5281284Z ........................................................................................................................................................................... [ 60%]
+2026-10-08T17:26:59.4274751Z ........................................................................ [ 61%]
+2026-10-08T17:26:59.7785426Z ............................................................. [ 62%]
+2026-10-08T17:27:00.6357642Z ...................................................................... [ 63%]
+2026-10-08T17:27:00.6915182Z ........................................................................ [ 63%]
+2026-10-08T17:27:00.7367093Z .................................................................. [ 64%]
+2026-10-08T17:27:00.7848306Z .................................................. [ 65%]
+2026-10-08T17:27:01.0332919Z .................................................................................................................... [ 66%]
+2026-10-08T17:27:01.0869930Z ............................................................. [ 67%]
+2026-10-08T17:27:01.4999837Z .................................................................... [ 68%]
+2026-10-08T17:27:09.5561769Z ........................................s................................................................................... [ 69%]
+2026-10-08T17:27:09.7114343Z ........................................................................ [ 70%]
+2026-10-08T17:27:09.7528484Z ........................................................................ [ 71%]
+2026-10-08T17:27:11.1348452Z ........................................................................ [ 71%]
+2026-10-08T17:27:11.2954150Z ........................................................................ [ 72%]
+2026-10-08T17:27:11.4813241Z ........................................................................ [ 73%]
+2026-10-08T17:27:11.5656573Z .................................................................................................................... [ 74%]
+2026-10-08T17:27:11.6014367Z ................................................................. [ 75%]
+2026-10-08T17:27:11.6508252Z ........................................................................ [ 76%]
+2026-10-08T17:27:11.7655675Z .................................................................. [ 77%]
+2026-10-08T17:27:11.8185279Z ...................................................... [ 77%]
+2026-10-08T17:27:11.8800743Z ...................................................................................... [ 78%]
+2026-10-08T17:27:12.0380179Z ................................................................................................... [ 79%]
+2026-10-08T17:27:12.0731242Z .................................................................... [ 80%]
+2026-10-08T17:27:12.4543602Z ........................................................................ [ 81%]
+2026-10-08T17:27:12.9625752Z ........................................................................ [ 82%]
+2026-10-08T17:27:13.7025750Z ........................................................................ [ 83%]
+2026-10-08T17:27:14.0846924Z ........................................................................ [ 83%]
+2026-10-08T17:27:16.8974808Z ........................................................................................................................... [ 85%]
+2026-10-08T17:27:17.9853546Z ........................................................................ [ 86%]
+2026-10-08T17:27:18.2409112Z ........................................................................ [ 86%]
+2026-10-08T17:27:18.8601665Z ................................................................ [ 87%]
+2026-10-08T17:27:18.9410609Z ..................................................... [ 88%]
+2026-10-08T17:27:22.7699855Z ........................................................................ [ 88%]
+2026-10-08T17:27:23.5884229Z ..................................................................... [ 89%]
+2026-10-08T17:27:49.6150542Z ........................................................................ [ 90%]
+2026-10-08T17:27:53.7816021Z .......................................................... [ 91%]
+2026-10-08T17:27:58.8200721Z ........................................................................ [ 92%]
+2026-10-08T17:27:59.9422423Z ........................................................................ [ 92%]
+2026-10-08T17:28:04.8325307Z ........................................................................ [ 93%]
+2026-10-08T17:28:06.2664332Z ........................................................................ [ 94%]
+2026-10-08T17:28:06.5866887Z .................................................................... [ 95%]
+2026-10-08T17:28:06.9511493Z ....sssssssssssssssssssssssssssss.................................................. [ 96%]
+2026-10-08T17:28:07.1319502Z ........................................................................ [ 96%]
+2026-10-08T17:28:33.6365742Z ............................................................................ [ 97%]
+2026-10-08T17:28:37.1434554Z .................. [ 98%]
+2026-10-08T17:28:39.5205049Z ........................................................................ [ 98%]
+2026-10-08T17:28:39.5923565Z .................................................................... [ 99%]
+2026-10-08T17:28:40.1008122Z ................................                                       [100%]
+2026-10-08T17:28:40.1009026Z 8830 passed, 30 skipped, 3990 subtests passed in 205.35s (0:03:25)
+2026-10-08T17:28:40.9729898Z ##[group]Run python scripts/update_compat_snapshots.py
+2026-10-08T17:28:40.9730251Z [36;1mpython scripts/update_compat_snapshots.py[0m
+2026-10-08T17:28:40.9787150Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:28:40.9787368Z env:
+2026-10-08T17:28:40.9787543Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:28:40.9787821Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:40.9788176Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:28:40.9788513Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:40.9788820Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:40.9789127Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:40.9789435Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:28:40.9789719Z ##[endgroup]
+2026-10-08T17:28:42.0960538Z ##[group]Run cmp dist/compat-catalog-current/compat_catalog_exchange_snapshot.json tests/snapshots/compat-current/compat_catalog_exchange_snapshot.json
+2026-10-08T17:28:42.0962177Z [36;1mcmp dist/compat-catalog-current/compat_catalog_exchange_snapshot.json tests/snapshots/compat-current/compat_catalog_exchange_snapshot.json[0m
+2026-10-08T17:28:42.0963215Z [36;1mcmp dist/compat-catalog-current/compat_catalog_exchange_snapshot.md tests/snapshots/compat-current/compat_catalog_exchange_snapshot.md[0m
+2026-10-08T17:28:42.0963926Z [36;1mgit diff --exit-code -- tests/fixtures/compat_catalog_snapshot.json tests/fixtures/compat_catalog_snapshot.md[0m
+2026-10-08T17:28:42.1021725Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:28:42.1021945Z env:
+2026-10-08T17:28:42.1022287Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:28:42.1022571Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:42.1022955Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:28:42.1023307Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:42.1023615Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:42.1023924Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:42.1024226Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:28:42.1024492Z ##[endgroup]
+2026-10-08T17:28:42.1171697Z ##[group]Run python scripts/smoke_installed_wheel.py
+2026-10-08T17:28:42.1172184Z [36;1mpython scripts/smoke_installed_wheel.py[0m
+2026-10-08T17:28:42.1224094Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:28:42.1224305Z env:
+2026-10-08T17:28:42.1224484Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:28:42.1224766Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:42.1225121Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:28:42.1225457Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:42.1225786Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:42.1226107Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:28:42.1226412Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:28:42.1226678Z ##[endgroup]
+2026-10-08T17:28:45.0534813Z Requirement already satisfied: pip in /tmp/mongoeco-wheel-smoke-g2dfcxoe/lib/python3.13/site-packages (26.2.1)
+2026-10-08T17:28:45.4490669Z Processing ./dist/mongoeco-4.9.0-py3-none-any.whl (from mongoeco==4.9.0)
+2026-10-08T17:28:45.4594656Z Collecting cxp<6,>=5.0.0 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:45.4604340Z   Using cached cxp-5.0.0-py3-none-any.whl.metadata (4.2 kB)
+2026-10-08T17:28:45.4955421Z Collecting msgspec<1,>=0.20 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:45.5617840Z   Downloading msgspec-0.22.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (6.0 kB)
+2026-10-08T17:28:45.6785776Z Collecting pyuca<2,>=1.2 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:45.6794009Z   Using cached pyuca-1.2-py2.py3-none-any.whl.metadata (649 bytes)
+2026-10-08T17:28:45.8487151Z Collecting rpds-py<2027,>=0.27 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:45.8588467Z   Downloading rpds_py-2026.9.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2026-10-08T17:28:45.9085639Z Collecting shapely<3,>=2.1 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:45.9186404Z   Downloading shapely-2.2.0-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (6.7 kB)
+2026-10-08T17:28:46.1366743Z Collecting usearch<3,>=2.23 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.1473010Z   Downloading usearch-2.26.4-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (35 kB)
+2026-10-08T17:28:46.1785024Z Collecting jsonschema<5,>=4.26 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.1794372Z   Using cached jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+2026-10-08T17:28:46.1931565Z Collecting pytest<10,>=8 (from mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.1940930Z   Using cached pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+2026-10-08T17:28:46.2052253Z Collecting referencing<1,>=0.35 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.2061310Z   Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2026-10-08T17:28:46.2092412Z Collecting rfc8785<1,>=0.1.4 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.2100836Z   Using cached rfc8785-0.1.4-py3-none-any.whl.metadata (3.4 kB)
+2026-10-08T17:28:46.2154499Z Collecting attrs>=22.2.0 (from jsonschema<5,>=4.26->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.2163311Z   Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+2026-10-08T17:28:46.2208474Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5,>=4.26->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.2217545Z   Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2026-10-08T17:28:46.2269188Z Collecting iniconfig>=1.0.1 (from pytest<10,>=8->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.2366498Z   Downloading iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+2026-10-08T17:28:46.2438016Z Collecting packaging>=22 (from pytest<10,>=8->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.2446256Z   Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+2026-10-08T17:28:46.2486831Z Collecting pluggy<2,>=1.5 (from pytest<10,>=8->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.2495753Z   Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-10-08T17:28:46.2571557Z Collecting pygments>=2.7.2 (from pytest<10,>=8->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.2669019Z   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+2026-10-08T17:28:46.5056772Z Collecting numpy>=1.26 (from shapely<3,>=2.1->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.5158366Z   Downloading numpy-2.5.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-10-08T17:28:46.6039051Z Collecting tqdm (from usearch<3,>=2.23->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.6138395Z   Downloading tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+2026-10-08T17:28:46.6819147Z Collecting numkong (from usearch<3,>=2.23->mongoeco==4.9.0->mongoeco==4.9.0)
+2026-10-08T17:28:46.6926184Z   Downloading numkong-7.8.5.tar.gz (1.2 MB)
+2026-10-08T17:28:46.8615210Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 6.3 MB/s  0:00:00
+2026-10-08T17:28:46.9589070Z   Installing build dependencies: started
+2026-10-08T17:28:47.5273685Z   Installing build dependencies: finished with status 'done'
+2026-10-08T17:28:47.5279185Z   Getting requirements to build wheel: started
+2026-10-08T17:28:50.4536247Z   Getting requirements to build wheel: finished with status 'done'
+2026-10-08T17:28:50.4544007Z   Preparing metadata (pyproject.toml): started
+2026-10-08T17:28:52.2461772Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2026-10-08T17:28:52.2531818Z Using cached cxp-5.0.0-py3-none-any.whl (58 kB)
+2026-10-08T17:28:52.2540858Z Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-10-08T17:28:52.2654803Z Downloading msgspec-0.22.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (230 kB)
+2026-10-08T17:28:52.2687824Z Using cached pytest-9.1.1-py3-none-any.whl (386 kB)
+2026-10-08T17:28:52.2697539Z Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-10-08T17:28:52.2706252Z Using cached pyuca-1.2-py2.py3-none-any.whl (1.5 MB)
+2026-10-08T17:28:52.2718766Z Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-10-08T17:28:52.2727312Z Using cached rfc8785-0.1.4-py3-none-any.whl (9.2 kB)
+2026-10-08T17:28:52.2825104Z Downloading rpds_py-2026.9.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (370 kB)
+2026-10-08T17:28:52.2967667Z Downloading shapely-2.2.0-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (2.3 MB)
+2026-10-08T17:28:52.3285553Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 68.7 MB/s  0:00:00
+2026-10-08T17:28:52.3390511Z Downloading usearch-2.26.4-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (2.4 MB)
+2026-10-08T17:28:52.3605597Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.4/2.4 MB 106.5 MB/s  0:00:00
+2026-10-08T17:28:52.3616290Z Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-10-08T17:28:52.3713120Z Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+2026-10-08T17:28:52.3753315Z Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-10-08T17:28:52.3864169Z Downloading numpy-2.5.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+2026-10-08T17:28:52.5609692Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.7/16.7 MB 95.5 MB/s  0:00:00
+2026-10-08T17:28:52.5621066Z Using cached packaging-26.3-py3-none-any.whl (129 kB)
+2026-10-08T17:28:52.5721733Z Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-10-08T17:28:52.5777528Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 279.5 MB/s  0:00:00
+2026-10-08T17:28:52.5876258Z Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+2026-10-08T17:28:52.6411391Z Building wheels for collected packages: numkong
+2026-10-08T17:28:52.6417878Z   Building wheel for numkong (pyproject.toml): started
+2026-10-08T17:30:01.0010771Z   Building wheel for numkong (pyproject.toml): still running...
+2026-10-08T17:31:09.9496615Z   Building wheel for numkong (pyproject.toml): still running...
+2026-10-08T17:31:23.3472233Z   Building wheel for numkong (pyproject.toml): finished with status 'done'
+2026-10-08T17:31:23.3546591Z   Created wheel for numkong: filename=numkong-7.8.5-cp313-cp313-linux_x86_64.whl size=10265024 sha256=985af3b4ab95cb9bdba9f3fa11b3d8ac97547521942bcafb9e60e5da290a587e
+2026-10-08T17:31:23.3547786Z   Stored in directory: /home/runner/.cache/pip/wheels/f0/3b/14/aaa508db4b87d52511eb952769d70c3693e1f7589a50c943fb
+2026-10-08T17:31:23.3589364Z Successfully built numkong
+2026-10-08T17:31:23.3990294Z Installing collected packages: pyuca, tqdm, rpds-py, rfc8785, pygments, pluggy, packaging, numpy, numkong, msgspec, iniconfig, attrs, usearch, shapely, referencing, pytest, cxp, jsonschema-specifications, jsonschema, mongoeco
+2026-10-08T17:31:27.0993912Z 
+2026-10-08T17:31:27.1015711Z Successfully installed attrs-26.1.0 cxp-5.0.0 iniconfig-2.3.1 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mongoeco-4.9.0 msgspec-0.22.0 numkong-7.8.5 numpy-2.5.3 packaging-26.3 pluggy-1.6.0 pygments-2.21.0 pytest-9.1.1 pyuca-1.2 referencing-0.37.0 rfc8785-0.1.4 rpds-py-2026.9.1 shapely-2.2.0 tqdm-4.70.1 usearch-2.26.4
+2026-10-08T17:31:27.8896000Z version 4.9.0
+2026-10-08T17:31:27.8896618Z module /tmp/mongoeco-wheel-smoke-g2dfcxoe/lib/python3.13/site-packages/mongoeco/__init__.py
+2026-10-08T17:31:27.8897198Z unicode_collation True
+2026-10-08T17:31:27.8897509Z find_one {'_id': '1', 'kind': 'view', 'count': 1}
+2026-10-08T17:31:27.8897893Z docs [{'_id': '1', 'kind': 'view', 'count': 1}]
+2026-10-08T17:31:28.3503789Z PASS mongoeco.engines:MemoryEngine [spi-v2] passed=4, failed=0, error=0, not-applicable=0
+2026-10-08T17:31:28.5978485Z ##[group]Run python scripts/smoke_installed_wheel.py --sdist
+2026-10-08T17:31:28.5978866Z [36;1mpython scripts/smoke_installed_wheel.py --sdist[0m
+2026-10-08T17:31:28.6035147Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:31:28.6035359Z env:
+2026-10-08T17:31:28.6035532Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-08T17:31:28.6035814Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:31:28.6036156Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-08T17:31:28.6036489Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:31:28.6036796Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:31:28.6037092Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-08T17:31:28.6037393Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-08T17:31:28.6037667Z ##[endgroup]
+2026-10-08T17:31:30.9401629Z Requirement already satisfied: pip in /tmp/mongoeco-sdist-smoke-hdcr8el0/lib/python3.13/site-packages (26.2.1)
+2026-10-08T17:31:31.2755065Z Processing ./dist/mongoeco-4.9.0.tar.gz
+2026-10-08T17:31:31.3378493Z   Installing build dependencies: started
+2026-10-08T17:31:32.1623481Z   Installing build dependencies: finished with status 'done'
+2026-10-08T17:31:32.1628267Z   Getting requirements to build wheel: started
+2026-10-08T17:31:32.5670491Z   Getting requirements to build wheel: finished with status 'done'
+2026-10-08T17:31:32.5677833Z   Preparing metadata (pyproject.toml): started
+2026-10-08T17:31:32.7371317Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2026-10-08T17:31:32.7468729Z Collecting cxp<6,>=5.0.0 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0)
+2026-10-08T17:31:32.7478661Z   Using cached cxp-5.0.0-py3-none-any.whl.metadata (4.2 kB)
+2026-10-08T17:31:32.7829728Z Collecting msgspec<1,>=0.20 (from mongoeco==4.9.0)
+2026-10-08T17:31:32.7840356Z   Using cached msgspec-0.22.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (6.0 kB)
+2026-10-08T17:31:32.7873325Z Collecting pyuca<2,>=1.2 (from mongoeco==4.9.0)
+2026-10-08T17:31:32.7882288Z   Using cached pyuca-1.2-py2.py3-none-any.whl.metadata (649 bytes)
+2026-10-08T17:31:32.9606044Z Collecting rpds-py<2027,>=0.27 (from mongoeco==4.9.0)
+2026-10-08T17:31:32.9617159Z   Using cached rpds_py-2026.9.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2026-10-08T17:31:33.0098216Z Collecting shapely<3,>=2.1 (from mongoeco==4.9.0)
+2026-10-08T17:31:33.0109430Z   Using cached shapely-2.2.0-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (6.7 kB)
+2026-10-08T17:31:33.2158441Z Collecting usearch<3,>=2.23 (from mongoeco==4.9.0)
+2026-10-08T17:31:33.2170087Z   Using cached usearch-2.26.4-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (35 kB)
+2026-10-08T17:31:33.2284044Z Collecting jsonschema<5,>=4.26 (from mongoeco==4.9.0)
+2026-10-08T17:31:33.2293457Z   Using cached jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+2026-10-08T17:31:33.2434712Z Collecting pytest<10,>=8 (from mongoeco==4.9.0)
+2026-10-08T17:31:33.2444338Z   Using cached pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+2026-10-08T17:31:33.2556365Z Collecting referencing<1,>=0.35 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0)
+2026-10-08T17:31:33.2565763Z   Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2026-10-08T17:31:33.2596774Z Collecting rfc8785<1,>=0.1.4 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0)
+2026-10-08T17:31:33.2605703Z   Using cached rfc8785-0.1.4-py3-none-any.whl.metadata (3.4 kB)
+2026-10-08T17:31:33.2659357Z Collecting attrs>=22.2.0 (from jsonschema<5,>=4.26->mongoeco==4.9.0)
+2026-10-08T17:31:33.2668600Z   Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+2026-10-08T17:31:33.2714306Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5,>=4.26->mongoeco==4.9.0)
+2026-10-08T17:31:33.2723689Z   Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2026-10-08T17:31:33.2776300Z Collecting iniconfig>=1.0.1 (from pytest<10,>=8->mongoeco==4.9.0)
+2026-10-08T17:31:33.2785444Z   Using cached iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+2026-10-08T17:31:33.2841971Z Collecting packaging>=22 (from pytest<10,>=8->mongoeco==4.9.0)
+2026-10-08T17:31:33.2851748Z   Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+2026-10-08T17:31:33.2893668Z Collecting pluggy<2,>=1.5 (from pytest<10,>=8->mongoeco==4.9.0)
+2026-10-08T17:31:33.2902559Z   Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-10-08T17:31:33.2979710Z Collecting pygments>=2.7.2 (from pytest<10,>=8->mongoeco==4.9.0)
+2026-10-08T17:31:33.2989034Z   Using cached pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+2026-10-08T17:31:33.4286402Z Collecting numpy>=1.26 (from shapely<3,>=2.1->mongoeco==4.9.0)
+2026-10-08T17:31:33.4297853Z   Using cached numpy-2.5.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-10-08T17:31:33.4462270Z Collecting tqdm (from usearch<3,>=2.23->mongoeco==4.9.0)
+2026-10-08T17:31:33.4471701Z   Using cached tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+2026-10-08T17:31:33.5117939Z Collecting numkong (from usearch<3,>=2.23->mongoeco==4.9.0)
+2026-10-08T17:31:33.5118480Z   Using cached numkong-7.8.5-cp313-cp313-linux_x86_64.whl
+2026-10-08T17:31:33.5201952Z Using cached cxp-5.0.0-py3-none-any.whl (58 kB)
+2026-10-08T17:31:33.5210941Z Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-10-08T17:31:33.5220151Z Using cached msgspec-0.22.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (230 kB)
+2026-10-08T17:31:33.5228649Z Using cached pytest-9.1.1-py3-none-any.whl (386 kB)
+2026-10-08T17:31:33.5238083Z Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-10-08T17:31:33.5246870Z Using cached pyuca-1.2-py2.py3-none-any.whl (1.5 MB)
+2026-10-08T17:31:33.5259455Z Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-10-08T17:31:33.5268018Z Using cached rfc8785-0.1.4-py3-none-any.whl (9.2 kB)
+2026-10-08T17:31:33.5276941Z Using cached rpds_py-2026.9.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (370 kB)
+2026-10-08T17:31:33.5286585Z Using cached shapely-2.2.0-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (2.3 MB)
+2026-10-08T17:31:33.5301534Z Using cached usearch-2.26.4-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (2.4 MB)
+2026-10-08T17:31:33.5316367Z Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-10-08T17:31:33.5325325Z Using cached iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+2026-10-08T17:31:33.5334020Z Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-10-08T17:31:33.5342628Z Using cached numpy-2.5.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+2026-10-08T17:31:33.5406640Z Using cached packaging-26.3-py3-none-any.whl (129 kB)
+2026-10-08T17:31:33.5415602Z Using cached pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-10-08T17:31:33.5427548Z Using cached tqdm-4.70.1-py3-none-any.whl (80 kB)
+2026-10-08T17:31:33.5958827Z Building wheels for collected packages: mongoeco
+2026-10-08T17:31:33.5965594Z   Building wheel for mongoeco (pyproject.toml): started
+2026-10-08T17:31:33.9713552Z   Building wheel for mongoeco (pyproject.toml): finished with status 'done'
+2026-10-08T17:31:33.9723474Z   Created wheel for mongoeco: filename=mongoeco-4.9.0-py3-none-any.whl size=758515 sha256=5233cf540b0338ca1e7735334264117ab781a65183bf7cab3a6aad9003fa46d0
+2026-10-08T17:31:33.9724687Z   Stored in directory: /home/runner/.cache/pip/wheels/77/a7/ed/bb7f887ac3c4f6c3d8a994f8ac0b302aafe6f47c8c9c5ae058
+2026-10-08T17:31:33.9756373Z Successfully built mongoeco
+2026-10-08T17:31:34.0168775Z Installing collected packages: pyuca, tqdm, rpds-py, rfc8785, pygments, pluggy, packaging, numpy, numkong, msgspec, iniconfig, attrs, usearch, shapely, referencing, pytest, cxp, jsonschema-specifications, jsonschema, mongoeco
+2026-10-08T17:31:38.0109223Z 
+2026-10-08T17:31:38.0129203Z Successfully installed attrs-26.1.0 cxp-5.0.0 iniconfig-2.3.1 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mongoeco-4.9.0 msgspec-0.22.0 numkong-7.8.5 numpy-2.5.3 packaging-26.3 pluggy-1.6.0 pygments-2.21.0 pytest-9.1.1 pyuca-1.2 referencing-0.37.0 rfc8785-0.1.4 rpds-py-2026.9.1 shapely-2.2.0 tqdm-4.70.1 usearch-2.26.4
+2026-10-08T17:31:38.6881920Z version 4.9.0
+2026-10-08T17:31:38.6883471Z module /tmp/mongoeco-sdist-smoke-hdcr8el0/lib/python3.13/site-packages/mongoeco/__init__.py
+2026-10-08T17:31:38.6884047Z unicode_collation True
+2026-10-08T17:31:38.6884340Z find_one {'_id': '1', 'kind': 'view', 'count': 1}
+2026-10-08T17:31:38.6884708Z docs [{'_id': '1', 'kind': 'view', 'count': 1}]
+2026-10-08T17:31:39.1393053Z PASS mongoeco.engines:MemoryEngine [spi-v2] passed=4, failed=0, error=0, not-applicable=0
+2026-10-08T17:31:39.2867630Z Post job cleanup.
+2026-10-08T17:31:39.4035488Z Post job cleanup.
+2026-10-08T17:31:39.4742464Z [command]/usr/bin/git version
+2026-10-08T17:31:39.4779273Z git version 2.55.0
+2026-10-08T17:31:39.4809895Z Temporarily overriding HOME='/home/runner/work/_temp/5a7bb3e7-1cb6-4bd9-8f03-5c6770afc0da' before making global git config changes
+2026-10-08T17:31:39.4811104Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-08T17:31:39.4815083Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mongoeco/mongoeco
+2026-10-08T17:31:39.4848427Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-08T17:31:39.4878135Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-08T17:31:39.5094003Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-08T17:31:39.5120661Z http.https://github.com/.extraheader
+2026-10-08T17:31:39.5131829Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-08T17:31:39.5167694Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-08T17:31:39.5386960Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-08T17:31:39.5423771Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-08T17:31:39.5779039Z Cleaning up orphan processes
+2026-10-08T17:31:39.6040137Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

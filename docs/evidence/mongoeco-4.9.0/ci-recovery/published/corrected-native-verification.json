@@ -1,0 +1,103 @@
+{
+  "run": 37814245488,
+  "commit": "7612872b5052c25de223825cd881445cc6f106f1",
+  "installation": "source build; final tag workflow must repeat with immutable release wheel",
+  "servers": [
+    {
+      "server": "7.0.43",
+      "fcv": "7.0",
+      "sdk": "4.18.2",
+      "required_parity_tests": 29,
+      "unexpected_skips": 0,
+      "capture_cases": {
+        "review": 72,
+        "version-deltas": 154,
+        "semantic-guarantees": 54,
+        "index-guarantees": 4
+      },
+      "all_compared_fields": "equal",
+      "sha256": {
+        "review": {
+          "capture": "fdd2d7af8edb5582131e6674703df39df1cbb40cfa6ddf852961b699ac1951f0",
+          "fixture": "977e833d32b2b6837be9b692618dca9ed567ed88f64f878ae27b04605f78e531"
+        },
+        "version-deltas": {
+          "capture": "7fc8915992e0cab7a4112d1de342a7d9a250408fa036dedf7d417c875a29232e",
+          "fixture": "08248368f08b7740cd7e73942efb56a88b0ad63ce4989ec3d6abf43bfe0df6f5"
+        },
+        "semantic-guarantees": {
+          "capture": "9a3ce50fdf2a0841325ed2dc7ef4a628e62bfe63a147ef4ee6da4ee14fe35095",
+          "fixture": "1e47b929637905dd67e5b2a124cbbb9a24b149e863ae62bd968e29faeb620c24"
+        },
+        "index-guarantees": {
+          "capture": "f6bf92a6c8c6ce71d502c7c2edd32a71499514c1a01c2aaeb806a1b515df79b4",
+          "fixture": "76b92a0dacac68b705173c9545e55cd4295d07c968cfca94f3971fc9fae21cf2"
+        }
+      }
+    },
+    {
+      "server": "8.0.32",
+      "fcv": "8.0",
+      "sdk": "4.18.2",
+      "required_parity_tests": 29,
+      "unexpected_skips": 0,
+      "capture_cases": {
+        "review": 72,
+        "version-deltas": 154,
+        "semantic-guarantees": 54,
+        "index-guarantees": 4
+      },
+      "all_compared_fields": "equal",
+      "sha256": {
+        "review": {
+          "capture": "f17c74ac0b507a2e5738f2e16cd072067f09811d8b33089f05422417a12b5728",
+          "fixture": "0937c54cc8da5bde997cf1e24ab9bfda73f8ee6d79209f9f8817de66aa6cef09"
+        },
+        "version-deltas": {
+          "capture": "543e466377f756899f0d3c2d61472b97975b6c0d2c1cd6826fc24f9dd12be2b3",
+          "fixture": "803ca8a4e0a0c8916c4a540087db81e81355c96f30eee5b3bc461b89466aab94"
+        },
+        "semantic-guarantees": {
+          "capture": "1a12a9929c015f6ef62e887b3a049495e6144cdfa89edb567e2c52d6f8c44454",
+          "fixture": "a2fcd3077df924d1b88bbea9f76694ce90183a60915aeff3b59ccbdbba850d3a"
+        },
+        "index-guarantees": {
+          "capture": "fd81de3f4b48b4af7c490784ca6a02f71dc2b445d454332103c365da28b672d6",
+          "fixture": "8810afafc5ba294cee33c486451a758e7b7d6d0be6472c2a8b5aa087933655d1"
+        }
+      }
+    },
+    {
+      "server": "9.0.2",
+      "fcv": "9.0",
+      "sdk": "4.18.2",
+      "required_parity_tests": 29,
+      "unexpected_skips": 0,
+      "capture_cases": {
+        "review": 72,
+        "version-deltas": 154,
+        "semantic-guarantees": 54,
+        "index-guarantees": 4
+      },
+      "all_compared_fields": "equal",
+      "sha256": {
+        "review": {
+          "capture": "887e8e95cd340b505eb038dabf22cf5f01ae6fdf6f0eb7ee7df6ad26da86adf7",
+          "fixture": "72f90b3910c351f6f007d0fb65fe5522b484cd1f79647fbed698866ec8b5119f"
+        },
+        "version-deltas": {
+          "capture": "d8af89105242afdb8460fdebbfc35d75070d5ece00aa892de9acb0546ead1822",
+          "fixture": "3298aed8786419c74db7a3a3226ea92d81ca9343b0a5f0d269e61224f2e0283b"
+        },
+        "semantic-guarantees": {
+          "capture": "356e439badd48b28a6d4086882d9014ffb7591c3cb594e5fc9f2928fc8036b3e",
+          "fixture": "5fa54b16856656aa924ab812cb350eb470de1df9954437c9a5b39c39ef23d5bd"
+        },
+        "index-guarantees": {
+          "capture": "32cc131fa0e831c65c6f8c2827db0d3936ea49d67d6360feab4bd0df13d03cb2",
+          "fixture": "3f2d312576513bc84f1c3e46dc90a71a87f9d4900498efc7424439b19174bc52"
+        }
+      }
+    }
+  ]
+}

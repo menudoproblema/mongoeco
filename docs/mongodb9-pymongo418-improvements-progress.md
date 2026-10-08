@@ -1,11 +1,12 @@
-# Preparación de Mongoeco 4.9.0: MongoDB 9.0 / PyMongo 4.18
+# Entrega de Mongoeco 4.9.0: MongoDB 9.0 / PyMongo 4.18
 
-Estado vigente: **recuperación de la entrega 4.9.0 tras la primera CI**. Contrato autorizado:
+Estado vigente: **4.9.0 publicada en PyPI y verificada**. Contrato autorizado:
 objetivo attachment `4896c5fd-4c6a-4dde-bb8e-f048d2d5c82b`, catorce bloques.
 Este registro acredita el cierre técnico anterior a los commits. El encargo
 posterior autoriza consolidar la release, commits semánticos y la etiqueta
-local `v4.9.0`; su estado se recoge en [release-4.9.0.md](release-4.9.0.md).
-La publicación sigue siendo posterior. Este registro conserva los antecedentes
+local `v4.9.0` y después la entrega remota y recuperación de esa misma versión;
+su estado se recoge en [release-4.9.0.md](release-4.9.0.md).
+Este registro conserva los antecedentes
 inferiores; sus cierres y artefactos 4.8.1 no acreditan 4.9.0.
 
 ## Recuperación de la entrega
@@ -36,13 +37,33 @@ La publicación requiere explícitamente el job de perfiles PyMongo, además de
 build, imports mínimos, tests y matriz diferencial. No se eliminan gates ni
 se convierten errores de red o servidores en éxitos.
 
-La versión y el código del paquete permanecen en `4.9.0`. La CI corregida y
-los artefactos finales siguen pendientes antes de sustituir la etiqueta
-compartida y publicar. Los recibos del candidato original se conservan como
-antecedentes; la evidencia nueva se guarda por separado en
-`docs/evidence/mongoeco-4.9.0/ci-recovery/`.
+La [CI corregida de main](https://github.com/menudoproblema/mongoeco/actions/runs/37814220661)
+y el [preflight nativo](https://github.com/menudoproblema/mongoeco/actions/runs/37814245488)
+pasaron sobre `7612872b5052c25de223825cd881445cc6f106f1`. Tras autorización
+directa se sustituyó la etiqueta compartida, con lease sobre su objeto
+original; el nuevo objeto anotado es
+`dbe2eea4b2d5c1efb1634e9dec678b5e41156378`. La
+[CI final de etiqueta](https://github.com/menudoproblema/mongoeco/actions/runs/37816027502)
+repitió todos los gates, incluidos 29 casos obligatorios y 284 capturas por
+servidor contra el wheel inmutable, y publicó mediante OIDC. Pasaron 8.830
+pruebas, 30 skips esperados y 3.990 subtests en Python 3.13 y 3.14, cobertura
+99,01 % y nueve propiedades deep. Los cinco SDK pasaron como dependencia
+obligatoria de publicación.
 
-Base efectiva: `aa626c51fea8a055510f89a2acf2f8ed1ce33761`; última release
+La [verificación desde PyPI](evidence/mongoeco-4.9.0/ci-recovery/published/published-verification.json)
+comprueba hashes de wheel/sdist y bytes descargados contra los artefactos del
+tag, instalación limpia sin constraints internas ni imports del checkout,
+pip check core/extras, manifiesto exacto, contratos y ambos engines/fachadas.
+El extra `mongodb9` resolvió PyMongo 4.18.2; el perfil core de conformance pasó
+cuatro casos en cada engine. La primera instalación se intentó antes de que
+el índice simple propagase la versión; su fallo se conserva, y una instalación
+en otro entorno limpio pasó después de observar ambos archivos en ese índice.
+Las 431 caracterizaciones sin consumidor efectivo permanecen excluidas de
+paridad. El código del paquete, las dependencias y los goldens son idénticos
+al candidato original. Los recibos históricos se conservan; la entrega final
+se registra por separado en `docs/evidence/mongoeco-4.9.0/ci-recovery/published/`.
+
+Antecedente del cierre técnico: base `aa626c51fea8a055510f89a2acf2f8ed1ce33761`; release previa
 `v4.8.1` (`ad90d846`). Workset inicial: 777 archivos, manifest SHA-256
 `b99e89a7219c2f54abc2ab8f6f053e62b9078e18d789a5418ff9cca0681dab93`.
 Identidades, copia del diff y censo fresco en `/private/tmp/mongoeco-490-20261008`.

@@ -3,10 +3,13 @@
 Fecha: 8 de octubre de 2026. Release menor de compatibilidad y correcciones
 sobre Mongoeco 4.8.1.
 
-Estado: en recuperación de la entrega. La primera etiqueta `v4.9.0` se envió
-al remoto; su CI bloqueó correctamente la publicación. La versión permanece
-en `4.9.0`. El [registro de recuperación](mongodb9-pymongo418-improvements-progress.md#recuperación-de-la-entrega)
-separa esa ejecución de las verificaciones de la corrección.
+Estado: **publicada y verificada en [PyPI](https://pypi.org/project/mongoeco/4.9.0/)**.
+La etiqueta `v4.9.0` identifica el commit
+`7612872b5052c25de223825cd881445cc6f106f1`. La
+[CI de entrega](https://github.com/menudoproblema/mongoeco/actions/runs/37816027502)
+pasó todos los gates requeridos antes de publicar. El
+[registro de recuperación](mongodb9-pymongo418-improvements-progress.md#recuperación-de-la-entrega)
+conserva la primera ejecución fallida y la sustitución autorizada de la etiqueta.
 
 ## Alcance y selección
 
@@ -89,8 +92,16 @@ filas; 431 caracterizaciones siguen excluidas de paridad y no se anuncian como
 capacidades protegidas. Los servicios propios se cerraron sin bases de prueba
 restantes. La primera CI alojada pasó build, perfiles SDK, imports mínimos y
 ambas versiones de Python, pero falló la comparación de capturas semánticas
-en MongoDB 8/9 por el orden de enumeración de tipos BSON. Sus resultados no
-acreditan el commit de recuperación; este requiere su propia CI verde.
+en MongoDB 8/9 por el orden de enumeración de tipos BSON. La CI de entrega
+del commit corregido pasó 8.830 pruebas, 30 skips esperados y 3.990 subtests
+en cada versión de Python, con cobertura 99,01 % y nueve propiedades deep.
+La matriz requerida repitió los 29 casos de paridad y las 284 capturas por
+servidor contra el wheel inmutable, con FCV exacta y sin skips inesperados.
+La [evidencia de publicación](evidence/mongoeco-4.9.0/ci-recovery/published/published-verification.json)
+añade descarga desde PyPI, identidad de artefactos, instalación limpia sin
+constraints internas, contrato público, manifests, ambos engines/fachadas y
+conformance del perfil core. Esa evidencia separa los gates del artefacto
+publicado de los antecedentes locales.
 
 La [comparación de rendimiento](evidence/mongoeco-4.9.0/performance-final-summary.json)
 usa el wheel publicado 4.8.1, harness y dependencias equivalentes, calentamiento
@@ -100,22 +111,36 @@ agrupadas, SQLite mostró +3,9 % de mediana de tiempo real y CPU prácticamente
 igual. No se afirma una mejora general ni ausencia global de regresiones.
 El RSS muestreado tampoco acredita un límite de memoria.
 
-## Artefactos y preparación Git
+## Artefactos y entrega Git
 
 Los cambios se agrupan en commits semánticos de implementación, CI,
 documentación y preparación de 4.9.0. La versión canónica reside en
 `src/mongoeco/_version.py`; metadata dinámica, lock y changelog quedan alineados.
 
-El wheel y sdist reconstruidos desde el commit de release se conservan en
-`dist/4.9.0-release/`. `SHA256SUMS` y `release-verification.json` identifican
-commit, epoch, builds reproducibles, equivalencia del código probado y smokes
-de instalación. El cierre técnico y sus hashes anteriores se conservan como
-antecedentes; la nueva identidad de distribución no se presenta como una nueva
-ejecución de las suites completas.
+Los dos builds locales, la CI previa de `main`, la CI de la etiqueta y los
+archivos descargados de PyPI producen la misma pareja de artefactos:
 
-Enviar `v4.9.0` activa el workflow de publicación. Antes de enviarla, comprobar
-el Trusted Publisher vigente de PyPI: owner `menudoproblema`, repositorio
-`mongoeco`, workflow `ci.yml`, environment `pypi`. La publicación OIDC de 4.8.1
-está [acreditada](release-4.8.1.md); en esta sesión no hay acceso autenticado a
-la configuración privada actual de PyPI. Esa comprobación y los gates alojados
-pertenecen a la entrega remota posterior.
+| Artefacto | SHA-256 |
+| --- | --- |
+| `mongoeco-4.9.0-py3-none-any.whl` | `4214ea98d80389929a43e0f59177c3fc88535f93cb6be16178f911a64df42d3f` |
+| `mongoeco-4.9.0.tar.gz` | `ad940c391dccb2ce6262257da99c1d59283bba3aa09e6dfb8b51956306705e85` |
+
+La publicación promovió los artefactos comprobados sin reconstruirlos. Los
+273 archivos del paquete y los requisitos de dependencias son idénticos al
+candidato técnico original. `dist/4.9.0-recovery/` conserva los builds y el
+recibo consolidado; `dist/4.9.0-release/` conserva la pareja anterior fallida.
+Los hashes y recibos históricos no se reescriben.
+
+La etiqueta anotada final tiene el objeto
+`dbe2eea4b2d5c1efb1634e9dec678b5e41156378`. Sustituyó con autorización directa
+el objeto `6454a429ebeda70aa7b4a5a074962ce91f437513`, que apuntaba a
+`d85c4b7de313028b709cde2fce4cb89dae80d513`, usando un lease sobre ese objeto.
+Se conserva el original en la referencia local
+`refs/codex/recovery/v4.9.0-original` y en la evidencia histórica.
+
+Trusted Publishing OIDC terminó correctamente para owner `menudoproblema`,
+repositorio `mongoeco`, workflow `ci.yml` y environment `pypi`. No hubo lectura
+autenticada de la configuración privada de PyPI; el resultado de publicación
+y los hashes oficiales acreditan la entrega efectiva. El primer intento de
+instalación encontró el índice simple aún sin propagar; después de comprobar
+que anunciaba ambos archivos, una instalación en otro entorno limpio pasó.

@@ -1,0 +1,40 @@
+
+Running tests...
+----------------------------------------------------------------------
+  test_aggregate_facet_shapes_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_facet_shapes_matches_real_mongodb) ... ok (0.034s)
+  test_aggregate_foreign_stats_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_foreign_stats_matches_real_mongodb) ... ok (0.061s)
+  test_aggregate_get_field_literal_name_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_get_field_literal_name_matches_real_mongodb) ... ok (0.021s)
+  test_aggregate_group_collection_references_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_group_collection_references_matches_real_mongodb) ... ok (0.050s)
+  test_aggregate_group_shapes_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_group_shapes_matches_real_mongodb) ... ok (0.029s)
+  test_aggregate_lookup_shapes_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_lookup_shapes_matches_real_mongodb) ... ok (0.040s)
+  test_aggregate_merge_writeback_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_merge_writeback_matches_real_mongodb) ... ok (0.043s)
+  test_aggregate_pipeline_validation_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_pipeline_validation_matches_real_mongodb) ... ok (0.054s)
+  test_aggregate_project_array_traversal_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_project_array_traversal_matches_real_mongodb) ... ok (0.024s)
+  test_aggregate_project_shapes_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_project_shapes_matches_real_mongodb) ... ok (0.027s)
+  test_aggregate_replace_root_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_replace_root_matches_real_mongodb) ... ok (0.027s)
+  test_aggregate_replace_with_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_replace_with_matches_real_mongodb) ... ok (0.027s)
+  test_aggregate_semantic_collation_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_semantic_collation_matches_real_mongodb) ... ok (0.154s)
+  test_aggregate_set_add_fields_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_set_add_fields_matches_real_mongodb) ... ok (0.027s)
+  test_aggregate_union_with_shapes_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_union_with_shapes_matches_real_mongodb) ... ok (0.040s)
+  test_aggregate_unset_shapes_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_unset_shapes_matches_real_mongodb) ... ok (0.026s)
+  test_aggregate_unwind_fanout_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_aggregate_unwind_fanout_matches_real_mongodb) ... ok (0.026s)
+  test_boolean_filter_matrix_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_boolean_filter_matrix_matches_real_mongodb) ... ok (0.101s)
+  test_find_all_with_multiple_elem_match_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_find_all_with_multiple_elem_match_matches_real_mongodb) ... ok (0.025s)
+  test_find_expr_compare_fields_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_find_expr_compare_fields_matches_real_mongodb) ... ok (0.022s)
+  test_find_expr_truthiness_array_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_find_expr_truthiness_array_matches_real_mongodb) ... ok (0.025s)
+  test_find_implicit_regex_literal_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_find_implicit_regex_literal_matches_real_mongodb) ... ok (0.022s)
+  test_find_in_with_regex_literals_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_find_in_with_regex_literals_matches_real_mongodb) ... ok (0.023s)
+  test_find_subdocument_order_sensitive_equality_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_find_subdocument_order_sensitive_equality_matches_real_mongodb) ... ok (0.022s)
+  test_insert_rejects_root_array_id_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_insert_rejects_root_array_id_matches_real_mongodb) ... ok (0.006s)
+  test_update_add_to_set_document_order_sensitive_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_update_add_to_set_document_order_sensitive_matches_real_mongodb) ... ok (0.023s)
+  test_update_pipeline_project_preserves_id_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_update_pipeline_project_preserves_id_matches_real_mongodb) ... ok (0.023s)
+  test_update_pipeline_rejects_id_change_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_update_pipeline_rejects_id_change_matches_real_mongodb) ... ok (0.020s)
+  test_update_set_on_insert_id_matches_filter_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_update_set_on_insert_id_matches_filter_matches_real_mongodb) ... ok (0.020s)
+
+----------------------------------------------------------------------
+Ran 29 tests in 1.048s
+
+OK
+
+Generating XML reports...
+Generated XML report: artifacts/8.0/junit/TEST-tests.differential.mongodb8_real_parity.MongoDB8RealParityTests-20261008172329.xml

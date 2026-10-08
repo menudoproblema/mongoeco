@@ -1,0 +1,449 @@
+﻿2026-10-08T17:31:45.8456292Z Current runner version: '2.337.0'
+2026-10-08T17:31:45.8474342Z ##[group]Runner Image Provisioner
+2026-10-08T17:31:45.8475018Z Hosted Compute Agent
+2026-10-08T17:31:45.8475471Z Version: 20261002.596
+2026-10-08T17:31:45.8475909Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+2026-10-08T17:31:45.8476399Z Build Date: 2026-10-02T22:28:27Z
+2026-10-08T17:31:45.8476924Z Worker ID: {90bbe53f-30f0-4b7f-b46e-ec694ef732ea}
+2026-10-08T17:31:45.8477420Z Region: centralus
+2026-10-08T17:31:45.8477811Z Cloud: Azure
+2026-10-08T17:31:45.8478227Z ##[endgroup]
+2026-10-08T17:31:45.8479327Z ##[group]Operating System
+2026-10-08T17:31:45.8479805Z Ubuntu
+2026-10-08T17:31:45.8480169Z 24.04.5
+2026-10-08T17:31:45.8480531Z LTS
+2026-10-08T17:31:45.8480901Z ##[endgroup]
+2026-10-08T17:31:45.8481589Z ##[group]Runner Image
+2026-10-08T17:31:45.8482092Z Image: ubuntu-24.04
+2026-10-08T17:31:45.8482485Z Version: 20261004.327.1
+2026-10-08T17:31:45.8483415Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261004.327/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-08T17:31:45.8484477Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261004.327
+2026-10-08T17:31:45.8485168Z ##[endgroup]
+2026-10-08T17:31:45.8485979Z ##[group]GITHUB_TOKEN Permissions
+2026-10-08T17:31:45.8488128Z Contents: read
+2026-10-08T17:31:45.8488537Z Metadata: read
+2026-10-08T17:31:45.8488949Z ##[endgroup]
+2026-10-08T17:31:45.8490461Z Secret source: Actions
+2026-10-08T17:31:45.8491373Z Cache mode: write
+2026-10-08T17:31:45.8491917Z Prepare workflow directory
+2026-10-08T17:31:45.8775488Z Prepare all required actions
+2026-10-08T17:31:45.8814182Z Getting action download info
+2026-10-08T17:31:46.1336319Z Download action repository 'actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09' (SHA:fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09)
+2026-10-08T17:31:46.3955768Z Download action repository 'actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1' (SHA:ece7cb06caefa5fff74198d8649806c4678c61a1)
+2026-10-08T17:31:46.8314371Z Download action repository 'actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0' (SHA:634f93cb2916e3fdff6788551b99b062d0335ce0)
+2026-10-08T17:31:47.4890176Z Download action repository 'pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33' (SHA:dc37677b2e1c63e2034f94d8a5b11f265b73ba33)
+2026-10-08T17:31:47.8888586Z Getting action download info
+2026-10-08T17:31:47.9964793Z Download action repository 'actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405' (SHA:a309ff8b426b58ec0e2a45f0f869d46889d02405)
+2026-10-08T17:31:48.5423318Z Complete job name: Publish tagged release
+2026-10-08T17:31:48.6178512Z ##[group]Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+2026-10-08T17:31:48.6179149Z with:
+2026-10-08T17:31:48.6179522Z   repository: menudoproblema/mongoeco
+2026-10-08T17:31:48.6181941Z   token: ***
+2026-10-08T17:31:48.6182284Z   ssh-strict: true
+2026-10-08T17:31:48.6182692Z   ssh-user: git
+2026-10-08T17:31:48.6183029Z   persist-credentials: true
+2026-10-08T17:31:48.6183403Z   clean: true
+2026-10-08T17:31:48.6183753Z   sparse-checkout-cone-mode: true
+2026-10-08T17:31:48.6184128Z   fetch-depth: 1
+2026-10-08T17:31:48.6184467Z   fetch-tags: false
+2026-10-08T17:31:48.6184813Z   show-progress: true
+2026-10-08T17:31:48.6185140Z   lfs: false
+2026-10-08T17:31:48.6185457Z   submodules: false
+2026-10-08T17:31:48.6185796Z   set-safe-directory: true
+2026-10-08T17:31:48.6186163Z   allow-unsafe-pr-checkout: false
+2026-10-08T17:31:48.6186699Z ##[endgroup]
+2026-10-08T17:31:48.6996084Z Syncing repository: menudoproblema/mongoeco
+2026-10-08T17:31:48.6997852Z ##[group]Getting Git version info
+2026-10-08T17:31:48.6998482Z Working directory is '/home/runner/work/mongoeco/mongoeco'
+2026-10-08T17:31:48.6999329Z [command]/usr/bin/git version
+2026-10-08T17:31:48.7052652Z git version 2.55.0
+2026-10-08T17:31:48.7072142Z ##[endgroup]
+2026-10-08T17:31:48.7088142Z Temporarily overriding HOME='/home/runner/work/_temp/b5bc23de-b0f8-4b31-aa5a-2d7b1086c502' before making global git config changes
+2026-10-08T17:31:48.7089623Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-08T17:31:48.7094416Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mongoeco/mongoeco
+2026-10-08T17:31:48.7301198Z Deleting the contents of '/home/runner/work/mongoeco/mongoeco'
+2026-10-08T17:31:48.7306008Z ##[group]Initializing the repository
+2026-10-08T17:31:48.7309030Z [command]/usr/bin/git init /home/runner/work/mongoeco/mongoeco
+2026-10-08T17:31:48.8204077Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-08T17:31:48.8205245Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-08T17:31:48.8205999Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-08T17:31:48.8206654Z hint: call:
+2026-10-08T17:31:48.8207345Z hint:
+2026-10-08T17:31:48.8207860Z hint: 	git config --global init.defaultBranch <name>
+2026-10-08T17:31:48.8208427Z hint:
+2026-10-08T17:31:48.8208958Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-08T17:31:48.8209665Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-08T17:31:48.8210211Z hint:
+2026-10-08T17:31:48.8210644Z hint: 	git branch -m <name>
+2026-10-08T17:31:48.8211420Z hint:
+2026-10-08T17:31:48.8211977Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-08T17:31:48.8212742Z Initialized empty Git repository in /home/runner/work/mongoeco/mongoeco/.git/
+2026-10-08T17:31:48.8214569Z [command]/usr/bin/git remote add origin https://github.com/menudoproblema/mongoeco
+2026-10-08T17:31:48.8399105Z ##[endgroup]
+2026-10-08T17:31:48.8404055Z ##[group]Disabling automatic garbage collection
+2026-10-08T17:31:48.8404855Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-08T17:31:48.8434531Z ##[endgroup]
+2026-10-08T17:31:48.8435225Z ##[group]Setting up auth
+2026-10-08T17:31:48.8440753Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-08T17:31:48.8468509Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-08T17:31:48.8756954Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-08T17:31:48.8785272Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-08T17:31:48.8943801Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-08T17:31:48.8969408Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-08T17:31:48.9120642Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-08T17:31:48.9153429Z ##[endgroup]
+2026-10-08T17:31:48.9154653Z ##[group]Fetching the repository
+2026-10-08T17:31:48.9161854Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +7612872b5052c25de223825cd881445cc6f106f1:refs/tags/v4.9.0
+2026-10-08T17:31:49.9145440Z From https://github.com/menudoproblema/mongoeco
+2026-10-08T17:31:49.9146110Z  * [new ref]         7612872b5052c25de223825cd881445cc6f106f1 -> v4.9.0
+2026-10-08T17:31:49.9149215Z ##[endgroup]
+2026-10-08T17:31:49.9150113Z ##[group]Determining the checkout info
+2026-10-08T17:31:49.9151084Z ##[endgroup]
+2026-10-08T17:31:49.9156811Z [command]/usr/bin/git sparse-checkout disable
+2026-10-08T17:31:49.9210051Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-08T17:31:49.9235128Z ##[group]Checking out the ref
+2026-10-08T17:31:49.9238611Z [command]/usr/bin/git checkout --progress --force refs/tags/v4.9.0
+2026-10-08T17:31:49.9882163Z Note: switching to 'refs/tags/v4.9.0'.
+2026-10-08T17:31:49.9883015Z 
+2026-10-08T17:31:49.9883246Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-08T17:31:49.9883799Z changes and commit them, and you can discard any commits you make in this
+2026-10-08T17:31:49.9884297Z state without impacting any branches by switching back to a branch.
+2026-10-08T17:31:49.9884636Z 
+2026-10-08T17:31:49.9884919Z If you want to create a new branch to retain commits you create, you may
+2026-10-08T17:31:49.9885457Z do so (now or later) by using -c with the switch command. Example:
+2026-10-08T17:31:49.9885743Z 
+2026-10-08T17:31:49.9885923Z   git switch -c <new-branch-name>
+2026-10-08T17:31:49.9886131Z 
+2026-10-08T17:31:49.9886258Z Or undo this operation with:
+2026-10-08T17:31:49.9886452Z 
+2026-10-08T17:31:49.9886566Z   git switch -
+2026-10-08T17:31:49.9886751Z 
+2026-10-08T17:31:49.9886965Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-08T17:31:49.9887317Z 
+2026-10-08T17:31:49.9887572Z HEAD is now at 7612872 docs(release): record 4.9.0 pipeline recovery evidence
+2026-10-08T17:31:49.9894143Z ##[endgroup]
+2026-10-08T17:31:49.9929900Z [command]/usr/bin/git log -1 --format=%H
+2026-10-08T17:31:49.9949727Z 7612872b5052c25de223825cd881445cc6f106f1
+2026-10-08T17:31:50.0159218Z ##[group]Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+2026-10-08T17:31:50.0159934Z with:
+2026-10-08T17:31:50.0160167Z   python-version: 3.14
+2026-10-08T17:31:50.0160403Z   check-latest: false
+2026-10-08T17:31:50.0162414Z   token: ***
+2026-10-08T17:31:50.0162633Z   update-environment: true
+2026-10-08T17:31:50.0162909Z   allow-prereleases: false
+2026-10-08T17:31:50.0163210Z   freethreaded: false
+2026-10-08T17:31:50.0163430Z ##[endgroup]
+2026-10-08T17:31:50.1124018Z ##[group]Installed versions
+2026-10-08T17:31:50.1191317Z Successfully set up CPython (3.14.8)
+2026-10-08T17:31:50.1192143Z ##[endgroup]
+2026-10-08T17:31:50.1323324Z ##[group]Run VERSION="$(python -c 'import runpy; print(runpy.run_path("src/mongoeco/_version.py")["__version__"])')"
+2026-10-08T17:31:50.1324074Z [36;1mVERSION="$(python -c 'import runpy; print(runpy.run_path("src/mongoeco/_version.py")["__version__"])')"[0m
+2026-10-08T17:31:50.1324504Z [36;1mtest "$GITHUB_REF_NAME" = "v$VERSION"[0m
+2026-10-08T17:31:50.1619372Z shell: /usr/bin/bash -e {0}
+2026-10-08T17:31:50.1619713Z env:
+2026-10-08T17:31:50.1620031Z   pythonLocation: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:50.1620440Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib/pkgconfig
+2026-10-08T17:31:50.1620792Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:50.1621452Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:50.1621800Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:50.1622177Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib
+2026-10-08T17:31:50.1622558Z ##[endgroup]
+2026-10-08T17:31:50.6856235Z ##[group]Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+2026-10-08T17:31:50.6856726Z with:
+2026-10-08T17:31:50.6857001Z   name: release-distributions
+2026-10-08T17:31:50.6857255Z   path: dist
+2026-10-08T17:31:50.6857469Z   merge-multiple: false
+2026-10-08T17:31:50.6857755Z   repository: menudoproblema/mongoeco
+2026-10-08T17:31:50.6858037Z   run-id: 37816027502
+2026-10-08T17:31:50.6858259Z env:
+2026-10-08T17:31:50.6858535Z   pythonLocation: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:50.6858933Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib/pkgconfig
+2026-10-08T17:31:50.6859330Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:50.6859691Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:50.6860038Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:50.6860390Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib
+2026-10-08T17:31:50.6860784Z ##[endgroup]
+2026-10-08T17:31:50.7979326Z Downloading single artifact
+2026-10-08T17:31:50.8089955Z (node:2098) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-08T17:31:50.8091548Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-08T17:31:50.9920877Z Preparing to download the following artifacts:
+2026-10-08T17:31:50.9922245Z - release-distributions (ID: 11567516104, Size: 1436805, Expected Digest: sha256:52b0bbac34c5a96f948c287b8e4187d3d41e847637f9d8403c0021d1d85ae178)
+2026-10-08T17:31:51.1602629Z Redirecting to blob download url: https://productionresultssa7.blob.core.windows.net/actions-results/0cb35956-abcd-8e7e-9fb9-157378bde759/workflow-job-run-1f6210f5-8a60-513c-be3c-85b941cabca3/artifacts/f26d0cb0ba1e9fd789de20f0f4bd6c7d894c964a0a5d8c868c48e73d7fa69c46.zip
+2026-10-08T17:31:51.1603886Z Starting download of artifact to: /home/runner/work/mongoeco/mongoeco/dist
+2026-10-08T17:31:51.3566207Z (node:2098) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-10-08T17:31:51.6985517Z SHA256 digest of downloaded artifact is 52b0bbac34c5a96f948c287b8e4187d3d41e847637f9d8403c0021d1d85ae178
+2026-10-08T17:31:51.6986227Z Artifact download completed successfully.
+2026-10-08T17:31:51.6986551Z Total of 1 artifact(s) downloaded
+2026-10-08T17:31:51.6990009Z Download artifact has finished successfully
+2026-10-08T17:31:51.7143236Z ##[group]Run pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+2026-10-08T17:31:51.7143695Z with:
+2026-10-08T17:31:51.7143963Z   user: __token__
+2026-10-08T17:31:51.7144270Z   repository_url: https://upload.pypi.org/legacy/
+2026-10-08T17:31:51.7144589Z   packages_dir: dist
+2026-10-08T17:31:51.7144872Z   verify_metadata: true
+2026-10-08T17:31:51.7145104Z   skip_existing: false
+2026-10-08T17:31:51.7145363Z   verbose: true
+2026-10-08T17:31:51.7145617Z   print_hash: true
+2026-10-08T17:31:51.7145850Z   attestations: true
+2026-10-08T17:31:51.7146116Z env:
+2026-10-08T17:31:51.7146391Z   pythonLocation: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7146801Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib/pkgconfig
+2026-10-08T17:31:51.7147226Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7147587Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7148037Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7148408Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib
+2026-10-08T17:31:51.7148730Z ##[endgroup]
+2026-10-08T17:31:51.7204226Z ##[start-action display=Fail-fast in unsupported environments;id=__pypa_gh-action-pypi-publish.__run]
+2026-10-08T17:31:51.7212013Z ##[end-action id=__pypa_gh-action-pypi-publish.__run;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-08T17:31:51.7214162Z ##[start-action display=Reset path if needed;id=__pypa_gh-action-pypi-publish.__run_2]
+2026-10-08T17:31:51.7238060Z ##[group]Run # Reset path if needed
+2026-10-08T17:31:51.7238440Z [36;1m# Reset path if needed[0m
+2026-10-08T17:31:51.7238786Z [36;1m# https://github.com/pypa/gh-action-pypi-publish/issues/112[0m
+2026-10-08T17:31:51.7239160Z [36;1mif [[ $PATH != *"/usr/bin"* ]]; then[0m
+2026-10-08T17:31:51.7239476Z [36;1m  echo "\$PATH=$PATH. Resetting \$PATH for GitHub Actions."[0m
+2026-10-08T17:31:51.7239897Z [36;1m  PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"[0m
+2026-10-08T17:31:51.7240256Z [36;1m  echo "PATH=$PATH" >>"$GITHUB_ENV"[0m
+2026-10-08T17:31:51.7240516Z [36;1m  echo "$PATH" >>"$GITHUB_PATH"[0m
+2026-10-08T17:31:51.7240810Z [36;1m  echo "\$PATH reset. \$PATH=$PATH"[0m
+2026-10-08T17:31:51.7241337Z [36;1mfi[0m
+2026-10-08T17:31:51.7277600Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T17:31:51.7277963Z env:
+2026-10-08T17:31:51.7278284Z   pythonLocation: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7278641Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib/pkgconfig
+2026-10-08T17:31:51.7279175Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7279516Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7279897Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7280238Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib
+2026-10-08T17:31:51.7280520Z ##[endgroup]
+2026-10-08T17:31:51.7349525Z ##[end-action id=__pypa_gh-action-pypi-publish.__run_2;outcome=success;conclusion=success;duration_ms=13]
+2026-10-08T17:31:51.7352098Z ##[start-action display=Discover pre-installed Python;id=__pypa_gh-action-pypi-publish.pre-installed-python]
+2026-10-08T17:31:51.7394880Z ##[group]Run # 🔎 Discover pre-installed Python
+2026-10-08T17:31:51.7395213Z [36;1m# 🔎 Discover pre-installed Python[0m
+2026-10-08T17:31:51.7395646Z [36;1mecho "python-path=$(command -v python3 || :)" | tee -a "${GITHUB_OUTPUT}"[0m
+2026-10-08T17:31:51.7422872Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T17:31:51.7423213Z env:
+2026-10-08T17:31:51.7423497Z   pythonLocation: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7423905Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib/pkgconfig
+2026-10-08T17:31:51.7424272Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7424602Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7425093Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7425441Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib
+2026-10-08T17:31:51.7425769Z ##[endgroup]
+2026-10-08T17:31:51.7479707Z python-path=/opt/hostedtoolcache/Python/3.14.8/x64/bin/python3
+2026-10-08T17:31:51.7500822Z ##[end-action id=__pypa_gh-action-pypi-publish.pre-installed-python;outcome=success;conclusion=success;duration_ms=14]
+2026-10-08T17:31:51.7505101Z ##[start-action display=Install Python 3;id=__pypa_gh-action-pypi-publish.new-python]
+2026-10-08T17:31:51.7510440Z ##[end-action id=__pypa_gh-action-pypi-publish.new-python;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-08T17:31:51.7516225Z ##[start-action display=Create Docker container action;id=__pypa_gh-action-pypi-publish.__run_3]
+2026-10-08T17:31:51.7546860Z ##[group]Run # Create Docker container action
+2026-10-08T17:31:51.7547191Z [36;1m# Create Docker container action[0m
+2026-10-08T17:31:51.7547916Z [36;1m/opt/hostedtoolcache/Python/3.14.8/x64/bin/python3 '/home/runner/work/_actions/pypa/gh-action-pypi-publish/dc37677b2e1c63e2034f94d8a5b11f265b73ba33/create-docker-action.py'[0m
+2026-10-08T17:31:51.7573191Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T17:31:51.7573596Z env:
+2026-10-08T17:31:51.7573864Z   pythonLocation: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7574219Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib/pkgconfig
+2026-10-08T17:31:51.7574636Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7575011Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7575368Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.7575700Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib
+2026-10-08T17:31:51.7576006Z   REF: dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+2026-10-08T17:31:51.7576422Z   REPO: pypa/gh-action-pypi-publish
+2026-10-08T17:31:51.7576685Z   REPO_ID: 1194784822
+2026-10-08T17:31:51.7576927Z ##[endgroup]
+2026-10-08T17:31:51.9258557Z ##[end-action id=__pypa_gh-action-pypi-publish.__run_3;outcome=success;conclusion=success;duration_ms=174]
+2026-10-08T17:31:51.9262225Z ##[start-action display=Run Docker container;id=__pypa_gh-action-pypi-publish.__self]
+2026-10-08T17:31:51.9329807Z ##[group]Run ./.github/.tmp/.generated-actions/run-pypi-publish-in-docker-container
+2026-10-08T17:31:51.9330188Z with:
+2026-10-08T17:31:51.9330401Z   user: __token__
+2026-10-08T17:31:51.9330710Z   repository-url: https://upload.pypi.org/legacy/
+2026-10-08T17:31:51.9331325Z   packages-dir: dist
+2026-10-08T17:31:51.9331699Z   verify-metadata: true
+2026-10-08T17:31:51.9331946Z   skip-existing: false
+2026-10-08T17:31:51.9332190Z   verbose: true
+2026-10-08T17:31:51.9332440Z   print-hash: true
+2026-10-08T17:31:51.9332655Z   attestations: true
+2026-10-08T17:31:51.9332868Z env:
+2026-10-08T17:31:51.9333128Z   pythonLocation: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.9333539Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib/pkgconfig
+2026-10-08T17:31:51.9333906Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.9334229Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.9334635Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+2026-10-08T17:31:51.9334955Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib
+2026-10-08T17:31:51.9335249Z ##[endgroup]
+2026-10-08T17:31:51.9445432Z ##[command]/usr/bin/docker run --name ghcriopypaghactionpypipublishdc37677b2e1c63e2034f94d8a5b11f265b73ba33_401591 --label c75372 --workdir /github/workspace --rm -e "pythonLocation" -e "PKG_CONFIG_PATH" -e "Python_ROOT_DIR" -e "Python2_ROOT_DIR" -e "Python3_ROOT_DIR" -e "LD_LIBRARY_PATH" -e "INPUT_USER" -e "INPUT_PASSWORD" -e "INPUT_REPOSITORY-URL" -e "INPUT_PACKAGES-DIR" -e "INPUT_VERIFY-METADATA" -e "INPUT_SKIP-EXISTING" -e "INPUT_VERBOSE" -e "INPUT_PRINT-HASH" -e "INPUT_ATTESTATIONS" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "GITHUB_ARTIFACTS" -e "GITHUB_ARTIFACTS_LIST" -e "GITHUB_ACTION_PATH" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_ID_TOKEN_REQUEST_URL" -e "ACTIONS_ID_TOKEN_REQUEST_TOKEN" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_CACHE_MODE" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/mongoeco/mongoeco":"/github/workspace" ghcr.io/pypa/gh-action-pypi-publish:dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+2026-10-08T17:31:52.0308325Z Unable to find image 'ghcr.io/pypa/gh-action-pypi-publish:dc37677b2e1c63e2034f94d8a5b11f265b73ba33' locally
+2026-10-08T17:31:52.5483330Z dc37677b2e1c63e2034f94d8a5b11f265b73ba33: Pulling from pypa/gh-action-pypi-publish
+2026-10-08T17:31:52.5487912Z f96fde5c7579: Pulling fs layer
+2026-10-08T17:31:52.5488537Z cd384decb927: Pulling fs layer
+2026-10-08T17:31:52.5489045Z 463aa101532a: Pulling fs layer
+2026-10-08T17:31:52.5489481Z 4a633c382b06: Pulling fs layer
+2026-10-08T17:31:52.5489922Z 7d25e6ce522b: Pulling fs layer
+2026-10-08T17:31:52.5490297Z 73aa50089b2f: Pulling fs layer
+2026-10-08T17:31:52.5490707Z 3f44ba4af573: Pulling fs layer
+2026-10-08T17:31:52.5491448Z e7cfcb60dbfb: Pulling fs layer
+2026-10-08T17:31:52.5492173Z 7e9f24617b6b: Pulling fs layer
+2026-10-08T17:31:52.5492497Z 6d9fe5224b4e: Pulling fs layer
+2026-10-08T17:31:52.5492839Z 533ef6f9b8fa: Pulling fs layer
+2026-10-08T17:31:52.5493225Z 4a633c382b06: Waiting
+2026-10-08T17:31:52.5493507Z 73aa50089b2f: Waiting
+2026-10-08T17:31:52.5494126Z 7d25e6ce522b: Waiting
+2026-10-08T17:31:52.5494491Z 7e9f24617b6b: Waiting
+2026-10-08T17:31:52.5494705Z 3f44ba4af573: Waiting
+2026-10-08T17:31:52.5494995Z 3441c4cce8f1: Pulling fs layer
+2026-10-08T17:31:52.5495244Z 70fcbeac8774: Pulling fs layer
+2026-10-08T17:31:52.5495536Z 4f4fb700ef54: Pulling fs layer
+2026-10-08T17:31:52.5495769Z 533ef6f9b8fa: Waiting
+2026-10-08T17:31:52.5496007Z 3441c4cce8f1: Waiting
+2026-10-08T17:31:52.5496284Z 70fcbeac8774: Waiting
+2026-10-08T17:31:52.5496538Z 4f4fb700ef54: Waiting
+2026-10-08T17:31:52.5496774Z e7cfcb60dbfb: Waiting
+2026-10-08T17:31:52.5497001Z 6d9fe5224b4e: Waiting
+2026-10-08T17:31:52.7940266Z cd384decb927: Verifying Checksum
+2026-10-08T17:31:52.7941391Z cd384decb927: Download complete
+2026-10-08T17:31:52.9067436Z f96fde5c7579: Verifying Checksum
+2026-10-08T17:31:52.9067893Z f96fde5c7579: Download complete
+2026-10-08T17:31:52.9418083Z 4a633c382b06: Verifying Checksum
+2026-10-08T17:31:52.9420215Z 4a633c382b06: Download complete
+2026-10-08T17:31:52.9535850Z 463aa101532a: Verifying Checksum
+2026-10-08T17:31:52.9536422Z 463aa101532a: Download complete
+2026-10-08T17:31:53.0715272Z 7d25e6ce522b: Verifying Checksum
+2026-10-08T17:31:53.0716293Z 7d25e6ce522b: Download complete
+2026-10-08T17:31:53.1170480Z 3f44ba4af573: Verifying Checksum
+2026-10-08T17:31:53.1174269Z 3f44ba4af573: Download complete
+2026-10-08T17:31:53.2400808Z e7cfcb60dbfb: Verifying Checksum
+2026-10-08T17:31:53.2401762Z e7cfcb60dbfb: Download complete
+2026-10-08T17:31:53.2990650Z 7e9f24617b6b: Verifying Checksum
+2026-10-08T17:31:53.2991539Z 7e9f24617b6b: Download complete
+2026-10-08T17:31:53.3324648Z 73aa50089b2f: Verifying Checksum
+2026-10-08T17:31:53.4002349Z 6d9fe5224b4e: Verifying Checksum
+2026-10-08T17:31:53.4003169Z 6d9fe5224b4e: Download complete
+2026-10-08T17:31:53.4974712Z 533ef6f9b8fa: Download complete
+2026-10-08T17:31:53.5213994Z 3441c4cce8f1: Verifying Checksum
+2026-10-08T17:31:53.5214547Z 3441c4cce8f1: Download complete
+2026-10-08T17:31:53.6150523Z 70fcbeac8774: Verifying Checksum
+2026-10-08T17:31:53.6151023Z 70fcbeac8774: Download complete
+2026-10-08T17:31:53.6334045Z f96fde5c7579: Pull complete
+2026-10-08T17:31:53.6814000Z 4f4fb700ef54: Verifying Checksum
+2026-10-08T17:31:53.6814650Z 4f4fb700ef54: Download complete
+2026-10-08T17:31:59.7065295Z cd384decb927: Pull complete
+2026-10-08T17:32:00.3458024Z 463aa101532a: Pull complete
+2026-10-08T17:32:00.3568124Z 4a633c382b06: Pull complete
+2026-10-08T17:32:00.3674027Z 7d25e6ce522b: Pull complete
+2026-10-08T17:32:01.8052118Z 73aa50089b2f: Pull complete
+2026-10-08T17:32:01.8163763Z 3f44ba4af573: Pull complete
+2026-10-08T17:32:01.8248076Z e7cfcb60dbfb: Pull complete
+2026-10-08T17:32:01.8340608Z 7e9f24617b6b: Pull complete
+2026-10-08T17:32:01.8433171Z 6d9fe5224b4e: Pull complete
+2026-10-08T17:32:01.8507353Z 533ef6f9b8fa: Pull complete
+2026-10-08T17:32:01.8585565Z 3441c4cce8f1: Pull complete
+2026-10-08T17:32:01.8675808Z 70fcbeac8774: Pull complete
+2026-10-08T17:32:01.8742594Z 4f4fb700ef54: Pull complete
+2026-10-08T17:32:01.8796575Z Digest: sha256:a68d05519f6d7e47372aeaddab80b851b69afa89be179ec41775c72c4e3ab2d5
+2026-10-08T17:32:01.8812777Z Status: Downloaded newer image for ghcr.io/pypa/gh-action-pypi-publish:dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+2026-10-08T17:32:03.6937526Z Checking dist/mongoeco-4.9.0-py3-none-any.whl: [32mPASSED[0m
+2026-10-08T17:32:03.7153412Z Checking dist/mongoeco-4.9.0.tar.gz: [32mPASSED[0m
+2026-10-08T17:32:03.7528358Z ##[notice]Generating and uploading digital attestations
+2026-10-08T17:32:04.4225936Z TUF metadata: /root/.local/share/sigstore-python/tuf/https%3A%2F%2Ftuf-repo-cdn.sigstore.dev
+2026-10-08T17:32:04.4226848Z TUF targets cache: /root/.cache/sigstore-python/tuf/https%3A%2F%2Ftuf-repo-cdn.sigstore.dev
+2026-10-08T17:32:04.7400611Z Found and verified trusted root
+2026-10-08T17:32:04.7401781Z Found and verified signing config
+2026-10-08T17:32:04.7413712Z Fulcio client using URL: https://fulcio.sigstore.dev
+2026-10-08T17:32:04.7415086Z Generating ephemeral keys...
+2026-10-08T17:32:04.7419223Z Requesting ephemeral certificate...
+2026-10-08T17:32:04.7419935Z Retrieving signed certificate...
+2026-10-08T17:32:05.0046717Z Found <Name(O=sigstore.dev,CN=sigstore-intermediate)> as issuer, verifying if it is a ca
+2026-10-08T17:32:05.0047496Z attempting to verify SCT with key ID dd3d306ac6c7113263191e1c99673702a24a5eb8de3cadff878a72802f29ee8e
+2026-10-08T17:32:05.0053305Z Successfully verified SCT...
+2026-10-08T17:32:05.0057993Z DSSE PAE: b'DSSEv1 28 application/vnd.in-toto+json 256 {"_type":"https://in-toto.io/Statement/v1","subject":[{"name":"mongoeco-4.9.0.tar.gz","digest":{"sha256":"ad940c391dccb2ce6262257da99c1d59283bba3aa09e6dfb8b51956306705e85"}}],"predicateType":"https://docs.pypi.org/attestations/publish/v1","predicate":null}'
+2026-10-08T17:32:05.1575833Z proposed: {"apiVersion": "0.0.1", "kind": "dsse", "spec": {"proposedContent": {"envelope": "{\"payload\":\"eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCJzdWJqZWN0IjpbeyJuYW1lIjoibW9uZ29lY28tNC45LjAudGFyLmd6IiwiZGlnZXN0Ijp7InNoYTI1NiI6ImFkOTQwYzM5MWRjY2IyY2U2MjYyMjU3ZGE5OWMxZDU5MjgzYmJhM2FhMDllNmRmYjhiNTE5NTYzMDY3MDVlODUifX1dLCJwcmVkaWNhdGVUeXBlIjoiaHR0cHM6Ly9kb2NzLnB5cGkub3JnL2F0dGVzdGF0aW9ucy9wdWJsaXNoL3YxIiwicHJlZGljYXRlIjpudWxsfQ==\",\"payloadType\":\"application/vnd.in-toto+json\",\"signatures\":[{\"sig\":\"MEYCIQC7u5o6uSrjUcozbBXfL7IIKprDy2kkdkqtl4tdidqgggIhALKjFxx9Ge71dRUg6/B1WUBEvAsfhPwvYWtEMQs4pxOn\"}]}", "verifiers": ["LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUc5RENDQm51Z0F3SUJBZ0lVTUE1V3dBSDlJd3hTS1REU2ZjalkrYmYvWWM0d0NnWUlLb1pJemowRUF3TXcKTnpFVk1CTUdBMVVFQ2hNTWMybG5jM1J2Y21VdVpHVjJNUjR3SEFZRFZRUURFeFZ6YVdkemRHOXlaUzFwYm5SbApjbTFsWkdsaGRHVXdIaGNOTWpZeE1EQTRNVGN6TWpBMFdoY05Nall4TURBNE1UYzBNakEwV2pBQU1Ga3dFd1lICktvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUVMNHFDYlI3RjVPa0k1MTIxcXpZbzZTcW9mL29SaFRzOEJsbUUKTEhCaGRkTzN0dFZoN2lUMzJKRWZwaTlaUDU3TXQ1Y0tFRWlxeWhzdk52L0lKUFM4dktPQ0Jab3dnZ1dXTUE0RwpBMVVkRHdFQi93UUVBd0lIZ0RBVEJnTlZIU1VFRERBS0JnZ3JCZ0VGQlFjREF6QWZCZ05WSFNNRUdEQVdnQlRmCjArblBWaVFSbHZtbzJPa29WYUxHTGhoa1B6QmlCZ05WSFJFQkFmOEVXREJXaGxSb2RIUndjem92TDJkcGRHaDEKWWk1amIyMHZiV1Z1ZFdSdmNISnZZbXhsYldFdmJXOXVaMjlsWTI4dkxtZHBkR2gxWWk5M2IzSnJabXh2ZDNNdgpZMmt1ZVcxc1FISmxabk12ZEdGbmN5OTJOQzQ1TGpBd09RWUtLd1lCQkFHRHZ6QUJBUVFyYUhSMGNITTZMeTkwCmIydGxiaTVoWTNScGIyNXpMbWRwZEdoMVluVnpaWEpqYjI1MFpXNTBMbU52YlRBU0Jnb3JCZ0VFQVlPL01BRUMKQkFSd2RYTm9NRFlHQ2lzR0FRUUJnNzh3QVFNRUtEYzJNVEk0TnpKaU5UQTFNbU15TldSbE1qSXpPREkxWTJRNApPREUwTkRWall6Wm1NVEEyWmpFd0VBWUtLd1lCQkFHRHZ6QUJCQVFDUTBrd0pRWUtLd1lCQkFHRHZ6QUJCUVFYCmJXVnVkV1J2Y0hKdllteGxiV0V2Ylc5dVoyOWxZMjh3SGdZS0t3WUJCQUdEdnpBQkJnUVFjbVZtY3k5MFlXZHoKTDNZMExqa3VNREE3QmdvckJnRUVBWU8vTUFFSUJDME1LMmgwZEhCek9pOHZkRzlyWlc0dVlXTjBhVzl1Y3k1bgphWFJvZFdKMWMyVnlZMjl1ZEdWdWRDNWpiMjB3WkFZS0t3WUJCQUdEdnpBQkNRUldERlJvZEhSd2N6b3ZMMmRwCmRHaDFZaTVqYjIwdmJXVnVkV1J2Y0hKdllteGxiV0V2Ylc5dVoyOWxZMjh2TG1kcGRHaDFZaTkzYjNKclpteHYKZDNNdlkya3VlVzFzUUhKbFpuTXZkR0ZuY3k5Mk5DNDVMakF3T0FZS0t3WUJCQUdEdnpBQkNnUXFEQ2czTmpFeQpPRGN5WWpVd05USmpNalZrWlRJeU16Z3lOV05rT0RneE5EUTFZMk0yWmpFd05tWXhNQjBHQ2lzR0FRUUJnNzh3CkFRc0VEd3dOWjJsMGFIVmlMV2h2YzNSbFpEQTZCZ29yQmdFRUFZTy9NQUVNQkN3TUttaDBkSEJ6T2k4dloybDAKYUhWaUxtTnZiUzl0Wlc1MVpHOXdjbTlpYkdWdFlTOXRiMjVuYjJWamJ6QTRCZ29yQmdFRUFZTy9NQUVOQkNvTQpLRGMyTVRJNE56SmlOVEExTW1NeU5XUmxNakl6T0RJMVkyUTRPREUwTkRWall6Wm1NVEEyWmpFd0lBWUtLd1lCCkJBR0R2ekFCRGdRU0RCQnlaV1p6TDNSaFozTXZkalF1T1M0d01Cb0dDaXNHQVFRQmc3OHdBUThFREF3S01URTUKTkRjNE5EZ3lNakF4QmdvckJnRUVBWU8vTUFFUUJDTU1JV2gwZEhCek9pOHZaMmwwYUhWaUxtTnZiUzl0Wlc1MQpaRzl3Y205aWJHVnRZVEFXQmdvckJnRUVBWU8vTUFFUkJBZ01CamszTmpFNE56QmtCZ29yQmdFRUFZTy9NQUVTCkJGWU1WR2gwZEhCek9pOHZaMmwwYUhWaUxtTnZiUzl0Wlc1MVpHOXdjbTlpYkdWdFlTOXRiMjVuYjJWamJ5OHUKWjJsMGFIVmlMM2R2Y210bWJHOTNjeTlqYVM1NWJXeEFjbVZtY3k5MFlXZHpMM1kwTGprdU1EQTRCZ29yQmdFRQpBWU8vTUFFVEJDb01LRGMyTVRJNE56SmlOVEExTW1NeU5XUmxNakl6T0RJMVkyUTRPREUwTkRWall6Wm1NVEEyClpqRXdGQVlLS3dZQkJBR0R2ekFCRkFRR0RBUndkWE5vTUY0R0Npc0dBUVFCZzc4d0FSVUVVQXhPYUhSMGNITTYKTHk5bmFYUm9kV0l1WTI5dEwyMWxiblZrYjNCeWIySnNaVzFoTDIxdmJtZHZaV052TDJGamRHbHZibk12Y25WdQpjeTh6TnpneE5qQXlOelV3TWk5aGRIUmxiWEIwY3k4eE1CWUdDaXNHQVFRQmc3OHdBUllFQ0F3R2NIVmliR2xqCk1CUUdDaXNHQVFRQmc3OHdBUmNFQmd3RWNIbHdhVEE5QmdvckJnRUVBWU8vTUFFWUJDOE1MWEpsY0c4NmJXVnUKZFdSdmNISnZZbXhsYldFdmJXOXVaMjlsWTI4NlpXNTJhWEp2Ym0xbGJuUTZjSGx3YVRDQml3WUtLd1lCQkFIVwplUUlFQWdSOUJIc0FlUUIzQU4wOU1Hckd4eEV5WXhrZUhKbG5Od0tpU2w2NDNqeXQvNGVLY29BdktlNk9BQUFCCm9SeVNmYVVBQUFRREFFZ3dSZ0loQVBXeFVQMkZBZWRQeDBUUzcvSTdSRXFOWGJTZGhUcy9ORjYwWFN2ZytqTHgKQWlFQXljZCtFalo4QUZKMXdPT0V3Ulk5OEZsN2hoVTY4elZJYncrZVRmalJsR0l3Q2dZSUtvWkl6ajBFQXdNRApad0F3WkFJd1gxT09rQXlKMEltT0lxY1FIMFhvOVBRNnpxcGY1eDlVOWxtRGcxcUdwVkltU3UwKzdUWEwwWlRwCk12cjR5UlRqQWpCeHVqL1AxUjU5RTFnYlh4YUFQSXlESTZXdURCc3Z2VHhFTGtlNWtsTVBNQzVoTjZTZDlHdUEKUFowTkJoMjkxR0k9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"]}, "signatures": null, "envelopeHash": null, "payloadHash": null}}
+2026-10-08T17:32:05.5623144Z integrated: {'108e9186e8c5677a80ceb6a4ef5f7e699473c04b6c8f0434d21d74b623c8b45057a2f1de02a3c9ec': {'body': 'eyJhcGlWZXJzaW9uIjoiMC4wLjEiLCJraW5kIjoiZHNzZSIsInNwZWMiOnsiZW52ZWxvcGVIYXNoIjp7ImFsZ29yaXRobSI6InNoYTI1NiIsInZhbHVlIjoiMGU0YzZiZjRjYzFkMDk4ZTUyNGZiZmJhNjNjYzFhMzMwODZlYzJhMzJjNjA3NTFkMTRmOGIyZDBmNGQwOTk5OCJ9LCJwYXlsb2FkSGFzaCI6eyJhbGdvcml0aG0iOiJzaGEyNTYiLCJ2YWx1ZSI6Ijg5MTk2ODk1MTE0YWY2MTkxNmYxZWZlZWNjYzRhNjQyNDkwZDAyYjI4ZTNkMmM3ZWNhMzZlNGRmZmViNzJjZTYifSwic2lnbmF0dXJlcyI6W3sic2lnbmF0dXJlIjoiTUVZQ0lRQzd1NW82dVNyalVjb3piQlhmTDdJSUtwckR5MmtrZGtxdGw0dGRpZHFnZ2dJaEFMS2pGeHg5R2U3MWRSVWc2L0IxV1VCRXZBc2ZoUHd2WVd0RU1RczRweE9uIiwidmVyaWZpZXIiOiJMUzB0TFMxQ1JVZEpUaUJEUlZKVVNVWkpRMEZVUlMwdExTMHRDazFKU1VjNVJFTkRRbTUxWjBGM1NVSkJaMGxWVFVFMVYzZEJTRGxKZDNoVFMxUkVVMlpqYWxrclltWXZXV00wZDBObldVbExiMXBKZW1vd1JVRjNUWGNLVG5wRlZrMUNUVWRCTVZWRlEyaE5UV015Ykc1ak0xSjJZMjFWZFZwSFZqSk5ValIzU0VGWlJGWlJVVVJGZUZaNllWZGtlbVJIT1hsYVV6RndZbTVTYkFwamJURnNXa2RzYUdSSFZYZElhR05PVFdwWmVFMUVRVFJOVkdONlRXcEJNRmRvWTA1TmFsbDRUVVJCTkUxVVl6Qk5ha0V3VjJwQlFVMUdhM2RGZDFsSUNrdHZXa2w2YWpCRFFWRlpTVXR2V2tsNmFqQkVRVkZqUkZGblFVVk1OSEZEWWxJM1JqVlBhMGsxTVRJeGNYcFpielpUY1c5bUwyOVNhRlJ6T0VKc2JVVUtURWhDYUdSa1R6TjBkRlpvTjJsVU16SktSV1p3YVRsYVVEVTNUWFExWTB0RlJXbHhlV2h6ZGs1MkwwbEtVRk00ZGt0UFEwSmFiM2RuWjFkWFRVRTBSd3BCTVZWa1JIZEZRaTkzVVVWQmQwbElaMFJCVkVKblRsWklVMVZGUkVSQlMwSm5aM0pDWjBWR1FsRmpSRUY2UVdaQ1owNVdTRk5OUlVkRVFWZG5RbFJtQ2pBcmJsQldhVkZTYkhadGJ6SlBhMjlXWVV4SFRHaG9hMUI2UW1sQ1owNVdTRkpGUWtGbU9FVlhSRUpYYUd4U2IyUklVbmRqZW05MlRESmtjR1JIYURFS1dXazFhbUl5TUhaaVYxWjFaRmRTZG1OSVNuWlpiWGhzWWxkRmRtSlhPWFZhTWpsc1dUSTRka3h0WkhCa1IyZ3hXV2s1TTJJelNuSmFiWGgyWkROTmRncFpNbXQxWlZjeGMxRklTbXhhYmsxMlpFZEdibU41T1RKT1F6UTFUR3BCZDA5UldVdExkMWxDUWtGSFJIWjZRVUpCVVZGeVlVaFNNR05JVFRaTWVUa3dDbUl5ZEd4aWFUVm9XVE5TY0dJeU5YcE1iV1J3WkVkb01WbHVWbnBhV0VwcVlqSTFNRnBYTlRCTWJVNTJZbFJCVTBKbmIzSkNaMFZGUVZsUEwwMUJSVU1LUWtGU2QyUllUbTlOUkZsSFEybHpSMEZSVVVKbk56aDNRVkZOUlV0RVl6Sk5WRWswVG5wS2FVNVVRVEZOYlUxNVRsZFNiRTFxU1hwUFJFa3hXVEpSTkFwUFJFVXdUa1JXYWxsNldtMU5WRUV5V21wRmQwVkJXVXRMZDFsQ1FrRkhSSFo2UVVKQ1FWRkRVVEJyZDBwUldVdExkMWxDUWtGSFJIWjZRVUpDVVZGWUNtSlhWblZrVjFKMlkwaEtkbGx0ZUd4aVYwVjJZbGM1ZFZveU9XeFpNamgzU0dkWlMwdDNXVUpDUVVkRWRucEJRa0puVVZGamJWWnRZM2s1TUZsWFpIb0tURE5aTUV4cWEzVk5SRUUzUW1kdmNrSm5SVVZCV1U4dlRVRkZTVUpETUUxTE1tZ3daRWhDZWs5cE9IWmtSemx5V2xjMGRWbFhUakJoVnpsMVkzazFiZ3BoV0ZKdlpGZEtNV015Vm5sWk1qbDFaRWRXZFdSRE5XcGlNakIzV2tGWlMwdDNXVUpDUVVkRWRucEJRa05SVWxkRVJsSnZaRWhTZDJONmIzWk1NbVJ3Q21SSGFERlphVFZxWWpJd2RtSlhWblZrVjFKMlkwaEtkbGx0ZUd4aVYwVjJZbGM1ZFZveU9XeFpNamgyVEcxa2NHUkhhREZaYVRrellqTktjbHB0ZUhZS1pETk5kbGt5YTNWbFZ6RnpVVWhLYkZwdVRYWmtSMFp1WTNrNU1rNURORFZNYWtGM1QwRlpTMHQzV1VKQ1FVZEVkbnBCUWtOblVYRkVRMmN6VG1wRmVRcFBSR041V1dwVmQwNVVTbXBOYWxacldsUkplVTE2WjNsT1YwNXJUMFJuZUU1RVVURlpNazB5V21wRmQwNXRXWGhOUWpCSFEybHpSMEZSVVVKbk56aDNDa0ZSYzBWRWQzZE9XakpzTUdGSVZtbE1WMmgyWXpOU2JGcEVRVFpDWjI5eVFtZEZSVUZaVHk5TlFVVk5Ra04zVFV0dGFEQmtTRUo2VDJrNGRsb3liREFLWVVoV2FVeHRUblppVXpsMFdsYzFNVnBIT1hkamJUbHBZa2RXZEZsVE9YUmlNalZ1WWpKV2FtSjZRVFJDWjI5eVFtZEZSVUZaVHk5TlFVVk9Ra052VFFwTFJHTXlUVlJKTkU1NlNtbE9WRUV4VFcxTmVVNVhVbXhOYWtsNlQwUkpNVmt5VVRSUFJFVXdUa1JXYWxsNldtMU5WRUV5V21wRmQwbEJXVXRMZDFsQ0NrSkJSMFIyZWtGQ1JHZFJVMFJDUW5sYVYxcDZURE5TYUZvelRYWmthbEYxVDFNMGQwMUNiMGREYVhOSFFWRlJRbWMzT0hkQlVUaEZSRUYzUzAxVVJUVUtUa1JqTkU1RVozbE5ha0Y0UW1kdmNrSm5SVVZCV1U4dlRVRkZVVUpEVFUxSlYyZ3daRWhDZWs5cE9IWmFNbXd3WVVoV2FVeHRUblppVXpsMFdsYzFNUXBhUnpsM1kyMDVhV0pIVm5SWlZFRlhRbWR2Y2tKblJVVkJXVTh2VFVGRlVrSkJaMDFDYW1zelRtcEZORTU2UW10Q1oyOXlRbWRGUlVGWlR5OU5RVVZUQ2tKR1dVMVdSMmd3WkVoQ2VrOXBPSFphTW13d1lVaFdhVXh0VG5aaVV6bDBXbGMxTVZwSE9YZGpiVGxwWWtkV2RGbFRPWFJpTWpWdVlqSldhbUo1T0hVS1dqSnNNR0ZJVm1sTU0yUjJZMjEwYldKSE9UTmplVGxxWVZNMU5XSlhlRUZqYlZadFkzazVNRmxYWkhwTU0xa3dUR3ByZFUxRVFUUkNaMjl5UW1kRlJRcEJXVTh2VFVGRlZFSkRiMDFMUkdNeVRWUkpORTU2U21sT1ZFRXhUVzFOZVU1WFVteE5ha2w2VDBSSk1Wa3lVVFJQUkVVd1RrUldhbGw2V20xTlZFRXlDbHBxUlhkR1FWbExTM2RaUWtKQlIwUjJla0ZDUmtGUlIwUkJVbmRrV0U1dlRVWTBSME5wYzBkQlVWRkNaemM0ZDBGU1ZVVlZRWGhQWVVoU01HTklUVFlLVEhrNWJtRllVbTlrVjBsMVdUSTVkRXd5TVd4aWJsWnJZak5DZVdJeVNuTmFWekZvVERJeGRtSnRaSFphVjA1MlRESkdhbVJIYkhaaWJrMTJZMjVXZFFwamVUaDZUbnBuZUU1cVFYbE9lbFYzVFdrNWFHUklVbXhpV0VJd1kzazRlRTFDV1VkRGFYTkhRVkZSUW1jM09IZEJVbGxGUTBGM1IyTklWbWxpUjJ4cUNrMUNVVWREYVhOSFFWRlJRbWMzT0hkQlVtTkZRbWQzUldOSWJIZGhWRUU1UW1kdmNrSm5SVVZCV1U4dlRVRkZXVUpET0UxTVdFcHNZMGM0Tm1KWFZuVUtaRmRTZG1OSVNuWlpiWGhzWWxkRmRtSlhPWFZhTWpsc1dUSTRObHBYTlRKaFdFcDJZbTB4YkdKdVVUWmpTR3gzWVZSRFFtbDNXVXRMZDFsQ1FrRklWd3BsVVVsRlFXZFNPVUpJYzBGbFVVSXpRVTR3T1UxSGNrZDRlRVY1V1hoclpVaEtiRzVPZDB0cFUydzJORE5xZVhRdk5HVkxZMjlCZGt0bE5rOUJRVUZDQ205U2VWTm1ZVlZCUVVGUlJFRkZaM2RTWjBsb1FWQlhlRlZRTWtaQlpXUlFlREJVVXpjdlNUZFNSWEZPV0dKVFpHaFVjeTlPUmpZd1dGTjJaeXRxVEhnS1FXbEZRWGxqWkN0RmFsbzRRVVpLTVhkUFQwVjNVbGs1T0Vac04yaG9WVFk0ZWxaSlluY3JaVlJtYWxKc1IwbDNRMmRaU1V0dldrbDZhakJGUVhkTlJBcGFkMEYzV2tGSmQxZ3hUMDlyUVhsS01FbHRUMGx4WTFGSU1GaHZPVkJSTm5weGNHWTFlRGxWT1d4dFJHY3hjVWR3VmtsdFUzVXdLemRVV0V3d1dsUndDazEyY2pSNVVsUnFRV3BDZUhWcUwxQXhValU1UlRGbllsaDRZVUZRU1hsRVNUWlhkVVJDYzNaMlZIaEZUR3RsTld0c1RWQk5RelZvVGpaVFpEbEhkVUVLVUZvd1RrSm9Namt4UjBrOUNpMHRMUzB0UlU1RUlFTkZVbFJKUmtsRFFWUkZMUzB0TFMwSyJ9XX19', 'integratedTime': 1791480725, 'logID': 'c0d23d6ad406973f9559f3ba2d1ca01f84147d8ffc5b8445c224f98b9591801d', 'logIndex': 3150726827, 'verification': {'inclusionProof': {'checkpoint': 'rekor.sigstore.dev - 1193050959916656506\n3028822572\nYZvfjXyOleqRIOo1h/9FxpmhHTJ4Ixgc89s3lOS71w4=\n\n— rekor.sigstore.dev wNI9ajBEAiATDHdNo24ttpNhV5VzZnxzBUcJxW0uQbHY1IOWRYR83AIgMdAb0f+8ejXKW+c8n/A26CDyeftlhyBtMFVngkrJNEU=\n', 'hashes': ['2e54467415b32776ba7351a320efebf07293981d3bcf14ecd210b23bfa8c1cd1', '65edfff9aef63b6d214aa9f739c016329d5f6b6b12d0ce2dc4bfb136c14212d5', '80738b196998f1a37c3f640afee099d4e71a36bd6677b4592c79ef74cdb54381', 'b51aeb51439241cb5161c28478bdea99ca288657602e2035286a0a42ffc439a5', 'eaef457a75834c4652000ceabebbeaf10f6b14d913d5260ae2cbddb337945331', '9a3261b392439966140786c9afb91e11c9ca50645e5e14c20555c021bccae53f', 'd4f42516c2066f9a19194a9bb7569df884f106ed219c3ba24e095d682bcbc3fd', '4b8a1ec1d50a6c8a65d7b1307658afd2a9bd3f4ed61657df145e6eaa632d4583', 'b84ed8a19ed9606c7f51db8117777abbc7cbcef5276a265c58bb7e0dbff1b339', '40951db4c1b97ea4de6c8edb5939f437c14bafd833f8136042bffb3ac3506b5c', '85a7d97c9773517ff2c82af7027bfb42ad43595696c68b5a725351725fcef524', '36539c96576628f035b4c288b24a87030b900d81e9df5630a4af8e38cacc71c7', 'ab1cc76a7033cf9ed20dd9897b407b6c92bbd8d4c805bc043060412af0ce44ec', 'c47fc30ac78b1ebf5e2a8613f2ab0e4592bbcd5744198587b95b6c56b0fde706'], 'logIndex': 3028822565, 'rootHash': '619bdf8d7c8e95ea9120ea3587ff45c699a11d327823181cf3db3794e4bbd70e', 'treeSize': 3028822572}, 'signedEntryTimestamp': 'MEUCIQCzEdyBNq5pCba/8jd1qJIxZZT/+wbKffAGC/OXIRfitQIgT5h1JIt5/2KqJNCN5vUkM/BPL/ork30NmPG0SCULkeU='}}}
+2026-10-08T17:32:05.5780188Z Transparency log entry created with index: 3150726827
+2026-10-08T17:32:05.5781873Z DSSE PAE: b'DSSEv1 28 application/vnd.in-toto+json 266 {"_type":"https://in-toto.io/Statement/v1","subject":[{"name":"mongoeco-4.9.0-py3-none-any.whl","digest":{"sha256":"4214ea98d80389929a43e0f59177c3fc88535f93cb6be16178f911a64df42d3f"}}],"predicateType":"https://docs.pypi.org/attestations/publish/v1","predicate":null}'
+2026-10-08T17:32:05.6091304Z proposed: {"apiVersion": "0.0.1", "kind": "dsse", "spec": {"proposedContent": {"envelope": "{\"payload\":\"eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCJzdWJqZWN0IjpbeyJuYW1lIjoibW9uZ29lY28tNC45LjAtcHkzLW5vbmUtYW55LndobCIsImRpZ2VzdCI6eyJzaGEyNTYiOiI0MjE0ZWE5OGQ4MDM4OTkyOWE0M2UwZjU5MTc3YzNmYzg4NTM1ZjkzY2I2YmUxNjE3OGY5MTFhNjRkZjQyZDNmIn19XSwicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vZG9jcy5weXBpLm9yZy9hdHRlc3RhdGlvbnMvcHVibGlzaC92MSIsInByZWRpY2F0ZSI6bnVsbH0=\",\"payloadType\":\"application/vnd.in-toto+json\",\"signatures\":[{\"sig\":\"MEUCIQD13e8FOLqoaXSVgYFlPlab59zO/N/s6SjILGIouo9EpgIgYJ0s21vYl4snwymlsborJ/oXarOrjfgg63eI+NUiEzk=\"}]}", "verifiers": ["LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUc5RENDQm51Z0F3SUJBZ0lVTUE1V3dBSDlJd3hTS1REU2ZjalkrYmYvWWM0d0NnWUlLb1pJemowRUF3TXcKTnpFVk1CTUdBMVVFQ2hNTWMybG5jM1J2Y21VdVpHVjJNUjR3SEFZRFZRUURFeFZ6YVdkemRHOXlaUzFwYm5SbApjbTFsWkdsaGRHVXdIaGNOTWpZeE1EQTRNVGN6TWpBMFdoY05Nall4TURBNE1UYzBNakEwV2pBQU1Ga3dFd1lICktvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUVMNHFDYlI3RjVPa0k1MTIxcXpZbzZTcW9mL29SaFRzOEJsbUUKTEhCaGRkTzN0dFZoN2lUMzJKRWZwaTlaUDU3TXQ1Y0tFRWlxeWhzdk52L0lKUFM4dktPQ0Jab3dnZ1dXTUE0RwpBMVVkRHdFQi93UUVBd0lIZ0RBVEJnTlZIU1VFRERBS0JnZ3JCZ0VGQlFjREF6QWZCZ05WSFNNRUdEQVdnQlRmCjArblBWaVFSbHZtbzJPa29WYUxHTGhoa1B6QmlCZ05WSFJFQkFmOEVXREJXaGxSb2RIUndjem92TDJkcGRHaDEKWWk1amIyMHZiV1Z1ZFdSdmNISnZZbXhsYldFdmJXOXVaMjlsWTI4dkxtZHBkR2gxWWk5M2IzSnJabXh2ZDNNdgpZMmt1ZVcxc1FISmxabk12ZEdGbmN5OTJOQzQ1TGpBd09RWUtLd1lCQkFHRHZ6QUJBUVFyYUhSMGNITTZMeTkwCmIydGxiaTVoWTNScGIyNXpMbWRwZEdoMVluVnpaWEpqYjI1MFpXNTBMbU52YlRBU0Jnb3JCZ0VFQVlPL01BRUMKQkFSd2RYTm9NRFlHQ2lzR0FRUUJnNzh3QVFNRUtEYzJNVEk0TnpKaU5UQTFNbU15TldSbE1qSXpPREkxWTJRNApPREUwTkRWall6Wm1NVEEyWmpFd0VBWUtLd1lCQkFHRHZ6QUJCQVFDUTBrd0pRWUtLd1lCQkFHRHZ6QUJCUVFYCmJXVnVkV1J2Y0hKdllteGxiV0V2Ylc5dVoyOWxZMjh3SGdZS0t3WUJCQUdEdnpBQkJnUVFjbVZtY3k5MFlXZHoKTDNZMExqa3VNREE3QmdvckJnRUVBWU8vTUFFSUJDME1LMmgwZEhCek9pOHZkRzlyWlc0dVlXTjBhVzl1Y3k1bgphWFJvZFdKMWMyVnlZMjl1ZEdWdWRDNWpiMjB3WkFZS0t3WUJCQUdEdnpBQkNRUldERlJvZEhSd2N6b3ZMMmRwCmRHaDFZaTVqYjIwdmJXVnVkV1J2Y0hKdllteGxiV0V2Ylc5dVoyOWxZMjh2TG1kcGRHaDFZaTkzYjNKclpteHYKZDNNdlkya3VlVzFzUUhKbFpuTXZkR0ZuY3k5Mk5DNDVMakF3T0FZS0t3WUJCQUdEdnpBQkNnUXFEQ2czTmpFeQpPRGN5WWpVd05USmpNalZrWlRJeU16Z3lOV05rT0RneE5EUTFZMk0yWmpFd05tWXhNQjBHQ2lzR0FRUUJnNzh3CkFRc0VEd3dOWjJsMGFIVmlMV2h2YzNSbFpEQTZCZ29yQmdFRUFZTy9NQUVNQkN3TUttaDBkSEJ6T2k4dloybDAKYUhWaUxtTnZiUzl0Wlc1MVpHOXdjbTlpYkdWdFlTOXRiMjVuYjJWamJ6QTRCZ29yQmdFRUFZTy9NQUVOQkNvTQpLRGMyTVRJNE56SmlOVEExTW1NeU5XUmxNakl6T0RJMVkyUTRPREUwTkRWall6Wm1NVEEyWmpFd0lBWUtLd1lCCkJBR0R2ekFCRGdRU0RCQnlaV1p6TDNSaFozTXZkalF1T1M0d01Cb0dDaXNHQVFRQmc3OHdBUThFREF3S01URTUKTkRjNE5EZ3lNakF4QmdvckJnRUVBWU8vTUFFUUJDTU1JV2gwZEhCek9pOHZaMmwwYUhWaUxtTnZiUzl0Wlc1MQpaRzl3Y205aWJHVnRZVEFXQmdvckJnRUVBWU8vTUFFUkJBZ01CamszTmpFNE56QmtCZ29yQmdFRUFZTy9NQUVTCkJGWU1WR2gwZEhCek9pOHZaMmwwYUhWaUxtTnZiUzl0Wlc1MVpHOXdjbTlpYkdWdFlTOXRiMjVuYjJWamJ5OHUKWjJsMGFIVmlMM2R2Y210bWJHOTNjeTlqYVM1NWJXeEFjbVZtY3k5MFlXZHpMM1kwTGprdU1EQTRCZ29yQmdFRQpBWU8vTUFFVEJDb01LRGMyTVRJNE56SmlOVEExTW1NeU5XUmxNakl6T0RJMVkyUTRPREUwTkRWall6Wm1NVEEyClpqRXdGQVlLS3dZQkJBR0R2ekFCRkFRR0RBUndkWE5vTUY0R0Npc0dBUVFCZzc4d0FSVUVVQXhPYUhSMGNITTYKTHk5bmFYUm9kV0l1WTI5dEwyMWxiblZrYjNCeWIySnNaVzFoTDIxdmJtZHZaV052TDJGamRHbHZibk12Y25WdQpjeTh6TnpneE5qQXlOelV3TWk5aGRIUmxiWEIwY3k4eE1CWUdDaXNHQVFRQmc3OHdBUllFQ0F3R2NIVmliR2xqCk1CUUdDaXNHQVFRQmc3OHdBUmNFQmd3RWNIbHdhVEE5QmdvckJnRUVBWU8vTUFFWUJDOE1MWEpsY0c4NmJXVnUKZFdSdmNISnZZbXhsYldFdmJXOXVaMjlsWTI4NlpXNTJhWEp2Ym0xbGJuUTZjSGx3YVRDQml3WUtLd1lCQkFIVwplUUlFQWdSOUJIc0FlUUIzQU4wOU1Hckd4eEV5WXhrZUhKbG5Od0tpU2w2NDNqeXQvNGVLY29BdktlNk9BQUFCCm9SeVNmYVVBQUFRREFFZ3dSZ0loQVBXeFVQMkZBZWRQeDBUUzcvSTdSRXFOWGJTZGhUcy9ORjYwWFN2ZytqTHgKQWlFQXljZCtFalo4QUZKMXdPT0V3Ulk5OEZsN2hoVTY4elZJYncrZVRmalJsR0l3Q2dZSUtvWkl6ajBFQXdNRApad0F3WkFJd1gxT09rQXlKMEltT0lxY1FIMFhvOVBRNnpxcGY1eDlVOWxtRGcxcUdwVkltU3UwKzdUWEwwWlRwCk12cjR5UlRqQWpCeHVqL1AxUjU5RTFnYlh4YUFQSXlESTZXdURCc3Z2VHhFTGtlNWtsTVBNQzVoTjZTZDlHdUEKUFowTkJoMjkxR0k9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"]}, "signatures": null, "envelopeHash": null, "payloadHash": null}}
+2026-10-08T17:32:05.8960127Z integrated: {'108e9186e8c5677a888abe4146f57264791815320d6baae6bb97c9c7dc76867d6dd418f2f9d06b3f': {'body': 'eyJhcGlWZXJzaW9uIjoiMC4wLjEiLCJraW5kIjoiZHNzZSIsInNwZWMiOnsiZW52ZWxvcGVIYXNoIjp7ImFsZ29yaXRobSI6InNoYTI1NiIsInZhbHVlIjoiZjhkZjZkNmIwYTFhOWIyYTAzZjA2OWJlYjE0OTY3OTUyNzdmMTQ5MmYyODg1ZDIzOTI4MDQ4YTA2NzU2NmQ3OSJ9LCJwYXlsb2FkSGFzaCI6eyJhbGdvcml0aG0iOiJzaGEyNTYiLCJ2YWx1ZSI6ImViYjExY2NmMzQ1NmJiMDJkYWQwYTBjMTE5NzM4NWRlMDZkMjYyNWU4MTVjZTgyNzg4MmI4YjZhNDhiOGI0NDEifSwic2lnbmF0dXJlcyI6W3sic2lnbmF0dXJlIjoiTUVVQ0lRRDEzZThGT0xxb2FYU1ZnWUZsUGxhYjU5ek8vTi9zNlNqSUxHSW91bzlFcGdJZ1lKMHMyMXZZbDRzbnd5bWxzYm9ySi9vWGFyT3JqZmdnNjNlSStOVWlFems9IiwidmVyaWZpZXIiOiJMUzB0TFMxQ1JVZEpUaUJEUlZKVVNVWkpRMEZVUlMwdExTMHRDazFKU1VjNVJFTkRRbTUxWjBGM1NVSkJaMGxWVFVFMVYzZEJTRGxKZDNoVFMxUkVVMlpqYWxrclltWXZXV00wZDBObldVbExiMXBKZW1vd1JVRjNUWGNLVG5wRlZrMUNUVWRCTVZWRlEyaE5UV015Ykc1ak0xSjJZMjFWZFZwSFZqSk5ValIzU0VGWlJGWlJVVVJGZUZaNllWZGtlbVJIT1hsYVV6RndZbTVTYkFwamJURnNXa2RzYUdSSFZYZElhR05PVFdwWmVFMUVRVFJOVkdONlRXcEJNRmRvWTA1TmFsbDRUVVJCTkUxVVl6Qk5ha0V3VjJwQlFVMUdhM2RGZDFsSUNrdHZXa2w2YWpCRFFWRlpTVXR2V2tsNmFqQkVRVkZqUkZGblFVVk1OSEZEWWxJM1JqVlBhMGsxTVRJeGNYcFpielpUY1c5bUwyOVNhRlJ6T0VKc2JVVUtURWhDYUdSa1R6TjBkRlpvTjJsVU16SktSV1p3YVRsYVVEVTNUWFExWTB0RlJXbHhlV2h6ZGs1MkwwbEtVRk00ZGt0UFEwSmFiM2RuWjFkWFRVRTBSd3BCTVZWa1JIZEZRaTkzVVVWQmQwbElaMFJCVkVKblRsWklVMVZGUkVSQlMwSm5aM0pDWjBWR1FsRmpSRUY2UVdaQ1owNVdTRk5OUlVkRVFWZG5RbFJtQ2pBcmJsQldhVkZTYkhadGJ6SlBhMjlXWVV4SFRHaG9hMUI2UW1sQ1owNVdTRkpGUWtGbU9FVlhSRUpYYUd4U2IyUklVbmRqZW05MlRESmtjR1JIYURFS1dXazFhbUl5TUhaaVYxWjFaRmRTZG1OSVNuWlpiWGhzWWxkRmRtSlhPWFZhTWpsc1dUSTRka3h0WkhCa1IyZ3hXV2s1TTJJelNuSmFiWGgyWkROTmRncFpNbXQxWlZjeGMxRklTbXhhYmsxMlpFZEdibU41T1RKT1F6UTFUR3BCZDA5UldVdExkMWxDUWtGSFJIWjZRVUpCVVZGeVlVaFNNR05JVFRaTWVUa3dDbUl5ZEd4aWFUVm9XVE5TY0dJeU5YcE1iV1J3WkVkb01WbHVWbnBhV0VwcVlqSTFNRnBYTlRCTWJVNTJZbFJCVTBKbmIzSkNaMFZGUVZsUEwwMUJSVU1LUWtGU2QyUllUbTlOUkZsSFEybHpSMEZSVVVKbk56aDNRVkZOUlV0RVl6Sk5WRWswVG5wS2FVNVVRVEZOYlUxNVRsZFNiRTFxU1hwUFJFa3hXVEpSTkFwUFJFVXdUa1JXYWxsNldtMU5WRUV5V21wRmQwVkJXVXRMZDFsQ1FrRkhSSFo2UVVKQ1FWRkRVVEJyZDBwUldVdExkMWxDUWtGSFJIWjZRVUpDVVZGWUNtSlhWblZrVjFKMlkwaEtkbGx0ZUd4aVYwVjJZbGM1ZFZveU9XeFpNamgzU0dkWlMwdDNXVUpDUVVkRWRucEJRa0puVVZGamJWWnRZM2s1TUZsWFpIb0tURE5aTUV4cWEzVk5SRUUzUW1kdmNrSm5SVVZCV1U4dlRVRkZTVUpETUUxTE1tZ3daRWhDZWs5cE9IWmtSemx5V2xjMGRWbFhUakJoVnpsMVkzazFiZ3BoV0ZKdlpGZEtNV015Vm5sWk1qbDFaRWRXZFdSRE5XcGlNakIzV2tGWlMwdDNXVUpDUVVkRWRucEJRa05SVWxkRVJsSnZaRWhTZDJONmIzWk1NbVJ3Q21SSGFERlphVFZxWWpJd2RtSlhWblZrVjFKMlkwaEtkbGx0ZUd4aVYwVjJZbGM1ZFZveU9XeFpNamgyVEcxa2NHUkhhREZaYVRrellqTktjbHB0ZUhZS1pETk5kbGt5YTNWbFZ6RnpVVWhLYkZwdVRYWmtSMFp1WTNrNU1rNURORFZNYWtGM1QwRlpTMHQzV1VKQ1FVZEVkbnBCUWtOblVYRkVRMmN6VG1wRmVRcFBSR041V1dwVmQwNVVTbXBOYWxacldsUkplVTE2WjNsT1YwNXJUMFJuZUU1RVVURlpNazB5V21wRmQwNXRXWGhOUWpCSFEybHpSMEZSVVVKbk56aDNDa0ZSYzBWRWQzZE9XakpzTUdGSVZtbE1WMmgyWXpOU2JGcEVRVFpDWjI5eVFtZEZSVUZaVHk5TlFVVk5Ra04zVFV0dGFEQmtTRUo2VDJrNGRsb3liREFLWVVoV2FVeHRUblppVXpsMFdsYzFNVnBIT1hkamJUbHBZa2RXZEZsVE9YUmlNalZ1WWpKV2FtSjZRVFJDWjI5eVFtZEZSVUZaVHk5TlFVVk9Ra052VFFwTFJHTXlUVlJKTkU1NlNtbE9WRUV4VFcxTmVVNVhVbXhOYWtsNlQwUkpNVmt5VVRSUFJFVXdUa1JXYWxsNldtMU5WRUV5V21wRmQwbEJXVXRMZDFsQ0NrSkJSMFIyZWtGQ1JHZFJVMFJDUW5sYVYxcDZURE5TYUZvelRYWmthbEYxVDFNMGQwMUNiMGREYVhOSFFWRlJRbWMzT0hkQlVUaEZSRUYzUzAxVVJUVUtUa1JqTkU1RVozbE5ha0Y0UW1kdmNrSm5SVVZCV1U4dlRVRkZVVUpEVFUxSlYyZ3daRWhDZWs5cE9IWmFNbXd3WVVoV2FVeHRUblppVXpsMFdsYzFNUXBhUnpsM1kyMDVhV0pIVm5SWlZFRlhRbWR2Y2tKblJVVkJXVTh2VFVGRlVrSkJaMDFDYW1zelRtcEZORTU2UW10Q1oyOXlRbWRGUlVGWlR5OU5RVVZUQ2tKR1dVMVdSMmd3WkVoQ2VrOXBPSFphTW13d1lVaFdhVXh0VG5aaVV6bDBXbGMxTVZwSE9YZGpiVGxwWWtkV2RGbFRPWFJpTWpWdVlqSldhbUo1T0hVS1dqSnNNR0ZJVm1sTU0yUjJZMjEwYldKSE9UTmplVGxxWVZNMU5XSlhlRUZqYlZadFkzazVNRmxYWkhwTU0xa3dUR3ByZFUxRVFUUkNaMjl5UW1kRlJRcEJXVTh2VFVGRlZFSkRiMDFMUkdNeVRWUkpORTU2U21sT1ZFRXhUVzFOZVU1WFVteE5ha2w2VDBSSk1Wa3lVVFJQUkVVd1RrUldhbGw2V20xTlZFRXlDbHBxUlhkR1FWbExTM2RaUWtKQlIwUjJla0ZDUmtGUlIwUkJVbmRrV0U1dlRVWTBSME5wYzBkQlVWRkNaemM0ZDBGU1ZVVlZRWGhQWVVoU01HTklUVFlLVEhrNWJtRllVbTlrVjBsMVdUSTVkRXd5TVd4aWJsWnJZak5DZVdJeVNuTmFWekZvVERJeGRtSnRaSFphVjA1MlRESkdhbVJIYkhaaWJrMTJZMjVXZFFwamVUaDZUbnBuZUU1cVFYbE9lbFYzVFdrNWFHUklVbXhpV0VJd1kzazRlRTFDV1VkRGFYTkhRVkZSUW1jM09IZEJVbGxGUTBGM1IyTklWbWxpUjJ4cUNrMUNVVWREYVhOSFFWRlJRbWMzT0hkQlVtTkZRbWQzUldOSWJIZGhWRUU1UW1kdmNrSm5SVVZCV1U4dlRVRkZXVUpET0UxTVdFcHNZMGM0Tm1KWFZuVUtaRmRTZG1OSVNuWlpiWGhzWWxkRmRtSlhPWFZhTWpsc1dUSTRObHBYTlRKaFdFcDJZbTB4YkdKdVVUWmpTR3gzWVZSRFFtbDNXVXRMZDFsQ1FrRklWd3BsVVVsRlFXZFNPVUpJYzBGbFVVSXpRVTR3T1UxSGNrZDRlRVY1V1hoclpVaEtiRzVPZDB0cFUydzJORE5xZVhRdk5HVkxZMjlCZGt0bE5rOUJRVUZDQ205U2VWTm1ZVlZCUVVGUlJFRkZaM2RTWjBsb1FWQlhlRlZRTWtaQlpXUlFlREJVVXpjdlNUZFNSWEZPV0dKVFpHaFVjeTlPUmpZd1dGTjJaeXRxVEhnS1FXbEZRWGxqWkN0RmFsbzRRVVpLTVhkUFQwVjNVbGs1T0Vac04yaG9WVFk0ZWxaSlluY3JaVlJtYWxKc1IwbDNRMmRaU1V0dldrbDZhakJGUVhkTlJBcGFkMEYzV2tGSmQxZ3hUMDlyUVhsS01FbHRUMGx4WTFGSU1GaHZPVkJSTm5weGNHWTFlRGxWT1d4dFJHY3hjVWR3VmtsdFUzVXdLemRVV0V3d1dsUndDazEyY2pSNVVsUnFRV3BDZUhWcUwxQXhValU1UlRGbllsaDRZVUZRU1hsRVNUWlhkVVJDYzNaMlZIaEZUR3RsTld0c1RWQk5RelZvVGpaVFpEbEhkVUVLVUZvd1RrSm9Namt4UjBrOUNpMHRMUzB0UlU1RUlFTkZVbFJKUmtsRFFWUkZMUzB0TFMwSyJ9XX19', 'integratedTime': 1791480725, 'logID': 'c0d23d6ad406973f9559f3ba2d1ca01f84147d8ffc5b8445c224f98b9591801d', 'logIndex': 3150726842, 'verification': {'inclusionProof': {'checkpoint': 'rekor.sigstore.dev - 1193050959916656506\n3028822584\nwOtdnU2wx7G4plx/lRd2mbVJK3O9t2k89IS4MzkKsA8=\n\n— rekor.sigstore.dev wNI9ajBFAiEAoxrWUnpnyOKIfbBTUDBEuuoWTgtLK26D7caQQ6sw/0QCIE+cY7ekVT+U7v59/JAl4QUrqmcW/9KXTTdoapDouGl7\n', 'hashes': ['5d0cba4a5e66a83868513abcc44664799ef6abedaf590288206e5f07c6d252fd', '5f437b2273d7e8b75b20eca8a509dc76baeb86106899a939c95e01c5afe0bcd9', 'b480f2698de3e36b98c31b7a67dc10fb02f15a201cdda1dfbf2aea182a37175a', 'c8c91b6ca2ffa6bc97c3447a77821c9d7093fb58aa50df9c953191213b42b086', 'eaef457a75834c4652000ceabebbeaf10f6b14d913d5260ae2cbddb337945331', '9a3261b392439966140786c9afb91e11c9ca50645e5e14c20555c021bccae53f', 'd4f42516c2066f9a19194a9bb7569df884f106ed219c3ba24e095d682bcbc3fd', '4b8a1ec1d50a6c8a65d7b1307658afd2a9bd3f4ed61657df145e6eaa632d4583', 'b84ed8a19ed9606c7f51db8117777abbc7cbcef5276a265c58bb7e0dbff1b339', '40951db4c1b97ea4de6c8edb5939f437c14bafd833f8136042bffb3ac3506b5c', '85a7d97c9773517ff2c82af7027bfb42ad43595696c68b5a725351725fcef524', '36539c96576628f035b4c288b24a87030b900d81e9df5630a4af8e38cacc71c7', 'ab1cc76a7033cf9ed20dd9897b407b6c92bbd8d4c805bc043060412af0ce44ec', 'c47fc30ac78b1ebf5e2a8613f2ab0e4592bbcd5744198587b95b6c56b0fde706'], 'logIndex': 3028822580, 'rootHash': 'c0eb5d9d4db0c7b1b8a65c7f95177699b5492b73bdb7693cf484b833390ab00f', 'treeSize': 3028822584}, 'signedEntryTimestamp': 'MEUCIHjLP2qmoSYHLdppbieEm5MikhY1TxT0Nb9WLC7WighkAiEA+wcwOLJoPL5DD44QZ8cU2+Z0w89ks8DK3x55e//+7Co='}}}
+2026-10-08T17:32:05.9118075Z Transparency log entry created with index: 3150726842
+2026-10-08T17:32:06.0104894Z Showing hash values of files to be uploaded:
+2026-10-08T17:32:06.0105374Z /github/workspace/dist/mongoeco-4.9.0.tar.gz
+2026-10-08T17:32:06.0105610Z 
+2026-10-08T17:32:06.0126903Z SHA256: ad940c391dccb2ce6262257da99c1d59283bba3aa09e6dfb8b51956306705e85
+2026-10-08T17:32:06.0127602Z MD5: 83140ba49b895ff07e61e65899d90444
+2026-10-08T17:32:06.0128146Z BLAKE2-256: b3d37ece9334e440a05aad2a0f245cd6cce9b57bb9cbbc748de148569cc21cb6
+2026-10-08T17:32:06.0128482Z 
+2026-10-08T17:32:06.0128841Z /github/workspace/dist/mongoeco-4.9.0-py3-none-any.whl.publish.attestation
+2026-10-08T17:32:06.0129203Z 
+2026-10-08T17:32:06.0130383Z SHA256: 334a32f6dae11befd45ccb026035b2631a0873736d8d2c5521d3aaf2d3d842fb
+2026-10-08T17:32:06.0130893Z MD5: 8a26c82d41d39c9b7e6af1f82951cd0e
+2026-10-08T17:32:06.0131627Z BLAKE2-256: ccae3f2cf7e8a5394bd76c29369cfb7cd9e34d11f1c7ba21262f07b97c36cee5
+2026-10-08T17:32:06.0132006Z 
+2026-10-08T17:32:06.0132182Z /github/workspace/dist/mongoeco-4.9.0-py3-none-any.whl
+2026-10-08T17:32:06.0132492Z 
+2026-10-08T17:32:06.0152672Z SHA256: 4214ea98d80389929a43e0f59177c3fc88535f93cb6be16178f911a64df42d3f
+2026-10-08T17:32:06.0153506Z MD5: bb7dd9de8af4ebd99bc667300beac0ec
+2026-10-08T17:32:06.0154341Z BLAKE2-256: 26134f421eb58d89795406b46c6f0dea7592d360357fb8be79248a24f38a65e2
+2026-10-08T17:32:06.0154709Z 
+2026-10-08T17:32:06.0154983Z /github/workspace/dist/mongoeco-4.9.0.tar.gz.publish.attestation
+2026-10-08T17:32:06.0155341Z 
+2026-10-08T17:32:06.0155547Z SHA256: 970e87128221de41980e66e9238de18dec9f4e477999eced900a977a5f08349c
+2026-10-08T17:32:06.0156262Z MD5: e82f385595a3037fda3c9fa88af233ba
+2026-10-08T17:32:06.0156731Z BLAKE2-256: 7bf1cf760cc3388ff7bc248e746467fe6df5c340a9680100b3f638f7048827eb
+2026-10-08T17:32:06.0157116Z 
+2026-10-08T17:32:06.4823172Z Uploading distributions to https://upload.pypi.org/legacy/
+2026-10-08T17:32:06.4882874Z [34mINFO    [0m dist/mongoeco-4.9.0-py3-none-any.whl (740.7 KB)                        
+2026-10-08T17:32:06.5101362Z [34mINFO    [0m dist/mongoeco-4.9.0.tar.gz (686.1 KB)                                  
+2026-10-08T17:32:06.5104453Z [34mINFO    [0m username set by command options                                        
+2026-10-08T17:32:06.5107577Z [34mINFO    [0m password set by command options                                        
+2026-10-08T17:32:06.5114532Z [34mINFO    [0m username: __token__                                                    
+2026-10-08T17:32:06.5117722Z [34mINFO    [0m password: <hidden>                                                     
+2026-10-08T17:32:06.5122262Z Uploading mongoeco-4.9.0-py3-none-any.whl
+2026-10-08T17:32:08.3763732Z [34mINFO    [0m Response from https://upload.pypi.org/legacy/:                         
+2026-10-08T17:32:08.3764313Z          200 OK                                                                 
+2026-10-08T17:32:08.3766779Z [34mINFO    [0m <html>                                                                 
+2026-10-08T17:32:08.3767145Z           <head>                                                                
+2026-10-08T17:32:08.3767599Z            <title>200 OK</title>                                                
+2026-10-08T17:32:08.3768231Z           </head>                                                               
+2026-10-08T17:32:08.3768595Z           <body>                                                                
+2026-10-08T17:32:08.3768923Z            <h1>200 OK</h1>                                                      
+2026-10-08T17:32:08.3769273Z            <br/><br/>                                                           
+2026-10-08T17:32:08.3769596Z                                                                                 
+2026-10-08T17:32:08.3769899Z                                                                                 
+2026-10-08T17:32:08.3770281Z                                                                                 
+2026-10-08T17:32:08.3770599Z           </body>                                                               
+2026-10-08T17:32:08.3771217Z          </html>                                                                
+2026-10-08T17:32:08.3771677Z Uploading mongoeco-4.9.0.tar.gz
+2026-10-08T17:32:09.6245733Z [34mINFO    [0m Response from https://upload.pypi.org/legacy/:                         
+2026-10-08T17:32:09.6246380Z          200 OK                                                                 
+2026-10-08T17:32:09.6251118Z [34mINFO    [0m <html>                                                                 
+2026-10-08T17:32:09.6251872Z           <head>                                                                
+2026-10-08T17:32:09.6252688Z            <title>200 OK</title>                                                
+2026-10-08T17:32:09.6253286Z           </head>                                                               
+2026-10-08T17:32:09.6253721Z           <body>                                                                
+2026-10-08T17:32:09.6254255Z            <h1>200 OK</h1>                                                      
+2026-10-08T17:32:09.6254707Z            <br/><br/>                                                           
+2026-10-08T17:32:09.6255090Z                                                                                 
+2026-10-08T17:32:09.6255463Z                                                                                 
+2026-10-08T17:32:09.6255841Z                                                                                 
+2026-10-08T17:32:09.6256238Z           </body>                                                               
+2026-10-08T17:32:09.6256634Z          </html>                                                                
+2026-10-08T17:32:09.6256877Z 
+2026-10-08T17:32:09.6257156Z [32mView at:[0m
+2026-10-08T17:32:09.6257770Z https://pypi.org/project/mongoeco/4.9.0/
+2026-10-08T17:32:09.7656977Z ##[end-action id=__pypa_gh-action-pypi-publish.__self;outcome=success;conclusion=success;duration_ms=17839]
+2026-10-08T17:32:09.7784746Z Post job cleanup.
+2026-10-08T17:32:09.7834781Z Post job cleanup.
+2026-10-08T17:32:09.8911631Z Post job cleanup.
+2026-10-08T17:32:09.9556173Z [command]/usr/bin/git version
+2026-10-08T17:32:09.9603845Z git version 2.55.0
+2026-10-08T17:32:09.9613924Z Temporarily overriding HOME='/home/runner/work/_temp/74e3d696-1e8c-430e-9909-72a62a3c71ce' before making global git config changes
+2026-10-08T17:32:09.9616406Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-08T17:32:09.9617864Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mongoeco/mongoeco
+2026-10-08T17:32:09.9646402Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-08T17:32:09.9671500Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-08T17:32:09.9830387Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-08T17:32:09.9850056Z http.https://github.com/.extraheader
+2026-10-08T17:32:09.9862824Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-08T17:32:09.9909339Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-08T17:32:10.0075893Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-08T17:32:10.0099591Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-08T17:32:10.0378939Z Evaluate and set environment url
+2026-10-08T17:32:10.0382241Z Evaluated environment url: https://pypi.org/project/mongoeco/
+2026-10-08T17:32:10.0383080Z Cleaning up orphan processes
+2026-10-08T17:32:10.0592677Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

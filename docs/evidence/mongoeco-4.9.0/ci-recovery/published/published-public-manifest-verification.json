@@ -1,0 +1,11 @@
+{
+  "release_commit": "7612872b5052c25de223825cd881445cc6f106f1",
+  "version": "4.9.0",
+  "semantic_comparison": "exact expected manifest",
+  "actual_export_sha256": "2626e1e27fb5b2cfd26b562850d07ae28673f98b280cd7411350c6599b979bc5",
+  "expected_fixture_path": "tests/fixtures/public_api_manifest_exchange_source.json",
+  "expected_fixture_sha256": "b2a2cb2cac2c5212d1067de7125e3155c28dabcb7960cc9ae5c59167a727e5e4",
+  "reproduction": "Install the verified 4.9.0 wheel in isolation and serialize public_api_manifest() with json.dumps(indent=2) plus a newline",
+  "raw_local_export": "dist/4.9.0-recovery/evidence/published-public-manifest.json",
+  "reason_for_reference": "Avoid duplicating the immutable public contract fixture; its exact commit and hash bind the evidence"
+}

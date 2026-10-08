@@ -1,0 +1,36 @@
+{
+  "version": "4.9.0",
+  "module": "/private/tmp/mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages/mongoeco/__init__.py",
+  "optional_modules_absent": [
+    "pymongo",
+    "bson",
+    "orjson",
+    "hypothesis"
+  ],
+  "checks": [
+    {
+      "engine": "MemoryEngine",
+      "dialect": "7.0",
+      "profile": "4.9",
+      "sync_async": "passed"
+    },
+    {
+      "engine": "MemoryEngine",
+      "dialect": "9.0",
+      "profile": "4.18",
+      "sync_async": "passed"
+    },
+    {
+      "engine": "SQLiteEngine",
+      "dialect": "7.0",
+      "profile": "4.9",
+      "sync_async": "passed"
+    },
+    {
+      "engine": "SQLiteEngine",
+      "dialect": "9.0",
+      "profile": "4.18",
+      "sync_async": "passed"
+    }
+  ]
+}

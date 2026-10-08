@@ -1,0 +1,119 @@
+Verifying published Mongoeco 4.9.0 from PyPI
+Requirement already satisfied: pip in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (26.2)
+Collecting pip
+  Downloading pip-26.2.1-py3-none-any.whl.metadata (4.6 kB)
+Downloading pip-26.2.1-py3-none-any.whl (1.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 30.3 MB/s  0:00:00
+Installing collected packages: pip
+  Attempting uninstall: pip
+    Found existing installation: pip 26.2
+    Uninstalling pip-26.2:
+      Successfully uninstalled pip-26.2
+Successfully installed pip-26.2.1
+Collecting mongoeco==4.9.0
+  Downloading mongoeco-4.9.0-py3-none-any.whl.metadata (23 kB)
+Collecting cxp<6,>=5.0.0 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0)
+  Downloading cxp-5.0.0-py3-none-any.whl.metadata (4.2 kB)
+Collecting msgspec<1,>=0.20 (from mongoeco==4.9.0)
+  Downloading msgspec-0.22.0-cp313-cp313-macosx_11_0_arm64.whl.metadata (6.0 kB)
+Collecting pyuca<2,>=1.2 (from mongoeco==4.9.0)
+  Downloading pyuca-1.2-py2.py3-none-any.whl.metadata (649 bytes)
+Collecting rpds-py<2027,>=0.27 (from mongoeco==4.9.0)
+  Downloading rpds_py-2026.9.1-cp313-cp313-macosx_11_0_arm64.whl.metadata (4.1 kB)
+Collecting shapely<3,>=2.1 (from mongoeco==4.9.0)
+  Downloading shapely-2.2.0-cp313-cp313-macosx_11_0_arm64.whl.metadata (6.7 kB)
+Collecting usearch<3,>=2.23 (from mongoeco==4.9.0)
+  Downloading usearch-2.26.4-cp313-cp313-macosx_11_0_arm64.whl.metadata (35 kB)
+Collecting jsonschema<5,>=4.23 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0)
+  Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+Collecting referencing<1,>=0.35 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0)
+  Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+Collecting rfc8785<1,>=0.1.4 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0)
+  Downloading rfc8785-0.1.4-py3-none-any.whl.metadata (3.4 kB)
+Collecting attrs>=22.2.0 (from jsonschema<5,>=4.23->cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0)
+  Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5,>=4.23->cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0)
+  Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+Collecting numpy>=1.26 (from shapely<3,>=2.1->mongoeco==4.9.0)
+  Downloading numpy-2.5.3-cp313-cp313-macosx_14_0_arm64.whl.metadata (6.6 kB)
+Collecting tqdm (from usearch<3,>=2.23->mongoeco==4.9.0)
+  Downloading tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+Collecting numkong (from usearch<3,>=2.23->mongoeco==4.9.0)
+  Downloading numkong-7.8.5-cp313-cp313-macosx_11_0_arm64.whl.metadata (87 kB)
+Downloading mongoeco-4.9.0-py3-none-any.whl (758 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 758.5/758.5 kB 3.5 MB/s  0:00:00
+Downloading cxp-5.0.0-py3-none-any.whl (58 kB)
+Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+Downloading msgspec-0.22.0-cp313-cp313-macosx_11_0_arm64.whl (193 kB)
+Downloading pyuca-1.2-py2.py3-none-any.whl (1.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 2.4 MB/s  0:00:00
+Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+Downloading rfc8785-0.1.4-py3-none-any.whl (9.2 kB)
+Downloading rpds_py-2026.9.1-cp313-cp313-macosx_11_0_arm64.whl (340 kB)
+Downloading shapely-2.2.0-cp313-cp313-macosx_11_0_arm64.whl (1.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 2.7 MB/s  0:00:00
+Downloading usearch-2.26.4-cp313-cp313-macosx_11_0_arm64.whl (454 kB)
+Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+Downloading numpy-2.5.3-cp313-cp313-macosx_14_0_arm64.whl (5.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.4/5.4 MB 4.0 MB/s  0:00:01
+Downloading numkong-7.8.5-cp313-cp313-macosx_11_0_arm64.whl (817 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 818.0/818.0 kB 12.4 MB/s  0:00:00
+Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+Installing collected packages: pyuca, tqdm, rpds-py, rfc8785, numpy, numkong, msgspec, attrs, usearch, shapely, referencing, cxp, jsonschema-specifications, jsonschema, mongoeco
+
+Successfully installed attrs-26.1.0 cxp-5.0.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mongoeco-4.9.0 msgspec-0.22.0 numkong-7.8.5 numpy-2.5.3 pyuca-1.2 referencing-0.37.0 rfc8785-0.1.4 rpds-py-2026.9.1 shapely-2.2.0 tqdm-4.70.1 usearch-2.26.4
+ok 4.9.0
+module /private/tmp/mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages/mongoeco/__init__.py
+cxp_catalog_sha256 84c69da54a8d09f6dce9a3cbc394cf8c2f251402c72e18b3f7488af86ef08aeb
+No broken requirements found.
+4.9.0 /private/tmp/mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages/mongoeco/__init__.py 4214ea98d80389929a43e0f59177c3fc88535f93cb6be16178f911a64df42d3f 273
+{'version': '4.9.0', 'module': '/private/tmp/mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages/mongoeco/__init__.py', 'optional_modules_absent': ['pymongo', 'bson', 'orjson', 'hypothesis'], 'checks': [{'engine': 'MemoryEngine', 'dialect': '7.0', 'profile': '4.9', 'sync_async': 'passed'}, {'engine': 'MemoryEngine', 'dialect': '9.0', 'profile': '4.18', 'sync_async': 'passed'}, {'engine': 'SQLiteEngine', 'dialect': '7.0', 'profile': '4.9', 'sync_async': 'passed'}, {'engine': 'SQLiteEngine', 'dialect': '9.0', 'profile': '4.18', 'sync_async': 'passed'}]}
+version 4.9.0
+module /private/tmp/mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages/mongoeco/__init__.py
+unicode_collation True
+find_one {'_id': '1', 'kind': 'view', 'count': 1}
+docs [{'_id': '1', 'kind': 'view', 'count': 1}]
+Requirement already satisfied: mongoeco==4.9.0 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from mongoeco[engine-testing,mongodb9]==4.9.0) (4.9.0)
+Requirement already satisfied: cxp<6,>=5.0.0 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (5.0.0)
+Requirement already satisfied: msgspec<1,>=0.20 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (0.22.0)
+Requirement already satisfied: pyuca<2,>=1.2 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (1.2)
+Requirement already satisfied: rpds-py<2027,>=0.27 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (2026.9.1)
+Requirement already satisfied: shapely<3,>=2.1 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (2.2.0)
+Requirement already satisfied: usearch<3,>=2.23 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (2.26.4)
+Requirement already satisfied: jsonschema<5,>=4.26 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from mongoeco[engine-testing,mongodb9]==4.9.0) (4.26.0)
+Collecting pytest<10,>=8 (from mongoeco[engine-testing,mongodb9]==4.9.0)
+  Downloading pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+Collecting pymongo<5,>=4.18.2 (from mongoeco[engine-testing,mongodb9]==4.9.0)
+  Downloading pymongo-4.18.2-cp313-cp313-macosx_11_0_arm64.whl.metadata (10 kB)
+Requirement already satisfied: referencing<1,>=0.35 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (0.37.0)
+Requirement already satisfied: rfc8785<1,>=0.1.4 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from cxp[exchange]<6,>=5.0.0->mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (0.1.4)
+Requirement already satisfied: attrs>=22.2.0 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from jsonschema<5,>=4.26->mongoeco[engine-testing,mongodb9]==4.9.0) (26.1.0)
+Requirement already satisfied: jsonschema-specifications>=2023.03.6 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from jsonschema<5,>=4.26->mongoeco[engine-testing,mongodb9]==4.9.0) (2025.9.1)
+Collecting dnspython<3.0.0,>=2.7.0 (from pymongo<5,>=4.18.2->mongoeco[engine-testing,mongodb9]==4.9.0)
+  Downloading dnspython-2.8.0-py3-none-any.whl.metadata (5.7 kB)
+Collecting iniconfig>=1.0.1 (from pytest<10,>=8->mongoeco[engine-testing,mongodb9]==4.9.0)
+  Downloading iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+Collecting packaging>=22 (from pytest<10,>=8->mongoeco[engine-testing,mongodb9]==4.9.0)
+  Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Collecting pluggy<2,>=1.5 (from pytest<10,>=8->mongoeco[engine-testing,mongodb9]==4.9.0)
+  Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Collecting pygments>=2.7.2 (from pytest<10,>=8->mongoeco[engine-testing,mongodb9]==4.9.0)
+  Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+Requirement already satisfied: numpy>=1.26 in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from shapely<3,>=2.1->mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (2.5.3)
+Requirement already satisfied: tqdm in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from usearch<3,>=2.23->mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (4.70.1)
+Requirement already satisfied: numkong in ./mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages (from usearch<3,>=2.23->mongoeco==4.9.0->mongoeco[engine-testing,mongodb9]==4.9.0) (7.8.5)
+Downloading pymongo-4.18.2-cp313-cp313-macosx_11_0_arm64.whl (819 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 819.3/819.3 kB 24.8 MB/s  0:00:00
+Downloading dnspython-2.8.0-py3-none-any.whl (331 kB)
+Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 10.0 MB/s  0:00:00
+Installing collected packages: pygments, pluggy, packaging, iniconfig, dnspython, pytest, pymongo
+
+Successfully installed dnspython-2.8.0 iniconfig-2.3.1 packaging-26.3 pluggy-1.6.0 pygments-2.21.0 pymongo-4.18.2 pytest-9.1.1
+No broken requirements found.
+4.9.0 /private/tmp/mongoeco-490-recovery-20261008/published-env-confirmed/lib/python3.13/site-packages/mongoeco/__init__.py 4214ea98d80389929a43e0f59177c3fc88535f93cb6be16178f911a64df42d3f 273

@@ -1,0 +1,1 @@
+The conformance CLI emitted text. Its two stdout files were renamed from the initial .json suffix to .txt without changing their bytes. The public API manifest export is retained locally and compared by hash and semantic equality to the fixture at the exact release commit.

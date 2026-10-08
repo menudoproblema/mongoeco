@@ -1,0 +1,110 @@
+{
+  "version": "4.9.0",
+  "release_commit": "7612872b5052c25de223825cd881445cc6f106f1",
+  "release_tree": "c288bf57e85b3f0ced8f2a34cc2c1959eb06940b",
+  "tag_object": "dbe2eea4b2d5c1efb1634e9dec678b5e41156378",
+  "previous_tag_object": "6454a429ebeda70aa7b4a5a074962ce91f437513",
+  "old_tag_local_backup": "refs/codex/recovery/v4.9.0-original",
+  "tag_replacement": "direct human authorization; exact force-with-lease on original tag object",
+  "recorded_at": "2026-10-08T17:37:57.783611+00:00",
+  "delivery_ci": {
+    "conclusion": "success",
+    "databaseId": 37816027502,
+    "headSha": "7612872b5052c25de223825cd881445cc6f106f1",
+    "jobs": [
+      {
+        "conclusion": "success",
+        "databaseId": 113444768949,
+        "name": "Isolated PyMongo API profiles",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 113444769209,
+        "name": "Build and reproduce release artifacts",
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "databaseId": 113444770539,
+        "name": "Latest released artifact contract",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 113444946983,
+        "name": "Test (Python 3.14)",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 113444946984,
+        "name": "Minimal imports (Python 3.13)",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 113444947075,
+        "name": "Test (Python 3.13)",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 113444947409,
+        "name": "Required MongoDB release differential / MongoDB 7.0 differential",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 113444947504,
+        "name": "Required MongoDB release differential / MongoDB 9.0 differential",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 113444947512,
+        "name": "Required MongoDB release differential / MongoDB 8.0 differential",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 113448936189,
+        "name": "Publish tagged release",
+        "status": "completed"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/37816027502"
+  },
+  "published_verification": {
+    "version": "4.9.0",
+    "verified_at": "2026-10-08T17:34:05.646045+00:00",
+    "release_commit": "7612872b5052c25de223825cd881445cc6f106f1",
+    "annotated_tag_object": "dbe2eea4b2d5c1efb1634e9dec678b5e41156378",
+    "ci_run": 37816027502,
+    "official_pypi_metadata": "https://pypi.org/pypi/mongoeco/4.9.0/json",
+    "artifacts": {
+      "mongoeco-4.9.0-py3-none-any.whl": "4214ea98d80389929a43e0f59177c3fc88535f93cb6be16178f911a64df42d3f",
+      "mongoeco-4.9.0.tar.gz": "ad940c391dccb2ce6262257da99c1d59283bba3aa09e6dfb8b51956306705e85"
+    },
+    "pypi_tag_local_artifacts_byte_identical": true,
+    "clean_installation": "public PyPI; no cache, internal constraints, config files, no-deps or checkout imports",
+    "pip_check_core_and_extras": "passed",
+    "public_contract_smoke": "passed",
+    "minimum_default_and_explicit_profiles_sync_async_memory_sqlite": "passed",
+    "official_smoke": "passed",
+    "public_manifest": "exact expected manifest",
+    "conformance_memory_sqlite": "passed",
+    "published_package_files": 273,
+    "installed_core_identity": "published-installed-identity.json",
+    "installed_extra_identity": "published-extra-installed-identity.json",
+    "conformance_profile": "spi-v2-core",
+    "conformance_cases_each_engine": 4,
+    "conformance_report_format": "text"
+  },
+  "diff_review": "publication receipts and release/progress documents reviewed; release runtime, fixtures, CI, scripts, dependencies and tests unchanged",
+  "documentation": "release and progress updated to published status; technical candidates and failed delivery receipts kept historical",
+  "causal_gate_reuse_for_post_publication_docs": "release gates bind exact tag commit and wheel hashes; new files are documentation and immutable evidence only",
+  "foreign_changes": [],
+  "pending_release_work": []
+}

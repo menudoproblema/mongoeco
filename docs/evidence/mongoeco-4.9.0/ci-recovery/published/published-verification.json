@@ -1,0 +1,26 @@
+{
+  "version": "4.9.0",
+  "verified_at": "2026-10-08T17:34:05.646045+00:00",
+  "release_commit": "7612872b5052c25de223825cd881445cc6f106f1",
+  "annotated_tag_object": "dbe2eea4b2d5c1efb1634e9dec678b5e41156378",
+  "ci_run": 37816027502,
+  "official_pypi_metadata": "https://pypi.org/pypi/mongoeco/4.9.0/json",
+  "artifacts": {
+    "mongoeco-4.9.0-py3-none-any.whl": "4214ea98d80389929a43e0f59177c3fc88535f93cb6be16178f911a64df42d3f",
+    "mongoeco-4.9.0.tar.gz": "ad940c391dccb2ce6262257da99c1d59283bba3aa09e6dfb8b51956306705e85"
+  },
+  "pypi_tag_local_artifacts_byte_identical": true,
+  "clean_installation": "public PyPI; no cache, internal constraints, config files, no-deps or checkout imports",
+  "pip_check_core_and_extras": "passed",
+  "public_contract_smoke": "passed",
+  "minimum_default_and_explicit_profiles_sync_async_memory_sqlite": "passed",
+  "official_smoke": "passed",
+  "public_manifest": "exact expected manifest",
+  "conformance_memory_sqlite": "passed",
+  "published_package_files": 273,
+  "installed_core_identity": "published-installed-identity.json",
+  "installed_extra_identity": "published-extra-installed-identity.json",
+  "conformance_profile": "spi-v2-core",
+  "conformance_cases_each_engine": 4,
+  "conformance_report_format": "text"
+}

@@ -1,0 +1,104 @@
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import runpy
+import subprocess
+import sys
+from urllib.request import urlopen
+import zipfile
+
+root = Path('/Users/uve/Proyectos/mongoeco')
+base = Path('/private/tmp/mongoeco-490-recovery-20261008')
+expected = {
+    'mongoeco-4.9.0-py3-none-any.whl': '4214ea98d80389929a43e0f59177c3fc88535f93cb6be16178f911a64df42d3f',
+    'mongoeco-4.9.0.tar.gz': 'ad940c391dccb2ce6262257da99c1d59283bba3aa09e6dfb8b51956306705e85',
+}
+with urlopen('https://pypi.org/pypi/mongoeco/4.9.0/json', timeout=30) as response:
+    metadata = json.load(response)
+assert metadata['info']['name'] == 'mongoeco'
+assert metadata['info']['version'] == '4.9.0'
+assert {item['filename'] for item in metadata['urls']} == set(expected)
+downloads = base/'published-downloads'
+downloads.mkdir(exist_ok=True)
+for item in metadata['urls']:
+    name = item['filename']
+    assert item['digests']['sha256'] == expected[name]
+    assert item['yanked'] is False
+    with urlopen(item['url'], timeout=60) as response:
+        content = response.read()
+    assert hashlib.sha256(content).hexdigest() == expected[name]
+    assert content == (base/'tag-distributions'/name).read_bytes()
+    target = downloads/name
+    if target.exists():
+        assert target.read_bytes() == content
+    else:
+        target.write_bytes(content)
+(base/'published-pypi-metadata.json').write_text(json.dumps(metadata, indent=2)+'\n')
+print('Official PyPI metadata and downloaded distributions match the tested tag artifacts', flush=True)
+
+env = dict(os.environ)
+for name in list(env):
+    if name.startswith(('PIP_', 'UV_', 'MONGOECO_')) or name in ('PYTHONPATH', 'PYTHONHOME', 'VIRTUAL_ENV'):
+        env.pop(name)
+env['PIP_CONFIG_FILE'] = '/dev/null'
+env['UV_CACHE_DIR'] = '/private/tmp/mongoeco-support-20261008/uv-cache'
+venv = base/'published-env-confirmed'
+assert not venv.exists(), 'Refusing to reuse an installation as clean evidence'
+log_path = base/'published-installation.log'
+with log_path.open('w') as log:
+    subprocess.run([sys.executable, str(root/'scripts/smoke_pypi_contract.py'), '--version', '4.9.0',
+                    '--venv', str(venv), '--keep-venv'], cwd='/private/tmp', env=env, check=True,
+                   stdout=log, stderr=subprocess.STDOUT)
+    python = venv/'bin/python'
+    pip = venv/'bin/pip'
+    subprocess.run([str(pip), 'check'], env=env, check=True, stdout=log, stderr=subprocess.STDOUT)
+    wheel = downloads/'mongoeco-4.9.0-py3-none-any.whl'
+    subprocess.run([str(python), '/private/tmp/mongoeco-490-20261008/verify_installed_identity.py',
+                    str(wheel), str(base/'published-installed-identity.json')], cwd='/private/tmp',
+                   env=env, check=True, stdout=log, stderr=subprocess.STDOUT)
+    subprocess.run([str(python), '/private/tmp/mongoeco-490-20261008/verify_minimal.py',
+                    str(base/'published-minimal.json')], cwd='/private/tmp', env=env, check=True,
+                   stdout=log, stderr=subprocess.STDOUT)
+    smoke = runpy.run_path(str(root/'scripts/smoke_installed_wheel.py'))['_smoke_script']()
+    subprocess.run([str(python), '-c', smoke], cwd='/private/tmp', env=env, check=True,
+                   stdout=log, stderr=subprocess.STDOUT)
+    manifest_script = 'import json; from mongoeco.compat import public_api_manifest; print(json.dumps(public_api_manifest(), indent=2))'
+    with (base/'published-public-manifest.json').open('w') as output:
+        subprocess.run([str(python), '-c', manifest_script], cwd='/private/tmp', env=env, check=True,
+                       stdout=output, stderr=log)
+    assert json.loads((base/'published-public-manifest.json').read_text()) == json.loads(
+        (root/'tests/fixtures/public_api_manifest_exchange_source.json').read_text())
+    subprocess.run([str(pip), 'install', '--index-url', 'https://pypi.org/simple', '--no-cache-dir',
+                    'mongoeco[engine-testing,mongodb9]==4.9.0'], cwd='/private/tmp', env=env, check=True,
+                   stdout=log, stderr=subprocess.STDOUT)
+    subprocess.run([str(pip), 'check'], env=env, check=True, stdout=log, stderr=subprocess.STDOUT)
+    for engine in ('MemoryEngine', 'SQLiteEngine'):
+        with (base/f'published-conformance-{engine}.json').open('w') as output:
+            subprocess.run([str(python), '-m', 'mongoeco.conformance', f'mongoeco.engines:{engine}',
+                            '--profile', 'spi-v2-core', '--require-success'], cwd='/private/tmp',
+                           env=env, check=True, stdout=output, stderr=log)
+    subprocess.run([str(python), '/private/tmp/mongoeco-490-20261008/verify_installed_identity.py',
+                    str(wheel), str(base/'published-extra-installed-identity.json')], cwd='/private/tmp',
+                   env=env, check=True, stdout=log, stderr=subprocess.STDOUT)
+
+receipt = {
+    'version': '4.9.0', 'verified_at': datetime.now(timezone.utc).isoformat(),
+    'release_commit': '7612872b5052c25de223825cd881445cc6f106f1',
+    'annotated_tag_object': 'dbe2eea4b2d5c1efb1634e9dec678b5e41156378',
+    'ci_run': 37816027502,
+    'official_pypi_metadata': 'https://pypi.org/pypi/mongoeco/4.9.0/json',
+    'artifacts': expected, 'pypi_tag_local_artifacts_byte_identical': True,
+    'clean_installation': 'public PyPI; no cache, internal constraints, config files, no-deps or checkout imports',
+    'pip_check_core_and_extras': 'passed', 'public_contract_smoke': 'passed',
+    'minimum_default_and_explicit_profiles_sync_async_memory_sqlite': 'passed',
+    'official_smoke': 'passed', 'public_manifest': 'exact expected manifest',
+    'conformance_memory_sqlite': 'passed',
+    'published_package_files': 273,
+    'installed_core_identity': 'published-installed-identity.json',
+    'installed_extra_identity': 'published-extra-installed-identity.json',
+}
+assert len(json.loads((base/'published-installed-identity.json').read_text())['package_files']) == 273
+(base/'published-verification.json').write_text(json.dumps(receipt, indent=2)+'\n')
+print('Published 4.9.0 clean installation, contracts, both engines/facades and conformance passed', flush=True)
