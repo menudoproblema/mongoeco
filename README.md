@@ -400,6 +400,13 @@ Planning mode is a third, separate concern:
 * `RELAXED` preserves the request metadata and reports `planning_issues`
   instead of compiling an executable plan for unsupported shapes
 
+The catalog supports MongoDB dialects `7.0`, `8.0` and `9.0`, and PyMongo
+profiles `4.9`, `4.11`, `4.13`, `4.17` and `4.18`. Defaults remain MongoDB
+`7.0` and PyMongo `4.9`. Select the new semantics explicitly with
+`MongoClient(mongodb_dialect="9.0", pymongo_profile="4.18")`.
+The `mongodb9` extra installs PyMongo; it does not select a dialect.
+See the [verified support and limits](docs/mongodb9-pymongo418.md).
+
 See:
 
 * [COMPATIBILITY.md](COMPATIBILITY.md)
@@ -510,6 +517,7 @@ API diff are documented in [the CXP migration guide](docs/cxp-c4-migration.md).
 Release-readiness checklist:
 
 * [docs/release-checklist.md](docs/release-checklist.md)
+* [docs/release-4.9.0.md](docs/release-4.9.0.md)
 * [docs/release-4.8.1.md](docs/release-4.8.1.md)
 * [docs/release-4.8.0.md](docs/release-4.8.0.md)
 * [docs/release-4.7.0.md](docs/release-4.7.0.md)

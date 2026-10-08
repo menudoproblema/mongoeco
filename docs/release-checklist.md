@@ -7,8 +7,8 @@ Esta lista prepara una release sin obligar a publicar nada.
 - revisar [README.md](../README.md) para que el
   alcance embebido/local y sus limites sean explicitos;
 - preparar o revisar la nota de release y la guía de migración de la versión
-  objetivo (para 4.7.0, [release-4.7.0.md](release-4.7.0.md) y
-  [migrating-to-4.7.md](migrating-to-4.7.md)) para
+  objetivo (para 4.9.0, [release-4.9.0.md](release-4.9.0.md) y
+  [mongodb9-pymongo418.md](mongodb9-pymongo418.md)) para
   confirmar que la narrativa y los cambios incompatibles son explícitos;
 - revisar [COMPATIBILITY.md](../COMPATIBILITY.md)
   y confirmar que runtime, compat catalog, docs y tests cuentan la misma
@@ -58,6 +58,8 @@ Esta lista prepara una release sin obligar a publicar nada.
   `python scripts/update_compat_snapshots.py`. La salida actual se escribe
   bajo `dist/compat-catalog-current/`; los fixtures `compat_catalog_snapshot`
   conservan la evidencia histórica del protocolo anterior y no se regeneran.
+  Comparar JSON/Markdown actuales con `tests/snapshots/compat-current/` y
+  ejecutar sus deltas estructurados contra las expectativas históricas.
 - en CI, comparar dos builds y promover solo una pareja verificada como
   artifact inmutable para la suite completa, los smokes y Trusted Publishing;
   verificar SHA-256 e import desde `site-packages` y no reconstruir en
@@ -72,7 +74,7 @@ Esta lista prepara una release sin obligar a publicar nada.
 
 ## 3. Validacion funcional
 
-- ejecutar `pytest -q`;
+- ejecutar `pytest -q` en Python 3.13 y 3.14 contra el wheel candidato;
 - ejecutar `python -m unittest discover -s tests -p 'test*.py'`;
 - ejecutar `pytest --cov=mongoeco --cov-report=term -q`;
 - ejecutar los property tests con los perfiles `ci` y `deep`, conservando el
@@ -85,15 +87,28 @@ Esta lista prepara una release sin obligar a publicar nada.
 - no ampliar `scripts/ruff_ratchet_baseline.json`; reducirla cuando se corrija
   deuda conocida y reiniciar su referencia despues de etiquetar la release;
 - ejecutar `python scripts/run_pymongo_profile_matrix.py --versions 4.9.2
-  4.11.3 4.13.2 4.17.0 --summary-output
+  4.11.3 4.13.2 4.17.0 4.18.2 --summary-output
   tests/fixtures/pymongo_profile_matrix.json` y revisar los deltas publicados.
-- ejecutar las suites de paridad real MongoDB 7.0 y 8.0 cuando haya servicios
+- ejecutar las suites de paridad real MongoDB 7.0, 8.0 y 9.0 cuando haya servicios
   disponibles; para valores temporales, comprobar invariantes y no timestamps
   exactos. Ningun caso puede salir de `REAL_CAPTURE_PENDING_CASES` sin golden
   capturado de un servidor real.
 - para 4.7, no recomendar publicacion si los 25 casos por version no se han
   ejecutado contra servidores reales; el listado y workflow verdes no
   sustituyen ese gate.
+- para el soporte 9.0/4.18, exigir los 29 casos por versión sin omisiones y
+  verificar las capturas de deltas y su hash de corpus; una conexión fallida
+  o FCV incorrecta debe producir fallo del gate.
+- recapturar los 72 casos de revisión en cada versión usando
+  `capture_differential_replay_golden.py --case-set review-improvements`, con
+  `--output` temporal y `--check` sobre la fixture real correspondiente.
+  Para 4.9.0, recapturar también los corpus `semantic-guarantees` e
+  `index-guarantees` con `--check` y los deltas originales. Cada corpus debe
+  conservar su hash, runtime y FCV y tener consumidores efectivos.
+  Consultar la matriz vigente de [cobertura efectiva de capturas](evidence/mongoeco-4.9.0/capture-coverage.json)
+  antes de atribuir paridad a una captura almacenada.
+- aislar `TMPDIR` por proceso al ejecutar suites completas en paralelo:
+  sus pruebas de limpieza comparan los temporales anteriores y posteriores.
 
 ## 4. Benchmarks y rendimiento
 

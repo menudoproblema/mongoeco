@@ -8,6 +8,55 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.9.0] - 2026-10-08
+
+### Added
+
+- Add the explicit MongoDB 9.0 dialect and PyMongo 4.18 profile while keeping
+  defaults 7.0/4.9. Support the documented array, scalar conversion, date-window,
+  densify, validation, index metadata and `$merge` ordering deltas, verified
+  against MongoDB 7.0/8.0/9.0. Keep deferred conversions and the unsupported
+  wildcard projection subset explicitly rejected in the new dialect.
+- Correlate driver retries with one operation ID per execution and a distinct
+  request ID per attempt; preserve pool cleanup on cancellation. Resolve SRV
+  with PyMongo's public API under profile 4.18, including suffix and TXT
+  validation. Keep existing wire, engine SPI, Search and persistence contracts.
+- Add the `mongodb9` extra, isolated five-version PyMongo probes and pinned
+  real-server CI lanes for 7.0/8.0/9.0.
+
+### Fixed
+
+- Correct `$densify` in 7.0/8.0 as well as 9.0: preserve originals and
+  duplicates, synthesize empty explicit ranges, and respect their upper bound.
+  Keep native differences for equal bounds and empty partitioned input;
+  use global bounds for `full` across partitions. Preserve missing/null originals,
+  distinguish missing/null partitions and support composite partition keys.
+  Validate literal range types and units even on empty input.
+  Preserve the native 7 versus 8/9 outcome when a full-range floating-point
+  step cannot advance; raise 5897900 for the latter without an unbounded loop.
+- Compare date-window bounds beyond Python's datetime range without changing
+  stored dates; preserve native invalid-offset and dateAdd error codes.
+  Classify empty and malformed variable names and malformed field paths with
+  native error codes and precedence instead of treating them as undefined.
+- Reuse equivalent aggregate preparation with its complete namespace/bindings
+  and retain direct evaluator guards. Recreate ordinary simple-collation indexes
+  in both explicit/implicit directions without canonicalizing storage definitions.
+- Recreate the builtin `_id_` through the API with default options and metadata
+  roundtrips while preserving its immutable, unique Engine SPI definition.
+- Classify conflicting same-name index specifications as 86/IndexKeySpecsConflict
+  in both engines; preserve the preexisting catalog after invalid batches.
+- Preserve explicit bindings when the direct aggregation evaluator prepares a
+  pipeline, including lexical scopes and registry invalidation.
+- Preserve legacy preparation callbacks of the public driver execution pipeline
+  while correlating retry command events; inspect the callback before acquiring
+  resources and never retry an implementation TypeError as a signature fallback.
+- Reject reserved aggregation options with `ConfigurationError` under profile
+  4.18 before cursor creation or I/O, consistently across both Python facades.
+- Fail differential gates on empty suites, configuration rejection,
+  unavailable servers, unexpected skips, or an incorrect server version/FCV.
+
+Release scope, migration and verification: [release-4.9.0](docs/release-4.9.0.md).
+
 ## [4.8.1] - 2026-10-01
 
 ### Fixed
