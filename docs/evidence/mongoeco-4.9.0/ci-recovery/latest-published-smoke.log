@@ -1,0 +1,80 @@
+warning: `VIRTUAL_ENV=/Users/uve/Proyectos/gdynamics/venv3.14` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+Verifying published Mongoeco 4.8.1 from PyPI
+Requirement already satisfied: pip in /private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-pypi-contract-smoke-p3am6sto/lib/python3.14/site-packages (26.1.1)
+Collecting pip
+  Downloading pip-26.2.1-py3-none-any.whl.metadata (4.6 kB)
+Downloading pip-26.2.1-py3-none-any.whl (1.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 17.2 MB/s  0:00:00
+Installing collected packages: pip
+  Attempting uninstall: pip
+    Found existing installation: pip 26.1.1
+    Uninstalling pip-26.1.1:
+      Successfully uninstalled pip-26.1.1
+Successfully installed pip-26.2.1
+Collecting mongoeco==4.8.1
+  Downloading mongoeco-4.8.1-py3-none-any.whl.metadata (23 kB)
+Collecting cxp<6,>=5.0.0 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.8.1)
+  Downloading cxp-5.0.0-py3-none-any.whl.metadata (4.2 kB)
+Collecting msgspec<1,>=0.20 (from mongoeco==4.8.1)
+  Downloading msgspec-0.22.0-cp314-cp314-macosx_11_0_arm64.whl.metadata (6.0 kB)
+Collecting pyuca<2,>=1.2 (from mongoeco==4.8.1)
+  Downloading pyuca-1.2-py2.py3-none-any.whl.metadata (649 bytes)
+Collecting rpds-py<2027,>=0.27 (from mongoeco==4.8.1)
+  Downloading rpds_py-2026.9.1-cp314-cp314-macosx_11_0_arm64.whl.metadata (4.1 kB)
+Collecting shapely<3,>=2.1 (from mongoeco==4.8.1)
+  Downloading shapely-2.2.0-cp314-cp314-macosx_11_0_arm64.whl.metadata (6.7 kB)
+Collecting usearch<3,>=2.23 (from mongoeco==4.8.1)
+  Downloading usearch-2.26.4-cp314-cp314-macosx_11_0_arm64.whl.metadata (35 kB)
+Collecting jsonschema<5,>=4.23 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.8.1)
+  Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+Collecting referencing<1,>=0.35 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.8.1)
+  Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+Collecting rfc8785<1,>=0.1.4 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.8.1)
+  Downloading rfc8785-0.1.4-py3-none-any.whl.metadata (3.4 kB)
+Collecting attrs>=22.2.0 (from jsonschema<5,>=4.23->cxp[exchange]<6,>=5.0.0->mongoeco==4.8.1)
+  Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5,>=4.23->cxp[exchange]<6,>=5.0.0->mongoeco==4.8.1)
+  Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+Collecting numpy>=1.26 (from shapely<3,>=2.1->mongoeco==4.8.1)
+  Downloading numpy-2.5.3-cp314-cp314-macosx_14_0_arm64.whl.metadata (6.6 kB)
+Collecting tqdm (from usearch<3,>=2.23->mongoeco==4.8.1)
+  Downloading tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+Collecting numkong (from usearch<3,>=2.23->mongoeco==4.8.1)
+  Downloading numkong-7.8.5.tar.gz (1.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 27.3 MB/s  0:00:00
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Downloading mongoeco-4.8.1-py3-none-any.whl (745 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 745.2/745.2 kB 79.9 MB/s  0:00:00
+Downloading cxp-5.0.0-py3-none-any.whl (58 kB)
+Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+Downloading msgspec-0.22.0-cp314-cp314-macosx_11_0_arm64.whl (193 kB)
+Downloading pyuca-1.2-py2.py3-none-any.whl (1.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 34.5 MB/s  0:00:00
+Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+Downloading rfc8785-0.1.4-py3-none-any.whl (9.2 kB)
+Downloading rpds_py-2026.9.1-cp314-cp314-macosx_11_0_arm64.whl (341 kB)
+Downloading shapely-2.2.0-cp314-cp314-macosx_11_0_arm64.whl (1.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 7.3 MB/s  0:00:00
+Downloading usearch-2.26.4-cp314-cp314-macosx_11_0_arm64.whl (453 kB)
+Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+Downloading numpy-2.5.3-cp314-cp314-macosx_14_0_arm64.whl (5.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.4/5.4 MB 10.7 MB/s  0:00:00
+Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+Building wheels for collected packages: numkong
+  Building wheel for numkong (pyproject.toml): started
+  Building wheel for numkong (pyproject.toml): finished with status 'done'
+  Created wheel for numkong: filename=numkong-7.8.5-cp314-cp314-macosx_15_0_arm64.whl size=821799 sha256=b9634bd4b394ed4e75ede7ee2fbcd7101ee06b3aeee926f7b452ac71237841ee
+  Stored in directory: /private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pip-ephem-wheel-cache-ksgeztgb/wheels/33/87/49/a9c2d4d9f0794bfc92eece54af71da61f67aa195ed971ddeb4
+Successfully built numkong
+Installing collected packages: pyuca, tqdm, rpds-py, rfc8785, numpy, numkong, msgspec, attrs, usearch, shapely, referencing, cxp, jsonschema-specifications, jsonschema, mongoeco
+
+Successfully installed attrs-26.1.0 cxp-5.0.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mongoeco-4.8.1 msgspec-0.22.0 numkong-7.8.5 numpy-2.5.3 pyuca-1.2 referencing-0.37.0 rfc8785-0.1.4 rpds-py-2026.9.1 shapely-2.2.0 tqdm-4.70.1 usearch-2.26.4
+ok 4.8.1
+module /private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-pypi-contract-smoke-p3am6sto/lib/python3.14/site-packages/mongoeco/__init__.py
+cxp_catalog_sha256 84c69da54a8d09f6dce9a3cbc394cf8c2f251402c72e18b3f7488af86ef08aeb

@@ -1,0 +1,46 @@
+{
+  "densify_bool": {
+    "expected": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "14"
+      },
+      "code_name": "TypeMismatch",
+      "error_labels": [],
+      "message": "BSON field '$densify.range.step' is the wrong type 'bool', expected types '[int, long, decimal, double]'"
+    },
+    "actual": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "14"
+      },
+      "code_name": "TypeMismatch",
+      "error_labels": [],
+      "message": "BSON field '$densify.range.step' is the wrong type 'bool', expected types '[decimal, int, double, long]'"
+    }
+  },
+  "densify_str": {
+    "expected": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "14"
+      },
+      "code_name": "TypeMismatch",
+      "error_labels": [],
+      "message": "BSON field '$densify.range.step' is the wrong type 'string', expected types '[int, long, decimal, double]'"
+    },
+    "actual": {
+      "ok": false,
+      "error_type": "OperationFailure",
+      "code": {
+        "$numberInt": "14"
+      },
+      "code_name": "TypeMismatch",
+      "error_labels": [],
+      "message": "BSON field '$densify.range.step' is the wrong type 'string', expected types '[decimal, int, double, long]'"
+    }
+  }
+}

@@ -35,9 +35,16 @@ not remove a case from that set; only a successful real capture may do so.
 
 Tagged releases call this workflow as a required reusable job for MongoDB
 7.0, 8.0 and 9.0. Publication cannot start unless the differential matrix, the
-artifact build and the installed-wheel test jobs have all succeeded.
+artifact build, isolated PyMongo profiles and the installed-wheel test jobs
+have all succeeded.
 
 Versioned native corpora also cover server deltas, review improvements and
 4.9 semantic guarantees. Every capture stores server/FCV/SDK and corpus identity;
 its coverage matrix identifies the effective consumer and comparison scope.
 Stored observations without a consumer remain characterization, not parity.
+
+Native capture comparison ignores ordering only in the numeric BSON type
+enumeration of `$densify.range.step` TypeMismatch errors. It retains accepted
+types and their multiplicity, the received type, field, message format and all
+other error fields. Successful data and other diagnostics keep their existing
+comparison rules; immutable native fixtures retain the original messages.

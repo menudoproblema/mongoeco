@@ -1,0 +1,24 @@
+{
+  "yaml_files_parsed": 3,
+  "shell_scripts_parsed": 75,
+  "embedded_python_parsed": 4,
+  "publish_dependencies": [
+    "build",
+    "pymongo-profiles",
+    "minimal-imports",
+    "test",
+    "release-differential"
+  ],
+  "publication_requires_success_of_all_dependencies": true,
+  "runtime_diff_against_original_tag": "",
+  "fixture_diff_against_original_tag": "",
+  "corrected_hosted_ci": "pending",
+  "remote_tag_replaced": false,
+  "source_sha256": {
+    ".github/workflows/ci.yml": "ee054ceaa8ceb6ba373264f3c974dc2f08a5b577814e99e3c55efae7862bb93c",
+    "scripts/capture_differential_replay_golden.py": "62c04f93e3acae52eb0a35785fda8a0cde372480439e315dafe08171b50df76a",
+    "scripts/smoke_pypi_contract.py": "e10fd90608397e3178bb3f41592df41033b57b47ec8b7db7aeab429f7b64ea9f",
+    "tests/unit/test_native_capture_comparison.py": "bfb7e82062efb7d57bbdee33657ea240ceb1c15fd0c527c9ecb50aec590e4d8c",
+    "tests/unit/test_smoke_pypi_contract.py": "cd2ce6d633c286f330e71c5a97fd0051401958207591ca7ca41fa53c25bed372"
+  }
+}

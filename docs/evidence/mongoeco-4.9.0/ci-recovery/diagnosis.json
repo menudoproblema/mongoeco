@@ -1,0 +1,33 @@
+{
+  "base": "d85c4b7de313028b709cde2fce4cb89dae80d513",
+  "version": "4.9.0",
+  "phase_result": "local_defect",
+  "causes": [
+    {
+      "symptom": "Native capture gate fails for MongoDB 8.0/9.0",
+      "first_broken_invariant": "Capture comparator treats ordering of an accepted BSON type enumeration as significant",
+      "evidence": [
+        "semantic-guarantees-differences-8.json",
+        "semantic-guarantees-differences-9.json"
+      ],
+      "scope": "Two densify type mismatch messages per version; same rejected type, code 14, code_name TypeMismatch, labels and complete remaining cases",
+      "competing_hypothesis_rejected": "No different accepted/rejected input, error code, expected type membership, corpus, FCV, manifests or result observed"
+    },
+    {
+      "symptom": "Latest published artifact job fails on main after tag push",
+      "first_broken_invariant": "Newest Git tag is assumed to already be published on PyPI",
+      "evidence": [
+        "published-contract-job.log"
+      ],
+      "scope": "Workflow attempts mongoeco==4.9.0, PyPI lists only through 4.8.1"
+    },
+    {
+      "symptom": "Publication could run independently of SDK profile matrix",
+      "first_broken_invariant": "publish.needs omits pymongo-profiles",
+      "scope": ".github/workflows/ci.yml job dependency graph"
+    }
+  ],
+  "next_action": "normal_change",
+  "blockers": [],
+  "worktree_unchanged_during_diagnosis": true
+}

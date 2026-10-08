@@ -54,6 +54,11 @@ usa Semantic Versioning.
   4.18 before cursor creation or I/O, consistently across both Python facades.
 - Fail differential gates on empty suites, configuration rejection,
   unavailable servers, unexpected skips, or an incorrect server version/FCV.
+- Compare the numeric BSON type enumeration in native `$densify.range.step`
+  type errors independently of order, preserving types, multiplicity, received
+  type, message format and every other error field. Keep native fixtures intact.
+- Require isolated PyMongo profiles before publishing. Select the latest
+  published artifact from PyPI metadata rather than an unpublished Git tag.
 
 Release scope, migration and verification: [release-4.9.0](docs/release-4.9.0.md).
 

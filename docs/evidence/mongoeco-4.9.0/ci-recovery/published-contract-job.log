@@ -1,0 +1,198 @@
+Latest released artifact contract	Set up job	﻿2026-10-08T16:33:59.8364139Z Current runner version: '2.337.0'
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8392365Z ##[group]Runner Image Provisioner
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8393294Z Hosted Compute Agent
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8394230Z Version: 20261002.596
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8395164Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8396210Z Build Date: 2026-10-02T22:28:27Z
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8397193Z Worker ID: {bb120592-94ec-4d4a-acca-b8fb407d00ae}
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8398144Z Region: centralus
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8398779Z Cloud: Azure
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8399363Z ##[endgroup]
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8401111Z ##[group]Operating System
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8402002Z Ubuntu
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8402555Z 24.04.5
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8403137Z LTS
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8403746Z ##[endgroup]
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8404330Z ##[group]Runner Image
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8405044Z Image: ubuntu-24.04
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8406007Z Version: 20261004.327.1
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8407963Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261004.327/images/ubuntu/Ubuntu2404-Readme.md
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8411322Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261004.327
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8413430Z ##[endgroup]
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8415828Z ##[group]GITHUB_TOKEN Permissions
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8418845Z Contents: read
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8419597Z Metadata: read
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8420373Z Packages: read
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8420944Z ##[endgroup]
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8423948Z Secret source: Actions
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8425751Z Cache mode: write
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8427377Z Prepare workflow directory
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8794064Z Prepare all required actions
+Latest released artifact contract	Set up job	2026-10-08T16:33:59.8846321Z Getting action download info
+Latest released artifact contract	Set up job	2026-10-08T16:34:00.1767587Z Download action repository 'actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09' (SHA:fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09)
+Latest released artifact contract	Set up job	2026-10-08T16:34:00.2766094Z Download action repository 'actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1' (SHA:ece7cb06caefa5fff74198d8649806c4678c61a1)
+Latest released artifact contract	Set up job	2026-10-08T16:34:00.4985004Z Complete job name: Latest released artifact contract
+Latest released artifact contract	Checkout	﻿2026-10-08T16:34:00.5811484Z ##[group]Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5812943Z with:
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5813405Z   fetch-depth: 0
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5813885Z   repository: menudoproblema/mongoeco
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5817791Z   token: ***
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5818439Z   ssh-strict: true
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5818981Z   ssh-user: git
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5819556Z   persist-credentials: true
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5820204Z   clean: true
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5820772Z   sparse-checkout-cone-mode: true
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5821465Z   fetch-tags: false
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5822325Z   show-progress: true
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5822790Z   lfs: false
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5823229Z   submodules: false
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5823691Z   set-safe-directory: true
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5824199Z   allow-unsafe-pr-checkout: false
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.5825003Z ##[endgroup]
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.6928012Z Syncing repository: menudoproblema/mongoeco
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.6931283Z ##[group]Getting Git version info
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.6933310Z Working directory is '/home/runner/work/mongoeco/mongoeco'
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.6935215Z [command]/usr/bin/git version
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7021316Z git version 2.55.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7056502Z ##[endgroup]
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7069746Z Temporarily overriding HOME='/home/runner/work/_temp/b545dc7b-eb57-4625-9d8d-309951dcc4f2' before making global git config changes
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7071212Z Adding repository directory to the temporary git global config as a safe directory
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7076386Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mongoeco/mongoeco
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7135120Z Deleting the contents of '/home/runner/work/mongoeco/mongoeco'
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7139251Z ##[group]Initializing the repository
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7146156Z [command]/usr/bin/git init /home/runner/work/mongoeco/mongoeco
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7265870Z hint: Using 'master' as the name for the initial branch. This default branch name
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7269849Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7271491Z hint: to use in all of your new repositories, which will suppress this warning,
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7272905Z hint: call:
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7273422Z hint:
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7274248Z hint: 	git config --global init.defaultBranch <name>
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7275495Z hint:
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7276330Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7277707Z hint: 'development'. The just-created branch can be renamed via this command:
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7278683Z hint:
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7279200Z hint: 	git branch -m <name>
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7279770Z hint:
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7280674Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7282573Z Initialized empty Git repository in /home/runner/work/mongoeco/mongoeco/.git/
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7284359Z [command]/usr/bin/git remote add origin https://github.com/menudoproblema/mongoeco
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7371218Z ##[endgroup]
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7372622Z ##[group]Disabling automatic garbage collection
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7376627Z [command]/usr/bin/git config --local gc.auto 0
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7410564Z ##[endgroup]
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7411416Z ##[group]Setting up auth
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7419668Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7456247Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7850524Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.7901260Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.8157729Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.8198387Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.8440374Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.8485483Z ##[endgroup]
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.8486558Z ##[group]Fetching the repository
+Latest released artifact contract	Checkout	2026-10-08T16:34:00.8496362Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5143948Z From https://github.com/menudoproblema/mongoeco
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5173507Z  * [new branch]      main       -> origin/main
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5183440Z  * [new tag]         v3.1.0     -> v3.1.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5184934Z  * [new tag]         v3.2.0     -> v3.2.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5186246Z  * [new tag]         v3.3.0     -> v3.3.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5187559Z  * [new tag]         v3.5.0     -> v3.5.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5188902Z  * [new tag]         v3.5.1     -> v3.5.1
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5190043Z  * [new tag]         v3.6.0     -> v3.6.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5191448Z  * [new tag]         v4.0.0     -> v4.0.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5192918Z  * [new tag]         v4.1.0     -> v4.1.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5194256Z  * [new tag]         v4.1.1     -> v4.1.1
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5195711Z  * [new tag]         v4.2.0     -> v4.2.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5196918Z  * [new tag]         v4.2.1     -> v4.2.1
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5198192Z  * [new tag]         v4.3.0     -> v4.3.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5199470Z  * [new tag]         v4.4.0     -> v4.4.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5200675Z  * [new tag]         v4.5.0     -> v4.5.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5201703Z  * [new tag]         v4.6.0     -> v4.6.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5202988Z  * [new tag]         v4.6.1     -> v4.6.1
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5204363Z  * [new tag]         v4.7.0     -> v4.7.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5205471Z  * [new tag]         v4.8.0     -> v4.8.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5206630Z  * [new tag]         v4.8.1     -> v4.8.1
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5207779Z  * [new tag]         v4.9.0     -> v4.9.0
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5210639Z [command]/usr/bin/git branch --list --remote origin/main
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5212662Z   origin/main
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5225644Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5258665Z d85c4b7de313028b709cde2fce4cb89dae80d513
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5302807Z ##[endgroup]
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5305580Z ##[group]Determining the checkout info
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5308401Z ##[endgroup]
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5309790Z [command]/usr/bin/git sparse-checkout disable
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5352867Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5392343Z ##[group]Checking out the ref
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.5396456Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.6598448Z Switched to a new branch 'main'
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.6603080Z branch 'main' set up to track 'origin/main'.
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.6628372Z ##[endgroup]
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.6683140Z [command]/usr/bin/git log -1 --format=%H
+Latest released artifact contract	Checkout	2026-10-08T16:34:02.6716602Z d85c4b7de313028b709cde2fce4cb89dae80d513
+Latest released artifact contract	Set up Python	﻿2026-10-08T16:34:02.7080766Z ##[group]Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.7082344Z with:
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.7083213Z   python-version: 3.14
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.7083905Z   check-latest: false
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.7093164Z   token: ***
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.7093716Z   update-environment: true
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.7094406Z   allow-prereleases: false
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.7095099Z   freethreaded: false
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.7095677Z ##[endgroup]
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.8570269Z ##[group]Installed versions
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.8670163Z Successfully set up CPython (3.14.8)
+Latest released artifact contract	Set up Python	2026-10-08T16:34:02.8672914Z ##[endgroup]
+Latest released artifact contract	Validate published PyPI artifact contract	﻿2026-10-08T16:34:02.9013306Z ##[group]Run VERSION="$(git describe --tags --abbrev=0 --match 'v[0-9]*')"
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9016802Z ^[[36;1mVERSION="$(git describe --tags --abbrev=0 --match 'v[0-9]*')"^[[0m
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9020994Z ^[[36;1mpython scripts/smoke_pypi_contract.py --version "${VERSION#v}"^[[0m
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9418658Z shell: /usr/bin/bash -e {0}
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9420073Z env:
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9421444Z   pythonLocation: /opt/hostedtoolcache/Python/3.14.8/x64
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9424048Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib/pkgconfig
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9426259Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9428296Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9430148Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.14.8/x64
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9431962Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.14.8/x64/lib
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:02.9433408Z ##[endgroup]
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:08.6508256Z Requirement already satisfied: pip in /tmp/mongoeco-pypi-contract-smoke-j6i0ej6f/lib/python3.14/site-packages (26.2.1)
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.4078890Z ERROR: Could not find a version that satisfies the requirement mongoeco==4.9.0 (from versions: 2.0.0, 2.0.1, 2.1.0, 2.2.0, 3.1.0, 3.2.0, 3.3.0, 3.4.0, 3.5.0, 3.5.1, 3.6.0, 4.0.0, 4.1.0, 4.1.1, 4.2.0, 4.2.1, 4.3.0, 4.4.0, 4.5.0, 4.6.0, 4.6.1, 4.7.0, 4.8.0, 4.8.1)
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.4082833Z ERROR: No matching distribution found for mongoeco==4.9.0
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5204810Z Traceback (most recent call last):
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5221465Z   File "/home/runner/work/mongoeco/mongoeco/scripts/smoke_pypi_contract.py", line 178, in <module>
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5223175Z     raise SystemExit(main())
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5225872Z                      ~~~~^^
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5226853Z   File "/home/runner/work/mongoeco/mongoeco/scripts/smoke_pypi_contract.py", line 167, in main
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5227833Z     _install_from_pypi(pip_bin, f"mongoeco=={args.version}")
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5228958Z     ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5230031Z   File "/home/runner/work/mongoeco/mongoeco/scripts/smoke_pypi_contract.py", line 21, in _install_from_pypi
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5230935Z     _run(
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5231300Z     ~~~~^
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5231658Z         [
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5232259Z         ^
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5232656Z     ...<6 lines>...
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5233045Z         ],
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5233397Z         ^^
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5233761Z     )
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5234153Z     ^
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5235428Z   File "/home/runner/work/mongoeco/mongoeco/scripts/smoke_pypi_contract.py", line 17, in _run
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5236687Z     subprocess.run(command, cwd=cwd, check=True)
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5237573Z     ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5238709Z   File "/opt/hostedtoolcache/Python/3.14.8/x64/lib/python3.14/subprocess.py", line 578, in run
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5239796Z     raise CalledProcessError(retcode, process.args,
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5240707Z                              output=stdout, stderr=stderr)
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5243293Z subprocess.CalledProcessError: Command '['/tmp/mongoeco-pypi-contract-smoke-j6i0ej6f/bin/pip', 'install', '--index-url', 'https://pypi.org/simple', '--no-cache-dir', 'mongoeco==4.9.0']' returned non-zero exit status 1.
+Latest released artifact contract	Validate published PyPI artifact contract	2026-10-08T16:34:09.5322794Z ##[error]Process completed with exit code 1.
+Latest released artifact contract	Post Checkout	﻿2026-10-08T16:34:09.5509131Z Post job cleanup.
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.6482444Z [command]/usr/bin/git version
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.6531019Z git version 2.55.0
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.6575972Z Temporarily overriding HOME='/home/runner/work/_temp/c1f307f5-5165-459a-9dc4-04014d5ddd01' before making global git config changes
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.6577524Z Adding repository directory to the temporary git global config as a safe directory
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.6584230Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mongoeco/mongoeco
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.6628456Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.6681715Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.6958502Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.6994512Z http.https://github.com/.extraheader
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.7009248Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.7054305Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.7334311Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Latest released artifact contract	Post Checkout	2026-10-08T16:34:09.7386763Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Latest released artifact contract	Complete job	﻿2026-10-08T16:34:09.7816368Z Cleaning up orphan processes

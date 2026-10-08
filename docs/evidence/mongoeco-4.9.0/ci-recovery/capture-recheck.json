@@ -1,0 +1,50 @@
+[
+  {
+    "version": 8,
+    "corpus": "review-improvements",
+    "cases": 72,
+    "capture_sha256": "f17c74ac0b507a2e5738f2e16cd072067f09811d8b33089f05422417a12b5728",
+    "fixture_sha256": "0937c54cc8da5bde997cf1e24ab9bfda73f8ee6d79209f9f8817de66aa6cef09",
+    "all_compared_fields": "equal"
+  },
+  {
+    "version": 8,
+    "corpus": "version-deltas",
+    "cases": 154,
+    "capture_sha256": "9fdb72361d52c4023182caf4d0c881de28454ee4ea0b11eff879e3ae67b8ea07",
+    "fixture_sha256": "803ca8a4e0a0c8916c4a540087db81e81355c96f30eee5b3bc461b89466aab94",
+    "all_compared_fields": "equal"
+  },
+  {
+    "version": 8,
+    "corpus": "semantic-guarantees",
+    "cases": 54,
+    "capture_sha256": "1a12a9929c015f6ef62e887b3a049495e6144cdfa89edb567e2c52d6f8c44454",
+    "fixture_sha256": "a2fcd3077df924d1b88bbea9f76694ce90183a60915aeff3b59ccbdbba850d3a",
+    "all_compared_fields": "equal"
+  },
+  {
+    "version": 9,
+    "corpus": "review-improvements",
+    "cases": 72,
+    "capture_sha256": "b651ec0c1923fbe9df78ae3b2fe29f361a84e29f65331b7a0f1995c31ccab8ed",
+    "fixture_sha256": "72f90b3910c351f6f007d0fb65fe5522b484cd1f79647fbed698866ec8b5119f",
+    "all_compared_fields": "equal"
+  },
+  {
+    "version": 9,
+    "corpus": "version-deltas",
+    "cases": 154,
+    "capture_sha256": "e35994c3f7b5eb8f4558971680cf91fc5c947e6f2a5c5e1b0ab11cbc2dd0da8d",
+    "fixture_sha256": "3298aed8786419c74db7a3a3226ea92d81ca9343b0a5f0d269e61224f2e0283b",
+    "all_compared_fields": "equal"
+  },
+  {
+    "version": 9,
+    "corpus": "semantic-guarantees",
+    "cases": 54,
+    "capture_sha256": "60696171c9dfdd64796cb87c20d8c4d7822920137036a08303e547b90aa16485",
+    "fixture_sha256": "5fa54b16856656aa924ab812cb350eb470de1df9954437c9a5b39c39ef23d5bd",
+    "all_compared_fields": "equal"
+  }
+]

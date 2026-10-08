@@ -1,12 +1,46 @@
 # Preparación de Mongoeco 4.9.0: MongoDB 9.0 / PyMongo 4.18
 
-Estado vigente: **4.9.0 preparada y verificada localmente**. Contrato autorizado:
+Estado vigente: **recuperación de la entrega 4.9.0 tras la primera CI**. Contrato autorizado:
 objetivo attachment `4896c5fd-4c6a-4dde-bb8e-f048d2d5c82b`, catorce bloques.
 Este registro acredita el cierre técnico anterior a los commits. El encargo
 posterior autoriza consolidar la release, commits semánticos y la etiqueta
 local `v4.9.0`; su estado se recoge en [release-4.9.0.md](release-4.9.0.md).
 La publicación sigue siendo posterior. Este registro conserva los antecedentes
 inferiores; sus cierres y artefactos 4.8.1 no acreditan 4.9.0.
+
+## Recuperación de la entrega
+
+La etiqueta original `v4.9.0` apuntó a
+`d85c4b7de313028b709cde2fce4cb89dae80d513` (objeto anotado
+`6454a429ebeda70aa7b4a5a074962ce91f437513`). La
+[primera CI](https://github.com/menudoproblema/mongoeco/actions/runs/37809790060)
+pasó build, perfiles PyMongo, imports mínimos y Python 3.13/3.14. Los 29
+casos obligatorios de paridad pasaron en cada servidor. La recaptura posterior
+falló en dos errores de `$densify.range.step` en MongoDB 8/9: los builds
+nativos enumeraban los mismos cuatro tipos numéricos en distinto orden.
+La publicación quedó omitida por los gates; no se publicó este candidato.
+
+La corrección compara exclusivamente esa enumeración sin orden. Conserva
+tipos aceptados y su multiplicidad, tipo recibido, campo, formato completo y
+el resto del error. Las pruebas negativas rechazan cambios de código,
+codeName, labels, tipo recibido, tipos ausentes/extra/duplicados, otros campos
+y texto adicional. Los goldens nativos permanecen intactos. Las seis capturas
+descargadas de la CI para 8/9 (review, deltas y garantías semánticas) pasan la
+comparación corregida; esa reutilización no sustituye recapturar las cuatro
+familias, incluidos los cuatro casos de índices que la primera CI no alcanzó.
+
+El job de contrato publicado de `main` intentaba instalar `4.9.0` desde PyPI
+porque elegía el último tag Git. Ahora selecciona una vez la versión publicada
+mediante metadata oficial de PyPI; su smoke limpio pasó con `4.8.1`.
+La publicación requiere explícitamente el job de perfiles PyMongo, además de
+build, imports mínimos, tests y matriz diferencial. No se eliminan gates ni
+se convierten errores de red o servidores en éxitos.
+
+La versión y el código del paquete permanecen en `4.9.0`. La CI corregida y
+los artefactos finales siguen pendientes antes de sustituir la etiqueta
+compartida y publicar. Los recibos del candidato original se conservan como
+antecedentes; la evidencia nueva se guarda por separado en
+`docs/evidence/mongoeco-4.9.0/ci-recovery/`.
 
 Base efectiva: `aa626c51fea8a055510f89a2acf2f8ed1ce33761`; última release
 `v4.8.1` (`ad90d846`). Workset inicial: 777 archivos, manifest SHA-256

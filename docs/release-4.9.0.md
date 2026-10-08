@@ -3,8 +3,10 @@
 Fecha: 8 de octubre de 2026. Release menor de compatibilidad y correcciones
 sobre Mongoeco 4.8.1.
 
-Estado: preparada localmente. La etiqueta anotada `v4.9.0` identifica el
-commit de release; no se ha enviado al remoto ni publicado en PyPI.
+Estado: en recuperación de la entrega. La primera etiqueta `v4.9.0` se envió
+al remoto; su CI bloqueó correctamente la publicación. La versión permanece
+en `4.9.0`. El [registro de recuperación](mongodb9-pymongo418-improvements-progress.md#recuperación-de-la-entrega)
+separa esa ejecución de las verificaciones de la corrección.
 
 ## Alcance y selección
 
@@ -85,7 +87,10 @@ identifica el candidato anterior a los commits y sus gates:
 La [matriz efectiva](evidence/mongoeco-4.9.0/capture-coverage.json) tiene 852
 filas; 431 caracterizaciones siguen excluidas de paridad y no se anuncian como
 capacidades protegidas. Los servicios propios se cerraron sin bases de prueba
-restantes. La CI alojada no se ha ejecutado en esta preparación local.
+restantes. La primera CI alojada pasó build, perfiles SDK, imports mínimos y
+ambas versiones de Python, pero falló la comparación de capturas semánticas
+en MongoDB 8/9 por el orden de enumeración de tipos BSON. Sus resultados no
+acreditan el commit de recuperación; este requiere su propia CI verde.
 
 La [comparación de rendimiento](evidence/mongoeco-4.9.0/performance-final-summary.json)
 usa el wheel publicado 4.8.1, harness y dependencias equivalentes, calentamiento
