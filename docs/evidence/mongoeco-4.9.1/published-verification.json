@@ -1,0 +1,86 @@
+{
+  "version": "4.9.1",
+  "verified_at": "2026-10-15T10:27:41.377383+00:00",
+  "tag": "v4.9.1",
+  "tag_object": "b77ce21a33c7fcbf8656069815377bc49bc40878",
+  "tagged_commit": "ad5c8aaf514d9197d05aa1da8bbdea0cd91c1e95",
+  "ci_run": 38718622700,
+  "ci_url": "https://github.com/menudoproblema/mongoeco/actions/runs/38718622700",
+  "metadata_url": "https://pypi.org/pypi/mongoeco/4.9.1/json",
+  "artifacts": [
+    {
+      "filename": "mongoeco-4.9.1-py3-none-any.whl",
+      "sha256": "f29bb9f8b2548c58861f5bf152594dc1771bd80fb7bce760061151e89f6f09bc",
+      "url": "https://files.pythonhosted.org/packages/6e/fd/59231de589aeb63e5ae8db60e9c57334846354aad96c59caaadc656c9a73/mongoeco-4.9.1-py3-none-any.whl",
+      "upload_time": "2026-10-15T10:24:59.284028Z",
+      "identical_to_tested_ci_artifact": true,
+      "provenance_url": "https://pypi.org/integrity/mongoeco/4.9.1/mongoeco-4.9.1-py3-none-any.whl/provenance",
+      "publishers": [
+        {
+          "environment": "pypi",
+          "kind": "GitHub",
+          "repository": "menudoproblema/mongoeco",
+          "workflow": "ci.yml"
+        }
+      ]
+    },
+    {
+      "filename": "mongoeco-4.9.1.tar.gz",
+      "sha256": "821d494e1a16e4753ac2bcb4952c80d8defe38f64f2c3230a7274b039e6100f1",
+      "url": "https://files.pythonhosted.org/packages/11/d7/8905b7ff88139d1d5df90979410951d69f20f2350e129726c02a0ecf9b5b/mongoeco-4.9.1.tar.gz",
+      "upload_time": "2026-10-15T10:25:00.869188Z",
+      "identical_to_tested_ci_artifact": true,
+      "provenance_url": "https://pypi.org/integrity/mongoeco/4.9.1/mongoeco-4.9.1.tar.gz/provenance",
+      "publishers": [
+        {
+          "environment": "pypi",
+          "kind": "GitHub",
+          "repository": "menudoproblema/mongoeco",
+          "workflow": "ci.yml"
+        }
+      ]
+    }
+  ],
+  "source_files_match_locally_validated_code": true,
+  "source_tree_sha256": "626675330c9b1b173c730f527aa872e68f845c36c34254cd4241b9bd7c6018e8",
+  "ci_conclusion": "success",
+  "installed_consumer": {
+    "python": "3.14.5",
+    "module": "/private/tmp/mongoeco-491/pypi-smoke/lib/python3.14/site-packages/mongoeco/__init__.py",
+    "pymongo": "4.18.2",
+    "unconstrained_public_dependency_resolution": true,
+    "pip_check": "passed",
+    "contract_smoke": "passed",
+    "source_files_verified": 272,
+    "regressions": {
+      "version": "4.9.1",
+      "module": "/private/tmp/mongoeco-491/pypi-smoke/lib/python3.14/site-packages/mongoeco/__init__.py",
+      "cases": {
+        "sync_MemoryEngine": 114,
+        "sync_SQLiteEngine": 114,
+        "async_MemoryEngine": 114,
+        "async_SQLiteEngine": 114
+      },
+      "total": 456,
+      "codes": [
+        2,
+        28,
+        40,
+        65
+      ],
+      "all_passed": true
+    },
+    "conformance_core": [
+      "MemoryEngine",
+      "SQLiteEngine"
+    ]
+  },
+  "evidence": {
+    "ci": "hosted-ci.json",
+    "native": "hosted-differential/summary.json",
+    "contract": "published-smoke.log",
+    "regressions": "published-regressions.json",
+    "pip_check": "published-pip-check.log"
+  },
+  "all_publication_checks_passed": true
+}

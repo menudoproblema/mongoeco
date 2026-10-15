@@ -1,7 +1,14 @@
 # Release 4.9.1
 
 Fecha: 15 de octubre de 2026. Corrección de fidelidad de actualizaciones sobre
-Mongoeco 4.9.0. Estado: cierre local verificado; pendiente de CI alojada y publicación.
+Mongoeco 4.9.0. Estado: **publicada y verificada en
+[PyPI](https://pypi.org/project/mongoeco/4.9.1/)**.
+
+La etiqueta anotada `v4.9.1` identifica el commit
+`ad5c8aaf514d9197d05aa1da8bbdea0cd91c1e95` y conserva el objeto
+`b77ce21a33c7fcbf8656069815377bc49bc40878`. La
+[CI de entrega](https://github.com/menudoproblema/mongoeco/actions/runs/38718622700)
+superó todos los gates requeridos y publicó mediante Trusted Publishing.
 
 ## Comportamiento corregido
 
@@ -40,8 +47,10 @@ entrega.
 
 La [matriz posicional](positional-update-validation.md) describe los 114 casos y
 sus códigos, estado persistido y controles válidos. La evidencia de este candidato
-se conserva en [evidence/mongoeco-4.9.1](evidence/mongoeco-4.9.1/). El cierre de
-entrega y la publicación se registrarán después de terminar sus gates.
+se conserva en [evidence/mongoeco-4.9.1](evidence/mongoeco-4.9.1/). Los
+[recibos alojados](evidence/mongoeco-4.9.1/hosted-ci.json) y la
+[verificación de publicación](evidence/mongoeco-4.9.1/published-verification.json)
+registran el cierre de entrega.
 
 ## Cierre local del candidato
 
@@ -63,8 +72,38 @@ reproducibles en [build.json](evidence/mongoeco-4.9.1/build.json).
 | Perfiles PyMongo | Matriz 4.9.2 / 4.11.3 / 4.13.2 / 4.17.0 / 4.18.2 idéntica a la fixture. |
 | Rendimiento | 95 escenarios comparados con 4.9.0, máximo delta de mediana +5,63 %; diagnóstico de spill con 100.000 documentos correcto. |
 
-La publicación utilizará los artefactos inmutables de la CI de la etiqueta. Los
+La publicación utilizó los artefactos inmutables de la CI de la etiqueta. Los
 hashes locales corresponden al commit de código indicado; la CI vuelve a construir
 con el timestamp del commit etiquetado y registra sus propios hashes. Los gates
-alojados exigen MongoDB 7.0.43 / 8.0.32 / 9.0.2 y las dos versiones de Python antes
-de que Trusted Publishing pueda publicar.
+alojados comprobaron MongoDB 7.0.43 / 8.0.32 / 9.0.2 y las dos versiones de Python
+antes de publicar.
+
+## Entrega verificada
+
+La CI de la etiqueta repitió los 8.840 tests y 4.456 subtests por versión de
+Python, mantuvo la cobertura del 99,01 %, ejecutó las nueve propiedades deep
+y superó los smokes de instalación limpia de wheel y sdist. La
+[matriz alojada](evidence/mongoeco-4.9.1/hosted-differential/summary.json)
+superó los 114 escenarios posicionales por motor y versión, los 29 casos
+anteriores por servidor y las comprobaciones de capturas.
+
+Los archivos descargados de PyPI son idénticos byte a byte a los artefactos
+inmutables probados por esa CI:
+
+| Artefacto publicado | SHA-256 |
+| --- | --- |
+| `mongoeco-4.9.1-py3-none-any.whl` | `f29bb9f8b2548c58861f5bf152594dc1771bd80fb7bce760061151e89f6f09bc` |
+| `mongoeco-4.9.1.tar.gz` | `821d494e1a16e4753ac2bcb4952c80d8defe38f64f2c3230a7274b039e6100f1` |
+
+La procedencia pública de ambos archivos identifica el repositorio
+`menudoproblema/mongoeco`, el workflow `ci.yml` y el environment `pypi`.
+Los 272 archivos de código y datos comprobados en el wheel publicado coinciden
+con el candidato local validado. Los hashes de distribución locales y alojados
+se conservan por separado porque usan el timestamp de su propio commit.
+
+La instalación limpia desde el índice público de PyPI, sin constraints internas,
+superó el contrato CXP y `pip check`. Sobre esa instalación se repitieron los 114
+escenarios en Memory/SQLite y sync/async: 456 comprobaciones correctas, incluidos
+los códigos 2, 28, 40 y 65 y los documentos persistidos. La conformance pública
+`spi-v2-core` también pasó en ambos motores. El probe de compatibilidad usó
+PyMongo 4.18.2; no añade soporte explícito para 4.19.

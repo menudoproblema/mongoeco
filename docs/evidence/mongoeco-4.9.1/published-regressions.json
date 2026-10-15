@@ -1,0 +1,18 @@
+{
+  "version": "4.9.1",
+  "module": "/private/tmp/mongoeco-491/pypi-smoke/lib/python3.14/site-packages/mongoeco/__init__.py",
+  "cases": {
+    "sync_MemoryEngine": 114,
+    "sync_SQLiteEngine": 114,
+    "async_MemoryEngine": 114,
+    "async_SQLiteEngine": 114
+  },
+  "total": 456,
+  "codes": [
+    2,
+    28,
+    40,
+    65
+  ],
+  "all_passed": true
+}

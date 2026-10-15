@@ -1,0 +1,15 @@
+WARNING: Cache entry deserialization failed, entry ignored
+WARNING: Cache entry deserialization failed, entry ignored
+WARNING: Cache entry deserialization failed, entry ignored
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting pymongo==4.18.2
+  Using cached pymongo-4.18.2-cp314-cp314-macosx_11_0_arm64.whl.metadata (10 kB)
+WARNING: Cache entry deserialization failed, entry ignored
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting dnspython<3.0.0,>=2.7.0 (from pymongo==4.18.2)
+  Using cached dnspython-2.9.0-py3-none-any.whl.metadata (5.7 kB)
+Using cached pymongo-4.18.2-cp314-cp314-macosx_11_0_arm64.whl (819 kB)
+Using cached dnspython-2.9.0-py3-none-any.whl (354 kB)
+Installing collected packages: dnspython, pymongo
+
+Successfully installed dnspython-2.9.0 pymongo-4.18.2

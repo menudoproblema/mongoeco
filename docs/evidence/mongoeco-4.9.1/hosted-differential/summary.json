@@ -1,0 +1,60 @@
+{
+  "ci_run": 38718622700,
+  "ci_url": "https://github.com/menudoproblema/mongoeco/actions/runs/38718622700",
+  "lanes": [
+    {
+      "lane": "mongodb-7.0-differential",
+      "version": "7.0.43",
+      "artifact_files_sha256": {
+        "index-guarantees-capture.json": "f6bf92a6c8c6ce71d502c7c2edd32a71499514c1a01c2aaeb806a1b515df79b4",
+        "junit/TEST-tests.differential.mongodb7_real_parity.MongoDB7RealParityTests-20261015101342.xml": "a3082ae4d16e82bf79954d93023abd734c7a9fd45848fe3507fef0667ec8f3fb",
+        "mongodb-build-info.json": "79bdff13c9dc39ea864cbb019e1e3326f85bef7fab2125e4e3c2625c5e624495",
+        "positional-updates.log": "07e4c67b51250c57bfde601f5d22064c7e7f66c100081942c63c32c7ecac0e37",
+        "report.json": "d6412f93d82a650fc0bec43c812ac5eada02f19f9fd7bd4116ab45a286becf99",
+        "review-capture.json": "fdd2d7af8edb5582131e6674703df39df1cbb40cfa6ddf852961b699ac1951f0",
+        "run.log": "67d1057235102952a9801bade1cd8c90040102c80d0b1c38a4ab282fe98a5d0c",
+        "semantic-guarantees-capture.json": "9a3ce50fdf2a0841325ed2dc7ef4a628e62bfe63a147ef4ee6da4ee14fe35095",
+        "version-deltas-capture.json": "0eb8217964e928a185120c8619ce3f32fb6511e0aeeff71bd2ec94262f717c98"
+      },
+      "positional_cases": 114,
+      "engines": 2,
+      "positional_gate_passed": true
+    },
+    {
+      "lane": "mongodb-8.0-differential",
+      "version": "8.0.32",
+      "artifact_files_sha256": {
+        "index-guarantees-capture.json": "fd81de3f4b48b4af7c490784ca6a02f71dc2b445d454332103c365da28b672d6",
+        "junit/TEST-tests.differential.mongodb8_real_parity.MongoDB8RealParityTests-20261015101345.xml": "1d284c612c18356fdb95a20fc8c5319cdf15c67999cb92ff5c095e5fd8dc534d",
+        "mongodb-build-info.json": "012e16a78297c47801eb9a1b2f01ad314e2c27b25837ece9b420dd745e8ca938",
+        "positional-updates.log": "69f007861d7db2b0b81ffacd01f59767e59a31041bd3efcd2e64171239e1d35a",
+        "report.json": "a424b60a6d8d0b8ad2dc20760099e11708abfb00af40b49fd72a9e9716e195dc",
+        "review-capture.json": "f17c74ac0b507a2e5738f2e16cd072067f09811d8b33089f05422417a12b5728",
+        "run.log": "4c3e1f7f8c6acc81b93ebb8193f7646051456b3e479eef461e6a16c6ed9420be",
+        "semantic-guarantees-capture.json": "1a12a9929c015f6ef62e887b3a049495e6144cdfa89edb567e2c52d6f8c44454",
+        "version-deltas-capture.json": "49f371affe649be12c9dc6e446e8f43135c010fc5ec1fd192431be7554d9f49b"
+      },
+      "positional_cases": 114,
+      "engines": 2,
+      "positional_gate_passed": true
+    },
+    {
+      "lane": "mongodb-9.0-differential",
+      "version": "9.0.2",
+      "artifact_files_sha256": {
+        "index-guarantees-capture.json": "32cc131fa0e831c65c6f8c2827db0d3936ea49d67d6360feab4bd0df13d03cb2",
+        "junit/TEST-tests.differential.mongodb9_real_parity.MongoDB9RealParityTests-20261015101352.xml": "62a1cfb3d1ae9154451c4e3cd40260dc3d98407ac7bb76a3015b583379d40c5d",
+        "mongodb-build-info.json": "e4779916616fdbc415afb736f43e03a0acb5a78511fdd045190a2ed0c56b196a",
+        "positional-updates.log": "13e9d597e984c3536d7f487126d7e7c101223824b2d1c8e42e4a87ceed0c3afd",
+        "report.json": "d16bb5111d28494745d9f4820d8d7f72fb789893b7f6354ea0079ab7ed0ebe0d",
+        "review-capture.json": "de8577d094c535b2ec4f98dac14125e7ab0414ce0344801a812edc1fe48e88ef",
+        "run.log": "050fc5a8765dd7cd591ef06f4bfa47a7aa6b2e320d0a089f97f2519079fb463b",
+        "semantic-guarantees-capture.json": "95a4eb6992e86248375f5418c41c2bf35e4f9e7829530da3d7d01faeb679e831",
+        "version-deltas-capture.json": "0d3f2b10814709e5935ef03f6365faebc8ef751abac36ac34951b5df3304bff2"
+      },
+      "positional_cases": 114,
+      "engines": 2,
+      "positional_gate_passed": true
+    }
+  ]
+}

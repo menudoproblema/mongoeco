@@ -1,0 +1,9 @@
+Selected result lines from the successful tagged CI run 38718622700.
+Test (Python 3.14)	Run unit and integration tests	2026-10-15T10:15:34.7236400Z Ran 3606 tests in 109.795s
+Test (Python 3.14)	Enforce installed package coverage floor	2026-10-15T10:19:18.4984627Z TOTAL                                                                                                                         43230    428  99.01%
+Test (Python 3.14)	Enforce installed package coverage floor	2026-10-15T10:19:18.4985013Z Required test coverage of 99.0% reached. Total coverage: 99.01%
+Test (Python 3.14)	Enforce installed package coverage floor	2026-10-15T10:19:18.4985366Z 8840 passed, 31 skipped, 4456 subtests passed in 221.35s (0:03:41)
+Test (Python 3.14)	Exercise deep property profile	2026-10-15T10:19:57.3411399Z 9 passed in 37.51s
+Test (Python 3.13)	Run unit and integration tests	2026-10-15T10:16:13.4833479Z Ran 3606 tests in 142.274s
+Test (Python 3.13)	Run complete pytest suite on Python 3.13	2026-10-15T10:20:58.4835342Z 8840 passed, 31 skipped, 4456 subtests passed in 283.09s (0:04:43)
+Publish tagged release	Publish distributions to PyPI	2026-10-15T10:25:02.2515563Z https://pypi.org/project/mongoeco/4.9.1/

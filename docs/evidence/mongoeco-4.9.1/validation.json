@@ -337,7 +337,7 @@
   "clean_sdist": "passed",
   "diff_reviewed": true,
   "unrelated_changes": false,
-  "publication": "ready_for_tagged_ci",
+  "publication": "verified_published",
   "performance": {
     "status": "passed",
     "baseline_tag": "v4.9.0",
@@ -357,5 +357,8 @@
     }
   },
   "documentation_aligned": true,
-  "all_local_gates_passed": true
+  "all_local_gates_passed": true,
+  "published_verification": "published-verification.json",
+  "hosted_ci": "hosted-ci.json",
+  "hosted_native_evidence": "hosted-differential/summary.json"
 }
