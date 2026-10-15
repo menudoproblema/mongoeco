@@ -1,0 +1,1958 @@
+{
+  "4.11.3": {
+    "aggregate.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.batch_size": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "aggregate.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate_raw_batches.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate_raw_batches.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate_raw_batches() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "bulk_write.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.delete_hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.replace_sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "client.private_srv_suffix": {
+      "accepted": false,
+      "error": "Invalid SRV host: node.internal",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "client.srv_host_validator": {
+      "accepted": false,
+      "error": "Invalid SRV host: node.internal",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "delete_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "delete_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "find_one_and_delete.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "list_search_indexes.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "list_search_indexes.pipeline": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "parse_uri.percent_encoded_hostname": {
+      "accepted": true,
+      "error": null,
+      "error_type": null,
+      "status": "completed"
+    },
+    "replace_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.replace_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "replace_one.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0acfd863d4d19a34f8cfa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    }
+  },
+  "4.13.2": {
+    "aggregate.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.batch_size": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "aggregate.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate_raw_batches.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate_raw_batches.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate_raw_batches() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "bulk_write.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.delete_hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.replace_sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "client.private_srv_suffix": {
+      "accepted": false,
+      "error": "Unknown option: srvAllowedHostsSuffix. Did you mean one of (authoidcallowedhosts, srvmaxhosts, tlsallowinvalidhostnames) or maybe a camelCase version of one? Refer to docstring.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "client.srv_host_validator": {
+      "accepted": false,
+      "error": "Unknown option: srv_host_validator. Did you mean one of (server_selector, srvmaxhosts, event_listeners) or maybe a camelCase version of one? Refer to docstring.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "delete_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "delete_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "find_one_and_delete.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "list_search_indexes.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "list_search_indexes.pipeline": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "parse_uri.percent_encoded_hostname": {
+      "accepted": true,
+      "error": null,
+      "error_type": null,
+      "status": "completed"
+    },
+    "replace_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.replace_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "replace_one.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad16e909f4cec3ee7a95, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    }
+  },
+  "4.17.0": {
+    "aggregate.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.batch_size": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "aggregate.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate_raw_batches.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate_raw_batches.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate_raw_batches() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "bulk_write.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.delete_hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.replace_sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "client.private_srv_suffix": {
+      "accepted": false,
+      "error": "Unknown option: srvAllowedHostsSuffix. Did you mean one of (authoidcallowedhosts, srvmaxhosts, tlsallowinvalidhostnames) or maybe a camelCase version of one? Refer to docstring.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "client.srv_host_validator": {
+      "accepted": false,
+      "error": "Unknown option: srv_host_validator. Did you mean one of (server_selector, srvmaxhosts, event_listeners) or maybe a camelCase version of one? Refer to docstring.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "delete_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "delete_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "find_one_and_delete.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "list_search_indexes.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "list_search_indexes.pipeline": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "parse_uri.percent_encoded_hostname": {
+      "accepted": true,
+      "error": null,
+      "error_type": null,
+      "status": "completed"
+    },
+    "replace_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.replace_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "replace_one.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad2d8118417504faadd3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    }
+  },
+  "4.18.2": {
+    "aggregate.aggregate": {
+      "accepted": false,
+      "error": "The aggregate option cannot be specified as a keyword argument.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "aggregate.batch_size": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "aggregate.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate_raw_batches.aggregate": {
+      "accepted": false,
+      "error": "The aggregate option cannot be specified as a keyword argument.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "aggregate_raw_batches.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate_raw_batches() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "bulk_write.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.delete_hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.replace_sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "client.private_srv_suffix": {
+      "accepted": true,
+      "error": null,
+      "error_type": null,
+      "status": "completed"
+    },
+    "client.srv_host_validator": {
+      "accepted": false,
+      "error": "Unknown option: srv_host_validator. Did you mean one of (server_selector, srvmaxhosts, event_listeners) or maybe a camelCase version of one? Refer to docstring.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "delete_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "delete_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "find_one_and_delete.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "list_search_indexes.aggregate": {
+      "accepted": false,
+      "error": "The aggregate option cannot be specified as a keyword argument.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "list_search_indexes.pipeline": {
+      "accepted": false,
+      "error": "The pipeline option cannot be specified as a keyword argument.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "parse_uri.percent_encoded_hostname": {
+      "accepted": false,
+      "error": "Percent-encoding is only allowed in Unix domain socket paths and IPv6 zone indexes, not in hostnames: %6cocalhost",
+      "error_type": "InvalidURI",
+      "status": "configuration-rejected"
+    },
+    "replace_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.replace_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "replace_one.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad455fc667778e99161c, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    }
+  },
+  "4.19.0": {
+    "aggregate.aggregate": {
+      "accepted": false,
+      "error": "The aggregate option cannot be specified as a keyword argument.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "aggregate.batch_size": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "aggregate.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate_raw_batches.aggregate": {
+      "accepted": false,
+      "error": "The aggregate option cannot be specified as a keyword argument.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "aggregate_raw_batches.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate_raw_batches() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "bulk_write.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.delete_hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.replace_sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "client.private_srv_suffix": {
+      "accepted": true,
+      "error": null,
+      "error_type": null,
+      "status": "completed"
+    },
+    "client.srv_host_validator": {
+      "accepted": true,
+      "error": null,
+      "error_type": null,
+      "status": "completed"
+    },
+    "delete_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "delete_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "find_one_and_delete.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "list_search_indexes.aggregate": {
+      "accepted": false,
+      "error": "The aggregate option cannot be specified as a keyword argument.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "list_search_indexes.pipeline": {
+      "accepted": false,
+      "error": "The pipeline option cannot be specified as a keyword argument.",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "parse_uri.percent_encoded_hostname": {
+      "accepted": false,
+      "error": "Percent-encoding is only allowed in Unix domain socket paths and IPv6 zone indexes, not in hostnames: %6cocalhost",
+      "error_type": "InvalidURI",
+      "status": "configuration-rejected"
+    },
+    "replace_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.replace_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "replace_one.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.sort": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ad5a0e6c7f19920ffab2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    }
+  },
+  "4.9.2": {
+    "aggregate.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.batch_size": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "aggregate.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate_raw_batches.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "aggregate_raw_batches.duplicate_pipeline": {
+      "accepted": false,
+      "error": "Collection.aggregate_raw_batches() got multiple values for argument 'pipeline'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "bulk_write.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.delete_hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "bulk_write.replace_sort": {
+      "accepted": false,
+      "error": "ReplaceOne.__init__() got an unexpected keyword argument 'sort'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "bulk_write.sort": {
+      "accepted": false,
+      "error": "UpdateOne.__init__() got an unexpected keyword argument 'sort'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "client.private_srv_suffix": {
+      "accepted": false,
+      "error": "Invalid SRV host: node.internal",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "client.srv_host_validator": {
+      "accepted": false,
+      "error": "Invalid SRV host: node.internal",
+      "error_type": "ConfigurationError",
+      "status": "configuration-rejected"
+    },
+    "delete_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "delete_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "delete_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.delete_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "find_one_and_delete.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_delete.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_replace.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "find_one_and_update.max_time_ms": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "list_search_indexes.aggregate": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "list_search_indexes.pipeline": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "parse_uri.percent_encoded_hostname": {
+      "accepted": true,
+      "error": null,
+      "error_type": null,
+      "status": "completed"
+    },
+    "replace_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "replace_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.replace_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "replace_one.sort": {
+      "accepted": false,
+      "error": "Collection.replace_one() got an unexpected keyword argument 'sort'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_many.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_many.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_many() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.comment": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.hint": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.let": {
+      "accepted": true,
+      "error": "127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 0.001s, Topology Description: <TopologyDescription id: 6ad0ace9a1a7e044548bd334, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 1) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:1: [Errno 61] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>",
+      "error_type": "ServerSelectionTimeoutError",
+      "status": "arguments-accepted"
+    },
+    "update_one.max_time_ms": {
+      "accepted": false,
+      "error": "Collection.update_one() got an unexpected keyword argument 'max_time_ms'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    },
+    "update_one.sort": {
+      "accepted": false,
+      "error": "Collection.update_one() got an unexpected keyword argument 'sort'",
+      "error_type": "TypeError",
+      "status": "signature-rejected"
+    }
+  }
+}

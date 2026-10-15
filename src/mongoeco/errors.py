@@ -9,6 +9,7 @@ except Exception:  # pragma: no cover - pymongo is optional
     _ServerSelectionTimeoutErrorBase = Exception
     _InvalidOperationBase = Exception
     _ConfigurationErrorBase = Exception
+    _InvalidURIBase = Exception
     _CollectionInvalidBase = Exception
     _OperationFailureBase = Exception
     _WriteErrorBase = Exception
@@ -22,6 +23,7 @@ else:  # pragma: no cover - behavior exercised in environments with pymongo
     _ServerSelectionTimeoutErrorBase = _pymongo_errors.ServerSelectionTimeoutError
     _InvalidOperationBase = _pymongo_errors.InvalidOperation
     _ConfigurationErrorBase = _pymongo_errors.ConfigurationError
+    _InvalidURIBase = _pymongo_errors.InvalidURI
     _CollectionInvalidBase = _pymongo_errors.CollectionInvalid
     _OperationFailureBase = _pymongo_errors.OperationFailure
     _WriteErrorBase = _pymongo_errors.WriteError
@@ -102,6 +104,10 @@ class PyMongoError(MongoEcoError, _PyMongoErrorBase):
 
 class ConfigurationError(PyMongoError, _ConfigurationErrorBase):
     """Se produce cuando las opciones del cliente no son válidas."""
+
+
+class InvalidURI(ConfigurationError, _InvalidURIBase):  # noqa: N818 - PyMongo public name
+    """Se produce cuando una URI de conexión no es válida."""
 
 
 class ConnectionFailure(PyMongoError, _ConnectionFailureBase):

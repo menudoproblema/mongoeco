@@ -87,7 +87,7 @@ Esta lista prepara una release sin obligar a publicar nada.
 - no ampliar `scripts/ruff_ratchet_baseline.json`; reducirla cuando se corrija
   deuda conocida y reiniciar su referencia despues de etiquetar la release;
 - ejecutar `python scripts/run_pymongo_profile_matrix.py --versions 4.9.2
-  4.11.3 4.13.2 4.17.0 4.18.2 --summary-output
+  4.11.3 4.13.2 4.17.0 4.18.2 4.19.0 --summary-output
   tests/fixtures/pymongo_profile_matrix.json` y revisar los deltas publicados.
 - ejecutar las suites de paridad real MongoDB 7.0, 8.0 y 9.0 cuando haya servicios
   disponibles; para valores temporales, comprobar invariantes y no timestamps

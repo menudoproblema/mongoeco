@@ -481,6 +481,7 @@ Hoy el catálogo oficial incluye:
 * `4.13`
 * `4.17`
 * `4.18`
+* `4.19` (Unreleased; no incluido en 4.9.1)
 
 Regla práctica:
 
@@ -492,6 +493,9 @@ Regla práctica:
   `aggregate` y `pipeline` reenviados como opciones de agregación, también en
   `aggregate_raw_batches` y helpers de índices Search. Un argumento Python
   duplicado conserva `TypeError`.
+* `4.19` hereda 4.18 y añade `srv_host_validator` con resolución pública,
+  sufijos privados y rechazo de percent-encoding en hostnames. La
+  [guía 4.19](docs/pymongo419.md) documenta validación y límites.
 * no existe catálogo oficial para perfiles anteriores a `4.9`
 
 ## 5. Autodetección de PyMongo instalada
@@ -971,7 +975,7 @@ python3 scripts/run_pymongo_profile_matrix.py
 ```
 
 El script crea entornos aislados para `PyMongo 4.9.2`, `4.11.3`, `4.13.2`,
-`4.17.0` y `4.18.2`, ejecuta
+`4.17.0`, `4.18.2` y `4.19.0`, ejecuta
 una sonda de aceptación de parámetros reales y devuelve un JSON con los
 resultados.
 

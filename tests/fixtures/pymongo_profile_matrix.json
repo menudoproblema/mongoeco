@@ -4,7 +4,8 @@
     "PyMongo 4.11.3",
     "PyMongo 4.13.2",
     "PyMongo 4.17.0",
-    "PyMongo 4.18.2"
+    "PyMongo 4.18.2",
+    "PyMongo 4.19.0"
   ],
   "scope": {
     "write_methods": [
@@ -90,6 +91,12 @@
       "replace_one.sort",
       "bulk_write.UpdateOne.sort",
       "bulk_write.ReplaceOne.sort"
+    ],
+    "4.18_plus": [
+      "client.private_srv_suffix"
+    ],
+    "4.19_plus": [
+      "client.srv_host_validator"
     ]
   },
   "confirmed_profile_rejections": {
@@ -97,10 +104,11 @@
       "aggregate.aggregate",
       "aggregate_raw_batches.aggregate",
       "list_search_indexes.aggregate",
-      "list_search_indexes.pipeline"
+      "list_search_indexes.pipeline",
+      "parse_uri.percent_encoded_hostname"
     ]
   },
-  "confirmed_unsupported_in_4_9_to_4_18": {
+  "confirmed_unsupported_in_4_9_to_4_19": {
     "update_one": [
       "max_time_ms"
     ],

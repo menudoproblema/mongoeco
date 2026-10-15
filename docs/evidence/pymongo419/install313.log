@@ -1,0 +1,19 @@
+Processing /tmp/mongoeco-pymongo419/dist/mongoeco-4.9.1-py3-none-any.whl
+Collecting pymongo==4.19.0
+  Downloading pymongo-4.19.0-cp313-cp313-macosx_11_0_arm64.whl.metadata (10 kB)
+Downloading pymongo-4.19.0-cp313-cp313-macosx_11_0_arm64.whl (827 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 827.2/827.2 kB 8.5 MB/s  0:00:00
+Installing collected packages: pymongo, mongoeco
+  Attempting uninstall: pymongo
+    Found existing installation: pymongo 4.18.2
+    Uninstalling pymongo-4.18.2:
+      Successfully uninstalled pymongo-4.18.2
+  Attempting uninstall: mongoeco
+    Found existing installation: mongoeco 4.9.1
+    Uninstalling mongoeco-4.9.1:
+      Successfully uninstalled mongoeco-4.9.1
+
+Successfully installed mongoeco-4.9.1 pymongo-4.19.0
+
+[notice] A new release of pip is available: 26.2 -> 26.2.1
+[notice] To update, run: /private/tmp/mongoeco-491/py313/bin/python -m pip install --upgrade pip

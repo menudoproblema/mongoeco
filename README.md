@@ -401,7 +401,8 @@ Planning mode is a third, separate concern:
   instead of compiling an executable plan for unsupported shapes
 
 The catalog supports MongoDB dialects `7.0`, `8.0` and `9.0`, and PyMongo
-profiles `4.9`, `4.11`, `4.13`, `4.17` and `4.18`. Defaults remain MongoDB
+profiles `4.9`, `4.11`, `4.13`, `4.17`, `4.18` and `4.19` (the latter is
+prepared for the next release; see [PyMongo 4.19](docs/pymongo419.md)). Defaults remain MongoDB
 `7.0` and PyMongo `4.9`. Select the new semantics explicitly with
 `MongoClient(mongodb_dialect="9.0", pymongo_profile="4.18")`.
 The `mongodb9` extra installs PyMongo; it does not select a dialect.

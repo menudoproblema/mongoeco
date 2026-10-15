@@ -12,14 +12,15 @@ from mongoeco.engines.sqlite import SQLiteEngine
 from mongoeco.wire import AsyncMongoEcoProxyServer
 
 
+@pytest.mark.parametrize("profile", ["4.18", "4.19"])
 @pytest.mark.parametrize("backend", ["memory", "sqlite"])
-def test_raw_bson_documents_and_nested_buffers_remain_stable(backend):
+def test_raw_bson_documents_and_nested_buffers_remain_stable(backend, profile):
     expected_max_wire_version = 20
 
     async def exercise():
         engine = MemoryEngine() if backend == "memory" else SQLiteEngine()
         async with AsyncMongoEcoProxyServer(
-            engine=engine, pymongo_profile="4.18"
+            engine=engine, pymongo_profile=profile
         ) as proxy:
 
             def run_client():

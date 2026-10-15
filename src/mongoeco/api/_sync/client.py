@@ -627,6 +627,7 @@ class MongoClient:
         engine: AsyncStorageEngine | None = None,
         *,
         uri: str | None = None,
+        srv_host_validator: Callable[[str], bool] | None = None,
         mongodb_dialect: MongoDialect | str | None = None,
         pymongo_profile: PyMongoProfile | str | None = None,
         write_concern: WriteConcern | None = None,
@@ -643,6 +644,7 @@ class MongoClient:
         self._async_client = AsyncMongoClient(
             engine,
             uri=uri,
+            srv_host_validator=srv_host_validator,
             mongodb_dialect=mongodb_dialect,
             pymongo_profile=pymongo_profile,
             write_concern=write_concern,

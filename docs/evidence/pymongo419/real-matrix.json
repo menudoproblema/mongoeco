@@ -1,0 +1,290 @@
+[
+  {
+    "target": "7.0",
+    "version": "7.0.39",
+    "git_version": "636e201a5c0732b95e88bb011a72938ce01d290b",
+    "fcv": {
+      "version": "7.0"
+    },
+    "runs": [
+      {
+        "command": [
+          "-m",
+          "unittest",
+          "tests.differential.test_positional_update_parity",
+          "-v"
+        ],
+        "exit_code": 0,
+        "seconds": 19.51471074996516,
+        "log": "real-7_0-0.log"
+      },
+      {
+        "command": [
+          "scripts/run_mongodb_real_differential.py",
+          "7.0",
+          "--json-report",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/native-7_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 3.406460792059079,
+        "log": "real-7_0-1.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "7.0",
+          "--case-set",
+          "review-improvements",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/review-improvements-7_0.json",
+          "--check",
+          "tests/fixtures/mongodb_review_improvements_7_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 2.124194458127022,
+        "log": "real-7_0-2.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "7.0",
+          "--case-set",
+          "version-deltas",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/version-deltas-7_0.json",
+          "--check",
+          "tests/fixtures/mongodb_version_deltas_7_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 6.659318333957344,
+        "log": "real-7_0-3.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "7.0",
+          "--case-set",
+          "semantic-guarantees",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/semantic-guarantees-7_0.json",
+          "--check",
+          "tests/fixtures/mongodb_semantic_guarantees_7_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 2.65353816607967,
+        "log": "real-7_0-4.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "7.0",
+          "--case-set",
+          "index-guarantees",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/index-guarantees-7_0.json",
+          "--check",
+          "tests/fixtures/mongodb_index_guarantees_7_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 0.6393782079685479,
+        "log": "real-7_0-5.log"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "git_version": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+    "fcv": {
+      "version": "8.0"
+    },
+    "runs": [
+      {
+        "command": [
+          "-m",
+          "unittest",
+          "tests.differential.test_positional_update_parity",
+          "-v"
+        ],
+        "exit_code": 0,
+        "seconds": 19.365040292032063,
+        "log": "real-8_0-0.log"
+      },
+      {
+        "command": [
+          "scripts/run_mongodb_real_differential.py",
+          "8.0",
+          "--json-report",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/native-8_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 6.022301167016849,
+        "log": "real-8_0-1.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "8.0",
+          "--case-set",
+          "review-improvements",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/review-improvements-8_0.json",
+          "--check",
+          "tests/fixtures/mongodb_review_improvements_8_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 3.6749772909097373,
+        "log": "real-8_0-2.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "8.0",
+          "--case-set",
+          "version-deltas",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/version-deltas-8_0.json",
+          "--check",
+          "tests/fixtures/mongodb_version_deltas_8_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 6.645962915848941,
+        "log": "real-8_0-3.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "8.0",
+          "--case-set",
+          "semantic-guarantees",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/semantic-guarantees-8_0.json",
+          "--check",
+          "tests/fixtures/mongodb_semantic_guarantees_8_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 2.1723015839233994,
+        "log": "real-8_0-4.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "8.0",
+          "--case-set",
+          "index-guarantees",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/index-guarantees-8_0.json",
+          "--check",
+          "tests/fixtures/mongodb_index_guarantees_8_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 0.6480029171798378,
+        "log": "real-8_0-5.log"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "git_version": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+    "fcv": {
+      "version": "9.0"
+    },
+    "runs": [
+      {
+        "command": [
+          "-m",
+          "unittest",
+          "tests.differential.test_positional_update_parity",
+          "-v"
+        ],
+        "exit_code": 0,
+        "seconds": 20.000889332965016,
+        "log": "real-9_0-0.log"
+      },
+      {
+        "command": [
+          "scripts/run_mongodb_real_differential.py",
+          "9.0",
+          "--json-report",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/native-9_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 4.0529092089273036,
+        "log": "real-9_0-1.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "9.0",
+          "--case-set",
+          "review-improvements",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/review-improvements-9_0.json",
+          "--check",
+          "tests/fixtures/mongodb_review_improvements_9_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 2.7306335419416428,
+        "log": "real-9_0-2.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "9.0",
+          "--case-set",
+          "version-deltas",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/version-deltas-9_0.json",
+          "--check",
+          "tests/fixtures/mongodb_version_deltas_9_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 4.154143457999453,
+        "log": "real-9_0-3.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "9.0",
+          "--case-set",
+          "semantic-guarantees",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/semantic-guarantees-9_0.json",
+          "--check",
+          "tests/fixtures/mongodb_semantic_guarantees_9_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 1.703917584149167,
+        "log": "real-9_0-4.log"
+      },
+      {
+        "command": [
+          "scripts/capture_differential_replay_golden.py",
+          "--target",
+          "9.0",
+          "--case-set",
+          "index-guarantees",
+          "--output",
+          "/Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/index-guarantees-9_0.json",
+          "--check",
+          "tests/fixtures/mongodb_index_guarantees_9_0.json"
+        ],
+        "exit_code": 0,
+        "seconds": 1.1940871658734977,
+        "log": "real-9_0-5.log"
+      }
+    ]
+  }
+]

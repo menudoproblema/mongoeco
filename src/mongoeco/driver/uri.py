@@ -167,6 +167,9 @@ def _parse_seeds(hostinfo: str, *, scheme: MongoScheme) -> tuple[MongoUriSeed, .
 
 
 def _parse_client_options(option_pairs: list[tuple[str, str]]) -> MongoClientOptions:
+    if any(key.lower() == 'srv_host_validator' for key, _ in option_pairs):
+        message = 'srv_host_validator must be passed as a callable keyword argument'
+        raise ConfigurationError(message)
     suffix_values = [
         value for key, value in option_pairs if key.lower() == 'srvallowedhostssuffix'
     ]

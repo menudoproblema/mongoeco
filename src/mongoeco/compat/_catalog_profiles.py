@@ -5,6 +5,8 @@ from types import MappingProxyType
 from mongoeco.compat._catalog_constants import (
     PYMONGO_CAP_RESERVED_AGGREGATION_KEYWORDS,
     PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX,
+    PYMONGO_CAP_SRV_HOST_VALIDATOR,
+    PYMONGO_CAP_STRICT_URI_HOSTS,
     PYMONGO_CAP_UPDATE_ONE_SORT,
 )
 from mongoeco.compat._catalog_models import PyMongoProfileCatalogEntry
@@ -58,6 +60,27 @@ PYMONGO_PROFILE_CATALOG = MappingProxyType(
                     PYMONGO_CAP_UPDATE_ONE_SORT,
                     PYMONGO_CAP_RESERVED_AGGREGATION_KEYWORDS,
                     PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX,
+                }
+            ),
+        ),
+        "4.19": PyMongoProfileCatalogEntry(
+            key="4.19",
+            driver_series="4.x",
+            label="PyMongo 4.19",
+            aliases=("4.19",),
+            behavior_flags=MappingProxyType(
+                {
+                    "supports_update_one_sort": True,
+                    "rejects_reserved_aggregation_keywords": True,
+                }
+            ),
+            capabilities=frozenset(
+                {
+                    PYMONGO_CAP_UPDATE_ONE_SORT,
+                    PYMONGO_CAP_RESERVED_AGGREGATION_KEYWORDS,
+                    PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX,
+                    PYMONGO_CAP_SRV_HOST_VALIDATOR,
+                    PYMONGO_CAP_STRICT_URI_HOSTS,
                 }
             ),
         ),

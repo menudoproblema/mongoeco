@@ -99,6 +99,13 @@
 - `behavior_flags`: `{'supports_update_one_sort': True, 'rejects_reserved_aggregation_keywords': True}`
 - `capabilities`: `aggregate.reserved_keywords_validation`, `update_one.sort`, `uri.srv_allowed_hosts_suffix`
 
+### `4.19`
+- `driver_series`: `4.x`
+- `label`: `PyMongo 4.19`
+- `aliases`: `4.19`
+- `behavior_flags`: `{'supports_update_one_sort': True, 'rejects_reserved_aggregation_keywords': True}`
+- `capabilities`: `aggregate.reserved_keywords_validation`, `update_one.sort`, `uri.rejects_percent_encoded_hostnames`, `uri.srv_allowed_hosts_suffix`, `uri.srv_host_validator`
+
 ## Database Commands
 ### `aggregate`
 - `family`: `admin_read`

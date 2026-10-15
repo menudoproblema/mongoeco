@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_VERSIONS = ("4.9.2", "4.11.3", "4.13.2", "4.17.0", "4.18.2")
+DEFAULT_VERSIONS = ("4.9.2", "4.11.3", "4.13.2", "4.17.0", "4.18.2", "4.19.0")
 WRITE_METHODS = (
     "update_one",
     "update_many",
@@ -78,6 +78,9 @@ CHECK_ORDER = (
     "aggregate_raw_batches.duplicate_pipeline",
     "list_search_indexes.aggregate",
     "list_search_indexes.pipeline",
+    "client.srv_host_validator",
+    "client.private_srv_suffix",
+    "parse_uri.percent_encoded_hostname",
 )
 CHECK_LABELS = {
     "bulk_write.hint": ("bulk_write", "UpdateOne.hint"),
@@ -130,16 +133,47 @@ def probe_call(call) -> dict[str, object]:
 PROBE_SCRIPT = textwrap.dedent(
     """
     import json
+    from unittest.mock import patch
+
+    import dns.resolver
+    import dns.rrset
 
     from pymongo import MongoClient
-    from pymongo.operations import DeleteMany, DeleteOne, InsertOne, ReplaceOne, UpdateMany, UpdateOne
+    from pymongo.operations import (
+        DeleteMany, DeleteOne, InsertOne, ReplaceOne, UpdateMany, UpdateOne,
+    )
     from scripts.run_pymongo_profile_matrix import probe_call
+    from pymongo.uri_parser import parse_uri
+
+
+    def controlled_srv(name, record_type, **kwargs):
+        if record_type == "TXT":
+            raise dns.resolver.NoAnswer
+        return dns.rrset.from_text(
+            str(name), 60, "IN", "SRV", "0 0 27017 node.internal."
+        )
+
+
+    def probe_srv(**kwargs):
+        # The real driver validates DNS; no MongoDB connection is opened.
+        with patch("dns.resolver.resolve", side_effect=controlled_srv):
+            with MongoClient(
+                "mongodb+srv://cluster.example.net/", connect=False, **kwargs
+            ):
+                pass
 
 
     client = MongoClient("mongodb://127.0.0.1:1", connect=False, serverSelectionTimeoutMS=1)
     collection = client.get_database("db").get_collection("coll")
 
     checks = {
+        "client.srv_host_validator": lambda: probe_srv(
+            srv_host_validator=lambda host: host == "node.internal"
+        ),
+        "client.private_srv_suffix": lambda: probe_srv(srvAllowedHostsSuffix="internal"),
+        "parse_uri.percent_encoded_hostname": lambda: parse_uri(
+            "mongodb://%6cocalhost/"
+        ),
         "update_one.sort": lambda: collection.update_one({"x": 1}, {"$set": {"y": 1}}, sort=[("rank", 1)]),
         "update_one.hint": lambda: collection.update_one({"x": 1}, {"$set": {"y": 1}}, hint="_id_"),
         "update_one.comment": lambda: collection.update_one({"x": 1}, {"$set": {"y": 1}}, comment="trace"),

@@ -8,6 +8,17 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Add the explicit PyMongo 4.19 profile, exact installed-driver detection and
+  `srv_host_validator` on both clients. Delegate initial SRV discovery and
+  callback validation to the public PyMongo 4.19 API, including private suffixes
+  and fail-closed validation. Reject percent-encoded hostnames with `InvalidURI`.
+  Keep defaults MongoDB 7.0/PyMongo 4.9 and historical profiles.
+- Extend isolated driver probes and CI to PyMongo 4.19.0, with regression
+  coverage for DNS validation, BSON boundaries, bulk writes, getMore and sessions.
+  See [support and limits](docs/pymongo419.md).
+
 ## [4.9.1] - 2026-10-15
 
 ### Fixed

@@ -33,7 +33,9 @@ class OptionalBsonImportTests(unittest.TestCase):
 
 
             async def main() -> None:
-                async with AsyncMongoClient(MemoryEngine()) as client:
+                async with AsyncMongoClient(
+                    MemoryEngine(), pymongo_profile="4.19"
+                ) as client:
                     collection = client.demo.users
                     await collection.insert_one({"_id": "1", "name": "Ada"})
                     document = await collection.find_one({"name": "Ada"})

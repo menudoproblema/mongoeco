@@ -1,0 +1,19 @@
+Processing /tmp/mongoeco-pymongo419/dist/mongoeco-4.9.1-py3-none-any.whl
+WARNING: Cache entry deserialization failed, entry ignored
+Collecting pymongo==4.19.0
+  Using cached pymongo-4.19.0-cp314-cp314-macosx_11_0_arm64.whl.metadata (10 kB)
+Using cached pymongo-4.19.0-cp314-cp314-macosx_11_0_arm64.whl (827 kB)
+Installing collected packages: pymongo, mongoeco
+  Attempting uninstall: pymongo
+    Found existing installation: pymongo 4.18.2
+    Uninstalling pymongo-4.18.2:
+      Successfully uninstalled pymongo-4.18.2
+  Attempting uninstall: mongoeco
+    Found existing installation: mongoeco 4.9.1
+    Uninstalling mongoeco-4.9.1:
+      Successfully uninstalled mongoeco-4.9.1
+
+Successfully installed mongoeco-4.9.1 pymongo-4.19.0
+
+[notice] A new release of pip is available: 26.1.1 -> 26.2.1
+[notice] To update, run: /private/tmp/mongoeco-491/py314/bin/python -m pip install --upgrade pip

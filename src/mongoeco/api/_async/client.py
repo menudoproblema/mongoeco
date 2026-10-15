@@ -452,6 +452,7 @@ class AsyncMongoClient:
         engine: AsyncStorageEngine | None = None,
         *,
         uri: str | None = None,
+        srv_host_validator: Callable[[str], bool] | None = None,
         mongodb_dialect: MongoDialect | str | None = None,
         pymongo_profile: PyMongoProfile | str | None = None,
         write_concern: WriteConcern | None = None,
@@ -491,6 +492,7 @@ class AsyncMongoClient:
         self._transaction_options = normalize_transaction_options(transaction_options)
         self._driver_runtime = DriverRuntime(
             uri=uri,
+            srv_host_validator=srv_host_validator,
             pymongo_profile=self._pymongo_profile,
             write_concern=self._write_concern,
             read_concern=self._read_concern,

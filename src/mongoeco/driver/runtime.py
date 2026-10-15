@@ -2,10 +2,17 @@ from __future__ import annotations
 
 import asyncio
 
+from collections.abc import (
+    Callable,  # noqa: TC003 - public annotations are introspectable
+)
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.compat import PyMongoProfile, resolve_pymongo_profile
-from mongoeco.compat._catalog_constants import PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX
+from mongoeco.compat._catalog_constants import (
+    PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX,
+    PYMONGO_CAP_SRV_HOST_VALIDATOR,
+    PYMONGO_CAP_STRICT_URI_HOSTS,
+)
 from mongoeco.driver._runtime_attempts import RuntimeAttemptLifecycle
 from mongoeco.driver._runtime_plan_resolution import resolve_runtime_execution_plan
 from mongoeco.driver._runtime_planning import build_runtime_command_plan
@@ -21,7 +28,7 @@ from mongoeco.driver.discovery import (
     resolve_srv_seeds,
 )
 from mongoeco.driver.execution import (
-    RequestExecutionResult,
+    RequestExecutionResult,  # noqa: TC001 - public annotations are introspectable
 )
 from mongoeco.driver.failpoints import DriverFailpointController
 from mongoeco.driver.monitoring import (
@@ -61,7 +68,7 @@ from mongoeco.driver.uri import (
     build_write_concern_from_uri,
     parse_mongo_uri,
 )
-from mongoeco.errors import ConfigurationError
+from mongoeco.errors import ConfigurationError, InvalidURI
 from mongoeco.session import (
     ClientSession,  # noqa: TC001 - exported annotations are introspectable
 )
@@ -76,6 +83,43 @@ if TYPE_CHECKING:
     from mongoeco.driver.transports import WireProtocolCommandTransport
 
 
+def _validate_profile_uri(
+    uri: MongoUri,
+    profile: PyMongoProfile,
+    validator: Callable[[str], bool] | None,
+    *,
+    injected_dns: bool,
+) -> None:
+    if profile.supports(PYMONGO_CAP_STRICT_URI_HOSTS):
+        for seed in uri.seeds:
+            if '%' in seed.host and not seed.host.endswith('.sock'):
+                message = (
+                    'Percent-encoding is only allowed in Unix domain socket paths '
+                    f'and IPv6 zone indexes, not in hostnames: {seed.host}'
+                )
+                raise InvalidURI(message)
+    if validator is None:
+        return
+    if not callable(validator):
+        message = f'srv_host_validator must be a callable, not {type(validator)}'
+        raise ValueError(message)
+    if not profile.supports(PYMONGO_CAP_SRV_HOST_VALIDATOR):
+        message = 'srv_host_validator requires PyMongo profile 4.19'
+        raise ConfigurationError(message)
+    if uri.options.srv_allowed_hosts_suffix is not None:
+        message = 'Cannot specify both srv_host_validator and srvAllowedHostsSuffix'
+        raise ConfigurationError(message)
+    if uri.scheme != 'mongodb+srv':
+        message = (
+            "The srv_host_validator option is only allowed "
+            "with 'mongodb+srv://' URIs"
+        )
+        raise ConfigurationError(message)
+    if injected_dns:
+        message = 'srv_host_validator requires the public resolver'
+        raise ConfigurationError(message)
+
+
 class DriverRuntime:
     def __init__(
         self,
@@ -86,21 +130,33 @@ class DriverRuntime:
         read_preference: ReadPreference,
         srv_records: tuple[tuple[str, int | None], ...] | None = None,
         srv_resolver=None,
+        srv_host_validator: Callable[[str], bool] | None = None,
         pymongo_profile: PyMongoProfile | str | None = None,
     ):
         self._uri = parse_mongo_uri(uri)
         profile = resolve_pymongo_profile(pymongo_profile)
+        _validate_profile_uri(
+            self._uri,
+            profile,
+            srv_host_validator,
+            injected_dns=srv_records is not None or srv_resolver is not None,
+        )
         public_srv = profile.supports(PYMONGO_CAP_SRV_ALLOWED_HOSTS_SUFFIX)
         if self._uri.options.srv_allowed_hosts_suffix is not None and (
             not public_srv or srv_records is not None or srv_resolver is not None
         ):
             message = (
                 'srvAllowedHostsSuffix requires the public resolver '
-                'and PyMongo profile 4.18'
+                'and PyMongo profile 4.18 or later'
             )
             raise ConfigurationError(message)
         if public_srv and srv_records is None and srv_resolver is None:
-            resolution = resolve_srv_public(self._uri)
+            resolution = resolve_srv_public(
+                self._uri,
+                srv_host_validator=srv_host_validator,
+                minimum_version=(4, 19)
+                if profile.supports(PYMONGO_CAP_SRV_HOST_VALIDATOR) else (4, 18),
+            )
         elif srv_records is None:
             resolution = resolve_srv_dns(self._uri, resolver=srv_resolver) if self._uri.scheme == "mongodb+srv" else None
         else:

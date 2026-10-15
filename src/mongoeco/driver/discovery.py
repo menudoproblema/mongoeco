@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import (  # noqa: TC003 - public annotations are introspectable
+    Callable,
+    Sequence,
+)
 from dataclasses import dataclass, replace
-from typing import Sequence
 
 from mongoeco.driver.uri import MongoClientOptions, MongoUri, MongoUriSeed
 from mongoeco.errors import ConfigurationError
@@ -17,11 +20,19 @@ class SrvResolution:
     effective_options: MongoClientOptions | None = None
 
 
-def resolve_srv_public(uri: MongoUri) -> SrvResolution | None:
+def resolve_srv_public(
+    uri: MongoUri,
+    *,
+    srv_host_validator: Callable[[str], bool] | None = None,
+    minimum_version: tuple[int, int] = (4, 18),
+) -> SrvResolution | None:
     """Delegate DNS and suffix validation to the driver's public API."""
     if uri.scheme != "mongodb+srv":
         return None
-    missing_driver_message = "PyMongo >= 4.18 is required for public SRV resolution"
+    version_label = ".".join(map(str, minimum_version))
+    missing_driver_message = (
+        f"PyMongo >= {version_label} is required for public SRV resolution"
+    )
     try:
         import pymongo  # noqa: PLC0415 - optional dependency
 
@@ -31,8 +42,13 @@ def resolve_srv_public(uri: MongoUri) -> SrvResolution | None:
         from pymongo.uri_parser import parse_uri  # noqa: PLC0415
     except ImportError as exc:
         raise ConfigurationError(missing_driver_message) from exc
-    if pymongo.version_tuple[:2] < (4, 18):
+    if pymongo.version_tuple[:2] < minimum_version:
         raise ConfigurationError(missing_driver_message)
+    callback_options = (
+        {"srv_host_validator": srv_host_validator}
+        if srv_host_validator is not None
+        else {}
+    )
     try:
         result = parse_uri(
             uri.original,
@@ -40,6 +56,7 @@ def resolve_srv_public(uri: MongoUri) -> SrvResolution | None:
             srv_service_name=uri.options.srv_service_name,
             srv_max_hosts=uri.options.srv_max_hosts,
             srv_allowed_hosts_suffix=uri.options.srv_allowed_hosts_suffix,
+            **callback_options,
         )
     except DriverConfigurationError as exc:
         raise ConfigurationError(str(exc)) from exc
@@ -119,14 +136,14 @@ def resolve_srv_dns(
     srv_name = f"_{service_name}._tcp.{hostname}"
     try:
         srv_answers = resolver(srv_name, "SRV")
-    except Exception:  # noqa: BLE001
+    except Exception:
         # Keep client construction stable for local/test use when real DNS SRV is
         # unavailable; callers that need strict DNS behavior can inject a resolver.
         return resolve_srv_seeds(uri)
     txt_options: dict[str, str] = {}
     try:
         txt_answers = resolver(hostname, "TXT")
-    except Exception:  # noqa: BLE001
+    except Exception:
         txt_answers = ()
     resolved: list[MongoUriSeed] = []
     for answer in srv_answers:

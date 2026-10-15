@@ -609,6 +609,17 @@ class PyMongoProfile418(PyMongoProfile417):
     catalog_capabilities: frozenset[str] = PYMONGO_PROFILE_CATALOG['4.18'].capabilities
 
 
+@dataclass(frozen=True, slots=True)
+class PyMongoProfile419(PyMongoProfile418):
+    key: str = '4.19'
+    driver_series: str = '4.x'
+    label: str = 'PyMongo 4.19'
+    catalog_behavior_flags: MappingProxyType = (
+        PYMONGO_PROFILE_CATALOG['4.19'].behavior_flags
+    )
+    catalog_capabilities: frozenset[str] = PYMONGO_PROFILE_CATALOG['4.19'].capabilities
+
+
 MONGODB_DIALECT_70 = MongoDialect70()
 MONGODB_DIALECT_80 = MongoDialect80()
 MONGODB_DIALECT_90 = MongoDialect90()
@@ -618,6 +629,7 @@ PYMONGO_PROFILE_411 = PyMongoProfile411()
 PYMONGO_PROFILE_413 = PyMongoProfile413()
 PYMONGO_PROFILE_417 = PyMongoProfile417()
 PYMONGO_PROFILE_418 = PyMongoProfile418()
+PYMONGO_PROFILE_419 = PyMongoProfile419()
 
 MONGODB_DIALECTS = MappingProxyType(
     {
@@ -646,6 +658,7 @@ PYMONGO_PROFILES = MappingProxyType(
         PYMONGO_PROFILE_413.key: PYMONGO_PROFILE_413,
         PYMONGO_PROFILE_417.key: PYMONGO_PROFILE_417,
         PYMONGO_PROFILE_418.key: PYMONGO_PROFILE_418,
+        PYMONGO_PROFILE_419.key: PYMONGO_PROFILE_419,
     }
 )
 

@@ -1,0 +1,82 @@
+7.0 0 exit 0 test_live_error_codes_bulk_errors_and_documents_match (tests.differential.test_positional_update_parity.PositionalUpdateRealParityTests.test_live_error_codes_bulk_errors_and_documents_match) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 18.847s
+
+OK
+
+7.0 1 exit 0 _rejects_id_change_matches_real_mongodb) ... ok
+test_update_set_on_insert_id_matches_filter_matches_real_mongodb (tests.differential.mongodb7_real_parity.MongoDB7RealParityTests.test_update_set_on_insert_id_matches_filter_matches_real_mongodb) ... ok
+
+----------------------------------------------------------------------
+Ran 29 tests in 2.544s
+
+OK
+
+7.0 2 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/review-improvements-7_0.json
+verified 72 native cases against tests/fixtures/mongodb_review_improvements_7_0.json
+
+7.0 3 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/version-deltas-7_0.json
+verified 154 native cases against tests/fixtures/mongodb_version_deltas_7_0.json
+
+7.0 4 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/semantic-guarantees-7_0.json
+verified 54 native cases against tests/fixtures/mongodb_semantic_guarantees_7_0.json
+
+7.0 5 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/index-guarantees-7_0.json
+verified 4 native cases against tests/fixtures/mongodb_index_guarantees_7_0.json
+
+8.0 0 exit 0 test_live_error_codes_bulk_errors_and_documents_match (tests.differential.test_positional_update_parity.PositionalUpdateRealParityTests.test_live_error_codes_bulk_errors_and_documents_match) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 18.618s
+
+OK
+
+8.0 1 exit 0 _rejects_id_change_matches_real_mongodb) ... ok
+test_update_set_on_insert_id_matches_filter_matches_real_mongodb (tests.differential.mongodb8_real_parity.MongoDB8RealParityTests.test_update_set_on_insert_id_matches_filter_matches_real_mongodb) ... ok
+
+----------------------------------------------------------------------
+Ran 29 tests in 5.237s
+
+OK
+
+8.0 2 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/review-improvements-8_0.json
+verified 72 native cases against tests/fixtures/mongodb_review_improvements_8_0.json
+
+8.0 3 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/version-deltas-8_0.json
+verified 154 native cases against tests/fixtures/mongodb_version_deltas_8_0.json
+
+8.0 4 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/semantic-guarantees-8_0.json
+verified 54 native cases against tests/fixtures/mongodb_semantic_guarantees_8_0.json
+
+8.0 5 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/index-guarantees-8_0.json
+verified 4 native cases against tests/fixtures/mongodb_index_guarantees_8_0.json
+
+9.0 0 exit 0 test_live_error_codes_bulk_errors_and_documents_match (tests.differential.test_positional_update_parity.PositionalUpdateRealParityTests.test_live_error_codes_bulk_errors_and_documents_match) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 19.230s
+
+OK
+
+9.0 1 exit 0 _rejects_id_change_matches_real_mongodb) ... ok
+test_update_set_on_insert_id_matches_filter_matches_real_mongodb (tests.differential.mongodb9_real_parity.MongoDB9RealParityTests.test_update_set_on_insert_id_matches_filter_matches_real_mongodb) ... ok
+
+----------------------------------------------------------------------
+Ran 29 tests in 3.156s
+
+OK
+
+9.0 2 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/review-improvements-9_0.json
+verified 72 native cases against tests/fixtures/mongodb_review_improvements_9_0.json
+
+9.0 3 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/version-deltas-9_0.json
+verified 154 native cases against tests/fixtures/mongodb_version_deltas_9_0.json
+
+9.0 4 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/semantic-guarantees-9_0.json
+verified 54 native cases against tests/fixtures/mongodb_semantic_guarantees_9_0.json
+
+9.0 5 exit 0 updated /Users/uve/Proyectos/mongoeco/docs/evidence/pymongo419/index-guarantees-9_0.json
+verified 4 native cases against tests/fixtures/mongodb_index_guarantees_9_0.json
+
+All native runtime/capture gates passed

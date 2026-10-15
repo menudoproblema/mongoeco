@@ -23,12 +23,12 @@ from mongoeco.errors import ConfigurationError, MongoEcoError, PyMongoError
 
 @pytest.mark.parametrize("backend", ["memory", "sqlite"])
 @pytest.mark.parametrize("surface", ["async", "sync"])
-@pytest.mark.parametrize("profile", ["4.9", "4.11", "4.13", "4.17", "4.18"])
+@pytest.mark.parametrize("profile", ["4.9", "4.11", "4.13", "4.17", "4.18", "4.19"])
 def test_reserved_aggregation_keywords_validate_before_returning_cursor(
     backend, surface, profile
 ):
     def check(collection):
-        expected = ConfigurationError if profile == "4.18" else TypeError
+        expected = ConfigurationError if profile in {"4.18", "4.19"} else TypeError
         for operation in ("aggregate", "aggregate_raw_batches", "list_search_indexes"):
             helper = getattr(collection, operation)
             positional = () if operation == "list_search_indexes" else ([],)

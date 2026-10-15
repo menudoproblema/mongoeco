@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+from collections.abc import Callable  # noqa: TC003 - mypy contract annotation
 from typing import assert_type
 
 from mongoeco import AsyncMongoClient, MongoClient, ObjectId, ObjectIdLike
 from mongoeco.compat import (
     MONGODB_DIALECT_90,
     PYMONGO_PROFILE_418,
+    PYMONGO_PROFILE_419,
     DeprecationEntry,
     DeprecationStatus,
     MongoDialect90,
     PyMongoProfile418,
+    PyMongoProfile419,
     compare_public_api_manifests,
     deprecation_catalog,
     deprecation_entries,
@@ -51,6 +54,16 @@ assert_type(sync_client, MongoClient)
 assert_type(async_client, AsyncMongoClient)
 assert_type(MONGODB_DIALECT_90, MongoDialect90)
 assert_type(PYMONGO_PROFILE_418, PyMongoProfile418)
+assert_type(PYMONGO_PROFILE_419, PyMongoProfile419)
+
+
+def check_srv_validator_signature() -> None:
+    def validator(host: str) -> bool:
+        return host.endswith(".internal")
+
+    callback: Callable[[str], bool] = validator
+    MongoClient(pymongo_profile=PYMONGO_PROFILE_419, srv_host_validator=callback)
+    AsyncMongoClient(pymongo_profile=PyMongoProfile419(), srv_host_validator=callback)
 
 
 class CompatibleObjectId:

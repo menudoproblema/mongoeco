@@ -692,6 +692,31 @@
         "behavior_flags",
         "densify_full_nonadvancing_step_errors"
       ]
+    },
+    {
+      "after": {
+        "aliases": [
+          "4.19"
+        ],
+        "behavior_flags": {
+          "rejects_reserved_aggregation_keywords": true,
+          "supports_update_one_sort": true
+        },
+        "capabilities": [
+          "aggregate.reserved_keywords_validation",
+          "update_one.sort",
+          "uri.rejects_percent_encoded_hostnames",
+          "uri.srv_allowed_hosts_suffix",
+          "uri.srv_host_validator"
+        ],
+        "driver_series": "4.x",
+        "label": "PyMongo 4.19"
+      },
+      "operation": "add",
+      "path": [
+        "pymongo_profiles",
+        "4.19"
+      ]
     }
   ],
   "excluded_sections": {
