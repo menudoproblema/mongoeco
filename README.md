@@ -387,6 +387,11 @@ Examples worth showing first:
 
 ## Compatibility
 
+The next release is being scoped around reliable writes for testkits, alongside
+the implemented PyMongo 4.19 support. The [bounded write-parity plan](docs/plan-write-parity.md)
+defines the corpus and acceptance criteria; this planning work does not claim
+the new corpus has passed.
+
 `mongoeco` now exposes three public contract layers:
 
 * the canonical CXP capability model for `database/mongodb`

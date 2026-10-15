@@ -171,7 +171,13 @@ Pendientes futuros:
 
 ## 7. Criterio de prioridad
 
-Orden recomendado a partir de aquí:
+Para la siguiente entrega, el objetivo acordado es **escrituras fiables para
+testkits**, además del soporte PyMongo 4.19 ya implementado. El
+[plan acotado](docs/plan-write-parity.md) define corpus, cobertura actual,
+criterios de aceptación y bloques pendientes. La planificación no acredita su
+implementación ni el cierre de sus gates.
+
+Orden de las demás líneas de evolución después de esa entrega:
 
 1. ampliar `search` solo si abre valor real de producto;
 2. subir cobertura selectiva en `search` / `virtual_indexes` / `sqlite` / `transports`;
