@@ -95,6 +95,19 @@ def update_path_has_positional_segment(path: str | CompiledUpdatePath) -> bool:
     )
 
 
+def _update_path_child(current: object, segment: UpdatePathSegment) -> object:
+    if isinstance(current, dict):
+        return current.get(segment.raw, _MISSING)
+    if (
+        segment.kind == "index"
+        and isinstance(current, list)
+        and segment.index is not None
+        and segment.index < len(current)
+    ):
+        return current[segment.index]
+    return _MISSING
+
+
 def expand_positional_update_paths(
     doc: object,
     path: str | CompiledUpdatePath,
@@ -117,19 +130,8 @@ def expand_positional_update_paths(
             return
 
         segment = segments[index]
-        if segment.kind == "field":
-            next_current = _MISSING
-            if isinstance(current, dict) and segment.raw in current:
-                next_current = current[segment.raw]
-            built.append(segment.raw)
-            _walk(next_current, index + 1, built)
-            built.pop()
-            return
-
-        if segment.kind == "index":
-            next_current = _MISSING
-            if isinstance(current, list) and segment.index is not None and segment.index < len(current):
-                next_current = current[segment.index]
+        if segment.kind in {"field", "index"}:
+            next_current = _update_path_child(current, segment)
             built.append(segment.raw)
             _walk(next_current, index + 1, built)
             built.pop()
@@ -139,7 +141,10 @@ def expand_positional_update_paths(
             if legacy_matcher is None:
                 raise OperationFailure("Legacy positional '$' update paths are not supported")
             if not isinstance(current, list):
-                raise OperationFailure("The positional operator did not find the match needed from the query")
+                raise OperationFailure(
+                    "The positional operator did not find the match needed from the query",
+                    code=2,
+                )
             for item_index, item in enumerate(current):
                 if not legacy_matcher(item):
                     continue
@@ -147,10 +152,24 @@ def expand_positional_update_paths(
                 _walk(item, index + 1, built)
                 built.pop()
                 return
-            raise OperationFailure("The positional operator did not find the match needed from the query")
+            raise OperationFailure(
+                "The positional operator did not find the match needed from the query",
+                code=2,
+            )
 
         if not isinstance(current, list):
-            return
+            array_path = ".".join(built)
+            if current is _MISSING:
+                message = (
+                    f"The path '{array_path}' must exist in the document "
+                    "in order to apply array updates."
+                )
+                raise OperationFailure(message, code=2)
+            message = (
+                "Cannot apply array updates to non-array element "
+                f"{array_path}: {current!r}"
+            )
+            raise OperationFailure(message, code=2)
 
         if segment.kind == "all_positional":
             for item_index, item in enumerate(current):

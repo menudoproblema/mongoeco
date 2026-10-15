@@ -1,0 +1,4951 @@
+{
+  "server_version": "8.0.32",
+  "cases": [
+    {
+      "name": "operator:$[]:$set",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$unset",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$unset": {
+          "items.$[].value": ""
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$inc",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$inc": {
+          "items.$[].value": 1
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$min",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$min": {
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$max",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$max": {
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$mul",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$mul": {
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$bit",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$bit": {
+          "items.$[].value": {
+            "or": 1
+          }
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$currentDate",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$currentDate": {
+          "items.$[].value": true
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$push",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$push": {
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$addToSet",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$addToSet": {
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$pull",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$pull": {
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$pullAll",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$pullAll": {
+          "items.$[].value": [
+            2
+          ]
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$pop",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$pop": {
+          "items.$[].value": 1
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[]:$setOnInsert",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$setOnInsert": {
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[]:null",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": null
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[]:object",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": {}
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": {}
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[]:string",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": "s"
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": "s"
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[]:bool",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": true
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[]:float",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 1.5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 1.5
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[]:missing",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "api:$[]:update_many",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_many",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "api:$[]:find_one_and_update",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "find_one_and_update",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "api:$[]:bulk_one",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "bulk_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 65,
+        "write_errors": [
+          [
+            0,
+            2
+          ]
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "api:$[]:bulk_many",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "bulk_many",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 65,
+        "write_errors": [
+          [
+            0,
+            2
+          ]
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "control:$[]:empty",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": []
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "control:$[]:no_match",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            {
+              "key": "b",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              {
+                "key": "b",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "control:$[]:match",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              {
+                "key": "a",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "upsert:$[]:missing",
+      "seed_documents": [],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": true,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": []
+      }
+    },
+    {
+      "name": "upsert:$[]:scalar",
+      "seed_documents": [],
+      "query": {
+        "_id": "a",
+        "items": 5
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": true,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": []
+      }
+    },
+    {
+      "name": "upsert:$[]:empty",
+      "seed_documents": [],
+      "query": {
+        "_id": "a",
+        "items": []
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": true,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [],
+            "untouched": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "upsert:$[]:exact",
+      "seed_documents": [],
+      "query": {
+        "_id": "a",
+        "items": [
+          {
+            "key": "a",
+            "value": 0
+          }
+        ]
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": true,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 2
+              }
+            ],
+            "untouched": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "no_document:$[]",
+      "seed_documents": [],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": []
+      }
+    },
+    {
+      "name": "operator:$[i]:$set",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$unset",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$unset": {
+          "items.$[i].value": ""
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$inc",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$inc": {
+          "items.$[i].value": 1
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$min",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$min": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$max",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$max": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$mul",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$mul": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$bit",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$bit": {
+          "items.$[i].value": {
+            "or": 1
+          }
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$currentDate",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$currentDate": {
+          "items.$[i].value": true
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$push",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$push": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$addToSet",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$addToSet": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$pull",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$pull": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$pullAll",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$pullAll": {
+          "items.$[i].value": [
+            2
+          ]
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$pop",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$pop": {
+          "items.$[i].value": 1
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "operator:$[i]:$setOnInsert",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$setOnInsert": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[i]:null",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": null
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[i]:object",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": {}
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": {}
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[i]:string",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": "s"
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": "s"
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[i]:bool",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": true
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[i]:float",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 1.5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 1.5
+          }
+        ]
+      }
+    },
+    {
+      "name": "type:$[i]:missing",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "api:$[i]:update_many",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_many",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "api:$[i]:find_one_and_update",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "find_one_and_update",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "api:$[i]:bulk_one",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "bulk_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 65,
+        "write_errors": [
+          [
+            0,
+            2
+          ]
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "api:$[i]:bulk_many",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "bulk_many",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 65,
+        "write_errors": [
+          [
+            0,
+            2
+          ]
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "control:$[i]:empty",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": []
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "control:$[i]:no_match",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            {
+              "key": "b",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              {
+                "key": "b",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "control:$[i]:match",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              {
+                "key": "a",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "upsert:$[i]:missing",
+      "seed_documents": [],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": true,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": []
+      }
+    },
+    {
+      "name": "upsert:$[i]:scalar",
+      "seed_documents": [],
+      "query": {
+        "_id": "a",
+        "items": 5
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": true,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": []
+      }
+    },
+    {
+      "name": "upsert:$[i]:empty",
+      "seed_documents": [],
+      "query": {
+        "_id": "a",
+        "items": []
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": true,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [],
+            "untouched": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "upsert:$[i]:exact",
+      "seed_documents": [],
+      "query": {
+        "_id": "a",
+        "items": [
+          {
+            "key": "a",
+            "value": 0
+          }
+        ]
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": true,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 2
+              }
+            ],
+            "untouched": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "no_document:$[i]",
+      "seed_documents": [],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": []
+      }
+    },
+    {
+      "name": "nested:invalid",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "groups": [
+            {
+              "key": "a",
+              "items": 5
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "groups.$[g].items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "g.key": "a"
+        },
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "groups": [
+              {
+                "key": "a",
+                "items": 5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "nested:missing",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "groups": [
+            {
+              "key": "a"
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "groups.$[g].items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "g.key": "a"
+        },
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "groups": [
+              {
+                "key": "a"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "nested:mixed",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "groups": [
+            {
+              "key": "a",
+              "items": [
+                {
+                  "key": "a",
+                  "value": 0
+                }
+              ]
+            },
+            {
+              "key": "a",
+              "items": 5
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "groups.$[g].items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "g.key": "a"
+        },
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "groups": [
+              {
+                "key": "a",
+                "items": [
+                  {
+                    "key": "a",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "key": "a",
+                "items": 5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "nested:empty",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "groups": []
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "groups.$[g].items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "g.key": "a"
+        },
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "groups": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "nested:inner_empty",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "groups": [
+            {
+              "key": "a",
+              "items": []
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "groups.$[g].items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "g.key": "a"
+        },
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "groups": [
+              {
+                "key": "a",
+                "items": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "nested:excluded_invalid",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "groups": [
+            {
+              "key": "b",
+              "items": 5
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "groups.$[g].items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "g.key": "a"
+        },
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "groups": [
+              {
+                "key": "b",
+                "items": 5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:numeric_object",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": {
+            "0": {
+              "tags": [
+                {
+                  "value": 0
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.0.tags.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": {
+              "0": {
+                "tags": [
+                  {
+                    "value": 2
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:numeric_object_leaf",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": {
+            "0": [
+              0
+            ]
+          }
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.0.$[]": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": {
+              "0": [
+                2
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:numeric_array",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            {
+              "tags": [
+                {
+                  "value": 0
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.0.tags.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              {
+                "tags": [
+                  {
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:out_of_range",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": []
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.1.tags.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:ancestor_scalar",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.tags.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:ancestor_missing",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.tags.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:array_field_without_index",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            {
+              "tags": [
+                0
+              ]
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.tags.$[]": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": [
+              {
+                "tags": [
+                  0
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:scalar_leaf",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            5
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 28,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": [
+              5
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:null_leaf",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            null
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 28,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": [
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:missing_leaf",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            {}
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              {
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:nested_numeric_object",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "groups": [
+            {
+              "items": {
+                "0": [
+                  0
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "groups.$[].items.0.$[]": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "groups": [
+              {
+                "items": {
+                  "0": [
+                    2
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "legacy:scalar",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a",
+        "items": 5
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$.value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "legacy:missing",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$.value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "legacy:valid",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a",
+        "items.key": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$.value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              {
+                "key": "a",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "rename_positional",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$rename": {
+          "items.$[].value": "renamed"
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "set_on_insert_scalar_upsert",
+      "seed_documents": [],
+      "query": {
+        "_id": "a",
+        "items": 5
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$setOnInsert": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": true,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": []
+      }
+    },
+    {
+      "name": "set_on_insert_missing_upsert",
+      "seed_documents": [],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$setOnInsert": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": true,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": []
+      }
+    },
+    {
+      "name": "path:all_positional_leaf",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            0
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[]": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:all_positional_unset_leaf",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            0
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1
+        },
+        "$unset": {
+          "items.$[]": ""
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              null
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:all_positional_nested_leaf",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "obj": {
+            "items": [
+              0
+            ]
+          }
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "obj.items.$[]": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "obj": {
+              "items": [
+                2
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:legacy_positional_leaf",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            0,
+            1
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a",
+        "items": 0
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              2,
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "path:filtered_positional_leaf",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            0
+          ]
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i]": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i": 0
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              2
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "multi:valid_then_invalid",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "_id": "b",
+          "items": 5,
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": {
+          "$in": [
+            "a",
+            "b"
+          ]
+        }
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_many",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 2,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 1,
+            "items": [
+              {
+                "key": "a",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "_id": "b",
+            "items": 5,
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "bulk:ordered=True",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        },
+        {
+          "_id": "b",
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "bulk_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": true,
+      "expected": {
+        "status": "error",
+        "code": 65,
+        "write_errors": [
+          [
+            0,
+            2
+          ]
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          },
+          {
+            "_id": "b",
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "bulk:ordered=False",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "untouched": 0,
+          "items": 5
+        },
+        {
+          "_id": "b",
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "untouched": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "bulk_one",
+      "upsert": false,
+      "ordered": false,
+      "batch_followup": true,
+      "expected": {
+        "status": "error",
+        "code": 65,
+        "write_errors": [
+          [
+            0,
+            2
+          ]
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "untouched": 0,
+            "items": 5
+          },
+          {
+            "_id": "b",
+            "untouched": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:overlap_update_one",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[].value": 1,
+          "items.$[i].value": 2,
+          "untouched": 1
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 40,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 0
+              },
+              {
+                "key": "b",
+                "value": 0
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:overlap_update_many",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[].value": 1,
+          "items.$[i].value": 2,
+          "untouched": 1
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_many",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 40,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 0
+              },
+              {
+                "key": "b",
+                "value": 0
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:overlap_find_one_and_update",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[].value": 1,
+          "items.$[i].value": 2,
+          "untouched": 1
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "find_one_and_update",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 40,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 0
+              },
+              {
+                "key": "b",
+                "value": 0
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:overlap_bulk_one",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[].value": 1,
+          "items.$[i].value": 2,
+          "untouched": 1
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "bulk_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 65,
+        "write_errors": [
+          [
+            0,
+            40
+          ]
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 0
+              },
+              {
+                "key": "b",
+                "value": 0
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:overlap_bulk_many",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[].value": 1,
+          "items.$[i].value": 2,
+          "untouched": 1
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "bulk_many",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 65,
+        "write_errors": [
+          [
+            0,
+            40
+          ]
+        ],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 0
+              },
+              {
+                "key": "b",
+                "value": 0
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:disjoint_filters",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[a].value": 1,
+          "items.$[b].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "a.key": "a"
+        },
+        {
+          "b.key": "b"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 1
+              },
+              {
+                "key": "b",
+                "value": 2
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:no_filtered_matches",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[].value": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "absent"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 1
+              },
+              {
+                "key": "b",
+                "value": 1
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:empty_array",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[].value": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:different_operators",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[].value": 1
+        },
+        "$inc": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 40,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 0
+              },
+              {
+                "key": "b",
+                "value": 0
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:different_operators_disjoint",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[a].value": 1
+        },
+        "$inc": {
+          "items.$[b].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "a.key": "a"
+        },
+        {
+          "b.key": "b"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 1
+              },
+              {
+                "key": "b",
+                "value": 2
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:ancestor_conflict",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[]": {
+            "key": "a"
+          },
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 40,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 0
+              },
+              {
+                "key": "b",
+                "value": 0
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:literal_index_conflict",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.0.value": 1,
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 40,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 0
+              },
+              {
+                "key": "b",
+                "value": 0
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:inactive_set_on_insert",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.$[].value": 1
+        },
+        "$setOnInsert": {
+          "items.$[i].value": 2
+        }
+      },
+      "array_filters": [
+        {
+          "i.key": "a"
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "error",
+        "code": 40,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 0
+              },
+              {
+                "key": "b",
+                "value": 0
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:filter_match_snapshot",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$inc": {
+          "items.$[i].value": 1
+        },
+        "$set": {
+          "items.$[i].selected": true
+        }
+      },
+      "array_filters": [
+        {
+          "i.value": 0
+        }
+      ],
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 1,
+                "selected": true
+              },
+              {
+                "key": "b",
+                "value": 1,
+                "selected": true
+              }
+            ],
+            "untouched": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:rename_and_positional",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "key": "a",
+              "value": 0
+            },
+            {
+              "key": "b",
+              "value": 0
+            }
+          ],
+          "untouched": 0,
+          "old": 1
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$rename": {
+          "old": "new"
+        },
+        "$set": {
+          "items.$[].value": 2
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "key": "a",
+                "value": 2
+              },
+              {
+                "key": "b",
+                "value": 2
+              }
+            ],
+            "untouched": 0,
+            "new": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:new_numeric_object",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.2.0.value": 2,
+          "untouched": 1
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              null,
+              null,
+              {
+                "0": {
+                  "value": 2
+                }
+              }
+            ],
+            "untouched": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:existing_numeric_object",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            {
+              "0": {}
+            }
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.0.0.value": 2,
+          "untouched": 1
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              {
+                "0": {
+                  "value": 2
+                }
+              }
+            ],
+            "untouched": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:existing_nested_array",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [
+            [
+              {}
+            ]
+          ],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.0.0.value": 2,
+          "untouched": 1
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              [
+                {
+                  "value": 2
+                }
+              ]
+            ],
+            "untouched": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "release491:multiple_new_numeric_objects",
+      "seed_documents": [
+        {
+          "_id": "a",
+          "items": [],
+          "untouched": 0
+        }
+      ],
+      "query": {
+        "_id": "a"
+      },
+      "update": {
+        "$set": {
+          "items.2.0.1.value": 2,
+          "untouched": 1
+        }
+      },
+      "array_filters": null,
+      "api": "update_one",
+      "upsert": false,
+      "ordered": true,
+      "batch_followup": false,
+      "expected": {
+        "status": "ok",
+        "code": null,
+        "write_errors": [],
+        "documents": [
+          {
+            "_id": "a",
+            "items": [
+              null,
+              null,
+              {
+                "0": {
+                  "1": {
+                    "value": 2
+                  }
+                }
+              }
+            ],
+            "untouched": 1
+          }
+        ]
+      }
+    }
+  ]
+}

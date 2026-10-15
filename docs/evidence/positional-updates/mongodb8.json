@@ -1,0 +1,52 @@
+{
+  "server_version": "8.0.32",
+  "server_git_version": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+  "fcv": {
+    "version": "8.0"
+  },
+  "pymongo_version": "4.18.2",
+  "scenario_count": 95,
+  "engine_scenario_comparisons": 190,
+  "comparison": [
+    "exception code",
+    "writeErrors item indexes and codes",
+    "persisted documents",
+    "captured golden"
+  ],
+  "runs": [
+    {
+      "command": [
+        "-m",
+        "pytest",
+        "tests/differential/test_positional_update_parity.py",
+        "-q"
+      ],
+      "returncode": 0,
+      "log": "docs/evidence/positional-updates/mongodb8-run-1.log"
+    },
+    {
+      "command": [
+        "scripts/run_mongodb_real_differential.py",
+        "8.0",
+        "--json-report",
+        "/Users/uve/Proyectos/mongoeco/docs/evidence/positional-updates/mongodb8-existing-suite.json"
+      ],
+      "returncode": 0,
+      "log": "docs/evidence/positional-updates/mongodb8-run-2.log"
+    }
+  ],
+  "files_sha256": {
+    "src/mongoeco/core/operators.py": "dc204659538389fb8f0630f4ebf66cc6fa75f7de8dd82895150cc57f2b0bfdb2",
+    "src/mongoeco/core/paths.py": "88f3d0795e8fd4337675017dbcaaa7e06adc796b33b59856259373a91dfae18c",
+    "src/mongoeco/core/update_paths.py": "0f2e7fd9a8e8dba2e0e5dc6e9a2de79ccb9ad03b0e620a799bb297f4be013bfa",
+    "src/mongoeco/core/update_scalar_operators.py": "c912abc3efdcdc26e112eda7e99fbf44ff2d8c8c990e72a59cd9122c3a6611a6",
+    "src/mongoeco/core/upserts.py": "c58b918cd1551b5577fb600ef3689db865f140d21561ce0eeb847341baf23002",
+    "src/mongoeco/engines/sqlite_query.py": "ce17acdff71f0c997cd9c7da1af7cff0a52ceb36f6d24ca34f8e024858a01980",
+    "tests/unit/core/test_update_paths.py": "aea58df2c340442c2fda99223d882aa88d4ed14da0557103b37a78971ca0213a",
+    "tests/support_positional_updates.py": "d760093d5196f69ac0919022e65423dfda81d49be5b12043df48967744fec8bd",
+    "tests/fixtures/positional_update_mongodb8.json": "9f14bed1cfba35949704732368340a8c5d03c38ad9bfad8833f98a03487e2e24",
+    "tests/integration/api/test_positional_update_contract.py": "9f7058984bb23787a769c997d52436f05af3fbee08d1a8efb441b6d71fae8d10",
+    "tests/differential/test_positional_update_parity.py": "80722f2e557bdc1571d906c425f50cefd7a99f0ee8f216ed06ff45512d83ee2e",
+    "tests/unit/core/test_positional_update_validation.py": "9e0bd4d86af65543354386002a064adea1050e80853b6da0ae98efb65740b912"
+  }
+}

@@ -93,22 +93,14 @@ class UpdatePathParsingTests(unittest.TestCase):
                 filtered_matcher=lambda _identifier, _candidate: True,
             )
 
-        self.assertEqual(
-            expand_positional_update_paths(
-                {"items": "not-a-list"},
-                "items.$[].name",
-                filtered_matcher=lambda _identifier, _candidate: True,
-            ),
-            [],
-        )
-        self.assertEqual(
-            expand_positional_update_paths(
-                {"items": "not-a-list"},
-                "items.$[entry].name",
-                filtered_matcher=lambda _identifier, _candidate: True,
-            ),
-            [],
-        )
+        for path in ("items.$[].name", "items.$[entry].name"):
+            with self.subTest(path=path), self.assertRaises(OperationFailure) as error:
+                expand_positional_update_paths(
+                    {"items": "not-a-list"},
+                    path,
+                    filtered_matcher=lambda _identifier, _candidate: True,
+                )
+            self.assertEqual(error.exception.code, 2)
 
         bad_path = CompiledUpdatePath(
             raw="items.bogus.$[]",

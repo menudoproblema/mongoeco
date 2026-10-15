@@ -127,6 +127,12 @@ jobs:
             --junit-dir "artifacts/${{ matrix.target }}/junit" \
               2>&1 | tee "artifacts/${{ matrix.target }}/run.log"
 
+      - name: Verify positional update error codes and document atomicity
+        shell: bash
+        run: |
+          python -m unittest tests.differential.test_positional_update_parity -v \
+            2>&1 | tee "artifacts/${{ matrix.target }}/positional-updates.log"
+
       - name: Verify review expectations against the native server
         run: |
           TARGET_SUFFIX="${MONGOECO_REAL_MONGODB_TARGET//./_}"

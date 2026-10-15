@@ -8,6 +8,27 @@ usa Semantic Versioning.
 
 ## [Unreleased]
 
+## [4.9.1] - 2026-10-15
+
+### Fixed
+
+- Reject positional array updates against missing or non-array fields with
+  MongoDB error code 2, including nested paths, `$setOnInsert`, upserts and bulk
+  writes, without committing changes to the failing document. Resolve numeric
+  object keys by their actual container type and preserve empty/nonmatching
+  arrays as valid no-ops.
+- Keep all positional writes on SQLite's Python execution path, including
+  `$[]` and legacy `$` leaves. Reject traversal through existing null array
+  elements with code 28 and detach mutable upsert seed containers from immutable
+  command BSON. Verify positional regression scenarios against real MongoDB, including
+  bulk error codes and stored documents; see
+  [the validation evidence](docs/positional-update-validation.md).
+- Reject overlapping concrete positional targets with code 40 before committing
+  the document, across update operators and with inactive `$setOnInsert` leaves.
+  Preserve disjoint filters and evaluate array-filter matches against the original
+  document. Create objects, rather than inferred arrays, for new intermediate
+  numeric path components.
+
 ## [4.9.0] - 2026-10-08
 
 ### Added

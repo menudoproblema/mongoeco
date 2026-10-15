@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from mongoeco.core.filtering import BSONComparator
 from mongoeco.core.query_operators import (
     is_query_operator_key,
@@ -42,10 +44,20 @@ def _iter_seedable_filters(filter_spec: Filter):
             continue
 
 
+def _mutable_seed_value(value: object) -> object:
+    # Command-owned BSON containers intentionally retain identity on deepcopy.
+    # The candidate document needs detached, mutable containers instead.
+    if isinstance(value, dict):
+        return {key: _mutable_seed_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_mutable_seed_value(item) for item in value]
+    return deepcopy(value)
+
+
 def _seed_filter_value(document: Document, path: str, value: object) -> None:
     if '.' not in path:
         if path not in document:
-            document[path] = value
+            document[path] = _mutable_seed_value(value)
             return
 
         if BSONComparator.compare(document[path], value) != 0:

@@ -18,11 +18,6 @@ def _parse_index(segment: str) -> int | None:
     return None
 
 
-def _make_container(next_path: str) -> dict[str, Any] | list[Any]:
-    first_segment = next_path.split(".", 1)[0]
-    return [] if _parse_index(first_segment) is not None else {}
-
-
 def _ensure_array_index_within_limit(index: int) -> None:
     if index > MAX_ARRAY_INDEX:
         raise OperationFailure(
@@ -122,7 +117,9 @@ def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -
         if "." not in path:
             index = _parse_index(path)
             if index is None:
-                raise OperationFailure(f"Cannot create field '{path}' in array element")
+                raise OperationFailure(
+                    f"Cannot create field '{path}' in array element", code=28
+                )
             _ensure_array_index_within_limit(index)
             if index >= len(doc):
                 doc.extend([None] * (index - len(doc) + 1))
@@ -134,15 +131,17 @@ def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -
         first, rest = path.split(".", 1)
         index = _parse_index(first)
         if index is None:
-            raise OperationFailure(f"Cannot create field '{rest}' in array element")
+            raise OperationFailure(
+                f"Cannot create field '{rest}' in array element", code=28
+            )
         _ensure_array_index_within_limit(index)
         if index >= len(doc):
             doc.extend([None] * (index - len(doc) + 1))
-        if doc[index] is None:
-            doc[index] = _make_container(rest)
+            doc[index] = {}
         elif not isinstance(doc[index], (dict, list)):
             raise OperationFailure(
-                f"Cannot create field '{rest}' in element {{{first}: {doc[index]!r}}}"
+                f"Cannot create field '{rest}' in element {{{first}: {doc[index]!r}}}",
+                code=28,
             )
         return set_document_value(doc[index], rest, value)
 
@@ -157,7 +156,8 @@ def set_document_value(doc: dict[str, Any] | list[Any], path: str, value: Any) -
         doc[first] = {}
     elif not isinstance(doc[first], (dict, list)):
         raise OperationFailure(
-            f"Cannot create field '{rest}' in element {{{first}: {doc[first]!r}}}"
+            f"Cannot create field '{rest}' in element {{{first}: {doc[first]!r}}}",
+            code=28,
         )
 
     return set_document_value(doc[first], rest, value)

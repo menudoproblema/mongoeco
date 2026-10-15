@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
@@ -105,6 +106,7 @@ class UpdateExecutionContext:
         default_factory=dict,
     )
     is_upsert_insert: bool = False
+    resolved_update_targets: Mapping[str, tuple[ResolvedUpdatePath, ...]] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -125,11 +127,14 @@ class CompiledUpdatePlan:
             assert_valid_root_document_id(doc["_id"])
         original = deepcopy(doc)
         working = deepcopy(doc)
+        context = UpdateEngine._prepare_positional_update_context(
+            original, self.compiled_operators, self.context
+        )
         modified = False
         for compiled_operator in self.compiled_operators:
             if compiled_operator.apply(
                 working,
-                context=self.context,
+                context=context,
                 variables=variables,
             ):
                 modified = True
@@ -715,7 +720,9 @@ class UpdateEngine:
             ResolvedInstructionApplication(
                 instruction=instruction,
                 targets=tuple(
-                    UpdateEngine._resolve_update_targets(
+                    context.resolved_update_targets[instruction.path.raw]
+                    if context.resolved_update_targets is not None
+                    else UpdateEngine._resolve_update_targets(
                         doc,
                         instruction.path,
                         selector_filter=context.selector_filter,
@@ -727,6 +734,45 @@ class UpdateEngine:
                 ),
             )
             for instruction in instructions
+        )
+
+    @staticmethod
+    def _prepare_positional_update_context(
+        doc: dict[str, Any],
+        operators: tuple[CompiledUpdateOperator, ...],
+        context: UpdateExecutionContext,
+    ) -> UpdateExecutionContext:
+        if not any(
+            segment.kind in {"positional", "all_positional", "filtered_positional"}
+            for operator in operators
+            for instruction in operator.instructions
+            for segment in instruction.path.segments
+        ):
+            return context
+        applications = UpdateEngine._resolve_instruction_applications(
+            doc,
+            tuple(
+                instruction
+                for operator in operators
+                for instruction in operator.instructions
+            ),
+            context=context,
+            allow_positional=True,
+        )
+        seen_paths: list[str] = []
+        for application in applications:
+            for target in application.targets:
+                UpdateEngine._register_update_path(seen_paths, target.concrete_path)
+            if application.instruction.target_path is not None:
+                UpdateEngine._register_update_path(
+                    seen_paths, application.instruction.target_path.raw
+                )
+        return replace(
+            context,
+            resolved_update_targets=MappingProxyType({
+                application.instruction.path.raw: application.targets
+                for application in applications
+            }),
         )
 
     @staticmethod
@@ -767,6 +813,7 @@ class UpdateEngine:
         if not resolved:
             raise OperationFailure(
                 "The positional operator did not find the match needed from the query",
+                code=2,
             )
         return resolved[0]
 
@@ -784,6 +831,7 @@ class UpdateEngine:
         if selector_filter is None:
             raise OperationFailure(
                 "The positional operator did not find the match needed from the query",
+                code=2,
             )
 
         def _predicate_matcher(
@@ -897,6 +945,7 @@ class UpdateEngine:
         if matcher is None:
             raise OperationFailure(
                 "The positional operator did not find the match needed from the query",
+                code=2,
             )
         return matcher
 
@@ -910,6 +959,7 @@ class UpdateEngine:
             ):
                 raise OperationFailure(
                     "conflicting update paths are not allowed",
+                    code=40,
                 )
         seen_paths.append(path)
 
@@ -946,6 +996,7 @@ class UpdateEngine:
         ):
             raise OperationFailure(
                 "Positional and array-filter update paths are not supported",
+                code=2,
             )
         if any(segment.kind == "index" for segment in segments):
             raise OperationFailure(

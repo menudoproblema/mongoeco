@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
 from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
@@ -38,7 +38,8 @@ from mongoeco.core.query_plan import (
     WhereCondition,
     is_concrete_query_node,
 )
-from mongoeco.types import SortSpec, Update
+if TYPE_CHECKING:
+    from mongoeco.types import SortSpec, Update
 
 
 type SqlFragment = tuple[str, list[object]]
@@ -1056,6 +1057,14 @@ def translate_compiled_update_plan(
     *,
     current_document: dict[str, Any] | None = None,
 ) -> SqlFragment:
+    if any(
+        segment.kind in {"positional", "all_positional", "filtered_positional"}
+        for operator in plan.compiled_operators
+        for instruction in operator.instructions
+        for segment in instruction.path.segments
+    ):
+        message = 'Positional update paths require Python update fallback'
+        raise NotImplementedError(message)
     supported_operators = {'$set', '$unset'}
     if any(
         operator.operator not in supported_operators

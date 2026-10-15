@@ -312,6 +312,12 @@ def apply_set_on_insert(
     helpers: Any,
 ) -> bool:
     if not context.is_upsert_insert:
+        helpers._resolve_instruction_applications(
+            doc,
+            instructions,
+            context=context,
+            allow_positional=True,
+        )
         return False
     return apply_set(
         doc,
