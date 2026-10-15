@@ -1,0 +1,11 @@
+{
+  "source": "https://pypi.org/integrity/mongoeco/4.9.0/mongoeco-4.9.0-py3-none-any.whl/provenance",
+  "publishers": [
+    {
+      "environment": "pypi",
+      "kind": "GitHub",
+      "repository": "menudoproblema/mongoeco",
+      "workflow": "ci.yml"
+    }
+  ]
+}

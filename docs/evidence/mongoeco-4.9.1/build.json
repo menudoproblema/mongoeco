@@ -1,0 +1,9 @@
+{
+  "source_commit": "b8db9238db511f4173a19a4d845798b5859a9466",
+  "source_date_epoch": "1792057566",
+  "reproducible": true,
+  "artifacts": {
+    "mongoeco-4.9.1.tar.gz": "8bd9540d4d9b134f8ca273d80cc5f48fa747265f3c9ad719b4d1d3d7c8fec4a7",
+    "mongoeco-4.9.1-py3-none-any.whl": "fbf06e1cceb4d0cfc6d4960f5cded3074def8b82981c6d37ad7a304b1715b87f"
+  }
+}

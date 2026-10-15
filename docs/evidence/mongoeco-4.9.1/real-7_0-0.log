@@ -1,0 +1,6 @@
+test_live_error_codes_bulk_errors_and_documents_match (tests.differential.test_positional_update_parity.PositionalUpdateRealParityTests.test_live_error_codes_bulk_errors_and_documents_match) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 6.345s
+
+OK

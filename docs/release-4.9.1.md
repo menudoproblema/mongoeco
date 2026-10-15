@@ -1,7 +1,7 @@
 # Release 4.9.1
 
 Fecha: 15 de octubre de 2026. Corrección de fidelidad de actualizaciones sobre
-Mongoeco 4.9.0. Estado: candidato en validación; todavía no publicado.
+Mongoeco 4.9.0. Estado: cierre local verificado; pendiente de CI alojada y publicación.
 
 ## Comportamiento corregido
 
@@ -42,3 +42,29 @@ La [matriz posicional](positional-update-validation.md) describe los 114 casos y
 sus códigos, estado persistido y controles válidos. La evidencia de este candidato
 se conserva en [evidence/mongoeco-4.9.1](evidence/mongoeco-4.9.1/). El cierre de
 entrega y la publicación se registrarán después de terminar sus gates.
+
+## Cierre local del candidato
+
+El código validado corresponde a `b8db9238db511f4173a19a4d845798b5859a9466`.
+Los metadatos y hashes del candidato están en
+[validation.json](evidence/mongoeco-4.9.1/validation.json) y los dos builds
+reproducibles en [build.json](evidence/mongoeco-4.9.1/build.json).
+
+| Comprobación | Resultado local |
+| --- | --- |
+| Wheel instalado, Python 3.13 y 3.14 | 8.840 passed, 31 skips esperados y 4.456 subtests en cada versión. |
+| Cobertura Python 3.14 | 99,01 %, con el floor original de 99,00 %. |
+| Unittest / propiedades deep | 3.606 tests, 3 skips; nueve propiedades correctas. |
+| Paridad posicional | 114 escenarios por motor y versión: 684 comparaciones, con códigos 2, 28, 40 y 65. |
+| Servidores reales locales | MongoDB 7.0.39 / 8.0.32 / 9.0.2, FCV estable exacta. |
+| Paridad y capturas anteriores | 29 casos y 284 capturas por versión, sin omisiones. |
+| Contratos | Typing, manifiesto, snapshots, conformance completo de Memory/SQLite y canario externo correctos. |
+| Persistencia e instalación | Fixture SQLite 4.5 y smokes limpios de wheel/sdist correctos. |
+| Perfiles PyMongo | Matriz 4.9.2 / 4.11.3 / 4.13.2 / 4.17.0 / 4.18.2 idéntica a la fixture. |
+| Rendimiento | 95 escenarios comparados con 4.9.0, máximo delta de mediana +5,63 %; diagnóstico de spill con 100.000 documentos correcto. |
+
+La publicación utilizará los artefactos inmutables de la CI de la etiqueta. Los
+hashes locales corresponden al commit de código indicado; la CI vuelve a construir
+con el timestamp del commit etiquetado y registra sus propios hashes. Los gates
+alojados exigen MongoDB 7.0.43 / 8.0.32 / 9.0.2 y las dos versiones de Python antes
+de que Trusted Publishing pueda publicar.

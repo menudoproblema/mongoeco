@@ -1,0 +1,403 @@
+{
+  "schema": "mongoeco-benchmark-report/v2",
+  "environment": {
+    "python": "3.14.5",
+    "pythonImplementation": "CPython",
+    "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "sqlite": "3.53.4",
+    "jsonBackend": "stdlib",
+    "mongoeco": "4.9.1",
+    "dependencies": {
+      "mongomock": "4.3.0",
+      "orjson": null,
+      "psutil": "7.2.2",
+      "pymongo": "4.18.2",
+      "usearch": "2.26.0"
+    },
+    "executable": "/private/tmp/mongoeco-491/bench/bin/python"
+  },
+  "source": {
+    "gitRevision": "b8db9238db511f4173a19a4d845798b5859a9466",
+    "gitDirty": true,
+    "mongoecoModule": "/private/tmp/mongoeco-491/bench/lib/python3.14/site-packages/mongoeco/__init__.py",
+    "harnessSha256": "sha256:a46f2e9c5ecbf5811289439caba8210f62a24928d1a5ad295da6a7337e8b3de3",
+    "datasetSha256": "sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63"
+  },
+  "config": {
+    "size": 100000,
+    "warmup": 0,
+    "repetitions": 1,
+    "workloads": [
+      "aggregation_spill_diagnostics"
+    ],
+    "rssPeakSamplingIntervalMs": 5.0
+  },
+  "results": {
+    "memory-sync": {
+      "aggregation_spill_diagnostics": {
+        "group_low_cardinality_first": {
+          "repetitions": 1,
+          "wall_time_mean_sec": 1.0399,
+          "wall_time_median_sec": 1.0399,
+          "wall_time_min_sec": 1.0399,
+          "wall_time_max_sec": 1.0399,
+          "cpu_user_mean_sec": 1.03,
+          "cpu_sys_mean_sec": 0.0,
+          "rss_delta_mean_mb": 33.84,
+          "rss_peak_max_mb": 321.11,
+          "metadata": {
+            "summary": "memory/python scan>filter",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 1,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "group-low-cardinality-first",
+            "expected_group_cardinality": 6,
+            "spill_threshold": 10000,
+            "spill_expected": false,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:4d41f52d8949785073380ce2131e04333a54da8442a93665480d7ed01a206f15",
+            "outcome_items": 2
+          }
+        },
+        "group_high_cardinality_first": {
+          "repetitions": 1,
+          "wall_time_mean_sec": 9.2481,
+          "wall_time_median_sec": 9.2481,
+          "wall_time_min_sec": 9.2481,
+          "wall_time_max_sec": 9.2481,
+          "cpu_user_mean_sec": 8.81,
+          "cpu_sys_mean_sec": 0.07,
+          "rss_delta_mean_mb": 13.72,
+          "rss_peak_max_mb": 334.83,
+          "metadata": {
+            "summary": "memory/python scan>filter",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 1,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "group-high-cardinality-first",
+            "expected_group_cardinality": 100000,
+            "spill_threshold": 10000,
+            "spill_expected": true,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:ce16e420692e739d95d4ab8de057a432f36338df2b7b2c0e9b58789da49e0c05",
+            "outcome_items": 2
+          }
+        }
+      }
+    },
+    "sqlite-sync": {
+      "aggregation_spill_diagnostics": {
+        "group_low_cardinality_first": {
+          "repetitions": 1,
+          "wall_time_mean_sec": 0.9355,
+          "wall_time_median_sec": 0.9355,
+          "wall_time_min_sec": 0.9355,
+          "wall_time_max_sec": 0.9355,
+          "cpu_user_mean_sec": 0.82,
+          "cpu_sys_mean_sec": 0.04,
+          "rss_delta_mean_mb": 0.72,
+          "rss_peak_max_mb": 251.0,
+          "metadata": {
+            "summary": "sqlite/sql scan>filter",
+            "engine": "sqlite",
+            "strategy": "sql",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 1,
+            "physical_plan": [
+              {
+                "runtime": "sql",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "sql",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "group-low-cardinality-first",
+            "expected_group_cardinality": 6,
+            "spill_threshold": 10000,
+            "spill_expected": false,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:4d41f52d8949785073380ce2131e04333a54da8442a93665480d7ed01a206f15",
+            "outcome_items": 2
+          }
+        },
+        "group_high_cardinality_first": {
+          "repetitions": 1,
+          "wall_time_mean_sec": 9.6799,
+          "wall_time_median_sec": 9.6799,
+          "wall_time_min_sec": 9.6799,
+          "wall_time_max_sec": 9.6799,
+          "cpu_user_mean_sec": 8.8,
+          "cpu_sys_mean_sec": 0.11,
+          "rss_delta_mean_mb": 5.72,
+          "rss_peak_max_mb": 256.72,
+          "metadata": {
+            "summary": "sqlite/sql scan>filter",
+            "engine": "sqlite",
+            "strategy": "sql",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 1,
+            "physical_plan": [
+              {
+                "runtime": "sql",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "sql",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "group-high-cardinality-first",
+            "expected_group_cardinality": 100000,
+            "spill_threshold": 10000,
+            "spill_expected": true,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:ce16e420692e739d95d4ab8de057a432f36338df2b7b2c0e9b58789da49e0c05",
+            "outcome_items": 2
+          }
+        }
+      }
+    },
+    "memory-async": {
+      "aggregation_spill_diagnostics": {
+        "group_low_cardinality_first": {
+          "repetitions": 1,
+          "wall_time_mean_sec": 1.1201,
+          "wall_time_median_sec": 1.1201,
+          "wall_time_min_sec": 1.1201,
+          "wall_time_max_sec": 1.1201,
+          "cpu_user_mean_sec": 1.12,
+          "cpu_sys_mean_sec": 0.0,
+          "rss_delta_mean_mb": 32.77,
+          "rss_peak_max_mb": 362.34,
+          "metadata": {
+            "summary": "memory/python scan>filter",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 1,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "group-low-cardinality-first",
+            "expected_group_cardinality": 6,
+            "spill_threshold": 10000,
+            "spill_expected": false,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:4d41f52d8949785073380ce2131e04333a54da8442a93665480d7ed01a206f15",
+            "outcome_items": 2
+          }
+        },
+        "group_high_cardinality_first": {
+          "repetitions": 1,
+          "wall_time_mean_sec": 9.8573,
+          "wall_time_median_sec": 9.8573,
+          "wall_time_min_sec": 9.8573,
+          "wall_time_max_sec": 9.8573,
+          "cpu_user_mean_sec": 8.79,
+          "cpu_sys_mean_sec": 0.08,
+          "rss_delta_mean_mb": 9.55,
+          "rss_peak_max_mb": 371.89,
+          "metadata": {
+            "summary": "memory/python scan>filter",
+            "engine": "memory",
+            "strategy": "python",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 1,
+            "physical_plan": [
+              {
+                "runtime": "python",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "python",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "group-high-cardinality-first",
+            "expected_group_cardinality": 100000,
+            "spill_threshold": 10000,
+            "spill_expected": true,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:ce16e420692e739d95d4ab8de057a432f36338df2b7b2c0e9b58789da49e0c05",
+            "outcome_items": 2
+          }
+        }
+      }
+    },
+    "sqlite-async": {
+      "aggregation_spill_diagnostics": {
+        "group_low_cardinality_first": {
+          "repetitions": 1,
+          "wall_time_mean_sec": 0.9208,
+          "wall_time_median_sec": 0.9208,
+          "wall_time_min_sec": 0.9208,
+          "wall_time_max_sec": 0.9208,
+          "cpu_user_mean_sec": 0.8,
+          "cpu_sys_mean_sec": 0.04,
+          "rss_delta_mean_mb": 0.61,
+          "rss_peak_max_mb": 308.11,
+          "metadata": {
+            "summary": "sqlite/sql scan>filter",
+            "engine": "sqlite",
+            "strategy": "sql",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 1,
+            "physical_plan": [
+              {
+                "runtime": "sql",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "sql",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "group-low-cardinality-first",
+            "expected_group_cardinality": 6,
+            "spill_threshold": 10000,
+            "spill_expected": false,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:4d41f52d8949785073380ce2131e04333a54da8442a93665480d7ed01a206f15",
+            "outcome_items": 2
+          }
+        },
+        "group_high_cardinality_first": {
+          "repetitions": 1,
+          "wall_time_mean_sec": 9.2602,
+          "wall_time_median_sec": 9.2602,
+          "wall_time_min_sec": 9.2602,
+          "wall_time_max_sec": 9.2602,
+          "cpu_user_mean_sec": 8.64,
+          "cpu_sys_mean_sec": 0.14,
+          "rss_delta_mean_mb": 0.19,
+          "rss_peak_max_mb": 308.3,
+          "metadata": {
+            "summary": "sqlite/sql scan>filter",
+            "engine": "sqlite",
+            "strategy": "sql",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": true,
+            "partitioned_group_state_candidate": true,
+            "streaming_group_output_candidate": true,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 1,
+            "physical_plan": [
+              {
+                "runtime": "sql",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "sql",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pipeline_shape": "group-high-cardinality-first",
+            "expected_group_cardinality": 100000,
+            "spill_threshold": 10000,
+            "spill_expected": true,
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:ce16e420692e739d95d4ab8de057a432f36338df2b7b2c0e9b58789da49e0c05",
+            "outcome_items": 2
+          }
+        }
+      }
+    },
+    "mongomock": {
+      "_skipped_workloads": {
+        "aggregation_spill_diagnostics": "adapter lacks benchmark capabilities: aggregation-spill-diagnostics"
+      }
+    }
+  }
+}
