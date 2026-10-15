@@ -20,7 +20,11 @@ class PositionalUpdateValidationTests(unittest.TestCase):
                 document,
                 {
                     "$inc": {"untouched": 1},
-                    "$set": {"items.$[].value": 1, "items.$[i].value": 2},
+                    "$set": {
+                        "items.$[].value": 1,
+                        "items.$[i].value.child": 2,
+                        "items.$[].value-child": 3,
+                    },
                 },
                 array_filters=[{"i.key": "a"}],
             )

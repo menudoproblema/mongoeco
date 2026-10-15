@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
+from itertools import pairwise
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
@@ -759,14 +760,24 @@ class UpdateEngine:
             context=context,
             allow_positional=True,
         )
-        seen_paths: list[str] = []
-        for application in applications:
-            for target in application.targets:
-                UpdateEngine._register_update_path(seen_paths, target.concrete_path)
-            if application.instruction.target_path is not None:
-                UpdateEngine._register_update_path(
-                    seen_paths, application.instruction.target_path.raw
-                )
+        paths = [
+            tuple(target.concrete_path.split("."))
+            for application in applications
+            for target in application.targets
+        ]
+        paths.extend(
+            tuple(application.instruction.target_path.raw.split("."))
+            for application in applications
+            if application.instruction.target_path is not None
+        )
+        # Sorting components keeps ancestors adjacent without quadratic scans
+        # over every expanded array element (or interference from keys like a-b).
+        if any(
+            current[:len(previous)] == previous
+            for previous, current in pairwise(sorted(paths))
+        ):
+            message = "conflicting update paths are not allowed"
+            raise OperationFailure(message, code=40)
         return replace(
             context,
             resolved_update_targets=MappingProxyType({
