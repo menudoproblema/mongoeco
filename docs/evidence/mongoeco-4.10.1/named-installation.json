@@ -1,0 +1,6 @@
+{
+  "version": "4.10.1",
+  "installation": "clean named PyPI index requirement",
+  "module": "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/named-index-venv/lib/python3.14/site-packages/mongoeco",
+  "runtime_files_match_public_wheel": 289
+}

@@ -1,0 +1,188 @@
+[
+  {
+    "name": "public-artifact-install",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/published-venv/bin/python",
+      "-B",
+      "-m",
+      "pip",
+      "install",
+      "--index-url",
+      "https://pypi.org/simple",
+      "--no-cache-dir",
+      "https://files.pythonhosted.org/packages/3b/05/7d0e358ec2d3cbc313941d4d94a7a93ebde491a964bfa0c0402327f27b97/mongoeco-4.10.1-py3-none-any.whl#sha256=0b4419ec41777a2914e1a331473c5bc2dc3e9770c31a61061b894d89135a7ddd"
+    ],
+    "cwd": "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1",
+    "exit_code": 0,
+    "seconds": 31.569,
+    "log": "public-artifact-install.log.gz",
+    "content_sha256": "cc9118076bae19b4103a49344c3fef3112ab74c4b69e17988f6c1d4bc5d7ea4d",
+    "compressed_sha256": "539e310d0149b7d4622d9951d5953689e4ccbf5ee11e0b61106b7567e663339a",
+    "encoding": "gzip"
+  },
+  {
+    "name": "public-contract",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/published-venv/bin/python",
+      "-B",
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/public-contract-code.py"
+    ],
+    "cwd": "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1",
+    "exit_code": 0,
+    "seconds": 0.493,
+    "log": "public-contract.log.gz",
+    "content_sha256": "db29ab2cd4208c1cbbf62184ac6f0879e13260436d9f32eb33789444a72da720",
+    "compressed_sha256": "e979778d798376d9de1fcf584f7a8ecac98d39d265ecce8fd2c1f52ebc138c25",
+    "encoding": "gzip"
+  },
+  {
+    "name": "public-tools",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/published-venv/bin/python",
+      "-B",
+      "-m",
+      "pip",
+      "install",
+      "--index-url",
+      "https://pypi.org/simple",
+      "--no-cache-dir",
+      "mongoeco[pytest]==4.10.1",
+      "pymongo==4.19.0",
+      "hypothesis",
+      "jsonschema",
+      "pytest-asyncio",
+      "anyio",
+      "pytest-xdist"
+    ],
+    "cwd": "/Users/uve/Proyectos/mongoeco",
+    "exit_code": 0,
+    "seconds": 5.0,
+    "log": "public-tools.log.gz",
+    "content_sha256": "56f04ed16a275e59c18a2d9cdee2f94f8dae25e8cb4abd7f5680a79a6b8dad8c",
+    "compressed_sha256": "019f426cd8a05e8d706829312bf71857e94b43eebd0505b3681ac34234183fd1",
+    "encoding": "gzip"
+  },
+  {
+    "name": "pip-check",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/published-venv/bin/python",
+      "-B",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "cwd": "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1",
+    "exit_code": 0,
+    "seconds": 0.114,
+    "log": "pip-check.log.gz",
+    "content_sha256": "9261363b733079a641c2e4cc9bc46ffa1d8336945a87f807b6cf68847dbc9b09",
+    "compressed_sha256": "cac4f0717e5b68b63c7376bcc07dfc607a5589b09374b45251bdcf31a6bece75",
+    "encoding": "gzip"
+  },
+  {
+    "name": "public-manifest",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/published-venv/bin/python",
+      "-B",
+      "scripts/update_public_api_manifest.py",
+      "--check"
+    ],
+    "cwd": "/Users/uve/Proyectos/mongoeco",
+    "exit_code": 0,
+    "seconds": 1.677,
+    "log": "public-manifest.log.gz",
+    "content_sha256": "3c70e7c5dc9b8641d082109a9d551c026c8bc7f11d2628b17d067186ab7979c0",
+    "compressed_sha256": "ec3b3565f8f3776cc57f1d98697aaccc2d9b84d5619adaebe168f93454c77dce",
+    "encoding": "gzip"
+  },
+  {
+    "name": "public-regressions",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/published-venv/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "tests/integration/api/test_find_modify_errors.py",
+      "tests/integration/api/test_shared_error_parity.py",
+      "tests/integration/api/test_error_phases.py",
+      "tests/integration/api/test_nonfinite_sqlite_mutations.py",
+      "tests/integration/pytest_kit"
+    ],
+    "cwd": "/Users/uve/Proyectos/mongoeco",
+    "exit_code": 0,
+    "seconds": 234.498,
+    "log": "public-regressions.log.gz",
+    "content_sha256": "802b6417c717c59bbce5ef6e70ddfb75fd67d006e17eb9dfa3ca4c093900fa12",
+    "compressed_sha256": "e8d378ab854e8c320c71fecfe07320d8ea7823be1328e9b77685e3bad942ab2d",
+    "encoding": "gzip"
+  },
+  {
+    "name": "conformance-MemoryEngine",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/published-venv/bin/python",
+      "-B",
+      "-m",
+      "mongoeco.conformance",
+      "mongoeco.engines:MemoryEngine",
+      "--profile",
+      "spi-v2-core",
+      "--require-success",
+      "--format",
+      "json",
+      "--output",
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/public-conformance-MemoryEngine.json"
+    ],
+    "cwd": "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1",
+    "exit_code": 0,
+    "seconds": 0.229,
+    "log": "conformance-MemoryEngine.log.gz",
+    "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "compressed_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "encoding": "gzip"
+  },
+  {
+    "name": "conformance-SQLiteEngine",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/published-venv/bin/python",
+      "-B",
+      "-m",
+      "mongoeco.conformance",
+      "mongoeco.engines:SQLiteEngine",
+      "--profile",
+      "spi-v2-core",
+      "--require-success",
+      "--format",
+      "json",
+      "--output",
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/public-conformance-SQLiteEngine.json"
+    ],
+    "cwd": "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1",
+    "exit_code": 0,
+    "seconds": 0.246,
+    "log": "conformance-SQLiteEngine.log.gz",
+    "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "compressed_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "encoding": "gzip"
+  },
+  {
+    "name": "public-named-index-contract",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.venv/bin/python",
+      "-B",
+      "scripts/smoke_pypi_contract.py",
+      "--version",
+      "4.10.1",
+      "--venv",
+      "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/named-index-venv"
+    ],
+    "cwd": "/Users/uve/Proyectos/mongoeco",
+    "exit_code": 0,
+    "seconds": 37.545,
+    "log": "public-named-index-contract.log.gz",
+    "content_sha256": "a5dd16e0549214ab582c1eae704bfa5acf9c11a58977e3ba80fddbc5b3c2d81b",
+    "compressed_sha256": "bf82dbaecefe672a6aca48467572c8058cb535aaa391ed73df44769114cbc8e6",
+    "encoding": "gzip"
+  }
+]

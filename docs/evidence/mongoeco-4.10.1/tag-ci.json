@@ -1,0 +1,2899 @@
+{
+  "conclusion": "success",
+  "createdAt": "2026-10-16T18:29:23Z",
+  "databaseId": 38947726603,
+  "event": "push",
+  "headSha": "14b7293832101750f20930cbf15019f6d764c1eb",
+  "jobs": [
+    {
+      "completedAt": "2026-10-16T18:29:50Z",
+      "conclusion": "success",
+      "databaseId": 117131006151,
+      "name": "Build and reproduce release artifacts",
+      "startedAt": "2026-10-16T18:29:26Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:27Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:30Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:30Z",
+          "conclusion": "success",
+          "name": "Set up Python",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:39Z",
+          "conclusion": "success",
+          "name": "Install release tooling",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:45Z",
+          "conclusion": "success",
+          "name": "Build and verify distributions",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:46Z",
+          "conclusion": "success",
+          "name": "Upload immutable distributions",
+          "number": 6,
+          "startedAt": "2026-10-16T18:29:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:47Z",
+          "conclusion": "success",
+          "name": "Upload distribution manifest",
+          "number": 7,
+          "startedAt": "2026-10-16T18:29:46Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:47Z",
+          "conclusion": "success",
+          "name": "Post Set up Python",
+          "number": 13,
+          "startedAt": "2026-10-16T18:29:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:48Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 14,
+          "startedAt": "2026-10-16T18:29:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:48Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:29:48Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131006151"
+    },
+    {
+      "completedAt": "2026-10-16T18:32:35Z",
+      "conclusion": "success",
+      "databaseId": 117131006326,
+      "name": "Isolated PyMongo API profiles",
+      "startedAt": "2026-10-16T18:29:26Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:27Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:30Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:30Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:32Z",
+          "conclusion": "success",
+          "name": "Probe every supported driver independently",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:33Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "number": 5,
+          "startedAt": "2026-10-16T18:32:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:33Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 9,
+          "startedAt": "2026-10-16T18:32:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:33Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 10,
+          "startedAt": "2026-10-16T18:32:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:33Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 11,
+          "startedAt": "2026-10-16T18:32:33Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131006326"
+    },
+    {
+      "completedAt": "2026-10-16T18:29:23Z",
+      "conclusion": "skipped",
+      "databaseId": 117131008008,
+      "name": "Latest released artifact contract",
+      "startedAt": "2026-10-16T18:29:24Z",
+      "status": "completed",
+      "steps": [],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131008008"
+    },
+    {
+      "completedAt": "2026-10-16T19:02:04Z",
+      "conclusion": "success",
+      "databaseId": 117131191414,
+      "name": "Test (Python 3.15)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:54Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:07Z",
+          "conclusion": "success",
+          "name": "Set up Python",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:08Z",
+          "conclusion": "success",
+          "name": "Download release distributions",
+          "number": 4,
+          "startedAt": "2026-10-16T18:30:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:08Z",
+          "conclusion": "success",
+          "name": "Download distribution manifest",
+          "number": 5,
+          "startedAt": "2026-10-16T18:30:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:31Z",
+          "conclusion": "success",
+          "name": "Install tested wheel and test tooling",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:31Z",
+          "conclusion": "success",
+          "name": "Verify tests import the immutable wheel",
+          "number": 7,
+          "startedAt": "2026-10-16T18:37:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:38:01Z",
+          "conclusion": "success",
+          "name": "Validate public PEP 561 contract",
+          "number": 8,
+          "startedAt": "2026-10-16T18:37:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:38:02Z",
+          "conclusion": "success",
+          "name": "Validate independent SPI v2 consumer",
+          "number": 9,
+          "startedAt": "2026-10-16T18:38:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:38:03Z",
+          "conclusion": "success",
+          "name": "Verify public API manifest",
+          "number": 10,
+          "startedAt": "2026-10-16T18:38:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:41:06Z",
+          "conclusion": "success",
+          "name": "Run unit and integration tests",
+          "number": 11,
+          "startedAt": "2026-10-16T18:38:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:41:11Z",
+          "conclusion": "success",
+          "name": "Enforce symbol-level lint ratchet",
+          "number": 12,
+          "startedAt": "2026-10-16T18:41:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:01:19Z",
+          "conclusion": "success",
+          "name": "Run complete pytest suite",
+          "number": 13,
+          "startedAt": "2026-10-16T18:41:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:01:19Z",
+          "conclusion": "skipped",
+          "name": "Enforce installed package coverage floor",
+          "number": 14,
+          "startedAt": "2026-10-16T19:01:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:01:19Z",
+          "conclusion": "skipped",
+          "name": "Exercise deep property profile",
+          "number": 15,
+          "startedAt": "2026-10-16T19:01:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:01:21Z",
+          "conclusion": "success",
+          "name": "Regenerate compat snapshots",
+          "number": 16,
+          "startedAt": "2026-10-16T19:01:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:01:21Z",
+          "conclusion": "success",
+          "name": "Verify compat snapshots are committed",
+          "number": 17,
+          "startedAt": "2026-10-16T19:01:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:01:21Z",
+          "conclusion": "skipped",
+          "name": "Benchmark smoke (memory search/vector)",
+          "number": 18,
+          "startedAt": "2026-10-16T19:01:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:01:21Z",
+          "conclusion": "skipped",
+          "name": "Benchmark smoke (sqlite search/vector)",
+          "number": 19,
+          "startedAt": "2026-10-16T19:01:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:01:33Z",
+          "conclusion": "success",
+          "name": "Smoke installed wheel",
+          "number": 20,
+          "startedAt": "2026-10-16T19:01:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:01:48Z",
+          "conclusion": "success",
+          "name": "Smoke installed sdist",
+          "number": 21,
+          "startedAt": "2026-10-16T19:01:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:01Z",
+          "conclusion": "success",
+          "name": "Smoke clean pytest extra",
+          "number": 22,
+          "startedAt": "2026-10-16T19:01:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:01Z",
+          "conclusion": "success",
+          "name": "Post Set up Python",
+          "number": 43,
+          "startedAt": "2026-10-16T19:02:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:02Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 44,
+          "startedAt": "2026-10-16T19:02:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:02Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 45,
+          "startedAt": "2026-10-16T19:02:02Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191414"
+    },
+    {
+      "completedAt": "2026-10-16T18:30:37Z",
+      "conclusion": "success",
+      "databaseId": 117131191445,
+      "name": "Minimal imports (Python 3.13)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:53Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:56Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:56Z",
+          "conclusion": "success",
+          "name": "Set up Python",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Download release distributions",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:05Z",
+          "conclusion": "success",
+          "name": "Install wheel without optional wire dependencies",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:35Z",
+          "conclusion": "success",
+          "name": "Run clean-import smoke tests without wire extras",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:05Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:35Z",
+          "conclusion": "success",
+          "name": "Post Set up Python",
+          "number": 11,
+          "startedAt": "2026-10-16T18:30:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:35Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 12,
+          "startedAt": "2026-10-16T18:30:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:35Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "startedAt": "2026-10-16T18:30:35Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191445"
+    },
+    {
+      "completedAt": "2026-10-16T18:48:18Z",
+      "conclusion": "success",
+      "databaseId": 117131191470,
+      "name": "Test (Python 3.14)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:54Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:58Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:58Z",
+          "conclusion": "success",
+          "name": "Set up Python",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:59Z",
+          "conclusion": "success",
+          "name": "Download release distributions",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:00Z",
+          "conclusion": "success",
+          "name": "Download distribution manifest",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:17Z",
+          "conclusion": "success",
+          "name": "Install tested wheel and test tooling",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:00Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:17Z",
+          "conclusion": "success",
+          "name": "Verify tests import the immutable wheel",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:34Z",
+          "conclusion": "success",
+          "name": "Validate public PEP 561 contract",
+          "number": 8,
+          "startedAt": "2026-10-16T18:30:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:35Z",
+          "conclusion": "success",
+          "name": "Validate independent SPI v2 consumer",
+          "number": 9,
+          "startedAt": "2026-10-16T18:30:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:35Z",
+          "conclusion": "success",
+          "name": "Verify public API manifest",
+          "number": 10,
+          "startedAt": "2026-10-16T18:30:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:35Z",
+          "conclusion": "success",
+          "name": "Run unit and integration tests",
+          "number": 11,
+          "startedAt": "2026-10-16T18:30:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:37Z",
+          "conclusion": "success",
+          "name": "Enforce symbol-level lint ratchet",
+          "number": 12,
+          "startedAt": "2026-10-16T18:32:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:37Z",
+          "conclusion": "skipped",
+          "name": "Run complete pytest suite",
+          "number": 13,
+          "startedAt": "2026-10-16T18:32:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:46:53Z",
+          "conclusion": "success",
+          "name": "Enforce installed package coverage floor",
+          "number": 14,
+          "startedAt": "2026-10-16T18:32:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:26Z",
+          "conclusion": "success",
+          "name": "Exercise deep property profile",
+          "number": 15,
+          "startedAt": "2026-10-16T18:46:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:27Z",
+          "conclusion": "success",
+          "name": "Regenerate compat snapshots",
+          "number": 16,
+          "startedAt": "2026-10-16T18:47:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:27Z",
+          "conclusion": "success",
+          "name": "Verify compat snapshots are committed",
+          "number": 17,
+          "startedAt": "2026-10-16T18:47:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:35Z",
+          "conclusion": "success",
+          "name": "Benchmark smoke (memory search/vector)",
+          "number": 18,
+          "startedAt": "2026-10-16T18:47:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:48Z",
+          "conclusion": "success",
+          "name": "Benchmark smoke (sqlite search/vector)",
+          "number": 19,
+          "startedAt": "2026-10-16T18:47:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:57Z",
+          "conclusion": "success",
+          "name": "Smoke installed wheel",
+          "number": 20,
+          "startedAt": "2026-10-16T18:47:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:07Z",
+          "conclusion": "success",
+          "name": "Smoke installed sdist",
+          "number": 21,
+          "startedAt": "2026-10-16T18:47:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:16Z",
+          "conclusion": "success",
+          "name": "Smoke clean pytest extra",
+          "number": 22,
+          "startedAt": "2026-10-16T18:48:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:16Z",
+          "conclusion": "success",
+          "name": "Post Set up Python",
+          "number": 43,
+          "startedAt": "2026-10-16T18:48:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:16Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 44,
+          "startedAt": "2026-10-16T18:48:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:16Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 45,
+          "startedAt": "2026-10-16T18:48:16Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191470"
+    },
+    {
+      "completedAt": "2026-10-16T18:48:22Z",
+      "conclusion": "success",
+      "databaseId": 117131191529,
+      "name": "Test (Python 3.13)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:54Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:58Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:58Z",
+          "conclusion": "success",
+          "name": "Set up Python",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:59Z",
+          "conclusion": "success",
+          "name": "Download release distributions",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:00Z",
+          "conclusion": "success",
+          "name": "Download distribution manifest",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:15Z",
+          "conclusion": "success",
+          "name": "Install tested wheel and test tooling",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:00Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:15Z",
+          "conclusion": "success",
+          "name": "Verify tests import the immutable wheel",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:33Z",
+          "conclusion": "success",
+          "name": "Validate public PEP 561 contract",
+          "number": 8,
+          "startedAt": "2026-10-16T18:30:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:34Z",
+          "conclusion": "success",
+          "name": "Validate independent SPI v2 consumer",
+          "number": 9,
+          "startedAt": "2026-10-16T18:30:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:34Z",
+          "conclusion": "success",
+          "name": "Verify public API manifest",
+          "number": 10,
+          "startedAt": "2026-10-16T18:30:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:26Z",
+          "conclusion": "success",
+          "name": "Run unit and integration tests",
+          "number": 11,
+          "startedAt": "2026-10-16T18:30:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:29Z",
+          "conclusion": "success",
+          "name": "Enforce symbol-level lint ratchet",
+          "number": 12,
+          "startedAt": "2026-10-16T18:32:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:45:46Z",
+          "conclusion": "success",
+          "name": "Run complete pytest suite",
+          "number": 13,
+          "startedAt": "2026-10-16T18:32:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:45:46Z",
+          "conclusion": "skipped",
+          "name": "Enforce installed package coverage floor",
+          "number": 14,
+          "startedAt": "2026-10-16T18:45:46Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:45:46Z",
+          "conclusion": "skipped",
+          "name": "Exercise deep property profile",
+          "number": 15,
+          "startedAt": "2026-10-16T18:45:46Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:45:47Z",
+          "conclusion": "success",
+          "name": "Regenerate compat snapshots",
+          "number": 16,
+          "startedAt": "2026-10-16T18:45:46Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:45:47Z",
+          "conclusion": "success",
+          "name": "Verify compat snapshots are committed",
+          "number": 17,
+          "startedAt": "2026-10-16T18:45:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:45:47Z",
+          "conclusion": "skipped",
+          "name": "Benchmark smoke (memory search/vector)",
+          "number": 18,
+          "startedAt": "2026-10-16T18:45:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:45:47Z",
+          "conclusion": "skipped",
+          "name": "Benchmark smoke (sqlite search/vector)",
+          "number": 19,
+          "startedAt": "2026-10-16T18:45:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:02Z",
+          "conclusion": "success",
+          "name": "Smoke installed wheel",
+          "number": 20,
+          "startedAt": "2026-10-16T18:45:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:11Z",
+          "conclusion": "success",
+          "name": "Smoke installed sdist",
+          "number": 21,
+          "startedAt": "2026-10-16T18:48:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:20Z",
+          "conclusion": "success",
+          "name": "Smoke clean pytest extra",
+          "number": 22,
+          "startedAt": "2026-10-16T18:48:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:20Z",
+          "conclusion": "success",
+          "name": "Post Set up Python",
+          "number": 43,
+          "startedAt": "2026-10-16T18:48:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:20Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 44,
+          "startedAt": "2026-10-16T18:48:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:48:20Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 45,
+          "startedAt": "2026-10-16T18:48:20Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191529"
+    },
+    {
+      "completedAt": "2026-10-16T18:47:38Z",
+      "conclusion": "success",
+      "databaseId": 117131191629,
+      "name": "Required MongoDB release differential / MongoDB 7.0 differential",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:53Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:17Z",
+          "conclusion": "success",
+          "name": "Initialize containers",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:19Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 3,
+          "startedAt": "2026-10-16T18:30:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:19Z",
+          "conclusion": "success",
+          "name": "Set up Python",
+          "number": 4,
+          "startedAt": "2026-10-16T18:30:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:19Z",
+          "conclusion": "skipped",
+          "name": "Install differential dependencies",
+          "number": 5,
+          "startedAt": "2026-10-16T18:30:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:19Z",
+          "conclusion": "success",
+          "name": "Download immutable release distributions",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:20Z",
+          "conclusion": "success",
+          "name": "Download distribution manifest",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:35Z",
+          "conclusion": "success",
+          "name": "Verify and install the release wheel",
+          "number": 8,
+          "startedAt": "2026-10-16T18:30:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:36Z",
+          "conclusion": "success",
+          "name": "Establish and verify the requested FCV",
+          "number": 9,
+          "startedAt": "2026-10-16T18:30:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:38Z",
+          "conclusion": "success",
+          "name": "Run reproducible differential suite",
+          "number": 10,
+          "startedAt": "2026-10-16T18:30:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:45Z",
+          "conclusion": "success",
+          "name": "Verify positional update error codes and document atomicity",
+          "number": 11,
+          "startedAt": "2026-10-16T18:30:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:16Z",
+          "conclusion": "success",
+          "name": "Verify unacknowledged writes and physical connection reuse",
+          "number": 12,
+          "startedAt": "2026-10-16T18:30:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:46:31Z",
+          "conclusion": "success",
+          "name": "Admit the complete write corpus and public routes",
+          "number": 13,
+          "startedAt": "2026-10-16T18:32:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:46:35Z",
+          "conclusion": "success",
+          "name": "Verify review expectations against the native server",
+          "number": 14,
+          "startedAt": "2026-10-16T18:46:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:06Z",
+          "conclusion": "success",
+          "name": "Verify native error payload deltas with the minimum SDK",
+          "number": 15,
+          "startedAt": "2026-10-16T18:46:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:07Z",
+          "conclusion": "success",
+          "name": "Record exact MongoDB runtime",
+          "number": 16,
+          "startedAt": "2026-10-16T18:47:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:07Z",
+          "conclusion": "success",
+          "name": "Upload differential evidence",
+          "number": 17,
+          "startedAt": "2026-10-16T18:47:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:08Z",
+          "conclusion": "success",
+          "name": "Post Set up Python",
+          "number": 32,
+          "startedAt": "2026-10-16T18:47:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:08Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 33,
+          "startedAt": "2026-10-16T18:47:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:37Z",
+          "conclusion": "success",
+          "name": "Stop containers",
+          "number": 34,
+          "startedAt": "2026-10-16T18:47:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:37Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 35,
+          "startedAt": "2026-10-16T18:47:37Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191629"
+    },
+    {
+      "completedAt": "2026-10-16T18:37:28Z",
+      "conclusion": "success",
+      "databaseId": 117131191680,
+      "name": "Pytest kit (3.13, pytest 9.1.1, SDK 4.19.0)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:53Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:56Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:09Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:29:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:27Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:09Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:27Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:37:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:27Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:37:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:27Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:37:27Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191680"
+    },
+    {
+      "completedAt": "2026-10-16T18:37:58Z",
+      "conclusion": "success",
+      "databaseId": 117131191693,
+      "name": "Pytest kit (3.14, pytest 9.1.1, SDK 4.9.2)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:54Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:56Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:56Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:19Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:29:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:56Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:57Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:37:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:57Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:37:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:57Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:37:57Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191693"
+    },
+    {
+      "completedAt": "2026-10-16T18:34:49Z",
+      "conclusion": "success",
+      "databaseId": 117131191710,
+      "name": "Pytest kit (3.14, pytest 8.4.2, SDK 4.9.2)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:54Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:56Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:13Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:34:47Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:34:47Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:34:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:34:47Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:34:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:34:47Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:34:47Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191710"
+    },
+    {
+      "completedAt": "2026-10-16T18:35:42Z",
+      "conclusion": "success",
+      "databaseId": 117131191718,
+      "name": "Pytest kit (3.13, pytest 8.4.2, SDK 4.19.0)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:54Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:58Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:59Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:08Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:29:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:35:39Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:35:39Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:35:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:35:39Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:35:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:35:39Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:35:39Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191718"
+    },
+    {
+      "completedAt": "2026-10-16T18:44:57Z",
+      "conclusion": "success",
+      "databaseId": 117131191722,
+      "name": "Required MongoDB release differential / MongoDB 9.0 differential",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:29Z",
+          "conclusion": "success",
+          "name": "Initialize containers",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:32Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 3,
+          "startedAt": "2026-10-16T18:30:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:32Z",
+          "conclusion": "success",
+          "name": "Set up Python",
+          "number": 4,
+          "startedAt": "2026-10-16T18:30:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:32Z",
+          "conclusion": "skipped",
+          "name": "Install differential dependencies",
+          "number": 5,
+          "startedAt": "2026-10-16T18:30:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:34Z",
+          "conclusion": "success",
+          "name": "Download immutable release distributions",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:34Z",
+          "conclusion": "success",
+          "name": "Download distribution manifest",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:48Z",
+          "conclusion": "success",
+          "name": "Verify and install the release wheel",
+          "number": 8,
+          "startedAt": "2026-10-16T18:30:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:49Z",
+          "conclusion": "success",
+          "name": "Establish and verify the requested FCV",
+          "number": 9,
+          "startedAt": "2026-10-16T18:30:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:51Z",
+          "conclusion": "success",
+          "name": "Run reproducible differential suite",
+          "number": 10,
+          "startedAt": "2026-10-16T18:30:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:31:00Z",
+          "conclusion": "success",
+          "name": "Verify positional update error codes and document atomicity",
+          "number": 11,
+          "startedAt": "2026-10-16T18:30:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:52Z",
+          "conclusion": "success",
+          "name": "Verify unacknowledged writes and physical connection reuse",
+          "number": 12,
+          "startedAt": "2026-10-16T18:31:00Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:43:34Z",
+          "conclusion": "success",
+          "name": "Admit the complete write corpus and public routes",
+          "number": 13,
+          "startedAt": "2026-10-16T18:32:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:43:40Z",
+          "conclusion": "success",
+          "name": "Verify review expectations against the native server",
+          "number": 14,
+          "startedAt": "2026-10-16T18:43:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:25Z",
+          "conclusion": "success",
+          "name": "Verify native error payload deltas with the minimum SDK",
+          "number": 15,
+          "startedAt": "2026-10-16T18:43:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:25Z",
+          "conclusion": "success",
+          "name": "Record exact MongoDB runtime",
+          "number": 16,
+          "startedAt": "2026-10-16T18:44:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:27Z",
+          "conclusion": "success",
+          "name": "Upload differential evidence",
+          "number": 17,
+          "startedAt": "2026-10-16T18:44:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:27Z",
+          "conclusion": "success",
+          "name": "Post Set up Python",
+          "number": 32,
+          "startedAt": "2026-10-16T18:44:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:27Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 33,
+          "startedAt": "2026-10-16T18:44:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:54Z",
+          "conclusion": "success",
+          "name": "Stop containers",
+          "number": 34,
+          "startedAt": "2026-10-16T18:44:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:54Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 35,
+          "startedAt": "2026-10-16T18:44:54Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191722"
+    },
+    {
+      "completedAt": "2026-10-16T18:37:08Z",
+      "conclusion": "success",
+      "databaseId": 117131191729,
+      "name": "Pytest kit (3.14, pytest 9.1.1, SDK 4.19.0)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:58Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:58Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:00Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:01Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:30:00Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:13Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:06Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:06Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:37:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:06Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:37:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:06Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:37:06Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191729"
+    },
+    {
+      "completedAt": "2026-10-16T18:47:22Z",
+      "conclusion": "success",
+      "databaseId": 117131191761,
+      "name": "Required MongoDB release differential / MongoDB 8.0 differential",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:54Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:19Z",
+          "conclusion": "success",
+          "name": "Initialize containers",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:21Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 3,
+          "startedAt": "2026-10-16T18:30:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:21Z",
+          "conclusion": "success",
+          "name": "Set up Python",
+          "number": 4,
+          "startedAt": "2026-10-16T18:30:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:21Z",
+          "conclusion": "skipped",
+          "name": "Install differential dependencies",
+          "number": 5,
+          "startedAt": "2026-10-16T18:30:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:22Z",
+          "conclusion": "success",
+          "name": "Download immutable release distributions",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:23Z",
+          "conclusion": "success",
+          "name": "Download distribution manifest",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:36Z",
+          "conclusion": "success",
+          "name": "Verify and install the release wheel",
+          "number": 8,
+          "startedAt": "2026-10-16T18:30:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:37Z",
+          "conclusion": "success",
+          "name": "Establish and verify the requested FCV",
+          "number": 9,
+          "startedAt": "2026-10-16T18:30:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:39Z",
+          "conclusion": "success",
+          "name": "Run reproducible differential suite",
+          "number": 10,
+          "startedAt": "2026-10-16T18:30:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:45Z",
+          "conclusion": "success",
+          "name": "Verify positional update error codes and document atomicity",
+          "number": 11,
+          "startedAt": "2026-10-16T18:30:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:32:12Z",
+          "conclusion": "success",
+          "name": "Verify unacknowledged writes and physical connection reuse",
+          "number": 12,
+          "startedAt": "2026-10-16T18:30:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:46:10Z",
+          "conclusion": "success",
+          "name": "Admit the complete write corpus and public routes",
+          "number": 13,
+          "startedAt": "2026-10-16T18:32:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:46:14Z",
+          "conclusion": "success",
+          "name": "Verify review expectations against the native server",
+          "number": 14,
+          "startedAt": "2026-10-16T18:46:10Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:46:46Z",
+          "conclusion": "success",
+          "name": "Verify native error payload deltas with the minimum SDK",
+          "number": 15,
+          "startedAt": "2026-10-16T18:46:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:46:47Z",
+          "conclusion": "success",
+          "name": "Record exact MongoDB runtime",
+          "number": 16,
+          "startedAt": "2026-10-16T18:46:46Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:46:48Z",
+          "conclusion": "success",
+          "name": "Upload differential evidence",
+          "number": 17,
+          "startedAt": "2026-10-16T18:46:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:46:48Z",
+          "conclusion": "success",
+          "name": "Post Set up Python",
+          "number": 32,
+          "startedAt": "2026-10-16T18:46:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:46:48Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 33,
+          "startedAt": "2026-10-16T18:46:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:20Z",
+          "conclusion": "success",
+          "name": "Stop containers",
+          "number": 34,
+          "startedAt": "2026-10-16T18:46:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:47:20Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 35,
+          "startedAt": "2026-10-16T18:47:20Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191761"
+    },
+    {
+      "completedAt": "2026-10-16T18:35:50Z",
+      "conclusion": "success",
+      "databaseId": 117131191781,
+      "name": "Pytest kit (3.13, pytest 9.1.1, SDK 4.9.2)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:58Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:59Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:09Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:29:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:35:47Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:09Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:35:47Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:35:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:35:47Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:35:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:35:47Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:35:47Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191781"
+    },
+    {
+      "completedAt": "2026-10-16T18:44:52Z",
+      "conclusion": "success",
+      "databaseId": 117131191796,
+      "name": "Pytest kit (3.15, pytest 8.4.2, SDK 4.19.0)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:53Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:03Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:04Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:30:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:04Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:30:04Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:17Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:04Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:49Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:37:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:49Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:44:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:50Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:44:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:50Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:44:50Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191796"
+    },
+    {
+      "completedAt": "2026-10-16T18:44:13Z",
+      "conclusion": "success",
+      "databaseId": 117131191805,
+      "name": "Pytest kit (3.15, pytest 9.1.1, SDK 4.9.2)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:07Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:09Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:30:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:09Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:30:09Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:19Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:09Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:10Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:37:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:10Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:44:10Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:11Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:44:10Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:11Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:44:11Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191805"
+    },
+    {
+      "completedAt": "2026-10-16T18:44:26Z",
+      "conclusion": "success",
+      "databaseId": 117131191814,
+      "name": "Pytest kit (3.15, pytest 8.4.2, SDK 4.9.2)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:54Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:06Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:08Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:30:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:09Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:30:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:27Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:09Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:22Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:37:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:22Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:44:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:23Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:44:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:23Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:44:23Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191814"
+    },
+    {
+      "completedAt": "2026-10-16T18:34:45Z",
+      "conclusion": "success",
+      "databaseId": 117131191930,
+      "name": "Pytest kit (3.14, pytest 8.4.2, SDK 4.19.0)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:53Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:56Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:56Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:58Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:08Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:29:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:34:43Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:34:43Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:34:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:34:43Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:34:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:34:43Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:34:43Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191930"
+    },
+    {
+      "completedAt": "2026-10-16T18:37:00Z",
+      "conclusion": "success",
+      "databaseId": 117131191940,
+      "name": "Pytest kit (3.13, pytest 8.4.2, SDK 4.9.2)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:53Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:55Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:56Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:29:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:56Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:29:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:08Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:29:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:36:58Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:30:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:36:58Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:36:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:36:59Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:36:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:36:59Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:36:59Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191940"
+    },
+    {
+      "completedAt": "2026-10-16T18:44:26Z",
+      "conclusion": "success",
+      "databaseId": 117131192005,
+      "name": "Pytest kit (3.15, pytest 9.1.1, SDK 4.19.0)",
+      "startedAt": "2026-10-16T18:29:52Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T18:29:53Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:29:57Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 2,
+          "startedAt": "2026-10-16T18:29:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:05Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 3,
+          "startedAt": "2026-10-16T18:29:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:06Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 4,
+          "startedAt": "2026-10-16T18:30:05Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:30:06Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+          "number": 5,
+          "startedAt": "2026-10-16T18:30:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:37:11Z",
+          "conclusion": "success",
+          "name": "Install immutable wheel with explicit test matrix overrides",
+          "number": 6,
+          "startedAt": "2026-10-16T18:30:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:24Z",
+          "conclusion": "success",
+          "name": "Exercise clients, failure cleanup and parallel workers",
+          "number": 7,
+          "startedAt": "2026-10-16T18:37:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:24Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+          "number": 13,
+          "startedAt": "2026-10-16T18:44:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:24Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09",
+          "number": 14,
+          "startedAt": "2026-10-16T18:44:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T18:44:24Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "startedAt": "2026-10-16T18:44:24Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131192005"
+    },
+    {
+      "completedAt": "2026-10-16T19:03:01Z",
+      "conclusion": "success",
+      "databaseId": 117145017813,
+      "name": "Publish tagged release",
+      "startedAt": "2026-10-16T19:02:07Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-16T19:02:10Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-16T19:02:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:14Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 2,
+          "startedAt": "2026-10-16T19:02:10Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:14Z",
+          "conclusion": "success",
+          "name": "Set up Python",
+          "number": 3,
+          "startedAt": "2026-10-16T19:02:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:14Z",
+          "conclusion": "success",
+          "name": "Verify tag matches package version",
+          "number": 4,
+          "startedAt": "2026-10-16T19:02:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:15Z",
+          "conclusion": "success",
+          "name": "Download tested distributions",
+          "number": 5,
+          "startedAt": "2026-10-16T19:02:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:58Z",
+          "conclusion": "success",
+          "name": "Publish distributions to PyPI",
+          "number": 6,
+          "startedAt": "2026-10-16T19:02:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:58Z",
+          "conclusion": "success",
+          "name": "Post Publish distributions to PyPI",
+          "number": 10,
+          "startedAt": "2026-10-16T19:02:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:58Z",
+          "conclusion": "success",
+          "name": "Post Set up Python",
+          "number": 11,
+          "startedAt": "2026-10-16T19:02:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:58Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 12,
+          "startedAt": "2026-10-16T19:02:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-16T19:02:58Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "startedAt": "2026-10-16T19:02:58Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117145017813"
+    }
+  ],
+  "status": "completed",
+  "updatedAt": "2026-10-16T19:03:01Z",
+  "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603",
+  "logs": [
+    {
+      "name": "Build and reproduce release artifacts",
+      "id": 117131006151,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131006151",
+      "conclusion": "success",
+      "summaries": [],
+      "log": "tag-logs/117131006151.txt.gz",
+      "log_sha256": "f64422ac6c5eff2ab9a28c65fd2fcd7c662220e4605a6fe3a06496743872e833",
+      "compressed_sha256": "11b697ed4c4e4fb427c27c3acc8750a7f60180ab185c1b5e95f1180b11d7cc4a"
+    },
+    {
+      "name": "Isolated PyMongo API profiles",
+      "id": 117131006326,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131006326",
+      "conclusion": "success",
+      "summaries": [],
+      "log": "tag-logs/117131006326.txt.gz",
+      "log_sha256": "b0581eba5487f7daff92011f8d8b9ee06b1498e31986286ab4f79b40ff242fcf",
+      "compressed_sha256": "9a985b8e13bdbb665aee4fb43a11e264f66b04ccfe3008f6d7532b4768c7319c"
+    },
+    {
+      "name": "Test (Python 3.15)",
+      "id": 117131191414,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191414",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:41:06.5751856Z Ran 3628 tests in 180.269s",
+        "2026-10-16T19:01:16.0482143Z 43982 passed, 31 skipped, 14459 subtests passed in 1202.43s (0:20:02)",
+        "2026-10-16T19:02:01.5581201Z 4 passed in 0.07s"
+      ],
+      "log": "tag-logs/117131191414.txt.gz",
+      "log_sha256": "6c64927cc26d6a374d7d627f526834e5dc3a962f36969b0f9b4596e357f8a9cf",
+      "compressed_sha256": "56e7702527e0777c208c7ecb8812425d88a57107e65fd4af5a297de2f14b321c"
+    },
+    {
+      "name": "Minimal imports (Python 3.13)",
+      "id": 117131191445,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191445",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:30:35.3253229Z Ran 12 tests in 29.384s"
+      ],
+      "log": "tag-logs/117131191445.txt.gz",
+      "log_sha256": "0c466677aa4001e886305bd2843006a2e981e0fa1848e1bb9d1251973789d946",
+      "compressed_sha256": "c44df4202a1f15f3bfb6afaebe7c039caf5e70bfd8c77027593a1b213dd8da56"
+    },
+    {
+      "name": "Test (Python 3.14)",
+      "id": 117131191470,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191470",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:32:34.7912542Z Ran 3628 tests in 116.774s",
+        "2026-10-16T18:46:50.2506246Z TOTAL                                                                                                                         44836    443  99.01%",
+        "2026-10-16T18:46:50.2506642Z Required test coverage of 99.0% reached. Total coverage: 99.01%",
+        "2026-10-16T18:46:50.2507019Z 43982 passed, 31 skipped, 14459 subtests passed in 850.20s (0:14:10)",
+        "2026-10-16T18:47:26.2117661Z 9 passed in 32.72s",
+        "2026-10-16T18:48:16.3644480Z 4 passed in 0.06s"
+      ],
+      "log": "tag-logs/117131191470.txt.gz",
+      "log_sha256": "ec874b68530c0710eab7540220592e2dca1e7e8422970268d29e0a0a92497257",
+      "compressed_sha256": "084bd323f7e9f6519f9989ccb3aef4eb7feff485d6c702a0278855f602b4143d"
+    },
+    {
+      "name": "Test (Python 3.13)",
+      "id": 117131191529,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191529",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:32:25.9925512Z Ran 3628 tests in 109.049s",
+        "2026-10-16T18:45:46.0710022Z 43982 passed, 31 skipped, 14459 subtests passed in 790.11s (0:13:10)",
+        "2026-10-16T18:48:20.0987107Z 4 passed in 0.06s"
+      ],
+      "log": "tag-logs/117131191529.txt.gz",
+      "log_sha256": "0e06649936bfd717876ac537c2c1b1ea89b8c78bde1722edcdd47aefcf6be92e",
+      "compressed_sha256": "00c602ea306244a8bc1a3aa05aab1649722dc759a5af015ee788eecd7dfd77cb"
+    },
+    {
+      "name": "Required MongoDB release differential / MongoDB 7.0 differential",
+      "id": 117131191629,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191629",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:30:38.3179682Z Ran 29 tests in 1.072s",
+        "2026-10-16T18:32:16.1352581Z 3360 passed in 84.17s (0:01:24)",
+        "2026-10-16T18:46:28.4306347Z 31466 passed, 9528 subtests passed in 799.50s (0:13:19)"
+      ],
+      "log": "tag-logs/117131191629.txt.gz",
+      "log_sha256": "19f321462d16ae0d2643e54d17c0a979b0d5391743669d224829a16874f2d3cd",
+      "compressed_sha256": "fe950620fba1a014ab6decf3cd54d4d313a54f4a43978f82c4a9867a95dc1944"
+    },
+    {
+      "name": "Pytest kit (3.13, pytest 9.1.1, SDK 4.19.0)",
+      "id": 117131191680,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191680",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:37:26.6220097Z 3454 passed in 434.83s (0:07:14)"
+      ],
+      "log": "tag-logs/117131191680.txt.gz",
+      "log_sha256": "5ec2959f71b1d5b28e093b777c3e3450f3522b2ce57dc4cfbede176f278f45c0",
+      "compressed_sha256": "74bdca53e8ac71d1db2be45d24e8c19c14188e4da0b51d444737279d4b8701ed"
+    },
+    {
+      "name": "Pytest kit (3.14, pytest 9.1.1, SDK 4.9.2)",
+      "id": 117131191693,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191693",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:37:56.2908184Z 3454 passed in 454.01s (0:07:34)"
+      ],
+      "log": "tag-logs/117131191693.txt.gz",
+      "log_sha256": "ddfb1320ffe3ec40f0827a747161ce5211119c4a28a935b78213fd3304d9fd2a",
+      "compressed_sha256": "2dbf6b740f94ddc35c70e502e39796b52841127ceb9dddec11059aba2ac1211a"
+    },
+    {
+      "name": "Pytest kit (3.14, pytest 8.4.2, SDK 4.9.2)",
+      "id": 117131191710,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191710",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:34:47.0520358Z 3454 passed in 270.68s (0:04:30)"
+      ],
+      "log": "tag-logs/117131191710.txt.gz",
+      "log_sha256": "11c875c0e8174b8672487a32b538c59e09128f4ff620a43e997f6603658d17a3",
+      "compressed_sha256": "a6079f42af0f880dab7ff2db390a30497b02604ef68959125a694b8c27c91b70"
+    },
+    {
+      "name": "Pytest kit (3.13, pytest 8.4.2, SDK 4.19.0)",
+      "id": 117131191718,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191718",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:35:39.3923349Z 3454 passed in 329.08s (0:05:29)"
+      ],
+      "log": "tag-logs/117131191718.txt.gz",
+      "log_sha256": "4d5534b3fa53db2ea346b34f698f5c25cbfa1f508004b3ff77dd4ad7bab7742a",
+      "compressed_sha256": "417eb0915eed34daa3c65e4d466b092f5a082a3ad12c6991a342d2450e0b6bcd"
+    },
+    {
+      "name": "Required MongoDB release differential / MongoDB 9.0 differential",
+      "id": 117131191722,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191722",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:30:51.4558865Z Ran 29 tests in 0.978s",
+        "2026-10-16T18:32:51.9869984Z 3360 passed in 100.83s (0:01:40)",
+        "2026-10-16T18:43:30.6626701Z 31466 passed, 9528 subtests passed in 567.94s (0:09:27)"
+      ],
+      "log": "tag-logs/117131191722.txt.gz",
+      "log_sha256": "dc445387119024711919acf1cd357dd8b14d082116952687ffba5b0ea4c5e5d2",
+      "compressed_sha256": "87fc141eac783e42a8281b8f633f4ef5f538a5c91cf8ceedbbbe528c74a0f152"
+    },
+    {
+      "name": "Pytest kit (3.14, pytest 9.1.1, SDK 4.19.0)",
+      "id": 117131191729,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191729",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:37:05.7184269Z 3454 passed in 410.34s (0:06:50)"
+      ],
+      "log": "tag-logs/117131191729.txt.gz",
+      "log_sha256": "29b560dc531ad6e54109dfdbdd0726466b38bc63f58dde3392a340b28a576166",
+      "compressed_sha256": "18b77ab98e49721cf1cff333c821366bed663438d4fef7e288618b7d3a234869"
+    },
+    {
+      "name": "Required MongoDB release differential / MongoDB 8.0 differential",
+      "id": 117131191761,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191761",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:30:39.2994343Z Ran 29 tests in 1.087s",
+        "2026-10-16T18:32:12.0682973Z 3360 passed in 80.25s (0:01:20)",
+        "2026-10-16T18:46:07.1470802Z 31466 passed, 9528 subtests passed in 782.47s (0:13:02)"
+      ],
+      "log": "tag-logs/117131191761.txt.gz",
+      "log_sha256": "f3777f99719e506151c6315bfc14ab927935658285897b8073bfe63157b6fa30",
+      "compressed_sha256": "e75fd47c20f65a2e04ff904801096cf1cf7112605047fdf130b7f1d641afeaac"
+    },
+    {
+      "name": "Pytest kit (3.13, pytest 9.1.1, SDK 4.9.2)",
+      "id": 117131191781,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191781",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:35:47.2032520Z 3454 passed in 335.98s (0:05:35)"
+      ],
+      "log": "tag-logs/117131191781.txt.gz",
+      "log_sha256": "7024a79d6e7e9cd3fd95879a9e209d9a85e20a3abc2e552e356a68c0748914fc",
+      "compressed_sha256": "3d4f3c7d7c161373a52b003326f6187718c6ffa3eb3602f17435f27203853883"
+    },
+    {
+      "name": "Pytest kit (3.15, pytest 8.4.2, SDK 4.19.0)",
+      "id": 117131191796,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191796",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:44:49.3367440Z 3454 passed in 449.53s (0:07:29)"
+      ],
+      "log": "tag-logs/117131191796.txt.gz",
+      "log_sha256": "2ab5c5ab5a72c4036d147968c4b740cd39039e48c26adac1823c82e02de4a6fb",
+      "compressed_sha256": "95fde6e79581f0ab810586c05847ace4e6d2ca133f3f3f5d0599e57075d3bfd3"
+    },
+    {
+      "name": "Pytest kit (3.15, pytest 9.1.1, SDK 4.9.2)",
+      "id": 117131191805,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191805",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:44:10.2739567Z 3454 passed in 408.72s (0:06:48)"
+      ],
+      "log": "tag-logs/117131191805.txt.gz",
+      "log_sha256": "ba963306495d70a97a5c5eb47358c4d626c1444e5c80266e33f2cddc258883cf",
+      "compressed_sha256": "4e13048458552fda21f2e756f3c862138d9f2f6aa0e54dbcc5519fda1e4e09fe"
+    },
+    {
+      "name": "Pytest kit (3.15, pytest 8.4.2, SDK 4.9.2)",
+      "id": 117131191814,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191814",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:44:22.1666841Z 3454 passed in 412.86s (0:06:52)"
+      ],
+      "log": "tag-logs/117131191814.txt.gz",
+      "log_sha256": "e818e12db04b8bcb0d32236109ed70d9cecdf60ddf797f4e955eec601d38e99d",
+      "compressed_sha256": "2ec973e566b549ca64d22977a2987547984f36d9231bc39a6387620ff1860132"
+    },
+    {
+      "name": "Pytest kit (3.14, pytest 8.4.2, SDK 4.19.0)",
+      "id": 117131191930,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191930",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:34:42.3635542Z 3454 passed in 272.15s (0:04:32)"
+      ],
+      "log": "tag-logs/117131191930.txt.gz",
+      "log_sha256": "fddaf2b5211850bafeafbd477a950d41f7316de1b46ebf52d843a88ce63775d8",
+      "compressed_sha256": "d39f6861528db2b3e45af3804fc613b49cb4a01813ed86d7e492369014c6f0bf"
+    },
+    {
+      "name": "Pytest kit (3.13, pytest 8.4.2, SDK 4.9.2)",
+      "id": 117131191940,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131191940",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:36:58.3623794Z 3454 passed in 408.02s (0:06:48)"
+      ],
+      "log": "tag-logs/117131191940.txt.gz",
+      "log_sha256": "8277e18651f11ec3e7e7d35c1e9622ba87bc3af91e27b75248df697b6b600354",
+      "compressed_sha256": "099493f0be22e49ca365903c0b2594baee4d4f0cfde11e584793aa1503b29887"
+    },
+    {
+      "name": "Pytest kit (3.15, pytest 9.1.1, SDK 4.19.0)",
+      "id": 117131192005,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117131192005",
+      "conclusion": "success",
+      "summaries": [
+        "2026-10-16T18:44:23.6387912Z 3454 passed in 430.43s (0:07:10)"
+      ],
+      "log": "tag-logs/117131192005.txt.gz",
+      "log_sha256": "53ef963ad47e5031d330ff9d3f5741d1f9257cc0e516adce8cab8249cf3565ad",
+      "compressed_sha256": "74ed14d90702789486fd1081d394fa1195b623b9705f2eaeebd9e2ab0f339464"
+    },
+    {
+      "name": "Publish tagged release",
+      "id": 117145017813,
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38947726603/job/117145017813",
+      "conclusion": "success",
+      "summaries": [],
+      "log": "tag-logs/117145017813.txt.gz",
+      "log_sha256": "8e3c6bf3c9618a5dea13c5937b5794ab8d6e8677d8420cf201dc1585d7f56497",
+      "compressed_sha256": "0f88083012ed81e38978fde3db113d35ac99cafefe2815adc34faa15fcc6200c"
+    }
+  ]
+}

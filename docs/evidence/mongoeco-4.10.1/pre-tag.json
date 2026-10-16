@@ -1,0 +1,22 @@
+{
+  "commit": "14b7293832101750f20930cbf15019f6d764c1eb",
+  "tag": "v4.10.1",
+  "tag_object": "36babd23d5c55a437b7d707c110982c22b2a6d8e",
+  "gates": [
+    {
+      "conclusion": "success",
+      "headSha": "14b7293832101750f20930cbf15019f6d764c1eb",
+      "status": "completed",
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38943954138"
+    },
+    {
+      "conclusion": "success",
+      "headSha": "14b7293832101750f20930cbf15019f6d764c1eb",
+      "status": "completed",
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38943954628"
+    }
+  ],
+  "working_tree_clean": true,
+  "remote_main_matches": true,
+  "version_available_before_tag": true
+}

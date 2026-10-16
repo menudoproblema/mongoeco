@@ -1,0 +1,8 @@
+{
+  "commit": "14b7293832101750f20930cbf15019f6d764c1eb",
+  "tree": "a80d0ff93b867feec4f4c8925c9ecb374771c74a",
+  "workset_sha256": "ab977aa4250790921cd42ef5d26b0b15899657b69bff3af78a32bfd4fe976d1a",
+  "algorithm": "SHA256 of sorted compact JSON tracked path-to-SHA256 mapping",
+  "tracked_files": 3146,
+  "manifest_sha256": "ab977aa4250790921cd42ef5d26b0b15899657b69bff3af78a32bfd4fe976d1a"
+}

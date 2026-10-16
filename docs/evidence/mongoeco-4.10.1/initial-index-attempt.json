@@ -1,0 +1,29 @@
+{
+  "status": "failed",
+  "cause": "PyPI simple index returned only versions through4.10.0 immediately after4.10.1 upload; JSON API and artifact downloads already available",
+  "files": {
+    "public-contract.log": "4e36f7ccd6cc99931cd8d1ffa8647e1c85b6fdc51231ad4ed610f696e0f148ec",
+    "public-gates.json": "301eb25c799a6dc1731eab5a54398bc2efa9dee5d9bf8685ceca19741b000797",
+    "public-run.log": "a207d5b4afd27f871033c0cb042c4aae7cb396affad6da2018eded51ed7cc20f"
+  },
+  "retained_files": [
+    {
+      "original": "public-contract.log",
+      "file": "initial-index-public-contract.log.gz",
+      "content_sha256": "4e36f7ccd6cc99931cd8d1ffa8647e1c85b6fdc51231ad4ed610f696e0f148ec",
+      "compressed_sha256": "fb4cba6ad7f6d8b8e8cee126f29d03a4f18f8cf6f2cfac2d4f2bb6e35ec13750"
+    },
+    {
+      "original": "public-gates.json",
+      "file": "initial-index-public-gates.json.gz",
+      "content_sha256": "301eb25c799a6dc1731eab5a54398bc2efa9dee5d9bf8685ceca19741b000797",
+      "compressed_sha256": "cf2ed43561d5fff5af584e8998d8f7d3ebe74c7ea8f6ab073f26e41cfb4ab13d"
+    },
+    {
+      "original": "public-run.log",
+      "file": "initial-index-public-run.log.gz",
+      "content_sha256": "a207d5b4afd27f871033c0cb042c4aae7cb396affad6da2018eded51ed7cc20f",
+      "compressed_sha256": "5e2c86403ad45b48d399cb5210c171db75d024e39a2947f16d51a2ec180687ba"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "version": "4.10.1",
+  "module": "/Users/uve/Proyectos/mongoeco/.tmp/release-4.10.1/published-venv/lib/python3.14/site-packages/mongoeco",
+  "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "runtime_files": 289,
+  "identical_to_public_wheel": true,
+  "installation_source": "Official PyPI wheel URL with SHA256 while simple index propagates; named-index contract verified separately",
+  "dependencies": {
+    "mongoeco": "4.10.1",
+    "pymongo": "4.19.0",
+    "pytest": "9.1.1",
+    "pytest-asyncio": "1.4.0",
+    "anyio": "4.15.1",
+    "pytest-xdist": "3.8.0",
+    "hypothesis": "6.170.1",
+    "usearch": "2.26.4",
+    "shapely": "2.2.0"
+  }
+}

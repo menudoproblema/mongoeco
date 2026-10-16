@@ -1,0 +1,158 @@
+[
+  {
+    "target": "7.0",
+    "mongodb": "7.0.43",
+    "git_version": "ef5a7d3480b59feae13d564376129fc4ceee6177",
+    "fcv": {
+      "version": "7.0"
+    },
+    "sdk": "4.19.0",
+    "native_sync_async_equal": true,
+    "native_physical_connection_reuse": true,
+    "scenarios": 1072,
+    "comparison": "existing check_reference/comparable; diagnostic wording, exception module and implicit unique-index metadata normalization retained; codes, counters and application BSON preserved",
+    "comparable_observations_equal_fixture": true,
+    "raw_differing_scenarios": [
+      "create_unique_duplicates",
+      "create_unique_code_duplicates"
+    ],
+    "capture_sha256": "26092d43a91305e0d4ee67234321aa81e93201576d63aedaf5a2c9947655b136",
+    "fixture_sha256": "1e2d9a07c6e9c2f3ced08cce06cc9e63f1187bbb0086afca6f87d40f6bb24186",
+    "inputs_sha256": {
+      "tests/differential/error_phase_cases.py": "13095536f3c5e90ccb7c7133654842c2ba371e7467c6ac1f0bb71d95a0373bae",
+      "tests/differential/error_absence_cases.py": "af2e2e416f08d6cb1eb826a1fd3d5454540c40ed02ccc7eb4b209a16cfbe5c9e",
+      "tests/differential/error_composition_cases.py": "1231f7528b184e828475f05f6bca53e8fa9c0a1c5c97a4fb96d1bd2cd2b908be",
+      "tests/differential/write_cases.py": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+      "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+      "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+    },
+    "sdk49_capture_sha256": "f1a1c7ca980f2b8ca5c0da66d1081c31086811fe855a47645ec761036514b6ea",
+    "sdk49": "4.9.2",
+    "sdk49_native_sync_async_equal": true,
+    "sdk49_native_physical_connection_reuse": true,
+    "sdk49_delta_cases": [
+      "multi_partial_True",
+      "multi_partial_False"
+    ]
+  },
+  {
+    "target": "8.0",
+    "mongodb": "8.0.32",
+    "git_version": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+    "fcv": {
+      "version": "8.0"
+    },
+    "sdk": "4.19.0",
+    "native_sync_async_equal": true,
+    "native_physical_connection_reuse": true,
+    "scenarios": 1072,
+    "comparison": "existing check_reference/comparable; diagnostic wording, exception module and implicit unique-index metadata normalization retained; codes, counters and application BSON preserved",
+    "comparable_observations_equal_fixture": true,
+    "raw_differing_scenarios": [
+      "create_unique_duplicates",
+      "create_unique_code_duplicates",
+      "composition_command_shape_findAndModify_bypassDocumentValidation_[]",
+      "composition_command_shape_findAndModify_bypassDocumentValidation_{}",
+      "composition_command_shape_update_bypassDocumentValidation_[]",
+      "composition_command_shape_update_bypassDocumentValidation_{}",
+      "composition_command_shape_delete_bypassDocumentValidation_[]",
+      "composition_command_shape_delete_bypassDocumentValidation_{}",
+      "composition_flag_update_bypassDocumentValidation_5",
+      "composition_flag_update_bypassDocumentValidation_6",
+      "composition_flag_update_bypassDocumentValidation_7",
+      "composition_flag_delete_bypassDocumentValidation_5",
+      "composition_flag_delete_bypassDocumentValidation_6",
+      "composition_flag_delete_bypassDocumentValidation_7",
+      "composition_flag_findAndModify_bypassDocumentValidation_5",
+      "composition_flag_findAndModify_bypassDocumentValidation_6",
+      "composition_flag_findAndModify_bypassDocumentValidation_7",
+      "composition_flag_findAndModify_upsert_5",
+      "composition_flag_findAndModify_upsert_6",
+      "composition_flag_findAndModify_upsert_7",
+      "composition_flag_findAndModify_new_5",
+      "composition_flag_findAndModify_new_6",
+      "composition_flag_findAndModify_new_7",
+      "composition_flag_findAndModify_remove_5",
+      "composition_flag_findAndModify_remove_6",
+      "composition_flag_findAndModify_remove_7"
+    ],
+    "capture_sha256": "d7d11589bdb7cd3b731898af5470ef958b89ff675710618164a585b98370eaf6",
+    "fixture_sha256": "e7cf4e8d52bc039fa078ad002fb03853eba463a4ab54f8ec3fc587e37686d543",
+    "inputs_sha256": {
+      "tests/differential/error_phase_cases.py": "13095536f3c5e90ccb7c7133654842c2ba371e7467c6ac1f0bb71d95a0373bae",
+      "tests/differential/error_absence_cases.py": "af2e2e416f08d6cb1eb826a1fd3d5454540c40ed02ccc7eb4b209a16cfbe5c9e",
+      "tests/differential/error_composition_cases.py": "1231f7528b184e828475f05f6bca53e8fa9c0a1c5c97a4fb96d1bd2cd2b908be",
+      "tests/differential/write_cases.py": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+      "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+      "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+    },
+    "sdk49_capture_sha256": "373f81766af561563ffeb6d1dd7875200925fc366bcc483b06c09e8f0b8a88f3",
+    "sdk49": "4.9.2",
+    "sdk49_native_sync_async_equal": true,
+    "sdk49_native_physical_connection_reuse": true,
+    "sdk49_delta_cases": [
+      "multi_partial_True",
+      "multi_partial_False"
+    ]
+  },
+  {
+    "target": "9.0",
+    "mongodb": "9.0.2",
+    "git_version": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+    "fcv": {
+      "version": "9.0"
+    },
+    "sdk": "4.19.0",
+    "native_sync_async_equal": true,
+    "native_physical_connection_reuse": true,
+    "scenarios": 1072,
+    "comparison": "existing check_reference/comparable; diagnostic wording, exception module and implicit unique-index metadata normalization retained; codes, counters and application BSON preserved",
+    "comparable_observations_equal_fixture": true,
+    "raw_differing_scenarios": [
+      "create_unique_duplicates",
+      "create_unique_code_duplicates",
+      "composition_command_shape_findAndModify_bypassDocumentValidation_[]",
+      "composition_command_shape_findAndModify_bypassDocumentValidation_{}",
+      "composition_command_shape_update_bypassDocumentValidation_[]",
+      "composition_command_shape_update_bypassDocumentValidation_{}",
+      "composition_command_shape_delete_bypassDocumentValidation_[]",
+      "composition_command_shape_delete_bypassDocumentValidation_{}",
+      "composition_flag_update_bypassDocumentValidation_5",
+      "composition_flag_update_bypassDocumentValidation_6",
+      "composition_flag_update_bypassDocumentValidation_7",
+      "composition_flag_delete_bypassDocumentValidation_5",
+      "composition_flag_delete_bypassDocumentValidation_6",
+      "composition_flag_delete_bypassDocumentValidation_7",
+      "composition_flag_findAndModify_bypassDocumentValidation_5",
+      "composition_flag_findAndModify_bypassDocumentValidation_6",
+      "composition_flag_findAndModify_bypassDocumentValidation_7",
+      "composition_flag_findAndModify_upsert_5",
+      "composition_flag_findAndModify_upsert_6",
+      "composition_flag_findAndModify_upsert_7",
+      "composition_flag_findAndModify_new_5",
+      "composition_flag_findAndModify_new_6",
+      "composition_flag_findAndModify_new_7",
+      "composition_flag_findAndModify_remove_5",
+      "composition_flag_findAndModify_remove_6",
+      "composition_flag_findAndModify_remove_7"
+    ],
+    "capture_sha256": "fa92fa8cd8674b0b864a9085c93209c7e549ce75ad2f965915a0b2087d880c3e",
+    "fixture_sha256": "c03a0181062ea8ad288531d2545d200295273854bd23ef4646b666bf55195143",
+    "inputs_sha256": {
+      "tests/differential/error_phase_cases.py": "13095536f3c5e90ccb7c7133654842c2ba371e7467c6ac1f0bb71d95a0373bae",
+      "tests/differential/error_absence_cases.py": "af2e2e416f08d6cb1eb826a1fd3d5454540c40ed02ccc7eb4b209a16cfbe5c9e",
+      "tests/differential/error_composition_cases.py": "1231f7528b184e828475f05f6bca53e8fa9c0a1c5c97a4fb96d1bd2cd2b908be",
+      "tests/differential/write_cases.py": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+      "tests/support_error_phases.py": "59c1e030f2e06b84bb729798232c0a9f1515f3388625e206e42c1db792eb9499",
+      "tests/support_write_parity.py": "0cf634d7cd456b6d88ecdee739663465d4afac8181054b6b56dd883fee921992"
+    },
+    "sdk49_capture_sha256": "1fbcd27d715a05d6eec197d712b00b69c114e0ed8b94e8d9d94ebfd64affa760",
+    "sdk49": "4.9.2",
+    "sdk49_native_sync_async_equal": true,
+    "sdk49_native_physical_connection_reuse": true,
+    "sdk49_delta_cases": [
+      "multi_partial_True",
+      "multi_partial_False"
+    ]
+  }
+]

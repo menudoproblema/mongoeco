@@ -1,0 +1,17 @@
+{
+  "version": "4.10.1",
+  "files": {
+    "mongoeco-4.10.1.tar.gz": "15b62fffe166247ae5bd7e9c7d69bb290030a9afe53811f11eb4a4b5a9716c2b",
+    "mongoeco-4.10.1-py3-none-any.whl": "0b4419ec41777a2914e1a331473c5bc2dc3e9770c31a61061b894d89135a7ddd"
+  },
+  "identical_second_build": true,
+  "runtime_files": 289,
+  "delta_from_final_implementation_wheel": [
+    "mongoeco/_version.py",
+    "mongoeco/core/resources/ICU-LICENSE.txt"
+  ],
+  "source_matches": true,
+  "public_manifest_delta": [
+    "packageVersion"
+  ]
+}
