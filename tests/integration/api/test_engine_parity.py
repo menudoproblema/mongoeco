@@ -89,7 +89,7 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(memory_documents, sqlite_documents)
 
-    async def test_id_uniqueness_preserves_storage_key_semantics(self):
+    async def test_id_uniqueness_uses_bson_numeric_equality(self):
         ids = [
             SON([("a", 1), ("b", 2)]),
             Binary(b"abc", subtype=1),
@@ -99,21 +99,29 @@ class EngineParityTests(unittest.IsolatedAsyncioTestCase):
             async with open_client(engine_name) as client:
                 collection = client.get_database("db").get_collection("ids")
                 for index, document_id in enumerate(ids):
-                    with self.subTest(engine=engine_name, document_id=repr(document_id)):
-                        await collection.insert_one({"_id": document_id, "index": index})
+                    with self.subTest(
+                        engine=engine_name, document_id=repr(document_id)
+                    ):
+                        await collection.insert_one(
+                            {"_id": document_id, "index": index}
+                        )
                         with self.assertRaises(DuplicateKeyError):
-                            await collection.insert_one({"_id": document_id, "index": index + 100})
+                            await collection.insert_one(
+                                {"_id": document_id, "index": index + 100}
+                            )
 
                 await collection.insert_one({"_id": 1, "kind": "int"})
-                await collection.insert_one({"_id": 1.0, "kind": "float"})
-                self.assertEqual(await collection.count_documents({}), len(ids) + 2)
+                with self.assertRaises(DuplicateKeyError) as duplicate:
+                    await collection.insert_one({"_id": 1.0, "kind": "float"})
+                self.assertEqual(duplicate.exception.code, 11000)
+                self.assertEqual(await collection.count_documents({}), len(ids) + 1)
 
     async def test_insert_many_duplicate_id_stops_at_duplicate_in_memory_and_sqlite(self):
         for engine_name in ("memory", "sqlite"):
             async with open_client(engine_name) as client:
                 collection = client.get_database("db").get_collection("bulk_ids")
                 with self.subTest(engine=engine_name):
-                    with self.assertRaises(DuplicateKeyError):
+                    with self.assertRaises(BulkWriteError):
                         await collection.insert_many(
                             [
                                 {"_id": "a", "value": 1},

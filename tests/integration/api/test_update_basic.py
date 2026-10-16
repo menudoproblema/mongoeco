@@ -293,12 +293,17 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                         {'_id': {'a': [1]}, 'ok': True},
                     )
 
-                    with self.assertRaises(OperationFailure):
+                    with self.assertRaises(BulkWriteError) as insert_error:
                         await coll.insert_many(
                             [{'_id': 'valid-before-error'}, {'_id': [2]}]
                         )
-                    self.assertIsNone(
-                        await coll.find_one({'_id': 'valid-before-error'})
+                    self.assertEqual(insert_error.exception.details['nInserted'], 1)
+                    self.assertEqual(
+                        insert_error.exception.details['writeErrors'][0]['code'], 53
+                    )
+                    self.assertEqual(
+                        await coll.find_one({'_id': 'valid-before-error'}),
+                        {'_id': 'valid-before-error'},
                     )
 
                     with self.assertRaises(BulkWriteError) as bulk_error:
@@ -418,7 +423,7 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                         }
                     )
 
-                    self.assertEqual(update_result['n'], 0)
+                    self.assertEqual(update_result['n'], 1)
                     self.assertEqual(update_result['nModified'], 0)
                     self.assertEqual(
                         update_result['upserted'],
@@ -430,27 +435,26 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                     )
 
                     await coll.insert_one({'_id': '1', 'name': 'Ada'})
-                    with self.assertRaises(BulkWriteError) as command_error:
-                        await database.command(
-                            {
-                                'update': 'test_coll',
-                                'updates': [
-                                    {
-                                        'q': {'_id': '1'},
-                                        'u': [{'$set': {'_id': '2'}}],
-                                    },
-                                ],
-                            }
-                        )
+                    command_error = await database.command(
+                        {
+                            'update': 'test_coll',
+                            'updates': [
+                                {
+                                    'q': {'_id': '1'},
+                                    'u': [{'$set': {'_id': '2'}}],
+                                },
+                            ],
+                        }
+                    )
 
                     self.assertEqual(
-                        command_error.exception.details['writeErrors'][0][
+                        command_error['writeErrors'][0][
                             'index'
                         ],
                         0,
                     )
                     self.assertEqual(
-                        command_error.exception.details['writeErrors'][0][
+                        command_error['writeErrors'][0][
                             'code'
                         ],
                         66,
@@ -461,29 +465,26 @@ class TestUpdateIntegration(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertIsNone(await coll.find_one({'_id': '2'}))
 
-                    with self.assertRaises(
-                        BulkWriteError
-                    ) as replacement_command_error:
-                        await database.command(
-                            {
-                                'update': 'test_coll',
-                                'updates': [
-                                    {
-                                        'q': {'_id': '1'},
-                                        'u': {'_id': '2', 'name': 'Grace'},
-                                    },
-                                ],
-                            }
-                        )
+                    replacement_command_error = await database.command(
+                        {
+                            'update': 'test_coll',
+                            'updates': [
+                                {
+                                    'q': {'_id': '1'},
+                                    'u': {'_id': '2', 'name': 'Grace'},
+                                },
+                            ],
+                        }
+                    )
 
                     self.assertEqual(
-                        replacement_command_error.exception.details[
+                        replacement_command_error[
                             'writeErrors'
                         ][0]['index'],
                         0,
                     )
                     self.assertEqual(
-                        replacement_command_error.exception.details[
+                        replacement_command_error[
                             'writeErrors'
                         ][0]['code'],
                         66,

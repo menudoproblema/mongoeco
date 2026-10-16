@@ -9,6 +9,16 @@ _ACCEPTED_NOOP = OptionSupportStatus.ACCEPTED_NOOP
 
 OPERATION_OPTION_SUPPORT_CATALOG = MappingProxyType(
     {
+        "insert_one": MappingProxyType(
+            {
+                "comment": OperationOptionSupport(_EFFECTIVE, "Preserved in insert profiling, active operations and session metadata."),
+            }
+        ),
+        "insert_many": MappingProxyType(
+            {
+                "comment": OperationOptionSupport(_EFFECTIVE, "Preserved in batch insert profiling, active operations and session metadata."),
+            }
+        ),
         "find": MappingProxyType(
             {
                 "hint": OperationOptionSupport(_EFFECTIVE, "Validated against existing indexes and applied to read planning/explain where engines can honor it."),
@@ -311,8 +321,16 @@ DATABASE_COMMAND_OPTION_SUPPORT_CATALOG = MappingProxyType(
         ),
         "validate": MappingProxyType(
             {
-                "scandata": OperationOptionSupport(_ACCEPTED_NOOP, "Accepted and type-checked; validation reports a warning and performs the same local scan."),
-                "full": OperationOptionSupport(_ACCEPTED_NOOP, "Accepted and type-checked; validation reports a warning and performs the same local pass."),
+                "scandata": OperationOptionSupport(
+                    _ACCEPTED_NOOP,
+                    "Accepted and type-checked; validation reports a warning "
+                    "and performs the same local scan.",
+                ),
+                "full": OperationOptionSupport(
+                    _ACCEPTED_NOOP,
+                    "Accepted and type-checked; validation reports a warning "
+                    "and performs the same local pass.",
+                ),
                 "background": OperationOptionSupport(
                     _ACCEPTED_NOOP,
                     (

@@ -19,6 +19,8 @@ from mongoeco.wire import AsyncMongoEcoProxyServer
 
 ENGINE_TYPES = [MemoryEngine, SQLiteEngine]
 SURFACES = ["api", "wire"]
+VALIDATION_ERROR_CODE = 121
+
 Command = Callable[[dict[str, object]], Awaitable[dict[str, Any]]]
 
 
@@ -56,7 +58,10 @@ def test_ordered_write_batch_controls_later_success_after_first_error(
 ) -> None:
     async def exercise(execute: Command) -> None:
         await execute(
-            {"insert": "items", "documents": [{"_id": 1, "value": "initial"}]}
+            {
+                "insert": "items",
+                "documents": [{"_id": 1, "value": "initial", "n": "bad"}],
+            }
         )
         if command_name == "insert":
             request: dict[str, object] = {
@@ -71,7 +76,7 @@ def test_ordered_write_batch_controls_later_success_after_first_error(
             request = {
                 "update": "items",
                 "updates": [
-                    {"q": {"_id": 1}, "u": {"$set": {"value": "bad"}}, "multi": "bad"},
+                    {"q": {"_id": 1}, "u": {"$inc": {"n": 1}}},
                     {"q": {"_id": 1}, "u": {"$set": {"value": "later"}}},
                 ],
                 "ordered": ordered,
@@ -80,14 +85,14 @@ def test_ordered_write_batch_controls_later_success_after_first_error(
             request = {
                 "delete": "items",
                 "deletes": [
-                    {"q": {"_id": 1}, "limit": 2},
+                    {"q": {"_id": 1}, "limit": 1, "hint": "missing"},
                     {"q": {"_id": 1}, "limit": 1},
                 ],
                 "ordered": ordered,
             }
-        with pytest.raises(BulkWriteError) as failure:
-            await execute(request)
-        assert [row["index"] for row in failure.value.details["writeErrors"]] == [0]
+        failure = await execute(request)
+        assert failure["ok"] == 1.0
+        assert [row["index"] for row in failure["writeErrors"]] == [0]
         found = await execute({"find": "items"})
         documents = found["cursor"]["firstBatch"]
         if command_name == "insert":
@@ -97,15 +102,7 @@ def test_ordered_write_batch_controls_later_success_after_first_error(
         else:
             assert len(documents) == (1 if ordered else 0)
         if not ordered:
-            count_fields = {
-                "insert": "nInserted",
-                "update": "nMatched",
-                "delete": "nRemoved",
-            }
-            count_field = count_fields[
-                command_name
-            ]
-            assert failure.value.details[count_field] == 1
+            assert failure["n"] == 1
 
     asyncio.run(with_command(engine_type, surface, exercise))
 
@@ -126,10 +123,13 @@ def test_create_indexes_max_time_ms_bounds_index_batch(
                 message = "controlled index deadline"
                 raise ExecutionTimeout(message)
 
-        with patch(
-            "mongoeco.api._async._collection_indexing.enforce_deadline",
-            side_effect=fail_on_deadline,
-        ), pytest.raises(ExecutionTimeout, match="controlled index deadline"):
+        with (
+            patch(
+                "mongoeco.api._async._collection_indexing.enforce_deadline",
+                side_effect=fail_on_deadline,
+            ),
+            pytest.raises(ExecutionTimeout, match="controlled index deadline"),
+        ):
             await execute({**request, "maxTimeMS": 17})
         indexes = await execute({"listIndexes": "items"})
         assert "kind_idx" not in {
@@ -175,9 +175,7 @@ def test_bypass_document_validation_changes_schema_enforcement(
         elif command_name == "update":
             request = {
                 "update": "items",
-                "updates": [
-                    {"q": {"_id": 1}, "u": {"$unset": {"name": ""}}}
-                ],
+                "updates": [{"q": {"_id": 1}, "u": {"$unset": {"name": ""}}}],
             }
         else:
             request = {
@@ -186,10 +184,14 @@ def test_bypass_document_validation_changes_schema_enforcement(
                 "update": {"$unset": {"name": ""}},
                 "new": True,
             }
-        with pytest.raises((BulkWriteError, OperationFailure)):
-            await execute(request)
-        with pytest.raises((BulkWriteError, OperationFailure)):
-            await execute({**request, "bypassDocumentValidation": False})
+        for invalid in (request, {**request, "bypassDocumentValidation": False}):
+            if command_name == "findAndModify":
+                with pytest.raises(OperationFailure):
+                    await execute(invalid)
+            else:
+                response = await execute(invalid)
+                assert response["ok"] == 1.0
+                assert response["writeErrors"][0]["code"] == VALIDATION_ERROR_CODE
         accepted = await execute({**request, "bypassDocumentValidation": True})
         assert accepted["ok"] == 1.0
         target_id = 2 if command_name == "insert" else 1
@@ -375,9 +377,7 @@ def test_find_and_modify_max_time_ms_reaches_update_deadline(
     engine_type: type[MemoryEngine | SQLiteEngine], surface: str
 ) -> None:
     async def exercise(execute: Command) -> None:
-        await execute(
-            {"insert": "items", "documents": [{"_id": 1, "value": "before"}]}
-        )
+        await execute({"insert": "items", "documents": [{"_id": 1, "value": "before"}]})
         request = {
             "findAndModify": "items",
             "query": {"_id": 1},
@@ -395,14 +395,13 @@ def test_find_and_modify_max_time_ms_reaches_update_deadline(
             if engine_type is MemoryEngine
             else "mongoeco.engines.sqlite"
         )
-        with patch(
-            f"{engine_module}.enforce_deadline", side_effect=fail_on_deadline
-        ), pytest.raises(ExecutionTimeout, match="controlled update deadline"):
+        with (
+            patch(f"{engine_module}.enforce_deadline", side_effect=fail_on_deadline),
+            pytest.raises(ExecutionTimeout, match="controlled update deadline"),
+        ):
             await execute({**request, "maxTimeMS": 17})
         unchanged = await execute({"find": "items", "filter": {"_id": 1}})
-        assert unchanged["cursor"]["firstBatch"] == [
-            {"_id": 1, "value": "before"}
-        ]
+        assert unchanged["cursor"]["firstBatch"] == [{"_id": 1, "value": "before"}]
         result = await execute(request)
         assert result["value"]["value"] == "after"
         with pytest.raises((TypeError, ValueError, OperationFailure)):
@@ -445,37 +444,44 @@ def test_find_and_modify_deadline_after_mutation_rolls_back(
                     mutation_complete = True
                     return result
 
-                with patch.object(
-                    engine, "_set_storage_document_locked", side_effect=set_and_mark
-                ), patch(
-                    "mongoeco.engines.memory.enforce_deadline",
-                    side_effect=fail_after_mutation,
-                ), pytest.raises(
-                    ExecutionTimeout, match="controlled post-mutation deadline"
+                with (
+                    patch.object(
+                        engine, "_set_storage_document_locked", side_effect=set_and_mark
+                    ),
+                    patch(
+                        "mongoeco.engines.memory.enforce_deadline",
+                        side_effect=fail_after_mutation,
+                    ),
+                    pytest.raises(
+                        ExecutionTimeout, match="controlled post-mutation deadline"
+                    ),
                 ):
                     await database.command(request)
             else:
+
                 def update_and_mark(*args: Any, **kwargs: Any) -> Any:
                     nonlocal mutation_complete
                     result = _sqlite_update_with_operation(*args, **kwargs)
                     mutation_complete = True
                     return result
 
-                with patch(
-                    "mongoeco.engines.sqlite._sqlite_update_with_operation",
-                    side_effect=update_and_mark,
-                ), patch(
-                    "mongoeco.engines.sqlite.enforce_deadline",
-                    side_effect=fail_after_mutation,
-                ), pytest.raises(
-                    ExecutionTimeout, match="controlled post-mutation deadline"
+                with (
+                    patch(
+                        "mongoeco.engines.sqlite._sqlite_update_with_operation",
+                        side_effect=update_and_mark,
+                    ),
+                    patch(
+                        "mongoeco.engines.sqlite.enforce_deadline",
+                        side_effect=fail_after_mutation,
+                    ),
+                    pytest.raises(
+                        ExecutionTimeout, match="controlled post-mutation deadline"
+                    ),
                 ):
                     await database.command(request)
             assert mutation_complete
             found = await database.command({"find": "items", "filter": {"_id": 1}})
-            assert found["cursor"]["firstBatch"] == [
-                {"_id": 1, "value": "before"}
-            ]
+            assert found["cursor"]["firstBatch"] == [{"_id": 1, "value": "before"}]
 
     asyncio.run(exercise())
 
@@ -500,14 +506,13 @@ def test_sqlite_find_and_modify_deadline_includes_worker_queue_wait() -> None:
                 "update": {"$set": {"value": "after"}},
                 "maxTimeMS": 20,
             }
-            with patch.object(
-                engine, "_run_blocking", side_effect=delayed_worker
-            ), pytest.raises(ExecutionTimeout):
+            with (
+                patch.object(engine, "_run_blocking", side_effect=delayed_worker),
+                pytest.raises(ExecutionTimeout),
+            ):
                 await database.command(request)
             found = await database.command({"find": "items", "filter": {"_id": 1}})
-            assert found["cursor"]["firstBatch"] == [
-                {"_id": 1, "value": "before"}
-            ]
+            assert found["cursor"]["firstBatch"] == [{"_id": 1, "value": "before"}]
 
     asyncio.run(exercise())
 
@@ -596,17 +601,13 @@ def test_command_let_controls_write_filter_and_spec_override(
         else:
             override = {
                 "delete": "items",
-                "deletes": [
-                    {"q": query, "limit": 1, "let": {"target": "click"}}
-                ],
+                "deletes": [{"q": query, "limit": 1, "let": {"target": "click"}}],
                 "let": {"target": "view"},
             }
         await execute(override)
         after_override = await execute({"find": "items", "sort": {"_id": 1}})
         if command_name == "update":
-            values = [
-                row["selected"] for row in after_override["cursor"]["firstBatch"]
-            ]
+            values = [row["selected"] for row in after_override["cursor"]["firstBatch"]]
             assert values == [
                 True,
                 "override",
@@ -619,7 +620,7 @@ def test_command_let_controls_write_filter_and_spec_override(
         malformed = dict(override)
         spec_name = "updates" if command_name == "update" else "deletes"
         malformed[spec_name] = [{**override[spec_name][0], "let": "click"}]
-        with pytest.raises(BulkWriteError):
+        with pytest.raises(OperationFailure):
             await execute(malformed)
 
     asyncio.run(with_command(engine_type, surface, exercise))

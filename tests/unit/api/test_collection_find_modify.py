@@ -1,5 +1,10 @@
+import asyncio
 import datetime
+
 from copy import deepcopy
+
+from mongoeco.api._async.collection import AsyncCollection
+from mongoeco.engines.memory import MemoryEngine
 
 from tests.unit.api._collection_test_support import *  # noqa: F403
 
@@ -51,7 +56,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
         self.assertEqual(result.matched_count, 0)
         self.assertEqual(result.modified_count, 0)
 
-    def test_replace_one_upsert_builds_seeded_document(self):
+    def test_replace_one_upsert_uses_replacement_without_filter_fields(self):
         async def _exercise():
             engine = MemoryEngine()
             await engine.connect()
@@ -76,8 +81,6 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
             document,
             {
                 "_id": result.upserted_id,
-                "kind": "missing",
-                "tenant": "a",
                 "done": True,
             },
         )
@@ -101,7 +104,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
 
         self.assertEqual(ctx.exception.code, 66)
 
-    def test_replace_one_identical_document_without_id_keeps_modified_count_zero(
+    def test_replace_one_identical_document_without_id_reports_native_modified_count(
         self,
     ):
         async def _exercise():
@@ -119,7 +122,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
         result, document = asyncio.run(_exercise())
 
         self.assertEqual(result.matched_count, 1)
-        self.assertEqual(result.modified_count, 0)
+        self.assertEqual(result.modified_count, 1)
         self.assertEqual(document, {"_id": "1", "a": 1, "b": 2})
 
     def test_replace_one_with_explicit_same_id_preserves_document_and_zero_modifications(
@@ -163,7 +166,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
         result, document = asyncio.run(_exercise())
 
         self.assertEqual(result.matched_count, 1)
-        self.assertEqual(result.modified_count, 0)
+        self.assertEqual(result.modified_count, 1)
         self.assertEqual(list(document.keys()), ["a", "_id", "b"])
 
     def test_replace_one_identical_document_without_id_preserves_trailing_id_position(
@@ -184,7 +187,7 @@ class AsyncCollectionFindModifyTests(AsyncCollectionHelperBase):
         result, document = asyncio.run(_exercise())
 
         self.assertEqual(result.matched_count, 1)
-        self.assertEqual(result.modified_count, 0)
+        self.assertEqual(result.modified_count, 1)
         self.assertEqual(list(document.keys()), ["a", "b", "_id"])
 
     def test_materialize_replacement_document_inserts_trailing_id_when_selected_has_it_last(

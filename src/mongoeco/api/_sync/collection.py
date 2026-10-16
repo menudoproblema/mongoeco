@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import datetime
 from threading import Lock
 
@@ -7,7 +7,7 @@ from mongoeco.api._sync.cursor import Cursor
 from mongoeco.api._sync.index_cursor import IndexCursor
 from mongoeco.api._sync.raw_batch_cursor import RawBatchCursor
 from mongoeco.api._sync.search_index_cursor import SearchIndexCursor
-from mongoeco.api.argument_validation import HintSpec
+from mongoeco.api.argument_validation import HintSpec, ProjectionInput
 from mongoeco.api.public_api import (
     ARG_UNSET,
     COLLECTION_COUNT_DOCUMENTS_SPEC,
@@ -51,7 +51,6 @@ from mongoeco.types import (
     InsertManyResult,
     InsertOneResult,
     PlanningMode,
-    Projection,
     ReadConcern,
     ReadPreference,
     ReturnDocument,
@@ -199,34 +198,40 @@ class Collection:
         *,
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
+        comment: object | None = None,
     ) -> InsertOneResult[DocumentId]:
         return self._run_collection_method(
             "insert_one",
             document,
             bypass_document_validation=bypass_document_validation,
             session=session,
+            comment=comment,
             inline=True,
         )
 
     def insert_many(
         self,
-        documents: list[Document],
+        documents: Iterable[Document],
         *,
+        ordered: bool = True,
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
+        comment: object | None = None,
     ) -> InsertManyResult[DocumentId]:
         return self._run_collection_method(
             "insert_many",
             documents,
+            ordered=ordered,
             bypass_document_validation=bypass_document_validation,
             session=session,
+            comment=comment,
             inline=True,
         )
 
     def find_one(
         self,
         filter_spec: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         *,
         filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
@@ -281,7 +286,7 @@ class Collection:
     def find(
         self,
         filter_spec: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         *,
         filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
@@ -382,7 +387,7 @@ class Collection:
     def find_raw_batches(
         self,
         filter_spec: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         *,
         filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
@@ -581,7 +586,7 @@ class Collection:
         *,
         filter: Filter | object = _FILTER_UNSET,
         update: Update | object = _UPDATE_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         upsert: bool = False,
@@ -640,7 +645,7 @@ class Collection:
         replacement: Document | object = ARG_UNSET,
         *,
         filter: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         upsert: bool = False,
@@ -695,7 +700,7 @@ class Collection:
         filter_spec: Filter | object = _FILTER_UNSET,
         *,
         filter: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         hint: HintSpec | None = None,

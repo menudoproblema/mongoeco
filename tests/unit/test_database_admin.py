@@ -11,7 +11,7 @@ from mongoeco.core.filtering import QueryEngine
 from mongoeco.engines.results import EngineUpdateResult, FindAndModifyOutcome
 from mongoeco.engines.memory import MemoryEngine
 from mongoeco.engines.sqlite import SQLiteEngine
-from mongoeco.errors import BulkWriteError, CollectionInvalid, InvalidOperation, OperationFailure, WriteError
+from mongoeco.errors import CollectionInvalid, InvalidOperation, OperationFailure, WriteError
 from mongoeco.session import ClientSession
 from mongoeco.types import UpdateResult
 
@@ -66,20 +66,20 @@ class _FakeCollection:
     async def insert_one(self, document, **kwargs):
         self.insert_calls.append((document, kwargs))
         if document.get("fail"):
-            raise RuntimeError("insert failed")
+            raise WriteError("insert failed")
         return SimpleNamespace()
 
     async def update_one(self, query, update, **kwargs):
         self.update_one_calls.append((query, update, kwargs))
-        return SimpleNamespace(matched_count=1, modified_count=1, upserted_id="upserted-1")
+        return UpdateResult(matched_count=0, modified_count=0, upserted_id="upserted-1")
 
     async def update_many(self, query, update, **kwargs):
         self.update_one_calls.append((query, update, kwargs))
-        return SimpleNamespace(matched_count=2, modified_count=2, upserted_id=None)
+        return UpdateResult(matched_count=2, modified_count=2)
 
     async def replace_one(self, query, replacement, **kwargs):
         self.update_one_calls.append((query, replacement, kwargs))
-        return SimpleNamespace(matched_count=1, modified_count=1, upserted_id=None)
+        return UpdateResult(matched_count=1, modified_count=1)
 
     async def delete_one(self, query, **kwargs):
         self.delete_one_calls.append((query, kwargs))
@@ -389,27 +389,15 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
 
         async def _run():
             with patch.object(database, "get_collection", return_value=collection):
-                with self.assertRaises(BulkWriteError) as type_error:
-                    await service._command_update({"update": "events", "updates": [{"q": {}, "u": 1}]})
-                self.assertIn("u must be a document or pipeline", str(type_error.exception.details))
-
-                with self.assertRaises(BulkWriteError) as upsert_error:
-                    await service._command_update(
-                        {"update": "events", "updates": [{"q": {}, "u": {"$set": {"x": 1}}, "upsert": "yes"}]}
-                    )
-                self.assertIn("upsert must be a bool", str(upsert_error.exception.details))
-
-                with self.assertRaises(BulkWriteError) as let_error:
-                    await service._command_update(
-                        {"update": "events", "updates": [{"q": {}, "u": {"$set": {"x": 1}}, "let": 1}]}
-                    )
-                self.assertIn("let must be a dict", str(let_error.exception.details))
-
-                with self.assertRaises(BulkWriteError) as multi_error:
-                    await service._command_update(
-                        {"update": "events", "updates": [{"q": {}, "u": {"x": 1}, "multi": True}]}
-                    )
-                self.assertIn("replacement updates cannot be multi", str(multi_error.exception.details))
+                for update in (
+                    {"q": {}, "u": 1},
+                    {"q": {}, "u": {"$set": {"x": 1}}, "upsert": "yes"},
+                    {"q": {}, "u": {"$set": {"x": 1}}, "let": 1},
+                ):
+                    with self.assertRaises(OperationFailure):
+                        await service._command_update({"update": "events", "updates": [update]})
+                response = await service._command_update({"update": "events", "updates": [{"q": {}, "u": {"x": 1}, "multi": True}]})
+                self.assertIn("replacement updates cannot be multi", str(response.to_document()))
 
                 options = SimpleNamespace(
                     collection_name="events",
@@ -580,63 +568,74 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
 
         async def _run():
             with patch.object(database, "get_collection", return_value=fake_collection):
-                with self.assertRaises(BulkWriteError) as exc_info:
-                    await service._command_insert(
+                exc_info = await service._command_insert(
                         {
                             "insert": "users",
                             "documents": [{"fail": True}, {"_id": 2}],
                             "ordered": False,
                         }
                     )
-                return exc_info.exception.details
+                return exc_info.to_document()
 
         details = asyncio.run(_run())
 
-        self.assertEqual(details["nInserted"], 1)
+        self.assertEqual(details["n"], 1)
         self.assertEqual(details["writeErrors"][0]["index"], 0)
 
     def test_command_update_and_delete_collect_partial_results_when_unordered(self):
         database = AsyncDatabase(MemoryEngine(), "db")
         service = database._admin
         fake_collection = _FakeCollection()
+        update_one = fake_collection.update_one
+        delete_one = fake_collection.delete_one
+        async def update(query, document, **kwargs):
+            if document == {"$set": {"name": "Ada"}}:
+                message = "controlled update failure"
+                raise WriteError(message, code=14)
+            return await update_one(query, document, **kwargs)
+        async def delete(query, **kwargs):
+            if query.get("fail"):
+                message = "controlled delete failure"
+                raise WriteError(message, code=2)
+            return await delete_one(query, **kwargs)
+        fake_collection.update_one = update
+        fake_collection.delete_one = delete
 
         async def _run_update():
             with patch.object(database, "get_collection", return_value=fake_collection):
-                with self.assertRaises(BulkWriteError) as exc_info:
-                    await service._command_update(
+                exc_info = await service._command_update(
                         {
                             "update": "users",
                             "ordered": False,
                             "updates": [
-                                {"q": {}, "u": {"$set": {"name": "Ada"}}, "multi": "yes"},
+                                {"q": {}, "u": {"$set": {"name": "Ada"}}},
                                 {"q": {}, "u": {"$set": {"name": "Grace"}}, "upsert": True},
                             ],
                         }
                     )
-                return exc_info.exception.details
+                return exc_info.to_document()
 
         async def _run_delete():
             with patch.object(database, "get_collection", return_value=fake_collection):
-                with self.assertRaises(BulkWriteError) as exc_info:
-                    await service._command_delete(
+                exc_info = await service._command_delete(
                         {
                             "delete": "users",
                             "ordered": False,
                             "deletes": [
-                                {"q": {}, "limit": 2},
+                                {"q": {"fail": True}, "limit": 1},
                                 {"q": {}, "limit": 1},
                             ],
                         }
                     )
-                return exc_info.exception.details
+                return exc_info.to_document()
 
         update_details = asyncio.run(_run_update())
         delete_details = asyncio.run(_run_delete())
 
-        self.assertEqual(update_details["nMatched"], 1)
-        self.assertEqual(update_details["nModified"], 1)
+        self.assertEqual(update_details["n"], 1)
+        self.assertEqual(update_details["nModified"], 0)
         self.assertEqual(update_details["upserted"][0]["_id"], "upserted-1")
-        self.assertEqual(delete_details["nRemoved"], 1)
+        self.assertEqual(delete_details["n"], 1)
         self.assertEqual(delete_details["writeErrors"][0]["index"], 0)
 
     def test_write_commands_preserve_write_error_codes(self):
@@ -655,20 +654,18 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
         async def _run_insert():
             fake_collection.insert_one = _insert_one
             with patch.object(database, "get_collection", return_value=fake_collection):
-                with self.assertRaises(BulkWriteError) as exc_info:
-                    await service._command_insert(
+                exc_info = await service._command_insert(
                         {
                             "insert": "users",
                             "documents": [{"_id": [1]}],
                         }
                     )
-                return exc_info.exception.details
+                return exc_info.to_document()
 
         async def _run_update():
             fake_collection.update_one = _update_one
             with patch.object(database, "get_collection", return_value=fake_collection):
-                with self.assertRaises(BulkWriteError) as exc_info:
-                    await service._command_update(
+                exc_info = await service._command_update(
                         {
                             "update": "users",
                             "updates": [
@@ -676,7 +673,7 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                             ],
                         }
                     )
-                return exc_info.exception.details
+                return exc_info.to_document()
 
         insert_details = asyncio.run(_run_insert())
         update_details = asyncio.run(_run_update())
@@ -828,14 +825,14 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                             "bypassDocumentValidation": "yes",
                         }
                     )
-                with self.assertRaises(BulkWriteError):
+                with self.assertRaises(OperationFailure):
                     await service._command_update(
                         {
                             "update": "users",
                             "updates": [{"q": {}, "u": {"$set": {"name": "Ada"}}, "arrayFilters": "bad"}],
                         }
                     )
-                with self.assertRaises(BulkWriteError):
+                with self.assertRaises(OperationFailure):
                     await service._command_update(
                         {
                             "update": "users",
@@ -847,14 +844,14 @@ class AsyncDatabaseAdminServiceTests(unittest.TestCase):
                         }
                     )
                 self.assertEqual(len(fake_collection.update_one_calls), 0)
-                with self.assertRaises(BulkWriteError):
+                with self.assertRaises(OperationFailure):
                     await service._command_delete(
                         {
                             "delete": "users",
                             "deletes": [{"q": {}, "limit": 1, "let": "bad"}],
                         }
                     )
-                with self.assertRaises(BulkWriteError):
+                with self.assertRaises(OperationFailure):
                     await service._command_delete(
                         {
                             "delete": "users",

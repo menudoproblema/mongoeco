@@ -12,7 +12,10 @@ from mongoeco.api.operations import (
     UpdateOperation,
     compile_find_operation,
 )
-from mongoeco.core.identity import materialize_replacement_document
+from mongoeco.core.identity import (
+    is_valid_root_document_id,
+    materialize_replacement_document,
+)
 from mongoeco.core.operation_context import resolve_operation_session
 from mongoeco.engines.adapter import EngineSpiAdapter
 from mongoeco.errors import OperationFailure, WriteError
@@ -377,12 +380,12 @@ class CollectionRuntimeCoordinator:
         if (
             document is None
             or "_id" not in document
-            or (result.upserted_id is None and result.modified_count == 0)
+            or (not result.did_upsert and result.modified_count == 0)
         ):
             return
         self.publish_change_event(
             operation_type=(
-                "insert" if result.upserted_id is not None else matched_operation_type
+                "insert" if result.did_upsert else matched_operation_type
             ),
             document_key={"_id": deepcopy(document["_id"])},
             full_document=document,
@@ -789,7 +792,11 @@ class CollectionRuntimeCoordinator:
 
         seeded: Document = {}
         seed_upsert_document(seeded, filter_spec)
-        if "_id" in seeded and "_id" in replacement:
+        if (
+            "_id" in seeded
+            and "_id" in replacement
+            and is_valid_root_document_id(replacement["_id"])
+        ):
             if not self._collection._mongodb_dialect.values_equal(
                 seeded["_id"], replacement["_id"]
             ):
@@ -797,8 +804,11 @@ class CollectionRuntimeCoordinator:
                     "The _id field cannot conflict with the replacement filter during upsert",
                     code=66,
                 )
-        document = deepcopy(seeded)
-        document.update(deepcopy(replacement))
+        # Replacement upserts inherit only equality on _id. Other predicate
+        # fields seed operator upserts, but are not part of a replacement.
+        document = deepcopy(dict(replacement))
+        if "_id" not in document and "_id" in seeded:
+            document["_id"] = deepcopy(seeded["_id"])
         if "_id" not in document:
             document["_id"] = ObjectId()
         return document

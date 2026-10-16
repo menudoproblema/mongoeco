@@ -1178,12 +1178,14 @@
       },
       "insert_many": {
         "acceptedNoopOptions": [],
-        "acceptsComment": false,
+        "acceptsComment": true,
         "acceptsDocuments": true,
         "acceptsOrderedExecution": true,
         "collectionScoped": true,
         "resultType": "insert_many_result",
-        "supportedOptions": [],
+        "supportedOptions": [
+          "comment"
+        ],
         "supportsExplain": false,
         "supportsOrderedExecution": true,
         "supportsSession": true,
@@ -1191,11 +1193,13 @@
       },
       "insert_one": {
         "acceptedNoopOptions": [],
-        "acceptsComment": false,
+        "acceptsComment": true,
         "acceptsDocument": true,
         "collectionScoped": true,
         "resultType": "insert_result",
-        "supportedOptions": [],
+        "supportedOptions": [
+          "comment"
+        ],
         "supportsExplain": false,
         "supportsSession": true,
         "unsupportedOptions": []

@@ -2764,6 +2764,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
 
             with self.assertRaises(DuplicateKeyError):
                 modify_ops.update_with_operation(
+                    delete_index_entries_for_storage_key=lambda *_args: None,
                     db_name="db",
                     coll_name="present",
                     operation=SimpleNamespace(array_filters=None),
@@ -4009,6 +4010,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             ) as validate_doc:
                 results = write_ops.insert_document_batch(
                     conn,
+                    deserialize_document=json.loads,
                     db_name="db",
                     coll_name="bulk",
                     documents=[{"_id": "1"}, {"_id": "1"}],
@@ -4046,6 +4048,7 @@ class SQLiteInternalHelperTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 write_ops.insert_document_batch(
                     conn,
+                    deserialize_document=json.loads,
                     db_name="db",
                     coll_name="bulk2",
                     documents=[{"_id": "2"}],

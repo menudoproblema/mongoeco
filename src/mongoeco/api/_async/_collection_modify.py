@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from mongoeco.api._async._write_errors import write_command_errors, find_modify_errors
 from mongoeco.api.operations import (
     UpdateOperation,
     compile_find_selection_from_update_operation,
@@ -38,7 +39,6 @@ from mongoeco.types import (
     Document,
     DocumentId,
     Filter,
-    Projection,
     ReturnDocument,
     SortSpec,
     Update,
@@ -48,7 +48,7 @@ from mongoeco.types import (
 
 if TYPE_CHECKING:
     from mongoeco.api._async.collection import AsyncCollection
-    from mongoeco.api.argument_validation import HintSpec
+    from mongoeco.api.argument_validation import HintSpec, ProjectionInput
     from mongoeco.session import ClientSession
 
 
@@ -130,6 +130,7 @@ async def _delete_selected_document(
     return result.result.deleted_count == 1
 
 
+@write_command_errors
 async def update_one(
     collection: AsyncCollection,
     filter_spec: Filter | object,
@@ -214,6 +215,7 @@ async def update_one(
     return result
 
 
+@write_command_errors
 async def update_many(
     collection: AsyncCollection,
     filter_spec: Filter | object,
@@ -349,6 +351,7 @@ async def update_many(
     )
 
 
+@write_command_errors
 async def replace_one(
     collection: AsyncCollection,
     filter_spec: Filter | object,
@@ -432,6 +435,7 @@ async def replace_one(
     return result
 
 
+@find_modify_errors
 async def find_one_and_update_outcome(
     collection: AsyncCollection,
     filter_spec: Filter | object,
@@ -439,7 +443,7 @@ async def find_one_and_update_outcome(
     *,
     filter: Filter | object,
     update: Update | object,
-    projection: Projection | None,
+    projection: ProjectionInput | None,
     collation: CollationDocument | None,
     sort: SortSpec | None,
     upsert: bool,
@@ -535,13 +539,14 @@ async def find_one_and_update_outcome(
     return outcome
 
 
+@find_modify_errors
 async def find_one_and_replace_outcome(
     collection: AsyncCollection,
     filter_spec: Filter | object,
     replacement: Document | object,
     *,
     filter: Filter | object,
-    projection: Projection | None,
+    projection: ProjectionInput | None,
     collation: CollationDocument | None,
     sort: SortSpec | None,
     upsert: bool,
@@ -639,12 +644,13 @@ async def find_one_and_replace_outcome(
     return outcome
 
 
+@find_modify_errors
 async def find_one_and_delete(
     collection: AsyncCollection,
     filter_spec: Filter | object,
     *,
     filter: Filter | object,
-    projection: Projection | None,
+    projection: ProjectionInput | None,
     collation: CollationDocument | None,
     sort: SortSpec | None,
     hint: object | None,

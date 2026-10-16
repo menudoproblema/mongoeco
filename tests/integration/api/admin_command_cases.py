@@ -4,7 +4,6 @@ from collections.abc import Callable
 from typing import Any
 
 from mongoeco.errors import (
-    BulkWriteError,
     CollectionInvalid,
     ConnectionFailure,
     OperationFailure,
@@ -1087,7 +1086,7 @@ async def assert_database_command_supports_insert_update_and_delete(
                 )
 
                 case.assertEqual(inserted, {"n": 2, "ok": 1.0})
-                case.assertEqual(updated["n"], 1)
+                case.assertEqual(updated["n"], 2)
                 case.assertEqual(updated["nModified"], 1)
                 case.assertEqual(updated["ok"], 1.0)
                 case.assertEqual(len(updated["upserted"]), 1)
@@ -1100,18 +1099,20 @@ async def assert_database_command_write_commands_surface_write_errors(
     async with open_client("memory") as client:
         await _maybe_await(client.alpha.events.insert_one({"_id": "1", "kind": "view"}))
 
-        with case.assertRaises(BulkWriteError):
-            await _maybe_await(
-                client.alpha.command(
-                    {
-                        "insert": "events",
-                        "documents": [
-                            {"_id": "1", "kind": "duplicate"},
-                            {"_id": "2", "kind": "ok"},
-                        ],
-                    },
-                ),
-            )
+        response = await _maybe_await(
+            client.alpha.command(
+                {
+                    "insert": "events",
+                    "documents": [
+                        {"_id": "1", "kind": "duplicate"},
+                        {"_id": "2", "kind": "ok"},
+                    ],
+                },
+            ),
+        )
+        case.assertEqual(response["ok"], 1.0)
+        case.assertEqual(response["n"], 0)
+        case.assertEqual(response["writeErrors"][0]["code"], 11000)
 
 
 async def assert_database_command_supports_find_and_modify(

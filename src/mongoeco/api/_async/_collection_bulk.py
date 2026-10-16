@@ -5,6 +5,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from mongoeco.api._async._write_errors import validate_classic_update_sort
+
 
 try:
     from pymongo import (
@@ -178,6 +180,42 @@ class PreparedBulkWriteRequest:
     insert_document: Document | None = None
     replacement_document: Document | None = None
     preparation_error: Exception | None = None
+    error_operation: Document | None = None
+
+
+def _bulk_error_operation(request: WriteModel, source: object) -> Document:
+    if isinstance(request, InsertOne):
+        return deepcopy(request.document)
+    command = {"q": deepcopy(request.filter)}
+    if isinstance(request, (UpdateOne, UpdateMany, ReplaceOne)):
+        command["u"] = deepcopy(
+            request.replacement if isinstance(request, ReplaceOne) else request.update
+        )
+        if not isinstance(request, ReplaceOne):
+            command["multi"] = isinstance(request, UpdateMany)
+        upsert = getattr(source, "_upsert", request.upsert)
+        if isinstance(request, UpdateOne):
+            upsert = bool(upsert)
+        if upsert is not None:
+            command["upsert"] = upsert
+    else:
+        command["limit"] = 1 if isinstance(request, DeleteOne) else 0
+    if request.collation is not None:
+        command["collation"] = _pymongo_collation(request.collation)
+    if (
+        isinstance(request, (UpdateOne, UpdateMany))
+        and request.array_filters is not None
+    ):
+        command["arrayFilters"] = deepcopy(request.array_filters)
+    if request.hint is not None:
+        command["hint"] = (
+            deepcopy(request.hint)
+            if isinstance(request.hint, str)
+            else dict(request.hint)
+        )
+    if isinstance(request, (UpdateOne, ReplaceOne)) and request.sort is not None:
+        command["sort"] = dict(request.sort)
+    return deepcopy(command)
 
 
 class BulkWritePreparationContext:
@@ -185,17 +223,29 @@ class BulkWritePreparationContext:
         self,
         collection: AsyncCollection,
         requests: list[WriteModel],
+        source_requests: Sequence[object] | None = None,
     ) -> None:
         self._collection = collection
         self._requests = requests
+        self._source_requests = (
+            source_requests if source_requests is not None else requests
+        )
 
     async def prepare(self) -> list[PreparedBulkWriteRequest]:
         # La preparación muta documentos InsertOne al asignar _id, como PyMongo.
         # Debe conservar el orden y resolver alias compartidos de forma determinista.
-        return [
+        prepared = [
             self._prepare_request(index, request)
             for index, request in enumerate(self._requests)
         ]
+        for item in prepared:
+            if isinstance(item.preparation_error, (TypeError, ValueError)):
+                raise item.preparation_error
+        for item, source in zip(prepared, self._source_requests, strict=True):
+            item.error_operation = _bulk_error_operation(
+                self._requests[item.index], source
+            )
+        return prepared
 
     def _prepare_request(self, index: int, request: WriteModel) -> PreparedBulkWriteRequest:
         collection = self._collection
@@ -348,8 +398,9 @@ async def execute_bulk_write(
     comment: object | None,
     let: dict[str, object] | None,
     session: ClientSession | None,
+    source_requests: Sequence[object] | None = None,
 ) -> BulkWriteResult[DocumentId]:
-    prepared_requests = await BulkWritePreparationContext(collection, list(requests)).prepare()
+    prepared_requests = await BulkWritePreparationContext(collection, list(requests), source_requests).prepare()
     normalized_bulk_let = collection._normalize_let(let)
 
     inserted_count = 0
@@ -363,6 +414,14 @@ async def execute_bulk_write(
     for batch in _classic_bulk_batches(prepared_requests, ordered=ordered):
         if stop:
             break
+        validate_classic_update_sort(
+            collection._mongodb_dialect.key,
+            has_sort=any(
+                isinstance(item.request, (UpdateOne, ReplaceOne))
+                and item.request.sort is not None
+                for item in batch
+            ),
+        )
         batch_context = None
         for prepared in batch:
             index = prepared.index
@@ -376,7 +435,7 @@ async def execute_bulk_write(
                         index=index,
                         code=getattr(exc, "code", None),
                         errmsg=str(exc),
-                        operation=request.__class__.__name__,
+                        operation=prepared.error_operation,
                     )
                 )
                 if ordered:
@@ -413,9 +472,9 @@ async def execute_bulk_write(
                     if bypass_document_validation:
                         update_one_kwargs["bypass_document_validation"] = True
                     result = await collection.update_one(request.filter, request.update, request.upsert, **update_one_kwargs)
-                    matched_count += result.matched_count
+                    matched_count += 0 if result.did_upsert else result.matched_count
                     modified_count += result.modified_count
-                    if result.upserted_id is not None:
+                    if result.did_upsert:
                         upserted_ids[index] = result.upserted_id
                 elif isinstance(request, UpdateMany):
                     update_many_kwargs = {
@@ -429,9 +488,9 @@ async def execute_bulk_write(
                     if bypass_document_validation:
                         update_many_kwargs["bypass_document_validation"] = True
                     result = await collection.update_many(request.filter, request.update, request.upsert, **update_many_kwargs)
-                    matched_count += result.matched_count
+                    matched_count += 0 if result.did_upsert else result.matched_count
                     modified_count += result.modified_count
-                    if result.upserted_id is not None:
+                    if result.did_upsert:
                         upserted_ids[index] = result.upserted_id
                 elif isinstance(request, ReplaceOne):
                     replace_one_kwargs = {
@@ -450,9 +509,9 @@ async def execute_bulk_write(
                         request.upsert,
                         **replace_one_kwargs,
                     )
-                    matched_count += result.matched_count
+                    matched_count += 0 if result.did_upsert else result.matched_count
                     modified_count += result.modified_count
-                    if result.upserted_id is not None:
+                    if result.did_upsert:
                         upserted_ids[index] = result.upserted_id
                 elif isinstance(request, DeleteOne):
                     result = await collection.delete_one(
@@ -480,7 +539,7 @@ async def execute_bulk_write(
                         index=index,
                         code=getattr(exc, "code", None),
                         errmsg=str(exc),
-                        operation=request.__class__.__name__,
+                        operation=prepared.error_operation,
                     )
                 )
                 if ordered:

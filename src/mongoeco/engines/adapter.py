@@ -664,7 +664,7 @@ class EngineSpiAdapter:
     ) -> MutationOutcome:
         if isinstance(result, MutationOutcome):
             matched = result.matched_count > 0
-            applied = result.modified_count > 0 or result.upserted_id is not None
+            applied = result.modified_count > 0 or result.result.did_upsert
             if (matched or applied) and result.after_document is None:
                 message = "an applied SPI v2 mutation must expose its after image"
                 raise RuntimeError(message)

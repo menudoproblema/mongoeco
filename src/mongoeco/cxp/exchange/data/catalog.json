@@ -16,9 +16,9 @@
             "result_type": "org.mongoeco:result.cursor:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -29,9 +29,9 @@
             "result_type": "org.mongoeco:result.document:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -42,9 +42,9 @@
             "result_type": "org.mongoeco:result.count:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -55,9 +55,9 @@
             "result_type": "org.mongoeco:result.count:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/estimated_document_count",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -68,9 +68,9 @@
             "result_type": "org.mongoeco:result.array:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         ],
@@ -104,9 +104,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -118,9 +118,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsBatchSize",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.acceptsCollation": {
@@ -129,9 +129,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsCollation",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.acceptsComment": {
@@ -140,9 +140,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.acceptsFilter": {
@@ -151,9 +151,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsFilter",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.acceptsHint": {
@@ -162,9 +162,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsHint",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.acceptsLet": {
@@ -173,9 +173,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsLet",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.acceptsLimit": {
@@ -184,9 +184,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsLimit",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.acceptsMaxTimeMs": {
@@ -195,9 +195,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsMaxTimeMs",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.acceptsProjection": {
@@ -206,9 +206,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsProjection",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.acceptsSkip": {
@@ -217,9 +217,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsSkip",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.acceptsSort": {
@@ -228,9 +228,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/acceptsSort",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.collectionScoped": {
@@ -239,9 +239,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.supportedOptions": {
@@ -250,9 +250,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -264,9 +264,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.supportsSession": {
@@ -275,9 +275,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find.unsupportedOptions": {
@@ -286,9 +286,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -300,9 +300,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -314,9 +314,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/acceptsCollation",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "count_documents.acceptsComment": {
@@ -325,9 +325,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "count_documents.acceptsFilter": {
@@ -336,9 +336,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/acceptsFilter",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "count_documents.acceptsHint": {
@@ -347,9 +347,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/acceptsHint",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "count_documents.acceptsMaxTimeMs": {
@@ -358,9 +358,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/acceptsMaxTimeMs",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "count_documents.collectionScoped": {
@@ -369,9 +369,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "count_documents.supportedOptions": {
@@ -380,9 +380,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -394,9 +394,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "count_documents.supportsSession": {
@@ -405,9 +405,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "count_documents.unsupportedOptions": {
@@ -416,9 +416,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/count_documents/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -430,9 +430,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -444,9 +444,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/acceptsCollation",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distinct.acceptsComment": {
@@ -455,9 +455,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distinct.acceptsFieldPath": {
@@ -466,9 +466,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/acceptsFieldPath",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distinct.acceptsFilter": {
@@ -477,9 +477,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/acceptsFilter",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distinct.acceptsHint": {
@@ -488,9 +488,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/acceptsHint",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distinct.acceptsMaxTimeMs": {
@@ -499,9 +499,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/acceptsMaxTimeMs",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distinct.collectionScoped": {
@@ -510,9 +510,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distinct.supportedOptions": {
@@ -521,9 +521,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -535,9 +535,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distinct.supportsSession": {
@@ -546,9 +546,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distinct.unsupportedOptions": {
@@ -557,9 +557,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/distinct/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -571,9 +571,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/estimated_document_count/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -585,9 +585,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/estimated_document_count/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "estimated_document_count.acceptsFilter": {
@@ -596,9 +596,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/estimated_document_count/acceptsFilter",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "estimated_document_count.acceptsMaxTimeMs": {
@@ -607,9 +607,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/estimated_document_count/acceptsMaxTimeMs",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "estimated_document_count.collectionScoped": {
@@ -618,9 +618,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/estimated_document_count/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "estimated_document_count.supportedOptions": {
@@ -629,9 +629,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/estimated_document_count/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -643,9 +643,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/estimated_document_count/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "estimated_document_count.supportsSession": {
@@ -654,9 +654,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/estimated_document_count/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "estimated_document_count.unsupportedOptions": {
@@ -665,9 +665,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/estimated_document_count/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -679,9 +679,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -693,9 +693,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsBatchSize",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.acceptsCollation": {
@@ -704,9 +704,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsCollation",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.acceptsComment": {
@@ -715,9 +715,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.acceptsFilter": {
@@ -726,9 +726,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsFilter",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.acceptsHint": {
@@ -737,9 +737,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsHint",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.acceptsLet": {
@@ -748,9 +748,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsLet",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.acceptsLimit": {
@@ -759,9 +759,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsLimit",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.acceptsMaxTimeMs": {
@@ -770,9 +770,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsMaxTimeMs",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.acceptsProjection": {
@@ -781,9 +781,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsProjection",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.acceptsSkip": {
@@ -792,9 +792,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsSkip",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.acceptsSort": {
@@ -803,9 +803,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/acceptsSort",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.collectionScoped": {
@@ -814,9 +814,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.supportedOptions": {
@@ -825,9 +825,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -839,9 +839,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.supportsSession": {
@@ -850,9 +850,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "find_one.unsupportedOptions": {
@@ -861,9 +861,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/operationMetadata/find_one/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -875,9 +875,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/async",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "embedded": {
@@ -886,9 +886,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/embedded",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "queryFieldOperators": {
@@ -897,9 +897,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/queryFieldOperators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -939,9 +939,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/queryTopLevelOperators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -963,17 +963,17 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/read/sync",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         },
         "source": {
           "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-          "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+          "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
           "locator": "/read",
-          "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+          "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
         }
       },
       {
@@ -988,9 +988,9 @@
             "result_type": "org.mongoeco:result.insert_result:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_one",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -1001,9 +1001,9 @@
             "result_type": "org.mongoeco:result.insert_many_result:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -1014,9 +1014,9 @@
             "result_type": "org.mongoeco:result.update_result:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -1027,9 +1027,9 @@
             "result_type": "org.mongoeco:result.update_result:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -1040,9 +1040,9 @@
             "result_type": "org.mongoeco:result.update_result:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -1053,9 +1053,9 @@
             "result_type": "org.mongoeco:result.delete_result:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -1066,9 +1066,9 @@
             "result_type": "org.mongoeco:result.delete_result:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           {
@@ -1079,9 +1079,9 @@
             "result_type": "org.mongoeco:result.bulk_write_result:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         ],
@@ -1115,9 +1115,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1129,9 +1129,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "bulk_write.acceptsLet": {
@@ -1140,9 +1140,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/acceptsLet",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "bulk_write.acceptsOrderedExecution": {
@@ -1151,9 +1151,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/acceptsOrderedExecution",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "bulk_write.acceptsWriteModels": {
@@ -1162,9 +1162,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/acceptsWriteModels",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "bulk_write.collectionScoped": {
@@ -1173,9 +1173,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "bulk_write.supportedOptions": {
@@ -1184,9 +1184,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1198,9 +1198,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "bulk_write.supportsOrderedExecution": {
@@ -1209,9 +1209,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/supportsOrderedExecution",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "bulk_write.supportsSession": {
@@ -1220,9 +1220,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "bulk_write.unsupportedOptions": {
@@ -1231,9 +1231,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/bulk_write/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1245,9 +1245,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1259,9 +1259,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/acceptsCollation",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_many.acceptsComment": {
@@ -1270,9 +1270,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_many.acceptsFilter": {
@@ -1281,9 +1281,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/acceptsFilter",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_many.acceptsHint": {
@@ -1292,9 +1292,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/acceptsHint",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_many.acceptsLet": {
@@ -1303,9 +1303,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/acceptsLet",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_many.collectionScoped": {
@@ -1314,9 +1314,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_many.supportedOptions": {
@@ -1325,9 +1325,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1339,9 +1339,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_many.supportsSession": {
@@ -1350,9 +1350,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_many.unsupportedOptions": {
@@ -1361,9 +1361,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_many/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1375,9 +1375,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1389,9 +1389,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/acceptsCollation",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_one.acceptsComment": {
@@ -1400,9 +1400,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_one.acceptsFilter": {
@@ -1411,9 +1411,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/acceptsFilter",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_one.acceptsHint": {
@@ -1422,9 +1422,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/acceptsHint",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_one.acceptsLet": {
@@ -1433,9 +1433,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/acceptsLet",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_one.collectionScoped": {
@@ -1444,9 +1444,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_one.supportedOptions": {
@@ -1455,9 +1455,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1469,9 +1469,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_one.supportsSession": {
@@ -1480,9 +1480,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "delete_one.unsupportedOptions": {
@@ -1491,9 +1491,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/delete_one/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1505,9 +1505,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1519,9 +1519,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_many.acceptsDocuments": {
@@ -1530,9 +1530,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many/acceptsDocuments",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_many.acceptsOrderedExecution": {
@@ -1541,9 +1541,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many/acceptsOrderedExecution",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_many.collectionScoped": {
@@ -1552,9 +1552,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_many.supportedOptions": {
@@ -1563,9 +1563,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1577,9 +1577,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_many.supportsOrderedExecution": {
@@ -1588,9 +1588,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many/supportsOrderedExecution",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_many.supportsSession": {
@@ -1599,9 +1599,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_many.unsupportedOptions": {
@@ -1610,9 +1610,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_many/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1624,9 +1624,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_one/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1638,9 +1638,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_one/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_one.acceptsDocument": {
@@ -1649,9 +1649,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_one/acceptsDocument",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_one.collectionScoped": {
@@ -1660,9 +1660,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_one/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_one.supportedOptions": {
@@ -1671,9 +1671,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_one/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1685,9 +1685,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_one/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_one.supportsSession": {
@@ -1696,9 +1696,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_one/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "insert_one.unsupportedOptions": {
@@ -1707,9 +1707,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/insert_one/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1721,9 +1721,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1735,9 +1735,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/acceptsCollation",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.acceptsComment": {
@@ -1746,9 +1746,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.acceptsFilter": {
@@ -1757,9 +1757,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/acceptsFilter",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.acceptsHint": {
@@ -1768,9 +1768,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/acceptsHint",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.acceptsLet": {
@@ -1779,9 +1779,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/acceptsLet",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.acceptsReplacementDocument": {
@@ -1790,9 +1790,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/acceptsReplacementDocument",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.acceptsSort": {
@@ -1801,9 +1801,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/acceptsSort",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.collectionScoped": {
@@ -1812,9 +1812,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.supportedOptions": {
@@ -1823,9 +1823,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1837,9 +1837,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.supportsReplacementDocument": {
@@ -1848,9 +1848,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/supportsReplacementDocument",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.supportsSession": {
@@ -1859,9 +1859,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.supportsUpsert": {
@@ -1870,9 +1870,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/supportsUpsert",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "replace_one.unsupportedOptions": {
@@ -1881,9 +1881,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/replace_one/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1895,9 +1895,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -1909,9 +1909,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/acceptsArrayFilters",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.acceptsCollation": {
@@ -1920,9 +1920,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/acceptsCollation",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.acceptsComment": {
@@ -1931,9 +1931,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.acceptsFilter": {
@@ -1942,9 +1942,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/acceptsFilter",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.acceptsHint": {
@@ -1953,9 +1953,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/acceptsHint",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.acceptsLet": {
@@ -1964,9 +1964,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/acceptsLet",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.acceptsSort": {
@@ -1975,9 +1975,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/acceptsSort",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.acceptsUpdateDocument": {
@@ -1986,9 +1986,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/acceptsUpdateDocument",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.collectionScoped": {
@@ -1997,9 +1997,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.supportedOptions": {
@@ -2008,9 +2008,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -2022,9 +2022,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/supportedUpdateOperators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -2036,9 +2036,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.supportsPipelineUpdate": {
@@ -2047,9 +2047,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/supportsPipelineUpdate",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.supportsSession": {
@@ -2058,9 +2058,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.supportsUpsert": {
@@ -2069,9 +2069,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/supportsUpsert",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_many.unsupportedOptions": {
@@ -2080,9 +2080,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_many/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -2094,9 +2094,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -2108,9 +2108,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/acceptsArrayFilters",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.acceptsCollation": {
@@ -2119,9 +2119,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/acceptsCollation",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.acceptsComment": {
@@ -2130,9 +2130,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/acceptsComment",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.acceptsFilter": {
@@ -2141,9 +2141,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/acceptsFilter",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.acceptsHint": {
@@ -2152,9 +2152,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/acceptsHint",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.acceptsLet": {
@@ -2163,9 +2163,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/acceptsLet",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.acceptsSort": {
@@ -2174,9 +2174,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/acceptsSort",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.acceptsUpdateDocument": {
@@ -2185,9 +2185,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/acceptsUpdateDocument",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.collectionScoped": {
@@ -2196,9 +2196,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/collectionScoped",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.supportedOptions": {
@@ -2207,9 +2207,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -2221,9 +2221,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/supportedUpdateOperators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -2235,9 +2235,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.supportsPipelineUpdate": {
@@ -2246,9 +2246,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/supportsPipelineUpdate",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.supportsSession": {
@@ -2257,9 +2257,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.supportsUpsert": {
@@ -2268,9 +2268,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/supportsUpsert",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "update_one.unsupportedOptions": {
@@ -2279,9 +2279,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/operationMetadata/update_one/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -2293,9 +2293,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/async",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "embedded": {
@@ -2304,9 +2304,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/embedded",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "supportsPipelineUpdate": {
@@ -2315,9 +2315,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/supportsPipelineUpdate",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "sync": {
@@ -2326,9 +2326,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/sync",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "updateOperators": {
@@ -2337,9 +2337,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/write/updateOperators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -2365,9 +2365,9 @@
         },
         "source": {
           "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-          "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+          "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
           "locator": "/write",
-          "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+          "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
         }
       },
       {
@@ -2432,9 +2432,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/transactions/async",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distributed": {
@@ -2443,9 +2443,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/transactions/distributed",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "embedded": {
@@ -2454,9 +2454,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/transactions/embedded",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "mode": {
@@ -2465,9 +2465,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/transactions/mode",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -2479,17 +2479,17 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/transactions/sync",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         },
         "source": {
           "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-          "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+          "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
           "locator": "/transactions",
-          "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+          "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
         }
       },
       {
@@ -2543,9 +2543,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/change_streams/boundedHistory",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "distributed": {
@@ -2554,9 +2554,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/change_streams/distributed",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "implementation": {
@@ -2565,9 +2565,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/change_streams/implementation",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -2579,9 +2579,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/change_streams/persistent",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "resumable": {
@@ -2590,9 +2590,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/change_streams/resumable",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "resumableAcrossClientRestarts": {
@@ -2601,9 +2601,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/change_streams/resumableAcrossClientRestarts",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "resumableAcrossNodes": {
@@ -2612,9 +2612,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/change_streams/resumableAcrossNodes",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "resumableAcrossProcesses": {
@@ -2623,17 +2623,17 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/change_streams/resumableAcrossProcesses",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         },
         "source": {
           "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-          "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+          "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
           "locator": "/change_streams",
-          "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+          "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
         }
       },
       {
@@ -2648,9 +2648,9 @@
             "result_type": "org.mongoeco:result.cursor:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         ],
@@ -2687,9 +2687,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/async",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "embedded": {
@@ -2698,9 +2698,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/embedded",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "explainable": {
@@ -2709,9 +2709,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/explainable",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "supportedExpressionOperators": {
@@ -2720,9 +2720,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/supportedExpressionOperators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -2870,9 +2870,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/supportedGroupAccumulators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -2908,9 +2908,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/supportedStages",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -2956,9 +2956,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/supportedWindowAccumulators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3002,9 +3002,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/sync",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.acceptedNoopOptions": {
@@ -3013,9 +3013,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3027,9 +3027,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/acceptsPipeline",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportedExpressionOperators": {
@@ -3038,9 +3038,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportedExpressionOperators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3052,9 +3052,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportedGroupAccumulators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3066,9 +3066,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3080,9 +3080,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportedStages",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3094,9 +3094,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportedWindowAccumulators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3108,9 +3108,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportsCollectionScope",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsDatabaseScope": {
@@ -3119,9 +3119,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportsDatabaseScope",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsExplain": {
@@ -3130,9 +3130,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsLeadingSearchStage": {
@@ -3141,9 +3141,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportsLeadingSearchStage",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsLeadingVectorSearchStage": {
@@ -3152,9 +3152,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportsLeadingVectorSearchStage",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsSession": {
@@ -3163,9 +3163,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.unsupportedOptions": {
@@ -3174,9 +3174,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/aggregation/operationMetadata/aggregate/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3185,9 +3185,9 @@
         },
         "source": {
           "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-          "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+          "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
           "locator": "/aggregation",
-          "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+          "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
         }
       },
       {
@@ -3202,9 +3202,9 @@
             "result_type": "org.mongoeco:result.cursor:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         ],
@@ -3247,9 +3247,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/advancedAtlasLikeGaps",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3261,9 +3261,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/aggregateStage",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3278,9 +3278,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/exactFilterFieldMappings",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3299,9 +3299,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/explainFeatures",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3313,9 +3313,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/fieldMappings",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3339,9 +3339,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3366,9 +3366,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/sqliteBackends",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3380,9 +3380,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/structuredFieldMappings",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3398,9 +3398,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/structuredParentPathOperators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3420,9 +3420,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/textSearchTier",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3437,9 +3437,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/textualFieldMappings",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3456,9 +3456,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3470,9 +3470,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/acceptsPipeline",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.aggregateStage": {
@@ -3481,9 +3481,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/aggregateStage",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3498,9 +3498,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/operators",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3525,9 +3525,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/requiresLeadingStage",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportedOptions": {
@@ -3536,9 +3536,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3550,9 +3550,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/supportsCollectionScope",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsDatabaseScope": {
@@ -3561,9 +3561,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/supportsDatabaseScope",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsExplain": {
@@ -3572,9 +3572,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsSession": {
@@ -3583,9 +3583,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.unsupportedOptions": {
@@ -3594,9 +3594,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/search/operationMetadata/aggregate/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3605,9 +3605,9 @@
         },
         "source": {
           "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-          "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+          "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
           "locator": "/search",
-          "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+          "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
         }
       },
       {
@@ -3622,9 +3622,9 @@
             "result_type": "org.mongoeco:result.cursor:1",
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         ],
@@ -3662,9 +3662,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/acceptedNoopOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3676,9 +3676,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/acceptsPipeline",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.aggregateStage": {
@@ -3687,9 +3687,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/aggregateStage",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3704,9 +3704,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/explainFeatures",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3718,9 +3718,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/hybridFilterModes",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3737,9 +3737,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/requiresLeadingStage",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.scoreField": {
@@ -3748,9 +3748,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/scoreField",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3765,9 +3765,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/similarities",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3784,9 +3784,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/supportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3798,9 +3798,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/supportsCollectionScope",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsDatabaseScope": {
@@ -3809,9 +3809,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/supportsDatabaseScope",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsExplain": {
@@ -3820,9 +3820,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/supportsExplain",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.supportsSession": {
@@ -3831,9 +3831,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/supportsSession",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "aggregate.unsupportedOptions": {
@@ -3842,9 +3842,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/operationMetadata/aggregate/unsupportedOptions",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3856,9 +3856,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/aggregateStage",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3873,9 +3873,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/backend",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3887,9 +3887,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/explainFeatures",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3901,9 +3901,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/fallback",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3915,9 +3915,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/filterMode",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3929,9 +3929,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/hybridFilterModes",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3948,9 +3948,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/mode",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -3962,9 +3962,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/vector_search/similarities",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "closed",
@@ -3978,9 +3978,9 @@
         },
         "source": {
           "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-          "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+          "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
           "locator": "/vector_search",
-          "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+          "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
         }
       },
       {
@@ -4014,9 +4014,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/collation/backend/advancedOptionsAvailable",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "backend.availableBackends": {
@@ -4025,9 +4025,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/collation/backend/availableBackends",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -4039,9 +4039,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/collation/backend/selectedBackend",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -4053,9 +4053,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/collation/backend/unicodeAvailable",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "capabilities.advancedOptionsRequireIcu": {
@@ -4064,9 +4064,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/collation/capabilities/advancedOptionsRequireIcu",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -4078,9 +4078,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/collation/capabilities/fallbackBackend",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -4092,9 +4092,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/collation/capabilities/optionalIcuBackend",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "capabilities.supportedLocales": {
@@ -4103,9 +4103,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/collation/capabilities/supportedLocales",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             },
             "domain": {
               "mode": "open"
@@ -4117,9 +4117,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/collation/capabilities/supportsCaseLevel",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "capabilities.supportsNumericOrdering": {
@@ -4128,17 +4128,17 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/collation/capabilities/supportsNumericOrdering",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         },
         "source": {
           "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-          "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+          "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
           "locator": "/collation",
-          "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+          "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
         }
       },
       {
@@ -4172,17 +4172,17 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/persistence/persistent",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         },
         "source": {
           "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-          "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+          "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
           "locator": "/persistence",
-          "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+          "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
         }
       },
       {
@@ -4217,9 +4217,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/topology_discovery/sdam/distributedMonitoring",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "sdam.electionMetadataAware": {
@@ -4228,9 +4228,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/topology_discovery/sdam/electionMetadataAware",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "sdam.fullSdam": {
@@ -4239,9 +4239,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/topology_discovery/sdam/fullSdam",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "sdam.helloMemberDiscovery": {
@@ -4250,9 +4250,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/topology_discovery/sdam/helloMemberDiscovery",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "sdam.longPollingHello": {
@@ -4261,9 +4261,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/topology_discovery/sdam/longPollingHello",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "sdam.serverHealthTracking": {
@@ -4272,9 +4272,9 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/topology_discovery/sdam/serverHealthTracking",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           },
           "sdam.topologyVersionAware": {
@@ -4283,17 +4283,17 @@
             "nullable": false,
             "source": {
               "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-              "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+              "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
               "locator": "/topology_discovery/sdam/topologyVersionAware",
-              "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+              "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
             }
           }
         },
         "source": {
           "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-          "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+          "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
           "locator": "/topology_discovery",
-          "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f"
+          "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba"
         }
       }
     ],
@@ -4306,9 +4306,9 @@
     "owner": "Mongoeco",
     "source": {
       "reference": "src/mongoeco/cxp/exchange/data/operational-metadata.json",
-      "revision": "fdc4bcecf82c73fe725e2a7f737364552d106203",
+      "revision": "sha256:c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
       "locator": "/",
-      "sha256": "93bdef63c0fdf46015b81e9a3b95d6879217bb31d02bb37d2a12bbfd52200d6f",
+      "sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
       "scope": "Generic owner capability declaration"
     }
   },

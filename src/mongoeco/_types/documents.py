@@ -390,7 +390,7 @@ class WriteErrorEntry:
     index: int
     errmsg: str
     code: int | None = None
-    operation: str | None = None
+    operation: Document | str | None = None
 
     def to_document(self) -> dict[str, object]:
         document: dict[str, object] = {
@@ -400,7 +400,7 @@ class WriteErrorEntry:
         if self.code is not None:
             document["code"] = self.code
         if self.operation is not None:
-            document["op"] = self.operation
+            document["op"] = deepcopy(self.operation)
         return document
 
 
@@ -443,12 +443,18 @@ class WriteCommandResult:
     modified_count: int | None = None
     upserted: list[UpsertedWriteEntry] | None = None
 
+    write_errors: list[WriteErrorEntry] | None = None
+
     def to_document(self) -> dict[str, object]:
         document: dict[str, object] = {"n": self.count, "ok": 1.0}
         if self.modified_count is not None:
             document["nModified"] = self.modified_count
         if self.upserted:
             document["upserted"] = [entry.to_document() for entry in self.upserted]
+        if self.write_errors:
+            document["writeErrors"] = [
+                entry.to_document() for entry in self.write_errors
+            ]
         return document
 
 
@@ -483,7 +489,9 @@ class FindAndModifyLastErrorObject:
         document: dict[str, object] = {"n": self.count}
         if self.updated_existing is not None:
             document["updatedExisting"] = self.updated_existing
-        if self.upserted_id is not None:
+        if self.upserted_id is not None or (
+            self.count == 1 and self.updated_existing is False
+        ):
             document["upserted"] = self.upserted_id
         return document
 

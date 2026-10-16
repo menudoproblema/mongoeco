@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from mongoeco.errors import BulkWriteError, CollectionInvalid, OperationFailure
-from mongoeco.core.expression_context import ExpressionExecutionContext
+from mongoeco.api._async._write_errors import validate_classic_update_sort
+from mongoeco.api._async._write_command_validation import (
+    command_shape_error as _command_shape_error,
+    validate_selection_shapes,
+    write_command_acknowledged,
+)
+
 from mongoeco.engines.results import FindAndModifyOutcome
-from mongoeco.session import ClientSession
+from mongoeco.errors import CollectionInvalid, OperationFailure, WriteError
 from mongoeco.types import (
-    BulkWriteErrorDetails,
     CreateIndexesCommandResult,
     Document,
     DropDatabaseCommandResult,
@@ -22,8 +26,67 @@ from mongoeco.types import (
     WriteErrorEntry,
 )
 
+
 if TYPE_CHECKING:
     from mongoeco.api._async.database_admin import AsyncDatabaseAdminService
+    from mongoeco.core.expression_context import ExpressionExecutionContext
+    from mongoeco.session import ClientSession
+
+
+_FAILED_TO_PARSE = 9
+_MISSING_REQUIRED_FIELD = 40414
+
+
+def _write_command_result(
+    result: WriteCommandResult, *, acknowledged: bool
+) -> WriteCommandResult:
+    if not acknowledged:
+        # Execute the complete ordered/unordered write first. Only its reply
+        # loses counters and per-write errors; command parsing still raises.
+        return WriteCommandResult(
+            count=0,
+            modified_count=0 if result.modified_count is not None else None,
+        )
+    return result
+
+
+def _validate_write_query(spec) -> None:
+    if spec.get("q") is None:
+        _command_shape_error("missing required field q", code=_MISSING_REQUIRED_FIELD)
+    if not isinstance(spec["q"], dict):
+        _command_shape_error("q must be a document")
+
+
+def _validate_update_command_shapes(updates, dialect: str) -> None:
+    # Command parsing precedes execution of every item. An invalid final spec
+    # must not publish an earlier valid update, even for unordered commands.
+    for spec in updates:
+        _validate_write_query(spec)
+        if not isinstance(spec.get("u"), (dict, list)):
+            _command_shape_error("u must be a document or pipeline", code=9)
+        for field in ("multi", "upsert"):
+            if field in spec and not isinstance(spec[field], bool):
+                _command_shape_error(f"{field} must be a bool")
+        if "arrayFilters" in spec and (
+            not isinstance(spec["arrayFilters"], list)
+            or not all(isinstance(item, dict) for item in spec["arrayFilters"])
+        ):
+            _command_shape_error("arrayFilters must be a list of dicts")
+        if "let" in spec and not isinstance(spec["let"], dict):
+            _command_shape_error("let must be a dict")
+        validate_classic_update_sort(dialect, has_sort="sort" in spec)
+        validate_selection_shapes(spec, update=True)
+
+
+def _validate_delete_command_shapes(deletes) -> None:
+    for spec in deletes:
+        _validate_write_query(spec)
+        limit = spec.get("limit")
+        if isinstance(limit, bool) or limit not in (0, 1):
+            _command_shape_error("limit must be 0 or 1", code=9)
+        if "let" in spec and not isinstance(spec["let"], dict):
+            _command_shape_error("let must be a dict")
+        validate_selection_shapes(spec)
 
 
 class DatabaseAdminWriteCommandService:
@@ -105,6 +168,9 @@ class DatabaseAdminWriteCommandService:
         bypass_document_validation = spec.get("bypassDocumentValidation", False)
         if not isinstance(bypass_document_validation, bool):
             raise TypeError("bypassDocumentValidation must be a bool")
+        acknowledged = write_command_acknowledged(
+            spec, dialect=self._admin._mongodb_dialect.key
+        )
         collection = self._admin._database.get_collection(collection_name)
         inserted = 0
         write_errors: list[WriteErrorEntry] = []
@@ -116,7 +182,7 @@ class DatabaseAdminWriteCommandService:
                     session=session,
                 )
                 inserted += 1
-            except Exception as exc:
+            except (WriteError, OperationFailure, TypeError, ValueError) as exc:
                 write_errors.append(
                     WriteErrorEntry(
                         index=index,
@@ -126,15 +192,10 @@ class DatabaseAdminWriteCommandService:
                 )
                 if ordered:
                     break
-        if write_errors:
-            raise BulkWriteError(
-                "insert command failed",
-                details=BulkWriteErrorDetails(
-                    write_errors=write_errors,
-                    inserted_count=inserted,
-                ).to_document(),
-            )
-        return WriteCommandResult(count=inserted)
+        return _write_command_result(
+            WriteCommandResult(count=inserted, write_errors=write_errors or None),
+            acknowledged=acknowledged,
+        )
 
     async def command_update(
         self,
@@ -145,6 +206,7 @@ class DatabaseAdminWriteCommandService:
     ) -> object:
         collection_name = self._admin._require_collection_name(spec.get("update"), "update")
         updates = self._admin._normalize_update_specs(spec.get("updates"))
+        _validate_update_command_shapes(updates, self._admin._mongodb_dialect.key)
         ordered = self._admin._normalize_ordered_from_command(spec.get("ordered"))
         bypass_document_validation = spec.get("bypassDocumentValidation", False)
         if not isinstance(bypass_document_validation, bool):
@@ -154,6 +216,9 @@ class DatabaseAdminWriteCommandService:
         command_let = spec.get("let")
         if command_let is not None and not isinstance(command_let, dict):
             raise TypeError("let must be a dict")
+        acknowledged = write_command_acknowledged(
+            spec, dialect=self._admin._mongodb_dialect.key
+        )
         matched = 0
         modified = 0
         upserted: list[UpsertedWriteEntry] = []
@@ -203,6 +268,7 @@ class DatabaseAdminWriteCommandService:
                         query,
                         update_document,
                         upsert=upsert,
+                        sort=update_spec.get("sort"),
                         collation=update_spec.get("collation"),
                         array_filters=array_filters,
                         hint=hint,
@@ -216,6 +282,7 @@ class DatabaseAdminWriteCommandService:
                         query,
                         update_document,
                         upsert=upsert,
+                        sort=update_spec.get("sort"),
                         collation=update_spec.get("collation"),
                         hint=hint,
                         comment=spec.get("comment"),
@@ -223,13 +290,13 @@ class DatabaseAdminWriteCommandService:
                         bypass_document_validation=bypass_document_validation,
                         session=session,
                     )
-                matched += result.matched_count
+                matched += 0 if result.did_upsert else result.matched_count
                 modified += result.modified_count
-                if result.upserted_id is not None:
+                if result.did_upsert:
                     upserted.append(
                         UpsertedWriteEntry(index=index, document_id=result.upserted_id)
                     )
-            except Exception as exc:
+            except (WriteError, OperationFailure, TypeError, ValueError) as exc:
                 write_errors.append(
                     WriteErrorEntry(
                         index=index,
@@ -239,20 +306,14 @@ class DatabaseAdminWriteCommandService:
                 )
                 if ordered:
                     break
-        if write_errors:
-            raise BulkWriteError(
-                "update command failed",
-                details=BulkWriteErrorDetails(
-                    write_errors=write_errors,
-                    matched_count=matched,
-                    modified_count=modified,
-                    upserted=upserted,
-                ).to_document(),
-            )
-        return WriteCommandResult(
-            count=matched,
-            modified_count=modified,
-            upserted=upserted or None,
+        return _write_command_result(
+            WriteCommandResult(
+                count=matched + len(upserted),
+                modified_count=modified,
+                upserted=upserted or None,
+                write_errors=write_errors or None,
+            ),
+            acknowledged=acknowledged,
         )
 
     async def command_delete(
@@ -264,12 +325,16 @@ class DatabaseAdminWriteCommandService:
     ) -> object:
         collection_name = self._admin._require_collection_name(spec.get("delete"), "delete")
         deletes = self._admin._normalize_delete_specs(spec.get("deletes"))
+        _validate_delete_command_shapes(deletes)
         ordered = self._admin._normalize_ordered_from_command(spec.get("ordered"))
         collection = self._admin._database.get_collection(collection_name)
         command_context = execution_context or self._admin._database._new_execution_context()
         command_let = spec.get("let")
         if command_let is not None and not isinstance(command_let, dict):
             raise TypeError("let must be a dict")
+        acknowledged = write_command_acknowledged(
+            spec, dialect=self._admin._mongodb_dialect.key
+        )
         deleted = 0
         write_errors: list[WriteErrorEntry] = []
         for index, delete_spec in enumerate(deletes):
@@ -302,7 +367,7 @@ class DatabaseAdminWriteCommandService:
                         session=session,
                     )
                 deleted += result.deleted_count
-            except Exception as exc:
+            except (WriteError, OperationFailure, TypeError, ValueError) as exc:
                 write_errors.append(
                     WriteErrorEntry(
                         index=index,
@@ -312,15 +377,10 @@ class DatabaseAdminWriteCommandService:
                 )
                 if ordered:
                     break
-        if write_errors:
-            raise BulkWriteError(
-                "delete command failed",
-                details=BulkWriteErrorDetails(
-                    write_errors=write_errors,
-                    removed_count=deleted,
-                ).to_document(),
-            )
-        return WriteCommandResult(count=deleted)
+        return _write_command_result(
+            WriteCommandResult(count=deleted, write_errors=write_errors or None),
+            acknowledged=acknowledged,
+        )
 
     async def execute_find_and_modify(
         self,
@@ -437,7 +497,7 @@ class DatabaseAdminWriteCommandService:
         if not isinstance(outcome, FindAndModifyOutcome):
             raise TypeError('find_one_and_update did not return an atomic outcome')
         result = outcome.captured.result
-        applied = result.matched_count > 0 or result.upserted_id is not None
+        applied = result.matched_count > 0 or result.did_upsert
         return FindAndModifyCommandResult(
             last_error_object=FindAndModifyLastErrorObject(
                 count=1 if applied else 0,
@@ -474,7 +534,7 @@ class DatabaseAdminWriteCommandService:
         if not isinstance(outcome, FindAndModifyOutcome):
             raise TypeError('find_one_and_replace did not return an atomic outcome')
         result = outcome.captured.result
-        applied = result.matched_count > 0 or result.upserted_id is not None
+        applied = result.matched_count > 0 or result.did_upsert
         return FindAndModifyCommandResult(
             last_error_object=FindAndModifyLastErrorObject(
                 count=1 if applied else 0,

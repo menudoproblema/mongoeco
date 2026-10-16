@@ -1,12 +1,31 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, Sequence, Set as AbstractSet
+from typing import Any
 
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.search import TEXT_SCORE_FIELD
-from mongoeco.types import SortSpec
+from mongoeco.types import Projection, SortSpec
 
 
 type HintSpec = str | SortSpec
+type ProjectionInput = Mapping[str, Any] | Sequence[str] | AbstractSet[str]
+
+
+def normalize_projection_spec(projection: object | None) -> Projection | None:
+    if projection is None:
+        return None
+    if isinstance(projection, Mapping):
+        document = dict(projection)
+    elif isinstance(projection, Sequence | AbstractSet):
+        if not all(isinstance(field, str) for field in projection):
+            message = "projection must be a list of key names, each an instance of str"
+            raise TypeError(message)
+        document = dict.fromkeys(projection, 1)
+    else:
+        message = "projection must be a mapping or list of key names"
+        raise TypeError(message)
+    return DocumentCodec.to_internal(document)
 
 
 def normalize_sort_spec(sort: object | None) -> SortSpec | None:

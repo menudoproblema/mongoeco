@@ -1,0 +1,1135 @@
+{
+  "target": "8.0",
+  "build_info": {
+    "version": "8.0.32",
+    "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+    "modules": [],
+    "allocator": "system",
+    "javascriptEngine": "mozjs",
+    "sysInfo": "deprecated",
+    "versionArray": [
+      8,
+      0,
+      32,
+      0
+    ],
+    "openssl": {
+      "running": "Apple Secure Transport"
+    },
+    "buildEnvironment": {
+      "distmod": "",
+      "distarch": "arm64",
+      "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+      "ccflags": "-U_FORTIFY_SOURCE -DBOOST_NO_CXX98_FUNCTION_BASE --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DASIO_HAS_STD_INVOKE_RESULT -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wimplicit-fallthrough",
+      "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+      "cxxflags": "-U_FORTIFY_SOURCE -DBOOST_NO_CXX98_FUNCTION_BASE --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DASIO_HAS_STD_INVOKE_RESULT -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wimplicit-fallthrough",
+      "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -lresolv -framework CoreFoundation -framework Security",
+      "target_arch": "arm64",
+      "target_os": "macOS",
+      "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+    },
+    "bits": 64,
+    "debug": false,
+    "maxBsonObjectSize": 16777216,
+    "macOS": {
+      "osProductVersion": "15.6",
+      "osRelease": "24.6.0",
+      "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+    },
+    "storageEngines": [
+      "devnull",
+      "wiredTiger"
+    ],
+    "ok": 1.0
+  },
+  "fcv": {
+    "version": "8.0"
+  },
+  "sdk": "4.19.0",
+  "native_facades": [
+    "sync",
+    "async"
+  ],
+  "catalog_sha256": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+  "observer_sha256": "be6f848fbe372e6a539ce235e404d2729c938556d5c9a59d8a4ddde9eaef1cd7",
+  "legacy_fixture_sha256": "27bf2bfc3a0e1207928068b0d8993163ea7fd6e0dcb3213fe553ac4f17ffdfbd",
+  "observations": {
+    "query_update_missing_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 40414,
+        "codeName": "IDLFailedToParse",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_missing_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 40414,
+        "codeName": "IDLFailedToParse",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_null_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 40414,
+        "codeName": "IDLFailedToParse",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_null_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 40414,
+        "codeName": "IDLFailedToParse",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_scalar_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_scalar_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_array_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_array_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_bool_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_bool_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_string_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_string_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_empty_True": {
+      "status": "ok",
+      "result": {
+        "ok": 1.0,
+        "n": 4,
+        "nModified": 4
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "before",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "1"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "after",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "1"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_update_empty_False": {
+      "status": "ok",
+      "result": {
+        "ok": 1.0,
+        "n": 4,
+        "nModified": 4
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "before",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "1"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "after",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "1"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_missing_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 40414,
+        "codeName": "IDLFailedToParse",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_missing_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 40414,
+        "codeName": "IDLFailedToParse",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_null_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 40414,
+        "codeName": "IDLFailedToParse",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_null_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 40414,
+        "codeName": "IDLFailedToParse",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_scalar_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_scalar_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_array_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_array_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_bool_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_bool_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_string_True": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_string_False": {
+      "status": "error",
+      "error": {
+        "family": "OperationFailure",
+        "code": 14,
+        "codeName": "TypeMismatch",
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "b"
+            ],
+            [
+              "value",
+              {
+                "$numberInt": "0"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "query_delete_empty_True": {
+      "status": "ok",
+      "result": {
+        "ok": 1.0,
+        "n": 2
+      },
+      "documents": []
+    },
+    "query_delete_empty_False": {
+      "status": "ok",
+      "result": {
+        "ok": 1.0,
+        "n": 2
+      },
+      "documents": []
+    }
+  },
+  "query_catalog_sha256": "ed683717312e13819da85c54cbec03cbb565caeb8868f8b08104b020309c75b8"
+}

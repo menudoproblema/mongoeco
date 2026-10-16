@@ -29,7 +29,7 @@ class MutationOutcome:
         if matched not in {0, 1} or modified not in {0, 1} or modified > matched:
             message = "mutation counts are inconsistent"
             raise ValueError(message)
-        upserted = self.result.upserted_id is not None
+        upserted = self.result.did_upsert
         if upserted and matched != 0:
             message = "an upsert cannot also match an existing document"
             raise ValueError(message)

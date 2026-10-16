@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 type Document = dict[str, Any]
@@ -73,7 +73,9 @@ class DeleteMany:
     collation: Any | None = None
 
 
-type WriteModel = InsertOne | UpdateOne | UpdateMany | ReplaceOne | DeleteOne | DeleteMany
+type WriteModel = (
+    InsertOne | UpdateOne | UpdateMany | ReplaceOne | DeleteOne | DeleteMany
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,6 +96,13 @@ class UpdateResult[T]:
     modified_count: int
     upserted_id: T | None = None
     acknowledged: bool = True
+    did_upsert: bool = field(default=False, kw_only=True)
+
+    def __post_init__(self) -> None:
+        # Older SPI v2 engines express an upsert by its non-null ID alone.
+        # A null ID needs the explicit flag while preserving those constructors.
+        if self.upserted_id is not None:
+            object.__setattr__(self, "did_upsert", True)
 
 
 @dataclass(frozen=True, slots=True)

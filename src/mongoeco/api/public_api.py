@@ -95,6 +95,12 @@ def normalize_public_operation_arguments(
             normalized[name] = value
 
     normalized.update(kwargs)
+    if 'bypassDocumentValidation' in normalized:
+        # findAndModify exposes the server spelling through PyMongo **kwargs.
+        # It takes precedence over the Python spelling's explicit default.
+        normalized['bypass_document_validation'] = normalized.pop(
+            'bypassDocumentValidation'
+        )
 
     for required in spec.required_arguments:
         if normalized.get(required, ARG_UNSET) is ARG_UNSET:
@@ -281,6 +287,7 @@ COLLECTION_FIND_ONE_AND_UPDATE_SPEC = PublicOperationSpec(
         'return_document',
         'array_filters',
         'bypass_document_validation',
+        'bypassDocumentValidation',
         _SINGLE_WRITE_SELECTION_OPTIONS,
         'max_time_ms',
     ),
@@ -297,6 +304,7 @@ COLLECTION_FIND_ONE_AND_REPLACE_SPEC = PublicOperationSpec(
         'upsert',
         'return_document',
         'bypass_document_validation',
+        'bypassDocumentValidation',
         _SINGLE_WRITE_SELECTION_OPTIONS,
         'max_time_ms',
     ),

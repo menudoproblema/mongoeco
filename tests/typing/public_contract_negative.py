@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from mongoeco import AsyncMongoClient, MongoClient
+from mongoeco.api import AsyncCollection, Collection
 from mongoeco.compat import (
     DeprecationStatus,
     compare_public_api_manifests,
@@ -43,3 +44,27 @@ status: DeprecationStatus = "deprecated"  # typing-error: assignment
 catalog_items: list[object] = deprecation_catalog()  # typing-error: assignment
 compare_public_api_manifests([], {})  # typing-error: arg-type
 cli_exit: ConformanceCliExit = 0  # typing-error: assignment
+
+
+async def reject_invalid_insert_many_ordered(
+    sync_collection: Collection,
+    async_collection: AsyncCollection,
+) -> None:
+    sync_collection.insert_many(
+        [{"_id": "sync"}],
+        ordered="no",  # typing-error: arg-type
+    )
+    await async_collection.insert_many(
+        [{"_id": "async"}],
+        ordered="no",  # typing-error: arg-type
+    )
+
+
+async def reject_invalid_projection_and_document_iterables(
+    sync_collection: Collection,
+    async_collection: AsyncCollection,
+) -> None:
+    sync_collection.find({}, [1])  # typing-error: list-item
+    await async_collection.find_one({}, [1])  # typing-error: list-item
+    sync_collection.insert_many((1, 2))  # typing-error: arg-type
+    await async_collection.insert_many((n for n in range(2)))  # typing-error: misc

@@ -404,6 +404,12 @@
 - `note`: `Static local connection metadata.`
 
 ## Operation Options
+### `insert_one`
+- `comment`: `status`="effective", `note`="Preserved in insert profiling, active operations and session metadata."
+
+### `insert_many`
+- `comment`: `status`="effective", `note`="Preserved in batch insert profiling, active operations and session metadata."
+
 ### `find`
 - `hint`: `status`="effective", `note`="Validated against existing indexes and applied to read planning/explain where engines can honor it."
 - `comment`: `status`="effective", `note`="Recorded in engine session metadata and surfaced by explain()."
@@ -626,7 +632,7 @@
 
 ## CXP Exchange
 - `catalog`: `org.mongoeco:mongodb:1.2.0`
-- `sha256`: `84c69da54a8d09f6dce9a3cbc394cf8c2f251402c72e18b3f7488af86ef08aeb`
+- `sha256`: `f2b3d7c51846a00858b4d7c17ae1b439adc0b7285df11f67c291302c0f7013b9`
 - `profiles`: `mongodb-core`, `mongodb-text-search`, `mongodb-search`, `mongodb-platform`, `mongodb-aggregate-rich`, `mongodb-mock-safe`
 
 ## Mock Safe Profile

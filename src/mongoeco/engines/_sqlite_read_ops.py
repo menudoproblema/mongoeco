@@ -6,7 +6,10 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
-from mongoeco.core.identity import document_matches_root_id_lookup
+from mongoeco.core.identity import (
+    document_matches_root_id_lookup,
+    id_contains_numeric_value,
+)
 from mongoeco.core.projections import apply_projection
 from mongoeco.core.search import (
     SearchQuery,
@@ -18,6 +21,7 @@ from mongoeco.core.search import (
     vector_field_paths,
 )
 from mongoeco.errors import OperationFailure
+
 
 if TYPE_CHECKING:
     from mongoeco.engines.sqlite_planner import SQLiteReadExecutionPlan
@@ -45,7 +49,26 @@ def get_document(
         (db_name, coll_name, storage_key),
     ).fetchone()
     if row is None:
-        return None
+        if not id_contains_numeric_value(doc_id):
+            return None
+        row = next(
+            (
+                (payload,)
+                for (payload,) in conn.execute(
+                    "SELECT document FROM documents "
+                    "WHERE db_name = ? AND coll_name = ?",
+                    (db_name, coll_name),
+                )
+                if document_matches_root_id_lookup(
+                    deserialize_document(payload),
+                    doc_id,
+                    dialect=effective_dialect,
+                )
+            ),
+            None,
+        )
+        if row is None:
+            return None
     document = deserialize_document(row[0])
     if not document_matches_root_id_lookup(
         document,

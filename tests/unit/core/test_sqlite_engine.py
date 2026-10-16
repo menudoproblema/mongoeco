@@ -773,19 +773,24 @@ class SQLiteEngineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.upserted_id, "seeded")
         self.assertEqual(found, {"_id": "seeded", "kind": "view", "done": True})
 
-    async def test_storage_key_distinguishes_int_and_float_ids(self):
+    async def test_physical_keys_remain_distinct_but_numeric_ids_are_unique(self):
         engine = SQLiteEngine()
         await engine.connect()
         try:
             await engine.insert_document("db", "coll", {"_id": 1, "kind": "int"})
-            await engine.insert_document("db", "coll", {"_id": 1.0, "kind": "float"})
+            self.assertNotEqual(engine._storage_key(1), engine._storage_key(1.0))
+            with self.assertRaises(DuplicateKeyError) as duplicate:
+                await engine.insert_document(
+                    "db", "coll", {"_id": 1.0, "kind": "float"}
+                )
+            self.assertEqual(duplicate.exception.code, 11000)
             int_doc = await engine.get_document("db", "coll", 1)
             float_doc = await engine.get_document("db", "coll", 1.0)
         finally:
             await engine.disconnect()
 
         self.assertEqual(int_doc, {"_id": 1, "kind": "int"})
-        self.assertEqual(float_doc, {"_id": 1.0, "kind": "float"})
+        self.assertEqual(float_doc, {"_id": 1, "kind": "int"})
 
     async def test_sqlite_preserves_document_field_order_round_trip(self):
         engine = SQLiteEngine()

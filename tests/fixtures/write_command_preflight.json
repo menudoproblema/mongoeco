@@ -1,0 +1,1334 @@
+[
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": 1
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "multi": "bad"
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "upsert": "bad"
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": "bad"
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": [
+            1
+          ]
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "delete": "cases",
+      "deletes": [
+        {
+          "q": {},
+          "limit": 1
+        },
+        {
+          "q": {},
+          "limit": 2
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": 1
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "multi": "bad"
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "upsert": "bad"
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": "bad"
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": [
+            1
+          ]
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "request": {
+      "delete": "cases",
+      "deletes": [
+        {
+          "q": {},
+          "limit": 1
+        },
+        {
+          "q": {},
+          "limit": 2
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": 1
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "multi": "bad"
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "upsert": "bad"
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": "bad"
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": [
+            1
+          ]
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "delete": "cases",
+      "deletes": [
+        {
+          "q": {},
+          "limit": 1
+        },
+        {
+          "q": {},
+          "limit": 2
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": 1
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "multi": "bad"
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "upsert": "bad"
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": "bad"
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": [
+            1
+          ]
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "request": {
+      "delete": "cases",
+      "deletes": [
+        {
+          "q": {},
+          "limit": 1
+        },
+        {
+          "q": {},
+          "limit": 2
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": 1
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "multi": "bad"
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "upsert": "bad"
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": "bad"
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": [
+            1
+          ]
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "delete": "cases",
+      "deletes": [
+        {
+          "q": {},
+          "limit": 1
+        },
+        {
+          "q": {},
+          "limit": 2
+        }
+      ],
+      "ordered": true
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": 1
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "multi": "bad"
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "upsert": "bad"
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": "bad"
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "update": "cases",
+      "updates": [
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "prefix": true
+            }
+          }
+        },
+        {
+          "q": {},
+          "u": {
+            "$set": {
+              "x": 1
+            }
+          },
+          "arrayFilters": [
+            1
+          ]
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 14,
+      "codeName": "TypeMismatch",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "request": {
+      "delete": "cases",
+      "deletes": [
+        {
+          "q": {},
+          "limit": 1
+        },
+        {
+          "q": {},
+          "limit": 2
+        }
+      ],
+      "ordered": false
+    },
+    "error": {
+      "family": "OperationFailure",
+      "code": 9,
+      "codeName": "FailedToParse",
+      "labels": [],
+      "write_errors": []
+    },
+    "documents": [
+      {
+        "_id": "a"
+      }
+    ]
+  }
+]

@@ -1,0 +1,5958 @@
+{
+  "target": "9.0",
+  "build_info": {
+    "version": "9.0.2",
+    "versionArray": [
+      9,
+      0,
+      2,
+      0
+    ],
+    "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+    "modules": [],
+    "allocator": "system",
+    "javascriptEngine": "mozjs-wasm",
+    "sysinfo": "deprecated",
+    "openssl": {
+      "running": "Apple Secure Transport"
+    },
+    "buildEnvironment": {
+      "distmod": "",
+      "distarch": "arm64",
+      "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+      "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+      "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+      "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+      "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+      "target_arch": "arm64",
+      "target_os": "macOS",
+      "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+    },
+    "bits": 64,
+    "debug": false,
+    "maxBsonObjectSize": 16777216,
+    "macOS": {
+      "osProductVersion": "15.6",
+      "osRelease": "24.6.0",
+      "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+    },
+    "storageEngines": [
+      "devnull",
+      "wiredTiger"
+    ],
+    "ok": 1.0
+  },
+  "fcv": {
+    "version": "9.0"
+  },
+  "sdk": "4.19.0",
+  "native_facades": [
+    "sync",
+    "async"
+  ],
+  "catalog_sha256": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+  "observer_sha256": "be6f848fbe372e6a539ce235e404d2729c938556d5c9a59d8a4ddde9eaef1cd7",
+  "legacy_fixture_sha256": "27bf2bfc3a0e1207928068b0d8993163ea7fd6e0dcb3213fe553ac4f17ffdfbd",
+  "observations": {
+    "sort_batch_preflight_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "count",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              2,
+              14
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 2,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "multi",
+                    false
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "seed"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "sort",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          {
+                            "$numberInt": "1"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$inc",
+                          {
+                            "$document": [
+                              [
+                                "count",
+                                "invalid"
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    false
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 1,
+            "nModified": 1,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "insert_many_duplicate_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              11000
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    "a"
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        },
+        "caller": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "date",
+                {
+                  "$date": {
+                    "$numberLong": "1767323045123"
+                  }
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$binary": {
+                      "base64": "cGF5bG9hZA==",
+                      "subType": "80"
+                    }
+                  },
+                  {
+                    "$oid": "000000000000000000000123"
+                  }
+                ]
+              ],
+              [
+                "nested",
+                {
+                  "$document": [
+                    [
+                      "second",
+                      {
+                        "$numberLong": "2"
+                      }
+                    ],
+                    [
+                      "first",
+                      {
+                        "$numberDecimal": "1.25"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "reference",
+                {
+                  "$ref": "other",
+                  "$id": "id"
+                }
+              ],
+              [
+                "regex",
+                {
+                  "$regularExpression": {
+                    "pattern": "a.*",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "bulk_write_duplicate_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              11000
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    "a"
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "insert_many_schema_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              121
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    {
+                      "$oid_token": "generated:0"
+                    }
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        },
+        "caller": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:0"
+                }
+              ],
+              [
+                "date",
+                {
+                  "$date": {
+                    "$numberLong": "1767323045123"
+                  }
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$binary": {
+                      "base64": "cGF5bG9hZA==",
+                      "subType": "80"
+                    }
+                  },
+                  {
+                    "$oid": "000000000000000000000123"
+                  }
+                ]
+              ],
+              [
+                "nested",
+                {
+                  "$document": [
+                    [
+                      "second",
+                      {
+                        "$numberLong": "2"
+                      }
+                    ],
+                    [
+                      "first",
+                      {
+                        "$numberDecimal": "1.25"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "reference",
+                {
+                  "$ref": "other",
+                  "$id": "id"
+                }
+              ],
+              [
+                "regex",
+                {
+                  "$regularExpression": {
+                    "pattern": "a.*",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "bulk_write_schema_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              121
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    {
+                      "$oid_token": "generated:0"
+                    }
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "insert_many_invalid_id_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              53
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    [
+                      "invalid"
+                    ]
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        },
+        "caller": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                [
+                  "invalid"
+                ]
+              ],
+              [
+                "date",
+                {
+                  "$date": {
+                    "$numberLong": "1767323045123"
+                  }
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$binary": {
+                      "base64": "cGF5bG9hZA==",
+                      "subType": "80"
+                    }
+                  },
+                  {
+                    "$oid": "000000000000000000000123"
+                  }
+                ]
+              ],
+              [
+                "nested",
+                {
+                  "$document": [
+                    [
+                      "second",
+                      {
+                        "$numberLong": "2"
+                      }
+                    ],
+                    [
+                      "first",
+                      {
+                        "$numberDecimal": "1.25"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "reference",
+                {
+                  "$ref": "other",
+                  "$id": "id"
+                }
+              ],
+              [
+                "regex",
+                {
+                  "$regularExpression": {
+                    "pattern": "a.*",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "bulk_write_invalid_id_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              53
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    [
+                      "invalid"
+                    ]
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "insert_many_mixed_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              121
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    "a"
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        },
+        "caller": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "date",
+                {
+                  "$date": {
+                    "$numberLong": "1767323045123"
+                  }
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$binary": {
+                      "base64": "cGF5bG9hZA==",
+                      "subType": "80"
+                    }
+                  },
+                  {
+                    "$oid": "000000000000000000000123"
+                  }
+                ]
+              ],
+              [
+                "nested",
+                {
+                  "$document": [
+                    [
+                      "second",
+                      {
+                        "$numberLong": "2"
+                      }
+                    ],
+                    [
+                      "first",
+                      {
+                        "$numberDecimal": "1.25"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "reference",
+                {
+                  "$ref": "other",
+                  "$id": "id"
+                }
+              ],
+              [
+                "regex",
+                {
+                  "$regularExpression": {
+                    "pattern": "a.*",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                [
+                  "invalid"
+                ]
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "z"
+              ],
+              [
+                "name",
+                "Zed"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "bulk_write_mixed_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              121
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    "a"
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "insert_many_shared_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:0"
+                }
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              11000
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    {
+                      "$oid_token": "generated:0"
+                    }
+                  ],
+                  [
+                    "name",
+                    "Ada"
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        },
+        "caller": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:0"
+                }
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:0"
+                }
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:1"
+                }
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "bulk_write_shared_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:0"
+                }
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              11000
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    {
+                      "$oid_token": "generated:0"
+                    }
+                  ],
+                  [
+                    "name",
+                    "Ada"
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "UpdateOne_options_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              2
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "arrayFilters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item.key",
+                            "match"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "collation",
+                    {
+                      "$document": [
+                        [
+                          "locale",
+                          "en"
+                        ],
+                        [
+                          "strength",
+                          {
+                            "$numberInt": "2"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "hint",
+                    "missing_index"
+                  ],
+                  [
+                    "multi",
+                    false
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Ada"
+                        ],
+                        [
+                          "literal",
+                          {
+                            "$document": [
+                              [
+                                "$ne",
+                                {
+                                  "$numberLong": "9"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "sort",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          {
+                            "$numberInt": "1"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$set",
+                          {
+                            "$document": [
+                              [
+                                "items.$[item].value",
+                                {
+                                  "$numberLong": "2"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    true
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "UpdateMany_options_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              2
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "arrayFilters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item.key",
+                            "match"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "collation",
+                    {
+                      "$document": [
+                        [
+                          "locale",
+                          "en"
+                        ],
+                        [
+                          "strength",
+                          {
+                            "$numberInt": "2"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "hint",
+                    "missing_index"
+                  ],
+                  [
+                    "multi",
+                    true
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Ada"
+                        ],
+                        [
+                          "literal",
+                          {
+                            "$document": [
+                              [
+                                "$ne",
+                                {
+                                  "$numberLong": "9"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$set",
+                          {
+                            "$document": [
+                              [
+                                "items.$[item].value",
+                                {
+                                  "$numberLong": "2"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    true
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "ReplaceOne_options_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              2
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "collation",
+                    {
+                      "$document": [
+                        [
+                          "locale",
+                          "en"
+                        ],
+                        [
+                          "strength",
+                          {
+                            "$numberInt": "2"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "hint",
+                    "missing_index"
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Ada"
+                        ],
+                        [
+                          "literal",
+                          {
+                            "$document": [
+                              [
+                                "$ne",
+                                {
+                                  "$numberLong": "9"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "sort",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          {
+                            "$numberInt": "1"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Replacement"
+                        ],
+                        [
+                          "nested",
+                          {
+                            "$document": [
+                              [
+                                "second",
+                                {
+                                  "$numberLong": "2"
+                                }
+                              ],
+                              [
+                                "first",
+                                {
+                                  "$numberDecimal": "1.25"
+                                }
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "items",
+                          [
+                            {
+                              "$binary": {
+                                "base64": "cGF5bG9hZA==",
+                                "subType": "80"
+                              }
+                            },
+                            {
+                              "$oid": "000000000000000000000123"
+                            }
+                          ]
+                        ],
+                        [
+                          "date",
+                          {
+                            "$date": {
+                              "$numberLong": "1767323045123"
+                            }
+                          }
+                        ],
+                        [
+                          "reference",
+                          {
+                            "$ref": "other",
+                            "$id": "id"
+                          }
+                        ],
+                        [
+                          "regex",
+                          {
+                            "$regularExpression": {
+                              "pattern": "a.*",
+                              "options": "i"
+                            }
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    true
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "DeleteOne_options_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              2
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "collation",
+                    {
+                      "$document": [
+                        [
+                          "locale",
+                          "en"
+                        ],
+                        [
+                          "strength",
+                          {
+                            "$numberInt": "2"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "hint",
+                    "missing_index"
+                  ],
+                  [
+                    "limit",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Ada"
+                        ],
+                        [
+                          "literal",
+                          {
+                            "$document": [
+                              [
+                                "$ne",
+                                {
+                                  "$numberLong": "9"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "DeleteMany_options_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              2
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "collation",
+                    {
+                      "$document": [
+                        [
+                          "locale",
+                          "en"
+                        ],
+                        [
+                          "strength",
+                          {
+                            "$numberInt": "2"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "hint",
+                    "missing_index"
+                  ],
+                  [
+                    "limit",
+                    {
+                      "$numberInt": "0"
+                    }
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Ada"
+                        ],
+                        [
+                          "literal",
+                          {
+                            "$document": [
+                              [
+                                "$ne",
+                                {
+                                  "$numberLong": "9"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "UpdateOne_type_error_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "count",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "count",
+                "invalid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              14
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 0,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "multi",
+                    false
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "b"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$inc",
+                          {
+                            "$document": [
+                              [
+                                "count",
+                                {
+                                  "$numberInt": "1"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    false
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "UpdateMany_type_error_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "count",
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "count",
+                "invalid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              14
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 0,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "multi",
+                    true
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "count",
+                          {
+                            "$document": [
+                              [
+                                "$exists",
+                                true
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$inc",
+                          {
+                            "$document": [
+                              [
+                                "count",
+                                {
+                                  "$numberInt": "1"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "mixed_families_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "count",
+                "invalid"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "insert"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "upsert"
+              ],
+              [
+                "count",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              3,
+              14
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 3,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "multi",
+                    false
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "a"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$inc",
+                          {
+                            "$document": [
+                              [
+                                "count",
+                                {
+                                  "$numberInt": "1"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    false
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 1,
+            "nUpserted": 1,
+            "upserted": [
+              [
+                0,
+                "upsert"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "replace_identity_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 0,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "a"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "changed"
+                        ],
+                        [
+                          "nested",
+                          {
+                            "$document": [
+                              [
+                                "second",
+                                {
+                                  "$numberLong": "2"
+                                }
+                              ],
+                              [
+                                "first",
+                                {
+                                  "$numberDecimal": "1.25"
+                                }
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "items",
+                          [
+                            {
+                              "$binary": {
+                                "base64": "cGF5bG9hZA==",
+                                "subType": "80"
+                              }
+                            },
+                            {
+                              "$oid": "000000000000000000000123"
+                            }
+                          ]
+                        ],
+                        [
+                          "date",
+                          {
+                            "$date": {
+                              "$numberLong": "1767323045123"
+                            }
+                          }
+                        ],
+                        [
+                          "reference",
+                          {
+                            "$ref": "other",
+                            "$id": "id"
+                          }
+                        ],
+                        [
+                          "regex",
+                          {
+                            "$regularExpression": {
+                              "pattern": "a.*",
+                              "options": "i"
+                            }
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "pipeline_failure_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 0,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "multi",
+                    false
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "a"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "$set",
+                            {
+                              "$document": [
+                                [
+                                  "_id",
+                                  "changed"
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "upsert",
+                    false
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "sort_batch_preflight_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "count",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              2,
+              14
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 2,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "multi",
+                    false
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "seed"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "sort",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          {
+                            "$numberInt": "1"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$inc",
+                          {
+                            "$document": [
+                              [
+                                "count",
+                                "invalid"
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    false
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 1,
+            "nModified": 1,
+            "nRemoved": 1,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "insert_many_duplicate_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              11000
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    "a"
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        },
+        "caller": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "date",
+                {
+                  "$date": {
+                    "$numberLong": "1767323045123"
+                  }
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$binary": {
+                      "base64": "cGF5bG9hZA==",
+                      "subType": "80"
+                    }
+                  },
+                  {
+                    "$oid": "000000000000000000000123"
+                  }
+                ]
+              ],
+              [
+                "nested",
+                {
+                  "$document": [
+                    [
+                      "second",
+                      {
+                        "$numberLong": "2"
+                      }
+                    ],
+                    [
+                      "first",
+                      {
+                        "$numberDecimal": "1.25"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "reference",
+                {
+                  "$ref": "other",
+                  "$id": "id"
+                }
+              ],
+              [
+                "regex",
+                {
+                  "$regularExpression": {
+                    "pattern": "a.*",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "bulk_write_duplicate_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              11000
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    "a"
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "insert_many_schema_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              121
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    {
+                      "$oid_token": "generated:0"
+                    }
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        },
+        "caller": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:0"
+                }
+              ],
+              [
+                "date",
+                {
+                  "$date": {
+                    "$numberLong": "1767323045123"
+                  }
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$binary": {
+                      "base64": "cGF5bG9hZA==",
+                      "subType": "80"
+                    }
+                  },
+                  {
+                    "$oid": "000000000000000000000123"
+                  }
+                ]
+              ],
+              [
+                "nested",
+                {
+                  "$document": [
+                    [
+                      "second",
+                      {
+                        "$numberLong": "2"
+                      }
+                    ],
+                    [
+                      "first",
+                      {
+                        "$numberDecimal": "1.25"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "reference",
+                {
+                  "$ref": "other",
+                  "$id": "id"
+                }
+              ],
+              [
+                "regex",
+                {
+                  "$regularExpression": {
+                    "pattern": "a.*",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "bulk_write_schema_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              121
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    {
+                      "$oid_token": "generated:0"
+                    }
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "insert_many_invalid_id_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              53
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    [
+                      "invalid"
+                    ]
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        },
+        "caller": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                [
+                  "invalid"
+                ]
+              ],
+              [
+                "date",
+                {
+                  "$date": {
+                    "$numberLong": "1767323045123"
+                  }
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$binary": {
+                      "base64": "cGF5bG9hZA==",
+                      "subType": "80"
+                    }
+                  },
+                  {
+                    "$oid": "000000000000000000000123"
+                  }
+                ]
+              ],
+              [
+                "nested",
+                {
+                  "$document": [
+                    [
+                      "second",
+                      {
+                        "$numberLong": "2"
+                      }
+                    ],
+                    [
+                      "first",
+                      {
+                        "$numberDecimal": "1.25"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "reference",
+                {
+                  "$ref": "other",
+                  "$id": "id"
+                }
+              ],
+              [
+                "regex",
+                {
+                  "$regularExpression": {
+                    "pattern": "a.*",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "bulk_write_invalid_id_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              53
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    [
+                      "invalid"
+                    ]
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "insert_many_mixed_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "z"
+              ],
+              [
+                "name",
+                "Zed"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              121
+            ],
+            [
+              3,
+              53
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    "a"
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "index": 3,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    [
+                      "invalid"
+                    ]
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 3,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        },
+        "caller": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "date",
+                {
+                  "$date": {
+                    "$numberLong": "1767323045123"
+                  }
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$binary": {
+                      "base64": "cGF5bG9hZA==",
+                      "subType": "80"
+                    }
+                  },
+                  {
+                    "$oid": "000000000000000000000123"
+                  }
+                ]
+              ],
+              [
+                "nested",
+                {
+                  "$document": [
+                    [
+                      "second",
+                      {
+                        "$numberLong": "2"
+                      }
+                    ],
+                    [
+                      "first",
+                      {
+                        "$numberDecimal": "1.25"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "reference",
+                {
+                  "$ref": "other",
+                  "$id": "id"
+                }
+              ],
+              [
+                "regex",
+                {
+                  "$regularExpression": {
+                    "pattern": "a.*",
+                    "options": "i"
+                  }
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                [
+                  "invalid"
+                ]
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "z"
+              ],
+              [
+                "name",
+                "Zed"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "bulk_write_mixed_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "c"
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "z"
+              ],
+              [
+                "name",
+                "Zed"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              121
+            ],
+            [
+              3,
+              53
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    "a"
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "index": 3,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    [
+                      "invalid"
+                    ]
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 3,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "insert_many_shared_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:0"
+                }
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:1"
+                }
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              11000
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    {
+                      "$oid_token": "generated:0"
+                    }
+                  ],
+                  [
+                    "name",
+                    "Ada"
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        },
+        "caller": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:0"
+                }
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:0"
+                }
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:1"
+                }
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "bulk_write_shared_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:0"
+                }
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$oid_token": "generated:1"
+                }
+              ],
+              [
+                "name",
+                "Cid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              11000
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    {
+                      "$oid_token": "generated:0"
+                    }
+                  ],
+                  [
+                    "name",
+                    "Ada"
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "UpdateOne_options_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "after"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              2
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "arrayFilters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item.key",
+                            "match"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "collation",
+                    {
+                      "$document": [
+                        [
+                          "locale",
+                          "en"
+                        ],
+                        [
+                          "strength",
+                          {
+                            "$numberInt": "2"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "hint",
+                    "missing_index"
+                  ],
+                  [
+                    "multi",
+                    false
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Ada"
+                        ],
+                        [
+                          "literal",
+                          {
+                            "$document": [
+                              [
+                                "$ne",
+                                {
+                                  "$numberLong": "9"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "sort",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          {
+                            "$numberInt": "1"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$set",
+                          {
+                            "$document": [
+                              [
+                                "items.$[item].value",
+                                {
+                                  "$numberLong": "2"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    true
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "UpdateMany_options_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "after"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              2
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "arrayFilters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item.key",
+                            "match"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "collation",
+                    {
+                      "$document": [
+                        [
+                          "locale",
+                          "en"
+                        ],
+                        [
+                          "strength",
+                          {
+                            "$numberInt": "2"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "hint",
+                    "missing_index"
+                  ],
+                  [
+                    "multi",
+                    true
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Ada"
+                        ],
+                        [
+                          "literal",
+                          {
+                            "$document": [
+                              [
+                                "$ne",
+                                {
+                                  "$numberLong": "9"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$set",
+                          {
+                            "$document": [
+                              [
+                                "items.$[item].value",
+                                {
+                                  "$numberLong": "2"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    true
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "ReplaceOne_options_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "after"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              2
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "collation",
+                    {
+                      "$document": [
+                        [
+                          "locale",
+                          "en"
+                        ],
+                        [
+                          "strength",
+                          {
+                            "$numberInt": "2"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "hint",
+                    "missing_index"
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Ada"
+                        ],
+                        [
+                          "literal",
+                          {
+                            "$document": [
+                              [
+                                "$ne",
+                                {
+                                  "$numberLong": "9"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "sort",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          {
+                            "$numberInt": "1"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Replacement"
+                        ],
+                        [
+                          "nested",
+                          {
+                            "$document": [
+                              [
+                                "second",
+                                {
+                                  "$numberLong": "2"
+                                }
+                              ],
+                              [
+                                "first",
+                                {
+                                  "$numberDecimal": "1.25"
+                                }
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "items",
+                          [
+                            {
+                              "$binary": {
+                                "base64": "cGF5bG9hZA==",
+                                "subType": "80"
+                              }
+                            },
+                            {
+                              "$oid": "000000000000000000000123"
+                            }
+                          ]
+                        ],
+                        [
+                          "date",
+                          {
+                            "$date": {
+                              "$numberLong": "1767323045123"
+                            }
+                          }
+                        ],
+                        [
+                          "reference",
+                          {
+                            "$ref": "other",
+                            "$id": "id"
+                          }
+                        ],
+                        [
+                          "regex",
+                          {
+                            "$regularExpression": {
+                              "pattern": "a.*",
+                              "options": "i"
+                            }
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    true
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "DeleteOne_options_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "after"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              2
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "collation",
+                    {
+                      "$document": [
+                        [
+                          "locale",
+                          "en"
+                        ],
+                        [
+                          "strength",
+                          {
+                            "$numberInt": "2"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "hint",
+                    "missing_index"
+                  ],
+                  [
+                    "limit",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Ada"
+                        ],
+                        [
+                          "literal",
+                          {
+                            "$document": [
+                              [
+                                "$ne",
+                                {
+                                  "$numberLong": "9"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "DeleteMany_options_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "after"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "before"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "seed"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              1,
+              2
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 1,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "collation",
+                    {
+                      "$document": [
+                        [
+                          "locale",
+                          "en"
+                        ],
+                        [
+                          "strength",
+                          {
+                            "$numberInt": "2"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "hint",
+                    "missing_index"
+                  ],
+                  [
+                    "limit",
+                    {
+                      "$numberInt": "0"
+                    }
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "name",
+                          "Ada"
+                        ],
+                        [
+                          "literal",
+                          {
+                            "$document": [
+                              [
+                                "$ne",
+                                {
+                                  "$numberLong": "9"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "UpdateOne_type_error_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "count",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "after"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "count",
+                "invalid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              14
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 0,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "multi",
+                    false
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "b"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$inc",
+                          {
+                            "$document": [
+                              [
+                                "count",
+                                {
+                                  "$numberInt": "1"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    false
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "UpdateMany_type_error_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "count",
+                {
+                  "$numberInt": "2"
+                }
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "after"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "count",
+                "invalid"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              14
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 0,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "multi",
+                    true
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "count",
+                          {
+                            "$document": [
+                              [
+                                "$exists",
+                                true
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$inc",
+                          {
+                            "$document": [
+                              [
+                                "count",
+                                {
+                                  "$numberInt": "1"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "mixed_families_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "count",
+                "invalid"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "insert"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "last"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "upsert"
+              ],
+              [
+                "count",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              3,
+              14
+            ],
+            [
+              4,
+              11000
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 3,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "multi",
+                    false
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "a"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "$inc",
+                          {
+                            "$document": [
+                              [
+                                "count",
+                                {
+                                  "$numberInt": "1"
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "upsert",
+                    false
+                  ]
+                ]
+              }
+            },
+            {
+              "index": 4,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "_id",
+                    "a"
+                  ],
+                  [
+                    "date",
+                    {
+                      "$date": {
+                        "$numberLong": "1767323045123"
+                      }
+                    }
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$binary": {
+                          "base64": "cGF5bG9hZA==",
+                          "subType": "80"
+                        }
+                      },
+                      {
+                        "$oid": "000000000000000000000123"
+                      }
+                    ]
+                  ],
+                  [
+                    "nested",
+                    {
+                      "$document": [
+                        [
+                          "second",
+                          {
+                            "$numberLong": "2"
+                          }
+                        ],
+                        [
+                          "first",
+                          {
+                            "$numberDecimal": "1.25"
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "reference",
+                    {
+                      "$ref": "other",
+                      "$id": "id"
+                    }
+                  ],
+                  [
+                    "regex",
+                    {
+                      "$regularExpression": {
+                        "pattern": "a.*",
+                        "options": "i"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 2,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 1,
+            "nUpserted": 1,
+            "upserted": [
+              [
+                0,
+                "upsert"
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "replace_identity_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "after"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 0,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "a"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "changed"
+                        ],
+                        [
+                          "nested",
+                          {
+                            "$document": [
+                              [
+                                "second",
+                                {
+                                  "$numberLong": "2"
+                                }
+                              ],
+                              [
+                                "first",
+                                {
+                                  "$numberDecimal": "1.25"
+                                }
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "items",
+                          [
+                            {
+                              "$binary": {
+                                "base64": "cGF5bG9hZA==",
+                                "subType": "80"
+                              }
+                            },
+                            {
+                              "$oid": "000000000000000000000123"
+                            }
+                          ]
+                        ],
+                        [
+                          "date",
+                          {
+                            "$date": {
+                              "$numberLong": "1767323045123"
+                            }
+                          }
+                        ],
+                        [
+                          "reference",
+                          {
+                            "$ref": "other",
+                            "$id": "id"
+                          }
+                        ],
+                        [
+                          "regex",
+                          {
+                            "$regularExpression": {
+                              "pattern": "a.*",
+                              "options": "i"
+                            }
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "pipeline_failure_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "after"
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "write_error_operations": [
+            {
+              "index": 0,
+              "present": true,
+              "value": {
+                "$document": [
+                  [
+                    "multi",
+                    false
+                  ],
+                  [
+                    "q",
+                    {
+                      "$document": [
+                        [
+                          "_id",
+                          "a"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "u",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "$set",
+                            {
+                              "$document": [
+                                [
+                                  "_id",
+                                  "changed"
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "upsert",
+                    false
+                  ]
+                ]
+              }
+            }
+          ],
+          "partial": {
+            "nInserted": 1,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ]
+  },
+  "operation_catalog_sha256": "4e286a8962dfea23fbcb368257126d5630f8a625822b7610ce84b5eb4d23b683"
+}

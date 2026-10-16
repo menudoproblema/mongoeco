@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from mongoeco.core.query_plan import QueryNode
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from mongoeco.core.query_plan import QueryNode
 
 
 def plan_has_array_traversing_paths(
@@ -98,7 +102,9 @@ def sort_requires_python(
                 json_type(document, {path_literal}) = 'array'
                 OR (
                     json_type(document, {path_literal}) = 'object'
-                    AND {type_expression_sql(field)} = ''
+                    AND {type_expression_sql(field)} IN (
+                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'
+                    )
                 )
               )
             LIMIT 1

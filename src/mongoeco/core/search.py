@@ -566,7 +566,7 @@ def resolve_classic_text_index_for_hint(
     normalized_hint = normalize_index_keys(hint)
     matching_indexes = [index for index in indexes if index.key == normalized_hint]
     if not matching_indexes:
-        raise OperationFailure("hint does not correspond to an existing index")
+        raise OperationFailure("hint does not correspond to an existing index", code=2)
     usable_indexes = [index for index in matching_indexes if not index.hidden]
     if not usable_indexes:
         raise OperationFailure(

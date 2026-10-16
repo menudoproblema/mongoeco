@@ -109,7 +109,7 @@ def apply_inc(
     ):
         increment = application.instruction.value
         if not helpers._is_numeric(increment):
-            raise OperationFailure("$inc requires numeric values")
+            raise OperationFailure("$inc requires numeric values", code=14)
         for target in application.targets:
             found, current = get_document_value(doc, target.concrete_path)
             if not found:
@@ -117,7 +117,9 @@ def apply_inc(
                     modified = True
                 continue
             if not helpers._is_numeric(current):
-                raise OperationFailure("$inc requires the target field to be numeric")
+                raise OperationFailure(
+                    "$inc requires the target field to be numeric", code=14,
+                )
             if set_document_value(doc, target.concrete_path, bson_add(current, increment)):
                 modified = True
     return modified

@@ -1,8 +1,18 @@
 from collections.abc import Callable
 from copy import deepcopy
+from re import Pattern
 from typing import Any
 
+from mongoeco.core.bson_scalars import bson_numeric_alias, is_bson_numeric
+from mongoeco.core.codec import DocumentCodec
 from mongoeco.errors import WriteError
+from mongoeco.types import Regex
+
+
+try:
+    from bson.regex import Regex as BsonRegex
+except ImportError:  # pragma: no cover - optional wire dependency
+    BsonRegex = None
 
 
 SELECTED_DOCUMENT_STORAGE_MISMATCH_MESSAGE = (
@@ -26,14 +36,51 @@ def canonical_document_id(value: Any) -> Any:
         return ("repr", repr(value))
 
 
+def id_contains_numeric_value(value: Any) -> bool:
+    """Numeric IDs need logical equality in addition to physical type identity."""
+    if isinstance(value, dict):
+        return any(id_contains_numeric_value(item) for item in value.values())
+    if isinstance(value, (list, tuple)):
+        return any(id_contains_numeric_value(item) for item in value)
+    return is_bson_numeric(value)
+
+
+def _numeric_id_types(value: Any) -> Any:
+    if isinstance(value, dict):
+        return tuple((key, _numeric_id_types(item)) for key, item in value.items())
+    if isinstance(value, list):
+        return tuple(_numeric_id_types(item) for item in value)
+    return bson_numeric_alias(value)
+
+
+def document_id_bson_type_changed(
+    original: dict[str, Any], updated: dict[str, Any]
+) -> bool:
+    """Observe numeric width/type changes independently of BSON value equality."""
+    return _numeric_id_types(DocumentCodec.to_internal(original.get("_id"))) != (
+        _numeric_id_types(DocumentCodec.to_internal(updated.get("_id")))
+    )
+
+
 def is_valid_root_document_id(value: Any) -> bool:
-    return not isinstance(value, list)
+    return not isinstance(value, (list, Regex, Pattern)) and not (
+        BsonRegex is not None and isinstance(value, BsonRegex)
+    )
 
 
 def assert_valid_root_document_id(value: Any) -> None:
     if is_valid_root_document_id(value):
         return
-    raise WriteError("The '_id' value cannot be of type array", code=53)
+    kind = "array" if isinstance(value, list) else "regex"
+    message = f"The '_id' value cannot be of type {kind}"
+    raise WriteError(message, code=53)
+
+
+def assert_valid_upsert_document_id(value: Any, *, is_replacement: bool) -> None:
+    if is_replacement and isinstance(value, list):
+        message = "After applying the update, the '_id' field was found to be an array"
+        raise WriteError(message, code=54)
+    assert_valid_root_document_id(value)
 
 
 def assert_document_matches_storage_key(
@@ -91,6 +138,8 @@ def materialize_replacement_document(
     replacement: dict[str, Any],
 ) -> dict[str, Any]:
     """Preserve the stored _id and its BSON field position in replacements."""
+    if "_id" in replacement:
+        assert_valid_root_document_id(replacement["_id"])
     if "_id" in replacement or "_id" not in original_document:
         return deepcopy(replacement)
 
@@ -155,9 +204,10 @@ def assert_classic_update_preserves_id(
 ) -> None:
     if "_id" in original_doc:
         original_id = original_doc["_id"]
-        if "_id" not in updated_doc or not dialect.values_equal(
-            updated_doc["_id"],
-            original_id,
+        if (
+            "_id" not in updated_doc
+            or document_id_bson_type_changed(original_doc, updated_doc)
+            or not dialect.values_equal(updated_doc["_id"], original_id)
         ):
             raise WriteError(
                 "Performing an update on the path '_id' would modify the immutable field '_id'",

@@ -8,7 +8,9 @@ from copy import deepcopy
 from mongoeco.core.identity import (
     assert_document_kept_storage_key,
     assert_document_matches_storage_key,
-    assert_valid_root_document_id,
+    assert_valid_upsert_document_id,
+    document_id_bson_type_changed,
+    preserve_and_validate_pipeline_id,
     materialize_replacement_document,
 )
 from mongoeco.core.sorting import sort_documents
@@ -226,6 +228,7 @@ def update_with_operation(
     storage_key_for_id: Callable[[DocumentId], str],
     new_object_id: Callable[[], DocumentId],
     invalidate_collection_features_cache: Callable[[str, str], None],
+    delete_index_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
     replacement_document: Document | None = None,
 ) -> MutationOutcome:
     semantics = compile_update_semantics(
@@ -311,8 +314,14 @@ def update_with_operation(
             if replacement_document is not None
             else deepcopy(original_document)
         )
+        if replacement_document is not None:
+            preserve_and_validate_pipeline_id(
+                original_document, document, dialect=semantics.dialect
+            )
         modified = (
-            not semantics.dialect.values_equal(document, original_document)
+            ("_id" not in replacement_document and "_id" in original_document)
+            or document_id_bson_type_changed(original_document, document)
+            or not semantics.dialect.values_equal(document, original_document)
             if replacement_document is not None
             else semantics.compiled_update_plan.apply(
                 document,
@@ -326,11 +335,16 @@ def update_with_operation(
                 before_document=deepcopy(original_document),
                 after_document=deepcopy(document),
             )
-        assert_document_kept_storage_key(
-            document,
-            storage_key,
-            storage_key_for_id=storage_key_for_id,
-        )
+        updated_storage_key = storage_key_for_id(document.get("_id"))
+        if (
+            "_id" not in original_document
+            or (replacement_document is None and isinstance(
+                semantics.compiled_update_plan, compiled_update_plan_type
+            ))
+        ):
+            assert_document_kept_storage_key(
+                document, storage_key, storage_key_for_id=storage_key_for_id
+            )
         if not bypass_document_validation:
             enforce_collection_document_validation(
                 document,
@@ -355,7 +369,9 @@ def update_with_operation(
             if replacement_document is not None:
                 raise NotImplementedError("replacement updates require Python update fallback")
             if not isinstance(semantics.compiled_update_plan, compiled_update_plan_type):
-                raise NotImplementedError("Aggregation pipeline updates require Python update fallback")
+                raise NotImplementedError(
+                    "Aggregation pipeline updates require Python update fallback"
+                )
             update_sql, update_params = translate_compiled_update_plan(
                 semantics.compiled_update_plan,
                 original_document,
@@ -422,16 +438,23 @@ def update_with_operation(
                 conn.execute(
                     """
                     UPDATE documents
-                    SET document = ?
+                    SET document = ?, storage_key = ?
                     WHERE db_name = ? AND coll_name = ? AND storage_key = ?
                     """,
-                    (serialize_document(document), db_name, coll_name, storage_key),
+                    (
+                        serialize_document(document), updated_storage_key,
+                        db_name, coll_name, storage_key,
+                    ),
                 )
+                if updated_storage_key != storage_key:
+                    delete_index_entries_for_storage_key(
+                        conn, db_name, coll_name, storage_key
+                    )
                 rebuild_multikey_entries_for_document(
                     conn,
                     db_name,
                     coll_name,
-                    storage_key,
+                    updated_storage_key,
                     document,
                     indexes,
                 )
@@ -439,7 +462,7 @@ def update_with_operation(
                     conn,
                     db_name,
                     coll_name,
-                    storage_key,
+                    updated_storage_key,
                     document,
                     indexes,
                 )
@@ -447,7 +470,7 @@ def update_with_operation(
                     conn,
                     db_name,
                     coll_name,
-                    storage_key,
+                    updated_storage_key,
                     document,
                     search_indexes,
                 )
@@ -480,7 +503,9 @@ def update_with_operation(
         semantics.compiled_upsert_plan.apply(new_doc, variables=semantics.variables)
     if "_id" not in new_doc:
         new_doc["_id"] = new_object_id()
-    assert_valid_root_document_id(new_doc["_id"])
+    assert_valid_upsert_document_id(
+        new_doc["_id"], is_replacement=replacement_document is not None
+    )
     if not bypass_document_validation:
         enforce_collection_document_validation(
             new_doc,
@@ -542,6 +567,7 @@ def update_with_operation(
         matched_count=0,
         modified_count=0,
         upserted_id=new_doc["_id"],
+        did_upsert=True,
     )
     return MutationOutcome(
         result=result,

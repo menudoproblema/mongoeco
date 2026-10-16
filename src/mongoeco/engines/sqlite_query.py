@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
 from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
 from mongoeco.core.codec import DocumentCodec
+from mongoeco.core.identity import id_contains_numeric_value
 from mongoeco.core.json_compat import json_dumps_compact
 from mongoeco.core.sql_translation import BaseSQLTranslator
 from mongoeco.core.query_plan import (
@@ -616,12 +617,23 @@ def _translate_elem_match_condition(
     )
 
 
+def _require_sql_identity_comparison(field: object, *values: object) -> None:
+    if (
+        isinstance(field, str)
+        and (field == "_id" or field.startswith("_id."))
+        and any(id_contains_numeric_value(value) for value in values)
+    ):
+        message = "Numeric identity comparisons require BSON equality"
+        raise NotImplementedError(message)
+
+
 def _translate_equals_scalar_only(
     field: str,
     value: object,
     *,
     null_matches_undefined: bool = False,
 ) -> SqlFragment:
+    _require_sql_identity_comparison(field, value)
     if not _is_translatable_equality_value(value):
         raise NotImplementedError(
             'Unsupported equality value for SQL translation'
@@ -1136,7 +1148,10 @@ def translate_compiled_update_plan(
 def translate_query_plan(plan: QueryNode) -> SqlFragment:
     if not is_concrete_query_node(plan):
         raise TypeError(f'Unsupported query plan node: {type(plan)!r}')
-    field = getattr(plan, 'field', None)
+    _require_sql_identity_comparison(
+        field := getattr(plan, 'field', None),
+        *(getattr(plan, name, None) for name in ('value', 'values', 'lower', 'upper')),
+    )
     if isinstance(field, str) and _path_uses_dbref_special_segment(field):
         raise NotImplementedError(
             'DBRef special subfields require Python query fallback'

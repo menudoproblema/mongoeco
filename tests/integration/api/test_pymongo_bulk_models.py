@@ -22,6 +22,7 @@ class PyMongoBulkModelsIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 async with open_client(
                     engine_name,
                     pymongo_profile="4.17",
+                    mongodb_dialect="8.0",
                 ) as client:
                     collection = client.test.pymongo_bulk_options
                     await collection.create_index([("name", 1)])

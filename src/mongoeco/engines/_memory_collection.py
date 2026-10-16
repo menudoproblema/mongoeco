@@ -454,6 +454,36 @@ class MemoryCollection[K, V](dict[K, V]):
         self._locations = self._locations.insert(key, (chunk_id, 0))
         self._values = self._values.insert(key, value)
 
+    def replace_key(self, key: K, replacement: K) -> None:
+        """Keep the row's ordinal and snapshot roots when its BSON ID type changes."""
+        if key == replacement:
+            return
+        if replacement in self:
+            raise KeyError(replacement)
+        value = self[key]
+        chunk_id, offset = self._locations[key]
+        chunk = self._chunks[chunk_id]
+        self._chunks = self._chunks.insert(
+            chunk_id,
+            _OrderChunk(
+                chunk.previous,
+                chunk.following,
+                (
+                    *chunk.items[:offset],
+                    (replacement, value),
+                    *chunk.items[offset + 1 :],
+                ),
+                chunk.live_count,
+            ),
+        )
+        self._values = self._values.remove(key).insert(replacement, value)
+        self._ordinals = self._ordinals.remove(key).insert(
+            replacement, self._ordinals[key]
+        )
+        self._locations = self._locations.remove(key).insert(
+            replacement, (chunk_id, offset)
+        )
+
     def __delitem__(self, key: K) -> None:
         chunk_id, offset = self._locations[key]
         chunk = self._chunks[chunk_id]

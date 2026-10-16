@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Callable  # noqa: TC003 - mypy contract annotation
+from collections.abc import Callable, Iterable  # noqa: TC003 - mypy contract annotation
 from typing import assert_type
 
 from mongoeco import AsyncMongoClient, MongoClient, ObjectId, ObjectIdLike
+from mongoeco.api import AsyncCollection, Collection  # noqa: TC001 - public method signature contract
 from mongoeco.compat import (
     MONGODB_DIALECT_90,
     PYMONGO_PROFILE_418,
@@ -126,3 +127,56 @@ provider = EngineConformanceProvider("typed", ExternalCanaryEngine)
 async def validate_runner_return() -> None:
     report = await run_engine_conformance(provider)
     assert_type(report, ConformanceReport)
+
+
+async def validate_insert_many_ordered_options(
+    sync_collection: Collection,
+    async_collection: AsyncCollection,
+) -> None:
+    sync_result = sync_collection.insert_many([{"_id": "sync"}], ordered=False)
+    async_result = await async_collection.insert_many([{"_id": "async"}], ordered=False)
+    bool(sync_result.acknowledged)
+    bool(async_result.acknowledged)
+
+
+async def validate_projection_comments_and_iterables(
+    sync_collection: Collection,
+    async_collection: AsyncCollection,
+    documents: Iterable[dict[str, object]],
+) -> None:
+    sync_collection.insert_one({"name": "Ada"}, comment={"request": "sync"})
+    await async_collection.insert_one({"name": "Ada"}, comment="async")
+    sync_collection.insert_many(documents, comment="iterable")
+    await async_collection.insert_many(documents, comment="iterable")
+    sync_collection.insert_many(({"name": "Tuple"},), comment=1)
+    await async_collection.insert_many(({"name": "Tuple"},), comment=1)
+    sync_collection.insert_many({"name": str(n)} for n in range(2))
+    await async_collection.insert_many({"name": str(n)} for n in range(2))
+    sync_collection.find({}, ["name"])
+    async_collection.find({}, ["name"])
+    sync_collection.find_one({}, ("name",))
+    await async_collection.find_one({}, ("name",))
+    sync_collection.find_raw_batches({}, ["name"])
+    await async_collection.find_raw_batches({}, ["name"])
+    sync_collection.find_one_and_update({}, {"$set": {"n": 1}}, projection=["name"])
+    await async_collection.find_one_and_update(
+        {}, {"$set": {"n": 1}}, projection=["name"]
+    )
+    sync_collection.find_one_and_replace({}, {"name": "Ada"}, projection=["name"])
+    await async_collection.find_one_and_replace(
+        {}, {"name": "Ada"}, projection=["name"]
+    )
+    sync_collection.find_one_and_delete({}, projection={"name"})
+    await async_collection.find_one_and_delete({}, projection={"name"})
+
+
+async def validate_upsert_presence(
+    sync_collection: Collection,
+    async_collection: AsyncCollection,
+) -> None:
+    result = sync_collection.update_one({"_id": None}, {"$set": {"n": 1}}, upsert=True)
+    assert_type(result.did_upsert, bool)
+    result = await async_collection.update_many(
+        {"_id": None}, {"$set": {"n": 1}}, upsert=True
+    )
+    assert_type(result.did_upsert, bool)

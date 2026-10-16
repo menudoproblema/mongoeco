@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from copy import deepcopy
 from dataclasses import dataclass, field
+from typing import TypeAliasType
 from unittest.mock import patch
 
 import pytest
@@ -11,6 +13,48 @@ from mongoeco.compat import (
     public_api as public_api_module,
     public_api_manifest,
 )
+
+
+type ManifestDocument = dict[str, object]
+
+
+class ManifestDocumentResult:
+    pass
+
+
+@pytest.mark.parametrize(
+    ["annotation", "rendered"],
+    [
+        (ManifestDocument | None, "ManifestDocument | None"),
+        (list[ManifestDocument], "list[ManifestDocument]"),
+        (Iterable[ManifestDocument], "collections.abc.Iterable[ManifestDocument]"),
+        (
+            ManifestDocument | ManifestDocumentResult,
+            f"ManifestDocument | {__name__}.ManifestDocumentResult",
+        ),
+        (
+            Callable[[ManifestDocument], ManifestDocument | None],
+            "collections.abc.Callable[[ManifestDocument], ManifestDocument | None]",
+        ),
+    ],
+)
+def test_alias_annotation_rendering_is_stable_across_python_versions(
+    annotation: object, rendered: str
+) -> None:
+    assert public_api_module._annotation_document(annotation) == {
+        "rendered": rendered,
+        "nullable": "None" in rendered,
+    }
+
+
+def test_alias_export_identity_is_stable_across_python_versions() -> None:
+    assert isinstance(ManifestDocument, TypeAliasType)
+    assert public_api_module._symbol_document(ManifestDocument) == {
+        "kind": "value",
+        "definedIn": __name__,
+        "qualifiedName": "TypeAliasType",
+        "valueType": "TypeAliasType",
+    }
 
 
 def test_public_api_manifest_captures_contract_surfaces() -> None:

@@ -11,6 +11,20 @@ from pathlib import Path
 
 
 class ModuleImportSmokeTests(unittest.TestCase):
+    def test_core_import_does_not_load_pytest(self):
+        environment = dict(os.environ)
+        if environment.get("MONGOECO_TEST_INSTALLED_ARTIFACT") != "1":
+            environment["PYTHONPATH"] = str(self._repo_root() / "src")
+        code = "import mongoeco, sys; assert 'pytest' not in sys.modules"
+        result = subprocess.run(  # noqa: S603 - fixed interpreter and import assertion
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            env=environment,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     @staticmethod
     def _repo_root() -> Path:
         return Path(__file__).resolve().parents[2]
@@ -132,9 +146,22 @@ class ModuleImportSmokeTests(unittest.TestCase):
                     textwrap.dedent(
                         """
                         import importlib
+                        import importlib.util
                         import sys
 
-                        importlib.import_module(sys.argv[1])
+                        optional = {
+                            "mongoeco.pytest_plugin": {"pytest"},
+                            "mongoeco.pytest_asyncio": {"pytest", "pytest_asyncio"},
+                            "mongoeco.pytest_anyio": {"pytest"},
+                        }
+                        try:
+                            importlib.import_module(sys.argv[1])
+                        except ModuleNotFoundError as error:
+                            # Explicit optional entrypoints require their runner.
+                            # A missing core dependency or any other import error
+                            # remains a failure in both minimal and full installs.
+                            assert error.name in optional.get(sys.argv[1], set())
+                            assert importlib.util.find_spec(error.name) is None
                         """
                     ),
                     module_name,

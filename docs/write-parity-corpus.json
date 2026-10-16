@@ -1,6 +1,6 @@
 {
   "schema": "mongoeco-write-parity-planning/v1",
-  "status": "planning_only_not_an_executable_fixture",
+  "status": "implemented_specifications_not_an_execution_dsl",
   "base_commit": "c0746abee8f0271698bffb1ac4bd00a3a35c6d1f",
   "objective": "Escrituras fiables para testkits; resultado/error/estado persistido equivalentes dentro de este corpus finito.",
   "counts": {
@@ -63,11 +63,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P001",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P001",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P001"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P002",
@@ -83,11 +88,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P002",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P002",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P002"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P003",
@@ -103,11 +113,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P003",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P003",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P003"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P004",
@@ -123,11 +138,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P004",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P004",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P004"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P005",
@@ -143,11 +163,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P005",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P005",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P005"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P006",
@@ -163,11 +188,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P006",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P006",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P006"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P007",
@@ -183,11 +213,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P007",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P007",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P007"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P008",
@@ -203,11 +238,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P008",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P008",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P008"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P009",
@@ -223,11 +263,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P009",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P009",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P009"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P010",
@@ -243,11 +288,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P010",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P010",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P010"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P011",
@@ -263,11 +313,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P011",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P011",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P011"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P012",
@@ -283,11 +338,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P012",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P012",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P012"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P013",
@@ -303,11 +363,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P013",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P013",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P013"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P014",
@@ -323,11 +388,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P014",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P014",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P014"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P015",
@@ -343,11 +413,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P015",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P015",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P015"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P016",
@@ -363,11 +438,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P016",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P016",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P016"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P017",
@@ -383,11 +463,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P017",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P017",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P017"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P018",
@@ -403,11 +488,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P018",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P018",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P018"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P019",
@@ -423,11 +513,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P019",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P019",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P019"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P020",
@@ -443,11 +538,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P020",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P020",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P020"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P021",
@@ -463,11 +563,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P021",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P021",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P021"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P022",
@@ -483,11 +588,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P022",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P022",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P022"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P023",
@@ -503,11 +613,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P023",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P023",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P023"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P024",
@@ -523,11 +638,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P024",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P024",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P024"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P025",
@@ -543,11 +663,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P025",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P025",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P025"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P026",
@@ -563,11 +688,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P026",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P026",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P026"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P027",
@@ -583,11 +713,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P027",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P027",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P027"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P028",
@@ -603,11 +738,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P028",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P028",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P028"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P029",
@@ -623,11 +763,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P029",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P029",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P029"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P030",
@@ -643,11 +788,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P030",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P030",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P030"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P031",
@@ -663,11 +813,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P031",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P031",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P031"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P032",
@@ -683,11 +838,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P032",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P032",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P032"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P033",
@@ -703,11 +863,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P033",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P033",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P033"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P034",
@@ -723,11 +888,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P034",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P034",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P034"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P035",
@@ -743,11 +913,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P035",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P035",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P035"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P036",
@@ -763,11 +938,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P036",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P036",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P036"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P037",
@@ -783,11 +963,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P037",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P037",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P037"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P038",
@@ -803,11 +988,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P038",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P038",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P038"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P039",
@@ -823,11 +1013,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P039",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P039",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P039"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P040",
@@ -843,11 +1038,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P040",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P040",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P040"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P041",
@@ -863,11 +1063,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P041",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P041",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P041"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P042",
@@ -883,11 +1088,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P042",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P042",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P042"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P043",
@@ -903,11 +1113,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P043",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P043",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P043"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P044",
@@ -923,11 +1138,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P044",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P044",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P044"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P045",
@@ -943,11 +1163,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P045",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P045",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P045"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P046",
@@ -963,11 +1188,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P046",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P046",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P046"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P047",
@@ -983,11 +1213,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P047",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P047",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P047"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P048",
@@ -1003,11 +1238,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P048",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P048",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P048"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P049",
@@ -1023,11 +1263,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P049",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P049",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P049"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P050",
@@ -1043,11 +1288,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P050",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P050",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P050"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P051",
@@ -1063,11 +1313,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P051",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P051",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P051"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P052",
@@ -1083,11 +1338,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P052",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P052",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P052"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P053",
@@ -1103,11 +1363,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P053",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P053",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P053"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P054",
@@ -1123,11 +1388,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P054",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P054",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P054"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P055",
@@ -1143,11 +1413,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P055",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P055",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P055"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P056",
@@ -1163,11 +1438,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P056",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P056",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P056"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P057",
@@ -1183,11 +1463,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P057",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P057",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P057"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P058",
@@ -1203,11 +1488,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P058",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P058",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P058"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P059",
@@ -1223,11 +1513,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P059",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P059",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P059"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P060",
@@ -1243,11 +1538,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P060",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P060",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P060"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P061",
@@ -1263,11 +1563,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P061",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P061",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P061"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P062",
@@ -1283,11 +1588,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P062",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P062",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P062"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P063",
@@ -1303,11 +1613,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P063",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P063",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P063"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P064",
@@ -1323,11 +1638,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P064",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P064",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P064"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P065",
@@ -1343,11 +1663,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P065",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P065",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P065"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P066",
@@ -1363,11 +1688,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P066",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P066",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P066"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P067",
@@ -1383,11 +1713,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P067",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P067",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P067"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P068",
@@ -1403,11 +1738,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P068",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P068",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P068"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P069",
@@ -1423,11 +1763,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P069",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P069",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P069"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P070",
@@ -1443,11 +1788,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P070",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P070",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P070"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P071",
@@ -1463,11 +1813,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P071",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P071",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P071"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P072",
@@ -1483,11 +1838,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P072",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P072",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P072"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P073",
@@ -1503,11 +1863,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P073",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P073",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P073"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P074",
@@ -1523,11 +1888,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P074",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P074",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P074"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P075",
@@ -1543,11 +1913,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P075",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P075",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P075"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P076",
@@ -1563,11 +1938,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P076",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P076",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P076"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P077",
@@ -1583,11 +1963,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P077",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P077",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P077"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P078",
@@ -1603,11 +1988,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P078",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P078",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P078"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P079",
@@ -1623,11 +2013,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P079",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P079",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P079"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P080",
@@ -1643,11 +2038,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P080",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P080",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P080"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P081",
@@ -1663,11 +2063,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P081",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P081",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P081"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P082",
@@ -1683,11 +2088,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P082",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P082",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P082"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P083",
@@ -1703,11 +2113,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P083",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P083",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P083"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P084",
@@ -1723,11 +2138,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P084",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P084",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P084"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P085",
@@ -1743,11 +2163,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P085",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P085",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P085"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P086",
@@ -1763,11 +2188,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P086",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P086",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P086"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P087",
@@ -1783,11 +2213,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P087",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P087",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P087"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P088",
@@ -1803,11 +2238,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P088",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P088",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P088"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P089",
@@ -1823,11 +2263,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P089",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P089",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P089"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P090",
@@ -1843,11 +2288,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P090",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P090",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P090"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P091",
@@ -1863,11 +2313,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P091",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P091",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P091"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P092",
@@ -1883,11 +2338,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P092",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P092",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P092"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P093",
@@ -1903,11 +2363,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P093",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P093",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P093"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P094",
@@ -1923,11 +2388,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P094",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P094",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P094"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P095",
@@ -1943,11 +2413,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P095",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P095",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P095"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P096",
@@ -1963,11 +2438,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P096",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P096",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P096"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P097",
@@ -1983,11 +2463,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P097",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P097",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P097"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P098",
@@ -2003,11 +2488,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P098",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P098",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P098"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P099",
@@ -2023,11 +2513,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P099",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P099",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P099"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P100",
@@ -2043,11 +2538,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P100",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P100",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P100"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P101",
@@ -2063,11 +2563,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P101",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P101",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P101"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P102",
@@ -2083,11 +2588,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P102",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P102",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P102"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P103",
@@ -2103,11 +2613,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P103",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P103",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P103"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P104",
@@ -2123,11 +2638,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P104",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P104",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P104"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P105",
@@ -2143,11 +2663,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P105",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P105",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P105"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P106",
@@ -2163,11 +2688,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P106",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P106",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P106"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P107",
@@ -2183,11 +2713,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P107",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P107",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P107"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P108",
@@ -2203,11 +2738,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P108",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P108",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P108"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P109",
@@ -2223,11 +2763,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P109",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P109",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P109"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P110",
@@ -2243,11 +2788,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P110",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P110",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P110"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P111",
@@ -2263,11 +2813,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P111",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P111",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P111"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P112",
@@ -2283,11 +2838,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P112",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P112",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P112"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P113",
@@ -2303,11 +2863,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P113",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P113",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P113"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "P114",
@@ -2323,11 +2888,16 @@
         "write_errors.index/code",
         "documents"
       ],
-      "full_oracle": "pending_extended_capture",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.P114",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.P114",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.P114"
+      },
       "related_existing_tests": [
         "tests/integration/api/test_positional_update_contract.py#test_positional_updates_match_captured_mongodb8_outcomes",
         "tests/differential/test_positional_update_parity.py#test_live_error_codes_bulk_errors_and_documents_match"
-      ]
+      ],
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "I01",
@@ -2355,8 +2925,12 @@
         "tests/integration/api/test_sync_api.py#test_insert_many_update_many_and_delete_many"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.I01",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.I01",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.I01"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "I02",
@@ -2383,8 +2957,12 @@
         "tests/integration/api/test_sync_api.py#test_insert_many_update_many_and_delete_many"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.I02",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.I02",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.I02"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "I03",
@@ -2417,8 +2995,12 @@
         "tests/integration/api/test_sync_api.py#test_insert_many_update_many_and_delete_many"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.I03",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.I03",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.I03"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "I04",
@@ -2448,8 +3030,12 @@
         "tests/integration/api/test_sync_api.py#test_insert_many_update_many_and_delete_many"
       ],
       "coverage_at_base": "native_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.I04",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.I04",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.I04"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "related_native_case": "insert_rejects_root_array_id"
     },
     {
@@ -2486,8 +3072,12 @@
         "tests/integration/api/test_sync_api.py#test_insert_many_update_many_and_delete_many"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.I05",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.I05",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.I05"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "requires_public_api_addition": "insert_many.ordered"
     },
     {
@@ -2530,8 +3120,12 @@
         "tests/integration/api/test_sync_api.py#test_insert_many_update_many_and_delete_many"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.I06",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.I06",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.I06"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "requires_public_api_addition": "insert_many.ordered"
     },
     {
@@ -2568,8 +3162,12 @@
         "tests/integration/api/test_sync_api.py#test_insert_many_update_many_and_delete_many"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.I07",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.I07",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.I07"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "requires_public_api_addition": "insert_many.ordered"
     },
     {
@@ -2613,8 +3211,12 @@
         "tests/integration/api/test_sync_api.py#test_insert_many_update_many_and_delete_many"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.I08",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.I08",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.I08"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "M01",
@@ -2658,8 +3260,12 @@
         "tests/integration/api/test_update_basic.py#test_pipeline_update_preserves_id_and_rejects_storage_corruption"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.M01",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.M01",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.M01"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "M02",
@@ -2696,8 +3302,12 @@
         "tests/integration/api/test_update_basic.py#test_pipeline_update_preserves_id_and_rejects_storage_corruption"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.M02",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.M02",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.M02"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "M03",
@@ -2738,8 +3348,12 @@
         "tests/integration/api/test_update_basic.py#test_pipeline_update_preserves_id_and_rejects_storage_corruption"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.M03",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.M03",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.M03"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "M04",
@@ -2784,8 +3398,12 @@
         "tests/integration/api/test_update_basic.py#test_pipeline_update_preserves_id_and_rejects_storage_corruption"
       ],
       "coverage_at_base": "native_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.M04",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.M04",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.M04"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "related_native_case": "update_add_to_set_document_order_sensitive"
     },
     {
@@ -2823,8 +3441,12 @@
         "tests/integration/api/test_update_basic.py#test_pipeline_update_preserves_id_and_rejects_storage_corruption"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.M05",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.M05",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.M05"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "M06",
@@ -2863,8 +3485,12 @@
         "tests/integration/api/test_update_basic.py#test_pipeline_update_preserves_id_and_rejects_storage_corruption"
       ],
       "coverage_at_base": "native_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.M06",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.M06",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.M06"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "related_native_case": "update_pipeline_project_preserves_id"
     },
     {
@@ -2903,8 +3529,12 @@
         "tests/integration/api/test_update_basic.py#test_pipeline_update_preserves_id_and_rejects_storage_corruption"
       ],
       "coverage_at_base": "native_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.M07",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.M07",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.M07"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "related_native_case": "update_pipeline_rejects_id_change"
     },
     {
@@ -2945,8 +3575,12 @@
         "tests/integration/api/test_update_basic.py#test_pipeline_update_preserves_id_and_rejects_storage_corruption"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.M08",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.M08",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.M08"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "admissible_final_documents": [
         [
           {
@@ -3003,13 +3637,17 @@
         "tests/integration/api/test_sync_api.py#test_replace_one_and_find_one_and_family"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.R01",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.R01",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.R01"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "R02",
       "family": "R",
-      "title": "Replace idéntico es no-op",
+      "title": "Replace idéntico que omite _id",
       "given": {
         "documents": [
           {
@@ -3032,15 +3670,20 @@
           "kwargs": {}
         }
       ],
-      "acceptance": "matched=1, modified=0; _id conservado.",
+      "acceptance": "matched=1, modified=1 al omitir _id, incluso si el documento almacenado queda igual; _id conservado. El no-op con _id explícito sigue dando modified=0.",
       "related_existing_tests": [
         "tests/unit/api/test_collection_find_modify.py#test_replace_one_identical_document_without_id_keeps_modified_count_zero",
         "tests/integration/api/test_async_api.py#test_replace_one_and_find_one_and_family",
         "tests/integration/api/test_sync_api.py#test_replace_one_and_find_one_and_family"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.R02",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.R02",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.R02"
+      },
+      "implementation_status": "implemented_with_native_replay",
+      "planning_correction": "MongoDB 7.0.43/8.0.32/9.0.2 contradicen el modified=0 supuesto durante la planificación; entradas sin cambios."
     },
     {
       "id": "R03",
@@ -3076,8 +3719,12 @@
         "tests/integration/api/test_sync_api.py#test_replace_one_and_find_one_and_family"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.R03",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.R03",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.R03"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "R04",
@@ -3116,8 +3763,12 @@
         "tests/integration/api/test_sync_api.py#test_replace_one_and_find_one_and_family"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.R04",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.R04",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.R04"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "R05",
@@ -3160,8 +3811,12 @@
         "tests/integration/api/test_sync_api.py#test_replace_one_and_find_one_and_family"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.R05",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.R05",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.R05"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "R06",
@@ -3210,8 +3865,12 @@
         "tests/integration/api/test_sync_api.py#test_replace_one_and_find_one_and_family"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.R06",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.R06",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.R06"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "R07",
@@ -3259,8 +3918,12 @@
         "tests/integration/api/test_sync_api.py#test_replace_one_and_find_one_and_family"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.R07",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.R07",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.R07"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "R08",
@@ -3318,8 +3981,12 @@
         "tests/integration/api/test_sync_api.py#test_replace_one_and_find_one_and_family"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.R08",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.R08",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.R08"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "U01",
@@ -3351,8 +4018,12 @@
         "tests/unit/api/test_collection_write_helpers.py#test_bulk_write_records_upserted_ids_for_update_many_and_replace_one"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.U01",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.U01",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.U01"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "U02",
@@ -3387,8 +4058,12 @@
         "tests/unit/api/test_collection_write_helpers.py#test_bulk_write_records_upserted_ids_for_update_many_and_replace_one"
       ],
       "coverage_at_base": "native_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.U02",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.U02",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.U02"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "related_native_case": "update_set_on_insert_id_matches_filter"
     },
     {
@@ -3426,8 +4101,12 @@
         "tests/unit/api/test_collection_write_helpers.py#test_bulk_write_records_upserted_ids_for_update_many_and_replace_one"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.U03",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.U03",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.U03"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "U04",
@@ -3461,8 +4140,12 @@
         "tests/unit/api/test_collection_write_helpers.py#test_bulk_write_records_upserted_ids_for_update_many_and_replace_one"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.U04",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.U04",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.U04"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "U05",
@@ -3517,8 +4200,12 @@
         "tests/unit/api/test_collection_write_helpers.py#test_bulk_write_records_upserted_ids_for_update_many_and_replace_one"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.U05",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.U05",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.U05"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "U06",
@@ -3554,8 +4241,12 @@
         "tests/unit/api/test_collection_write_helpers.py#test_bulk_write_records_upserted_ids_for_update_many_and_replace_one"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.U06",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.U06",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.U06"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "U07",
@@ -3588,8 +4279,12 @@
         "tests/unit/api/test_collection_write_helpers.py#test_bulk_write_records_upserted_ids_for_update_many_and_replace_one"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.U07",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.U07",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.U07"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "U08",
@@ -3662,8 +4357,12 @@
         "tests/unit/api/test_collection_write_helpers.py#test_bulk_write_records_upserted_ids_for_update_many_and_replace_one"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.U08",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.U08",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.U08"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "N01",
@@ -3707,8 +4406,12 @@
         "tests/integration/api/test_partial_index_semantic_safety.py#test_partial_unique_index_uses_its_collation_for_membership"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.N01",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.N01",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.N01"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "N02",
@@ -3762,8 +4465,12 @@
         "tests/integration/api/test_partial_index_semantic_safety.py#test_partial_unique_index_uses_its_collation_for_membership"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.N02",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.N02",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.N02"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "N03",
@@ -3813,8 +4520,12 @@
         "tests/integration/api/test_partial_index_semantic_safety.py#test_partial_unique_index_uses_its_collation_for_membership"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.N03",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.N03",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.N03"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "N04",
@@ -3864,8 +4575,12 @@
         "tests/integration/api/test_partial_index_semantic_safety.py#test_partial_unique_index_uses_its_collation_for_membership"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.N04",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.N04",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.N04"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "N05",
@@ -3922,8 +4637,12 @@
         "tests/integration/api/test_partial_index_semantic_safety.py#test_partial_unique_index_uses_its_collation_for_membership"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.N05",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.N05",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.N05"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "N06",
@@ -3980,8 +4699,12 @@
         "tests/integration/api/test_partial_index_semantic_safety.py#test_partial_unique_index_uses_its_collation_for_membership"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.N06",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.N06",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.N06"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "N07",
@@ -4029,8 +4752,12 @@
         "tests/integration/api/test_partial_index_semantic_safety.py#test_partial_unique_index_uses_its_collation_for_membership"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.N07",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.N07",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.N07"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "N08",
@@ -4078,8 +4805,12 @@
         "tests/integration/api/test_partial_index_semantic_safety.py#test_partial_unique_index_uses_its_collation_for_membership"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.N08",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.N08",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.N08"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "V01",
@@ -4122,8 +4853,12 @@
         "tests/unit/core/test_schema_validation.py#test_moderate_validation_skips_updates_for_legacy_invalid_documents"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.V01",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.V01",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.V01"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "V02",
@@ -4178,8 +4913,12 @@
         "tests/unit/core/test_schema_validation.py#test_moderate_validation_skips_updates_for_legacy_invalid_documents"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.V02",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.V02",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.V02"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "V03",
@@ -4228,8 +4967,12 @@
         "tests/unit/core/test_schema_validation.py#test_moderate_validation_skips_updates_for_legacy_invalid_documents"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.V03",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.V03",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.V03"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "V04",
@@ -4285,8 +5028,12 @@
         "tests/unit/core/test_schema_validation.py#test_moderate_validation_skips_updates_for_legacy_invalid_documents"
       ],
       "coverage_at_base": "local_contract_tension_D1",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.V04",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.V04",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.V04"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "requires_public_api_addition": "insert_many.ordered"
     },
     {
@@ -4343,8 +5090,12 @@
         "tests/unit/core/test_schema_validation.py#test_moderate_validation_skips_updates_for_legacy_invalid_documents"
       ],
       "coverage_at_base": "local_contract_tension_D1",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.V05",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.V05",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.V05"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "requires_public_api_addition": "insert_many.ordered"
     },
     {
@@ -4390,8 +5141,12 @@
         "tests/unit/core/test_schema_validation.py#test_moderate_validation_skips_updates_for_legacy_invalid_documents"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.V06",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.V06",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.V06"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "V07",
@@ -4434,8 +5189,12 @@
         "tests/unit/core/test_schema_validation.py#test_moderate_validation_skips_updates_for_legacy_invalid_documents"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.V07",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.V07",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.V07"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "V08",
@@ -4487,8 +5246,12 @@
         "tests/unit/core/test_schema_validation.py#test_moderate_validation_skips_updates_for_legacy_invalid_documents"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.V08",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.V08",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.V08"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "B01",
@@ -4567,8 +5330,12 @@
         "tests/integration/api/test_pymongo_bulk_models.py#test_bulk_write_accepts_all_pymongo_write_models"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.B01",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.B01",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.B01"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "B02",
@@ -4626,8 +5393,12 @@
         "tests/integration/api/test_pymongo_bulk_models.py#test_bulk_write_accepts_all_pymongo_write_models"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.B02",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.B02",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.B02"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "B03",
@@ -4685,8 +5456,12 @@
         "tests/integration/api/test_pymongo_bulk_models.py#test_bulk_write_accepts_all_pymongo_write_models"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.B03",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.B03",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.B03"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "B04",
@@ -4758,8 +5533,12 @@
         "tests/integration/api/test_pymongo_bulk_models.py#test_bulk_write_accepts_all_pymongo_write_models"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.B04",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.B04",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.B04"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "B05",
@@ -4835,8 +5614,12 @@
         "tests/integration/api/test_pymongo_bulk_models.py#test_bulk_write_accepts_all_pymongo_write_models"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.B05",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.B05",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.B05"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "B06",
@@ -4910,8 +5693,12 @@
         "tests/integration/api/test_pymongo_bulk_models.py#test_bulk_write_accepts_all_pymongo_write_models"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.B06",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.B06",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.B06"
+      },
+      "implementation_status": "implemented_with_native_replay"
     },
     {
       "id": "B07",
@@ -5717,8 +6504,12 @@
         "tests/integration/api/test_sqlite_bulk_preparation_contract.py#test_bulk_duplicate_after_block_boundary_keeps_error_index_and_partial_results"
       ],
       "coverage_at_base": "local_partial_not_full_oracle",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started",
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.B07",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.B07",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.B07"
+      },
+      "implementation_status": "implemented_with_native_replay",
       "requires_public_api_addition": "insert_many.ordered"
     },
     {
@@ -5767,8 +6558,12 @@
         "tests/integration/api/test_pymongo_bulk_models.py#test_bulk_write_accepts_all_pymongo_write_models"
       ],
       "coverage_at_base": "needs_specific_mapping",
-      "full_oracle": "pending_native_capture",
-      "implementation_status": "not_started"
+      "full_oracle": {
+        "7.0": "tests/fixtures/write_parity_mongodb_7_0.json#observations.B08",
+        "8.0": "tests/fixtures/write_parity_mongodb_8_0.json#observations.B08",
+        "9.0": "tests/fixtures/write_parity_mongodb_9_0.json#observations.B08"
+      },
+      "implementation_status": "implemented_with_native_replay"
     }
   ],
   "competitive": [
@@ -5826,9 +6621,10 @@
       "related_existing_tests": [
         "tests/integration/api/test_atomic_selected_mutations.py#test_find_one_and_update_rechecks_selector_atomically"
       ],
-      "oracle_status": "pending_native_history_capture",
+      "oracle_status": "captured_in_docs/evidence/write-parity/histories",
       "repetitions_per_cell": 10,
-      "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures"
+      "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures",
+      "implementation_status": "implemented_ten_fixed_repetitions_per_cell"
     },
     {
       "id": "Q02",
@@ -5884,9 +6680,10 @@
       "related_existing_tests": [
         "tests/integration/api/test_atomic_selected_mutations.py#test_update_one_sort_and_hint_recheck_selector_atomically"
       ],
-      "oracle_status": "pending_native_history_capture",
+      "oracle_status": "captured_in_docs/evidence/write-parity/histories",
       "repetitions_per_cell": 10,
-      "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures"
+      "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures",
+      "implementation_status": "implemented_ten_fixed_repetitions_per_cell"
     },
     {
       "id": "Q03",
@@ -5937,9 +6734,10 @@
       "related_existing_tests": [
         "tests/integration/api/test_atomic_selected_mutations.py#test_find_one_and_replace_rechecks_selector_atomically"
       ],
-      "oracle_status": "pending_native_history_capture",
+      "oracle_status": "captured_in_docs/evidence/write-parity/histories",
       "repetitions_per_cell": 10,
-      "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures"
+      "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures",
+      "implementation_status": "implemented_ten_fixed_repetitions_per_cell"
     },
     {
       "id": "Q04",
@@ -5986,10 +6784,11 @@
       "related_existing_tests": [
         "tests/integration/api/test_selected_mutation_snapshot_contract.py#test_sqlite_cas_is_atomic_across_engine_instances"
       ],
-      "oracle_status": "pending_native_history_capture",
+      "oracle_status": "captured_in_docs/evidence/write-parity/histories",
       "repetitions_per_cell": 10,
       "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures",
-      "topology": "SQLite: two independent engine connections to the same database file; Memory: same storage authority, concurrent actors"
+      "topology": "SQLite: two independent engine connections to the same database file; Memory: same storage authority, concurrent actors",
+      "implementation_status": "implemented_ten_fixed_repetitions_per_cell"
     },
     {
       "id": "Q05",
@@ -6031,9 +6830,10 @@
       ],
       "coverage_at_base": "needs_specific_mapping",
       "related_existing_tests": [],
-      "oracle_status": "pending_native_history_capture",
+      "oracle_status": "captured_in_docs/evidence/write-parity/histories",
       "repetitions_per_cell": 10,
-      "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures"
+      "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures",
+      "implementation_status": "implemented_ten_fixed_repetitions_per_cell"
     },
     {
       "id": "Q06",
@@ -6069,83 +6869,84 @@
       "related_existing_tests": [
         "tests/integration/api/test_atomic_selected_mutations.py#test_find_one_and_delete_rechecks_selector_atomically"
       ],
-      "oracle_status": "pending_native_history_capture",
+      "oracle_status": "captured_in_docs/evidence/write-parity/histories",
       "repetitions_per_cell": 10,
-      "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures"
+      "coordination": "start barrier, bounded completion, no sleeps as ordering oracle; do not retry failures",
+      "implementation_status": "implemented_ten_fixed_repetitions_per_cell"
     }
   ],
   "consumer": [
     {
       "id": "C01",
       "title": "Filtro CAS con campo hermano y $or",
-      "source_test": "packages/mochuelo-testkit/tests/test_mongodb_mock.py#test_mongodb_mock_filter_matches_field_before_top_level_operator",
+      "source_test": "consumer-tests.py#test_mongodb_mock_filter_matches_field_before_top_level_operator",
       "acceptance": "Mantener orden semántico del filtro sin reordenarlo como reparación.",
       "coverage_at_base": "consumer_test_uses_semantic_wrapper_not_direct_parity",
       "oracle_status": "pending_consumer_direct_delegation",
-      "implementation_status": "not_started"
+      "implementation_status": "isolated_real_consumer_overlay_with_original_payload_replay"
     },
     {
       "id": "C02",
       "title": "Bulk upsert repetido e idempotente",
-      "source_test": "packages/mochuelo-testkit/tests/test_mongodb_mock.py#test_mongodb_mock_bulk_write_upsert_is_idempotent",
+      "source_test": "consumer-tests.py#test_mongodb_mock_bulk_write_upsert_is_idempotent",
       "acceptance": "Llamar bulk_write real con modelos y ordered; no ejecutar el bucle de modelos del wrapper.",
       "coverage_at_base": "consumer_test_uses_semantic_wrapper_not_direct_parity",
       "oracle_status": "pending_consumer_direct_delegation",
-      "implementation_status": "not_started"
+      "implementation_status": "isolated_real_consumer_overlay_with_original_payload_replay"
     },
     {
       "id": "C03",
       "title": "Bulk DeleteOne",
-      "source_test": "packages/mochuelo-testkit/tests/test_mongodb_mock.py#test_mongodb_mock_bulk_write_applies_delete_one",
+      "source_test": "consumer-tests.py#test_mongodb_mock_bulk_write_applies_delete_one",
       "acceptance": "Conservar deleted_count y estado con delegación bulk real.",
       "coverage_at_base": "consumer_test_uses_semantic_wrapper_not_direct_parity",
       "oracle_status": "pending_consumer_direct_delegation",
-      "implementation_status": "not_started"
+      "implementation_status": "isolated_real_consumer_overlay_with_original_payload_replay"
     },
     {
       "id": "C04",
       "title": "Array filters: set/inc y append atómicos",
-      "source_test": "packages/mochuelo-testkit/tests/test_mongodb_mock.py#test_mongodb_mock_lowers_array_filter_update_atomically",
+      "source_test": "consumer-tests.py#test_mongodb_mock_lowers_array_filter_update_atomically",
       "acceptance": "Enviar array_filters y modifier original intactos; primer tramo de aceptación.",
       "coverage_at_base": "consumer_test_uses_semantic_wrapper_not_direct_parity",
       "oracle_status": "pending_consumer_direct_delegation",
-      "implementation_status": "not_started"
+      "implementation_status": "isolated_real_consumer_overlay_with_original_payload_replay"
     },
     {
       "id": "C05",
       "title": "Array filters: retirar y archivar",
-      "source_test": "packages/mochuelo-testkit/tests/test_mongodb_mock.py#test_mongodb_mock_lowers_array_filter_update_atomically",
+      "source_test": "consumer-tests.py#test_mongodb_mock_lowers_array_filter_update_atomically",
       "acceptance": "Segundo tramo del mismo flujo: pull/push y paths filtrados, sin lowering a pipeline.",
       "coverage_at_base": "consumer_test_uses_semantic_wrapper_not_direct_parity",
       "oracle_status": "pending_consumer_direct_delegation",
-      "implementation_status": "not_started"
+      "implementation_status": "isolated_real_consumer_overlay_with_original_payload_replay"
     },
     {
       "id": "C06",
       "title": "Filtro sin elementos coincidentes",
-      "source_test": "packages/mochuelo-testkit/tests/test_mongodb_mock.py#test_mongodb_mock_keeps_array_when_no_filtered_item_matches",
+      "source_test": "consumer-tests.py#test_mongodb_mock_keeps_array_when_no_filtered_item_matches",
       "acceptance": "Conservar array y campos hermanos según MongoDB; enviar filtro original.",
       "coverage_at_base": "consumer_test_uses_semantic_wrapper_not_direct_parity",
       "oracle_status": "pending_consumer_direct_delegation",
-      "implementation_status": "not_started"
+      "implementation_status": "isolated_real_consumer_overlay_with_original_payload_replay"
     },
     {
       "id": "C07",
       "title": "Pipeline append y consulta dotted con UUID",
-      "source_test": "packages/mochuelo-testkit/tests/test_mongodb_mock.py#test_mongodb_mock_repairs_dotted_array_lookup_after_pipeline_write",
+      "source_test": "consumer-tests.py#test_mongodb_mock_repairs_dotted_array_lookup_after_pipeline_write",
       "acceptance": "Pipeline original y lectura dotted sin reescritura; fijar UUID/codec explícitos.",
       "coverage_at_base": "consumer_test_uses_semantic_wrapper_not_direct_parity",
       "oracle_status": "pending_consumer_direct_delegation",
-      "implementation_status": "not_started"
+      "implementation_status": "isolated_real_consumer_overlay_with_original_payload_replay"
     },
     {
       "id": "C08",
       "title": "Entrada de Storage con probe y mutación de array",
-      "source_test": "packages/mochuelo-testkit/tests/test_mongodb_mock.py#test_mongodb_mock_probe_precedes_a_real_embedded_array_mutation",
+      "source_test": "consumer-tests.py#test_mongodb_mock_probe_precedes_a_real_embedded_array_mutation",
       "acceptance": "Alcanzar attach_mongodb_mock_collection y la entrada consumidora real; preservar clock/lifecycle/probe.",
       "coverage_at_base": "consumer_test_uses_semantic_wrapper_not_direct_parity",
       "oracle_status": "pending_consumer_direct_delegation",
-      "implementation_status": "not_started"
+      "implementation_status": "isolated_real_consumer_overlay_with_original_payload_replay"
     }
   ],
   "wire_case_ids": [
@@ -6161,7 +6962,7 @@
   "decisions": [
     {
       "id": "D1",
-      "status": "pending_native_capture_and_owner_disposition",
+      "status": "resolved_native_bug_fix_without_spi_change",
       "cases": [
         "I05",
         "I06",
@@ -6175,18 +6976,19 @@
       "target": "Native per-document success/error semantics; ordered=True stops at first server write error, ordered=False preserves independent later successes.",
       "constraints": "Do not silently change SPI v2 batch preparation, caller ID mutation or validation-vs-encoding precedence. Separate public API semantics from lower-level engine contract and classify version/migration before a fix.",
       "native_normative_reference": "https://www.mongodb.com/docs/manual/reference/method/db.collection.insertMany/",
-      "native_execution": "pending; this planning request did not run native reproductions"
+      "native_execution": "docs/evidence/write-parity/insert-many-before-native.json; admisión final con 7.0.43/8.0.32/9.0.2 en los goldens write_parity.",
+      "disposition": "Añadir ordered=True y BulkWriteError con conteos parciales en el API; conservar preparación atómica y firma del SPI. Corregir expectativas locales contrarias al servidor. Cambio corrector de compatibilidad; la numeración y publicación se decidirán después del cierre técnico."
     }
   ],
   "coverage_basis": {
     "mongoeco_commit": "c0746abee8f0271698bffb1ac4bd00a3a35c6d1f",
     "consumer": {
-      "repository": "gdynamics-testing",
+      "repository": "anonymous-consumer",
       "base": "4e0dc23cf5edd45c8220e03fa012f661d3ec1050",
       "files_sha256": {
-        "packages/mochuelo-testkit/src/mochuelo_testkit/mongodb_mock.py": "e7b89d838a550f057af6588139270c621b57a2460f56d3c94669fc4a2e5c2580",
-        "packages/mochuelo-testkit/tests/test_mongodb_mock.py": "6dd789ab2997c644aecd307051b5234a726efe3e8b38eeb02df3d17e3cf28914",
-        "packages/mochuelo-testkit/pyproject.toml": "e4d51fe067147d81428cfb6ae03fc39292c1bded5f3a6b47ddacb157b4d0db71"
+        "consumer-adapter.py": "e7b89d838a550f057af6588139270c621b57a2460f56d3c94669fc4a2e5c2580",
+        "consumer-tests.py": "6dd789ab2997c644aecd307051b5234a726efe3e8b38eeb02df3d17e3cf28914",
+        "consumer-package.toml": "e4d51fe067147d81428cfb6ae03fc39292c1bded5f3a6b47ddacb157b4d0db71"
       }
     },
     "evidence_report": "docs/evidence/pymongo419/validation.json",

@@ -33,11 +33,16 @@ from mongoeco.core.expression_context import (
     ensure_expression_context,
 )
 from mongoeco.core.filtering import QueryEngine
+from mongoeco.core.operators import CompiledUpdatePlan
 from mongoeco.core.identity import (
     assert_document_kept_storage_key,
     assert_document_matches_storage_key,
     assert_valid_root_document_id,
+    assert_valid_upsert_document_id,
+    id_contains_numeric_value,
     document_matches_root_id_lookup,
+    document_id_bson_type_changed,
+    preserve_and_validate_pipeline_id,
     materialize_merge_insert_document,
     materialize_merge_update_document,
     materialize_replacement_document,
@@ -1851,7 +1856,7 @@ class MemoryEngine(AsyncStorageEngine):
                     )
                 return deepcopy(index)
 
-        raise OperationFailure("hint does not correspond to an existing index")
+        raise OperationFailure("hint does not correspond to an existing index", code=2)
 
     def _storage_key(self, value: Any) -> Any:
         return self._typed_engine_key(value)
@@ -2835,7 +2840,10 @@ class MemoryEngine(AsyncStorageEngine):
                 raise DuplicateKeyError(
                     f"Duplicate key: _id={candidate['_id']}",
                 )
-            if scan_payload_id:
+            if scan_payload_id or (
+                candidate_id_storage_key != normalized_exclude
+                and id_contains_numeric_value(candidate["_id"])
+            ):
                 for storage_key, data in coll.items():
                     if (
                         normalized_exclude is not None
@@ -2845,8 +2853,8 @@ class MemoryEngine(AsyncStorageEngine):
                     existing = self._borrow_storage_document(data)
                     if (
                         "_id" in existing
-                        and self._storage_key(existing["_id"])
-                        == candidate_id_storage_key
+                        and bson_equality_key(existing["_id"])
+                        == bson_equality_key(candidate["_id"])
                     ):
                         raise DuplicateKeyError(
                             f"Duplicate key: _id={candidate['_id']}",
@@ -3175,6 +3183,17 @@ class MemoryEngine(AsyncStorageEngine):
 
                 results: list[bool] = []
                 modified_any = False
+                id_equality_keys = (
+                    {
+                        bson_equality_key(self._borrow_storage_document(data)["_id"])
+                        for data in coll.values()
+                        if "_id" in self._borrow_storage_document(data)
+                    }
+                    if not overwrite and any(
+                        id_contains_numeric_value(document.get("_id"))
+                        for document in documents
+                    ) else None
+                )
                 for document in documents:
                     if "_id" in document:
                         assert_valid_root_document_id(document["_id"])
@@ -3200,6 +3219,13 @@ class MemoryEngine(AsyncStorageEngine):
                     if not overwrite and storage_key in coll:
                         results.append(False)
                         break
+                    numeric_id = (
+                        id_equality_keys is not None
+                        and id_contains_numeric_value(doc_id)
+                    )
+                    if numeric_id and bson_equality_key(doc_id) in id_equality_keys:
+                        results.append(False)
+                        break
 
                     if not bypass_document_validation and not bulk_insert_prevalidated:
                         enforce_collection_document_validation(
@@ -3218,7 +3244,7 @@ class MemoryEngine(AsyncStorageEngine):
                             indexes_view=indexes_view,
                             storage_view=storage,
                             index_data_view=index_data_view,
-                            check_id_storage=True,
+                            check_id_storage=not numeric_id,
                             scan_payload_id=len(documents) == 1,
                         )
                     except DuplicateKeyError:
@@ -3248,6 +3274,8 @@ class MemoryEngine(AsyncStorageEngine):
                         storage_key,
                         self._encode_storage_document(document),
                     )
+                    if id_equality_keys is not None and "_id" in document:
+                        id_equality_keys.add(bson_equality_key(doc_id))
                     self._update_indexes_locked(
                         db_name,
                         coll_name,
@@ -3552,12 +3580,18 @@ class MemoryEngine(AsyncStorageEngine):
                 ),
             )
             storage_key = self._storage_key(doc_id)
-            data = (
-                self._storage_view(context)
-                .get(db_name, {})
-                .get(coll_name, {})
-                .get(storage_key)
-            )
+            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
+            data = coll.get(storage_key)
+            if data is None and id_contains_numeric_value(doc_id):
+                data = next(
+                    (
+                        candidate for candidate in coll.values()
+                        if document_matches_root_id_lookup(
+                            self._borrow_storage_document(candidate), doc_id,
+                            dialect=effective_dialect,
+                        )
+                    ), None,
+                )
         if data is None:
             return None
         document = self._copy_document_containers(
@@ -3605,6 +3639,16 @@ class MemoryEngine(AsyncStorageEngine):
                 now=self._ttl_now(),
             )
             storage_key = self._storage_key(doc_id)
+            if storage_key not in coll and id_contains_numeric_value(doc_id):
+                storage_key = next(
+                    (
+                        key for key, candidate in coll.items()
+                        if document_matches_root_id_lookup(
+                            self._borrow_storage_document(candidate), doc_id,
+                            dialect=MONGODB_DIALECT_70,
+                        )
+                    ), storage_key,
+                )
             if storage_key in coll:
                 document = self._borrow_storage_document(coll[storage_key])
                 public_document = DocumentCodec.to_public(document)
@@ -3950,8 +3994,14 @@ class MemoryEngine(AsyncStorageEngine):
                     storage_key,
                     storage_key_for_id=self._storage_key,
                 )
+                if replacement_document is not None:
+                    preserve_and_validate_pipeline_id(
+                        original_document, document, dialect=semantics.dialect
+                    )
                 modified = (
-                    not semantics.dialect.values_equal(
+                    ("_id" not in replacement_document and "_id" in original_document)
+                    or document_id_bson_type_changed(original_document, document)
+                    or not semantics.dialect.values_equal(
                         document,
                         original_document,
                     )
@@ -3961,7 +4011,13 @@ class MemoryEngine(AsyncStorageEngine):
                         variables=semantics.variables,
                     )
                 )
-                if modified:
+                updated_storage_key = self._storage_key(document.get("_id"))
+                if modified and (
+                    "_id" not in original_document
+                    or (replacement_document is None and isinstance(
+                        semantics.compiled_update_plan, CompiledUpdatePlan
+                    ))
+                ):
                     assert_document_kept_storage_key(
                         document,
                         storage_key,
@@ -4005,15 +4061,20 @@ class MemoryEngine(AsyncStorageEngine):
                         index_data_view=index_data_view,
                         indexes_view=indexes_view,
                     )
+                    if updated_storage_key != storage_key:
+                        if isinstance(coll, MemoryCollection):
+                            coll.replace_key(storage_key, updated_storage_key)
+                        else:
+                            self._delete_storage_document_locked(coll, storage_key)
                     self._set_storage_document_locked(
                         coll,
-                        storage_key,
+                        updated_storage_key,
                         self._encode_storage_document(document),
                     )
                     self._update_indexes_locked(
                         db_name,
                         coll_name,
-                        storage_key,
+                        updated_storage_key,
                         document,
                         action="insert",
                         index_data_view=index_data_view,
@@ -4084,7 +4145,9 @@ class MemoryEngine(AsyncStorageEngine):
                 )
             if "_id" not in new_doc:
                 new_doc["_id"] = ObjectId()
-            assert_valid_root_document_id(new_doc["_id"])
+            assert_valid_upsert_document_id(
+                new_doc["_id"], is_replacement=replacement_document is not None
+            )
             if not bypass_document_validation:
                 enforce_collection_document_validation(
                     new_doc,
@@ -4150,6 +4213,7 @@ class MemoryEngine(AsyncStorageEngine):
                     matched_count=0,
                     modified_count=0,
                     upserted_id=new_doc["_id"],
+                    did_upsert=True,
                 )
                 captured = MutationOutcome(
                     result=result,

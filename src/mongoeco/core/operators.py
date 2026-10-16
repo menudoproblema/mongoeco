@@ -14,12 +14,14 @@ from mongoeco.core.aggregation import (
     apply_pipeline,
     compile_pipeline,
 )
+from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
 from mongoeco.core.bson_scalars import is_bson_numeric, unwrap_bson_numeric
 from mongoeco.core.collation import CollationSpec, normalize_collation
 from mongoeco.core.expression_context import ensure_expression_context
 from mongoeco.core.filtering import QueryEngine
 from mongoeco.core.identity import (
     assert_classic_update_preserves_id,
+    document_id_bson_type_changed,
     assert_valid_root_document_id,
     preserve_and_validate_pipeline_id,
 )
@@ -163,7 +165,8 @@ class CompiledUpdatePipelinePlan:
         *,
         variables: Mapping[str, Any] | None = None,
     ) -> bool:
-        variables = ensure_expression_context(variables)
+        variables = aggregation_environment(ensure_expression_context(variables))
+        variables.preserve_numeric_conversion_types = True
         original = deepcopy(doc)
         working = deepcopy(doc)
         if self.compiled_pipeline is not None:
@@ -184,7 +187,10 @@ class CompiledUpdatePipelinePlan:
                 "Update pipeline must produce a single document",
             )
         replacement = result[0]
-        modified = not self.context.dialect.values_equal(original, replacement)
+        modified = (
+            document_id_bson_type_changed(original, replacement)
+            or not self.context.dialect.values_equal(original, replacement)
+        )
         preserve_and_validate_pipeline_id(
             original,
             replacement,

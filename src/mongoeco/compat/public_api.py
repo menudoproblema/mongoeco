@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import inspect
+import re
 
 from dataclasses import MISSING, fields, is_dataclass
 from enum import Enum
 from importlib import import_module
 from importlib.resources import files
+from typing import TypeAliasType, get_args
 
 from mongoeco._version import __version__
 from mongoeco.compat.deprecations import DEPRECATION_CATALOG_SCHEMA_VERSION
@@ -27,6 +29,20 @@ def _annotation_document(annotation: object) -> dict[str, object]:
     if annotation is inspect.Signature.empty:
         return {"rendered": None, "nullable": None}
     rendered = inspect.formatannotation(annotation)
+    pending = [annotation]
+    while pending:
+        item = pending.pop()
+        if isinstance(item, TypeAliasType):
+            qualified_name = getattr(item, "__qualname__", item.__name__)
+            rendered = re.sub(
+                rf"\b{re.escape(f'{item.__module__}.{qualified_name}')}\b",
+                item.__name__,
+                rendered,
+            )
+        elif isinstance(item, list | tuple):
+            pending.extend(item)
+        else:
+            pending.extend(get_args(item))
     return {"rendered": rendered, "nullable": "None" in rendered}
 
 
@@ -127,7 +143,11 @@ def _dataclass_fields(value: type[object]) -> list[dict[str, object]]:
 def _symbol_document(value: object) -> dict[str, object]:
     document: dict[str, object] = {
         "definedIn": getattr(value, "__module__", type(value).__module__),
-        "qualifiedName": getattr(value, "__qualname__", type(value).__qualname__),
+        "qualifiedName": (
+            type(value).__qualname__
+            if isinstance(value, TypeAliasType)
+            else getattr(value, "__qualname__", type(value).__qualname__)
+        ),
     }
     if inspect.isclass(value):
         document.update(

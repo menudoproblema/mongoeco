@@ -39,9 +39,10 @@ from mongoeco.core.aggregation.spill import AggregationSpillPolicy
 from mongoeco.core.bson_ordering import (
     SQLITE_SORT_BUCKET_WEIGHTS,
     bson_engine_key,
+    bson_equality_key,
     bson_numeric_index_key,
 )
-from mongoeco.core.bson_scalars import utc_bson_now
+from mongoeco.core.bson_scalars import is_bson_numeric, utc_bson_now
 from mongoeco.core.codec import DocumentCodec
 from mongoeco.core.collation import (
     normalize_collation,
@@ -58,6 +59,7 @@ from mongoeco.core.identity import (
     assert_valid_root_document_id,
     canonical_document_id,
     document_matches_root_id_lookup,
+    id_contains_numeric_value,
     materialize_merge_insert_document,
     materialize_merge_update_document,
 )
@@ -1451,7 +1453,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     )
                 return deepcopy(index)
 
-        raise OperationFailure("hint does not correspond to an existing index")
+        raise OperationFailure("hint does not correspond to an existing index", code=2)
 
     def _serialize_document(self, document: Document) -> str:
         return json_dumps_compact(
@@ -3127,7 +3129,10 @@ class SQLiteEngine(AsyncStorageEngine):
                     raise DuplicateKeyError(
                         f"Duplicate key: _id={document['_id']}",
                     )
-            if scan_payload_id:
+            if scan_payload_id or (
+                document_id_storage_key != exclude_storage_key
+                and id_contains_numeric_value(document["_id"])
+            ):
                 for storage_key, existing_document in self._load_documents(
                     db_name,
                     coll_name,
@@ -3139,8 +3144,8 @@ class SQLiteEngine(AsyncStorageEngine):
                         continue
                     if (
                         "_id" in existing_document
-                        and self._storage_key(existing_document["_id"])
-                        == document_id_storage_key
+                        and bson_equality_key(existing_document["_id"])
+                        == bson_equality_key(document["_id"])
                     ):
                         raise DuplicateKeyError(
                             f"Duplicate key: _id={document['_id']}",
@@ -3233,6 +3238,12 @@ class SQLiteEngine(AsyncStorageEngine):
         if not physical_name:
             return None
         field = index["fields"][0]
+        found, value = get_document_value(document, field)
+        # Existing SQLite files may omit tagged numeric values from scalar rows.
+        # Physical type identity is not MongoDB numeric uniqueness; the semantic
+        # fallback remains authoritative without rebuilding persisted indexes.
+        if found and is_bson_numeric(value):
+            return None
         signature = self._scalar_value_signature_for_document(document, field)
         if signature is None:
             return None
@@ -3257,7 +3268,7 @@ class SQLiteEngine(AsyncStorageEngine):
         values = QueryEngine.extract_values(document, field)
         if not values:
             return self._typed_engine_key(None)
-        return self._typed_engine_key(values[0])
+        return bson_equality_key(values[0])
 
     def _select_first_document_for_plan(
         self,
@@ -3965,6 +3976,19 @@ class SQLiteEngine(AsyncStorageEngine):
             storage_key,
             document,
             search_indexes=search_indexes,
+        )
+
+    def _delete_document_index_entries(
+        self, conn: sqlite3.Connection, db_name: str, coll_name: str, storage_key: str,
+    ) -> None:
+        self._delete_multikey_entries_for_storage_key(
+            conn, db_name, coll_name, storage_key
+        )
+        self._delete_scalar_entries_for_storage_key(
+            conn, db_name, coll_name, storage_key
+        )
+        self._delete_search_entries_for_storage_key(
+            conn, db_name, coll_name, storage_key
         )
 
     def _delete_multikey_entries_for_storage_key(
@@ -5645,6 +5669,7 @@ class SQLiteEngine(AsyncStorageEngine):
                         documents=documents,
                         prepared_documents=prepared_documents,
                         snapshot_indexes=snapshot_indexes,
+                        deserialize_document=self._deserialize_document,
                         bypass_document_validation=bypass_document_validation,
                         dialect=effective_dialect,
                         snapshot_options=snapshot_options,
@@ -5732,7 +5757,10 @@ class SQLiteEngine(AsyncStorageEngine):
                             commit_sequence = _sqlite_append_change(
                                 conn,
                                 context=operation_context,
-                                event_index=event_index,
+                                event_index=(
+                                    operation_context.change_event_index
+                                    if operation_context is not None else 0
+                                ) + event_index,
                                 operation_type="insert",
                                 db_name=db_name,
                                 coll_name=coll_name,
@@ -5892,7 +5920,7 @@ class SQLiteEngine(AsyncStorageEngine):
                     conn,
                     db_name=db_name,
                     coll_name=coll_name,
-                    storage_key=self._storage_key(doc_id),
+                    storage_key=self._storage_key(document.get("_id")),
                     begin_write=lambda current: self._begin_write(
                         current,
                         context,
@@ -6025,6 +6053,10 @@ class SQLiteEngine(AsyncStorageEngine):
             )
             reader.own(source)
             return self._finalize_scan_source(source, python_semantics)
+
+        # A Python fallback must still reject a missing index. Plan usability
+        # and classic text index selection retain their specialized checks.
+        self._resolve_hint_index(db_name, coll_name, semantics.hint)
 
         if (
             semantics.text_query is None
@@ -7492,11 +7524,12 @@ class SQLiteEngine(AsyncStorageEngine):
                         storage_key_for_id=self._storage_key,
                         new_object_id=ObjectId,
                         invalidate_collection_features_cache=self._invalidate_collection_features_cache,
+                        delete_index_entries_for_storage_key=self._delete_document_index_entries,
                         replacement_document=replacement_document,
                     )
                     enforce_deadline(deadline)
                     if result.after_document is not None and (
-                        result.result.upserted_id is not None
+                        result.result.did_upsert
                         or result.result.modified_count > 0
                     ):
                         change_context = operation_context
@@ -7510,7 +7543,7 @@ class SQLiteEngine(AsyncStorageEngine):
                             context=change_context,
                             operation_type=(
                                 "insert"
-                                if result.result.upserted_id is not None
+                                if result.result.did_upsert
                                 else (
                                     operation_context.change_operation_type
                                     if operation_context is not None

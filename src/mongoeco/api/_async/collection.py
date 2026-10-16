@@ -11,19 +11,20 @@ from collections.abc import (
 )
 from copy import deepcopy
 from datetime import datetime
+
 from mongoeco.api._async import (
     _collection_indexing,
     _collection_modify,
     _collection_reads,
 )
 from mongoeco.api._async._active_operations import track_active_operation
-from mongoeco.core._public_materialization import materialize_public_document
 from mongoeco.api._async._collection_bulk import (
     BulkWritePreparationContext as _BulkWriteContext,  # noqa: F401
     PreparedBulkWriteRequest as _PreparedBulkWriteRequest,  # noqa: F401
     execute_bulk_write,
     normalize_bulk_write_request,
 )
+from mongoeco.api._async._collection_insert import execute_insert_many
 from mongoeco.api._async._collection_runtime import (
     CollectionRuntimeCoordinator,
 )
@@ -35,9 +36,13 @@ from mongoeco.api._async._collection_watch import (
 from mongoeco.api._async.aggregation_cursor import AsyncAggregationCursor
 from mongoeco.api._async.cursor import AsyncCursor  # noqa: TC001
 from mongoeco.api._async.raw_batch_cursor import AsyncRawBatchCursor
-from mongoeco.api._async.search_index_cursor import AsyncSearchIndexCursor  # noqa: TC001
+from mongoeco.api._async.search_index_cursor import (
+    AsyncSearchIndexCursor,  # noqa: TC001
+)
 from mongoeco.api.argument_validation import (
     HintSpec,
+    ProjectionInput,
+    normalize_projection_spec,
     normalize_sort_spec as _normalize_sort_spec,
     validate_batch_size as _validate_batch_size,
     validate_hint_spec as _validate_hint_spec,
@@ -71,7 +76,10 @@ from mongoeco.compat import (
     resolve_mongodb_dialect_resolution,
     resolve_pymongo_profile_resolution,
 )
-from mongoeco.core.aggregation import Pipeline  # noqa: TC001 - runtime public annotations
+from mongoeco.core._public_materialization import materialize_public_document
+from mongoeco.core.aggregation import (
+    Pipeline,  # noqa: TC001 - runtime public annotations
+)
 from mongoeco.core.bson_scalars import (
     normalize_utc_bson_datetime,
     utc_bson_now,
@@ -93,10 +101,11 @@ from mongoeco.core.query_plan import QueryNode  # noqa: TC001
 from mongoeco.core.validation import (
     is_document,
     is_filter,
-    is_projection,
     is_update,
 )
-from mongoeco.engines.base import AsyncStorageEngine  # noqa: TC001 - runtime public annotations
+from mongoeco.engines.base import (
+    AsyncStorageEngine,  # noqa: TC001 - runtime public annotations
+)
 from mongoeco.engines.results import (
     DeleteOutcome,
     FindAndModifyOutcome,
@@ -370,11 +379,7 @@ class AsyncCollection:
 
     @staticmethod
     def _normalize_projection(projection: object | None) -> Projection | None:
-        if projection is None:
-            return None
-        if not is_projection(projection):
-            raise TypeError("projection must be a dict")
-        return DocumentCodec.to_internal(projection)
+        return normalize_projection_spec(projection)
 
     @staticmethod
     def _require_write_requests(requests: object) -> list[WriteModel]:
@@ -501,10 +506,16 @@ class AsyncCollection:
         result: UpdateResult[DocumentId],
     ) -> UpdateResult[DocumentId]:
         return UpdateResult(
-            matched_count=result.matched_count,
+            # PyMongo's individual UpdateResult exposes n=1 when the upsert ID
+            # is null. Bulk/raw consumers use did_upsert, not this public count.
+            matched_count=(
+                1 if result.did_upsert and result.upserted_id is None
+                else result.matched_count
+            ),
             modified_count=result.modified_count,
             upserted_id=DocumentCodec.to_pymongo(result.upserted_id),
             acknowledged=result.acknowledged,
+            did_upsert=result.did_upsert,
         )
 
     @staticmethod
@@ -856,9 +867,11 @@ class AsyncCollection:
         *,
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
+        comment: object | None = None,
         _execution_context: ExpressionExecutionContext | None = None,
     ) -> InsertOneResult[DocumentId]:
         self._ensure_session_active(session)
+        comment = deepcopy(comment)
         context = self._new_operation_context(
             session=session,
             expressions=_execution_context,
@@ -876,11 +889,14 @@ class AsyncCollection:
         doc = DocumentCodec.to_internal(deepcopy(original))
 
         def _insert_one_profile_command() -> dict[str, object]:
-            return {
+            command = {
                 "insert": self._collection_name,
                 "documents": [deepcopy(doc)],
                 "bypassDocumentValidation": bypass_document_validation,
             }
+            if comment is not None:
+                command["comment"] = deepcopy(comment)
+            return command
 
         started_at = time.perf_counter_ns()
         try:
@@ -890,6 +906,7 @@ class AsyncCollection:
                 operation_type="write",
                 namespace=f"{self._db_name}.{self._collection_name}",
                 session=session,
+                comment=comment,
                 metadata={"kind": "insert_one"},
                 killable=False,
             ):
@@ -904,6 +921,8 @@ class AsyncCollection:
                         session=session,
                     ),
                 )
+            if not outcome:
+                raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
         except Exception as exc:
             await self._profile_operation(
                 op="insert",
@@ -912,16 +931,15 @@ class AsyncCollection:
                 errmsg=str(exc),
             )
             raise
-        if not outcome:
-            raise DuplicateKeyError(f"Duplicate key: _id={doc['_id']}")
         self._notify_instrumented_insert_outcome(outcome, session=session)
         await self._profile_operation(
             op="insert",
             command_factory=_insert_one_profile_command,
             duration_ns=time.perf_counter_ns() - started_at,
         )
-        if session is not None:
-            session.observe_operation()
+        self._record_operation_metadata(
+            operation="insert_one", comment=comment, session=session
+        )
         return InsertOneResult(inserted_id=DocumentCodec.to_pymongo(doc["_id"]))
 
     def _publish_insert_change_events(
@@ -965,176 +983,20 @@ class AsyncCollection:
 
     async def insert_many(
         self,
-        documents: list[Document],
+        documents: Iterable[Document],
         *,
+        ordered: bool = True,
         bypass_document_validation: bool = False,
         session: ClientSession | None = None,
+        comment: object | None = None,
     ) -> InsertManyResult[DocumentId]:
-        self._ensure_session_active(session)
-        execution_context = self._new_operation_context(
+        return await execute_insert_many(
+            self,
+            documents,
+            ordered=ordered,
+            bypass_document_validation=bypass_document_validation,
             session=session,
-            change_operation_type="insert",
-            publication=(
-                ChangePublicationPolicy.EMIT
-                if self._should_publish_change_events(session=session)
-                else ChangePublicationPolicy.RECORD_GAP
-            ),
-        )
-        inserted_ids: list[DocumentId] = []
-        started_at = time.perf_counter_ns()
-        normalized_documents: list[Document] = []
-        for original in self._require_documents(documents):
-            if "_id" not in original:
-                original["_id"] = DocumentCodec.to_pymongo(ObjectId())
-            assert_valid_root_document_id(original["_id"])
-            doc = DocumentCodec.to_internal(deepcopy(original))
-            normalized_documents.append(doc)
-
-        def _insert_many_profile_command() -> dict[str, object]:
-            return {
-                "insert": self._collection_name,
-                "documents": [deepcopy(doc) for doc in normalized_documents],
-                "bypassDocumentValidation": bypass_document_validation,
-            }
-
-        try:
-            try:
-                with track_active_operation(
-                    self._engine,
-                    command_name="insert",
-                    operation_type="write",
-                    namespace=f"{self._db_name}.{self._collection_name}",
-                    session=session,
-                    metadata={
-                        "kind": "insert_many",
-                        "documents": len(normalized_documents),
-                    },
-                    killable=False,
-                ):
-                    results = list(
-                        await self._runtime.engine_insert_documents(
-                            normalized_documents,
-                            session=session,
-                            bypass_document_validation=bypass_document_validation,
-                            operation_context=execution_context,
-                            on_commit=lambda committed: self._publish_insert_outcome(
-                                committed,
-                                session=session,
-                            ),
-                        )
-                    )
-                    for outcome in results:
-                        self._notify_instrumented_insert_outcome(
-                            outcome,
-                            session=session,
-                        )
-            except NotImplementedError:
-                raise
-            except Exception as exc:
-                await self._profile_operation(
-                    op="insert",
-                    command_factory=_insert_many_profile_command,
-                    duration_ns=time.perf_counter_ns() - started_at,
-                    errmsg=str(exc),
-                )
-                raise
-            if len(results) > len(normalized_documents) or (
-                len(results) != len(normalized_documents)
-                and (not results or results[-1])
-            ):
-                raise RuntimeError(
-                    "bulk insert engine returned a result count different from the number of documents"
-                )
-            for doc, success in zip(normalized_documents, results, strict=False):
-                if not success:
-                    message = f"Duplicate key: _id={doc['_id']}"
-                    await self._profile_operation(
-                        op="insert",
-                        command_factory=_insert_many_profile_command,
-                        duration_ns=time.perf_counter_ns() - started_at,
-                        errmsg=message,
-                    )
-                    if inserted_ids and session is not None:
-                        session.observe_operation()
-                    raise DuplicateKeyError(message)
-                inserted_ids.append(doc["_id"])
-            await self._profile_operation(
-                op="insert",
-                command_factory=_insert_many_profile_command,
-                duration_ns=time.perf_counter_ns() - started_at,
-            )
-            if session is not None:
-                session.observe_operation()
-            return InsertManyResult(
-                inserted_ids=[
-                    DocumentCodec.to_pymongo(document_id)
-                    for document_id in inserted_ids
-                ]
-            )
-        except NotImplementedError:
-            pass
-
-        for doc in normalized_documents:
-            try:
-                with track_active_operation(
-                    self._engine,
-                    command_name="insert",
-                    operation_type="write",
-                    namespace=f"{self._db_name}.{self._collection_name}",
-                    session=session,
-                    metadata={
-                        "kind": "insert_many",
-                        "documents": len(normalized_documents),
-                    },
-                    killable=False,
-                ):
-                    outcome = await self._runtime.engine_insert_document(
-                        doc,
-                        overwrite=False,
-                        session=session,
-                        bypass_document_validation=bypass_document_validation,
-                        operation_context=execution_context,
-                        on_commit=lambda committed: self._publish_insert_outcome(
-                            committed,
-                            session=session,
-                        ),
-                    )
-            except Exception as exc:
-                await self._profile_operation(
-                    op="insert",
-                    command_factory=_insert_many_profile_command,
-                    duration_ns=time.perf_counter_ns() - started_at,
-                    errmsg=str(exc),
-                )
-                raise
-            if not outcome:
-                message = f"Duplicate key: _id={doc['_id']}"
-                await self._profile_operation(
-                    op="insert",
-                    command_factory=_insert_many_profile_command,
-                    duration_ns=time.perf_counter_ns() - started_at,
-                    errmsg=message,
-                )
-                if inserted_ids and session is not None:
-                    session.observe_operation()
-                raise DuplicateKeyError(message)
-            self._notify_instrumented_insert_outcome(
-                outcome,
-                session=session,
-            )
-            inserted_ids.append(doc["_id"])
-
-        await self._profile_operation(
-            op="insert",
-            command_factory=_insert_many_profile_command,
-            duration_ns=time.perf_counter_ns() - started_at,
-        )
-        if session is not None:
-            session.observe_operation()
-        return InsertManyResult(
-            inserted_ids=[
-                DocumentCodec.to_pymongo(document_id) for document_id in inserted_ids
-            ]
+            comment=comment,
         )
 
     async def bulk_write(
@@ -1148,6 +1010,7 @@ class AsyncCollection:
         session: ClientSession | None = None,
     ) -> BulkWriteResult[DocumentId]:
         self._ensure_session_active(session)
+        source_requests = list(requests) if isinstance(requests, list) else None
         requests = self._require_write_requests(requests)
         if not isinstance(ordered, bool):
             raise TypeError("ordered must be a bool")
@@ -1160,6 +1023,7 @@ class AsyncCollection:
             comment=comment,
             let=let,
             session=session,
+            source_requests=source_requests,
         )
         self._record_operation_metadata(
             operation="bulk_write",
@@ -1182,7 +1046,7 @@ class AsyncCollection:
     async def find_one(
         self,
         filter_spec: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         *,
         filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
@@ -1202,7 +1066,7 @@ class AsyncCollection:
     def find(
         self,
         filter_spec: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         *,
         filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
@@ -1302,7 +1166,7 @@ class AsyncCollection:
     def find_raw_batches(
         self,
         filter_spec: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         *,
         filter: Filter | object = _FILTER_UNSET,
         collation: CollationDocument | None = None,
@@ -1541,7 +1405,7 @@ class AsyncCollection:
         *,
         filter: Filter | object = _FILTER_UNSET,
         update: Update | object = _UPDATE_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         upsert: bool = False,
@@ -1583,7 +1447,7 @@ class AsyncCollection:
         *,
         filter: Filter | object = _FILTER_UNSET,
         update: Update | object = _UPDATE_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         upsert: bool = False,
@@ -1628,7 +1492,7 @@ class AsyncCollection:
         replacement: Document | object = ARG_UNSET,
         *,
         filter: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         upsert: bool = False,
@@ -1666,7 +1530,7 @@ class AsyncCollection:
         replacement: Document | object = ARG_UNSET,
         *,
         filter: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         upsert: bool = False,
@@ -1707,7 +1571,7 @@ class AsyncCollection:
         filter_spec: Filter | object = _FILTER_UNSET,
         *,
         filter: Filter | object = _FILTER_UNSET,
-        projection: Projection | None = None,
+        projection: ProjectionInput | None = None,
         collation: CollationDocument | None = None,
         sort: SortSpec | None = None,
         hint: HintSpec | None = None,

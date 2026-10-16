@@ -1,12 +1,19 @@
+import asyncio
+
+import mongoeco.api._async._collection_bulk as collection_bulk_module
+import mongoeco.api.operations as operations_module
+
+from mongoeco.api._async.collection import AsyncCollection
+from mongoeco.engines.memory import MemoryEngine
+from mongoeco.session import ClientSession
+from mongoeco.types import ReplaceOne, UpdateOne
+
 from tests.unit.api._collection_test_support import *  # noqa: F403
 from tests.unit.api._collection_test_support import (
     EngineCapabilities,
     InsertOutcome,
     _SpiV2EngineStub,
 )
-import mongoeco.api._async._collection_bulk as collection_bulk_module
-import mongoeco.api.operations as operations_module
-from mongoeco.session import ClientSession
 
 
 class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
@@ -52,7 +59,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
 
         collection = AsyncCollection(EngineStub(), 'db', 'coll')
 
-        with self.assertRaisesRegex(DuplicateKeyError, 'Duplicate key'):
+        with self.assertRaisesRegex(BulkWriteError, 'Duplicate key'):
             asyncio.run(collection.insert_many([{'_id': '1'}, {'_id': '1'}]))
 
     def test_insert_one_mutates_original_document_id_and_detaches_nested_values(
@@ -198,7 +205,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             collection = AsyncCollection(EngineStub(), 'db', 'coll')
             await collection.insert_many([{'_id': '1'}, {'_id': '2'}])
 
-        with self.assertRaisesRegex(DuplicateKeyError, 'Duplicate key'):
+        with self.assertRaisesRegex(BulkWriteError, 'Duplicate key'):
             asyncio.run(_exercise())
 
     def test_insert_many_non_bulk_path_profiles_errors_and_observes_session(
@@ -642,7 +649,8 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             await engine.connect()
             try:
                 collection = AsyncCollection(
-                    engine, 'db', 'coll', pymongo_profile='4.11'
+                    engine, 'db', 'coll', pymongo_profile='4.11',
+                    mongodb_dialect='8.0'
                 )
                 await collection.insert_one(
                     {'_id': 'base', 'kind': 'view', 'rank': 2, 'done': False}
@@ -743,7 +751,8 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                 except BulkWriteError as exc:
                     documents = await collection.find({}).to_list()
                     return exc, documents
-                raise AssertionError('bulk_write should have failed')
+                message = 'bulk_write should have failed'
+                raise AssertionError(message)
             finally:
                 await engine.disconnect()
 
@@ -798,7 +807,8 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                 except BulkWriteError as exc:
                     remaining = await collection.find({}).to_list()
                     return exc, remaining
-                raise AssertionError('bulk_write should have failed')
+                message = 'bulk_write should have failed'
+                raise AssertionError(message)
             finally:
                 await engine.disconnect()
 
@@ -809,7 +819,7 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
         self.assertEqual(error.details['nRemoved'], 1)
         self.assertEqual(remaining, [])
 
-    def test_bulk_write_normalizes_operation_failures_and_continues_when_unordered(
+    def test_bulk_write_rejects_invalid_replacement_before_unordered_execution(
         self,
     ):
         async def _exercise():
@@ -826,18 +836,17 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                         ],
                         ordered=False,
                     )
-                except BulkWriteError as exc:
+                except ValueError as exc:
                     document = await collection.find_one({'_id': '1'})
                     return exc, document
-                raise AssertionError('bulk_write should have failed')
+                message = 'bulk_write should have failed'
+                raise AssertionError(message)
             finally:
                 await engine.disconnect()
 
         error, document = asyncio.run(_exercise())
-
-        self.assertEqual(error.details['writeErrors'][0]['index'], 0)
-        self.assertEqual(error.details['nModified'], 1)
-        self.assertEqual(document, {'_id': '1', 'name': 'Ada', 'done': True})
+        self.assertIsInstance(error, ValueError)
+        self.assertEqual(document, {'_id': '1', 'name': 'Ada'})
 
     def test_bulk_write_preserves_replacement_id_write_error_code(self):
         async def _exercise():
@@ -856,7 +865,8 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
                     )
                 except BulkWriteError as exc:
                     return exc, await collection.find({}).to_list()
-                raise AssertionError('bulk_write should have failed')
+                message = 'bulk_write should have failed'
+                raise AssertionError(message)
             finally:
                 await engine.disconnect()
 
@@ -1274,15 +1284,13 @@ class AsyncCollectionWriteTests(AsyncCollectionHelperBase):
             documents,
             [
                 {
-                    '_id': result.upserted_ids[0],
-                    'kind': 'missing',
-                    'tenant': 'a',
+                    '_id': result.upserted_ids[1],
                     'done': True,
                 },
                 {
-                    '_id': result.upserted_ids[1],
-                    'kind': 'replace',
-                    'tenant': 'b',
+                    '_id': result.upserted_ids[0],
+                    'kind': 'missing',
+                    'tenant': 'a',
                     'done': True,
                 },
             ],

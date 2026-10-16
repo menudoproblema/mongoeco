@@ -5405,7 +5405,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     )
                     stream = collection.watch(max_await_time_ms=5)
 
-                    with self.assertRaises(DuplicateKeyError):
+                    with self.assertRaises(BulkWriteError):
                         await collection.insert_many(
                             [
                                 {"_id": "ok"},
@@ -5441,7 +5441,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     await collection.create_index(["email"], unique=True)
                     stream = collection.watch(max_await_time_ms=5)
 
-                    with self.assertRaises(DuplicateKeyError):
+                    with self.assertRaises(BulkWriteError):
                         await collection.insert_many(
                             [
                                 {"_id": "ok", "email": "same@example.com"},
@@ -5460,7 +5460,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(event["documentKey"], {"_id": "ok"})
                     self.assertIsNone(await stream.try_next())
 
-    async def test_insert_many_validation_failure_writes_no_partial_batch(
+    async def test_insert_many_validation_failure_preserves_valid_prefix(
         self,
     ):
         for engine_name in ENGINE_FACTORIES:
@@ -5472,7 +5472,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     )
                     stream = collection.watch(max_await_time_ms=5)
 
-                    with self.assertRaises(DocumentValidationFailure):
+                    with self.assertRaises(BulkWriteError):
                         await collection.insert_many(
                             [
                                 {"_id": "valid-before-error", "name": "Ada"},
@@ -5480,7 +5480,14 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                             ],
                         )
 
-                    self.assertEqual(await collection.find({}).to_list(), [])
+                    self.assertEqual(
+                        await collection.find({}).to_list(),
+                        [{"_id": "valid-before-error", "name": "Ada"}],
+                    )
+                    event = await stream.try_next()
+                    self.assertEqual(
+                        event["documentKey"], {"_id": "valid-before-error"}
+                    )
                     self.assertIsNone(await stream.try_next())
 
     async def test_bulk_write_supports_ordered_and_unordered_execution(self):
@@ -5489,6 +5496,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 async with AsyncMongoClient(
                     ENGINE_FACTORIES[engine_name](),
                     pymongo_profile="4.11",
+                    mongodb_dialect="8.0",
                 ) as client:
                     collection = client.test.users
                     await collection.insert_one(
@@ -12137,7 +12145,7 @@ class AsyncApiIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         await collection.find_one([])
 
                     with self.assertRaises(TypeError):
-                        await collection.find_one({}, [])
+                        await collection.find_one({}, [1])
 
                     with self.assertRaises(TypeError):
                         await collection.update_one([], {})

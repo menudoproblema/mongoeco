@@ -717,6 +717,32 @@
         "pymongo_profiles",
         "4.19"
       ]
+    },
+    {
+      "after": {
+        "comment": {
+          "note": "Preserved in insert profiling, active operations and session metadata.",
+          "status": "effective"
+        }
+      },
+      "operation": "add",
+      "path": [
+        "operation_options",
+        "insert_one"
+      ]
+    },
+    {
+      "after": {
+        "comment": {
+          "note": "Preserved in batch insert profiling, active operations and session metadata.",
+          "status": "effective"
+        }
+      },
+      "operation": "add",
+      "path": [
+        "operation_options",
+        "insert_many"
+      ]
     }
   ],
   "excluded_sections": {

@@ -5342,7 +5342,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection.insert_one({"_id": "dup", "value": "original"})
                     stream = collection.watch(max_await_time_ms=5)
 
-                    with self.assertRaises(DuplicateKeyError):
+                    with self.assertRaises(BulkWriteError):
                         collection.insert_many(
                             [
                                 {"_id": "ok"},
@@ -5374,7 +5374,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     collection.create_index(["email"], unique=True)
                     stream = collection.watch(max_await_time_ms=5)
 
-                    with self.assertRaises(DuplicateKeyError):
+                    with self.assertRaises(BulkWriteError):
                         collection.insert_many(
                             [
                                 {"_id": "ok", "email": "same@example.com"},
@@ -5393,26 +5393,32 @@ class SyncApiIntegrationTests(unittest.TestCase):
                     self.assertEqual(event["documentKey"], {"_id": "ok"})
                     self.assertIsNone(stream.try_next())
 
-    def test_insert_many_validation_failure_writes_no_partial_batch(self):
+    def test_insert_many_validation_failure_preserves_valid_prefix(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
-            with self.subTest(engine=engine_name):
-                with MongoClient(factory()) as client:
-                    collection = client.observe.create_collection(
-                        "validated_items",
-                        validator={"$jsonSchema": {"required": ["name"]}},
+            with self.subTest(engine=engine_name), MongoClient(factory()) as client:
+                collection = client.observe.create_collection(
+                    "validated_items",
+                    validator={"$jsonSchema": {"required": ["name"]}},
+                )
+                stream = collection.watch(max_await_time_ms=5)
+
+                with self.assertRaises(BulkWriteError):
+                    collection.insert_many(
+                        [
+                            {"_id": "valid-before-error", "name": "Ada"},
+                            {"_id": "invalid"},
+                        ],
                     )
-                    stream = collection.watch(max_await_time_ms=5)
 
-                    with self.assertRaises(DocumentValidationFailure):
-                        collection.insert_many(
-                            [
-                                {"_id": "valid-before-error", "name": "Ada"},
-                                {"_id": "invalid"},
-                            ],
-                        )
-
-                    self.assertEqual(collection.find({}).to_list(), [])
-                    self.assertIsNone(stream.try_next())
+                self.assertEqual(
+                    collection.find({}).to_list(),
+                    [{"_id": "valid-before-error", "name": "Ada"}],
+                )
+                event = stream.try_next()
+                self.assertEqual(
+                    event["documentKey"], {"_id": "valid-before-error"}
+                )
+                self.assertIsNone(stream.try_next())
 
     def test_delete_last_document_keeps_collection_visible_until_drop(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
@@ -5429,7 +5435,9 @@ class SyncApiIntegrationTests(unittest.TestCase):
     def test_bulk_write_supports_ordered_and_unordered_execution(self):
         for engine_name, factory in SYNC_ENGINE_FACTORIES.items():
             with self.subTest(engine=engine_name):
-                with MongoClient(factory(), pymongo_profile="4.11") as client:
+                with MongoClient(
+                    factory(), pymongo_profile="4.11", mongodb_dialect="8.0"
+                ) as client:
                     collection = client.test.users
                     collection.insert_one(
                         {
@@ -11633,7 +11641,7 @@ class SyncApiIntegrationTests(unittest.TestCase):
                         collection.find_one([])
 
                     with self.assertRaises(TypeError):
-                        collection.find_one({}, [])
+                        collection.find_one({}, [1])
 
                     with self.assertRaises(TypeError):
                         collection.update_one([], {})

@@ -18,12 +18,12 @@ from mongoeco.core.filtering import QueryEngine
 
 if TYPE_CHECKING:
     from mongoeco.api._async.collection import AsyncCollection
+    from mongoeco.api.argument_validation import ProjectionInput
     from mongoeco.types import (
         CollationDocument,
         Document,
         Filter,
         HintSpec,
-        Projection,
     )
 
 
@@ -33,7 +33,7 @@ _FILTER_UNSET = object()
 async def find_one(
     collection: AsyncCollection,
     filter_spec: Filter | object,
-    projection: Projection | None,
+    projection: ProjectionInput | None,
     *,
     filter: Filter | object = _FILTER_UNSET,
     collation: CollationDocument | None = None,

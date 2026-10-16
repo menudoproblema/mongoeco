@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import sqlite3
+
 from typing import TYPE_CHECKING
 
-from mongoeco.core.identity import assert_valid_root_document_id
-from mongoeco.errors import DuplicateKeyError
-from mongoeco.engines.semantic_core import enforce_collection_document_validation
+from mongoeco.core.bson_ordering import bson_equality_key
+from mongoeco.core.identity import (
+    assert_valid_root_document_id,
+    id_contains_numeric_value,
+)
 from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
+from mongoeco.engines.semantic_core import enforce_collection_document_validation
+from mongoeco.errors import DuplicateKeyError
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -78,17 +84,17 @@ def insert_document_record(  # noqa: PLR0913 - SQLite write transaction boundary
                 conn, db_name, coll_name, storage_key
             )
 
-        if not overwrite and original_document is not None:
-            write.rollback()
-            return False
-
         if not bypass_document_validation:
             enforce_collection_document_validation(
                 document,
                 options=collection_options,
-                original_document=original_document,
+                original_document=original_document if overwrite else None,
                 dialect=dialect,
             )
+
+        if not overwrite and original_document is not None:
+            write.rollback()
+            return False
 
         ensure_collection_row(conn, db_name, coll_name, options=collection_options)
         validate_document_against_unique_indexes(
@@ -148,7 +154,28 @@ def insert_document_record(  # noqa: PLR0913 - SQLite write transaction boundary
         return True
 
 
-def insert_document_batch(  # noqa: PLR0913 - SQLite batch transaction boundary
+def _batch_id_equality_keys(
+    conn: sqlite3.Connection,
+    db_name: str,
+    coll_name: str,
+    documents: list[Document],
+    deserialize_document: Callable[[str], Document],
+) -> set[object] | None:
+    if not any(
+        id_contains_numeric_value(document.get("_id")) for document in documents
+    ):
+        return None
+    return {
+        bson_equality_key(document["_id"])
+        for (payload,) in conn.execute(
+            "SELECT document FROM documents WHERE db_name = ? AND coll_name = ?",
+            (db_name, coll_name),
+        )
+        if "_id" in (document := deserialize_document(payload))
+    }
+
+
+def insert_document_batch(  # noqa: PLR0913, PLR0915 - SQLite batch transaction boundary
     conn: sqlite3.Connection,
     *,
     db_name: str,
@@ -159,6 +186,7 @@ def insert_document_batch(  # noqa: PLR0913 - SQLite batch transaction boundary
     bypass_document_validation: bool,
     dialect: MongoDialect,
     snapshot_options: dict[str, object] | None,
+    deserialize_document: Callable[[str], Document],
     purge_expired_documents: Callable[[sqlite3.Connection, str, str], None],
     collection_options_or_empty: Callable[
         [sqlite3.Connection, str, str], dict[str, object]
@@ -252,6 +280,9 @@ def insert_document_batch(  # noqa: PLR0913 - SQLite batch transaction boundary
             ).fetchall()
             existing_storage_keys.update(row[0] for row in rows)
         seen_storage_keys: set[str] = set()
+        id_equality_keys = _batch_id_equality_keys(
+            conn, db_name, coll_name, documents, deserialize_document
+        )
         for document, (storage_key, serialized_document, prepared_multikey_rows) in zip(
             documents,
             prepared_documents,
@@ -263,10 +294,13 @@ def insert_document_batch(  # noqa: PLR0913 - SQLite batch transaction boundary
                 if (
                     storage_key in seen_storage_keys
                     or storage_key in existing_storage_keys
+                    or (
+                        id_equality_keys is not None
+                        and bson_equality_key(document.get("_id")) in id_equality_keys
+                    )
                 ):
                     results.append(False)
                     break
-                seen_storage_keys.add(storage_key)
                 validate_document_against_unique_indexes(
                     db_name,
                     coll_name,
@@ -286,6 +320,8 @@ def insert_document_batch(  # noqa: PLR0913 - SQLite batch transaction boundary
                 if cursor.rowcount == 0:
                     results.append(False)
                     break
+                if id_equality_keys is not None:
+                    id_equality_keys.add(bson_equality_key(document["_id"]))
                 delete_multikey_entries_for_storage_key(
                     conn, db_name, coll_name, storage_key
                 )
@@ -361,6 +397,7 @@ def insert_document_batch(  # noqa: PLR0913 - SQLite batch transaction boundary
                     search_indexes,
                 )
                 results.append(True)
+                seen_storage_keys.add(storage_key)
             except (DuplicateKeyError, sqlite3.IntegrityError):
                 results.append(False)
                 break

@@ -131,12 +131,14 @@ def evaluate_scalar_expression(
             if target not in aliases:
                 raise OperationFailure("$convert target type is not supported")
             if extended:
-                return _convert_extended_scalar(
+                converted = _convert_extended_scalar(
                     value, aliases[target], base=base, stringify_value=stringify_value
                 )
-            return _convert_aggregation_scalar(
-                operator, value, aliases[target], stringify_value=stringify_value
-            )
+            else:
+                converted = _convert_aggregation_scalar(
+                    operator, value, aliases[target], stringify_value=stringify_value
+                )
+            return _typed_conversion_result(converted, aliases[target], variables)
         except Exception:
             if "onError" in spec:
                 return evaluate_expression(document, spec["onError"], variables)
@@ -237,9 +239,10 @@ def evaluate_scalar_expression(
             "$toObjectId": "objectId",
             "$toUUID": "uuid",
         }[operator]
-        return _convert_aggregation_scalar(
+        converted = _convert_aggregation_scalar(
             operator, value, target, stringify_value=stringify_value
         )
+        return _typed_conversion_result(converted, target, variables)
 
     if operator == "$isArray":
         args = require_expression_args(
@@ -507,6 +510,21 @@ def _convert_extended_scalar(
     return _convert_aggregation_scalar(
         "$convert", value, target, stringify_value=stringify_value
     )
+
+
+def _typed_conversion_result(value: Any, target: str, variables: object) -> Any:
+    if value is None or not getattr(
+        variables, "preserve_numeric_conversion_types", False
+    ):
+        return value
+    constructors = {
+        "int": int,
+        "long": BsonInt64,
+        "double": float,
+        "decimal": Decimal128,
+    }
+    constructor = constructors.get(target)
+    return value if constructor is None else constructor(unwrap_bson_numeric(value))
 
 
 def _convert_aggregation_scalar(

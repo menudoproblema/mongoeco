@@ -186,6 +186,7 @@ class DialectAndProfileContractTests(unittest.TestCase):
                     "db",
                     "coll",
                     pymongo_profile=_ToggleSortProfile(enabled),
+                    mongodb_dialect="8.0",
                 )
                 return await collection.bulk_write(
                     [

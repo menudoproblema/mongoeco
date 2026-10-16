@@ -177,7 +177,7 @@ def test_catalog_identity_and_hash_are_exact() -> None:
     catalog = load_mongodb_catalog()
     reference = catalog_reference(catalog)
     assert catalog.sha256 == (
-        "84c69da54a8d09f6dce9a3cbc394cf8c2f251402c72e18b3f7488af86ef08aeb"
+        "f2b3d7c51846a00858b4d7c17ae1b439adc0b7285df11f67c291302c0f7013b9"
     )
     assert reference == load_mongodb_declared_snapshot().payload["catalog"]
     assert load_mongodb_declared_snapshot().payload["source"]["reference"] == (
@@ -544,7 +544,9 @@ def test_write_options_are_scoped_to_their_operation() -> None:
     assert "sort" in write["properties"]["update_one.supportedOptions"]
     assert "sort" not in write["properties"]["update_many.supportedOptions"]
     assert write["properties"]["update_many.acceptsSort"] is False
-    assert write["properties"]["insert_one.supportedOptions"] == []
+    for operation in ("insert_one", "insert_many"):
+        assert write["properties"][f"{operation}.supportedOptions"] == ["comment"]
+        assert write["properties"][f"{operation}.acceptsComment"] is True
 
     requirement_content = load_mongodb_profile("mongodb-core").as_dict()
     requirement_content["payload"]["requirement"] = {

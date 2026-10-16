@@ -160,7 +160,10 @@ def test_inventory_tracks_exact_owner_and_public_command_option_sets() -> None:
         hashlib.sha256(source.read_bytes()).hexdigest()
     }
     assert {row["source_revision"] for row in rows} == {
-        "867139d9c99f885f6fbaa2a93a7a38b5f6df53ac"
+        (
+            "sha256:"
+            "3e37485aabe4e0bdf7c57714d1263b6eb6b1d97e9f6ebf776b52cfb45261f3dd"
+        )
     }
     assert {
         (command, option)

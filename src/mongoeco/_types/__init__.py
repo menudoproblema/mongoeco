@@ -1,4 +1,10 @@
 from importlib import import_module
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from mongoeco._types.writes import UpdateResult as UpdateResult
+
 
 _BSON_EXPORTS = (
     "Binary",

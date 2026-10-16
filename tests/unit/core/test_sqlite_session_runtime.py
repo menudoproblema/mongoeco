@@ -236,6 +236,7 @@ class SQLiteSessionRuntimeTests(unittest.TestCase):
 
             with self.assertRaisesRegex(OperationFailure, "boom"):
                 modify_ops.update_with_operation(
+                    delete_index_entries_for_storage_key=lambda *_args: None,
                     db_name="db",
                     coll_name="coll",
                     operation=SimpleNamespace(array_filters=None),

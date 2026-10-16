@@ -21,15 +21,17 @@ class EvaluationEnvironment(dict[str, Any]):
         root: Document | None = None,
         current: Document | None = None,
         collation=None,
+        preserve_numeric_conversion_types: bool = False,
     ) -> None:
         super().__init__(bindings or {})
         self.root = root
         self.current = current
         self.collation = collation
+        self.preserve_numeric_conversion_types = preserve_numeric_conversion_types
         if root is not None:
-            self['ROOT'] = root
+            self["ROOT"] = root
         if current is not None:
-            self['CURRENT'] = current
+            self["CURRENT"] = current
 
     @property
     def is_bound(self) -> bool:
@@ -41,6 +43,7 @@ class EvaluationEnvironment(dict[str, Any]):
             root=self.root,
             current=self.current,
             collation=self.collation,
+            preserve_numeric_conversion_types=self.preserve_numeric_conversion_types,
         )
 
     def with_current(self, document: Document) -> EvaluationEnvironment:
@@ -49,6 +52,7 @@ class EvaluationEnvironment(dict[str, Any]):
             root=self.root if self.root is not None else document,
             current=document,
             collation=self.collation,
+            preserve_numeric_conversion_types=self.preserve_numeric_conversion_types,
         )
 
 
@@ -57,14 +61,10 @@ def environment_for_document(
     variables: Mapping[str, Any] | None,
 ) -> EvaluationEnvironment:
     if isinstance(variables, EvaluationEnvironment):
-        return (
-            variables
-            if variables.is_bound
-            else variables.with_current(document)
-        )
+        return variables if variables.is_bound else variables.with_current(document)
     context = ensure_expression_context(variables)
     return EvaluationEnvironment(
-        {**context, 'ROOT': document, 'CURRENT': document},
+        {**context, "ROOT": document, "CURRENT": document},
         root=document,
         current=document,
     )

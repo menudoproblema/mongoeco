@@ -1,3 +1,5 @@
+from mongoeco.api._async.collection import AsyncCollection
+
 from tests.unit.api._collection_test_support import *  # noqa: F403
 
 class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
@@ -143,8 +145,9 @@ class AsyncCollectionValidationTests(AsyncCollectionHelperBase):
             _ = self.collection[""]  # type: ignore[index]
         with self.assertRaises(TypeError):
             AsyncCollection._normalize_filter([])  # type: ignore[arg-type]
+        self.assertEqual(AsyncCollection._normalize_projection([]), {})
         with self.assertRaises(TypeError):
-            AsyncCollection._normalize_projection([])  # type: ignore[arg-type]
+            AsyncCollection._normalize_projection([1])
         with self.assertRaises(TypeError):
             AsyncCollection._normalize_let("bad")  # type: ignore[arg-type]
         with self.assertRaises(TypeError):
