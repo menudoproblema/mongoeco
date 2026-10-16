@@ -15,6 +15,35 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DIST_ROOT = PROJECT_ROOT / "dist"
 
 
+def _pytest_smoke_script() -> str:
+    return '''
+import tempfile
+import threading
+from pathlib import Path
+import mongoeco
+import pytest
+
+assert 'site-packages' in Path(mongoeco.__file__).parts
+with tempfile.TemporaryDirectory(prefix='mongoeco-pytest-smoke-') as name:
+    path = Path(name) / 'test_native.py'
+    path.write_text("""
+from pymongo import MongoClient
+def test_first(mongoeco_client):
+    assert type(mongoeco_client) is MongoClient
+    assert mongoeco_client.app.items.count_documents({}) == 0
+    mongoeco_client.app.items.insert_one({'_id':'same'})
+def test_second(mongoeco_client):
+    assert mongoeco_client.app.items.count_documents({}) == 0
+""")
+    result = pytest.main([
+        str(path), '-p', 'mongoeco.pytest_plugin',
+        '--mongoeco-backend=both', '-q',
+    ])
+    assert result == 0
+assert not any(t.name == 'mongoeco-pytest-server' for t in threading.enumerate())
+'''
+
+
 def _resolve_distribution(path: str | None, *, kind: str) -> Path:
     artifact_label = "wheel" if kind == "wheel" else "sdist"
     if path is not None:
@@ -114,6 +143,9 @@ def main() -> int:
         action="store_true",
         help="Conserva el venv al terminar.",
     )
+    parser.add_argument(
+        "--pytest-kit", action="store_true", help="Smoke the optional pytest extra."
+    )
     args = parser.parse_args()
 
     if args.wheel is not None and args.sdist is not None:
@@ -149,8 +181,12 @@ def main() -> int:
             shutil.rmtree(venv_root)
         _run([sys.executable, "-m", "venv", str(venv_root)])
         _run([str(pip_bin), "install", "--upgrade", "pip"])
-        _run([str(pip_bin), "install", f"{distribution}[engine-testing]"])
+        extra = "pytest" if args.pytest_kit else "engine-testing"
+        _run([str(pip_bin), "install", f"{distribution}[{extra}]"])
         external_cwd = Path(tempfile.gettempdir())
+        if args.pytest_kit:
+            _run([str(python_bin), "-c", _pytest_smoke_script()], cwd=external_cwd)
+            return 0
         _run([str(python_bin), "-c", _smoke_script()], cwd=external_cwd)
         _run(
             [

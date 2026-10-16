@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mongoeco"
 dynamic = ["version"]
-description = "Async-first MongoDB-like persistence library with pluggable storage engines."
+description = "Local MongoDB testing and embedded persistence for Python, with PyMongo-style sync and async APIs."
 readme = {file = "README.md", content-type = "text/markdown"}
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -16,8 +16,8 @@ dependencies = [
     "msgspec>=0.20,<1",
     "pyuca>=1.2,<2",
     "rpds-py>=0.27,<2027",
-    "shapely>=2.1,<3",
-    "usearch>=2.23,<3",
+    "shapely>=2.2,<3",
+    "usearch>=2.26.4,<3",
 ]
 keywords = [
     "mongodb",
@@ -34,10 +34,18 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Database",
     "Topic :: Software Development :: Testing",
     "Typing :: Typed",
 ]
+
+[project.urls]
+Homepage = "https://github.com/menudoproblema/mongoeco"
+Documentation = "https://github.com/menudoproblema/mongoeco/blob/main/docs/README.md"
+Repository = "https://github.com/menudoproblema/mongoeco"
+Issues = "https://github.com/menudoproblema/mongoeco/issues"
+Changelog = "https://github.com/menudoproblema/mongoeco/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
@@ -49,6 +57,9 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
+    "pytest-asyncio>=1.4,<2",
+    "anyio>=4.11,<5",
+    "pytest-xdist>=3.8,<4",
     "ruff==0.16.2",
     "twine",
 ]
@@ -69,6 +80,10 @@ mongodb-real = [
     "pymongo>=4.9,<5",
 ]
 wire = [
+    "pymongo>=4.9,<5",
+]
+pytest = [
+    "pytest>=8.4,<10",
     "pymongo>=4.9,<5",
 ]
 json-fast = [

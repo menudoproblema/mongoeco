@@ -152,6 +152,7 @@ jobs:
         python-version:
           - "3.13"
           - "3.14"
+          - "3.15"
     steps:
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -181,7 +182,7 @@ jobs:
         run: |
           sha256sum -c artifact-manifest/SHA256SUMS
           WHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"
-          python -m pip install coverage hypothesis jsonschema mypy pytest pytest-cov ruff
+          python -m pip install coverage hypothesis jsonschema mypy pytest pytest-cov ruff pytest-asyncio anyio pytest-xdist
           python -m pip install "${WHEEL}[wire]"
           python -m pip install -r benchmarks/requirements.txt
 
@@ -197,7 +198,12 @@ jobs:
           PY
 
       - name: Validate public PEP 561 contract
-        run: python scripts/check_public_typing.py
+        run: |
+          python scripts/check_public_typing.py
+          python -m mypy --strict --follow-imports=silent --ignore-missing-imports \
+            -m mongoeco.pytest_plugin -m mongoeco.pytest_asyncio \
+            -m mongoeco.pytest_anyio -m mongoeco._pytest_runtime \
+            -m mongoeco.wire._lifecycle
 
       - name: Validate independent SPI v2 consumer
         run: python scripts/smoke_external_engine.py
@@ -213,8 +219,8 @@ jobs:
           BASE_REF="$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^)"
           python scripts/check_lint_ratchet.py --base-ref "$BASE_REF"
 
-      - name: Run complete pytest suite on Python 3.13
-        if: matrix.python-version == '3.13'
+      - name: Run complete pytest suite
+        if: matrix.python-version != '3.14'
         run: python -m pytest -q
 
       - name: Enforce installed package coverage floor
@@ -266,6 +272,56 @@ jobs:
       - name: Smoke installed sdist
         run: python scripts/smoke_installed_wheel.py --sdist
 
+      - name: Smoke clean pytest extra
+        run: python scripts/smoke_installed_wheel.py --pytest-kit
+
+  pytest-kit:
+    name: Pytest kit (${{ matrix.python }}, pytest ${{ matrix.pytest }}, SDK ${{ matrix.pymongo }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.13", "3.14", "3.15"]
+        pytest: ["8.4.2", "9.1.1"]
+        pymongo: ["4.9.2", "4.19.0"]
+    env:
+      MONGOECO_TEST_INSTALLED_ARTIFACT: "1"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: release-distributions
+          path: dist
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: release-distribution-manifest
+          path: artifact-manifest
+      - name: Install immutable wheel with explicit test matrix overrides
+        run: |
+          sha256sum -c artifact-manifest/SHA256SUMS
+          python - <<'PY'
+          from pathlib import Path
+          lines = Path('requirements/ci-constraints.txt').read_text().splitlines()
+          Path('/tmp/kit-constraints.txt').write_text('\n'.join(
+              line for line in lines if not line.startswith(('pytest==', 'pymongo=='))
+          ) + '\n')
+          PY
+          WHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"
+          python -m pip install -c /tmp/kit-constraints.txt "${WHEEL}[pytest]" \
+            "pytest==${{ matrix.pytest }}" "pymongo==${{ matrix.pymongo }}" \
+            hypothesis pytest-asyncio anyio pytest-xdist
+      - name: Exercise clients, failure cleanup and parallel workers
+        run: |
+          python -m pytest tests/integration/pytest_kit \
+            tests/integration/wire/test_proxy_lifecycle.py \
+            tests/integration/wire/test_unacknowledged.py \
+            tests/integration/api/test_write_preflight_parity.py -q
+
   release-differential:
     name: Required MongoDB release differential
     if: startsWith(github.ref, 'refs/tags/v')
@@ -283,6 +339,7 @@ jobs:
       - pymongo-profiles
       - minimal-imports
       - test
+      - pytest-kit
       - release-differential
     runs-on: ubuntu-latest
     environment:

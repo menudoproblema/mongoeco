@@ -70,7 +70,7 @@ jobs:
       - name: Install differential dependencies
         if: inputs.distribution_artifact == ''
         run: |
-          python -m pip install -c requirements/ci-constraints.txt ".[mongodb-real]" unittest-xml-reporting
+          python -m pip install -c requirements/ci-constraints.txt ".[mongodb-real]" unittest-xml-reporting pytest
 
       - name: Download immutable release distributions
         if: inputs.distribution_artifact != ''
@@ -91,7 +91,7 @@ jobs:
         run: |
           sha256sum -c artifact-manifest/SHA256SUMS
           WHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"
-          python -m pip install -c requirements/ci-constraints.txt "${WHEEL}[mongodb-real]" unittest-xml-reporting
+          python -m pip install -c requirements/ci-constraints.txt "${WHEEL}[mongodb-real]" unittest-xml-reporting pytest
           python - <<'PY'
           from pathlib import Path
           import mongoeco
@@ -132,6 +132,52 @@ jobs:
         run: |
           python -m unittest tests.differential.test_positional_update_parity -v \
             2>&1 | tee "artifacts/${{ matrix.target }}/positional-updates.log"
+
+      - name: Verify unacknowledged writes and physical connection reuse
+        shell: bash
+        run: |
+          TARGET_SUFFIX="${MONGOECO_REAL_MONGODB_TARGET//./_}"
+          python scripts/capture_unacknowledged_parity.py \
+            --target "$MONGOECO_REAL_MONGODB_TARGET" \
+            --output "artifacts/${{ matrix.target }}/unacknowledged.json" \
+            --check "tests/fixtures/unacknowledged_mongodb_${TARGET_SUFFIX}.json"
+          python -m pytest tests/integration/wire/test_unacknowledged.py \
+            tests/integration/api/test_write_preflight_parity.py -q \
+            2>&1 | tee "artifacts/${{ matrix.target }}/unacknowledged.log"
+
+      - name: Admit the complete write corpus and public routes
+        shell: bash
+        env:
+          MONGOECO_WRITE_HISTORY_OUTPUT: artifacts/${{ matrix.target }}/write-histories
+        run: |
+          python scripts/capture_write_parity.py \
+            --target "$MONGOECO_REAL_MONGODB_TARGET" \
+            --output-dir "artifacts/${{ matrix.target }}/write-capture" \
+            --histories-dir "artifacts/${{ matrix.target }}/write-histories" \
+            --check-dir tests/fixtures
+          TARGET_SUFFIX="${MONGOECO_REAL_MONGODB_TARGET//./_}"
+          python scripts/capture_api_option_parity.py \
+            --target "$MONGOECO_REAL_MONGODB_TARGET" \
+            --output "artifacts/${{ matrix.target }}/api-options.json" \
+            --check "tests/fixtures/api_options_mongodb_${TARGET_SUFFIX}.json"
+          python -m pytest -q \
+            tests/integration/api/test_write_parity_corpus.py \
+            tests/integration/api/test_write_identity_parity.py \
+            tests/integration/api/test_write_query_parity.py \
+            tests/integration/api/test_numeric_identity_conservation.py \
+            tests/integration/api/test_id_conversion_conservation.py \
+            tests/unit/core/test_id_bson_conversion.py \
+            tests/integration/api/test_null_identity_conservation.py \
+            tests/integration/api/test_write_operation_parity.py \
+            tests/integration/api/test_write_operation_conservation.py \
+            tests/integration/api/test_api_option_parity.py \
+            tests/integration/api/test_api_option_conservation.py \
+            tests/integration/api/test_write_histories.py \
+            tests/integration/api/test_write_command_parity.py \
+            tests/integration/api/test_insert_many_write_contract.py \
+            tests/unit/test_write_observer.py \
+            tests/unit/test_write_corpus_inventory.py \
+            2>&1 | tee "artifacts/${{ matrix.target }}/write-parity.log"
 
       - name: Verify review expectations against the native server
         run: |

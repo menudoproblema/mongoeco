@@ -6,6 +6,9 @@ from pathlib import Path
 from hypothesis import HealthCheck, settings
 
 
+pytest_plugins = ("pytester",)
+
+
 SRC_ROOT = Path(__file__).resolve().parents[1] / "src"
 TEST_INSTALLED_ARTIFACT = os.environ.get("MONGOECO_TEST_INSTALLED_ARTIFACT") == "1"
 if TEST_INSTALLED_ARTIFACT:
