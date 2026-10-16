@@ -1,0 +1,353 @@
+{
+  "7.0": {
+    "mongodb": "7.0.43",
+    "sdk": "4.19.0",
+    "sync_async_equal_codes": true,
+    "unchanged_after_each_rejection": true,
+    "recovery_write_succeeded": true,
+    "observations": {
+      "update_0": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "update_1": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "update_2": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "update_3": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_0": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_1": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_2": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_3": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_0": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_1": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_2": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_3": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      }
+    }
+  },
+  "8.0": {
+    "mongodb": "8.0.32",
+    "sdk": "4.19.0",
+    "sync_async_equal_codes": true,
+    "unchanged_after_each_rejection": true,
+    "recovery_write_succeeded": true,
+    "observations": {
+      "update_0": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "update_1": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "update_2": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "update_3": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_0": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_1": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_2": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_3": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_0": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_1": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_2": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_3": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      }
+    }
+  },
+  "9.0": {
+    "mongodb": "9.0.2",
+    "sdk": "4.19.0",
+    "sync_async_equal_codes": true,
+    "unchanged_after_each_rejection": true,
+    "recovery_write_succeeded": true,
+    "observations": {
+      "update_0": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "update_1": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "update_2": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "update_3": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'update.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_0": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_1": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_2": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "delete_3": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'delete.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_0": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_1": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_2": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      },
+      "findAndModify_3": {
+        "code": 40415,
+        "details": {
+          "ok": 0.0,
+          "errmsg": "BSON field 'findAndModify.constants' is an unknown field.",
+          "code": 40415,
+          "codeName": "IDLUnknownField"
+        }
+      }
+    }
+  }
+}

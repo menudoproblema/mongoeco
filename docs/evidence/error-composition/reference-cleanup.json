@@ -1,0 +1,20 @@
+[
+  {
+    "target": "7.0",
+    "pid": 20640,
+    "exit_code": 0,
+    "private_database_files_removed": true
+  },
+  {
+    "target": "8.0",
+    "pid": 20703,
+    "exit_code": 0,
+    "private_database_files_removed": true
+  },
+  {
+    "target": "9.0",
+    "pid": 20781,
+    "exit_code": 0,
+    "private_database_files_removed": true
+  }
+]

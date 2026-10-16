@@ -1,0 +1,23 @@
+[
+  {
+    "python": "3.13.15 (main, Aug  5 2026, 12:25:43) [Clang 17.0.0 (clang-1700.6.4.2)]",
+    "sdk": "4.19.0",
+    "pytest": "9.1.1",
+    "version": "4.10.0",
+    "module": "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/lib/python3.13/site-packages/mongoeco/__init__.py"
+  },
+  {
+    "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+    "sdk": "4.19.0",
+    "pytest": "9.1.1",
+    "version": "4.10.0",
+    "module": "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/lib/python3.14/site-packages/mongoeco/__init__.py"
+  },
+  {
+    "python": "3.15.0 (main, Oct 15 2026, 15:02:52) [Clang 17.0.0 (clang-1700.6.4.2)]",
+    "sdk": "4.19.0",
+    "pytest": "9.1.1",
+    "version": "4.10.0",
+    "module": "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/lib/python3.15/site-packages/mongoeco/__init__.py"
+  }
+]

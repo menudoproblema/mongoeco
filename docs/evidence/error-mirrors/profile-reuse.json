@@ -1,0 +1,17 @@
+{
+  "reused_evidence": "docs/evidence/shared-errors/pymongo-profiles-summary.json",
+  "reason": "Independent native PyMongo signature probe; script, expected fixture and constrained dependencies unchanged. It imports no Mongoeco runtime.",
+  "unchanged_inputs": {
+    "scripts/run_pymongo_profile_matrix.py": "4b568416c086fc8b024613f4bd014230be8e90ba96e785371e959bba3cc93122",
+    "tests/fixtures/pymongo_profile_matrix.json": "ae83143edfd7498d7408bd372ff9c8b98cd0478bf57fbab22346802a26ef8520",
+    "requirements/ci-constraints.txt": "80504cfa0a061bfda54f6dfbc61a65c7bb13f44f0d74ad0061c81bd01ec1d0b6"
+  },
+  "verified_versions": [
+    "4.9.2",
+    "4.11.3",
+    "4.13.2",
+    "4.17.0",
+    "4.18.2",
+    "4.19.0"
+  ]
+}

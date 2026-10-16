@@ -1,0 +1,20 @@
+{
+  "producer": {
+    "module": "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/lib/python3.14/site-packages/mongoeco/__init__.py",
+    "version": "4.10.0",
+    "file": ".tmp/shared-errors/published-code.sqlite"
+  },
+  "legacy_scalar_entry": [
+    [
+      "string",
+      "x",
+      "(<class 'str'>, 'a')"
+    ]
+  ],
+  "schema_unchanged": true,
+  "existing_payload_and_storage_key_unchanged": true,
+  "sync_async_typed_queries": true,
+  "unique_code_rejected": 11000,
+  "row_count": 3,
+  "integrity_check": "ok"
+}

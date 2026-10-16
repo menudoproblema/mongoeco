@@ -1,0 +1,50 @@
+[
+  {
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+      "-B",
+      "-m",
+      "benchmarks.run",
+      "--engine",
+      "memory-sync",
+      "--size",
+      "250",
+      "--warmup",
+      "0",
+      "--repetitions",
+      "1",
+      "--workload",
+      "search_diagnostics",
+      "--workload",
+      "vector_search_diagnostics",
+      "--format",
+      "json"
+    ],
+    "exit_code": 0,
+    "log": "benchmark-memory-sync.json"
+  },
+  {
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+      "-B",
+      "-m",
+      "benchmarks.run",
+      "--engine",
+      "sqlite-sync",
+      "--size",
+      "250",
+      "--warmup",
+      "0",
+      "--repetitions",
+      "1",
+      "--workload",
+      "search_diagnostics",
+      "--workload",
+      "vector_search_diagnostics",
+      "--format",
+      "json"
+    ],
+    "exit_code": 0,
+    "log": "benchmark-sqlite-sync.json"
+  }
+]

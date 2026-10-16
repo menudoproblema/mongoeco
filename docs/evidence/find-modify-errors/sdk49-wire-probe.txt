@@ -1,0 +1,97 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.14.5, pytest-9.1.1, pluggy-1.6.0 -- /Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-sdk49/bin/python
+cachedir: .tmp/find-modify/probe-cache
+hypothesis profile 'ci' -> database=None, deadline=None, max_examples=30, derandomize=True, suppress_health_check=(HealthCheck.too_slow,)
+rootdir: /Users/uve/Proyectos/mongoeco
+configfile: pyproject.toml
+plugins: cov-7.1.0, xdist-3.8.0, asyncio-1.4.0, hypothesis-6.165.9, anyio-4.15.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/integration/api/test_find_modify_errors.py::test_wire_command_errors_match_native[7.0-memory-async] Timeout (0:00:15)!
+Thread 0x000000016ed87000 [pymongo_kill_cursors_thread] (most recent call first):
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/selectors.py", line 548 in select
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 2019 in _run_once
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 677 in run_forever
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 706 in run_until_complete
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 127 in run
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 204 in run
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/periodic_executor.py", line 78 in _run_async
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/threading.py", line 1024 in run
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/threading.py", line 1082 in _bootstrap_inner
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/threading.py", line 1044 in _bootstrap
+
+Thread 0x000000016dd7b000 [pymongo_server_monitor_thread] (most recent call first):
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/selectors.py", line 548 in select
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 2019 in _run_once
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 677 in run_forever
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 706 in run_until_complete
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 127 in run
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 204 in run
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/periodic_executor.py", line 78 in _run_async
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/threading.py", line 1024 in run
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/threading.py", line 1082 in _bootstrap_inner
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/threading.py", line 1044 in _bootstrap
+
+Thread 0x000000020502a0c0 (most recent call first):
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/socket_checker.py", line 66 in select
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/network.py", line 378 in wait_for_read
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/network.py", line 396 in _receive_data_on_socket
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/network.py", line 322 in receive_message
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/pool.py", line 590 in receive_message
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/server.py", line 208 in run_operation
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/helpers.py", line 45 in inner
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/mongo_client.py", line 1751 in _cmd
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/mongo_client.py", line 2711 in _read
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/mongo_client.py", line 2568 in run
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/mongo_client.py", line 1825 in _retry_internal
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/_csot.py", line 110 in csot_wrapper
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/mongo_client.py", line 1869 in _retryable_read
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/mongo_client.py", line 1760 in _run_operation
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/_csot.py", line 110 in csot_wrapper
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/cursor.py", line 1102 in _send_message
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/cursor.py", line 1207 in _refresh
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/cursor.py", line 1271 in _next_batch
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/asynchronous/cursor.py", line 1315 in to_list
+  File "/tmp/mongoeco-pymongo419/matrix/4.9.2/lib/python3.14/site-packages/pymongo/_csot.py", line 110 in csot_wrapper
+  File "/Users/uve/Proyectos/mongoeco/tests/support_write_parity.py", line 311 in observe_async_write_case
+  File "/Users/uve/Proyectos/mongoeco/tests/integration/api/test_find_modify_errors.py", line 98 in exercise
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/events.py", line 94 in _run
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 2057 in _run_once
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 677 in run_forever
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 706 in run_until_complete
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 127 in run
+  File "/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 204 in run
+  File "/Users/uve/Proyectos/mongoeco/tests/integration/api/test_find_modify_errors.py", line 103 in test_wire_command_errors_match_native
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/python.py", line 167 in pytest_pyfunc_call
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/python.py", line 1707 in runtest
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/runner.py", line 184 in pytest_runtest_call
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/runner.py", line 250 in <lambda>
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/runner.py", line 361 in from_call
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/runner.py", line 249 in call_and_report
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/runner.py", line 139 in runtestprotocol
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/runner.py", line 118 in pytest_runtest_protocol
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/main.py", line 408 in pytest_runtestloop
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/main.py", line 384 in _main
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/main.py", line 330 in wrap_session
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/main.py", line 377 in pytest_cmdline_main
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_callers.py", line 121 in _multicall
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_manager.py", line 120 in _hookexec
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pluggy/_hooks.py", line 512 in __call__
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/config/__init__.py", line 229 in _main
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/_pytest/config/__init__.py", line 253 in _console_main
+  File "/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest/__main__.py", line 9 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 203 in _run_module_as_main

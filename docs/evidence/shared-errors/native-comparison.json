@@ -1,0 +1,95 @@
+[
+  {
+    "mongodb": "7.0.43",
+    "target": "7.0",
+    "fcv": {
+      "version": "7.0"
+    },
+    "shared_cases_per_facade": 102,
+    "opaque_key_vectors_per_facade": 851,
+    "native_sdk_versions": [
+      "4.9.2",
+      "4.19.0"
+    ],
+    "native_facades": [
+      "sync",
+      "async"
+    ],
+    "sdk_observations_equal": true,
+    "physical_connection_reused": true,
+    "fixtures": {
+      "tests/fixtures/write_parity_mongodb_7_0.json": "08ef9951419cc87665ce0fd638a74d47ecc1f72234dbf90084f597da6028af19",
+      "tests/fixtures/write_raw_mongodb_7_0.json": "e6065031a9e9ee00fed055cb60b4a1f83c6e7f3ddf6a3b7703641e622f852a9b",
+      "tests/fixtures/write_identity_mongodb_7_0.json": "2fd3d14aa23045cfb5cf8d8e5bd9eba7e77602936b22aad3b96389ddfaf0c948",
+      "tests/fixtures/write_operations_mongodb_7_0.json": "ca0aa01b871115f4377a249d9056bc22a286c5c60ac2e59c8f0ad91e43fbdf62",
+      "tests/fixtures/write_queries_mongodb_7_0.json": "957ef2553ea8390e9f7a85bc5115865ca8abf9d390a44b3230e0d5c6c6258911",
+      "tests/fixtures/find_modify_mongodb_7_0.json": "4b240b8083ee28e68923573c6cf3327d97d8dd9e2a0af1ce2609102f85da35a9",
+      "tests/fixtures/shared_errors_mongodb_7_0.json": "9bc2e2d51f304b09a9e2af58f57eebd72f52b16e57d7901674389d5a2dfca4a0",
+      "tests/fixtures/collation_keys_mongodb_7_0.json": "d85acf921694ba5e7344589a5629cd9421ae8e41adb8991bcac2b6264f3c02fc",
+      "tests/fixtures/api_options_mongodb_7_0.json": "36dde95db390be6b97761ccdcfe103e53dd1573a68cd99e1a13ffce7e3d5b3b2",
+      "tests/fixtures/unacknowledged_mongodb_7_0.json": "8e0ae8d1c4fb02761d307c4cc380f39aaf4a2740b361019f9e569403bb53d5f3"
+    }
+  },
+  {
+    "mongodb": "8.0.32",
+    "target": "8.0",
+    "fcv": {
+      "version": "8.0"
+    },
+    "shared_cases_per_facade": 102,
+    "opaque_key_vectors_per_facade": 851,
+    "native_sdk_versions": [
+      "4.9.2",
+      "4.19.0"
+    ],
+    "native_facades": [
+      "sync",
+      "async"
+    ],
+    "sdk_observations_equal": true,
+    "physical_connection_reused": true,
+    "fixtures": {
+      "tests/fixtures/write_parity_mongodb_8_0.json": "4c154f360e491c2a36df0ba9e9578f6dfb21852ab236620cafb099b9a01b3138",
+      "tests/fixtures/write_raw_mongodb_8_0.json": "e3ad1a25f273bd85890b898066de30a410c3d2a584975385c28c771206b54f56",
+      "tests/fixtures/write_identity_mongodb_8_0.json": "85ebe5f489becdb245b0c08e61052c084589267a6dd4e95859f1c672a6c01d12",
+      "tests/fixtures/write_operations_mongodb_8_0.json": "34cfdb9d967f0f56cb1a824a2f4d98a675325a6d37dee070ce31880a47e1fac4",
+      "tests/fixtures/write_queries_mongodb_8_0.json": "a05ba5afc7ac065476e0f631697d334ba81b8447cd42fc679b637508a277d735",
+      "tests/fixtures/find_modify_mongodb_8_0.json": "0423d440feacbbae464d51827d842a5d8ac88b55c9c59cd52aae325c3cd23a5b",
+      "tests/fixtures/shared_errors_mongodb_8_0.json": "9564ca3c9263097dbbfd7e8a831d3f3c4322968619289ebc388891217f2454ae",
+      "tests/fixtures/collation_keys_mongodb_8_0.json": "7508e2a0475e59218f9ca363421d0e56a07316c09c7333749bc3fc160d945163",
+      "tests/fixtures/api_options_mongodb_8_0.json": "7f234b9ff1bd8246e708d11d5a08cc53accb89632fc64b8d96f9639cc7008436",
+      "tests/fixtures/unacknowledged_mongodb_8_0.json": "28c112a361a38fd510e9c48c0aea7631cf540d6fcff5850210e01dd07bf19026"
+    }
+  },
+  {
+    "mongodb": "9.0.2",
+    "target": "9.0",
+    "fcv": {
+      "version": "9.0"
+    },
+    "shared_cases_per_facade": 102,
+    "opaque_key_vectors_per_facade": 851,
+    "native_sdk_versions": [
+      "4.9.2",
+      "4.19.0"
+    ],
+    "native_facades": [
+      "sync",
+      "async"
+    ],
+    "sdk_observations_equal": true,
+    "physical_connection_reused": true,
+    "fixtures": {
+      "tests/fixtures/write_parity_mongodb_9_0.json": "604521eafa8502ce0b22507b20644de5ac439fdf6d176ee0374b13c5ba16ba46",
+      "tests/fixtures/write_raw_mongodb_9_0.json": "55039b2375ddb0e3df54513367a4cf497d9024955642da80a4d940ee29c3741e",
+      "tests/fixtures/write_identity_mongodb_9_0.json": "3ec509445f315b95e3701c079e6d3852a5413b364da00736884ae9bc7ca6619d",
+      "tests/fixtures/write_operations_mongodb_9_0.json": "a45cb23e22a133ba42d6ae11779151d1e60e6db1cb278a88c504c0a710f3bf86",
+      "tests/fixtures/write_queries_mongodb_9_0.json": "9cefdb85391539de898daf60af0ee886da8306f5838fce13a564d0e33bc891f2",
+      "tests/fixtures/find_modify_mongodb_9_0.json": "5120039d94fb2e7751285395f90df0a2a9ca7a2a6e41d313821d3224e505ac62",
+      "tests/fixtures/shared_errors_mongodb_9_0.json": "26a0c516e906369ee6db7f6d95645556026dc4ae34d9955e748206146a23d46a",
+      "tests/fixtures/collation_keys_mongodb_9_0.json": "49fdfc26e9b049782b176196f1048abc38f1c95da186023d8ec0d6d933286f9b",
+      "tests/fixtures/api_options_mongodb_9_0.json": "03b6c76f4f62a81c9a77dfc6f8b7aa661dab3519c64faee46abecd645fd05b81",
+      "tests/fixtures/unacknowledged_mongodb_9_0.json": "3b800d99d0634379ff3229b2069a7169c9693ba86b69a6efa37390945f505188"
+    }
+  }
+]

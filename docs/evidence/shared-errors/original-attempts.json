@@ -1,0 +1,102 @@
+{
+  "files": {
+    "first-unit.log": {
+      "source_sha256": "90ae162cc2266a79f0d8bf68406f7f415a497867c570c80357be0796d9ee8663",
+      "archive": "original-first-unit.log.gz",
+      "archive_sha256": "35d06356bb7ce080f85fea5acc585cbbd4acbe5be2fbb823498894463b554c5f"
+    },
+    "shared-first.log": {
+      "source_sha256": "e65517648e369ed2d36dabc026e4e3a364596ef5658e7c34a2eb3e729e936d81",
+      "archive": "original-shared-first.log.gz",
+      "archive_sha256": "cf08b564c73b1e764079f15cc92149820743efbdb504f5c8a6d85ba71b4cc685"
+    },
+    "shared-second.log": {
+      "source_sha256": "a619b871e68ad960631fd4e351a973fc8b58e868a42e7e0d8aa2fb10787c8c11",
+      "archive": "original-shared-second.log.gz",
+      "archive_sha256": "4331b5b672ec556858d8f3404432fe540a04fd306a8d77df6fb04cadc1122952"
+    },
+    "shared-third.log": {
+      "source_sha256": "a8db596c89353274dcae7482a7b814e39f88683ff2e70a9b1751f82fb3380e7e",
+      "archive": "original-shared-third.log.gz",
+      "archive_sha256": "f385f40c08fbc12b760123413afec1807bcd81b60a186bd2056c2c235a878b74"
+    },
+    "shared-fourth.log": {
+      "source_sha256": "361639595b98c0565eaf2a26cee1ef8c98d85f0dce9484dbff04f3dc458640c0",
+      "archive": "original-shared-fourth.log.gz",
+      "archive_sha256": "58e702985b6b46e6f0a14b168a62e3dbd3b2169093451071eac3331212974ab2"
+    },
+    "unit-all-initial.log": {
+      "source_sha256": "4b87502df4e5b197928d4d8770ed0e17aad169c9d334c3db2241ae357c354634",
+      "archive": "original-unit-all-initial.log.gz",
+      "archive_sha256": "b816bc710e44405d3daf668b20bb97818b8712ec64e7ddce5251180e9b87af2c"
+    },
+    "matrix-102-first.log": {
+      "source_sha256": "811215db13107c5239924cd6e9fa4244a66475c7ebd1e4bd1a5e2cbc6e183cdf",
+      "archive": "original-matrix-102-first.log.gz",
+      "archive_sha256": "1ed5a9f1d62d17b8e9a3e731d5ab0ac4218d3bc0c76dc868869f6c821eea19dd"
+    },
+    "unit-final-precheck.log": {
+      "source_sha256": "1a9f3395adc214bc9240b6f557c5dcd37406a8a0f7a206ab441f737c16e99356",
+      "archive": "original-unit-final-precheck.log.gz",
+      "archive_sha256": "afff058819664194a48a3e03c59fd93c34b0607d4f9f36c42cea288df9138576"
+    },
+    "installed-focal.log": {
+      "source_sha256": "12532475e39c19ad5503e371b0767bd2a15851c2ac0dcb49f07900b631a95c87",
+      "archive": "original-installed-focal.log.gz",
+      "archive_sha256": "6a0843861cbf307b993af66f974d009c852cb3fe05832f2c847c3f713bfb0ec9"
+    },
+    "admitted-capture-8.0.txt": {
+      "source_sha256": "50634e14146eb532caf9917524cf99981839625c33ac01694747756c76d7f292",
+      "archive": "original-admitted-capture-8.0.txt.gz",
+      "archive_sha256": "5c33892d03d97136c5d405045b9f1bba73c4517bc60db5c8b9a6400ac3581c84"
+    },
+    "non-utf8-before.log": {
+      "source_sha256": "a322b55539716a0075e781275b493b323bd3bc7a1d6ca0513d4a605fa82768c7",
+      "archive": "original-non-utf8-before.log.gz",
+      "archive_sha256": "786ed6d1c00e83613d7f60ee12ee32bc4952c9708d0acd8ddff3ba9887eadf81"
+    },
+    "collation-nested.log": {
+      "source_sha256": "c2997b7546dd453af0e79e84afbe927e786280d6fd39fc78fd7ac6c6a1d3455d",
+      "archive": "original-collation-nested.log.gz",
+      "archive_sha256": "dd975df5411add43041f3f56b5b2cb06840062d3a7ee9c81f3fda437d3905769"
+    },
+    "interrupted-global-gates/pytest-results.json": {
+      "source_sha256": "ab5d5a4205644c65fe4441fcac7fb043e93fe6da592d396030aedf1e93678ad7",
+      "archive": "original-interrupted-global-gates-pytest-results.json.gz",
+      "archive_sha256": "1308311435b83df6ffdee9efb238b3bafc3e09daa9a87eca05977010bcc42213"
+    },
+    "sort-precondition-alignment/pytest-results.json": {
+      "source_sha256": "27caabe0e6bfb76f8da4f99caa0aaca9c7750930ce8b08fe574269dcef8bfc00",
+      "archive": "original-sort-precondition-alignment-pytest-results.json.gz",
+      "archive_sha256": "62136debcf74af2aeed46f73ae01a899f6a4fe4b190d8743b447b56f0684def3"
+    },
+    "before-direct-sort-envelope/pytest-results.json": {
+      "source_sha256": "27caabe0e6bfb76f8da4f99caa0aaca9c7750930ce8b08fe574269dcef8bfc00",
+      "archive": "original-before-direct-sort-envelope-pytest-results.json.gz",
+      "archive_sha256": "62136debcf74af2aeed46f73ae01a899f6a4fe4b190d8743b447b56f0684def3"
+    },
+    "before-explicit-utf8/pytest-results.json": {
+      "source_sha256": "397c82de6d0738201afa50fbdbb767a4ae85fa7d71ec2046ab28901ef2072e61",
+      "archive": "original-before-explicit-utf8-pytest-results.json.gz",
+      "archive_sha256": "eef079baec020eeedb5a9d96e8f8644084f1b12064df4fc69cddc0b8a11bb761"
+    },
+    "before-explicit-utf8/coverage314.json": {
+      "source_sha256": "e9a6d9a24d5082339a4a707676a32ba0de295a859341c0ddfa33bde6cc4fee08",
+      "archive": "original-before-explicit-utf8-coverage314.json.gz",
+      "archive_sha256": "2d98432c96df4ef1f63648c734d46b2151b4a22dc48599a4555ef8d028239316"
+    }
+  },
+  "baseline": {
+    "file": "baseline-matrix.json.gz",
+    "uncompressed_sha256": "fb1ad011fab5ea9b4ab5432aa4b389356668424235f21b389d6f3c82eae6e7ce",
+    "archive_sha256": "ff81e7e6f64c38bd1751bac127038050c43459e5699bb0ee0244c6c0a19a460b",
+    "scope": "27 cases over 30 cells, before the nine corrections; a previous local candidate, not the final runtime"
+  },
+  "notes": [
+    "An early native capture accidentally added a 3-second socket timeout; the original capture configuration was restored.",
+    "Legacy sort tests used MongoDB 7 while expecting an option introduced in MongoDB 8; one waited indefinitely on a barrier after rejection. Preconditions and failure cleanup were corrected.",
+    "An initial clean sdist invocation used mutually exclusive flags; its receipt is retained in the temporary antecedent, while its original log was overwritten. Final commands are valid and all pass.",
+    "The pre-UTF8 candidate passed its complete suites, but a separate ASCII-locale probe reproduced UnicodeDecodeError. Explicit UTF-8 and a subprocess regression close this defect.",
+    "ResourceWarnings in that antecedent came from raw SQLite connections in the new legacy-file test. They now use explicit closing; the strict-warning focal run passes."
+  ]
+}

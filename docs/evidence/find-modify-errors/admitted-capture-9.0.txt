@@ -1,0 +1,1 @@
+MongoDB 9.0.2 FCV 9.0: 170 writes, 8 commands, 60 histories, 321 identity cases; 180 identity commands; 28 query commands; 42 operation payloads; 38 findAndModify cases; native sync/async equal; cleanup verified

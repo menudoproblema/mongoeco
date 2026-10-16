@@ -1,0 +1,12 @@
+[
+  {
+    "path": "/database_command_options/delete/let/note",
+    "before": "Propagated into per-delete filters through $expr when supplied on individual specs.",
+    "after": "Command-level bindings are propagated into every delete filter through $expr."
+  },
+  {
+    "path": "/database_command_options/update/let/note",
+    "before": "Propagated into per-update filters through $expr when supplied on individual specs.",
+    "after": "Command-level bindings are propagated into every update filter through $expr."
+  }
+]

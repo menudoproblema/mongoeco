@@ -1,0 +1,39 @@
+[
+  {
+    "gate": "wheel",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+      "-B",
+      "scripts/smoke_installed_wheel.py",
+      "--wheel",
+      "/Users/uve/Proyectos/mongoeco/.tmp/shared-errors/final-dist/mongoeco-4.10.0-py3-none-any.whl"
+    ],
+    "exit_code": 0,
+    "log": "smoke-wheel.log"
+  },
+  {
+    "gate": "sdist",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+      "-B",
+      "scripts/smoke_installed_wheel.py",
+      "--sdist",
+      "/Users/uve/Proyectos/mongoeco/.tmp/shared-errors/final-dist/mongoeco-4.10.0.tar.gz"
+    ],
+    "exit_code": 0,
+    "log": "smoke-sdist.log"
+  },
+  {
+    "gate": "pytest-kit",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+      "-B",
+      "scripts/smoke_installed_wheel.py",
+      "--wheel",
+      "/Users/uve/Proyectos/mongoeco/.tmp/shared-errors/final-dist/mongoeco-4.10.0-py3-none-any.whl",
+      "--pytest-kit"
+    ],
+    "exit_code": 0,
+    "log": "smoke-pytest-kit.log"
+  }
+]

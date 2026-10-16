@@ -1,0 +1,50 @@
+[
+  {
+    "python": "313",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/bin/python",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test*.py"
+    ],
+    "exit_code": 0,
+    "log": "unittest-313.log"
+  },
+  {
+    "python": "314",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test*.py"
+    ],
+    "exit_code": 0,
+    "log": "unittest-314.log"
+  },
+  {
+    "python": "315",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test*.py"
+    ],
+    "exit_code": 0,
+    "log": "unittest-315.log"
+  }
+]

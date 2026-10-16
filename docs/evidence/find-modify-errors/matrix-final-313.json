@@ -1,0 +1,19 @@
+{
+  "python": "313",
+  "exit_code": 0,
+  "command": [
+    "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/bin/python",
+    "-B",
+    "-m",
+    "pytest",
+    "tests/integration/api/test_find_modify_errors.py",
+    "tests/unit/test_write_observer.py",
+    "tests/unit/api/test_find_modify_error_documents.py",
+    "tests/unit/wire/test_bson_bridge.py",
+    "-q",
+    "-o",
+    "cache_dir=/Users/uve/Proyectos/mongoeco/.tmp/find-modify/focal-cache-313",
+    "--basetemp=/Users/uve/Proyectos/mongoeco/.tmp/find-modify/focal-temp-313"
+  ],
+  "log": "matrix-final-313.txt"
+}

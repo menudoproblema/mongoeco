@@ -1,0 +1,86 @@
+[
+  {
+    "target": "7.0",
+    "mongodb": "7.0.43",
+    "sdk": "4.19.0",
+    "cases": 173,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "one_physical_connection_reused": true,
+    "reference": ".tmp/mirror-errors/final-shared/shared_errors_mongodb_7_0.json",
+    "sha256": "1c53db7c87c0622fc440a500fe1a256ff80d1eca8c50f6837c6cced2c8515da7",
+    "matches_committed_fixture": true
+  },
+  {
+    "target": "7.0",
+    "mongodb": "7.0.43",
+    "sdk": "4.9.2",
+    "cases": 173,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "one_physical_connection_reused": true,
+    "reference": ".tmp/mirror-errors/final-shared-sdk49/shared_errors_mongodb_7_0.json",
+    "sha256": "b91612858f2dfe41707fe72274da5ea7a895fdce8048c5a1295672760bd2c11b",
+    "matches_committed_fixture": true
+  },
+  {
+    "target": "8.0",
+    "mongodb": "8.0.32",
+    "sdk": "4.19.0",
+    "cases": 173,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "one_physical_connection_reused": true,
+    "reference": ".tmp/mirror-errors/final-shared/shared_errors_mongodb_8_0.json",
+    "sha256": "bce15db4a53df6bd430f43d5362e1f0e02003db8db4c3572d8075785f025e4d8",
+    "matches_committed_fixture": true
+  },
+  {
+    "target": "8.0",
+    "mongodb": "8.0.32",
+    "sdk": "4.9.2",
+    "cases": 173,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "one_physical_connection_reused": true,
+    "reference": ".tmp/mirror-errors/final-shared-sdk49/shared_errors_mongodb_8_0.json",
+    "sha256": "4cf94a0b6948b88c5e84d262f145bee18bfe251b5ea2ae3a0a0eec094a41c1af",
+    "matches_committed_fixture": true
+  },
+  {
+    "target": "9.0",
+    "mongodb": "9.0.2",
+    "sdk": "4.19.0",
+    "cases": 173,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "one_physical_connection_reused": true,
+    "reference": ".tmp/mirror-errors/final-shared/shared_errors_mongodb_9_0.json",
+    "sha256": "c8cb9b2a244554d83825922a3b8e8938a3484f32c232dc44b9b3d9135dae31e2",
+    "matches_committed_fixture": true
+  },
+  {
+    "target": "9.0",
+    "mongodb": "9.0.2",
+    "sdk": "4.9.2",
+    "cases": 173,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "one_physical_connection_reused": true,
+    "reference": ".tmp/mirror-errors/final-shared-sdk49/shared_errors_mongodb_9_0.json",
+    "sha256": "787a894ebe5c6be3283f9267c7d47a0e997bd81cc727546068fdaba46e948524",
+    "matches_committed_fixture": true
+  }
+]

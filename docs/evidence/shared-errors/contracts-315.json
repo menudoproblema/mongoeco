@@ -1,0 +1,56 @@
+[
+  {
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test*.py"
+    ],
+    "exit_code": 0,
+    "log": "contract-315-0.txt"
+  },
+  {
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+      "-B",
+      "scripts/check_public_typing.py"
+    ],
+    "exit_code": 0,
+    "log": "contract-315-1.txt"
+  },
+  {
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+      "-B",
+      "scripts/smoke_external_engine.py"
+    ],
+    "exit_code": 0,
+    "log": "contract-315-2.txt"
+  },
+  {
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+      "-B",
+      "scripts/update_public_api_manifest.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "contract-315-3.txt"
+  },
+  {
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+      "-B",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "exit_code": 0,
+    "log": "contract-315-4.txt"
+  }
+]

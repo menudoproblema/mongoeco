@@ -1,0 +1,57 @@
+{
+  "status": "original_failures_retained",
+  "runs": [
+    {
+      "python": "313",
+      "failed": 3408,
+      "failure_groups": {
+        "tests/integration/api/test_api_option_parity.py": 36,
+        "tests/integration/api/test_find_modify_errors.py": 12,
+        "tests/integration/api/test_write_preflight_parity.py": 1272,
+        "tests/integration/wire/test_unacknowledged.py": 2088
+      },
+      "raw_log_sha256": "114255458a6b9c935a88318a9bfdc0993e72a8a805d552e0461db8c72cce8881",
+      "original_log_workspace_path": ".tmp/find-modify/initial-gates/pytest-313.txt",
+      "causes": [
+        "12 wire Binary subtype mismatches",
+        "36 stale API option observer fingerprints",
+        "3360 stale unacknowledged-write observer fingerprints"
+      ]
+    },
+    {
+      "python": "314",
+      "failed": 3408,
+      "failure_groups": {
+        "tests/integration/api/test_api_option_parity.py": 36,
+        "tests/integration/api/test_find_modify_errors.py": 12,
+        "tests/integration/api/test_write_preflight_parity.py": 1272,
+        "tests/integration/wire/test_unacknowledged.py": 2088
+      },
+      "raw_log_sha256": "1409696bec099a939e239a008f456a1518bd76b4e2eeae75412c1f74cf87fa8b",
+      "original_log_workspace_path": ".tmp/find-modify/initial-gates/pytest-314.txt",
+      "causes": [
+        "12 wire Binary subtype mismatches",
+        "36 stale API option observer fingerprints",
+        "3360 stale unacknowledged-write observer fingerprints"
+      ]
+    },
+    {
+      "python": "315",
+      "failed": 3408,
+      "failure_groups": {
+        "tests/integration/api/test_api_option_parity.py": 36,
+        "tests/integration/api/test_find_modify_errors.py": 12,
+        "tests/integration/api/test_write_preflight_parity.py": 1272,
+        "tests/integration/wire/test_unacknowledged.py": 2088
+      },
+      "raw_log_sha256": "f9f8ab05896d78de8ed95f93e56fc4aeb662f9460b086c84c7550b438ae2821f",
+      "original_log_workspace_path": ".tmp/find-modify/initial-gates/pytest-315.txt",
+      "causes": [
+        "12 wire Binary subtype mismatches",
+        "36 stale API option observer fingerprints",
+        "3360 stale unacknowledged-write observer fingerprints"
+      ]
+    }
+  ],
+  "recovery": "Preserve Binary subtype; recapture API options and unacknowledged writes on real 7/8/9 and require unchanged observations; rerun all final artifact gates."
+}

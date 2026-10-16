@@ -1,0 +1,239 @@
+{
+  "mongodb": "7.0.43",
+  "fcv": {
+    "version": "7.0"
+  },
+  "sdk": "4.19.0",
+  "facades": [
+    "sync",
+    "async"
+  ],
+  "matches_classic_raw_command_reference": true,
+  "observations": {
+    "update_one": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 40415,
+          "codeName": "IDLUnknownField",
+          "labels": [],
+          "write_errors": [],
+          "details": {
+            "state": "document",
+            "fields": {
+              "code": {
+                "$numberInt": "40415"
+              },
+              "codeName": "IDLUnknownField",
+              "errmsg": {
+                "present": true,
+                "type": "str",
+                "nonempty": true,
+                "formatted_exception": false
+              },
+              "ok": {
+                "$numberDouble": "0.0"
+              }
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        }
+      }
+    ],
+    "replace_one": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 40415,
+          "codeName": "IDLUnknownField",
+          "labels": [],
+          "write_errors": [],
+          "details": {
+            "state": "document",
+            "fields": {
+              "code": {
+                "$numberInt": "40415"
+              },
+              "codeName": "IDLUnknownField",
+              "errmsg": {
+                "present": true,
+                "type": "str",
+                "nonempty": true,
+                "formatted_exception": false
+              },
+              "ok": {
+                "$numberDouble": "0.0"
+              }
+            }
+          }
+        }
+      },
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ],
+              [
+                "recovered",
+                true
+              ]
+            ]
+          },
+          {
+            "$document": [
+              [
+                "_id",
+                "b"
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 1,
+          "modified_count": 1,
+          "upserted_id": null,
+          "did_upsert": false
+        }
+      }
+    ]
+  },
+  "private_reference_closed": true
+}

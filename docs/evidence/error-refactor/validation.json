@@ -1,0 +1,305 @@
+{
+  "status": "completed",
+  "git_head": "2fb04b6ce4a071257772bf3eec2961390724a1e8",
+  "scope": "13 audited error families; direct/wire, sync/async, Memory/SQLite; public API, SPI v2 and existing SQLite files",
+  "native": {
+    "servers": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "sdk": [
+      "4.19.0",
+      "4.9.2"
+    ],
+    "scenarios_per_cell": 489,
+    "sdk49_delta_cases_per_target": 2,
+    "physical_connections_per_pool": 1,
+    "reused": true,
+    "candidate_not_imported": true
+  },
+  "artifacts": {
+    "mongoeco-4.10.0-py3-none-any.whl": {
+      "sha256": "b15bebe5f7271514df8527daaf6592c7dced10b50241d5b236865ca88fde6971",
+      "reproducible": true
+    },
+    "mongoeco-4.10.0.tar.gz": {
+      "sha256": "53ebad864144bef2f25a71a23ebe9c40fab67a8fbf49a6a3cd4d7040e8acf77f",
+      "reproducible": true
+    }
+  },
+  "checks": {
+    "pytest_python_313": {
+      "log": ".tmp/error-refactor/final-full-313.log",
+      "sha256": "f867cc8a42bb8ad44f20ea883fafe442ac6edb7dd229156f6fc6adbf0ee1e13f",
+      "summary": "36912 passed, 31 skipped, 14458 subtests passed in 492.72s (0:08:12)",
+      "command": "MONGOECO_TEST_INSTALLED_ARTIFACT=1 .tmp/find-modify/venv-313/bin/python -B -m pytest -q --tb=short",
+      "exit_code": 0,
+      "passed": 36912,
+      "subtests_passed": 14458,
+      "skipped": 31
+    },
+    "unittest_python_313": {
+      "log": ".tmp/error-refactor/final-unittest-313.log",
+      "sha256": "1fb612dd7b162c69bae297dd8243ff72ae38f01c800a6e32cd88b77bfb8e1261",
+      "summary": "OK (skipped=3)",
+      "exit_code": 0,
+      "tests": 3628,
+      "skipped": 3
+    },
+    "pytest_python_314": {
+      "log": ".tmp/error-refactor/final-full-314.log",
+      "sha256": "8f9510db745e6e01a9e89b06d63b1f828c6146e9ee7483aef604ee179a602d15",
+      "summary": "36912 passed, 31 skipped, 14458 subtests passed in 531.79s (0:08:51)",
+      "command": "MONGOECO_TEST_INSTALLED_ARTIFACT=1 .tmp/find-modify/venv-314/bin/python -B -m pytest --cov=mongoeco --cov-report=term --cov-report=json:.tmp/error-refactor/final-coverage.json -q --tb=short",
+      "exit_code": 0,
+      "passed": 36912,
+      "subtests_passed": 14458,
+      "skipped": 31
+    },
+    "unittest_python_314": {
+      "log": ".tmp/error-refactor/final-unittest-314.log",
+      "sha256": "67e68260119dafdc9864ed586d245630de6f7f976309146d3e81e1e436beb7d4",
+      "summary": "OK (skipped=3)",
+      "exit_code": 0,
+      "tests": 3628,
+      "skipped": 3
+    },
+    "pytest_python_315": {
+      "log": ".tmp/error-refactor/final-full-315.log",
+      "sha256": "9f254dfe47c29a64f4e2777cdfe4627c2af8e74702675a2eeb380e795ab7ea5d",
+      "summary": "36912 passed, 31 skipped, 14458 subtests passed in 530.15s (0:08:50)",
+      "command": "MONGOECO_TEST_INSTALLED_ARTIFACT=1 .tmp/find-modify/venv-315/bin/python -B -m pytest -q --tb=short",
+      "exit_code": 0,
+      "passed": 36912,
+      "subtests_passed": 14458,
+      "skipped": 31
+    },
+    "unittest_python_315": {
+      "log": ".tmp/error-refactor/final-unittest-315.log",
+      "sha256": "b1a86fa96694d5d4f89c2e81091b4cfd2d47f4d5da56197d7ae194c821278668",
+      "summary": "OK (skipped=3)",
+      "exit_code": 0,
+      "tests": 3628,
+      "skipped": 3
+    },
+    "sdk49": {
+      "log": ".tmp/error-refactor/final-sdk49.log",
+      "sha256": "66634b05560299b81a3d8c3e374b3c532ae8a3ff2fb7cb3d51793791e7e12137",
+      "summary": "5989 passed in 134.07s (0:02:14)",
+      "exit_code": 0,
+      "passed": 5989,
+      "sdk": "4.9.2"
+    },
+    "pytest84_sdk49": {
+      "log": ".tmp/error-refactor/pytest84-sdk49.log",
+      "sha256": "57d4c4e7dfccedb8b8e30ebcf4ae81e8f24b9871d4a4552df28edebcd3d369a8",
+      "summary": "3454 passed in 140.72s (0:02:20)",
+      "exit_code": 0,
+      "passed": 3454,
+      "pytest": "8.4.2",
+      "sdk": "4.9.2"
+    },
+    "public_typing": {
+      "log": ".tmp/error-refactor/final-typing.log",
+      "sha256": "8523fc7226b47c529dcce7d50145334b21c53f8f68ff2d5081f1b5c2fd637beb",
+      "summary": "public typing contract passed: positive=1, negative-errors=20",
+      "exit_code": 0
+    },
+    "plugin_typing": {
+      "log": ".tmp/error-refactor/final-plugin-typing.log",
+      "sha256": "e317872697c2cbfdefa321527a6efe73290dff3a390b0fa8723b87092eccba6a",
+      "summary": "Success: no issues found in 5 source files",
+      "exit_code": 0
+    },
+    "api_manifest": {
+      "log": ".tmp/error-refactor/final-api.log",
+      "sha256": "3c70e7c5dc9b8641d082109a9d551c026c8bc7f11d2628b17d067186ab7979c0",
+      "summary": "public API manifest is current",
+      "exit_code": 0
+    },
+    "spi_v2": {
+      "log": ".tmp/error-refactor/final-spi.log",
+      "sha256": "fc0c13553ba47169d65e86792f4e9596b2898ce0179b93599fce7a45d263530f",
+      "summary": "PASS external-canary [spi-v2] passed=5, failed=0, error=0, not-applicable=5",
+      "exit_code": 0
+    },
+    "minimal_imports": {
+      "log": ".tmp/error-refactor/final-minimal.log",
+      "sha256": "6a83283448b7f91e1e70f6d6551da98b9a39b85aa041ee34c6347928cea159ef",
+      "summary": "OK",
+      "exit_code": 0
+    },
+    "deep_properties": {
+      "log": ".tmp/error-refactor/final-deep.log",
+      "sha256": "1f65ce427ca266a8ee20a85d5493232a1d2744cce797ca977a490f96910e2c3c",
+      "summary": "9 passed in 30.46s",
+      "exit_code": 0,
+      "passed": 9
+    },
+    "wheel_smoke": {
+      "log": ".tmp/error-refactor/final-smoke-wheel.log",
+      "sha256": "6f643e47c4b157cbea67504a93589f1ab28a5d6c4573681358094793bbcecc9b",
+      "summary": "PASS mongoeco.engines:MemoryEngine [spi-v2] passed=4, failed=0, error=0, not-applicable=0",
+      "exit_code": 0
+    },
+    "sdist_smoke": {
+      "log": ".tmp/error-refactor/final-smoke-sdist.log",
+      "sha256": "efc697b79ef92f9a8118b04ba85974db4dc2faed718f185c34b100b0a71f4278",
+      "summary": "PASS mongoeco.engines:MemoryEngine [spi-v2] passed=4, failed=0, error=0, not-applicable=0",
+      "exit_code": 0
+    },
+    "pytest_extra_smoke": {
+      "log": ".tmp/error-refactor/final-smoke-kit.log",
+      "sha256": "e6c383d5e22895c155229fd4befe6eebf587716cb876a33088be9c2f260cf7fc",
+      "summary": "4 passed in 0.16s",
+      "exit_code": 0
+    },
+    "twine": {
+      "log": ".tmp/error-refactor/final-twine.log",
+      "sha256": "10387a74440d5d2d2ca1195fe2f9d434f5d9e620aef7b1a150392e2f44e3c291",
+      "summary": "Checking .tmp/error-refactor/final-dist-first/mongoeco-4.10.0.tar.gz: PASSED",
+      "exit_code": 0
+    },
+    "lint": {
+      "log": ".tmp/error-refactor/closing-lint.log",
+      "summary": "lint ratchet passed for 104 changed Python files",
+      "exit_code": 0,
+      "sha256": "3ec30b2ede2629638f94249f93331437a4c94134b56f662b4a4f28bc960b270d"
+    },
+    "released_contract": {
+      "log": ".tmp/error-refactor/released-contract.log",
+      "sha256": "781d04cf709d6f86ea21c1975f5835f05518881c0199fd46a5a9f6d06ab0e557",
+      "summary": "cxp_catalog_sha256 f2b3d7c51846a00858b4d7c17ae1b439adc0b7285df11f67c291302c0f7013b9",
+      "exit_code": 0
+    },
+    "profiles": {
+      "exit_code": 0,
+      "drivers": [
+        "4.9.2",
+        "4.11.3",
+        "4.13.2",
+        "4.17.0",
+        "4.18.2",
+        "4.19.0"
+      ],
+      "summary_sha256": "ae83143edfd7498d7408bd372ff9c8b98cd0478bf57fbab22346802a26ef8520",
+      "matches_snapshot": true
+    },
+    "compat_snapshots": {
+      "exit_code": 0,
+      "unchanged": true
+    },
+    "benchmarks": {
+      "exit_code": 0,
+      "engines": [
+        "memory-sync",
+        "sqlite-sync"
+      ],
+      "size": 250,
+      "workloads": [
+        "search_diagnostics",
+        "vector_search_diagnostics"
+      ]
+    },
+    "coverage": {
+      "covered_lines": 44329,
+      "num_statements": 44770,
+      "percent_covered": 99.01496537860174,
+      "percent_covered_display": "99.01",
+      "missing_lines": 441,
+      "excluded_lines": 934,
+      "percent_statements_covered": 99.01496537860174,
+      "percent_statements_covered_display": "99.01",
+      "required": 99.0,
+      "exit_code": 0
+    }
+  },
+  "resource_cleanup": [
+    {
+      "capture": "reference",
+      "dialect": "7.0",
+      "exit_code": 0,
+      "private_database_files_removed": true
+    },
+    {
+      "capture": "reference",
+      "dialect": "8.0",
+      "exit_code": 0,
+      "private_database_files_removed": true
+    },
+    {
+      "capture": "reference",
+      "dialect": "9.0",
+      "exit_code": 0,
+      "private_database_files_removed": true
+    },
+    {
+      "capture": "reference-sdk49",
+      "dialect": "7.0",
+      "exit_code": 0,
+      "private_database_files_removed": true
+    },
+    {
+      "capture": "reference-sdk49",
+      "dialect": "8.0",
+      "exit_code": 0,
+      "private_database_files_removed": true
+    },
+    {
+      "capture": "reference-sdk49",
+      "dialect": "9.0",
+      "exit_code": 0,
+      "private_database_files_removed": true
+    }
+  ],
+  "retained_attempts": [
+    {
+      "log": ".tmp/error-refactor/baseline-regressions.log",
+      "outcome": "original-code failures retained before corrections; native code differences"
+    },
+    {
+      "log": ".tmp/error-refactor/full-source-second.log",
+      "outcome": "47 failures during development; contract timing, bindings and obsolete white-box targets corrected"
+    },
+    {
+      "log": ".tmp/error-refactor/full-wheel-313.log",
+      "outcome": "240 failures; raw findAndModify BSON materialization restored"
+    },
+    {
+      "log": ".tmp/error-refactor/full-wheel-315.log",
+      "outcome": "241 failures; same BSON issue and Python 3.15 AST display difference"
+    },
+    {
+      "log": ".tmp/error-refactor/full-wheel-314.log",
+      "outcome": "240 failures and 98.98% coverage; final candidate passes 99.01% without reducing the floor"
+    },
+    {
+      "log": ".tmp/error-refactor/sdk49.log",
+      "outcome": "12 wire failures against SDK4.19 reference; native SDK4.9 capture proves two driver payload deltas, retained explicitly"
+    },
+    {
+      "log": ".tmp/error-refactor/minimal.log",
+      "outcome": "stale environment lacked pip and current mandatory dependency; replaced with a clean declared-dependency installation"
+    }
+  ],
+  "review": {
+    "final_diff_reviewed": true,
+    "documentation_aligned": true,
+    "runtime_source_matches_wheel": true,
+    "public_api_manifest_unchanged": true,
+    "spi_v2_canary_passed": true,
+    "sqlite_schema_unchanged": true,
+    "legacy_sqlite_regressions_passed": true,
+    "prior_uncommitted_changes_preserved": true,
+    "consumer_identities_in_committable_changes": false,
+    "remote_ci_executed": false,
+    "remote_ci_note": "Local gates executed; no push or remote workflow dispatch was requested."
+  },
+  "limits": [
+    "Finite corpus, not universal MongoDB compatibility",
+    "This corpus checks errmsg structure rather than all literal wording",
+    "Structured validator-tree parity is bounded to exercised required/properties/BSON types",
+    "904 legacy uncoded constructors remain inventoried outside this correction scope"
+  ]
+}

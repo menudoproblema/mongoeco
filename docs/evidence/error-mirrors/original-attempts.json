@@ -1,0 +1,93 @@
+{
+  "archives": [
+    {
+      "file": "original-focal-first.log.gz",
+      "uncompressed_sha256": "4acf816309af991b77f0f3627f150ca9e80a4d8cb5782a05b9ba431fc88bc3be",
+      "archive_sha256": "a49d0bef44339e18892ab9a9cb6158e832de63b4710eae30256906d0b83d58d1"
+    },
+    {
+      "file": "original-unit-first.log.gz",
+      "uncompressed_sha256": "2a103b908fbdb58ca34f589256744605389fcd292ff934944a2d1f3a8bb61c32",
+      "archive_sha256": "3fd1ceeff9a5097f8bb4f78cfffda976a1bc9cbbeae36f850c0174c8edc9029f"
+    },
+    {
+      "file": "original-context.log.gz",
+      "uncompressed_sha256": "64953af1fce418f9fa78863c2e61c8eb36d202c5346a3538198aef14a3eb7fcb",
+      "archive_sha256": "a2d8d7e9df5972e7c34322fde13f9bd9a44cb2d19657accd826f12e3a5002346"
+    },
+    {
+      "file": "original-contracts-final.log.gz",
+      "uncompressed_sha256": "e9006aaa8de9e4ebee8a1d27a0ab18dcbb290d28709eaa7239e47649bb634c01",
+      "archive_sha256": "94684c7cb7125c0d5e1e54031c57c0d02bdd8c9bd9ad8e88a163d6024e88b99b"
+    },
+    {
+      "file": "original-contracts.log.gz",
+      "uncompressed_sha256": "06c3aa98b0f0e58bb0bc0a12e6662f4345a715e6dec8c1deeeed7ef2e0e510a4",
+      "archive_sha256": "eda76d28687ea5855e0fc45fe81b25580893b9202529ba547f77250d46d4c8ee"
+    },
+    {
+      "file": "original-stale-run.json.gz",
+      "uncompressed_sha256": "f3fe7bb67cbd6bcbc94d1afc4ae248038c3ef23cffa0ff083694242410a7a412",
+      "archive_sha256": "5e99217d8bedee124af44dd1a45c57eddba1e780b33c07d6dff4aef9b35c55dd"
+    },
+    {
+      "file": "original-legacy-expectations-interruption.json.gz",
+      "uncompressed_sha256": "dda934bd0626553fc1f98782aa5cdedab228cc884f1165d814445b1cad5b9b01",
+      "archive_sha256": "a91a60e21f751b073f85edf5a09f5f2e55861b8ecfd19889e6862aa950f7f1ba"
+    },
+    {
+      "file": "original-original-namespace-collision-final-shared.log.gz",
+      "uncompressed_sha256": "daca68cbb1a1104018031dac794e7b25616f92281ebdea242f29513d0c0fbf3f",
+      "archive_sha256": "3b16ac2d34e5361d61c8adf8069899c5ee86403f423df7b93ae4770aa01a0395"
+    },
+    {
+      "file": "original-original-namespace-collision-final-shared-sdk49.log.gz",
+      "uncompressed_sha256": "a55de11feaa5561f2534ce124996ca97ef23126ede05ebfa2e353eeee44ad510",
+      "archive_sha256": "2cd9cbeea6e99b3e62f22dc58818901d1a5d3828d7f5537c4606ec67be5c1516"
+    },
+    {
+      "file": "original-original-namespace-length-final-shared.log.gz",
+      "uncompressed_sha256": "7f199dfe2b4579b90d2d4d9be236f14968fbdca18cac9b04e780fc8f71aa816f",
+      "archive_sha256": "9d3cb35fb36b861f802ec6735624874ef96db472eee1b88cc06260c8449bdb9f"
+    },
+    {
+      "file": "original-original-namespace-length-final-shared-sdk49.log.gz",
+      "uncompressed_sha256": "ee347e7c1c592d9c3dc3bbf30b60d8d3fa2ac426691e6c62779ba2dbf25091b3",
+      "archive_sha256": "ac91e53d13e1fba85cc9b93d18f7f4affd323830c9fa7213f5e795d83bee00fc"
+    },
+    {
+      "file": "original-legacy-expectations-pytest-all.log.gz",
+      "uncompressed_sha256": "da7815b71e43df6c324227959292312052f657f743268243eed12379a78eac91",
+      "archive_sha256": "cafa65756d8d27c11ea5c2fdbcd6e994a6aad9555e1aaacdde61bc20a63a517b"
+    },
+    {
+      "file": "baseline-matrix.json.gz",
+      "uncompressed_sha256": "fdfd2a5e811bc5b10e2b47fa64f9cd286eb703b321db566391ba3a25c9f1c164",
+      "archive_sha256": "dce884639392b8281b8ee433d8520cb1c25456e15e2adc6646bd5c3f4d4d7d9c"
+    },
+    {
+      "file": "baseline-witness.json.gz",
+      "uncompressed_sha256": "7acc3b357fc7e9667ea792c35f8b4aedc631a7ff3181a2758a7a6e6d4d9d8953",
+      "archive_sha256": "237fb7212bff8eeb491d24fb046b01c5da3c160d6efa235ff6bcc264da04554e"
+    },
+    {
+      "file": "baseline-receipt.json.gz",
+      "uncompressed_sha256": "c740f0457e213a9a7528a810df48b2a4910e661127282837d7d60f61226c3029",
+      "archive_sha256": "8dceaabc940ccf43122abcfa986f3c1a03ee2b24dab739ada198f0b15e6883d9"
+    },
+    {
+      "file": "baseline-review.md.gz",
+      "uncompressed_sha256": "f6cf5cb2d6612c2c11d1a590da15ae25a49ecac052a7e9b7d4b20029a27aa5f4",
+      "archive_sha256": "a6d7ae234bdaff27ac11147f5cf6a5da6258d3ea7cde83664033104e2b1be766"
+    }
+  ],
+  "classification": [
+    "The original review reproduced the six defects before correction.",
+    "The first focal run started before native fixture refresh; hash failures are retained, not treated as semantic failures or passes.",
+    "A parallel exploratory unit run shared TMPDIR across old spill census tests; its failures remain visible. The 152-test serial check and final serial global suites pass with distinct interpreter temp roots.",
+    "Command completion initially lost descriptor code_name. Regression and implementation preserve it.",
+    "Runtime identity detected a build preceding the final removal of two unverified code assignments. That build was replaced; interrupted gates are not accepted.",
+    "A final capture helper initially shared database names between SDKs, then exceeded the namespace length limit. Both original failures are retained. Final captures use independent short namespaces and match the full native capture.",
+    "Two legacy tests expected TypeError for an invalid modifier. Native WriteError 9 is now required explicitly, with index and diagnostic. Interrupted globals and old contract errors are not counted as final success."
+  ]
+}

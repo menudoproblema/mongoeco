@@ -1,0 +1,69 @@
+{
+  "status": "passed_unreleased_implementation",
+  "recorded_at_utc": "2026-10-16T13:28:26.498381+00:00",
+  "base_commit": "2fb04b6ce4a071257772bf3eec2961390724a1e8",
+  "workset_sha256": "f44ef36bb3b4c522bc926590cd781994deea7326fec5a67127828c2d3defce6a",
+  "workset_definition": "SHA256 of sorted compact JSON mapping all Git tracked/nonignored files to their byte SHA256, excluding only docs/evidence/error-mirrors/ to avoid self-reference. Historical evidence directories are included.",
+  "requested_findings_corrected": 6,
+  "shared_corpus_cases": 173,
+  "new_shared_witnesses": 71,
+  "streaming_cursor_regressions": 24,
+  "observer_mutation_regressions": 4,
+  "descriptor_preservation_regressions": 2,
+  "native_targets": [
+    "7.0.43",
+    "8.0.32",
+    "9.0.2"
+  ],
+  "native_sdks": [
+    "4.9.2",
+    "4.19.0"
+  ],
+  "native_comparison": "native-final-comparison.json",
+  "matrix": "sync/async, Memory/SQLite, direct profiles 4.9/4.19 and real PyMongo proxy clients with both SDKs",
+  "contract": "codes, families, complete error documents, duplicate diagnostics, bulk counters, rejected operations, partial effects, recovery and physical connection reuse",
+  "complete_pytest": {
+    "313": {
+      "passed": 30973,
+      "skipped": 31,
+      "subtests_passed": 14456
+    },
+    "314": {
+      "passed": 30973,
+      "skipped": 31,
+      "subtests_passed": 14456
+    },
+    "315": {
+      "passed": 30973,
+      "skipped": 31,
+      "subtests_passed": 14456
+    }
+  },
+  "coverage_python314": 99.02720230589082,
+  "coverage_floor": 99.0,
+  "unittest_per_interpreter": 3628,
+  "unittest_skips": 3,
+  "sdk49_focal_passed": 4226,
+  "runtime_files": 286,
+  "artifacts": {
+    "mongoeco-4.10.0-py3-none-any.whl": "75c8dae7e5e6191c99a7cd13e6bfbaf7245812cf8c54852cd2101bdad9cbe4ac",
+    "mongoeco-4.10.0.tar.gz": "d49b6bbb625ab495e17b069928f908cec2eb8135f0234d3dc815f7312fa9c59e"
+  },
+  "source_wheel_four_installed_runtimes_equal": true,
+  "reproducible_distributions": true,
+  "clean_dependency_resolution_passed": true,
+  "profile_matrix": "profile-reuse.json: independent native SDK probe with unchanged causal inputs, not a new run",
+  "review": {
+    "runtime_diff_reviewed": true,
+    "observer_and_regression_diff_reviewed": true,
+    "documentation_aligned": true,
+    "required_local_gates_passed": true,
+    "preserved_prior_authorized_changes": true,
+    "no_consumers_identified": true
+  },
+  "limits": [
+    "Finite supported witnesses; not every operator, topology, BSON value or literal diagnostic.",
+    "The generic full unit suite is run serially as in CI; the exploratory shared-TMPDIR xdist census failure is documented, not hidden.",
+    "Remote CI not dispatched; no commit, tag or publication requested in this correction. Source version remains 4.10.0; unpublished local wheels are distinct from the published release."
+  ]
+}

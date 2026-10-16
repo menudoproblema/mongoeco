@@ -1,0 +1,64 @@
+{
+  "status": "passed_unreleased_implementation",
+  "recorded_at_utc": "2026-10-16T10:07:09.971653+00:00",
+  "base_commit": "2fb04b6ce4a071257772bf3eec2961390724a1e8",
+  "workset_sha256": "c690425b8faca4c4450a27b4f317ee2bbfe249a9b6cf4809f0b408212a893c2b",
+  "workset_definition": "SHA256 of canonical sorted JSON mapping source/test/script/workflow/requirements paths to their byte SHA256; evidence/docs excluded.",
+  "artifacts": [
+    {
+      "file": "mongoeco-4.10.0-py3-none-any.whl",
+      "sha256": "21294706d77128b0789333509a26c221fcbe997c6d2019e395f21f1fe7484bf9"
+    },
+    {
+      "file": "mongoeco-4.10.0.tar.gz",
+      "sha256": "3ec567bf7d13c45cd5af60ae4fdaeb5d86f0762786d55a905d3c7baf2281c44a"
+    }
+  ],
+  "runtime_files": 282,
+  "source_and_three_installed_runtimes_equal_wheel": true,
+  "published_baseline": "4.10.0",
+  "baseline_recovery_failures": 8,
+  "native_comparison": "native-comparison.json",
+  "complete_pytest": {
+    "python": [
+      "3.13",
+      "3.14",
+      "3.15"
+    ],
+    "passed_per_interpreter": 26739,
+    "expected_skips": 31,
+    "subtests_per_interpreter": 14456
+  },
+  "final_harness_recheck": {
+    "passed_per_interpreter": 950,
+    "subtests": 4,
+    "physical_sdks": [
+      "4.9.2",
+      "4.19.0"
+    ],
+    "test_only_delta": "Move the native async client to an independent loop; keep every request, response assertion and parameter.",
+    "causal_reuse": "The wheel/runtime, native corpora, observer and all other test functions are unchanged from the complete suites. Only the scheduling in the new wire test changed; all 12 affected wire cells and the entire 950-test focal selection were rerun on all three Python versions. Python 3.14 coverage appends those final executions to the complete suite."
+  },
+  "coverage_python314_percent": 99.05606732628227,
+  "coverage_floor_percent": 99,
+  "unittest_per_interpreter": 3628,
+  "unittest_expected_skips": 3,
+  "contracts": "typing, strict module mypy, SPI, public manifest, pip check, lint ratchet and unchanged compatibility snapshots passed",
+  "deep_property_tests": 9,
+  "reference_processes": "Confirmed closed; private database directories removed; shutdown logs retained in the ignored workspace.",
+  "scope": "Only Mongoeco files changed; reference data, logs, caches and validation environments created in its ignored .tmp/find-modify directory.",
+  "review": {
+    "diff_reviewed": true,
+    "documentation_aligned": true,
+    "foreign_changes": false
+  },
+  "original_failures": "initial-gate-failures.json",
+  "publication": "Not requested or performed; source package version remains 4.10.0 and this candidate is distinct from its published wheel.",
+  "legacy_async_harness": {
+    "initial_result": "Interrupted after 913 passing tests; isolated probe retained the blocking socket-poll stack.",
+    "cause": "The experimental PyMongo 4.9 async cursor polls synchronously, delaying a proxy hosted on the same loop.",
+    "resolution": "Give native client and proxy independent loops; retain the corpus, assertions and budgets.",
+    "final_result": "950 passed and 4 subtests on PyMongo 4.9.2; the same focal corpus passed on 4.19.0 across all three supported Python interpreters."
+  },
+  "published_baseline_wheel_sha256": "dc3246314d2de35ae7df09c870784b1bd02497d765d9ff16d429c929db1a0ea4"
+}

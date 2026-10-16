@@ -1,0 +1,182 @@
+[
+  {
+    "python": "313",
+    "unittest": {
+      "python": "313",
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test*.py"
+      ],
+      "exit_code": 0,
+      "log": "unittest-313.log"
+    },
+    "other_gates": [
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/bin/python",
+          "-B",
+          "scripts/check_public_typing.py"
+        ],
+        "exit_code": 0,
+        "log": "contract-313-1.txt"
+      },
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/bin/python",
+          "-B",
+          "scripts/smoke_external_engine.py"
+        ],
+        "exit_code": 0,
+        "log": "contract-313-2.txt"
+      },
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/bin/python",
+          "-B",
+          "scripts/update_public_api_manifest.py",
+          "--check"
+        ],
+        "exit_code": 0,
+        "log": "contract-313-3.txt"
+      },
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/bin/python",
+          "-B",
+          "-m",
+          "pip",
+          "check"
+        ],
+        "exit_code": 0,
+        "log": "contract-313-4.txt"
+      }
+    ]
+  },
+  {
+    "python": "314",
+    "unittest": {
+      "python": "314",
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test*.py"
+      ],
+      "exit_code": 0,
+      "log": "unittest-314.log"
+    },
+    "other_gates": [
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+          "-B",
+          "scripts/check_public_typing.py"
+        ],
+        "exit_code": 0,
+        "log": "contract-314-1.txt"
+      },
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+          "-B",
+          "scripts/smoke_external_engine.py"
+        ],
+        "exit_code": 0,
+        "log": "contract-314-2.txt"
+      },
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+          "-B",
+          "scripts/update_public_api_manifest.py",
+          "--check"
+        ],
+        "exit_code": 0,
+        "log": "contract-314-3.txt"
+      },
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+          "-B",
+          "-m",
+          "pip",
+          "check"
+        ],
+        "exit_code": 0,
+        "log": "contract-314-4.txt"
+      }
+    ]
+  },
+  {
+    "python": "315",
+    "unittest": {
+      "python": "315",
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test*.py"
+      ],
+      "exit_code": 0,
+      "log": "unittest-315.log"
+    },
+    "other_gates": [
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+          "-B",
+          "scripts/check_public_typing.py"
+        ],
+        "exit_code": 0,
+        "log": "contract-315-1.txt"
+      },
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+          "-B",
+          "scripts/smoke_external_engine.py"
+        ],
+        "exit_code": 0,
+        "log": "contract-315-2.txt"
+      },
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+          "-B",
+          "scripts/update_public_api_manifest.py",
+          "--check"
+        ],
+        "exit_code": 0,
+        "log": "contract-315-3.txt"
+      },
+      {
+        "command": [
+          "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+          "-B",
+          "-m",
+          "pip",
+          "check"
+        ],
+        "exit_code": 0,
+        "log": "contract-315-4.txt"
+      }
+    ]
+  }
+]

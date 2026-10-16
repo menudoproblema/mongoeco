@@ -1,0 +1,35 @@
+{
+  "servers": [
+    {
+      "target": "7.0",
+      "mongodb": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "port_closed": true,
+      "shutdown_complete": true,
+      "server_log_sha256": "60e5ef77b53557d65435cf7e47d0f37ab655158ea8519a8006acb20940e03702"
+    },
+    {
+      "target": "8.0",
+      "mongodb": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "port_closed": true,
+      "shutdown_complete": true,
+      "server_log_sha256": "db1adf00d0f63e8cb88bae008586134a8b01d7c02daf9463845c7301ecfbd452"
+    },
+    {
+      "target": "9.0",
+      "mongodb": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "port_closed": true,
+      "shutdown_complete": true,
+      "server_log_sha256": "e2babb58e33f13007191517f24a5be5ce1917b6d42ecf21c83f736795f0943bc"
+    }
+  ],
+  "own_private_data_removed": true
+}

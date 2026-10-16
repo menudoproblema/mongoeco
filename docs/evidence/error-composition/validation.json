@@ -1,0 +1,276 @@
+{
+  "status": "completed",
+  "git_head": "2fb04b6ce4a071257772bf3eec2961390724a1e8",
+  "starting_workset_sha256": "b8562744212c24af41422c2c81ff35c4c200546d4566222b0d7fe74a86a340d7",
+  "scope": "12 audited families plus related SQLite JSON1 nonfinite preservation; API signatures, SPIv2 and existing SQLite files retained",
+  "corpus": {
+    "prior": 489,
+    "added": 583,
+    "per_target_surface": 1072,
+    "native_versions": [
+      "7.0.43",
+      "8.0.32",
+      "9.0.2"
+    ],
+    "sdk": [
+      "4.19.0",
+      "4.9.2"
+    ],
+    "native_sync_async_equal": true,
+    "native_candidate_imported": false,
+    "physical_connections_per_pool": 1,
+    "reused": true
+  },
+  "artifacts": {
+    "mongoeco-4.10.0.tar.gz": "f5ffd187c45ef9bba08aec9d09f198cf45ed2511fdb14d40fcc251bdd6c823ea",
+    "mongoeco-4.10.0-py3-none-any.whl": "5f9b3021ae9d293f367d26c80254a11fe5c4c4ed2eb74616c246d1d673f0a2cb"
+  },
+  "runtime_files": 289,
+  "checks": {
+    "pytest_313": {
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short"
+      ],
+      "exit_code": 0,
+      "log": ".tmp/refactor-fixes/global-pytest-313.log",
+      "log_sha256": "b7699c64c2f5fabd4b50b26aeb5c8c54dc660b70f7bbbc0d4f2f3197735adc9f",
+      "summary": "43982 passed, 31 skipped, 14459 subtests passed in 574.43s (0:09:34)"
+    },
+    "unittest_313": {
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test*.py"
+      ],
+      "exit_code": 0,
+      "log": ".tmp/refactor-fixes/global-unittest-313.log",
+      "log_sha256": "1171c547bf20f7706981ea91d43c5521cbf9906f524874d9de15e79ee3e7364d",
+      "summary": "Ran 1 test in 0.000s; Ran 1 test in 0.000s; Ran 1 test in 0.000s; OK (skipped=1); Ran 3628 tests in 71.471s; OK (skipped=3)"
+    },
+    "pytest_314": {
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "--cov=mongoeco",
+        "--cov-report=term",
+        "--cov-report=json:/Users/uve/Proyectos/mongoeco/.tmp/refactor-fixes/global-coverage.json"
+      ],
+      "exit_code": 0,
+      "log": ".tmp/refactor-fixes/global-pytest-314.log",
+      "log_sha256": "c6a036b2aeb055ce029024fc9cf8ad2e9b97f3f038525691b430eda37dd50270",
+      "summary": "43982 passed, 31 skipped, 14459 subtests passed in 643.67s (0:10:43)"
+    },
+    "unittest_314": {
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test*.py"
+      ],
+      "exit_code": 0,
+      "log": ".tmp/refactor-fixes/global-unittest-314.log",
+      "log_sha256": "2e4c166f9d15d4ced7d57c840d5a63ae48b65b3b31c25bae26e58a377dd35a2c",
+      "summary": "Ran 1 test in 0.000s; Ran 1 test in 0.000s; Ran 1 test in 0.000s; OK (skipped=1); Ran 3628 tests in 69.447s; OK (skipped=3)"
+    },
+    "pytest_315": {
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short"
+      ],
+      "exit_code": 0,
+      "log": ".tmp/refactor-fixes/global-pytest-315.log",
+      "log_sha256": "eee6859137b74b5c8da130685bbd8802395fafc1b67638122e0dd8cd4530bb6e",
+      "summary": "43982 passed, 31 skipped, 14459 subtests passed in 646.26s (0:10:46)"
+    },
+    "unittest_315": {
+      "command": [
+        "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test*.py"
+      ],
+      "exit_code": 0,
+      "log": ".tmp/refactor-fixes/global-unittest-315.log",
+      "log_sha256": "5bc83efa0101917a34e625c01706d909c397f55ba08e81d74638d976a882c563",
+      "summary": "Ran 1 test in 0.004s; Ran 1 test in 0.004s; Ran 1 test in 0.004s; OK (skipped=1); Ran 3628 tests in 71.109s; OK (skipped=3)"
+    },
+    "sdk49": {
+      "log": ".tmp/refactor-fixes/sdk49-notes.log",
+      "sha256": "54849495734625dd58b9c5715bb562307478138975e5fb437220c9badcf80506",
+      "summary": "171 passed; wire1072 x12, existing SQLite files, grammar and write-option conservation"
+    },
+    "deep": {
+      "log": ".tmp/refactor-fixes/deep-notes.log",
+      "sha256": "6f14e2bbf740fd8f8a6bed0a4a3ca4de56463e7f3e1a30792135dffa5771ea56",
+      "summary": "9 passed; max_examples=300"
+    },
+    "conservation": {
+      "log": ".tmp/refactor-fixes/conservation-last.log",
+      "sha256": "cfed1c48aa7ea9931db34f2a9f0000d36bbcd772f0941b24e89a745a4ea651f3",
+      "summary": "351 passed; native-aligned expectations and source fingerprints"
+    },
+    "sqlite_files_focal": {
+      "log": ".tmp/refactor-fixes/sqlite-nonfinite-final.log",
+      "sha256": "d6b3ffc50f240e6c44f52e9a1dec516dc7160ed1fa1d1ab131249070e9f4075d",
+      "summary": "131 passed, including60 existing-file/profile/dialect/surface cells"
+    },
+    "special_numbers_focal": {
+      "log": ".tmp/refactor-fixes/special-direct-fixed.log",
+      "sha256": "31848e604300a213ca72e1f68f807fb7a021f41e591ef3dbe19c0c10f08edf1f",
+      "summary": "1536 passed across12 direct cells; valid/invalid Inf/NaN, null and place"
+    },
+    "typing_spi": {
+      "log": ".tmp/refactor-fixes/contracts-notes.log",
+      "sha256": "dbe4fc5b766399c1a5e16d745a271fd4f1548e96b0a943aa410a377126c5703a",
+      "summary": "API manifest unchanged, PEP561 positive1/negative20, SPIv2 and strict mypy on3Python"
+    },
+    "minimal": {
+      "log": ".tmp/refactor-fixes/minimal-notes.log",
+      "sha256": "e69c9a6373fd6596641d974dc3cbf9ece7c7e13e4432a44f53bcc8a08baae524",
+      "summary": "12 unittest passed without PyMongo"
+    },
+    "clean_wheel_pytest": {
+      "log": ".tmp/refactor-fixes/smoke-kit-notes.log",
+      "sha256": "4e5b7ada071fac413571f4957d2fb817006b4fb81e40747abe066c8695a8c38b",
+      "summary": "Clean dependency resolution, smoke and4 pytest fixture cases passed"
+    },
+    "clean_sdist": {
+      "log": ".tmp/refactor-fixes/smoke-sdist-notes.log",
+      "sha256": "019db313f93b45383f0d41d2e866018d5b819880ab52233088a361a8c1aeaaa3",
+      "summary": "Clean installation and engine/conformance smoke passed"
+    },
+    "lint": {
+      "log": ".tmp/refactor-fixes/lint-notes.log",
+      "sha256": "c31b8d713bc542bd5602743e388612fe6f1d05ea301863b6306182faf0938291",
+      "summary": "119 changed Python files passed"
+    },
+    "twine": {
+      "log": ".tmp/refactor-fixes/twine-notes.log",
+      "sha256": "edcc93bb08ed8eb12c367ca34661607d359abece566a349c8506bf8c14925754",
+      "summary": "Wheel and sdist passed"
+    },
+    "profiles": {
+      "log": ".tmp/refactor-fixes/profiles.log",
+      "sha256": "56b67dcd92c49d2985d806ed221708ba48f85900e3db265f1cdd15e2ba6a9947",
+      "summary": "Six isolated supported driver profiles equal the retained public snapshot"
+    },
+    "native_sdk419": {
+      "log": ".tmp/refactor-fixes/native-complete.log",
+      "sha256": "6da738f2db6e181cba79b15542953f62865ea983ee21274b2fd42a4357dd44da",
+      "summary": "1072 native sync/async scenarios per target; candidate not imported; one reused physical connection per pool"
+    },
+    "native_sdk49": {
+      "log": ".tmp/refactor-fixes/native-sdk49-complete.log",
+      "sha256": "974d51e2079b2f096f7e12eda298291e7eb41feb51f6525f80eaa9e8b13e37a0",
+      "summary": "1072 native sync/async scenarios per target; two SDK delta cases per target"
+    },
+    "native_fields": {
+      "log": ".tmp/refactor-fixes/fields-native.log",
+      "sha256": "26f7966af6adc27751b67f420b2378ddd674477e76cb2c2e06a5cf0faba870e1",
+      "summary": "72 native unknown constants field rejections, no effects, successful recovery"
+    },
+    "native_bindings": {
+      "log": ".tmp/refactor-fixes/bindings-native.log",
+      "sha256": "7b808c4fcb689fb1d6a2110b6c8d6fa86eb090b321413ae0fa75f2fccf00e7fe",
+      "summary": "24 native per-entry let rejections, no effects, successful recovery"
+    },
+    "benchmarks": {
+      "memory_sha256": "22a84b8ff54767db438502acb044e6d54a3e65581dad80d1fea3855bfb7500f6",
+      "sqlite_sha256": "fd5c9d3f70e186413faf7bc86657f79615342f8b79864d96d8a7a96fc7add423",
+      "size": 250,
+      "repetitions": 1,
+      "result": "all workloads executed; smoke, not a statistical performance claim"
+    }
+  },
+  "coverage": {
+    "covered_lines": 44393,
+    "num_statements": 44836,
+    "percent_covered": 99.01195467927558,
+    "percent_covered_display": "99.01",
+    "missing_lines": 443,
+    "excluded_lines": 934,
+    "percent_statements_covered": 99.01195467927558,
+    "percent_statements_covered_display": "99.01"
+  },
+  "frozen_inputs_unchanged_at_global_completion": true,
+  "report_only_change_after_global": "docs/error-composition-regressions.md verification results; no runtime/test change",
+  "retained_corrected_attempts": [
+    {
+      "log": ".tmp/refactor-fixes/native.log",
+      "sha256": "65895b8c8febdc533e0fc9f656ba9534c95d9a772259cccf86fcb983afc8f49e",
+      "summary": "Transport timeout with3s socket deadline; capture tool raised deadline to30s; final captures pass"
+    },
+    {
+      "log": ".tmp/refactor-fixes/differential-focal.log",
+      "sha256": "a1014b2d82e0f0bce6d44dfe408d68f866d49b816af0b8f192f15d5c1f0c8f7e",
+      "summary": "12wire failures: duplicate let shape guard lost code14; shared typed parser now used"
+    },
+    {
+      "log": ".tmp/refactor-fixes/deep-final.log",
+      "sha256": "cd0667636627113efc21084870012afa6a39f759d6345c5f09011cb0b2852b3f",
+      "summary": "Metadata expression incorrectly rejected; preserved runtime meta support and added regression"
+    },
+    {
+      "log": ".tmp/refactor-fixes/deep-meta-fixed.log",
+      "sha256": "78e7bcf4860f14375b97097323e1a03e123759b6dea5e8b1a1dfe97bdb2654b6",
+      "summary": "New regression fixture used an obsolete metadata layout; corrected RuntimeDocumentState fixture"
+    },
+    {
+      "log": ".tmp/refactor-fixes/bench-memory-install-race.log",
+      "sha256": "ed416b8361a3a9f7f83447134f868fd7d1be97427ff9fa60403c5eb94cd3446f",
+      "summary": "Runner started during environment reinstall; discarded and rerun after installation"
+    },
+    {
+      "log": ".tmp/refactor-fixes/special-direct-final.log",
+      "sha256": "866a8f1d01841dc0cf66cfaa1fad520caa3205809dde2a71c17526585f3abf87",
+      "summary": "16SQLite NaN recovery state mismatches; JSON1 mutation fallback now preserves nonfinite values"
+    },
+    {
+      "log": ".tmp/refactor-fixes/global-obsolete-expectations/global-pytest-313.log",
+      "sha256": "28ecaff702ae1afa8c17a499d47ad199fb969e4c748a91651332180036e39692",
+      "summary": "Full global exposed26obsolete expectations/fingerprints; corrected against native evidence, with unchanged option keys/states"
+    },
+    {
+      "log": ".tmp/refactor-fixes/global-historical-note/global-pytest-313.log",
+      "sha256": "2113fa12c50357c585a7fc2700dd5cb0aba04fd2604626ebb2a12212e4113d09",
+      "summary": "Historical replay lacked the two explicit note deltas; current metadata already matched; registered both before/after replacements and verified554compatibility/conservation tests"
+    }
+  ],
+  "cancelled_global_attempt": "global-interrupted/; stopped at28% after numeric edge probe; not used as final verification",
+  "review": {
+    "diff_reviewed": true,
+    "documentation_aligned": true,
+    "prior_user_changes_preserved": true,
+    "consumer_identity_scan": "clean",
+    "remote_ci": "not dispatched; local gates executed"
+  }
+}

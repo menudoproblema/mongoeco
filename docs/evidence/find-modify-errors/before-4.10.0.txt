@@ -1,0 +1,368 @@
+FFFFFFFF                                                                 [100%]
+=================================== FAILURES ===================================
+_ test_sync_duplicate_error_can_be_translated_and_recovered[find_one_and_update-memory] _
+
+engine = 'memory', method = 'find_one_and_update'
+
+    @pytest.mark.parametrize("engine", ENGINE_FACTORIES)
+    @pytest.mark.parametrize("method", ["find_one_and_update", "find_one_and_replace"])
+    def test_sync_duplicate_error_can_be_translated_and_recovered(engine, method):
+        with MongoClient(ENGINE_FACTORIES[engine]()) as client:
+            collection = client.recovery.items
+            collection.create_index("key", unique=True)
+            collection.insert_many(
+                [{"_id": "a", "key": "old"}, {"_id": "b", "key": "taken"}]
+            )
+            change = (
+                {"$set": {"key": "taken"}}
+                if method.endswith("update")
+                else {"key": "taken"}
+            )
+            with pytest.raises(pymongo.errors.DuplicateKeyError) as caught:
+                getattr(collection, method)({"_id": "a"}, change)
+>           assert _duplicate_index(caught.value) == "key_1"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/api/test_find_modify_errors.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+error = DuplicateKeyError("Duplicate key for unique index 'key_1': ['key']=(('str', 'taken'),), full error: {'codeName': 'DuplicateKey'}")
+
+    def _duplicate_index(error):
+        # A client must be able to consume this server error as a complete document.
+        assert error.code == 11000
+>       message = error.details["errmsg"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'errmsg'
+
+tests/integration/api/test_find_modify_errors.py:108: KeyError
+_ test_sync_duplicate_error_can_be_translated_and_recovered[find_one_and_update-sqlite] _
+
+engine = 'sqlite', method = 'find_one_and_update'
+
+    @pytest.mark.parametrize("engine", ENGINE_FACTORIES)
+    @pytest.mark.parametrize("method", ["find_one_and_update", "find_one_and_replace"])
+    def test_sync_duplicate_error_can_be_translated_and_recovered(engine, method):
+        with MongoClient(ENGINE_FACTORIES[engine]()) as client:
+            collection = client.recovery.items
+            collection.create_index("key", unique=True)
+            collection.insert_many(
+                [{"_id": "a", "key": "old"}, {"_id": "b", "key": "taken"}]
+            )
+            change = (
+                {"$set": {"key": "taken"}}
+                if method.endswith("update")
+                else {"key": "taken"}
+            )
+            with pytest.raises(pymongo.errors.DuplicateKeyError) as caught:
+                getattr(collection, method)({"_id": "a"}, change)
+>           assert _duplicate_index(caught.value) == "key_1"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/api/test_find_modify_errors.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+error = DuplicateKeyError("Duplicate key for unique index 'key_1': ['key']=(('str', 'taken'),), full error: {'codeName': 'DuplicateKey'}")
+
+    def _duplicate_index(error):
+        # A client must be able to consume this server error as a complete document.
+        assert error.code == 11000
+>       message = error.details["errmsg"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'errmsg'
+
+tests/integration/api/test_find_modify_errors.py:108: KeyError
+_ test_sync_duplicate_error_can_be_translated_and_recovered[find_one_and_replace-memory] _
+
+engine = 'memory', method = 'find_one_and_replace'
+
+    @pytest.mark.parametrize("engine", ENGINE_FACTORIES)
+    @pytest.mark.parametrize("method", ["find_one_and_update", "find_one_and_replace"])
+    def test_sync_duplicate_error_can_be_translated_and_recovered(engine, method):
+        with MongoClient(ENGINE_FACTORIES[engine]()) as client:
+            collection = client.recovery.items
+            collection.create_index("key", unique=True)
+            collection.insert_many(
+                [{"_id": "a", "key": "old"}, {"_id": "b", "key": "taken"}]
+            )
+            change = (
+                {"$set": {"key": "taken"}}
+                if method.endswith("update")
+                else {"key": "taken"}
+            )
+            with pytest.raises(pymongo.errors.DuplicateKeyError) as caught:
+                getattr(collection, method)({"_id": "a"}, change)
+>           assert _duplicate_index(caught.value) == "key_1"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/api/test_find_modify_errors.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+error = DuplicateKeyError("Duplicate key for unique index 'key_1': ['key']=(('str', 'taken'),), full error: {'codeName': 'DuplicateKey'}")
+
+    def _duplicate_index(error):
+        # A client must be able to consume this server error as a complete document.
+        assert error.code == 11000
+>       message = error.details["errmsg"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'errmsg'
+
+tests/integration/api/test_find_modify_errors.py:108: KeyError
+_ test_sync_duplicate_error_can_be_translated_and_recovered[find_one_and_replace-sqlite] _
+
+engine = 'sqlite', method = 'find_one_and_replace'
+
+    @pytest.mark.parametrize("engine", ENGINE_FACTORIES)
+    @pytest.mark.parametrize("method", ["find_one_and_update", "find_one_and_replace"])
+    def test_sync_duplicate_error_can_be_translated_and_recovered(engine, method):
+        with MongoClient(ENGINE_FACTORIES[engine]()) as client:
+            collection = client.recovery.items
+            collection.create_index("key", unique=True)
+            collection.insert_many(
+                [{"_id": "a", "key": "old"}, {"_id": "b", "key": "taken"}]
+            )
+            change = (
+                {"$set": {"key": "taken"}}
+                if method.endswith("update")
+                else {"key": "taken"}
+            )
+            with pytest.raises(pymongo.errors.DuplicateKeyError) as caught:
+                getattr(collection, method)({"_id": "a"}, change)
+>           assert _duplicate_index(caught.value) == "key_1"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/api/test_find_modify_errors.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+error = DuplicateKeyError("Duplicate key for unique index 'key_1': ['key']=(('str', 'taken'),), full error: {'codeName': 'DuplicateKey'}")
+
+    def _duplicate_index(error):
+        # A client must be able to consume this server error as a complete document.
+        assert error.code == 11000
+>       message = error.details["errmsg"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'errmsg'
+
+tests/integration/api/test_find_modify_errors.py:108: KeyError
+_ test_async_duplicate_error_can_be_translated_and_recovered[find_one_and_update-memory] _
+
+engine = 'memory', method = 'find_one_and_update'
+
+    @pytest.mark.parametrize("engine", ENGINE_FACTORIES)
+    @pytest.mark.parametrize("method", ["find_one_and_update", "find_one_and_replace"])
+    def test_async_duplicate_error_can_be_translated_and_recovered(engine, method):
+        async def exercise():
+            async with AsyncMongoClient(ENGINE_FACTORIES[engine]()) as client:
+                collection = client.recovery.items
+                await collection.create_index("key", unique=True)
+                await collection.insert_many(
+                    [{"_id": "a", "key": "old"}, {"_id": "b", "key": "taken"}]
+                )
+                change = (
+                    {"$set": {"key": "taken"}}
+                    if method.endswith("update")
+                    else {"key": "taken"}
+                )
+                with pytest.raises(pymongo.errors.DuplicateKeyError) as caught:
+                    await getattr(collection, method)({"_id": "a"}, change)
+                assert _duplicate_index(caught.value) == "key_1"
+                assert (await collection.find_one({"key": "taken"}))["_id"] == "b"
+                assert (await collection.find_one({"_id": "a"}))["key"] == "old"
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_find_modify_errors.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_find_modify_errors.py:159: in exercise
+    assert _duplicate_index(caught.value) == "key_1"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+error = DuplicateKeyError("Duplicate key for unique index 'key_1': ['key']=(('str', 'taken'),), full error: {'codeName': 'DuplicateKey'}")
+
+    def _duplicate_index(error):
+        # A client must be able to consume this server error as a complete document.
+        assert error.code == 11000
+>       message = error.details["errmsg"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'errmsg'
+
+tests/integration/api/test_find_modify_errors.py:108: KeyError
+_ test_async_duplicate_error_can_be_translated_and_recovered[find_one_and_update-sqlite] _
+
+engine = 'sqlite', method = 'find_one_and_update'
+
+    @pytest.mark.parametrize("engine", ENGINE_FACTORIES)
+    @pytest.mark.parametrize("method", ["find_one_and_update", "find_one_and_replace"])
+    def test_async_duplicate_error_can_be_translated_and_recovered(engine, method):
+        async def exercise():
+            async with AsyncMongoClient(ENGINE_FACTORIES[engine]()) as client:
+                collection = client.recovery.items
+                await collection.create_index("key", unique=True)
+                await collection.insert_many(
+                    [{"_id": "a", "key": "old"}, {"_id": "b", "key": "taken"}]
+                )
+                change = (
+                    {"$set": {"key": "taken"}}
+                    if method.endswith("update")
+                    else {"key": "taken"}
+                )
+                with pytest.raises(pymongo.errors.DuplicateKeyError) as caught:
+                    await getattr(collection, method)({"_id": "a"}, change)
+                assert _duplicate_index(caught.value) == "key_1"
+                assert (await collection.find_one({"key": "taken"}))["_id"] == "b"
+                assert (await collection.find_one({"_id": "a"}))["key"] == "old"
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_find_modify_errors.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_find_modify_errors.py:159: in exercise
+    assert _duplicate_index(caught.value) == "key_1"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+error = DuplicateKeyError("Duplicate key for unique index 'key_1': ['key']=(('str', 'taken'),), full error: {'codeName': 'DuplicateKey'}")
+
+    def _duplicate_index(error):
+        # A client must be able to consume this server error as a complete document.
+        assert error.code == 11000
+>       message = error.details["errmsg"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'errmsg'
+
+tests/integration/api/test_find_modify_errors.py:108: KeyError
+_ test_async_duplicate_error_can_be_translated_and_recovered[find_one_and_replace-memory] _
+
+engine = 'memory', method = 'find_one_and_replace'
+
+    @pytest.mark.parametrize("engine", ENGINE_FACTORIES)
+    @pytest.mark.parametrize("method", ["find_one_and_update", "find_one_and_replace"])
+    def test_async_duplicate_error_can_be_translated_and_recovered(engine, method):
+        async def exercise():
+            async with AsyncMongoClient(ENGINE_FACTORIES[engine]()) as client:
+                collection = client.recovery.items
+                await collection.create_index("key", unique=True)
+                await collection.insert_many(
+                    [{"_id": "a", "key": "old"}, {"_id": "b", "key": "taken"}]
+                )
+                change = (
+                    {"$set": {"key": "taken"}}
+                    if method.endswith("update")
+                    else {"key": "taken"}
+                )
+                with pytest.raises(pymongo.errors.DuplicateKeyError) as caught:
+                    await getattr(collection, method)({"_id": "a"}, change)
+                assert _duplicate_index(caught.value) == "key_1"
+                assert (await collection.find_one({"key": "taken"}))["_id"] == "b"
+                assert (await collection.find_one({"_id": "a"}))["key"] == "old"
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_find_modify_errors.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_find_modify_errors.py:159: in exercise
+    assert _duplicate_index(caught.value) == "key_1"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+error = DuplicateKeyError("Duplicate key for unique index 'key_1': ['key']=(('str', 'taken'),), full error: {'codeName': 'DuplicateKey'}")
+
+    def _duplicate_index(error):
+        # A client must be able to consume this server error as a complete document.
+        assert error.code == 11000
+>       message = error.details["errmsg"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'errmsg'
+
+tests/integration/api/test_find_modify_errors.py:108: KeyError
+_ test_async_duplicate_error_can_be_translated_and_recovered[find_one_and_replace-sqlite] _
+
+engine = 'sqlite', method = 'find_one_and_replace'
+
+    @pytest.mark.parametrize("engine", ENGINE_FACTORIES)
+    @pytest.mark.parametrize("method", ["find_one_and_update", "find_one_and_replace"])
+    def test_async_duplicate_error_can_be_translated_and_recovered(engine, method):
+        async def exercise():
+            async with AsyncMongoClient(ENGINE_FACTORIES[engine]()) as client:
+                collection = client.recovery.items
+                await collection.create_index("key", unique=True)
+                await collection.insert_many(
+                    [{"_id": "a", "key": "old"}, {"_id": "b", "key": "taken"}]
+                )
+                change = (
+                    {"$set": {"key": "taken"}}
+                    if method.endswith("update")
+                    else {"key": "taken"}
+                )
+                with pytest.raises(pymongo.errors.DuplicateKeyError) as caught:
+                    await getattr(collection, method)({"_id": "a"}, change)
+                assert _duplicate_index(caught.value) == "key_1"
+                assert (await collection.find_one({"key": "taken"}))["_id"] == "b"
+                assert (await collection.find_one({"_id": "a"}))["key"] == "old"
+    
+>       asyncio.run(exercise())
+
+tests/integration/api/test_find_modify_errors.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/api/test_find_modify_errors.py:159: in exercise
+    assert _duplicate_index(caught.value) == "key_1"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+error = DuplicateKeyError("Duplicate key for unique index 'key_1': ['key']=(('str', 'taken'),), full error: {'codeName': 'DuplicateKey'}")
+
+    def _duplicate_index(error):
+        # A client must be able to consume this server error as a complete document.
+        assert error.code == 11000
+>       message = error.details["errmsg"]
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'errmsg'
+
+tests/integration/api/test_find_modify_errors.py:108: KeyError
+=========================== short test summary info ============================
+FAILED tests/integration/api/test_find_modify_errors.py::test_sync_duplicate_error_can_be_translated_and_recovered[find_one_and_update-memory]
+FAILED tests/integration/api/test_find_modify_errors.py::test_sync_duplicate_error_can_be_translated_and_recovered[find_one_and_update-sqlite]
+FAILED tests/integration/api/test_find_modify_errors.py::test_sync_duplicate_error_can_be_translated_and_recovered[find_one_and_replace-memory]
+FAILED tests/integration/api/test_find_modify_errors.py::test_sync_duplicate_error_can_be_translated_and_recovered[find_one_and_replace-sqlite]
+FAILED tests/integration/api/test_find_modify_errors.py::test_async_duplicate_error_can_be_translated_and_recovered[find_one_and_update-memory]
+FAILED tests/integration/api/test_find_modify_errors.py::test_async_duplicate_error_can_be_translated_and_recovered[find_one_and_update-sqlite]
+FAILED tests/integration/api/test_find_modify_errors.py::test_async_duplicate_error_can_be_translated_and_recovered[find_one_and_replace-memory]
+FAILED tests/integration/api/test_find_modify_errors.py::test_async_duplicate_error_can_be_translated_and_recovered[find_one_and_replace-sqlite]
+8 failed, 924 deselected in 0.95s

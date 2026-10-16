@@ -1,0 +1,56 @@
+[
+  {
+    "python": "313",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "faulthandler_timeout=30",
+      "-o",
+      "cache_dir=/Users/uve/Proyectos/mongoeco/.tmp/shared-errors/pytest-cache-313",
+      "--basetemp=/Users/uve/Proyectos/mongoeco/.tmp/shared-errors/pytest-temp-313"
+    ],
+    "exit_code": 0,
+    "log": "pytest-313.txt"
+  },
+  {
+    "python": "314",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "faulthandler_timeout=30",
+      "-o",
+      "cache_dir=/Users/uve/Proyectos/mongoeco/.tmp/shared-errors/pytest-cache-314",
+      "--basetemp=/Users/uve/Proyectos/mongoeco/.tmp/shared-errors/pytest-temp-314",
+      "--cov=mongoeco",
+      "--cov-report=term",
+      "--cov-report=json:/Users/uve/Proyectos/mongoeco/.tmp/shared-errors/coverage314.json"
+    ],
+    "exit_code": 0,
+    "log": "pytest-314.txt"
+  },
+  {
+    "python": "315",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "faulthandler_timeout=30",
+      "-o",
+      "cache_dir=/Users/uve/Proyectos/mongoeco/.tmp/shared-errors/pytest-cache-315",
+      "--basetemp=/Users/uve/Proyectos/mongoeco/.tmp/shared-errors/pytest-temp-315"
+    ],
+    "exit_code": 0,
+    "log": "pytest-315.txt"
+  }
+]

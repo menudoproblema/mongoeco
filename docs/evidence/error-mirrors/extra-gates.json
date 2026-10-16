@@ -1,0 +1,49 @@
+[
+  {
+    "gate": "mypy",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+      "-B",
+      "-m",
+      "mypy",
+      "--strict",
+      "--follow-imports=silent",
+      "--ignore-missing-imports",
+      "-m",
+      "mongoeco.pytest_plugin",
+      "-m",
+      "mongoeco.pytest_asyncio",
+      "-m",
+      "mongoeco.pytest_anyio",
+      "-m",
+      "mongoeco._pytest_runtime",
+      "-m",
+      "mongoeco.wire._lifecycle"
+    ],
+    "exit_code": 0,
+    "log": "mypy.log"
+  },
+  {
+    "gate": "deep",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "tests/property",
+      "-q"
+    ],
+    "exit_code": 0,
+    "log": "deep.log"
+  },
+  {
+    "gate": "snapshots",
+    "command": [
+      "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/bin/python",
+      "-B",
+      "scripts/update_compat_snapshots.py"
+    ],
+    "exit_code": 0,
+    "log": "snapshots.log"
+  }
+]

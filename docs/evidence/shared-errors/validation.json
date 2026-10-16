@@ -1,0 +1,65 @@
+{
+  "status": "passed_unreleased_implementation",
+  "recorded_at_utc": "2026-10-16T12:12:43.292704+00:00",
+  "base_commit": "2fb04b6ce4a071257772bf3eec2961390724a1e8",
+  "workset_sha256": "3c2f2fcefb3db4c3e8880ab2a3531b936ccbcef4f56e40f6b8a6b973908dad1a",
+  "workset_definition": "SHA256 of sorted compact JSON mapping all Git tracked/nonignored files to their byte SHA256, excluding only docs/evidence/shared-errors to avoid self-reference.",
+  "requested_findings_corrected": 9,
+  "native_comparison": "native-comparison.json",
+  "additional_classic_sort_guards": 8,
+  "direct_and_wire_matrix": "MongoDB 7/8/9; sync/async; Memory/SQLite; direct profiles 4.9/4.19; real wire SDK 4.9.2/4.19.0",
+  "observed_contract": "error families, codes and document shape; BSON duplicate-key metadata and diagnostic representations; bulk counters, rejected operations and partial effects; recovery and one physical connection",
+  "finite_scope": "102 shared specimens and 851 opaque-key vectors per native target, plus existing corpora and 8 direct sort guards; not universal compatibility or every literal errmsg",
+  "complete_pytest": [
+    {
+      "python": "313",
+      "passed": 29239,
+      "skipped": 31,
+      "subtests": 14458
+    },
+    {
+      "python": "314",
+      "passed": 29239,
+      "skipped": 31,
+      "subtests": 14458
+    },
+    {
+      "python": "315",
+      "passed": 29239,
+      "skipped": 31,
+      "subtests": 14458
+    }
+  ],
+  "coverage_python314": 99.02892934390772,
+  "coverage_floor": 99,
+  "unittest_per_interpreter": 3628,
+  "unittest_skips": 3,
+  "sdk49_focal_passed": 3440,
+  "isolated_driver_profile_versions": 6,
+  "runtime_files": 286,
+  "artifacts": {
+    "mongoeco-4.10.0-py3-none-any.whl": "70668a86f315119effb4d35327d4ebead6ed907f1618dbf42b145c1f717383b6",
+    "mongoeco-4.10.0.tar.gz": "4ddb91469184805bcc15c425c4f32d5e620f23fd9801c945fdbfd5dfa9ffa296"
+  },
+  "source_wheel_four_installed_runtimes_equal": true,
+  "reproducible_distributions": true,
+  "data_provenance": {
+    "source": "Unicode ICU 57.1 FractionalUCA",
+    "source_sha256": "73838732a2af47fd2d8ea0f7d326a16c03be0d15a498077756e001992edce04b",
+    "resource_sha256": "13bd0a7e0cceca7fc5e6feaca9814b944ebb446c43b320f00e407a73f691947b",
+    "reproduced_under_ascii_locale": true,
+    "additional_native_dependency": false
+  },
+  "legacy_sqlite": "schema and existing payload/storage key unchanged; typed queries and duplicate code 11000; integrity_check ok",
+  "resources": "private reference processes closed and own databases removed; native client/proxy teardown is exercised by the matrices",
+  "review": {
+    "diff_reviewed": true,
+    "documentation_aligned": true,
+    "all_listed_local_gates_passed": true,
+    "foreign_changes_detected": false,
+    "preserved_prior_authorized_work": "initial findAndModify correction and its historical evidence"
+  },
+  "original_attempts": "original-attempts.json",
+  "publication": "Not requested or performed for this correction. Source version remains 4.10.0; this unpublished wheel is distinct from the existing published artifact.",
+  "remote_ci": "Not dispatched in this task; local gate commands/results are recorded."
+}

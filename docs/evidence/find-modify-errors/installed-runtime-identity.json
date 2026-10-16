@@ -1,0 +1,20 @@
+[
+  {
+    "python": "313",
+    "runtime_files": 282,
+    "matches_wheel": true,
+    "module": "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-313/lib/python3.13/site-packages/mongoeco"
+  },
+  {
+    "python": "314",
+    "runtime_files": 282,
+    "matches_wheel": true,
+    "module": "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-314/lib/python3.14/site-packages/mongoeco"
+  },
+  {
+    "python": "315",
+    "runtime_files": 282,
+    "matches_wheel": true,
+    "module": "/Users/uve/Proyectos/mongoeco/.tmp/find-modify/venv-315/lib/python3.15/site-packages/mongoeco"
+  }
+]

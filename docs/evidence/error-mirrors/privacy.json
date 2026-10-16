@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "changed_or_untracked_files_scanned": 301,
+  "compressed_files_decompressed": 74,
+  "distribution_archives_scanned": [
+    "mongoeco-4.10.0.tar.gz",
+    "mongoeco-4.10.0-py3-none-any.whl"
+  ],
+  "consumer_identifiers_found": false
+}

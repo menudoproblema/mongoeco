@@ -1,0 +1,3 @@
+7.0 38 sync/async equal; SDK 4.9 agrees with 4.19
+8.0 38 sync/async equal; SDK 4.9 agrees with 4.19
+9.0 38 sync/async equal; SDK 4.9 agrees with 4.19

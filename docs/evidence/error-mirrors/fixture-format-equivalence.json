@@ -1,0 +1,13 @@
+{
+  "change": "One blank line between third-party and local imports only",
+  "before_sha256": "b385e9787249bd385cebf2971c7bd9468d07dea90d285535e58e69b1ee77c856",
+  "after_sha256": "c86888b8fd168e6621f0794a37e0ddcf0be5516254970a501b15238aaea7eeb4",
+  "identical_ast": true,
+  "native_capture_observations_unchanged": true,
+  "updated_fixture_metadata": [
+    "tests/fixtures/shared_errors_mongodb_7_0.json",
+    "tests/fixtures/shared_errors_mongodb_8_0.json",
+    "tests/fixtures/shared_errors_mongodb_9_0.json"
+  ],
+  "additional_final_recapture": "Running for SDK 4.9.2 and 4.19.0; must match the complete capture observations"
+}
