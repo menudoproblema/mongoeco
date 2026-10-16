@@ -1,0 +1,18 @@
+{
+  "version": "4.10.0",
+  "kind": "tag",
+  "artifacts": [
+    {
+      "file": "mongoeco-4.10.0-py3-none-any.whl",
+      "sha256": "dc3246314d2de35ae7df09c870784b1bd02497d765d9ff16d429c929db1a0ea4"
+    },
+    {
+      "file": "mongoeco-4.10.0.tar.gz",
+      "sha256": "15f456ae8160e0ce326c950ed2a0c155a17a7b4d03d75feb1ee3bff157142f71"
+    }
+  ],
+  "runtime_files": 281,
+  "runtime_matches_checkout": true,
+  "manifest_verified": true,
+  "main_tag_byte_identity": true
+}

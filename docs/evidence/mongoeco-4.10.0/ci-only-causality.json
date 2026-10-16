@@ -1,0 +1,10 @@
+{
+  "earlier_main_ci": "https://github.com/menudoproblema/mongoeco/actions/runs/38831984135",
+  "corrected_native_preflight": "https://github.com/menudoproblema/mongoeco/actions/runs/38834949507",
+  "all_wheel_members_byte_identical": true,
+  "wheel_member_count": 286,
+  "production_tests_and_dependency_metadata_unchanged": true,
+  "only_changed_verification_input": "Differential workflow setup now explicitly installs Hypothesis; both native setup branches are corrected.",
+  "fresh_native_jobs": 3,
+  "ci_input_causality": "The earlier complete suites remain evidence for identical installed code/data/metadata. Corrected main CI and the final tag CI repeat all required artifact gates before closure/publication."
+}

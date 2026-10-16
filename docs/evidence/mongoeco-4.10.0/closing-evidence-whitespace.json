@@ -1,0 +1,30 @@
+{
+  "status": "reviewed",
+  "source_and_document_diff_check": "passed",
+  "raw_evidence_paths_with_original_whitespace": [
+    "docs/evidence/mongoeco-4.10.0/ci-logs/main-116761979613.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/main-116761979672.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/main-116761979684.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399818.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399820.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399831.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399852.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399856.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399872.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399909.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399916.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399918.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399927.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399954.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399984.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765399988.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765400004.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765400043.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765400054.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765400078.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116765400139.txt",
+    "docs/evidence/mongoeco-4.10.0/ci-logs/tag-116771757055.txt"
+  ],
+  "diagnostic_sha256": "1eea2760bdbb2e5bbd297d6d918fe3e5b22b9ab218b812a8ccd38181109fedf5",
+  "policy": "Raw CI terminal output is preserved with its whitespace; readable terminal logs strip ANSI escape sequences only. No code or narrative whitespace issue is waived."
+}

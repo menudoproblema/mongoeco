@@ -1,0 +1,19 @@
+{
+  "version": "4.10.0",
+  "status": "resolved_by_normal_index_propagation",
+  "published_api_and_files_verified": true,
+  "failed_command": "python scripts/smoke_pypi_contract.py --version 4.10.0",
+  "error": "No matching distribution found for mongoeco==4.10.0",
+  "log": "published-initial-index-attempt.txt",
+  "sha256": "df734d8a01131bab07a216e2b007745dd564aca5c19bd31e4d895c9cf4c67c0c",
+  "recovery": "Wait for normal PyPI simple-index propagation; repeat the unchanged clean-install gate.",
+  "failed_attempts": 2,
+  "second_attempt": {
+    "log": "published-index-retry-2.txt",
+    "sha256": "1cd4f8c2386dc9dd760f1bcb0b476b99969aec11224f0258719efbc0317ffa02",
+    "error": "No matching distribution found for mongoeco==4.10.0"
+  },
+  "pip_subsequently_lists_version": "pip-index-diagnostic.txt",
+  "initial_status": "public_simple_index_not_yet_visible",
+  "unchanged_clean_install_gate": "passed"
+}

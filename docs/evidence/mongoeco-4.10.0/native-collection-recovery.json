@@ -2,7 +2,7 @@
   "initial_tag_object": "0b37388861ad129f5fa31ecbafcc27a9c1ad33cf",
   "initial_commit": "10e82bf4a98c775c79cf88e0350e97cfbf506846",
   "failed_tag_ci": "https://github.com/menudoproblema/mongoeco/actions/runs/38834508070",
-  "status": "publication_blocked_and_not_attempted",
+  "status": "resolved_before_publication",
   "cause": "The differential workflow installed pytest without Hypothesis, which is required by tests/conftest.py. Native capture succeeds; candidate pytest collection fails.",
   "correction": "Declare Hypothesis explicitly in both source and installed-wheel differential setup; keep existing constraints and all assertions.",
   "runtime_change": false,
@@ -32,5 +32,16 @@
       "collection_error": "ModuleNotFoundError: No module named 'hypothesis'"
     }
   ],
-  "retry": "Preserve the unpublished initial tag object and verify the corrected workflow before retrying the release."
+  "retry": "Preserve the unpublished initial tag object and verify the corrected workflow before retrying the release.",
+  "initial_status": "publication_blocked_and_not_attempted",
+  "resolution": {
+    "tag_retry": "tag-retry.json",
+    "source_native_preflight": "native-preflight-summary.json",
+    "final_tag_native": "native-tag-summary.json",
+    "final_main_ci": "https://github.com/menudoproblema/mongoeco/actions/runs/38834949307",
+    "final_tag_ci": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920",
+    "published_verification": "published-verification.json",
+    "runtime_unchanged": true,
+    "all_original_failures_retained": true
+  }
 }

@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "method": "Case-insensitive byte and path scan against private consumer identifiers; private mapping retained outside repository.",
+  "changed_files_scanned": 1768,
+  "total_file_and_archive_entries_scanned": 2350,
+  "matches": 0,
+  "artifacts": [
+    {
+      "file": "mongoeco-4.10.0.tar.gz",
+      "sha256": "15f456ae8160e0ce326c950ed2a0c155a17a7b4d03d75feb1ee3bff157142f71"
+    },
+    {
+      "file": "mongoeco-4.10.0-py3-none-any.whl",
+      "sha256": "dc3246314d2de35ae7df09c870784b1bd02497d765d9ff16d429c929db1a0ea4"
+    }
+  ]
+}

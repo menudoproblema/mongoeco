@@ -1,0 +1,401 @@
+﻿2026-10-16T01:37:02.9153860Z Current runner version: '2.337.0'
+2026-10-16T01:37:02.9191954Z ##[group]Runner Image Provisioner
+2026-10-16T01:37:02.9193338Z Hosted Compute Agent
+2026-10-16T01:37:02.9194426Z Version: 20261012.601
+2026-10-16T01:37:02.9195484Z Commit: f3dc54e1fb89da6852db922499a0233137369e1d
+2026-10-16T01:37:02.9196813Z Build Date: 2026-10-12T17:48:21Z
+2026-10-16T01:37:02.9198272Z Worker ID: {37ebc94c-9ed6-45da-bef2-f899a29d4d75}
+2026-10-16T01:37:02.9199428Z Region: eastus
+2026-10-16T01:37:02.9200620Z Cloud: Azure
+2026-10-16T01:37:02.9201554Z ##[endgroup]
+2026-10-16T01:37:02.9204108Z ##[group]Operating System
+2026-10-16T01:37:02.9205141Z Ubuntu
+2026-10-16T01:37:02.9205948Z 24.04.5
+2026-10-16T01:37:02.9206864Z LTS
+2026-10-16T01:37:02.9208041Z ##[endgroup]
+2026-10-16T01:37:02.9208996Z ##[group]Runner Image
+2026-10-16T01:37:02.9209975Z Image: ubuntu-24.04
+2026-10-16T01:37:02.9210941Z Version: 20261012.334.1
+2026-10-16T01:37:02.9213799Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-16T01:37:02.9216724Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+2026-10-16T01:37:02.9218674Z ##[endgroup]
+2026-10-16T01:37:02.9220809Z ##[group]GITHUB_TOKEN Permissions
+2026-10-16T01:37:02.9224092Z Contents: read
+2026-10-16T01:37:02.9225171Z Metadata: read
+2026-10-16T01:37:02.9226214Z Packages: read
+2026-10-16T01:37:02.9227412Z ##[endgroup]
+2026-10-16T01:37:02.9230819Z Secret source: Actions
+2026-10-16T01:37:02.9232335Z Cache mode: write
+2026-10-16T01:37:02.9233926Z Prepare workflow directory
+2026-10-16T01:37:02.9732205Z Prepare all required actions
+2026-10-16T01:37:02.9782173Z Getting action download info
+2026-10-16T01:37:03.1429475Z Download action repository 'actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09' (SHA:fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09)
+2026-10-16T01:37:03.2749334Z Download action repository 'actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1' (SHA:ece7cb06caefa5fff74198d8649806c4678c61a1)
+2026-10-16T01:37:03.3492444Z Download action repository 'actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0' (SHA:634f93cb2916e3fdff6788551b99b062d0335ce0)
+2026-10-16T01:37:03.6304744Z Complete job name: Pytest kit (3.13, pytest 9.1.1, SDK 4.9.2)
+2026-10-16T01:37:03.7156679Z ##[group]Run actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+2026-10-16T01:37:03.7158060Z with:
+2026-10-16T01:37:03.7158537Z   repository: menudoproblema/mongoeco
+2026-10-16T01:37:03.7162351Z   token: ***
+2026-10-16T01:37:03.7162789Z   ssh-strict: true
+2026-10-16T01:37:03.7163232Z   ssh-user: git
+2026-10-16T01:37:03.7163684Z   persist-credentials: true
+2026-10-16T01:37:03.7164178Z   clean: true
+2026-10-16T01:37:03.7164630Z   sparse-checkout-cone-mode: true
+2026-10-16T01:37:03.7165170Z   fetch-depth: 1
+2026-10-16T01:37:03.7165608Z   fetch-tags: false
+2026-10-16T01:37:03.7166069Z   show-progress: true
+2026-10-16T01:37:03.7166529Z   lfs: false
+2026-10-16T01:37:03.7166952Z   submodules: false
+2026-10-16T01:37:03.7167614Z   set-safe-directory: true
+2026-10-16T01:37:03.7168152Z   allow-unsafe-pr-checkout: false
+2026-10-16T01:37:03.7168947Z env:
+2026-10-16T01:37:03.7169407Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-16T01:37:03.7169952Z ##[endgroup]
+2026-10-16T01:37:03.8218299Z Syncing repository: menudoproblema/mongoeco
+2026-10-16T01:37:03.8221069Z ##[group]Getting Git version info
+2026-10-16T01:37:03.8222221Z Working directory is '/home/runner/work/mongoeco/mongoeco'
+2026-10-16T01:37:03.8223834Z [command]/usr/bin/git version
+2026-10-16T01:37:03.8293491Z git version 2.55.0
+2026-10-16T01:37:03.8326703Z ##[endgroup]
+2026-10-16T01:37:03.8345047Z Temporarily overriding HOME='/home/runner/work/_temp/c82be533-18db-4e70-b4d7-6fb97321bb11' before making global git config changes
+2026-10-16T01:37:03.8347791Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-16T01:37:03.8352790Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mongoeco/mongoeco
+2026-10-16T01:37:03.8408725Z Deleting the contents of '/home/runner/work/mongoeco/mongoeco'
+2026-10-16T01:37:03.8413092Z ##[group]Initializing the repository
+2026-10-16T01:37:03.8417791Z [command]/usr/bin/git init /home/runner/work/mongoeco/mongoeco
+2026-10-16T01:37:03.8536846Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-16T01:37:03.8539639Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-16T01:37:03.8542243Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-16T01:37:03.8543620Z hint: call:
+2026-10-16T01:37:03.8544315Z hint:
+2026-10-16T01:37:03.8545228Z hint: 	git config --global init.defaultBranch <name>
+2026-10-16T01:37:03.8546253Z hint:
+2026-10-16T01:37:03.8547404Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-16T01:37:03.8548954Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-16T01:37:03.8550226Z hint:
+2026-10-16T01:37:03.8550997Z hint: 	git branch -m <name>
+2026-10-16T01:37:03.8551768Z hint:
+2026-10-16T01:37:03.8552813Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-16T01:37:03.8554564Z Initialized empty Git repository in /home/runner/work/mongoeco/mongoeco/.git/
+2026-10-16T01:37:03.8557895Z [command]/usr/bin/git remote add origin https://github.com/menudoproblema/mongoeco
+2026-10-16T01:37:03.8609801Z ##[endgroup]
+2026-10-16T01:37:03.8611089Z ##[group]Disabling automatic garbage collection
+2026-10-16T01:37:03.8613171Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-16T01:37:03.8667706Z ##[endgroup]
+2026-10-16T01:37:03.8682772Z ##[group]Setting up auth
+2026-10-16T01:37:03.8684317Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-16T01:37:03.8708192Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-16T01:37:03.9188823Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-16T01:37:03.9222970Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-16T01:37:03.9489036Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-16T01:37:03.9534341Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-16T01:37:03.9817646Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-16T01:37:03.9864262Z ##[endgroup]
+2026-10-16T01:37:03.9865294Z ##[group]Fetching the repository
+2026-10-16T01:37:03.9875552Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e763c2a75be6aac9de46dbc8e9a6627af0fb02f5:refs/tags/v4.10.0
+2026-10-16T01:37:05.1997505Z From https://github.com/menudoproblema/mongoeco
+2026-10-16T01:37:05.1999465Z  * [new ref]         e763c2a75be6aac9de46dbc8e9a6627af0fb02f5 -> v4.10.0
+2026-10-16T01:37:05.2004018Z ##[endgroup]
+2026-10-16T01:37:05.2006152Z ##[group]Determining the checkout info
+2026-10-16T01:37:05.2008824Z ##[endgroup]
+2026-10-16T01:37:05.2014208Z [command]/usr/bin/git sparse-checkout disable
+2026-10-16T01:37:05.2074862Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-16T01:37:05.2118441Z ##[group]Checking out the ref
+2026-10-16T01:37:05.2131532Z [command]/usr/bin/git checkout --progress --force refs/tags/v4.10.0
+2026-10-16T01:37:05.6084207Z Note: switching to 'refs/tags/v4.10.0'.
+2026-10-16T01:37:05.6084845Z 
+2026-10-16T01:37:05.6085180Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-16T01:37:05.6085990Z changes and commit them, and you can discard any commits you make in this
+2026-10-16T01:37:05.6087965Z state without impacting any branches by switching back to a branch.
+2026-10-16T01:37:05.6088629Z 
+2026-10-16T01:37:05.6089113Z If you want to create a new branch to retain commits you create, you may
+2026-10-16T01:37:05.6090149Z do so (now or later) by using -c with the switch command. Example:
+2026-10-16T01:37:05.6090731Z 
+2026-10-16T01:37:05.6091014Z   git switch -c <new-branch-name>
+2026-10-16T01:37:05.6093381Z 
+2026-10-16T01:37:05.6093595Z Or undo this operation with:
+2026-10-16T01:37:05.6093851Z 
+2026-10-16T01:37:05.6093994Z   git switch -
+2026-10-16T01:37:05.6094202Z 
+2026-10-16T01:37:05.6094504Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-16T01:37:05.6094921Z 
+2026-10-16T01:37:05.6131892Z HEAD is now at e763c2a fix(ci): install required Hypothesis tooling for native parity
+2026-10-16T01:37:05.6145977Z ##[endgroup]
+2026-10-16T01:37:05.6525088Z [command]/usr/bin/git log -1 --format=%H
+2026-10-16T01:37:05.6561283Z e763c2a75be6aac9de46dbc8e9a6627af0fb02f5
+2026-10-16T01:37:05.7138872Z ##[group]Run actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+2026-10-16T01:37:05.7139422Z with:
+2026-10-16T01:37:05.7139691Z   python-version: 3.13
+2026-10-16T01:37:05.7139979Z   check-latest: false
+2026-10-16T01:37:05.7142572Z   token: ***
+2026-10-16T01:37:05.7142844Z   update-environment: true
+2026-10-16T01:37:05.7143152Z   allow-prereleases: false
+2026-10-16T01:37:05.7143473Z   freethreaded: false
+2026-10-16T01:37:05.7143733Z env:
+2026-10-16T01:37:05.7143989Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-16T01:37:05.7144312Z ##[endgroup]
+2026-10-16T01:37:05.8561457Z ##[group]Installed versions
+2026-10-16T01:37:05.9620689Z Successfully set up CPython (3.13.16)
+2026-10-16T01:37:05.9621723Z ##[endgroup]
+2026-10-16T01:37:06.0024273Z ##[group]Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+2026-10-16T01:37:06.0025103Z with:
+2026-10-16T01:37:06.0025520Z   name: release-distributions
+2026-10-16T01:37:06.0025999Z   path: dist
+2026-10-16T01:37:06.0026433Z   merge-multiple: false
+2026-10-16T01:37:06.0026916Z   repository: menudoproblema/mongoeco
+2026-10-16T01:37:06.0027698Z   run-id: 38836040920
+2026-10-16T01:37:06.0028104Z env:
+2026-10-16T01:37:06.0028497Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-16T01:37:06.0029148Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.0030007Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-16T01:37:06.0030829Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.0031584Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.0032335Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.0033133Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-16T01:37:06.0033757Z ##[endgroup]
+2026-10-16T01:37:06.1696128Z Downloading single artifact
+2026-10-16T01:37:06.1869471Z (node:2317) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-16T01:37:06.1870933Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-16T01:37:06.2621519Z Preparing to download the following artifacts:
+2026-10-16T01:37:06.2622747Z - release-distributions (ID: 12018778726, Size: 1455451, Expected Digest: sha256:dad26e22295cdb1da39ee67cddaaa94f1cd0b8b02d654afe2fef78d4853b083d)
+2026-10-16T01:37:06.3742212Z Redirecting to blob download url: https://productionresultssa11.blob.core.windows.net/actions-results/c7f71372-157e-8d83-97fd-bdfe4debb421/workflow-job-run-41608e55-8fdc-5bad-bbc2-06770ac09534/artifacts/f26d0cb0ba1e9fd789de20f0f4bd6c7d894c964a0a5d8c868c48e73d7fa69c46.zip
+2026-10-16T01:37:06.3744688Z Starting download of artifact to: /home/runner/work/mongoeco/mongoeco/dist
+2026-10-16T01:37:06.4245331Z (node:2317) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-10-16T01:37:06.4621622Z SHA256 digest of downloaded artifact is dad26e22295cdb1da39ee67cddaaa94f1cd0b8b02d654afe2fef78d4853b083d
+2026-10-16T01:37:06.4622536Z Artifact download completed successfully.
+2026-10-16T01:37:06.4622873Z Total of 1 artifact(s) downloaded
+2026-10-16T01:37:06.4628736Z Download artifact has finished successfully
+2026-10-16T01:37:06.5111751Z ##[group]Run actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+2026-10-16T01:37:06.5112232Z with:
+2026-10-16T01:37:06.5112458Z   name: release-distribution-manifest
+2026-10-16T01:37:06.5112743Z   path: artifact-manifest
+2026-10-16T01:37:06.5112993Z   merge-multiple: false
+2026-10-16T01:37:06.5113246Z   repository: menudoproblema/mongoeco
+2026-10-16T01:37:06.5113510Z   run-id: 38836040920
+2026-10-16T01:37:06.5113719Z env:
+2026-10-16T01:37:06.5113920Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-16T01:37:06.5114264Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.5114697Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-16T01:37:06.5115165Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.5115550Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.5115946Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.5116383Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-16T01:37:06.5116712Z ##[endgroup]
+2026-10-16T01:37:06.6746043Z Downloading single artifact
+2026-10-16T01:37:06.6922987Z (node:2330) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-16T01:37:06.6924493Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-16T01:37:06.7609824Z Preparing to download the following artifacts:
+2026-10-16T01:37:06.7612582Z - release-distribution-manifest (ID: 12019347191, Size: 274, Expected Digest: sha256:cb83c342a2c045008b1eb3fcb7f560c17c191e5c15c61d56329e11a5de632324)
+2026-10-16T01:37:06.8889684Z Redirecting to blob download url: https://productionresultssa11.blob.core.windows.net/actions-results/c7f71372-157e-8d83-97fd-bdfe4debb421/workflow-job-run-41608e55-8fdc-5bad-bbc2-06770ac09534/artifacts/5506a40141b9dcd509f88698d50c81d9076d24b6031975733f9bfd771562cafe.zip
+2026-10-16T01:37:06.8898426Z Starting download of artifact to: /home/runner/work/mongoeco/mongoeco/artifact-manifest
+2026-10-16T01:37:06.9188113Z (node:2330) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-10-16T01:37:06.9274419Z SHA256 digest of downloaded artifact is cb83c342a2c045008b1eb3fcb7f560c17c191e5c15c61d56329e11a5de632324
+2026-10-16T01:37:06.9275792Z Artifact download completed successfully.
+2026-10-16T01:37:06.9276600Z Total of 1 artifact(s) downloaded
+2026-10-16T01:37:06.9282099Z Download artifact has finished successfully
+2026-10-16T01:37:06.9450501Z ##[group]Run sha256sum -c artifact-manifest/SHA256SUMS
+2026-10-16T01:37:06.9451054Z sha256sum -c artifact-manifest/SHA256SUMS
+2026-10-16T01:37:06.9451407Z python - <<'PY'
+2026-10-16T01:37:06.9451672Z from pathlib import Path
+2026-10-16T01:37:06.9452112Z lines = Path('requirements/ci-constraints.txt').read_text().splitlines()
+2026-10-16T01:37:06.9452616Z Path('/tmp/kit-constraints.txt').write_text('\n'.join(
+2026-10-16T01:37:06.9453093Z     line for line in lines if not line.startswith(('pytest==', 'pymongo=='))
+2026-10-16T01:37:06.9453506Z ) + '\n')
+2026-10-16T01:37:06.9453721Z PY
+2026-10-16T01:37:06.9454020Z WHEEL="$(find dist -name 'mongoeco-*.whl' -print -quit)"
+2026-10-16T01:37:06.9454509Z python -m pip install -c /tmp/kit-constraints.txt "${WHEEL}[pytest]" \
+2026-10-16T01:37:06.9454948Z   "pytest==9.1.1" "pymongo==4.9.2" \
+2026-10-16T01:37:06.9455370Z   hypothesis pytest-asyncio anyio pytest-xdist
+2026-10-16T01:37:06.9739526Z shell: /usr/bin/bash -e {0}
+2026-10-16T01:37:06.9739860Z env:
+2026-10-16T01:37:06.9740102Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-16T01:37:06.9740478Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.9740945Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-16T01:37:06.9741395Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.9741800Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.9742205Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:06.9742620Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-16T01:37:06.9742961Z ##[endgroup]
+2026-10-16T01:37:06.9892556Z dist/mongoeco-4.10.0-py3-none-any.whl: OK
+2026-10-16T01:37:06.9897046Z dist/mongoeco-4.10.0.tar.gz: OK
+2026-10-16T01:37:08.1400168Z Processing ./dist/mongoeco-4.10.0-py3-none-any.whl (from mongoeco==4.10.0)
+2026-10-16T01:37:08.2884551Z Collecting pytest==9.1.1
+2026-10-16T01:37:08.3758950Z   Downloading pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+2026-10-16T01:37:08.7408547Z Collecting pymongo==4.9.2
+2026-10-16T01:37:08.7598244Z   Downloading pymongo-4.9.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (22 kB)
+2026-10-16T01:37:09.1081006Z Collecting hypothesis
+2026-10-16T01:37:09.1828782Z   Downloading hypothesis-6.165.9-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.7 kB)
+2026-10-16T01:37:09.2208270Z Collecting pytest-asyncio
+2026-10-16T01:37:09.2374739Z   Downloading pytest_asyncio-1.4.0-py3-none-any.whl.metadata (4.1 kB)
+2026-10-16T01:37:09.2716944Z Collecting anyio
+2026-10-16T01:37:09.2896421Z   Downloading anyio-4.15.1-py3-none-any.whl.metadata (4.7 kB)
+2026-10-16T01:37:09.3208376Z Collecting pytest-xdist
+2026-10-16T01:37:09.3387438Z   Downloading pytest_xdist-3.8.0-py3-none-any.whl.metadata (3.0 kB)
+2026-10-16T01:37:09.3685181Z Collecting cxp<6,>=5.0.0 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:09.3854699Z   Downloading cxp-5.0.0-py3-none-any.whl.metadata (4.2 kB)
+2026-10-16T01:37:09.4631033Z Collecting msgspec<1,>=0.20 (from mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:09.4814706Z   Downloading msgspec-0.21.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.8 kB)
+2026-10-16T01:37:09.5099884Z Collecting pyuca<2,>=1.2 (from mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:09.5292321Z   Downloading pyuca-1.2-py2.py3-none-any.whl.metadata (649 bytes)
+2026-10-16T01:37:09.8003839Z Collecting rpds-py<2027,>=0.27 (from mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:09.8197814Z   Downloading rpds_py-2026.6.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2026-10-16T01:37:09.9214784Z Collecting shapely<3,>=2.2 (from mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:09.9575122Z   Downloading shapely-2.2.0-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (6.7 kB)
+2026-10-16T01:37:10.3177943Z Collecting usearch<3,>=2.26.4 (from mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:10.3392908Z   Downloading usearch-2.26.4-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (35 kB)
+2026-10-16T01:37:10.3771586Z Collecting iniconfig>=1.0.1 (from pytest==9.1.1)
+2026-10-16T01:37:10.4271517Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-10-16T01:37:10.4591167Z Collecting packaging>=22 (from pytest==9.1.1)
+2026-10-16T01:37:10.4760919Z   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+2026-10-16T01:37:10.5061830Z Collecting pluggy<2,>=1.5 (from pytest==9.1.1)
+2026-10-16T01:37:10.5238354Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-10-16T01:37:10.5576589Z Collecting pygments>=2.7.2 (from pytest==9.1.1)
+2026-10-16T01:37:10.5743524Z   Downloading pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+2026-10-16T01:37:10.6070396Z Collecting dnspython<3.0.0,>=1.16.0 (from pymongo==4.9.2)
+2026-10-16T01:37:10.6233705Z   Downloading dnspython-2.8.0-py3-none-any.whl.metadata (5.7 kB)
+2026-10-16T01:37:10.6632842Z Collecting jsonschema<5,>=4.23 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:10.6796806Z   Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+2026-10-16T01:37:10.7179701Z Collecting referencing<1,>=0.35 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:10.7347027Z   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2026-10-16T01:37:10.7623120Z Collecting rfc8785<1,>=0.1.4 (from cxp[exchange]<6,>=5.0.0->mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:10.7797582Z   Downloading rfc8785-0.1.4-py3-none-any.whl.metadata (3.4 kB)
+2026-10-16T01:37:10.8118197Z Collecting attrs>=22.2.0 (from jsonschema<5,>=4.23->cxp[exchange]<6,>=5.0.0->mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:10.8279994Z   Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+2026-10-16T01:37:10.8588609Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5,>=4.23->cxp[exchange]<6,>=5.0.0->mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:10.8757540Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2026-10-16T01:37:11.1002054Z Collecting numpy>=1.26 (from shapely<3,>=2.2->mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:11.1176322Z   Downloading numpy-2.5.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-10-16T01:37:11.1592475Z Collecting tqdm (from usearch<3,>=2.26.4->mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:11.1829016Z   Downloading tqdm-4.70.0-py3-none-any.whl.metadata (57 kB)
+2026-10-16T01:37:11.3210513Z Collecting numkong (from usearch<3,>=2.26.4->mongoeco==4.10.0->mongoeco==4.10.0)
+2026-10-16T01:37:11.3398898Z   Downloading numkong-7.8.0-cp313-cp313-manylinux_2_28_x86_64.whl.metadata (86 kB)
+2026-10-16T01:37:11.3771812Z Collecting sortedcontainers<3.0.0,>=2.1.0 (from hypothesis)
+2026-10-16T01:37:11.3936386Z   Downloading sortedcontainers-2.4.0-py2.py3-none-any.whl.metadata (10 kB)
+2026-10-16T01:37:11.4268390Z Collecting idna>=2.8 (from anyio)
+2026-10-16T01:37:11.4431358Z   Downloading idna-3.18-py3-none-any.whl.metadata (6.1 kB)
+2026-10-16T01:37:11.4843351Z Collecting typing_extensions>=4.16.0 (from anyio)
+2026-10-16T01:37:11.5053179Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+2026-10-16T01:37:11.5358525Z Collecting execnet>=2.1 (from pytest-xdist)
+2026-10-16T01:37:11.5543461Z   Downloading execnet-2.1.2-py3-none-any.whl.metadata (2.9 kB)
+2026-10-16T01:37:11.5814132Z Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+2026-10-16T01:37:11.6782873Z Downloading pymongo-4.9.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.2 MB)
+2026-10-16T01:37:11.7437535Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 31.4 MB/s  0:00:00
+2026-10-16T01:37:11.7671609Z Downloading cxp-5.0.0-py3-none-any.whl (58 kB)
+2026-10-16T01:37:11.7856925Z Downloading dnspython-2.8.0-py3-none-any.whl (331 kB)
+2026-10-16T01:37:11.8047605Z Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-10-16T01:37:11.8236088Z Downloading msgspec-0.21.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (225 kB)
+2026-10-16T01:37:11.8430302Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-10-16T01:37:11.8707404Z Downloading pyuca-1.2-py2.py3-none-any.whl (1.5 MB)
+2026-10-16T01:37:11.8937646Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 59.1 MB/s  0:00:00
+2026-10-16T01:37:11.9108223Z Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-10-16T01:37:11.9297870Z Downloading rfc8785-0.1.4-py3-none-any.whl (9.2 kB)
+2026-10-16T01:37:11.9490006Z Downloading rpds_py-2026.6.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (365 kB)
+2026-10-16T01:37:11.9738501Z Downloading shapely-2.2.0-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (2.3 MB)
+2026-10-16T01:37:11.9958164Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 105.0 MB/s  0:00:00
+2026-10-16T01:37:12.0125504Z Downloading usearch-2.26.4-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (2.4 MB)
+2026-10-16T01:37:12.0479243Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.4/2.4 MB 63.8 MB/s  0:00:00
+2026-10-16T01:37:12.0670452Z Downloading hypothesis-6.165.9-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.2 MB)
+2026-10-16T01:37:12.0789246Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 97.5 MB/s  0:00:00
+2026-10-16T01:37:12.0969974Z Downloading sortedcontainers-2.4.0-py2.py3-none-any.whl (29 kB)
+2026-10-16T01:37:12.1168391Z Downloading pytest_asyncio-1.4.0-py3-none-any.whl (16 kB)
+2026-10-16T01:37:12.1380070Z Downloading anyio-4.15.1-py3-none-any.whl (132 kB)
+2026-10-16T01:37:12.1571061Z Downloading pytest_xdist-3.8.0-py3-none-any.whl (46 kB)
+2026-10-16T01:37:12.1756676Z Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-10-16T01:37:12.1941448Z Downloading execnet-2.1.2-py3-none-any.whl (40 kB)
+2026-10-16T01:37:12.2496614Z Downloading idna-3.18-py3-none-any.whl (65 kB)
+2026-10-16T01:37:12.2722923Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-10-16T01:37:12.3002620Z Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-10-16T01:37:12.3378461Z Downloading numpy-2.5.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+2026-10-16T01:37:12.5037425Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.7/16.7 MB 100.7 MB/s  0:00:00
+2026-10-16T01:37:12.5206134Z Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-10-16T01:37:12.5403237Z Downloading pygments-2.20.0-py3-none-any.whl (1.2 MB)
+2026-10-16T01:37:12.5471357Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 221.1 MB/s  0:00:00
+2026-10-16T01:37:12.5666667Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-10-16T01:37:12.5918228Z Downloading numkong-7.8.0-cp313-cp313-manylinux_2_28_x86_64.whl (10.5 MB)
+2026-10-16T01:37:12.7377048Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.5/10.5 MB 74.0 MB/s  0:00:00
+2026-10-16T01:37:12.7541128Z Downloading tqdm-4.70.0-py3-none-any.whl (80 kB)
+2026-10-16T01:37:12.9540382Z Installing collected packages: sortedcontainers, pyuca, typing_extensions, tqdm, rpds-py, rfc8785, pygments, pluggy, packaging, numpy, numkong, msgspec, iniconfig, idna, hypothesis, execnet, dnspython, attrs, usearch, shapely, referencing, pytest, pymongo, cxp, anyio, pytest-xdist, pytest-asyncio, jsonschema-specifications, jsonschema, mongoeco
+2026-10-16T01:37:19.2924894Z 
+2026-10-16T01:37:19.2963222Z Successfully installed anyio-4.15.1 attrs-26.1.0 cxp-5.0.0 dnspython-2.8.0 execnet-2.1.2 hypothesis-6.165.9 idna-3.18 iniconfig-2.3.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 mongoeco-4.10.0 msgspec-0.21.1 numkong-7.8.0 numpy-2.5.2 packaging-26.3 pluggy-1.6.0 pygments-2.20.0 pymongo-4.9.2 pytest-9.1.1 pytest-asyncio-1.4.0 pytest-xdist-3.8.0 pyuca-1.2 referencing-0.37.0 rfc8785-0.1.4 rpds-py-2026.6.3 shapely-2.2.0 sortedcontainers-2.4.0 tqdm-4.70.0 typing_extensions-4.16.0 usearch-2.26.4
+2026-10-16T01:37:19.4801067Z ##[group]Run python -m pytest tests/integration/pytest_kit \
+2026-10-16T01:37:19.4801575Z python -m pytest tests/integration/pytest_kit \
+2026-10-16T01:37:19.4801983Z   tests/integration/wire/test_proxy_lifecycle.py \
+2026-10-16T01:37:19.4802371Z   tests/integration/wire/test_unacknowledged.py \
+2026-10-16T01:37:19.4802799Z   tests/integration/api/test_write_preflight_parity.py -q
+2026-10-16T01:37:19.4867712Z shell: /usr/bin/bash -e {0}
+2026-10-16T01:37:19.4867976Z env:
+2026-10-16T01:37:19.4868188Z   MONGOECO_TEST_INSTALLED_ARTIFACT: 1
+2026-10-16T01:37:19.4868537Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:19.4868978Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib/pkgconfig
+2026-10-16T01:37:19.4869407Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:19.4869804Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:19.4870238Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.16/x64
+2026-10-16T01:37:19.4870805Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.16/x64/lib
+2026-10-16T01:37:19.4871139Z ##[endgroup]
+2026-10-16T01:38:56.6381410Z ........................................................................ [  2%]
+2026-10-16T01:38:58.3308284Z ........................................................................ [  4%]
+2026-10-16T01:39:00.1668695Z ........................................................................ [  6%]
+2026-10-16T01:39:02.0858720Z ........................................................................ [  8%]
+2026-10-16T01:39:04.0135791Z ........................................................................ [ 10%]
+2026-10-16T01:39:05.9639690Z ........................................................................ [ 12%]
+2026-10-16T01:39:07.8098570Z ........................................................................ [ 14%]
+2026-10-16T01:39:09.7152285Z ........................................................................ [ 16%]
+2026-10-16T01:39:11.6307352Z ........................................................................ [ 18%]
+2026-10-16T01:39:13.6347800Z ........................................................................ [ 20%]
+2026-10-16T01:39:15.4823373Z ........................................................................ [ 23%]
+2026-10-16T01:39:17.3725215Z ........................................................................ [ 25%]
+2026-10-16T01:39:19.3519446Z ........................................................................ [ 27%]
+2026-10-16T01:39:21.3249931Z ........................................................................ [ 29%]
+2026-10-16T01:39:23.3998316Z ........................................................................ [ 31%]
+2026-10-16T01:39:25.4162250Z ........................................................................ [ 33%]
+2026-10-16T01:39:27.4584092Z ........................................................................ [ 35%]
+2026-10-16T01:39:29.4772076Z ........................................................................ [ 37%]
+2026-10-16T01:39:31.5111666Z ........................................................................ [ 39%]
+2026-10-16T01:39:33.4272270Z ........................................................................ [ 41%]
+2026-10-16T01:39:35.4707002Z ........................................................................ [ 43%]
+2026-10-16T01:39:37.5111290Z ........................................................................ [ 46%]
+2026-10-16T01:39:39.6928254Z ........................................................................ [ 48%]
+2026-10-16T01:39:41.7815263Z ........................................................................ [ 50%]
+2026-10-16T01:39:43.8869464Z ........................................................................ [ 52%]
+2026-10-16T01:39:46.0401468Z ........................................................................ [ 54%]
+2026-10-16T01:39:48.0913737Z ........................................................................ [ 56%]
+2026-10-16T01:39:50.2986300Z ........................................................................ [ 58%]
+2026-10-16T01:39:52.4074472Z ........................................................................ [ 60%]
+2026-10-16T01:39:54.4504913Z ........................................................................ [ 62%]
+2026-10-16T01:39:55.7230897Z ........................................................................ [ 64%]
+2026-10-16T01:39:57.1188432Z ........................................................................ [ 66%]
+2026-10-16T01:39:58.4629157Z ........................................................................ [ 69%]
+2026-10-16T01:39:59.8505533Z ........................................................................ [ 71%]
+2026-10-16T01:40:01.1300984Z ........................................................................ [ 73%]
+2026-10-16T01:40:02.5644475Z ........................................................................ [ 75%]
+2026-10-16T01:40:03.9585715Z ........................................................................ [ 77%]
+2026-10-16T01:40:05.2420276Z ........................................................................ [ 79%]
+2026-10-16T01:40:06.6582463Z ........................................................................ [ 81%]
+2026-10-16T01:40:08.0428617Z ........................................................................ [ 83%]
+2026-10-16T01:40:09.5298682Z ........................................................................ [ 85%]
+2026-10-16T01:40:10.9458706Z ........................................................................ [ 87%]
+2026-10-16T01:40:12.4276821Z ........................................................................ [ 89%]
+2026-10-16T01:40:13.7742252Z ........................................................................ [ 92%]
+2026-10-16T01:40:15.2762453Z ........................................................................ [ 94%]
+2026-10-16T01:40:16.6858948Z ........................................................................ [ 96%]
+2026-10-16T01:40:18.2025813Z ........................................................................ [ 98%]
+2026-10-16T01:40:19.5591142Z ..........................................................               [100%]
+2026-10-16T01:40:19.5593478Z 3442 passed in 178.45s (0:02:58)
+2026-10-16T01:40:19.9727374Z Post job cleanup.
+2026-10-16T01:40:20.1212029Z Post job cleanup.
+2026-10-16T01:40:20.2153405Z [command]/usr/bin/git version
+2026-10-16T01:40:20.2202335Z git version 2.55.0
+2026-10-16T01:40:20.2250867Z Temporarily overriding HOME='/home/runner/work/_temp/cfaab653-b073-46c0-9e9d-38329f78742a' before making global git config changes
+2026-10-16T01:40:20.2252198Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-16T01:40:20.2256090Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mongoeco/mongoeco
+2026-10-16T01:40:20.2309160Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-16T01:40:20.2356476Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-16T01:40:20.2632644Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-16T01:40:20.2673052Z http.https://github.com/.extraheader
+2026-10-16T01:40:20.2687680Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-16T01:40:20.2731834Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-16T01:40:20.3027615Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-16T01:40:20.3070637Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-16T01:40:20.3492569Z Cleaning up orphan processes
+2026-10-16T01:40:20.3810158Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

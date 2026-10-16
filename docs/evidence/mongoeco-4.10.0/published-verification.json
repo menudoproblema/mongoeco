@@ -1,0 +1,138 @@
+{
+  "version": "4.10.0",
+  "status": "published_and_verified",
+  "tag": "v4.10.0",
+  "tag_object": "3b722d592a2b1004bc7e64cd4eaed8ea4009c437",
+  "tagged_commit": "e763c2a75be6aac9de46dbc8e9a6627af0fb02f5",
+  "main_ci": "https://github.com/menudoproblema/mongoeco/actions/runs/38834949307",
+  "tag_ci": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920",
+  "main_and_tag_ci": "success",
+  "artifacts": [
+    {
+      "filename": "mongoeco-4.10.0-py3-none-any.whl",
+      "sha256": "dc3246314d2de35ae7df09c870784b1bd02497d765d9ff16d429c929db1a0ea4",
+      "url": "https://files.pythonhosted.org/packages/34/04/1ed634f778fd73b1cdace1f6dd8f93eedf0487be279cfb39376282a1f9f1/mongoeco-4.10.0-py3-none-any.whl",
+      "upload_time": "2026-10-16T02:00:46.501076Z",
+      "identical_to_tested_ci_artifact": true,
+      "provenance_url": "https://pypi.org/integrity/mongoeco/4.10.0/mongoeco-4.10.0-py3-none-any.whl/provenance",
+      "publishers": [
+        {
+          "environment": "pypi",
+          "kind": "GitHub",
+          "repository": "menudoproblema/mongoeco",
+          "workflow": "ci.yml"
+        }
+      ],
+      "attestation_subject_matches_artifact": true
+    },
+    {
+      "filename": "mongoeco-4.10.0.tar.gz",
+      "sha256": "15f456ae8160e0ce326c950ed2a0c155a17a7b4d03d75feb1ee3bff157142f71",
+      "url": "https://files.pythonhosted.org/packages/a0/36/84fb16468ae771f06c1477fbcb5de98420d81f32b5fc0cba0a99f94e5d98/mongoeco-4.10.0.tar.gz",
+      "upload_time": "2026-10-16T02:00:48.563053Z",
+      "identical_to_tested_ci_artifact": true,
+      "provenance_url": "https://pypi.org/integrity/mongoeco/4.10.0/mongoeco-4.10.0.tar.gz/provenance",
+      "publishers": [
+        {
+          "environment": "pypi",
+          "kind": "GitHub",
+          "repository": "menudoproblema/mongoeco",
+          "workflow": "ci.yml"
+        }
+      ],
+      "attestation_subject_matches_artifact": true
+    }
+  ],
+  "runtime_files_match_checkout": 281,
+  "runtime_sha256": "8bfdb25dc0f902e33ecddbccf91aac9e5d6aa4de0429999a7aad8511a6e01968",
+  "native_jobs": [
+    {
+      "name": "Required MongoDB release differential / MongoDB 7.0 differential",
+      "databaseId": 116765399820,
+      "conclusion": "success",
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399820"
+    },
+    {
+      "name": "Required MongoDB release differential / MongoDB 8.0 differential",
+      "databaseId": 116765399918,
+      "conclusion": "success",
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399918"
+    },
+    {
+      "name": "Required MongoDB release differential / MongoDB 9.0 differential",
+      "databaseId": 116765400139,
+      "conclusion": "success",
+      "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765400139"
+    }
+  ],
+  "public_installation_verification": {
+    "status": "passed",
+    "source": "https://pypi.org/simple",
+    "clean_venv": true,
+    "installed_runtime_files": 281,
+    "installed_runtime_identical_to_published_wheel": true,
+    "pytest_regressions": 3442,
+    "skips": 0,
+    "conformance_engines": [
+      "MemoryEngine",
+      "SQLiteEngine"
+    ],
+    "pip_check": "passed",
+    "contracts": "passed",
+    "version": "4.10.0",
+    "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+    "module": "/private/tmp/mongoeco-410/pypi-smoke/lib/python3.14/site-packages/mongoeco",
+    "dependencies": {
+      "mongoeco": "4.10.0",
+      "pymongo": "4.19.0",
+      "pytest": "9.1.1",
+      "pytest-asyncio": "1.4.0",
+      "anyio": "4.15.1",
+      "pytest-xdist": "3.8.0",
+      "hypothesis": "6.165.11"
+    }
+  },
+  "public_gate_logs": [
+    {
+      "file": "published-gate-0.txt",
+      "sha256": "03a29cc56344008da3b07beb92c64932905b01d85f6538491022628e64b1b9da",
+      "exit_code": 0
+    },
+    {
+      "file": "published-gate-1.txt",
+      "sha256": "8fd728731a0b5f98990c879b3dcaeb4157e2824a82afad58d408cbeab348fc6b",
+      "exit_code": 0
+    },
+    {
+      "file": "published-gate-2.txt",
+      "sha256": "9261363b733079a641c2e4cc9bc46ffa1d8336945a87f807b6cf68847dbc9b09",
+      "exit_code": 0
+    },
+    {
+      "file": "published-gate-3.txt",
+      "sha256": "963faee655f44c4b71b6b668ded2a4c3a9d9b4de97d29fcab34067b25e849bba",
+      "exit_code": 0
+    },
+    {
+      "file": "published-gate-4.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0
+    },
+    {
+      "file": "published-gate-5.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0
+    }
+  ],
+  "github_release": {
+    "url": "https://github.com/menudoproblema/mongoeco/releases/tag/v4.10.0",
+    "tag": "v4.10.0",
+    "published_at": "2026-10-16T02:05:18Z",
+    "stable": true,
+    "asset_sha256": {
+      "mongoeco-4.10.0.tar.gz": "15f456ae8160e0ce326c950ed2a0c155a17a7b4d03d75feb1ee3bff157142f71",
+      "mongoeco-4.10.0-py3-none-any.whl": "dc3246314d2de35ae7df09c870784b1bd02497d765d9ff16d429c929db1a0ea4",
+      "SHA256SUMS": "53a25ddab0117dfb20e9d842d3198e15004a1b8ec525ba410c57134a8fcac2af"
+    }
+  }
+}

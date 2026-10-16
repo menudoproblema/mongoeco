@@ -1,0 +1,294 @@
+[
+  {
+    "name": "Test (Python 3.13)",
+    "job_id": 116765399818,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399818",
+    "conclusion": "success",
+    "log": "tag-116765399818.txt",
+    "sha256": "4499e855240154a2802ab3e79ae2ce6bee2e8a23a6e9a1a78641b12104e13af7",
+    "original_terminal_log_sha256": "95157134f39cef6bb1bb265bc9c519fa4ff785873ec60c80b023505b1f3cbc03",
+    "pytest_passed": 25801,
+    "expected_skips": 31,
+    "subtests_passed": 14451,
+    "unittest_passed": 3627
+  },
+  {
+    "name": "Required MongoDB release differential / MongoDB 7.0 differential",
+    "job_id": 116765399820,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399820",
+    "conclusion": "success",
+    "log": "tag-116765399820.txt",
+    "sha256": "452f7dfa0f8fba302d1a62b19f368743f479477d853c998876936d6dfac6c9a4",
+    "original_terminal_log_sha256": "335f037755ef7e8c7cd301e3cd22265647d32dc4a058693b64983b4001d0991f"
+  },
+  {
+    "name": "Test (Python 3.15)",
+    "job_id": 116765399831,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399831",
+    "conclusion": "success",
+    "log": "tag-116765399831.txt",
+    "sha256": "a469bc9fdfcf4ee62cf7e3fb40f2b6b039ab65f2b6aee8abec6dc358452ea52b",
+    "original_terminal_log_sha256": "d1c81a2e4fc27067dc0a66e1e19f0c853cad90182a2188111ef306647b979f58",
+    "pytest_passed": 25801,
+    "expected_skips": 31,
+    "subtests_passed": 14451,
+    "unittest_passed": 3627
+  },
+  {
+    "name": "Pytest kit (3.15, pytest 8.4.2, SDK 4.9.2)",
+    "job_id": 116765399852,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399852",
+    "conclusion": "success",
+    "log": "tag-116765399852.txt",
+    "sha256": "e44ea6ded696963a29d1b0f7b9d4d12076647defc296dac0116e3ca103f6fac6",
+    "original_terminal_log_sha256": "d30095c52967b12169ed55460a2e6de733d8691116508dbb9dfd5cbb5f1c3d02",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Test (Python 3.14)",
+    "job_id": 116765399856,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399856",
+    "conclusion": "success",
+    "log": "tag-116765399856.txt",
+    "sha256": "a1f808d9bc255d8b395b3a9fe40e502dea1287430b20352176b23ad525384ed6",
+    "original_terminal_log_sha256": "29969ad453cc123fb3539a5bdb2bec8adcce086594096891ce15b93f44f5747c",
+    "pytest_passed": 25801,
+    "expected_skips": 31,
+    "subtests_passed": 14451,
+    "unittest_passed": 3627,
+    "coverage_percent": 99.05
+  },
+  {
+    "name": "Pytest kit (3.13, pytest 8.4.2, SDK 4.9.2)",
+    "job_id": 116765399872,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399872",
+    "conclusion": "success",
+    "log": "tag-116765399872.txt",
+    "sha256": "e392212ae9c0acb5ee32f08148721127ff0b5ca1a6ce8dd066b3ae1375aaf644",
+    "original_terminal_log_sha256": "f4969df1bc25e87a5ee1d698c4f783c1be16cbcc59d8771af04fe729e009c67f",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Pytest kit (3.15, pytest 8.4.2, SDK 4.19.0)",
+    "job_id": 116765399909,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399909",
+    "conclusion": "success",
+    "log": "tag-116765399909.txt",
+    "sha256": "329ecec3fed54134206b61a92b6ceeabc3450ec34bf6b4ec0b1d2ca6ad4caad0",
+    "original_terminal_log_sha256": "807d8398e8dc5babd90e4744fd163b22022b95e4752f740887509b8be05be490",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Pytest kit (3.13, pytest 9.1.1, SDK 4.9.2)",
+    "job_id": 116765399916,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399916",
+    "conclusion": "success",
+    "log": "tag-116765399916.txt",
+    "sha256": "4bf925be5cefd1d150358441f0147bf7f377464d26984c2dec7830da04c24934",
+    "original_terminal_log_sha256": "80f46c7bb171e5bfefd513852d17e65cfaf89bc2fe84237620d4a1e123abbfe4",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Required MongoDB release differential / MongoDB 8.0 differential",
+    "job_id": 116765399918,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399918",
+    "conclusion": "success",
+    "log": "tag-116765399918.txt",
+    "sha256": "0d2f4fef00827871e51860f5aa2e604547f167508ee605495365b3f9cbc6ed1c",
+    "original_terminal_log_sha256": "4525274a1ac7d866a0cfd36770925462e2e5380edf3dbd9316f1a9a69fe4d125"
+  },
+  {
+    "name": "Pytest kit (3.14, pytest 8.4.2, SDK 4.9.2)",
+    "job_id": 116765399927,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399927",
+    "conclusion": "success",
+    "log": "tag-116765399927.txt",
+    "sha256": "0a149f238783f329acffdebd125d707d8a6d2143c92ad6c0f878c6ee08306cb2",
+    "original_terminal_log_sha256": "dfb254717647766c295496c9a7747bd74810e4a5119f378c343036753866704d",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Pytest kit (3.14, pytest 9.1.1, SDK 4.19.0)",
+    "job_id": 116765399954,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399954",
+    "conclusion": "success",
+    "log": "tag-116765399954.txt",
+    "sha256": "337e6dcbbf02540bc509f0f44cd6f840427cf9a0c0f55894e83ae6b253138009",
+    "original_terminal_log_sha256": "1ba2649202c92a1ea450b1f8c65da24f65f4299bc74e8ebdfd01c13ccaf14ee2",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Pytest kit (3.13, pytest 8.4.2, SDK 4.19.0)",
+    "job_id": 116765399984,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399984",
+    "conclusion": "success",
+    "log": "tag-116765399984.txt",
+    "sha256": "ec90f9e723490453fd730e046bccdaee937c786141104a3a33837b3b2f72f766",
+    "original_terminal_log_sha256": "c758881bfce1149080ba446a2b5c598f3d9e5ff717da69c826cabc8c1142b27d",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Pytest kit (3.14, pytest 9.1.1, SDK 4.9.2)",
+    "job_id": 116765399988,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765399988",
+    "conclusion": "success",
+    "log": "tag-116765399988.txt",
+    "sha256": "4793bfdca85aa91fad6e4b1f794aeacc732c4c2a64b18447fbedf43bbc841ef6",
+    "original_terminal_log_sha256": "33b936bfd8b57514f679e1d3c809b8f2f35a19692b6611e25a536369ca16e19d",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Pytest kit (3.14, pytest 8.4.2, SDK 4.19.0)",
+    "job_id": 116765400004,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765400004",
+    "conclusion": "success",
+    "log": "tag-116765400004.txt",
+    "sha256": "bcf57b317f2f5a9c7adb5bf0f01e865d8853449bcf20cdd4097b9a0144278965",
+    "original_terminal_log_sha256": "8a6cd4bd81ceacced931d3f6a8541ce8b0d81941028f9a0aaf24b1747f6d6961",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Pytest kit (3.15, pytest 9.1.1, SDK 4.19.0)",
+    "job_id": 116765400043,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765400043",
+    "conclusion": "success",
+    "log": "tag-116765400043.txt",
+    "sha256": "10906127254d6e08c0de4d08883945451ca8146d6b3e6cf92136bef716968288",
+    "original_terminal_log_sha256": "1d931db8060a9f923cd3a91a41552ad9bb740c47c7903a9a72e0f0b93c049b58",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Pytest kit (3.13, pytest 9.1.1, SDK 4.19.0)",
+    "job_id": 116765400054,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765400054",
+    "conclusion": "success",
+    "log": "tag-116765400054.txt",
+    "sha256": "e230846f43e22c41b8fbe64ffc18b67a6c39d24a4b8c0e4618577834fe380cdd",
+    "original_terminal_log_sha256": "0eadd7e6e369fcd8c2e931794b8a4e81eb2f68318135f63f2df4d5eff339b567",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Pytest kit (3.15, pytest 9.1.1, SDK 4.9.2)",
+    "job_id": 116765400078,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765400078",
+    "conclusion": "success",
+    "log": "tag-116765400078.txt",
+    "sha256": "08c071a8e32f2b0b2042228aed3577aa0f89615fd241244ef869bed2e245a50b",
+    "original_terminal_log_sha256": "c627e32772d71732b663dd9daee7798adc44e883836bdc21fbd6d88eb621eb85",
+    "pytest_passed": 3442,
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ]
+  },
+  {
+    "name": "Required MongoDB release differential / MongoDB 9.0 differential",
+    "job_id": 116765400139,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116765400139",
+    "conclusion": "success",
+    "log": "tag-116765400139.txt",
+    "sha256": "f1403e1f74e7b51dabe3a8672256d9aead24d225e161b37a0fba5cf2cc301cfe",
+    "original_terminal_log_sha256": "c46e936ba5eaf9df1298f4599a20bb1c45943ece19349a3c5b663acd464c82e9"
+  },
+  {
+    "name": "Publish tagged release",
+    "job_id": 116771757055,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920/job/116771757055",
+    "conclusion": "success",
+    "log": "tag-116771757055.txt",
+    "sha256": "2c8d5a7f44e15010d9ce4d5b3e3b40f8fe804514e8d4aeef5cd7ea7e5d76c0eb",
+    "original_terminal_log_sha256": "6fc619205d5b77d61922b1d4841ae510e277f0150c137add73604881ecedaf81"
+  }
+]

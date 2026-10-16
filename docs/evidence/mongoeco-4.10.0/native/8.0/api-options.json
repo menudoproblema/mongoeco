@@ -1,0 +1,8570 @@
+{
+  "target": "8.0",
+  "build_info": {
+    "version": "8.0.32",
+    "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+    "modules": [],
+    "allocator": "tcmalloc-google",
+    "javascriptEngine": "mozjs",
+    "sysInfo": "deprecated",
+    "versionArray": [
+      8,
+      0,
+      32,
+      0
+    ],
+    "openssl": {
+      "running": "OpenSSL 3.0.13 30 Jan 2024",
+      "compiled": "OpenSSL 3.0.13 30 Jan 2024"
+    },
+    "buildEnvironment": {
+      "distmod": "ubuntu2404",
+      "distarch": "x86_64",
+      "cc": "external/mongo_toolchain_v4/v4/bin/gcc: gcc (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "ccflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/x86_64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/x86_64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/x86_64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/x86_64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/x86_64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/x86_64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=sandybridge -mtune=generic -mprefer-vector-width=128 -Werror -ffunction-sections",
+      "cxx": "external/mongo_toolchain_v4/v4/bin/g++: g++ (GCC) 11.3.0\nCopyright (C) 2021 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "cxxflags": "-U_FORTIFY_SOURCE -std=c++20 -nostdinc++ -Wall -Wsign-compare -Winvalid-pch -Wno-missing-braces -Wno-psabi -Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/x86_64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/x86_64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -fPIE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -no-canonical-prefixes -D__DATE__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIMESTAMP__=\"OMITTED_FOR_HASH_CONSISTENCY\" -D__TIME__=\"OMITTED_FOR_HASH_CONSISTENCY\" -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/x86_64-mongodb-linux/11.3.0/include -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/x86_64-mongodb-linux/11.3.0/include-fixed -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0 -isystemexternal/mongo_toolchain_v4/stow/gcc-v4/include/c++/11.3.0/x86_64-mongodb-linux -isystem/usr/include/openssl -isystem/usr/include/x86_64-mongodb-linux -isystem/usr/include -gdwarf-5 -gdwarf64 -g2 -Wno-non-virtual-dtor -fsized-deallocation -Woverloaded-virtual -Wpessimizing-move -Wno-interference-size -Wno-overloaded-virtual -Wno-dangling-reference -Wno-deprecated -Wno-deprecated-declarations -Wno-class-memaccess -Wno-uninitialized -Wno-array-bounds -Wno-sign-compare -Wno-stringop-overflow -Wno-stringop-overread -Wno-restrict -Wno-dangling-pointer -Wno-attributes -ffp-contract=off -Wno-maybe-uninitialized -Wno-unused-but-set-variable -fasynchronous-unwind-tables -fno-omit-frame-pointer -fstack-protector-strong -fno-strict-aliasing -fdiagnostics-color -Wno-ignored-attributes -O2 -Wno-unused-function -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wno-unused-const-variable -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wa,--compress-debug-sections -Wimplicit-fallthrough=5 -march=sandybridge -mtune=generic -mprefer-vector-width=128 -Werror -ffunction-sections",
+      "linkflags": "-Bexternal/mongo_toolchain_v4/v4/bin -Bexternal/mongo_toolchain_v4/stow/gcc-v4/libexec/gcc/x86_64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/x86_64-mongodb-linux/11.3.0 -Bexternal/mongo_toolchain_v4/stow/llvm-v4/bin -pie -Lexternal/mongo_toolchain_v4/stow/gcc-v4/lib/gcc/x86_64-mongodb-linux/11.3.0 -Lexternal/mongo_toolchain_v4/v4/lib -Lexternal/mongo_toolchain_v4/v4/lib64 -fuse-ld=lld -gdwarf64 -Wl,--hash-style=gnu -Wl,-z,noexecstack -Wl,--warn-execstack -Wl,-z,relro -pthread -Wl,--compress-debug-sections=none -rdynamic -lm -lresolv -latomic -Wl,--build-id -Wl,-z,now -Wl,--fatal-warnings -Wl,--symbol-ordering-file=$(location //buildscripts:symbols.orderfile) -Wl,--no-warn-symbol-ordering",
+      "target_arch": "x86_64",
+      "target_os": "linux",
+      "cppdefines": "NDEBUG ABSL_ALLOCATOR_NOTHROW _FORTIFY_SOURCE=2 BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+    },
+    "bits": 64,
+    "debug": false,
+    "maxBsonObjectSize": 16777216,
+    "storageEngines": [
+      "devnull",
+      "wiredTiger"
+    ],
+    "ok": 1.0
+  },
+  "fcv": {
+    "version": "8.0"
+  },
+  "sdk": "4.19.0",
+  "source_sha256": {
+    "tests/differential/api_option_cases.py": "129f459c5b20d82cf3c835ec11b7820a5bfd86309e37c04926731fd63328e708",
+    "tests/support_api_options.py": "74fd0ac5742634ec6f9c460b4444f03be4e42f5ad903bb4a48dc1f74575737fb",
+    "tests/support_write_parity.py": "be6f848fbe372e6a539ce235e404d2729c938556d5c9a59d8a4ddde9eaef1cd7"
+  },
+  "native_facades": [
+    "sync",
+    "async"
+  ],
+  "observations": {
+    "projection_find_fields": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "city",
+                      "Madrid"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_empty": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "counter",
+                {
+                  "$numberInt": "0"
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "x"
+                      ]
+                    ]
+                  },
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "y"
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "name",
+                "Ada"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "city",
+                      "Madrid"
+                    ],
+                    [
+                      "zip",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_duplicates": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_nested_array": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "x"
+                      ]
+                    ]
+                  },
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "y"
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_tuple": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "city",
+                      "Madrid"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_empty_tuple": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "counter",
+                {
+                  "$numberInt": "0"
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "x"
+                      ]
+                    ]
+                  },
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "y"
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "name",
+                "Ada"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "city",
+                      "Madrid"
+                    ],
+                    [
+                      "zip",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_set": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "city",
+                      "Madrid"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_dict": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_string": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_invalid_member": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_invalid_scalar": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_generator": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_fields": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_empty": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_duplicates": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_nested_array": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_tuple": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_empty_tuple": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_set": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_dict": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "name",
+              "Ada"
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_string": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_invalid_member": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_invalid_scalar": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_generator": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_fields": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "city",
+                      "Madrid"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_empty": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "counter",
+                {
+                  "$numberInt": "0"
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "x"
+                      ]
+                    ]
+                  },
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "y"
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "name",
+                "Ada"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "city",
+                      "Madrid"
+                    ],
+                    [
+                      "zip",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_duplicates": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_nested_array": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "x"
+                      ]
+                    ]
+                  },
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "y"
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_tuple": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "city",
+                      "Madrid"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_empty_tuple": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "counter",
+                {
+                  "$numberInt": "0"
+                }
+              ],
+              [
+                "items",
+                [
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "x"
+                      ]
+                    ]
+                  },
+                  {
+                    "$document": [
+                      [
+                        "sku",
+                        "y"
+                      ]
+                    ]
+                  }
+                ]
+              ],
+              [
+                "name",
+                "Ada"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "city",
+                      "Madrid"
+                    ],
+                    [
+                      "zip",
+                      {
+                        "$numberInt": "1"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_set": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "name",
+                "Ada"
+              ],
+              [
+                "profile",
+                {
+                  "$document": [
+                    [
+                      "city",
+                      "Madrid"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_dict": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "name",
+                "Ada"
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_string": {
+      "result": {
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ]
+            ]
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_invalid_member": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_invalid_scalar": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_raw_batches_generator": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_fields": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_empty": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_duplicates": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_nested_array": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_tuple": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_empty_tuple": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_set": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_dict": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "name",
+              "Ada"
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_string": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "1"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_invalid_member": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_invalid_scalar": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_update_generator": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_fields": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Bea"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Paris"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_empty": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Bea"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Paris"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_duplicates": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Bea"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Paris"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_nested_array": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Bea"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Paris"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_tuple": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Bea"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Paris"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_empty_tuple": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Bea"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Paris"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_set": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Bea"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Paris"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_dict": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "name",
+              "Ada"
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Bea"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Paris"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_string": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ]
+          ]
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Bea"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Paris"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_invalid_member": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_invalid_scalar": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_replace_generator": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_fields": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_empty": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_duplicates": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ]
+          ]
+        }
+      },
+      "documents": [],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_nested_array": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ]
+          ]
+        }
+      },
+      "documents": [],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_tuple": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_empty_tuple": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_set": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      },
+      "documents": [],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_dict": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "name",
+              "Ada"
+            ]
+          ]
+        }
+      },
+      "documents": [],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_string": {
+      "result": {
+        "document": {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ]
+          ]
+        }
+      },
+      "documents": [],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_invalid_member": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_invalid_scalar": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "projection_find_one_and_delete_generator": {
+      "error": {
+        "family": "TypeError",
+        "code": null,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "a"
+            ],
+            [
+              "counter",
+              {
+                "$numberInt": "0"
+              }
+            ],
+            [
+              "items",
+              [
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "x"
+                    ]
+                  ]
+                },
+                {
+                  "$document": [
+                    [
+                      "sku",
+                      "y"
+                    ]
+                  ]
+                }
+              ]
+            ],
+            [
+              "name",
+              "Ada"
+            ],
+            [
+              "profile",
+              {
+                "$document": [
+                  [
+                    "city",
+                    "Madrid"
+                  ],
+                  [
+                    "zip",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "caller": [],
+      "profile_comments": []
+    },
+    "comment_insert_one_text_none": {
+      "result": {
+        "acknowledged": true,
+        "inserted_id": {
+          "$oid_token": "generated:0"
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        "request-42"
+      ]
+    },
+    "comment_insert_one_text_duplicate": {
+      "error": {
+        "family": "DuplicateKeyError",
+        "code": 11000,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        "request-42"
+      ]
+    },
+    "comment_insert_one_text_schema": {
+      "error": {
+        "family": "WriteError",
+        "code": 121,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        "request-42"
+      ]
+    },
+    "comment_insert_one_document_none": {
+      "result": {
+        "acknowledged": true,
+        "inserted_id": {
+          "$oid_token": "generated:0"
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "request",
+              "42"
+            ],
+            [
+              "tags",
+              [
+                "test"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    "comment_insert_one_document_duplicate": {
+      "error": {
+        "family": "DuplicateKeyError",
+        "code": 11000,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "request",
+              "42"
+            ],
+            [
+              "tags",
+              [
+                "test"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    "comment_insert_one_document_schema": {
+      "error": {
+        "family": "WriteError",
+        "code": 121,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "request",
+              "42"
+            ],
+            [
+              "tags",
+              [
+                "test"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    "comment_insert_one_number_none": {
+      "result": {
+        "acknowledged": true,
+        "inserted_id": {
+          "$oid_token": "generated:0"
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$numberLong": "42"
+        }
+      ]
+    },
+    "comment_insert_one_number_duplicate": {
+      "error": {
+        "family": "DuplicateKeyError",
+        "code": 11000,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$numberLong": "42"
+        }
+      ]
+    },
+    "comment_insert_one_number_schema": {
+      "error": {
+        "family": "WriteError",
+        "code": 121,
+        "codeName": null,
+        "labels": [],
+        "write_errors": []
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$numberLong": "42"
+        }
+      ]
+    },
+    "comment_insert_one_omitted": {
+      "result": {
+        "acknowledged": true,
+        "inserted_id": {
+          "$oid_token": "generated:0"
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": []
+    },
+    "comment_insert_many_text_none": {
+      "result": {
+        "acknowledged": true,
+        "inserted_ids": [
+          {
+            "$oid_token": "generated:0"
+          },
+          "second",
+          {
+            "$oid_token": "generated:1"
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        "request-42"
+      ]
+    },
+    "comment_insert_many_text_duplicate": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            11000
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "duplicate"
+                ],
+                [
+                  "name",
+                  "Second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 1,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        "request-42"
+      ]
+    },
+    "comment_insert_many_text_schema": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            121
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 1,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        "request-42"
+      ]
+    },
+    "comment_insert_many_text_duplicate_unordered": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            11000
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "duplicate"
+                ],
+                [
+                  "name",
+                  "Second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 2,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        "request-42"
+      ]
+    },
+    "comment_insert_many_text_schema_unordered": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            121
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 2,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        "request-42"
+      ]
+    },
+    "comment_insert_many_document_none": {
+      "result": {
+        "acknowledged": true,
+        "inserted_ids": [
+          {
+            "$oid_token": "generated:0"
+          },
+          "second",
+          {
+            "$oid_token": "generated:1"
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "request",
+              "42"
+            ],
+            [
+              "tags",
+              [
+                "test"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    "comment_insert_many_document_duplicate": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            11000
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "duplicate"
+                ],
+                [
+                  "name",
+                  "Second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 1,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "request",
+              "42"
+            ],
+            [
+              "tags",
+              [
+                "test"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    "comment_insert_many_document_schema": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            121
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 1,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "request",
+              "42"
+            ],
+            [
+              "tags",
+              [
+                "test"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    "comment_insert_many_document_duplicate_unordered": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            11000
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "duplicate"
+                ],
+                [
+                  "name",
+                  "Second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 2,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "request",
+              "42"
+            ],
+            [
+              "tags",
+              [
+                "test"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    "comment_insert_many_document_schema_unordered": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            121
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 2,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "request",
+              "42"
+            ],
+            [
+              "tags",
+              [
+                "test"
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    "comment_insert_many_number_none": {
+      "result": {
+        "acknowledged": true,
+        "inserted_ids": [
+          {
+            "$oid_token": "generated:0"
+          },
+          "second",
+          {
+            "$oid_token": "generated:1"
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$numberLong": "42"
+        }
+      ]
+    },
+    "comment_insert_many_number_duplicate": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            11000
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "duplicate"
+                ],
+                [
+                  "name",
+                  "Second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 1,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$numberLong": "42"
+        }
+      ]
+    },
+    "comment_insert_many_number_schema": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            121
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 1,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$numberLong": "42"
+        }
+      ]
+    },
+    "comment_insert_many_number_duplicate_unordered": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            11000
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "duplicate"
+                ],
+                [
+                  "name",
+                  "Second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 2,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$numberLong": "42"
+        }
+      ]
+    },
+    "comment_insert_many_number_schema_unordered": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            121
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 2,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$numberLong": "42"
+        }
+      ]
+    },
+    "comment_insert_many_omitted": {
+      "result": {
+        "acknowledged": true,
+        "inserted_ids": [
+          {
+            "$oid_token": "generated:0"
+          },
+          "second",
+          {
+            "$oid_token": "generated:1"
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": []
+    },
+    "iterable_tuple_none_True": {
+      "result": {
+        "acknowledged": true,
+        "inserted_ids": [
+          {
+            "$oid_token": "generated:0"
+          },
+          "second",
+          {
+            "$oid_token": "generated:1"
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "shape",
+              "tuple"
+            ]
+          ]
+        }
+      ]
+    },
+    "iterable_tuple_duplicate_True": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            11000
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "duplicate"
+                ],
+                [
+                  "name",
+                  "Second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 1,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "shape",
+              "tuple"
+            ]
+          ]
+        }
+      ]
+    },
+    "iterable_tuple_duplicate_False": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            11000
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "duplicate"
+                ],
+                [
+                  "name",
+                  "Second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 2,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "shape",
+              "tuple"
+            ]
+          ]
+        }
+      ]
+    },
+    "iterable_generator_none_True": {
+      "result": {
+        "acknowledged": true,
+        "inserted_ids": [
+          {
+            "$oid_token": "generated:0"
+          },
+          "second",
+          {
+            "$oid_token": "generated:1"
+          }
+        ]
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "second"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "shape",
+              "generator"
+            ]
+          ]
+        }
+      ]
+    },
+    "iterable_generator_duplicate_True": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            11000
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "duplicate"
+                ],
+                [
+                  "name",
+                  "Second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 1,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "shape",
+              "generator"
+            ]
+          ]
+        }
+      ]
+    },
+    "iterable_generator_duplicate_False": {
+      "error": {
+        "family": "BulkWriteError",
+        "code": 65,
+        "codeName": null,
+        "labels": [],
+        "write_errors": [
+          [
+            1,
+            11000
+          ]
+        ],
+        "write_error_operations": [
+          {
+            "index": 1,
+            "present": true,
+            "value": {
+              "$document": [
+                [
+                  "_id",
+                  "duplicate"
+                ],
+                [
+                  "name",
+                  "Second"
+                ]
+              ]
+            }
+          }
+        ],
+        "partial": {
+          "nInserted": 2,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "nUpserted": 0,
+          "upserted": []
+        }
+      },
+      "documents": [
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Existing"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "caller": [
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:0"
+              }
+            ],
+            [
+              "name",
+              "First"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              "duplicate"
+            ],
+            [
+              "name",
+              "Second"
+            ]
+          ]
+        },
+        {
+          "$document": [
+            [
+              "_id",
+              {
+                "$oid_token": "generated:1"
+              }
+            ],
+            [
+              "name",
+              "Last"
+            ]
+          ]
+        }
+      ],
+      "profile_comments": [
+        {
+          "$document": [
+            [
+              "shape",
+              "generator"
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}

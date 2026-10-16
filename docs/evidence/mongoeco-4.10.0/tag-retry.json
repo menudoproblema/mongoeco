@@ -1,0 +1,11 @@
+{
+  "old_tag_object": "0b37388861ad129f5fa31ecbafcc27a9c1ad33cf",
+  "new_tag_object": "3b722d592a2b1004bc7e64cd4eaed8ea4009c437",
+  "old_commit": "10e82bf4a98c775c79cf88e0350e97cfbf506846",
+  "new_commit": "e763c2a75be6aac9de46dbc8e9a6627af0fb02f5",
+  "pypi_version_absent_before_retry": true,
+  "remote_lease_verified": true,
+  "initial_object_retained_locally_and_as_committed_raw_object": true,
+  "runtime_tests_and_dependency_metadata_changed": false,
+  "native_preflight": "https://github.com/menudoproblema/mongoeco/actions/runs/38834949507"
+}

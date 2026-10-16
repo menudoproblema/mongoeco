@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "release_version": "4.10.0",
+  "release_candidate": "e763c2a75be6aac9de46dbc8e9a6627af0fb02f5",
+  "release_ci": "https://github.com/menudoproblema/mongoeco/actions/runs/38836040920",
+  "release_ci_status": "success",
+  "publication": "published-verification.json",
+  "final_followup_scope": "Only the release owner and verification evidence; no source, tests, workflows, dependency metadata or public API changes.",
+  "gate_reuse_basis": "All release source, test, workflow and metadata inputs are unchanged from the candidate whose main and tag workflows passed. Fresh public-artifact installation and conformance checks also passed.",
+  "diff_reviewed": true,
+  "documentation_aligned": true,
+  "implementation_work_included_in_tag": true,
+  "original_failures_retained": true,
+  "no_new_features_or_runtime_changes": true
+}

@@ -1,0 +1,91 @@
+[
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "scripts/smoke_pypi_contract.py",
+      "--version",
+      "4.10.0",
+      "--venv",
+      "/tmp/mongoeco-410/pypi-smoke",
+      "--keep-venv"
+    ],
+    "exit_code": 0,
+    "log": "published-gate-0.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-410/pypi-smoke/bin/python",
+      "-m",
+      "pip",
+      "install",
+      "--index-url",
+      "https://pypi.org/simple",
+      "--no-cache-dir",
+      "mongoeco[pytest,engine-testing]==4.10.0",
+      "pytest-asyncio>=1.4,<2",
+      "anyio>=4.11,<5",
+      "pytest-xdist>=3.8,<4",
+      "hypothesis>=6.165,<6.166"
+    ],
+    "exit_code": 0,
+    "log": "published-gate-1.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-410/pypi-smoke/bin/python",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "exit_code": 0,
+    "log": "published-gate-2.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-410/pypi-smoke/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/integration/pytest_kit",
+      "tests/integration/wire/test_proxy_lifecycle.py",
+      "tests/integration/wire/test_unacknowledged.py",
+      "tests/integration/api/test_write_preflight_parity.py"
+    ],
+    "exit_code": 0,
+    "log": "published-gate-3.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-410/pypi-smoke/bin/python",
+      "-m",
+      "mongoeco.conformance",
+      "mongoeco.engines:MemoryEngine",
+      "--profile",
+      "spi-v2-core",
+      "--format",
+      "json",
+      "--output",
+      "/tmp/mongoeco-410/published-conformance-MemoryEngine.json",
+      "--require-success"
+    ],
+    "exit_code": 0,
+    "log": "published-gate-4.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-410/pypi-smoke/bin/python",
+      "-m",
+      "mongoeco.conformance",
+      "mongoeco.engines:SQLiteEngine",
+      "--profile",
+      "spi-v2-core",
+      "--format",
+      "json",
+      "--output",
+      "/tmp/mongoeco-410/published-conformance-SQLiteEngine.json",
+      "--require-success"
+    ],
+    "exit_code": 0,
+    "log": "published-gate-5.txt"
+  }
+]

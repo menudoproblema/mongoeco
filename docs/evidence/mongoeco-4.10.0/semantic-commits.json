@@ -14,5 +14,21 @@
   {
     "commit": "8d422457b769e3773a4f3fe220c8543460a966bb",
     "message": "docs: focus adoption guides and preserve native parity evidence"
+  },
+  {
+    "commit": "55127f1beb67008010a3675e7e7c991da0b293ea",
+    "message": "chore(release): prepare Mongoeco 4.10.0"
+  },
+  {
+    "commit": "fe9dafc9ab766999bfc3bd199361d9d28d9cd692",
+    "message": "docs(release): distinguish historical candidates from 4.10.0 delivery"
+  },
+  {
+    "commit": "10e82bf4a98c775c79cf88e0350e97cfbf506846",
+    "message": "fix(ci): prevent archived validation driver from pytest collection"
+  },
+  {
+    "commit": "e763c2a75be6aac9de46dbc8e9a6627af0fb02f5",
+    "message": "fix(ci): install required Hypothesis tooling for native parity"
   }
 ]

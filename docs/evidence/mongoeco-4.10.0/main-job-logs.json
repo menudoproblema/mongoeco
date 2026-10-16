@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Test (Python 3.14)",
+    "job_id": 116761979613,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38834949307/job/116761979613",
+    "conclusion": "success",
+    "log": "main-116761979613.txt",
+    "sha256": "9f5ba5e6482cb6a8357b63ef87ad89a5a918547bbe59e9f3d29161cd8648aba4",
+    "original_terminal_log_sha256": "b95d8fc434b9132fc2e8e92a6c75c3abea1288f8583d500cc9e0c24540b43b88",
+    "pytest_passed": 25801,
+    "expected_skips": 31,
+    "subtests_passed": 14451,
+    "unittest_passed": 3627,
+    "coverage_percent": 99.05
+  },
+  {
+    "name": "Test (Python 3.13)",
+    "job_id": 116761979672,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38834949307/job/116761979672",
+    "conclusion": "success",
+    "log": "main-116761979672.txt",
+    "sha256": "06f143b7956813858a02d9194d5a0c2b8a8041dc1334de7b12db4aa926699773",
+    "original_terminal_log_sha256": "38ee4170ce7d02765e675479dfffd88852c1d4c2700ccea1a424dd1a0557f43b",
+    "pytest_passed": 25801,
+    "expected_skips": 31,
+    "subtests_passed": 14451,
+    "unittest_passed": 3627
+  },
+  {
+    "name": "Test (Python 3.15)",
+    "job_id": 116761979684,
+    "url": "https://github.com/menudoproblema/mongoeco/actions/runs/38834949307/job/116761979684",
+    "conclusion": "success",
+    "log": "main-116761979684.txt",
+    "sha256": "de34d29bc6b1c0ea7762e89d6c1d5aedd5344b1b5b05c9e57c20827fd375b0f5",
+    "original_terminal_log_sha256": "021c784dc60eb2ea14c0b778f77be78b09cef4b12e679a92b470068d8f6c0c46",
+    "pytest_passed": 25801,
+    "expected_skips": 31,
+    "subtests_passed": 14451,
+    "unittest_passed": 3627
+  }
+]

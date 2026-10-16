@@ -1,0 +1,148 @@
+{
+  "kind": "preflight",
+  "status": "passed",
+  "targets": [
+    {
+      "target": "7.0",
+      "mongodb": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "sdk": "4.19.0",
+      "legacy_real_cases": 29,
+      "native_command_cases_per_facade": 172,
+      "native_raw_cases": 4,
+      "candidate_command_regressions": 3360,
+      "candidate_write_corpus": 13395,
+      "write_subtests": 9528,
+      "api_option_cases": 104,
+      "replay_capture_cases": {
+        "review": 72,
+        "version-deltas": 154,
+        "semantic-guarantees": 54,
+        "index-guarantees": 4
+      },
+      "physical_application_connection_reused": true,
+      "captured_observations_equal_fixtures": true,
+      "source_fingerprints_match": true,
+      "artifact_file_manifest": {
+        "write-parity.log": "74785a2096c290277d4c18a5187cca9ff718cd8d62c2f8941a0e4dc20b0e2b6e",
+        "positional-updates.log": "1524e6a17fc4fcdc83535e423f4d0a641a7d8515acb96a761921e25f731427b0",
+        "version-deltas-capture.json": "e5d460603bbe7fef192ee1491f3e5aac6897d049f920ffd6dcb3311c53624010",
+        "index-guarantees-capture.json": "09dc831f5d630f9b5b23aa4965fe43caac656b98b7c18951a1d969da17f1611f",
+        "report.json": "cf78e4744e6c89c477a4c3a33f091c6a0b8b03d865ac870b971c49fddfc1ff74",
+        "semantic-guarantees-capture.json": "2893bdd7bfa2a79fb93a10b02675cb67253d8892205ef87f5b0e183e88cff076",
+        "run.log": "b834f83582f83ceec35617b1f098f41c29e8baed07c9b8e5f9f1a9a75e1e1ed5",
+        "unacknowledged.json": "05880a135f108633708d08d26bae6a5331f188deaa17ef88c832c469f50ba176",
+        "unacknowledged.log": "63faa70100cbb35d30d74d12d83365edbdf4d3bb4674607f4e7c6cc95567e1a2",
+        "mongodb-build-info.json": "79bdff13c9dc39ea864cbb019e1e3326f85bef7fab2125e4e3c2625c5e624495",
+        "review-capture.json": "5585adaa77252a24a5a868c0079079c62263e1f94639aed224264111862cfd90",
+        "api-options.json": "ee93f33e1d4161ec9b1c21256b6ab2ae099d50b89817849e619039c122a8f8e3",
+        "write-capture/write_parity_mongodb_7_0.json": "3c11e36a214ffbba0a10d4308f1c5f2d2e96c2658ae1c49fef6c3b12aed834ce",
+        "write-capture/write_identity_mongodb_7_0.json": "472fca4560dfaef0df8bc7cb7354202e5460a7c6fd8beda55cf536a275600229",
+        "write-capture/write_queries_mongodb_7_0.json": "cb3aa4ebff6e3f9d0b872091baabc73454a7d9e755e0eefb21d8b462bee55ea1",
+        "write-capture/write_operations_mongodb_7_0.json": "fff249f3ba56c444fddc541e78b60ff2520fb2c134e8c43857b8d68df7b5c063",
+        "write-capture/write_raw_mongodb_7_0.json": "3021c05911e4f060c75f8860166bc818d011fe42c42a27b4754ba7c6e8af3052",
+        "junit/TEST-tests.differential.mongodb7_real_parity.MongoDB7RealParityTests-20261016012522.xml": "b1b73b1ee364e7cb1e2dadf44ddd0ecbb283e74c698f530a543f0beffd9bef6e",
+        "write-histories/native_7_0.json": "3c5f9554da8b7bd0cb2766e220e5ff4f7c0511ec7c6268f3f005840713f30df1",
+        "write-histories/sync.json": "7b1fd53b6056948071d92e8328e5d64299a6c71a734346df6f54816bc4b2aa6e",
+        "write-histories/async.json": "236c91c6acbba3da3b06b63686e1d30e142fb5a670e46358bab9ead6e6b47618"
+      }
+    },
+    {
+      "target": "8.0",
+      "mongodb": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "sdk": "4.19.0",
+      "legacy_real_cases": 29,
+      "native_command_cases_per_facade": 172,
+      "native_raw_cases": 4,
+      "candidate_command_regressions": 3360,
+      "candidate_write_corpus": 13395,
+      "write_subtests": 9528,
+      "api_option_cases": 104,
+      "replay_capture_cases": {
+        "review": 72,
+        "version-deltas": 154,
+        "semantic-guarantees": 54,
+        "index-guarantees": 4
+      },
+      "physical_application_connection_reused": true,
+      "captured_observations_equal_fixtures": true,
+      "source_fingerprints_match": true,
+      "artifact_file_manifest": {
+        "write-parity.log": "7fef7a7255965c7c8b1d682f0b8cecf114ed5bce0f105738d66df848cbce25b6",
+        "positional-updates.log": "bc17d4f2f7513f720659e0d10f7c228429897448763656b49edb86daf9caa546",
+        "version-deltas-capture.json": "c2cdf822f1457abce55b706ee14be190a76994a3773ab690739b935c45f91320",
+        "index-guarantees-capture.json": "69fd2d470079866615c8d2367e325c36e3534fc0aca11802c10c1e4e28361b94",
+        "report.json": "123264282b01daa8667cafd5978425b30dbfa01fa3e13861df0f879f6a11324e",
+        "semantic-guarantees-capture.json": "baafd6331c31626fe6496c4cc46b02dbab4a2258e9dd43fdee79f7a53ba25b7d",
+        "run.log": "2cce51db45d5c60c077d3368bb5155ad0e9cc19ebcce4891fb456a9ff7d469a1",
+        "unacknowledged.json": "bbf68421fac5696a65a68c9e43588be043e86048137a4039d8dfbb7e65743f75",
+        "unacknowledged.log": "a6d8474cc83f7f34693b52b141e8b4fea4484a518503e1a796e95aac0b9109ce",
+        "mongodb-build-info.json": "012e16a78297c47801eb9a1b2f01ad314e2c27b25837ece9b420dd745e8ca938",
+        "review-capture.json": "181587c27072b8970bc8a401cf8632a0e34e120a5fd1660cbe56c50495f09c6d",
+        "api-options.json": "03613d73382bf46326091c43f1f513774715745182dc0506a3e880e228d80dea",
+        "write-capture/write_queries_mongodb_8_0.json": "f174af9e84f3f8680242d32ce00cb760a345a6d6748f47a13873f43594c9548b",
+        "write-capture/write_raw_mongodb_8_0.json": "c7615936e0941b278b025c43b7f91ce84e5f51d8e2054a0a2efa39bfdd33942c",
+        "write-capture/write_operations_mongodb_8_0.json": "82c2b86da78ecfca5c761abd6024adcf95a9680270e450b581c06d3cce0d6c91",
+        "write-capture/write_parity_mongodb_8_0.json": "10099e41ba83ffdf95fede79485d1f30c63a8cb7a06feda8064bb64b19360f6d",
+        "write-capture/write_identity_mongodb_8_0.json": "7c4368eed12c731266601db4608bf15f7d98b2f5750f548d54fcd32f1af648b2",
+        "junit/TEST-tests.differential.mongodb8_real_parity.MongoDB8RealParityTests-20261016012521.xml": "494259ec9422d3fbb71904f2b129528aa41dada81dfbcfb8e86fb10a830b5d3a",
+        "write-histories/sync.json": "b4f06ecb6fc878c32590ee240175f0ac3c8c7b1f8b38bbd86485add5bb5cb8cf",
+        "write-histories/native_8_0.json": "2d892d8f6c09cdc00ae7dad3a137d13c4fb74785cf6922d1bc9f4bc0ec211c02",
+        "write-histories/async.json": "f6cd6ec7e13f64e2a4b50572709b0b677821cc4e615b02bd5e5a3029d315a7ec"
+      }
+    },
+    {
+      "target": "9.0",
+      "mongodb": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "sdk": "4.19.0",
+      "legacy_real_cases": 29,
+      "native_command_cases_per_facade": 172,
+      "native_raw_cases": 4,
+      "candidate_command_regressions": 3360,
+      "candidate_write_corpus": 13395,
+      "write_subtests": 9528,
+      "api_option_cases": 104,
+      "replay_capture_cases": {
+        "review": 72,
+        "version-deltas": 154,
+        "semantic-guarantees": 54,
+        "index-guarantees": 4
+      },
+      "physical_application_connection_reused": true,
+      "captured_observations_equal_fixtures": true,
+      "source_fingerprints_match": true,
+      "artifact_file_manifest": {
+        "write-parity.log": "f7bbd81c3b7e6c3bbc0ade86f48e92515b121a9ebdb8fd0bbea6ce49d11effe3",
+        "positional-updates.log": "66dc4541ce508de440dd23a00a48736d25e11848c6ac12b6a9ce94ac55e8523c",
+        "version-deltas-capture.json": "7bc39cd7932053f6ea3fa2fb7c94036d2c8582f9aba1bbf42783745bc0f3fcef",
+        "index-guarantees-capture.json": "ce84945b71f729b6ba8d362e1a560f07f1c20e0b1b6ecc189a5c322ab03c6e55",
+        "report.json": "87a41dd3d000ab7041826b40e3d64e5678b56a0925ceeeb9fa4ed90587e3d825",
+        "semantic-guarantees-capture.json": "0a5f65cefbe148195e582d1f314fdcb030e910e3fed703c793390041368ca245",
+        "run.log": "e6562f9f2452935db78995c63fe3547c86c2aceca67e6634fb3efe7a9ca78807",
+        "unacknowledged.json": "ddd62a322952efdfeb2075408a042e1df63f4b599834a5ce3dc766a9963587de",
+        "unacknowledged.log": "0ea4fc2a2d2d1207690ed77c5fb87cb49bf217bfafe56c0ac5ea92a67a15fabc",
+        "mongodb-build-info.json": "e4779916616fdbc415afb736f43e03a0acb5a78511fdd045190a2ed0c56b196a",
+        "review-capture.json": "954236190479d2921553ead352008c3c75774be06793e25b1ed2c8bf0105e61e",
+        "api-options.json": "74a509f8798c0398d3a4cfe3ff8bfa76589d51c6c246b2a2dac7fade7f9bd9e1",
+        "write-capture/write_parity_mongodb_9_0.json": "2926c6b10dd052f9f0d5fb9ed2ac53a1ed3bb7c83b85520eb9199e81564abacc",
+        "write-capture/write_identity_mongodb_9_0.json": "5e178cadeaf4afbb2c00c7490e6f16139a7d8b33473dee7076fc6df9c58a1e27",
+        "write-capture/write_queries_mongodb_9_0.json": "3bd2a5b9a339aa3ce4912c5846708ed55b87a7355d71f6d1e2ee64186c44e0b7",
+        "write-capture/write_operations_mongodb_9_0.json": "50534e96b970a74edfef51aaac8d1c93bcce31983b07ef22f04901476702b973",
+        "write-capture/write_raw_mongodb_9_0.json": "bed0fac6743e95153de1c18d646ee541270383a1bd769cbed433b4d6e051926c",
+        "junit/TEST-tests.differential.mongodb9_real_parity.MongoDB9RealParityTests-20261016012524.xml": "294cc4d5af9cae5e7abc9c4759723f081820b35b5b0f41dfbed59bcd17dade3f",
+        "write-histories/native_9_0.json": "e61ec9cfed77eb1796efd3e71d92f02e6210124003fa9be54100ea3deee97332",
+        "write-histories/sync.json": "d064eaddd2a7411aa5509a18f713d6b8ce10d2488941ef40a7c554ca7968f0b3",
+        "write-histories/async.json": "22680a0c60a7c1278c9249388e09db6c77814b115d186eebb13bfe3795230fb1"
+      }
+    }
+  ],
+  "case_counts_are_per_job": "The candidate parametrized corpus is replayed in each server job; these are repeated executions, not distinct native scenarios."
+}
