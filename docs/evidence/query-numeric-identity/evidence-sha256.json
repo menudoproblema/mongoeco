@@ -110,7 +110,7 @@
   "test-cleanup.diff": "b05cab7886f7590c50b2b7513518ba5426608a6c3c5e6d061937c813c01c37ca",
   "test-cleanup.json": "b810dbadf72fa97dee751e51985b9a9ecbb8ec1d8840cc4cf283e5a6ffce6cbd",
   "test-cleanup.log": "43c53d7e33d7f876e280466c8530259d27712b78e864b0d3753cb9dc33fc14c0",
-  "test_cleanup.py": "8fe37a8b7b81c1289e6ae23ad0a3c5ccee487480373dcfb5cd1ab4ed94b02d3e",
+  "test_cleanup.py.txt": "8fe37a8b7b81c1289e6ae23ad0a3c5ccee487480373dcfb5cd1ab4ed94b02d3e",
   "twine-final.log": "aa5a60e3a70c268ce1657bf45ea245068d46e1a0f7340cfb47728b8b714a0bd6",
   "typechange-followup.json": "9eab43c61eb52dc98b00d6ef38dcee7f4fb7b3b701313f82dcfdb4dfeb38e0a6",
   "typechange-followup.log": "7ad2b278333d89b1efba5c0762ab19f20876925f38a8d3ec83d96402e7ac8342",

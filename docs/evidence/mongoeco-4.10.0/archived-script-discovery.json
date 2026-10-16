@@ -1,0 +1,9 @@
+{
+  "reason": "Archived validation driver named test_cleanup.py is executable at import and is not a test. Pytest root discovery could invoke local-only validation infrastructure on CI.",
+  "old_path": "docs/evidence/query-numeric-identity/test_cleanup.py",
+  "archive_path": "docs/evidence/query-numeric-identity/test_cleanup.py.txt",
+  "blob_sha256": "8fe37a8b7b81c1289e6ae23ad0a3c5ccee487480373dcfb5cd1ab4ed94b02d3e",
+  "bytes_preserved": true,
+  "test_corpus_unchanged": true,
+  "historical_commands_preserved": true
+}
