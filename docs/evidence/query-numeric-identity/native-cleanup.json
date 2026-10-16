@@ -1,0 +1,41 @@
+[
+  {
+    "target": "7.0",
+    "version": "7.0.43",
+    "port": 37567,
+    "databases": [
+      "admin",
+      "config",
+      "local"
+    ],
+    "dbpath": "/tmp/mongoeco-query-id/tmphqrn484r",
+    "port_closed": true,
+    "temporary_dbpath_removed": true
+  },
+  {
+    "target": "8.0",
+    "version": "8.0.32",
+    "port": 37568,
+    "databases": [
+      "admin",
+      "config",
+      "local"
+    ],
+    "dbpath": "/tmp/mongoeco-query-id/tmp_0gjxm73",
+    "port_closed": true,
+    "temporary_dbpath_removed": true
+  },
+  {
+    "target": "9.0",
+    "version": "9.0.2",
+    "port": 37569,
+    "databases": [
+      "admin",
+      "config",
+      "local"
+    ],
+    "dbpath": "/tmp/mongoeco-query-id/tmp5n6ajndw",
+    "port_closed": true,
+    "temporary_dbpath_removed": true
+  }
+]

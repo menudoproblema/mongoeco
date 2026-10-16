@@ -5,6 +5,19 @@ Arquitectura relacionada:
 * [docs/architecture/index.md](docs/architecture/index.md)
 * [docs/architecture/testing-and-compatibility.md](docs/architecture/testing-and-compatibility.md)
 
+## Versiones de Python
+
+Desde 4.10.0, Mongoeco admite oficialmente CPython **3.13, 3.14 y 3.15**.
+El mínimo sigue siendo `>=3.13`. El soporte de Python 3.13 finaliza en
+**octubre de 2028**, según la [política de soporte](docs/python-support.md).
+
+El extra [`pytest`](docs/pytest.md) proporciona fixtures de URI y clientes
+PyMongo reales sobre el proxy wire local. Su matriz incluye clientes
+sync/async, Memory/SQLite y ejecución paralela; conserva los límites wire y de
+dialecto del paquete y no sustituye los imports del consumidor.
+La versión del intérprete es independiente de `mongodb_dialect` y
+`pymongo_profile`.
+
 Esta guía resume cómo configurar `mongoeco` cuando quieres controlar:
 
 * la semántica objetivo de MongoDB (`mongodb_dialect`)
@@ -95,6 +108,13 @@ de hasta 100.000 modelos: runs contiguos en modo ordenado y grupos por familia
 en modo no ordenado. Cada lote comparte un `$$NOW`. No emula todavía límites de
 tamaño BSON/mensaje ni el comando `bulkWrite` introducido para clientes modernos
 de MongoDB 8.0.
+
+Los reemplazos y pipelines de actualización permiten convertir el tipo BSON
+numérico de `_id` cuando conserva su valor lógico. El cambio de tipo cuenta como
+modificación; un segundo update idéntico es no-op. Los updates clásicos conservan
+el rechazo 66. La fila convertida y sus referencias se actualizan atómicamente,
+sin migrar el esquema ni cambiar el formato de archivos SQLite existentes.
+Ver [alcance y contraste nativo](docs/id-bson-conversion.md).
 
 ### Frontera BSON publica
 
@@ -481,7 +501,7 @@ Hoy el catálogo oficial incluye:
 * `4.13`
 * `4.17`
 * `4.18`
-* `4.19` (Unreleased; no incluido en 4.9.1)
+* `4.19` (desde 4.10.0; no incluido en 4.9.1)
 
 Regla práctica:
 

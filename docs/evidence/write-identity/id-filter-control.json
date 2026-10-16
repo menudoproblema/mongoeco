@@ -1,0 +1,1042 @@
+{
+  "7.0": {
+    "0": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 54,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "1": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "2": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "a"
+        }
+      }
+    ],
+    "3": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 54,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "4": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "5": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "a"
+        }
+      }
+    ],
+    "6": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 54,
+          "codeName": "NotSingleValueField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "7": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "8": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "9": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 54,
+          "codeName": "NotSingleValueField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "10": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "11": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ]
+  },
+  "8.0": {
+    "0": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 54,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "1": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "2": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "a"
+        }
+      }
+    ],
+    "3": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 54,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "4": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "5": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "a"
+        }
+      }
+    ],
+    "6": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 54,
+          "codeName": "NotSingleValueField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "7": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "8": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "9": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 54,
+          "codeName": "NotSingleValueField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "10": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "11": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ]
+  },
+  "9.0": {
+    "0": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 54,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "1": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "2": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "a"
+        }
+      }
+    ],
+    "3": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 54,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "4": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "5": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "a"
+        }
+      }
+    ],
+    "6": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 54,
+          "codeName": "NotSingleValueField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "7": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "8": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "9": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 54,
+          "codeName": "NotSingleValueField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "10": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "11": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ]
+  },
+  "memory": {
+    "0": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "1": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "2": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "a"
+        }
+      }
+    ],
+    "3": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "4": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "5": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "a"
+        }
+      }
+    ],
+    "6": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "7": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "8": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "9": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "10": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "11": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ]
+  },
+  "sqlite": {
+    "0": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "1": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "2": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "a"
+        }
+      }
+    ],
+    "3": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "4": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "5": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": "a"
+        }
+      }
+    ],
+    "6": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "7": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "8": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "9": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "10": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "11": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ]
+  }
+}

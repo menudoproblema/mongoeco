@@ -1,0 +1,24 @@
+{
+  "schema": "mongoeco-python-support-policy-amendment/v1",
+  "date": "2026-10-15",
+  "authority": "User explicitly replaces October 2028 with October 2027; any extension requires a later decision.",
+  "python_313_support_through": "2027-10",
+  "supersedes_policy_in": "validation.json",
+  "prior_validation_sha256": "9691db7330e04c168a2447586d1a73a571a879e1582b293555c57c0527e6102b",
+  "prior_python_313_support_through": "2028-10",
+  "runtime_unchanged": true,
+  "runtime_files_verified": 275,
+  "runtime_manifest_sha256": "d7178bf84063409ca304fbb65d4b72e723219f8c847913a2a65db30ff643b5b9",
+  "verification": "Documentation references checked and git diff --check; no runtime, CI matrix, dependencies or test changes. Prior runtime test evidence remains applicable.",
+  "packaging": "The previously validated wheel/sdist retain the earlier README date. Rebuild artifacts when preparing the release; no publication is performed here.",
+  "policy_sources_sha256": {
+    "README.md": "5e7d3023399cdb0af14f335a84ba419f36b768cda6df53f0d9692139fe69e5a5",
+    "COMPATIBILITY.md": "3022c051f51ec73aabe486dcb1db7af328d60251d6e4d257fd2516f16d6e4a1e",
+    "CHANGELOG.md": "52f95b64afbe0ff37b45407bbb0817fef298242204e3af163d800e44397f0e93",
+    "TODO.md": "807dd820f3c7f57cac9dd02783bae59a263fd137018559c86029ef579a4aac7b",
+    "docs/python-support.md": "0cf91983c5c73297dd7fe3c243b44a2c5f1ad575f060b33bbec308fe45cb74f5",
+    "docs/architecture/testing-and-compatibility.md": "88206188025f905594553024d9ebe5e39596af0b2e7b3eca44b4931cdd59d29e",
+    "docs/release-checklist.md": "5476729092e8eedd9a57897496f03ce9dcf6cbb18338c06542d5b836762358cb",
+    "docs/plan-write-parity.md": "846f75e90c3001b57f456200e7290f0f30d973b70d7261ebb6abd72fca85e0e9"
+  }
+}

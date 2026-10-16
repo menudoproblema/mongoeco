@@ -1,0 +1,39 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ ProxyLifecycleTests.test_shutdown_does_not_wait_for_a_peer_to_drain_a_large_response _
+
+self = <tests.integration.wire.test_proxy_lifecycle.ProxyLifecycleTests testMethod=test_shutdown_does_not_wait_for_a_peer_to_drain_a_large_response>
+
+    async def test_shutdown_does_not_wait_for_a_peer_to_drain_a_large_response(self):
+        proxy = AsyncMongoEcoProxyServer(engine=MemoryEngine())
+        await proxy.start()
+        seen = asyncio.Event()
+    
+        async def reply(*args, **kwargs):
+            seen.set()
+            return {"ok": 1, "data": "x" * (8 * 1024 * 1024)}
+    
+        proxy._executor.execute_command = reply
+        _, peer = await asyncio.open_connection(proxy.address.host, proxy.address.port)
+        server = proxy._server
+        try:
+            peer.write(
+                encode_op_msg_response(
+                    {"ping": 1, "$db": "admin"}, request_id=1, response_to=0
+                )
+            )
+            await peer.drain()
+            await seen.wait()
+            closing = asyncio.create_task(proxy.close())
+            done, _ = await asyncio.wait({closing}, timeout=2)
+            if not done:
+                # Let a broken implementation finish so the regression never leaks.
+                server.abort_clients()
+            await closing
+>           self.assertTrue(done, "shutdown waited for the unread response")
+E           AssertionError: set() is not true : shutdown waited for the unread response
+
+tests/integration/wire/test_proxy_lifecycle.py:43: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/wire/test_proxy_lifecycle.py::ProxyLifecycleTests::test_shutdown_does_not_wait_for_a_peer_to_drain_a_large_response
+1 failed, 9 deselected in 2.51s

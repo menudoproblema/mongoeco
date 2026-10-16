@@ -1,0 +1,92 @@
+[
+  {
+    "target": "9.0",
+    "sdk": "4.19.0",
+    "exit_code": 0,
+    "command": [
+      "/tmp/mongoeco-pytest-kit/matrix-314-4.19.0/bin/python",
+      "scripts/capture_unacknowledged_parity.py",
+      "--target",
+      "9.0",
+      "--output",
+      "tests/fixtures/unacknowledged_mongodb_9_0.json"
+    ],
+    "log": "capture-9.0-4.19.0.txt"
+  },
+  {
+    "target": "7.0",
+    "sdk": "4.19.0",
+    "exit_code": 0,
+    "command": [
+      "/tmp/mongoeco-pytest-kit/matrix-314-4.19.0/bin/python",
+      "scripts/capture_unacknowledged_parity.py",
+      "--target",
+      "7.0",
+      "--output",
+      "tests/fixtures/unacknowledged_mongodb_7_0.json"
+    ],
+    "log": "capture-7.0-4.19.0.txt"
+  },
+  {
+    "target": "8.0",
+    "sdk": "4.19.0",
+    "exit_code": 0,
+    "command": [
+      "/tmp/mongoeco-pytest-kit/matrix-314-4.19.0/bin/python",
+      "scripts/capture_unacknowledged_parity.py",
+      "--target",
+      "8.0",
+      "--output",
+      "tests/fixtures/unacknowledged_mongodb_8_0.json"
+    ],
+    "log": "capture-8.0-4.19.0.txt"
+  },
+  {
+    "target": "9.0",
+    "sdk": "4.9.2",
+    "exit_code": 0,
+    "command": [
+      "/tmp/mongoeco-pytest-kit/matrix-314-4.9.2/bin/python",
+      "scripts/capture_unacknowledged_parity.py",
+      "--target",
+      "9.0",
+      "--output",
+      "/tmp/mongoeco-write-preflight/native-9.0-4.9.2.json",
+      "--check",
+      "tests/fixtures/unacknowledged_mongodb_9_0.json"
+    ],
+    "log": "capture-9.0-4.9.2.txt"
+  },
+  {
+    "target": "7.0",
+    "sdk": "4.9.2",
+    "exit_code": 0,
+    "command": [
+      "/tmp/mongoeco-pytest-kit/matrix-314-4.9.2/bin/python",
+      "scripts/capture_unacknowledged_parity.py",
+      "--target",
+      "7.0",
+      "--output",
+      "/tmp/mongoeco-write-preflight/native-7.0-4.9.2.json",
+      "--check",
+      "tests/fixtures/unacknowledged_mongodb_7_0.json"
+    ],
+    "log": "capture-7.0-4.9.2.txt"
+  },
+  {
+    "target": "8.0",
+    "sdk": "4.9.2",
+    "exit_code": 0,
+    "command": [
+      "/tmp/mongoeco-pytest-kit/matrix-314-4.9.2/bin/python",
+      "scripts/capture_unacknowledged_parity.py",
+      "--target",
+      "8.0",
+      "--output",
+      "/tmp/mongoeco-write-preflight/native-8.0-4.9.2.json",
+      "--check",
+      "tests/fixtures/unacknowledged_mongodb_8_0.json"
+    ],
+    "log": "capture-8.0-4.9.2.txt"
+  }
+]

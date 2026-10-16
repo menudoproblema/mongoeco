@@ -1,0 +1,13 @@
+[
+  {
+    "command": [
+      "/tmp/mongoeco-python315/venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short"
+    ],
+    "exit_code": 0,
+    "log": "pytest-315.log"
+  }
+]

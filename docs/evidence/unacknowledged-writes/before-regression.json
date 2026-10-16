@@ -1,0 +1,20 @@
+{
+  "status": "expected_failure",
+  "exit_code": 1,
+  "failed": 1,
+  "wheel": "pytest-report candidate",
+  "reason": "Unacknowledged write leaves a stray response before this change.",
+  "command": [
+    "/tmp/mongoeco-unack/before/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/wire/test_unacknowledged.py",
+    "-q",
+    "--tb=short",
+    "-k",
+    "8.0",
+    "-x"
+  ],
+  "wheel_sha256": "d75af90706c338fcca2ab05cc8fd0e11c46e921dd4e0d0419b5dd637e11711d4",
+  "all_runtime_files_match_prior_wheel": true
+}

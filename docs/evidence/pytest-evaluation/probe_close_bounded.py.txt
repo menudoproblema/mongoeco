@@ -1,0 +1,19 @@
+import asyncio, json
+from mongoeco.wire import AsyncMongoEcoProxyServer
+from mongoeco.engines.memory import MemoryEngine
+
+async def main():
+    server=AsyncMongoEcoProxyServer(engine=MemoryEngine(),pymongo_profile='4.19')
+    await server.start()
+    reader,writer=await asyncio.open_connection(server.address.host,server.address.port)
+    await asyncio.sleep(.02)
+    task=asyncio.create_task(server.close())
+    done,pending=await asyncio.wait({task},timeout=.2)
+    result={'proxy_close_completed_with_open_connection':bool(done),'client_stream_eof_before_peer_close':reader.at_eof()}
+    writer.close()
+    await writer.wait_closed()
+    await asyncio.wait_for(task,2)
+    result['proxy_close_completed_after_peer_close']=True
+    print(json.dumps(result),flush=True)
+    open('/tmp/mongoeco-pytest-evaluation/probe-close.json','w').write(json.dumps(result,indent=2)+'\n')
+asyncio.run(main())

@@ -1,0 +1,16 @@
+[
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py313/bin/python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test*.py"
+    ],
+    "exit_code": 0,
+    "log": "unittest-313.txt"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "status": "expected_failure",
+  "exit_code": 1,
+  "failed": 1,
+  "wheel": "transport fix candidate",
+  "wheel_sha256": "41b20645df8632e8806edb6f844d525e304da243be465c10eba7e70a8bb4ba0a",
+  "reason": "Explicit w=0 command exposes acknowledged counters before this change.",
+  "command": [
+    "/tmp/mongoeco-command-unack/before/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/wire/test_unacknowledged.py",
+    "-q",
+    "--tb=short",
+    "-k",
+    "command_insert_w0 and 8.0 and memory",
+    "-x"
+  ]
+}

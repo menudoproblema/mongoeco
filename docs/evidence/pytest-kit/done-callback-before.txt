@@ -1,0 +1,68 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ ProxyLifecycleTests.test_completed_handler_with_queued_callback_cannot_spin_shutdown _
+
+self = <tests.integration.wire.test_proxy_lifecycle.ProxyLifecycleTests testMethod=test_completed_handler_with_queued_callback_cannot_spin_shutdown>
+
+    async def test_completed_handler_with_queued_callback_cannot_spin_shutdown(self):
+        proxy = AsyncMongoEcoProxyServer(engine=MemoryEngine())
+        await proxy.start()
+        loop = asyncio.get_running_loop()
+        original_factory = loop.get_task_factory()
+        original_gather = asyncio.gather
+        calls = 0
+    
+        def bounded_gather(*args, **kwargs):
+            nonlocal calls
+            calls += 1
+            if calls > 1:
+                message = "shutdown spun on a completed handler"
+                raise AssertionError(message)
+            return original_gather(*args, **kwargs)
+    
+        try:
+            # Eager completion places the done callback behind the close call.
+            loop.set_task_factory(asyncio.eager_task_factory)
+            reader, writer = Mock(), Mock()
+            reader.at_eof.return_value = True
+            writer.wait_closed = AsyncMock()
+            proxy._accept_connection(reader, writer)
+            self.assertTrue(all(task.done() for task in proxy._handlers))
+            with patch("asyncio.gather", side_effect=bounded_gather):
+>               await proxy.close()
+
+tests/integration/wire/test_proxy_lifecycle.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/wire/proxy.py:119: in close
+    await finish_cleanup(self._close_resources())
+/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/wire/_lifecycle.py:21: in finish_cleanup
+    task.result()
+/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/wire/proxy.py:131: in _close_resources
+    await asyncio.gather(*handlers, return_exceptions=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/mock.py:1176: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/mock.py:1180: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/mock.py:1247: in _execute_mock_call
+    result = effect(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<Task finished name='Task-4' result=None created at /opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py:1050>,)
+kwargs = {'return_exceptions': True}
+
+    def bounded_gather(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls > 1:
+            message = "shutdown spun on a completed handler"
+>           raise AssertionError(message)
+E           AssertionError: shutdown spun on a completed handler
+
+tests/integration/wire/test_proxy_lifecycle.py:30: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/wire/test_proxy_lifecycle.py::ProxyLifecycleTests::test_completed_handler_with_queued_callback_cannot_spin_shutdown
+1 failed, 10 deselected in 0.40s

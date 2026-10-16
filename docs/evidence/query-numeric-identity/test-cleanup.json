@@ -1,0 +1,8 @@
+{
+  "file": "tests/integration/api/test_numeric_identity_conservation.py",
+  "full_suite_input_sha256": "0d002f403e3c4579808016c6cf616ad412db2d4fb30755c57a4a6c4154a85e30",
+  "final_sha256": "a33d721398adc2725434c776807a54c6cd6effbb43485537cf90679244e51461",
+  "change": "Close read-only snapshot connection deterministically; no assertions, test IDs, setup data or production code changes.",
+  "affected_gate": "Entire changed test module re-run in all three installed artifact environments; other full-suite inputs and wheel unchanged.",
+  "reason": "SQLite connection context manager commits/rolls back but does not close; six ResourceWarnings in Python 3.14 full suite."
+}

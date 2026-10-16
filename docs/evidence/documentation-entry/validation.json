@@ -1,0 +1,235 @@
+{
+  "schema": "mongoeco-documentation-entry/v1",
+  "date": "2026-10-15",
+  "status": "documentation_and_package_metadata_ready",
+  "source_files": {
+    "README.md": "4147c431613c835a0bba9b05818f1a96f71ec54968205c55ee42661a8c03e42f",
+    "pyproject.toml": "55a12b0e311aa5d7928c73012a8ec0862ec13faf37f34005ae5d52868c6a13e1",
+    "CHANGELOG.md": "ef7b8f6f8b9a3b45a969ec9a51a970b22a0476eda173bb843bbb8163b4712395",
+    "docs/README.md": "b2ea5441224a639cd587421e50db6a9b599b2bf83e982400bd123b5b05822146",
+    "docs/development.md": "510a252203ea077232f619215c87fc3e242b19daadbaffcb833320c9f5d51821",
+    "docs/migrating-from-mongomock.md": "b6cce70a736b3b09e91002654462a4d63f830d34d84b37590a493f016f1b8e9f",
+    "docs/runtime-reference.md": "a0337aed66fed576e3c2550cbb1fa90714e3125d3c80eacd9bd2a39a0ffc595f",
+    "docs/comparisons.md": "365a934c0afd7258fe4b0ae5fde26797d76c6f6267c268cb01317913827ed136",
+    "docs/use-cases.md": "a2574af487a106c8d935528c0d44827d847520fbc0e8bc7803b24d8309fc39c1",
+    "docs/use-cases/test-runtime.md": "5fc95f8608215846e0591bf5906764ddccaaa076cea332a7b1061067b0c2d421",
+    "docs/pytest.md": "da186693b60d9e77f8441b4a5f573e64b4a86c273c956567f3e0484422b2e62c",
+    "docs/release-checklist.md": "72329e9a8ec065eb3d4d45aceb749f201d09965c281ffb528e7a9c4b073a5a4a"
+  },
+  "candidate": {
+    "git_head": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "uncommitted_workset": true,
+    "workset_sha256": "60dfb8e42f22fbbb9d8f581b0201af95c7d2b65aecd8c59b2963e5bcab51cee0",
+    "package_version": "4.9.1",
+    "disposition": "Unpublished candidate; version unchanged pending release decision.",
+    "artifacts": {
+      "mongoeco-4.9.1-py3-none-any.whl": "33d90993c482b8589d9335b9318768abf5a29bf5644238417f7d7cbec5f09bbd",
+      "mongoeco-4.9.1.tar.gz": "a256833377c90b455bcb0c277fd9211b0de0c832e2354b78037c43815f9b4805"
+    },
+    "reproducible_wheel_and_sdist": true
+  },
+  "checks": {
+    "status": "passed",
+    "documentation_links_checked": 138,
+    "readme_relative_rendered_links": 0,
+    "pypi_markdown_rendered": true,
+    "metadata_summary": "Local MongoDB testing and embedded persistence for Python, with PyMongo-style sync and async APIs.",
+    "metadata_project_urls": {
+      "Homepage": "https://github.com/menudoproblema/mongoeco",
+      "Documentation": "https://github.com/menudoproblema/mongoeco/blob/main/docs/README.md",
+      "Repository": "https://github.com/menudoproblema/mongoeco",
+      "Issues": "https://github.com/menudoproblema/mongoeco/issues",
+      "Changelog": "https://github.com/menudoproblema/mongoeco/blob/main/CHANGELOG.md"
+    },
+    "wheel_sdist_readme_matches_source": true,
+    "wheel_sdist_metadata_aligned": true,
+    "runtime_files_identical_to_tested_candidate": 280,
+    "dependencies_extras_python_policy_unchanged": true,
+    "first_python_example_line": 20,
+    "published_pypi_updated": false,
+    "remote_new_document_pages_verified": false,
+    "propagation": "Commit/push and release publication remain outside this documentation edit."
+  },
+  "examples": {
+    "status": "passed",
+    "pytest_cases": 30,
+    "standalone_snippets": 12,
+    "runs": [
+      {
+        "python": "313",
+        "example": "quickstart",
+        "exit_code": 0
+      },
+      {
+        "python": "313",
+        "example": "direct-async",
+        "exit_code": 0
+      },
+      {
+        "python": "313",
+        "example": "sqlite",
+        "exit_code": 0
+      },
+      {
+        "python": "313",
+        "example": "runtime-cxp",
+        "exit_code": 0
+      },
+      {
+        "python": "313",
+        "example": "readme-sync",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "313",
+        "example": "readme-async",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "313",
+        "example": "application-sync",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "313",
+        "example": "application-async",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "313",
+        "example": "migration",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "314",
+        "example": "quickstart",
+        "exit_code": 0
+      },
+      {
+        "python": "314",
+        "example": "direct-async",
+        "exit_code": 0
+      },
+      {
+        "python": "314",
+        "example": "sqlite",
+        "exit_code": 0
+      },
+      {
+        "python": "314",
+        "example": "runtime-cxp",
+        "exit_code": 0
+      },
+      {
+        "python": "314",
+        "example": "readme-sync",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "314",
+        "example": "readme-async",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "314",
+        "example": "application-sync",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "314",
+        "example": "application-async",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "314",
+        "example": "migration",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "315",
+        "example": "quickstart",
+        "exit_code": 0
+      },
+      {
+        "python": "315",
+        "example": "direct-async",
+        "exit_code": 0
+      },
+      {
+        "python": "315",
+        "example": "sqlite",
+        "exit_code": 0
+      },
+      {
+        "python": "315",
+        "example": "runtime-cxp",
+        "exit_code": 0
+      },
+      {
+        "python": "315",
+        "example": "readme-sync",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "315",
+        "example": "readme-async",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "315",
+        "example": "application-sync",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "315",
+        "example": "application-async",
+        "cases": 2,
+        "exit_code": 0
+      },
+      {
+        "python": "315",
+        "example": "migration",
+        "cases": 2,
+        "exit_code": 0
+      }
+    ]
+  },
+  "runtime_reuse": {
+    "record": "../pytest-review/validation.json",
+    "tested_wheel_sha256": "414e6d2978fc8bf0dbbb33846fc6a9651c6d0df310e4c179359b6442703b1249",
+    "runtime_files_byte_identical": 280,
+    "three_interpreter_installs_verified": true,
+    "metadata_deltas": [
+      "Summary",
+      "Project-URL",
+      "README description"
+    ],
+    "dependency_classifier_and_extra_metadata_unchanged": true,
+    "scope": "Previously executed functional suites remain evidence for identical runtime and dependency inputs; examples, build reproducibility, rendering, links and metadata are freshly checked. No full-suite rerun claimed."
+  },
+  "review": {
+    "diff_reviewed": true,
+    "documentation_owners_aligned": true,
+    "prior_authorized_work_preserved": true,
+    "source_whitespace_check": "passed",
+    "consumer_identity_policy": "Anonymous consumers; no consumer names, URLs or import namespaces added."
+  },
+  "propagation_pending": [
+    "Commit and push the documentation and project metadata.",
+    "Reconcile upcoming-release notices when selecting and publishing the release.",
+    "Publish a new distribution to update PyPI description and project links; published package metadata was not edited."
+  ]
+}

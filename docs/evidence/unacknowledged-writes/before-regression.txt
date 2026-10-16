@@ -1,0 +1,83 @@
+F
+=================================== FAILURES ===================================
+____ test_unacknowledged_writes_match_native[insert_one_w0-8.0-memory-sync] ____
+tests/integration/wire/test_unacknowledged.py:93: in test_unacknowledged_writes_match_native
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/wire/test_unacknowledged.py:78: in exercise
+    actual = await asyncio.to_thread(synchronous)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py:86: in run
+    result = ctx.run(self.task)
+             ^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/concurrent/futures/thread.py:73: in run
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+tests/integration/wire/test_unacknowledged.py:75: in synchronous
+    return observe(client, "unack", case.id, case, pool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/support_unacknowledged.py:152: in observe
+    assert client.admin.command("ping")["ok"] == 1
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/mongo_client.py:3187: in _read
+    return self._func(self._session, self._server, conn, read_pref)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/database.py:934: in inner
+    return self._command(
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/database.py:773: in _command
+    return conn.command(
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/helpers.py:50: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/pool.py:430: in command
+    self._raise_connection_failure(error)
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/pool.py:576: in _raise_connection_failure
+    raise error
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/pool.py:405: in command
+    return run_command(
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/command_runner.py:440: in run_command
+    docs, _, _ = _run_command(
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/command_runner.py:192: in _run_command
+    reply = conn.receive_message(request_id)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/pool.py:458: in receive_message
+    self._raise_connection_failure(error)
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/pool.py:576: in _raise_connection_failure
+    raise error
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/synchronous/pool.py:455: in receive_message
+    return receive_message(self, request_id, self.max_message_size)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pymongo/network_layer.py:752: in receive_message
+    raise ProtocolError(f"Got response id {response_to!r} but expected {request_id!r}")
+E   pymongo.errors.ProtocolError: Got response id 470211272 but expected 101027544
+=========================== short test summary info ============================
+FAILED tests/integration/wire/test_unacknowledged.py::test_unacknowledged_writes_match_native[insert_one_w0-8.0-memory-sync]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 320 deselected in 1.14s

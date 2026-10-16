@@ -1,0 +1,162 @@
+{
+  "schema": "mongoeco-benchmark-report/v2",
+  "environment": {
+    "python": "3.14.5",
+    "pythonImplementation": "CPython",
+    "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "sqlite": "3.53.4",
+    "jsonBackend": "stdlib",
+    "mongoeco": "4.9.1",
+    "dependencies": {
+      "mongomock": "4.3.0",
+      "orjson": "3.11.9",
+      "psutil": "7.2.2",
+      "pymongo": "4.19.0",
+      "usearch": "2.25.3"
+    },
+    "executable": "/Users/uve/Proyectos/mongoeco/.venv/bin/python"
+  },
+  "source": {
+    "gitRevision": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "gitDirty": true,
+    "mongoecoModule": "/Users/uve/Proyectos/mongoeco/src/mongoeco/__init__.py",
+    "harnessSha256": "sha256:a46f2e9c5ecbf5811289439caba8210f62a24928d1a5ad295da6a7337e8b3de3",
+    "datasetSha256": "sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63"
+  },
+  "config": {
+    "size": 1000,
+    "warmup": 1,
+    "repetitions": 5,
+    "workloads": [
+      "filter_selectivity"
+    ],
+    "rssPeakSamplingIntervalMs": 5.0
+  },
+  "results": {
+    "sqlite-sync": {
+      "filter_selectivity": {
+        "filter_selectivity_low_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.1214,
+          "wall_time_median_sec": 0.1193,
+          "wall_time_min_sec": 0.1171,
+          "wall_time_max_sec": 0.1306,
+          "cpu_user_mean_sec": 0.09,
+          "cpu_sys_mean_sec": 0.014,
+          "rss_delta_mean_mb": -9.38,
+          "rss_peak_max_mb": 180.95,
+          "metadata": {
+            "summary": "sqlite/sql scan>filter",
+            "engine": "sqlite",
+            "strategy": "sql",
+            "planning_mode": "strict",
+            "limit": null,
+            "physical_plan": [
+              {
+                "runtime": "sql",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "sql",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pushdown_mode": "sql-exact",
+            "residual_required": false,
+            "filter_owner": "sql",
+            "sort_owner": "none",
+            "window_owner": "none",
+            "query_shape": "username equality",
+            "selectivity": "low",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:e980b1118bef4758327e2c66f497b4602660f5b3ffce899fe27eeeb9a68f3a04",
+            "outcome_items": 100
+          }
+        },
+        "filter_selectivity_medium_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.241,
+          "wall_time_median_sec": 0.241,
+          "wall_time_min_sec": 0.2347,
+          "wall_time_max_sec": 0.2467,
+          "cpu_user_mean_sec": 0.19,
+          "cpu_sys_mean_sec": 0.018,
+          "rss_delta_mean_mb": -0.83,
+          "rss_peak_max_mb": 178.09,
+          "metadata": {
+            "summary": "sqlite/sql scan>filter",
+            "engine": "sqlite",
+            "strategy": "sql",
+            "planning_mode": "strict",
+            "limit": null,
+            "physical_plan": [
+              {
+                "runtime": "sql",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "sql",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pushdown_mode": "sql-exact",
+            "residual_required": false,
+            "filter_owner": "sql",
+            "sort_owner": "none",
+            "window_owner": "none",
+            "query_shape": "city equality",
+            "selectivity": "medium",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:666fe8ca0e57b8abed833462937bce71b67e517c67c61f705bdc28d436a64dbb",
+            "outcome_items": 100
+          }
+        },
+        "filter_selectivity_high_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.7013,
+          "wall_time_median_sec": 0.6975,
+          "wall_time_min_sec": 0.6723,
+          "wall_time_max_sec": 0.7298,
+          "cpu_user_mean_sec": 0.554,
+          "cpu_sys_mean_sec": 0.05,
+          "rss_delta_mean_mb": 14.47,
+          "rss_peak_max_mb": 182.27,
+          "metadata": {
+            "summary": "sqlite/sql scan>filter",
+            "engine": "sqlite",
+            "strategy": "sql",
+            "planning_mode": "strict",
+            "limit": null,
+            "physical_plan": [
+              {
+                "runtime": "sql",
+                "operation": "scan",
+                "detail": null
+              },
+              {
+                "runtime": "sql",
+                "operation": "filter",
+                "detail": null
+              }
+            ],
+            "pushdown_mode": "sql-exact",
+            "residual_required": false,
+            "filter_owner": "sql",
+            "sort_owner": "none",
+            "window_owner": "none",
+            "query_shape": "active equality",
+            "selectivity": "high",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:ceeb353045b75aaafbb70d8a15db6b527a8a09a51f1ed121949142d7523ddebb",
+            "outcome_items": 100
+          }
+        }
+      }
+    }
+  }
+}

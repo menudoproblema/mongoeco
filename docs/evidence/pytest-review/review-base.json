@@ -1,0 +1,13 @@
+{
+  "git_head": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+  "files": {
+    "src/mongoeco/wire/proxy.py": "9089cfe6c3b10db8f4884f05f341f9197c58b04f0243e37523eb33a47e5783a1",
+    "src/mongoeco/pytest_asyncio.py": "acaea571b858fd614bd1a64b5a0c65cb81aa440a68668238c0d8032f8e12f899",
+    "src/mongoeco/pytest_anyio.py": "7892ccba2d9495fe0a5d5c23cf5d146761df957c2409cbdb9b6616c9f39b72fc",
+    "src/mongoeco/pytest_plugin.py": "d3fcd5b93231ebc3c24fcf5d8360015ad9361dadcb0e53eafa2868bac5f46929",
+    "src/mongoeco/_pytest_runtime.py": "0e61f76de9f7d59382588a17d92b7046b5428e6574f31d46088e71393819e5c0",
+    "src/mongoeco/wire/_lifecycle.py": "877d15e97e0656841d051dfb647af26311e2a3c46542431984f5386a7b2460cb",
+    "tests/integration/pytest_kit/test_fixtures.py": "b99825b55f0457210f6059de5754c6fee2119a6ce26881a0b235ee23a208baf1",
+    "tests/integration/wire/test_proxy_lifecycle.py": "84cc9d3d788943f9b8336822e00c1add5e5e4244615649f04d4ad921d80bae70"
+  }
+}

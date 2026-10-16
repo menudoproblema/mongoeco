@@ -1,7 +1,7 @@
 # Soporte de PyMongo 4.19
 
-Estado: implementación para la siguiente entrega, bajo `Unreleased`. La versión
-publicada 4.9.1 no incluye este perfil. No se cambia el mínimo Python 3.13 ni los
+Disponible desde Mongoeco **4.10.0**. La versión publicada 4.9.1 no incluye
+este perfil. No se cambia el mínimo Python 3.13 ni los
 defaults MongoDB 7.0 / PyMongo 4.9.
 
 ## Selección y contrato
@@ -74,13 +74,17 @@ explícitas. El codec BSON sigue delegado al driver opcional; las pruebas de la
 frontera wire rechazan elementos que consumen el terminador del documento y
 conservan la propiedad de buffers y RawBSON. No se eleva la versión wire anunciada.
 
-No se añade CSFLE/QE, callbacks KMS, `append_metadata`, Python 3.15,
+No se añade CSFLE/QE, callbacks KMS, `append_metadata`,
 subintérpretes ni polling SRV al runtime local. La disponibilidad de estas
 funciones en PyMongo no implica soporte de Mongoeco. DNS se prueba con el
 resolver público real y respuestas controladas; no acredita una instalación DNS
 o TLS externa.
 
-El consumidor Mochuelo observado ya fija PyMongo 4.19.0; el testkit observado
+El soporte oficial del intérprete Python 3.15 se incorpora en un bloque
+posterior de la misma entrega, con su propia
+[política y validación](python-support.md).
+
+El consumidor externo observado ya fija PyMongo 4.19.0; el testkit observado
 mantiene una restricción de Mongoeco anterior a 4.9. Sus manifests no se cambian
 en esta implementación ni se acredita su adopción permanente.
 

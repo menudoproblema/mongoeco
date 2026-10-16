@@ -1,0 +1,3657 @@
+{
+  "runs": [
+    {
+      "id": "C01",
+      "engine": "MemoryEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_filter_matches_field_before_top_level_operator",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [],
+          "kwargs": {
+            "document": {
+              "_id": "doc-1",
+              "__locked": "locker-a",
+              "__locked_at": {
+                "$date": {
+                  "$numberLong": "1792067186486"
+                }
+              },
+              "__locked_until": {
+                "$date": {
+                  "$numberLong": "1792067246486"
+                }
+              }
+            }
+          },
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "__locked",
+                    "locker-a"
+                  ],
+                  [
+                    "__locked_at",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067186486"
+                      }
+                    }
+                  ],
+                  [
+                    "__locked_until",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067246486"
+                      }
+                    }
+                  ],
+                  [
+                    "_id",
+                    "doc-1"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one",
+          "args": [],
+          "kwargs": {
+            "filter": {
+              "$or": [
+                {
+                  "__locked": null
+                },
+                {
+                  "__locked": {
+                    "$exists": false
+                  }
+                },
+                {
+                  "__locked_until": {
+                    "$lte": {
+                      "$date": {
+                        "$numberLong": "1792067186487"
+                      }
+                    }
+                  }
+                }
+              ],
+              "_id": "doc-1"
+            }
+          },
+          "observation": {
+            "result": {
+              "document": null
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "__locked",
+                    "locker-a"
+                  ],
+                  [
+                    "__locked_at",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067186486"
+                      }
+                    }
+                  ],
+                  [
+                    "__locked_until",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067246486"
+                      }
+                    }
+                  ],
+                  [
+                    "_id",
+                    "doc-1"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one_and_update",
+          "args": [],
+          "kwargs": {
+            "filter": {
+              "$or": [
+                {
+                  "__locked": null
+                },
+                {
+                  "__locked": {
+                    "$exists": false
+                  }
+                },
+                {
+                  "__locked_until": {
+                    "$lte": {
+                      "$date": {
+                        "$numberLong": "1792067186487"
+                      }
+                    }
+                  }
+                }
+              ],
+              "_id": "doc-1"
+            },
+            "update": {
+              "$set": {
+                "field": "updated"
+              }
+            }
+          },
+          "observation": {
+            "result": {
+              "document": null
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "__locked",
+                    "locker-a"
+                  ],
+                  [
+                    "__locked_at",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067186486"
+                      }
+                    }
+                  ],
+                  [
+                    "__locked_until",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067246486"
+                      }
+                    }
+                  ],
+                  [
+                    "_id",
+                    "doc-1"
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C02",
+      "engine": "MemoryEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_bulk_write_upsert_is_idempotent",
+      "steps": [
+        {
+          "method": "bulk_write",
+          "args": [
+            [
+              {
+                "model": "UpdateOne",
+                "filter": {
+                  "_id": "doc-1"
+                },
+                "document": {
+                  "$setOnInsert": {
+                    "name": "Item 1"
+                  }
+                }
+              }
+            ]
+          ],
+          "kwargs": {
+            "ordered": false
+          },
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "matched_count": {
+                "$numberInt": "0"
+              },
+              "modified_count": {
+                "$numberInt": "0"
+              },
+              "deleted_count": {
+                "$numberInt": "0"
+              },
+              "inserted_count": {
+                "$numberInt": "0"
+              },
+              "upserted_count": {
+                "$numberInt": "1"
+              },
+              "upserted_ids": [
+                [
+                  {
+                    "$numberInt": "0"
+                  },
+                  "doc-1"
+                ]
+              ]
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "name",
+                    "Item 1"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "bulk_write",
+          "args": [
+            [
+              {
+                "model": "UpdateOne",
+                "filter": {
+                  "_id": "doc-1"
+                },
+                "document": {
+                  "$setOnInsert": {
+                    "name": "Item 1"
+                  }
+                }
+              }
+            ]
+          ],
+          "kwargs": {
+            "ordered": false
+          },
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "matched_count": {
+                "$numberInt": "1"
+              },
+              "modified_count": {
+                "$numberInt": "0"
+              },
+              "deleted_count": {
+                "$numberInt": "0"
+              },
+              "inserted_count": {
+                "$numberInt": "0"
+              },
+              "upserted_count": {
+                "$numberInt": "0"
+              },
+              "upserted_ids": []
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "name",
+                    "Item 1"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one",
+          "args": [
+            {
+              "_id": "doc-1"
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "name",
+                    "Item 1"
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "name",
+                    "Item 1"
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C03",
+      "engine": "MemoryEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_bulk_write_applies_delete_one",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "name": "Item 1"
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "name",
+                    "Item 1"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "bulk_write",
+          "args": [
+            [
+              {
+                "model": "DeleteOne",
+                "filter": {
+                  "_id": "doc-1"
+                },
+                "document": null
+              }
+            ]
+          ],
+          "kwargs": {
+            "ordered": false
+          },
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "matched_count": {
+                "$numberInt": "0"
+              },
+              "modified_count": {
+                "$numberInt": "0"
+              },
+              "deleted_count": {
+                "$numberInt": "1"
+              },
+              "inserted_count": {
+                "$numberInt": "0"
+              },
+              "upserted_count": {
+                "$numberInt": "0"
+              },
+              "upserted_ids": []
+            },
+            "documents": []
+          }
+        },
+        {
+          "method": "find_one",
+          "args": [
+            {
+              "_id": "doc-1"
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "document": null
+            },
+            "documents": []
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C04",
+      "engine": "MemoryEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_lowers_array_filter_update_atomically",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "status": "pending",
+              "retention_count": {
+                "$numberInt": "0"
+              },
+              "counters": [
+                {
+                  "counter_key": "first",
+                  "value": {
+                    "$numberInt": "0"
+                  }
+                },
+                {
+                  "counter_key": "second",
+                  "value": {
+                    "$numberInt": "1"
+                  }
+                }
+              ],
+              "items": [
+                {
+                  "item_id": "previous"
+                }
+              ],
+              "archived_items": []
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    []
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "0"
+                    }
+                  ],
+                  [
+                    "status",
+                    "pending"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "doc-1"
+            },
+            {
+              "$set": {
+                "status": "accepted"
+              },
+              "$inc": {
+                "retention_count": {
+                  "$numberInt": "1"
+                },
+                "counters.$[entry].value": {
+                  "$numberInt": "1"
+                }
+              },
+              "$push": {
+                "items": {
+                  "item_id": "accepted"
+                }
+              }
+            }
+          ],
+          "kwargs": {
+            "array_filters": [
+              {
+                "entry.counter_key": "first",
+                "entry.value": {
+                  "$lt": {
+                    "$numberInt": "1"
+                  }
+                }
+              }
+            ],
+            "return_document": true
+          },
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    []
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "accepted"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ],
+                  [
+                    "status",
+                    "accepted"
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    []
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "accepted"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ],
+                  [
+                    "status",
+                    "accepted"
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C05",
+      "engine": "MemoryEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_lowers_array_filter_update_atomically",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "status": "accepted",
+              "retention_count": {
+                "$numberInt": "1"
+              },
+              "counters": [
+                {
+                  "counter_key": "first",
+                  "value": {
+                    "$numberInt": "1"
+                  }
+                },
+                {
+                  "counter_key": "second",
+                  "value": {
+                    "$numberInt": "1"
+                  }
+                }
+              ],
+              "items": [
+                {
+                  "item_id": "previous"
+                },
+                {
+                  "item_id": "accepted"
+                }
+              ],
+              "archived_items": []
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    []
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "accepted"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ],
+                  [
+                    "status",
+                    "accepted"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "doc-1"
+            },
+            {
+              "$inc": {
+                "retention_count": {
+                  "$numberInt": "-1"
+                },
+                "counters.$[entry].value": {
+                  "$numberInt": "-1"
+                }
+              },
+              "$pull": {
+                "items": {
+                  "item_id": "accepted"
+                }
+              },
+              "$push": {
+                "archived_items": {
+                  "item_id": "accepted"
+                }
+              }
+            }
+          ],
+          "kwargs": {
+            "array_filters": [
+              {
+                "entry.counter_key": "first",
+                "entry.value": {
+                  "$gt": {
+                    "$numberInt": "0"
+                  }
+                }
+              }
+            ],
+            "return_document": true
+          },
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "accepted"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "0"
+                    }
+                  ],
+                  [
+                    "status",
+                    "accepted"
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "accepted"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "0"
+                    }
+                  ],
+                  [
+                    "status",
+                    "accepted"
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C06",
+      "engine": "MemoryEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_keeps_array_when_no_filtered_item_matches",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "items": [
+                {
+                  "item_id": "first",
+                  "attempt": {
+                    "$numberInt": "0"
+                  }
+                }
+              ]
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "first"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "doc-1"
+            },
+            {
+              "$inc": {
+                "items.$[entry].attempt": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          ],
+          "kwargs": {
+            "array_filters": [
+              {
+                "entry.item_id": "missing"
+              }
+            ],
+            "return_document": true
+          },
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "first"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "first"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C07",
+      "engine": "MemoryEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_repairs_dotted_array_lookup_after_pipeline_write",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "items": []
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    []
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "doc-1"
+            },
+            [
+              {
+                "$set": {
+                  "items": {
+                    "$concatArrays": [
+                      "$items",
+                      [
+                        {
+                          "item_id": {
+                            "$binary": {
+                              "base64": "VpD4krh0T4+xwCxPoZ2e7A==",
+                              "subType": "04"
+                            }
+                          }
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            ]
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "matched_count": {
+                "$numberInt": "1"
+              },
+              "modified_count": {
+                "$numberInt": "1"
+              },
+              "upserted_id": null
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            {
+                              "$binary": {
+                                "base64": "VpD4krh0T4+xwCxPoZ2e7A==",
+                                "subType": "04"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one",
+          "args": [
+            {
+              "items.item_id": {
+                "$eq": {
+                  "$binary": {
+                    "base64": "VpD4krh0T4+xwCxPoZ2e7A==",
+                    "subType": "04"
+                  }
+                }
+              }
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            {
+                              "$binary": {
+                                "base64": "VpD4krh0T4+xwCxPoZ2e7A==",
+                                "subType": "04"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            {
+                              "$binary": {
+                                "base64": "VpD4krh0T4+xwCxPoZ2e7A==",
+                                "subType": "04"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C08",
+      "engine": "MemoryEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_probe_precedes_a_real_embedded_array_mutation",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "items": [
+                {
+                  "item_id": "item-1",
+                  "status": "pending",
+                  "attempt": {
+                    "$numberInt": "0"
+                  }
+                }
+              ]
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "item-1"
+                          ],
+                          [
+                            "status",
+                            "pending"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "doc-1"
+            },
+            {
+              "$set": {
+                "items.$[entry].status": "running"
+              },
+              "$inc": {
+                "items.$[entry].attempt": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          ],
+          "kwargs": {
+            "array_filters": [
+              {
+                "entry.item_id": "item-1"
+              }
+            ],
+            "return_document": true
+          },
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "item-1"
+                          ],
+                          [
+                            "status",
+                            "running"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "item-1"
+                          ],
+                          [
+                            "status",
+                            "running"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      },
+      "storage_role": "consumer-database-adapter"
+    },
+    {
+      "id": "C01",
+      "engine": "SQLiteEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_filter_matches_field_before_top_level_operator",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [],
+          "kwargs": {
+            "document": {
+              "_id": "doc-1",
+              "__locked": "locker-a",
+              "__locked_at": {
+                "$date": {
+                  "$numberLong": "1792067191987"
+                }
+              },
+              "__locked_until": {
+                "$date": {
+                  "$numberLong": "1792067251987"
+                }
+              }
+            }
+          },
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "__locked",
+                    "locker-a"
+                  ],
+                  [
+                    "__locked_at",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067191987"
+                      }
+                    }
+                  ],
+                  [
+                    "__locked_until",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067251987"
+                      }
+                    }
+                  ],
+                  [
+                    "_id",
+                    "doc-1"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one",
+          "args": [],
+          "kwargs": {
+            "filter": {
+              "$or": [
+                {
+                  "__locked": null
+                },
+                {
+                  "__locked": {
+                    "$exists": false
+                  }
+                },
+                {
+                  "__locked_until": {
+                    "$lte": {
+                      "$date": {
+                        "$numberLong": "1792067191991"
+                      }
+                    }
+                  }
+                }
+              ],
+              "_id": "doc-1"
+            }
+          },
+          "observation": {
+            "result": {
+              "document": null
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "__locked",
+                    "locker-a"
+                  ],
+                  [
+                    "__locked_at",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067191987"
+                      }
+                    }
+                  ],
+                  [
+                    "__locked_until",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067251987"
+                      }
+                    }
+                  ],
+                  [
+                    "_id",
+                    "doc-1"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one_and_update",
+          "args": [],
+          "kwargs": {
+            "filter": {
+              "$or": [
+                {
+                  "__locked": null
+                },
+                {
+                  "__locked": {
+                    "$exists": false
+                  }
+                },
+                {
+                  "__locked_until": {
+                    "$lte": {
+                      "$date": {
+                        "$numberLong": "1792067191991"
+                      }
+                    }
+                  }
+                }
+              ],
+              "_id": "doc-1"
+            },
+            "update": {
+              "$set": {
+                "field": "updated"
+              }
+            }
+          },
+          "observation": {
+            "result": {
+              "document": null
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "__locked",
+                    "locker-a"
+                  ],
+                  [
+                    "__locked_at",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067191987"
+                      }
+                    }
+                  ],
+                  [
+                    "__locked_until",
+                    {
+                      "$date": {
+                        "$numberLong": "1792067251987"
+                      }
+                    }
+                  ],
+                  [
+                    "_id",
+                    "doc-1"
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C02",
+      "engine": "SQLiteEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_bulk_write_upsert_is_idempotent",
+      "steps": [
+        {
+          "method": "bulk_write",
+          "args": [
+            [
+              {
+                "model": "UpdateOne",
+                "filter": {
+                  "_id": "doc-1"
+                },
+                "document": {
+                  "$setOnInsert": {
+                    "name": "Item 1"
+                  }
+                }
+              }
+            ]
+          ],
+          "kwargs": {
+            "ordered": false
+          },
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "matched_count": {
+                "$numberInt": "0"
+              },
+              "modified_count": {
+                "$numberInt": "0"
+              },
+              "deleted_count": {
+                "$numberInt": "0"
+              },
+              "inserted_count": {
+                "$numberInt": "0"
+              },
+              "upserted_count": {
+                "$numberInt": "1"
+              },
+              "upserted_ids": [
+                [
+                  {
+                    "$numberInt": "0"
+                  },
+                  "doc-1"
+                ]
+              ]
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "name",
+                    "Item 1"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "bulk_write",
+          "args": [
+            [
+              {
+                "model": "UpdateOne",
+                "filter": {
+                  "_id": "doc-1"
+                },
+                "document": {
+                  "$setOnInsert": {
+                    "name": "Item 1"
+                  }
+                }
+              }
+            ]
+          ],
+          "kwargs": {
+            "ordered": false
+          },
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "matched_count": {
+                "$numberInt": "1"
+              },
+              "modified_count": {
+                "$numberInt": "0"
+              },
+              "deleted_count": {
+                "$numberInt": "0"
+              },
+              "inserted_count": {
+                "$numberInt": "0"
+              },
+              "upserted_count": {
+                "$numberInt": "0"
+              },
+              "upserted_ids": []
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "name",
+                    "Item 1"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one",
+          "args": [
+            {
+              "_id": "doc-1"
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "name",
+                    "Item 1"
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "name",
+                    "Item 1"
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C03",
+      "engine": "SQLiteEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_bulk_write_applies_delete_one",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "name": "Item 1"
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "name",
+                    "Item 1"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "bulk_write",
+          "args": [
+            [
+              {
+                "model": "DeleteOne",
+                "filter": {
+                  "_id": "doc-1"
+                },
+                "document": null
+              }
+            ]
+          ],
+          "kwargs": {
+            "ordered": false
+          },
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "matched_count": {
+                "$numberInt": "0"
+              },
+              "modified_count": {
+                "$numberInt": "0"
+              },
+              "deleted_count": {
+                "$numberInt": "1"
+              },
+              "inserted_count": {
+                "$numberInt": "0"
+              },
+              "upserted_count": {
+                "$numberInt": "0"
+              },
+              "upserted_ids": []
+            },
+            "documents": []
+          }
+        },
+        {
+          "method": "find_one",
+          "args": [
+            {
+              "_id": "doc-1"
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "document": null
+            },
+            "documents": []
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C04",
+      "engine": "SQLiteEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_lowers_array_filter_update_atomically",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "status": "pending",
+              "retention_count": {
+                "$numberInt": "0"
+              },
+              "counters": [
+                {
+                  "counter_key": "first",
+                  "value": {
+                    "$numberInt": "0"
+                  }
+                },
+                {
+                  "counter_key": "second",
+                  "value": {
+                    "$numberInt": "1"
+                  }
+                }
+              ],
+              "items": [
+                {
+                  "item_id": "previous"
+                }
+              ],
+              "archived_items": []
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    []
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "0"
+                    }
+                  ],
+                  [
+                    "status",
+                    "pending"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "doc-1"
+            },
+            {
+              "$set": {
+                "status": "accepted"
+              },
+              "$inc": {
+                "retention_count": {
+                  "$numberInt": "1"
+                },
+                "counters.$[entry].value": {
+                  "$numberInt": "1"
+                }
+              },
+              "$push": {
+                "items": {
+                  "item_id": "accepted"
+                }
+              }
+            }
+          ],
+          "kwargs": {
+            "array_filters": [
+              {
+                "entry.counter_key": "first",
+                "entry.value": {
+                  "$lt": {
+                    "$numberInt": "1"
+                  }
+                }
+              }
+            ],
+            "return_document": true
+          },
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    []
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "accepted"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ],
+                  [
+                    "status",
+                    "accepted"
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    []
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "accepted"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ],
+                  [
+                    "status",
+                    "accepted"
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C05",
+      "engine": "SQLiteEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_lowers_array_filter_update_atomically",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "status": "accepted",
+              "retention_count": {
+                "$numberInt": "1"
+              },
+              "counters": [
+                {
+                  "counter_key": "first",
+                  "value": {
+                    "$numberInt": "1"
+                  }
+                },
+                {
+                  "counter_key": "second",
+                  "value": {
+                    "$numberInt": "1"
+                  }
+                }
+              ],
+              "items": [
+                {
+                  "item_id": "previous"
+                },
+                {
+                  "item_id": "accepted"
+                }
+              ],
+              "archived_items": []
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    []
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "accepted"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "1"
+                    }
+                  ],
+                  [
+                    "status",
+                    "accepted"
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "doc-1"
+            },
+            {
+              "$inc": {
+                "retention_count": {
+                  "$numberInt": "-1"
+                },
+                "counters.$[entry].value": {
+                  "$numberInt": "-1"
+                }
+              },
+              "$pull": {
+                "items": {
+                  "item_id": "accepted"
+                }
+              },
+              "$push": {
+                "archived_items": {
+                  "item_id": "accepted"
+                }
+              }
+            }
+          ],
+          "kwargs": {
+            "array_filters": [
+              {
+                "entry.counter_key": "first",
+                "entry.value": {
+                  "$gt": {
+                    "$numberInt": "0"
+                  }
+                }
+              }
+            ],
+            "return_document": true
+          },
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "accepted"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "0"
+                    }
+                  ],
+                  [
+                    "status",
+                    "accepted"
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "archived_items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "accepted"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "counters",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "first"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      },
+                      {
+                        "$document": [
+                          [
+                            "counter_key",
+                            "second"
+                          ],
+                          [
+                            "value",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "previous"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "retention_count",
+                    {
+                      "$numberInt": "0"
+                    }
+                  ],
+                  [
+                    "status",
+                    "accepted"
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C06",
+      "engine": "SQLiteEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_keeps_array_when_no_filtered_item_matches",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "items": [
+                {
+                  "item_id": "first",
+                  "attempt": {
+                    "$numberInt": "0"
+                  }
+                }
+              ]
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "first"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "doc-1"
+            },
+            {
+              "$inc": {
+                "items.$[entry].attempt": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          ],
+          "kwargs": {
+            "array_filters": [
+              {
+                "entry.item_id": "missing"
+              }
+            ],
+            "return_document": true
+          },
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "first"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "first"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C07",
+      "engine": "SQLiteEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_repairs_dotted_array_lookup_after_pipeline_write",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "items": []
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    []
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "doc-1"
+            },
+            [
+              {
+                "$set": {
+                  "items": {
+                    "$concatArrays": [
+                      "$items",
+                      [
+                        {
+                          "item_id": {
+                            "$binary": {
+                              "base64": "H12ZjroYRNO3wJagL9v4xQ==",
+                              "subType": "04"
+                            }
+                          }
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            ]
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "matched_count": {
+                "$numberInt": "1"
+              },
+              "modified_count": {
+                "$numberInt": "1"
+              },
+              "upserted_id": null
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            {
+                              "$binary": {
+                                "base64": "H12ZjroYRNO3wJagL9v4xQ==",
+                                "subType": "04"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one",
+          "args": [
+            {
+              "items.item_id": {
+                "$eq": {
+                  "$binary": {
+                    "base64": "H12ZjroYRNO3wJagL9v4xQ==",
+                    "subType": "04"
+                  }
+                }
+              }
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            {
+                              "$binary": {
+                                "base64": "H12ZjroYRNO3wJagL9v4xQ==",
+                                "subType": "04"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            {
+                              "$binary": {
+                                "base64": "H12ZjroYRNO3wJagL9v4xQ==",
+                                "subType": "04"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "3"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      }
+    },
+    {
+      "id": "C08",
+      "engine": "SQLiteEngine",
+      "profile": "4.19",
+      "dialect": "7.0",
+      "source_anchor": "test_mongodb_mock_probe_precedes_a_real_embedded_array_mutation",
+      "steps": [
+        {
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "doc-1",
+              "items": [
+                {
+                  "item_id": "item-1",
+                  "status": "pending",
+                  "attempt": {
+                    "$numberInt": "0"
+                  }
+                }
+              ]
+            }
+          ],
+          "kwargs": {},
+          "observation": {
+            "result": {
+              "acknowledged": true,
+              "inserted_id": "doc-1"
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "item-1"
+                          ],
+                          [
+                            "status",
+                            "pending"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "0"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "doc-1"
+            },
+            {
+              "$set": {
+                "items.$[entry].status": "running"
+              },
+              "$inc": {
+                "items.$[entry].attempt": {
+                  "$numberInt": "1"
+                }
+              }
+            }
+          ],
+          "kwargs": {
+            "array_filters": [
+              {
+                "entry.item_id": "item-1"
+              }
+            ],
+            "return_document": true
+          },
+          "observation": {
+            "result": {
+              "document": {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "item-1"
+                          ],
+                          [
+                            "status",
+                            "running"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            },
+            "documents": [
+              {
+                "$document": [
+                  [
+                    "_id",
+                    "doc-1"
+                  ],
+                  [
+                    "items",
+                    [
+                      {
+                        "$document": [
+                          [
+                            "item_id",
+                            "item-1"
+                          ],
+                          [
+                            "status",
+                            "running"
+                          ],
+                          [
+                            "attempt",
+                            {
+                              "$numberInt": "1"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "native": [
+        {
+          "target": "7.0",
+          "version": "7.0.43",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "8.0",
+          "version": "8.0.32",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        },
+        {
+          "target": "9.0",
+          "version": "9.0.2",
+          "steps": {
+            "$numberInt": "2"
+          },
+          "parity": true
+        }
+      ],
+      "semantic_correctors_invoked": {
+        "$numberInt": "0"
+      },
+      "storage_role": "consumer-database-adapter"
+    }
+  ],
+  "sdk": "4.19.0",
+  "mongoeco_import": "/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/mongoeco-consumer-5ckk6ts2/env/lib/python3.13/site-packages/mongoeco/__init__.py",
+  "testkit_import": "isolated-overlay/consumer-adapter.py",
+  "source_sha256": "6dd789ab2997c644aecd307051b5234a726efe3e8b38eeb02df3d17e3cf28914",
+  "overlay": {
+    "original_sha256": "e7b89d838a550f057af6588139270c621b57a2460f56d3c94669fc4a2e5c2580",
+    "overlay_sha256": "86c83e6c5b0a01ca4811ad93b26f75f71fba0a084d7c2dc2e3b8fd270569c9f2",
+    "wheel_sha256": "6b91102576c280a6ab2821458b0caed8bfe298f189593d7e5987d21debdd568f",
+    "consumer_source_modified": false
+  },
+  "provenance_redacted": true
+}

@@ -1,0 +1,29 @@
+[
+  {
+    "port": 37567,
+    "databases": [
+      "admin",
+      "config",
+      "local"
+    ],
+    "version": "7.0.43"
+  },
+  {
+    "port": 37568,
+    "databases": [
+      "admin",
+      "config",
+      "local"
+    ],
+    "version": "8.0.32"
+  },
+  {
+    "port": 37569,
+    "databases": [
+      "admin",
+      "config",
+      "local"
+    ],
+    "version": "9.0.2"
+  }
+]

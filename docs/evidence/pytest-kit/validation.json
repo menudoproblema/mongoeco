@@ -1,0 +1,1003 @@
+{
+  "schema": "mongoeco-pytest-kit-validation/v1",
+  "status": "implementation_complete_release_decision_pending",
+  "date": "2026-10-15",
+  "candidate": {
+    "git_head": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "uncommitted_workset": true,
+    "package_version": "4.9.1",
+    "disposition": "Unpublished workset candidate; distinct from the published release. No version selection, commit, tag or publication.",
+    "wheel_sha256": "5aa7f4bc54877b1c2dfcc6ad9d88669c9ea0b88b75fd9b7ddb367a58e3b0b8c5",
+    "sdist_sha256": "e2f2fe4fe1a5a729d09c2a54de1d7a389a63d313eb4bcf156cf4fff193e5610b",
+    "runtime_files": 280,
+    "runtime_manifest": "runtime-sources.json",
+    "reproducible_wheel_and_sdist": true,
+    "runtime_matches_checkout_three_installs_and_sdist": true,
+    "wheel_sdist_dependency_metadata_equal": true,
+    "all_existing_sdist_source_inputs_match": true,
+    "sdist_source_inputs_compared": 288,
+    "workset_manifest": "workset-sources.json",
+    "workset_sha256": "af3a11210c21309f1a2e5408ba8598905bab9e3d30534f973ba5e89d324a1f8d"
+  },
+  "scope": {
+    "approved_contract": "../../architecture/pytest-integration-proposal.md",
+    "guide": "../../pytest.md",
+    "runtime_changes": [
+      "mongoeco/wire/proxy.py"
+    ],
+    "runtime_added": [
+      "mongoeco/_pytest_runtime.py",
+      "mongoeco/pytest_anyio.py",
+      "mongoeco/pytest_asyncio.py",
+      "mongoeco/pytest_plugin.py",
+      "mongoeco/wire/_lifecycle.py"
+    ],
+    "runtime_removed": [],
+    "engines_spi_and_sqlite_format_unchanged": true,
+    "python_313_support_through": "2028-10"
+  },
+  "gates": {
+    "313": {
+      "pytest_passed": 22397,
+      "expected_skips": 31,
+      "subtests_passed": 14450,
+      "contracts": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/check_public_typing.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-0.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/smoke_external_engine.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-1.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/update_public_api_manifest.py",
+            "--check"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-2.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/update_compat_snapshots.py",
+            "--output-dir",
+            "/tmp/mongoeco-pytest-kit/compat-313"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-3.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/check_lint_ratchet.py",
+            "--base-ref",
+            "v4.9.1"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-4.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "-m",
+            "mypy",
+            "--strict",
+            "--follow-imports=silent",
+            "--ignore-missing-imports",
+            "-m",
+            "mongoeco.pytest_plugin",
+            "-m",
+            "mongoeco.pytest_asyncio",
+            "-m",
+            "mongoeco.pytest_anyio",
+            "-m",
+            "mongoeco._pytest_runtime",
+            "-m",
+            "mongoeco.wire._lifecycle"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-5.txt"
+        }
+      ],
+      "unittest": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            "test*.py"
+          ],
+          "exit_code": 0,
+          "log": "unittest-313.txt"
+        }
+      ],
+      "smoke-wheel": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--wheel",
+            "/tmp/mongoeco-pytest-kit/dist/mongoeco-4.9.1-py3-none-any.whl"
+          ],
+          "exit_code": 0,
+          "log": "smoke-wheel-313.txt"
+        }
+      ],
+      "smoke-sdist": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--sdist",
+            "/tmp/mongoeco-pytest-kit/dist/mongoeco-4.9.1.tar.gz"
+          ],
+          "exit_code": 0,
+          "log": "smoke-sdist-313.txt"
+        }
+      ],
+      "smoke-kit": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--pytest-kit",
+            "--wheel",
+            "/tmp/mongoeco-pytest-kit/dist/mongoeco-4.9.1-py3-none-any.whl"
+          ],
+          "exit_code": 0,
+          "log": "smoke-kit-313.txt"
+        }
+      ],
+      "conformance": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:MemoryEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-pytest-kit/conformance-MemoryEngine-313.json"
+          ],
+          "exit_code": 0,
+          "engine": "MemoryEngine"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:SQLiteEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-pytest-kit/conformance-SQLiteEngine-313.json"
+          ],
+          "exit_code": 0,
+          "engine": "SQLiteEngine"
+        }
+      ]
+    },
+    "314": {
+      "pytest_passed": 22397,
+      "expected_skips": 31,
+      "subtests_passed": 14450,
+      "contracts": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/check_public_typing.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-0.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/smoke_external_engine.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-1.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/update_public_api_manifest.py",
+            "--check"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-2.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/update_compat_snapshots.py",
+            "--output-dir",
+            "/tmp/mongoeco-pytest-kit/compat-314"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-3.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/check_lint_ratchet.py",
+            "--base-ref",
+            "v4.9.1"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-4.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "-m",
+            "mypy",
+            "--strict",
+            "--follow-imports=silent",
+            "--ignore-missing-imports",
+            "-m",
+            "mongoeco.pytest_plugin",
+            "-m",
+            "mongoeco.pytest_asyncio",
+            "-m",
+            "mongoeco.pytest_anyio",
+            "-m",
+            "mongoeco._pytest_runtime",
+            "-m",
+            "mongoeco.wire._lifecycle"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-5.txt"
+        }
+      ],
+      "unittest": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            "test*.py"
+          ],
+          "exit_code": 0,
+          "log": "unittest-314.txt"
+        }
+      ],
+      "smoke-wheel": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--wheel",
+            "/tmp/mongoeco-pytest-kit/dist/mongoeco-4.9.1-py3-none-any.whl"
+          ],
+          "exit_code": 0,
+          "log": "smoke-wheel-314.txt"
+        }
+      ],
+      "smoke-sdist": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--sdist",
+            "/tmp/mongoeco-pytest-kit/dist/mongoeco-4.9.1.tar.gz"
+          ],
+          "exit_code": 0,
+          "log": "smoke-sdist-314.txt"
+        }
+      ],
+      "smoke-kit": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--pytest-kit",
+            "--wheel",
+            "/tmp/mongoeco-pytest-kit/dist/mongoeco-4.9.1-py3-none-any.whl"
+          ],
+          "exit_code": 0,
+          "log": "smoke-kit-314.txt"
+        }
+      ],
+      "conformance": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:MemoryEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-pytest-kit/conformance-MemoryEngine-314.json"
+          ],
+          "exit_code": 0,
+          "engine": "MemoryEngine"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:SQLiteEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-pytest-kit/conformance-SQLiteEngine-314.json"
+          ],
+          "exit_code": 0,
+          "engine": "SQLiteEngine"
+        }
+      ]
+    },
+    "315": {
+      "pytest_passed": 22397,
+      "expected_skips": 31,
+      "subtests_passed": 14450,
+      "contracts": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/check_public_typing.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-0.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/smoke_external_engine.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-1.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/update_public_api_manifest.py",
+            "--check"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-2.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/update_compat_snapshots.py",
+            "--output-dir",
+            "/tmp/mongoeco-pytest-kit/compat-315"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-3.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/check_lint_ratchet.py",
+            "--base-ref",
+            "v4.9.1"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-4.txt"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "-m",
+            "mypy",
+            "--strict",
+            "--follow-imports=silent",
+            "--ignore-missing-imports",
+            "-m",
+            "mongoeco.pytest_plugin",
+            "-m",
+            "mongoeco.pytest_asyncio",
+            "-m",
+            "mongoeco.pytest_anyio",
+            "-m",
+            "mongoeco._pytest_runtime",
+            "-m",
+            "mongoeco.wire._lifecycle"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-5.txt"
+        }
+      ],
+      "unittest": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            "test*.py"
+          ],
+          "exit_code": 0,
+          "log": "unittest-315.txt"
+        }
+      ],
+      "smoke-wheel": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--wheel",
+            "/tmp/mongoeco-pytest-kit/dist/mongoeco-4.9.1-py3-none-any.whl"
+          ],
+          "exit_code": 0,
+          "log": "smoke-wheel-315.txt"
+        }
+      ],
+      "smoke-sdist": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--sdist",
+            "/tmp/mongoeco-pytest-kit/dist/mongoeco-4.9.1.tar.gz"
+          ],
+          "exit_code": 0,
+          "log": "smoke-sdist-315.txt"
+        }
+      ],
+      "smoke-kit": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--pytest-kit",
+            "--wheel",
+            "/tmp/mongoeco-pytest-kit/dist/mongoeco-4.9.1-py3-none-any.whl"
+          ],
+          "exit_code": 0,
+          "log": "smoke-kit-315.txt"
+        }
+      ],
+      "conformance": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:MemoryEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-pytest-kit/conformance-MemoryEngine-315.json"
+          ],
+          "exit_code": 0,
+          "engine": "MemoryEngine"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:SQLiteEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-pytest-kit/conformance-SQLiteEngine-315.json"
+          ],
+          "exit_code": 0,
+          "engine": "SQLiteEngine"
+        }
+      ]
+    }
+  },
+  "fixture_matrix": [
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-313-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-313-4.9.2-9.1.1.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-313-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-313-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-314-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-314-4.9.2-9.1.1.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-314-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-314-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-315-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-315-4.9.2-9.1.1.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-315-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 38,
+      "record": "matrix-315-4.19.0-9.1.1.json"
+    }
+  ],
+  "matrix_cells": 12,
+  "matrix_case_executions": 456,
+  "consumer": {
+    "identity": "anonymous-consumer",
+    "runs": [
+      {
+        "schema": "mongoeco-pytest-consumer-canary/v1",
+        "identity": "anonymous-consumer",
+        "wheel_sha256": "5aa7f4bc54877b1c2dfcc6ad9d88669c9ea0b88b75fd9b7ddb367a58e3b0b8c5",
+        "runtime_files_verified": 280,
+        "source_sha256": "ba473e83ff6a26ce11337bed14f4194d42c5bc9e776027e39bab89afed556868",
+        "business_ast_sha256": "c104dd94d5d6f3c6868be5eb533a97e43500d45532d3f991f984a319bf8b8783",
+        "source_unchanged": true,
+        "preparation_only": true,
+        "test_inventory": 38,
+        "async_tests": 31,
+        "python": "3.13.15",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "workers": 0,
+        "results": [
+          {
+            "backend": "memory",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "backend": "sqlite",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ]
+      },
+      {
+        "schema": "mongoeco-pytest-consumer-canary/v1",
+        "identity": "anonymous-consumer",
+        "wheel_sha256": "5aa7f4bc54877b1c2dfcc6ad9d88669c9ea0b88b75fd9b7ddb367a58e3b0b8c5",
+        "runtime_files_verified": 280,
+        "source_sha256": "ba473e83ff6a26ce11337bed14f4194d42c5bc9e776027e39bab89afed556868",
+        "business_ast_sha256": "c104dd94d5d6f3c6868be5eb533a97e43500d45532d3f991f984a319bf8b8783",
+        "source_unchanged": true,
+        "preparation_only": true,
+        "test_inventory": 38,
+        "async_tests": 31,
+        "python": "3.13.15",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "workers": 2,
+        "results": [
+          {
+            "backend": "memory",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "backend": "sqlite",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ]
+      },
+      {
+        "schema": "mongoeco-pytest-consumer-canary/v1",
+        "identity": "anonymous-consumer",
+        "wheel_sha256": "5aa7f4bc54877b1c2dfcc6ad9d88669c9ea0b88b75fd9b7ddb367a58e3b0b8c5",
+        "runtime_files_verified": 280,
+        "source_sha256": "ba473e83ff6a26ce11337bed14f4194d42c5bc9e776027e39bab89afed556868",
+        "business_ast_sha256": "c104dd94d5d6f3c6868be5eb533a97e43500d45532d3f991f984a319bf8b8783",
+        "source_unchanged": true,
+        "preparation_only": true,
+        "test_inventory": 38,
+        "async_tests": 31,
+        "python": "3.13.15",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "workers": 4,
+        "results": [
+          {
+            "backend": "memory",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "backend": "sqlite",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ]
+      },
+      {
+        "schema": "mongoeco-pytest-consumer-canary/v1",
+        "identity": "anonymous-consumer",
+        "wheel_sha256": "5aa7f4bc54877b1c2dfcc6ad9d88669c9ea0b88b75fd9b7ddb367a58e3b0b8c5",
+        "runtime_files_verified": 280,
+        "source_sha256": "ba473e83ff6a26ce11337bed14f4194d42c5bc9e776027e39bab89afed556868",
+        "business_ast_sha256": "c104dd94d5d6f3c6868be5eb533a97e43500d45532d3f991f984a319bf8b8783",
+        "source_unchanged": true,
+        "preparation_only": true,
+        "test_inventory": 38,
+        "async_tests": 31,
+        "python": "3.14.5",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "workers": 0,
+        "results": [
+          {
+            "backend": "memory",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "backend": "sqlite",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ]
+      },
+      {
+        "schema": "mongoeco-pytest-consumer-canary/v1",
+        "identity": "anonymous-consumer",
+        "wheel_sha256": "5aa7f4bc54877b1c2dfcc6ad9d88669c9ea0b88b75fd9b7ddb367a58e3b0b8c5",
+        "runtime_files_verified": 280,
+        "source_sha256": "ba473e83ff6a26ce11337bed14f4194d42c5bc9e776027e39bab89afed556868",
+        "business_ast_sha256": "c104dd94d5d6f3c6868be5eb533a97e43500d45532d3f991f984a319bf8b8783",
+        "source_unchanged": true,
+        "preparation_only": true,
+        "test_inventory": 38,
+        "async_tests": 31,
+        "python": "3.14.5",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "workers": 2,
+        "results": [
+          {
+            "backend": "memory",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "backend": "sqlite",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ]
+      },
+      {
+        "schema": "mongoeco-pytest-consumer-canary/v1",
+        "identity": "anonymous-consumer",
+        "wheel_sha256": "5aa7f4bc54877b1c2dfcc6ad9d88669c9ea0b88b75fd9b7ddb367a58e3b0b8c5",
+        "runtime_files_verified": 280,
+        "source_sha256": "ba473e83ff6a26ce11337bed14f4194d42c5bc9e776027e39bab89afed556868",
+        "business_ast_sha256": "c104dd94d5d6f3c6868be5eb533a97e43500d45532d3f991f984a319bf8b8783",
+        "source_unchanged": true,
+        "preparation_only": true,
+        "test_inventory": 38,
+        "async_tests": 31,
+        "python": "3.14.5",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "workers": 4,
+        "results": [
+          {
+            "backend": "memory",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "backend": "sqlite",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ]
+      },
+      {
+        "schema": "mongoeco-pytest-consumer-canary/v1",
+        "identity": "anonymous-consumer",
+        "wheel_sha256": "5aa7f4bc54877b1c2dfcc6ad9d88669c9ea0b88b75fd9b7ddb367a58e3b0b8c5",
+        "runtime_files_verified": 280,
+        "source_sha256": "ba473e83ff6a26ce11337bed14f4194d42c5bc9e776027e39bab89afed556868",
+        "business_ast_sha256": "4cc10ac6594570cfa33173b630505f7ddfb6d004ad9a88dba9b098a476fd1644",
+        "source_unchanged": true,
+        "preparation_only": true,
+        "test_inventory": 38,
+        "async_tests": 31,
+        "python": "3.15.0",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "workers": 0,
+        "results": [
+          {
+            "backend": "memory",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "backend": "sqlite",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ]
+      },
+      {
+        "schema": "mongoeco-pytest-consumer-canary/v1",
+        "identity": "anonymous-consumer",
+        "wheel_sha256": "5aa7f4bc54877b1c2dfcc6ad9d88669c9ea0b88b75fd9b7ddb367a58e3b0b8c5",
+        "runtime_files_verified": 280,
+        "source_sha256": "ba473e83ff6a26ce11337bed14f4194d42c5bc9e776027e39bab89afed556868",
+        "business_ast_sha256": "4cc10ac6594570cfa33173b630505f7ddfb6d004ad9a88dba9b098a476fd1644",
+        "source_unchanged": true,
+        "preparation_only": true,
+        "test_inventory": 38,
+        "async_tests": 31,
+        "python": "3.15.0",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "workers": 2,
+        "results": [
+          {
+            "backend": "memory",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "backend": "sqlite",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ]
+      },
+      {
+        "schema": "mongoeco-pytest-consumer-canary/v1",
+        "identity": "anonymous-consumer",
+        "wheel_sha256": "5aa7f4bc54877b1c2dfcc6ad9d88669c9ea0b88b75fd9b7ddb367a58e3b0b8c5",
+        "runtime_files_verified": 280,
+        "source_sha256": "ba473e83ff6a26ce11337bed14f4194d42c5bc9e776027e39bab89afed556868",
+        "business_ast_sha256": "4cc10ac6594570cfa33173b630505f7ddfb6d004ad9a88dba9b098a476fd1644",
+        "source_unchanged": true,
+        "preparation_only": true,
+        "test_inventory": 38,
+        "async_tests": 31,
+        "python": "3.15.0",
+        "pymongo": "4.19.0",
+        "pytest": "9.1.1",
+        "workers": 4,
+        "results": [
+          {
+            "backend": "memory",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "backend": "sqlite",
+            "tests": 38,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ]
+      }
+    ],
+    "case_executions": 684,
+    "source_and_business_assertions_changed": false,
+    "native_async_business_tests": 31,
+    "sync_construction_tests": 7,
+    "sync_crud_is_separate_public_contract_coverage": true,
+    "private_inputs_required_to_reproduce": true
+  },
+  "coverage_python_314": {
+    "covered_lines": 43378,
+    "num_statements": 43796,
+    "percent_covered": 99.04557493835054,
+    "percent_covered_display": "99.05",
+    "missing_lines": 418,
+    "excluded_lines": 920,
+    "percent_statements_covered": 99.04557493835054,
+    "percent_statements_covered_display": "99.05"
+  },
+  "new_module_coverage": {
+    "/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/_pytest_runtime.py": 100.0,
+    "/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/pytest_anyio.py": 100.0,
+    "/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/pytest_asyncio.py": 100.0,
+    "/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/pytest_plugin.py": 100.0,
+    "/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/wire/_lifecycle.py": 100.0
+  },
+  "additional": {
+    "deep_properties": 9,
+    "engine_conformance_runs": 6,
+    "clean_installs": 10,
+    "clean_pytest_extra_cases": 12,
+    "benchmark_engines": [
+      "memory-sync",
+      "sqlite-sync"
+    ],
+    "twine": "passed",
+    "lint_ratchet": "passed",
+    "public_manifest": "unchanged_and_checked",
+    "installed_fixture_typing": "strict -m checks in all three interpreters",
+    "ci": "Mandatory 12-cell installed-wheel job and clean-extra gate configured; hosted jobs not executed here.",
+    "clean_installs_detail": {
+      "extras": 9,
+      "base_without_optional_runners_or_sdk": 1
+    },
+    "minimal_imports": {
+      "python": "3.13",
+      "status": "passed",
+      "record": "minimal-final-result.json"
+    }
+  },
+  "regressions": {
+    "failed_bind": "Owned engine is disconnected after partial startup; original error retained.",
+    "active_peers": "Transports aborted and handlers awaited before owned engine disconnect.",
+    "queued_accept": "Late accepted peers are closed before handler creation.",
+    "backpressure": "Unread response regression fails before fix and passes on candidate.",
+    "queued_done_callback": "Eager completed-handler regression fails before fix; explicit snapshot removal avoids event-loop starvation.",
+    "isolation": "Per-function engine, port, SQLite directory and executor; native sync/async clients.",
+    "failures": "Assertion/setup/cancellation/teardown errors checked; fixture failures remain failures."
+  },
+  "review": {
+    "final_diff_reviewed": true,
+    "documentation_aligned": true,
+    "prior_authorized_work_preserved": true,
+    "remaining_findings_in_scope": [],
+    "resources": "All test-server processes finish; per-test cleanup guards verify closed endpoints, owned threads and temporary directories.",
+    "privacy_audit": "privacy-audit.json",
+    "final_configuration_checks": "final-checks.json",
+    "scope": "This kit/proxy change reviewed; prior authorized pending work preserved.",
+    "final_diff_check": "passed",
+    "lint_ratchet_final": "passed for 118 changed Python files; runtime and tests unchanged after the three per-interpreter contract checks"
+  },
+  "limits": [
+    "Local macOS arm64 validation; hosted Linux CI configured, not claimed as executed.",
+    "No live MongoDB recapture in this block; full suites replay existing native references.",
+    "Consumer business suite is async; native sync CRUD is tested independently.",
+    "Existing SDK-only signature probes remain independent: their driver/source inputs are unchanged; the new fixture matrix actually executes both SDK extrema."
+  ],
+  "discarded_checks": [
+    "Pre-build matrix attempts were not admission evidence.",
+    "In-process nested pytest sessions were replaced with isolated consumer subprocesses.",
+    "A global SQLite-thread assertion was corrected to measure only owned threads; the full suites were rerun.",
+    "Installed typing was invoked by module name after direct site-packages paths caused a mypy shadowing error; strict flags were preserved."
+  ]
+}

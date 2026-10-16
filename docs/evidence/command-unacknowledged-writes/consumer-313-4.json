@@ -1,0 +1,32 @@
+{
+  "schema": "mongoeco-pytest-consumer-canary/v1",
+  "identity": "anonymous-consumer",
+  "wheel_sha256": "2d349d49d3b1a5a7862e0143966f02015f2ab7628b87ae6aaab33a0daa6de3c3",
+  "runtime_files_verified": 280,
+  "source_sha256": "ba473e83ff6a26ce11337bed14f4194d42c5bc9e776027e39bab89afed556868",
+  "business_ast_sha256": "c104dd94d5d6f3c6868be5eb533a97e43500d45532d3f991f984a319bf8b8783",
+  "source_unchanged": true,
+  "preparation_only": true,
+  "test_inventory": 38,
+  "async_tests": 31,
+  "python": "3.13.15",
+  "pymongo": "4.19.0",
+  "pytest": "9.1.1",
+  "workers": 4,
+  "results": [
+    {
+      "backend": "memory",
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "backend": "sqlite",
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ]
+}

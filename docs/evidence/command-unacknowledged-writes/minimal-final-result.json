@@ -1,0 +1,46 @@
+[
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py313/bin/python",
+      "-m",
+      "venv",
+      "/tmp/mongoeco-command-unack/minimal-final"
+    ],
+    "exit_code": 0,
+    "log": "minimal-final-0.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-command-unack/minimal-final/bin/python",
+      "-m",
+      "pip",
+      "install",
+      "-c",
+      "/Users/uve/Proyectos/mongoeco/requirements/ci-constraints.txt",
+      "/tmp/mongoeco-command-unack/dist/mongoeco-4.9.1-py3-none-any.whl"
+    ],
+    "exit_code": 0,
+    "log": "minimal-final-1.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-command-unack/minimal-final/bin/python",
+      "-c",
+      "import importlib.util,mongoeco;assert 'site-packages' in mongoeco.__file__;assert all(importlib.util.find_spec(name) is None for name in ('pytest','pymongo','pytest_asyncio','anyio'))"
+    ],
+    "exit_code": 0,
+    "log": "minimal-final-2.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-command-unack/minimal-final/bin/python",
+      "-m",
+      "unittest",
+      "tests.unit.test_optional_bson_imports",
+      "tests.unit.test_module_imports",
+      "tests.unit.test_public_exports"
+    ],
+    "exit_code": 0,
+    "log": "minimal-final-3.txt"
+  }
+]

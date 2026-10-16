@@ -1,0 +1,20 @@
+[
+  {
+    "target": "7.0",
+    "legacy_cases_unchanged": 66,
+    "new_cases": 106,
+    "sdk_extremes_agree": true
+  },
+  {
+    "target": "8.0",
+    "legacy_cases_unchanged": 66,
+    "new_cases": 106,
+    "sdk_extremes_agree": true
+  },
+  {
+    "target": "9.0",
+    "legacy_cases_unchanged": 66,
+    "new_cases": 106,
+    "sdk_extremes_agree": true
+  }
+]

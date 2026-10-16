@@ -1,0 +1,3782 @@
+{
+  "7.0": {
+    "replace_one_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 54,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": {
+            "$document": [
+              [
+                "nested",
+                [
+                  "bad"
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 53,
+          "codeName": "InvalidIdField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 54,
+          "codeName": "NotSingleValueField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "update_one_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": {
+            "$document": [
+              [
+                "nested",
+                [
+                  "bad"
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 53,
+          "codeName": "InvalidIdField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "bulk_replace_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              53
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              54
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "deleted_count": 0,
+          "inserted_count": 0,
+          "upserted_count": 1,
+          "upserted_ids": [
+            [
+              0,
+              {
+                "$document": [
+                  [
+                    "nested",
+                    [
+                      "bad"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ],
+    "bulk_update_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              53
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "deleted_count": 0,
+          "inserted_count": 0,
+          "upserted_count": 1,
+          "upserted_ids": [
+            [
+              0,
+              {
+                "$document": [
+                  [
+                    "nested",
+                    [
+                      "bad"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "8.0": {
+    "replace_one_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 54,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": {
+            "$document": [
+              [
+                "nested",
+                [
+                  "bad"
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 53,
+          "codeName": "InvalidIdField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 54,
+          "codeName": "NotSingleValueField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "update_one_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": {
+            "$document": [
+              [
+                "nested",
+                [
+                  "bad"
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 53,
+          "codeName": "InvalidIdField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "bulk_replace_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              53
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              54
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "deleted_count": 0,
+          "inserted_count": 0,
+          "upserted_count": 1,
+          "upserted_ids": [
+            [
+              0,
+              {
+                "$document": [
+                  [
+                    "nested",
+                    [
+                      "bad"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ],
+    "bulk_update_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              53
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "deleted_count": 0,
+          "inserted_count": 0,
+          "upserted_count": 1,
+          "upserted_ids": [
+            [
+              0,
+              {
+                "$document": [
+                  [
+                    "nested",
+                    [
+                      "bad"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "9.0": {
+    "replace_one_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 54,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": {
+            "$document": [
+              [
+                "nested",
+                [
+                  "bad"
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 53,
+          "codeName": "InvalidIdField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 54,
+          "codeName": "NotSingleValueField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "update_one_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": {
+            "$document": [
+              [
+                "nested",
+                [
+                  "bad"
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "OperationFailure",
+          "code": 66,
+          "codeName": "ImmutableField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "OperationFailure",
+          "code": 53,
+          "codeName": "InvalidIdField",
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "bulk_replace_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              53
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              54
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "deleted_count": 0,
+          "inserted_count": 0,
+          "upserted_count": 1,
+          "upserted_ids": [
+            [
+              0,
+              {
+                "$document": [
+                  [
+                    "nested",
+                    [
+                      "bad"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ],
+    "bulk_update_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              53
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "deleted_count": 0,
+          "inserted_count": 0,
+          "upserted_count": 1,
+          "upserted_ids": [
+            [
+              0,
+              {
+                "$document": [
+                  [
+                    "nested",
+                    [
+                      "bad"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "memory": {
+    "replace_one_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": {
+            "$document": [
+              [
+                "nested",
+                [
+                  "bad"
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "update_one_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": {
+            "$document": [
+              [
+                "nested",
+                [
+                  "bad"
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "bulk_replace_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              53
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "deleted_count": 0,
+          "inserted_count": 0,
+          "upserted_count": 1,
+          "upserted_ids": [
+            [
+              0,
+              {
+                "$document": [
+                  [
+                    "nested",
+                    [
+                      "bad"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ],
+    "bulk_update_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              53
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "deleted_count": 0,
+          "inserted_count": 0,
+          "upserted_count": 1,
+          "upserted_ids": [
+            [
+              0,
+              {
+                "$document": [
+                  [
+                    "nested",
+                    [
+                      "bad"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "sqlite": {
+    "replace_one_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "replace_one_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": {
+            "$document": [
+              [
+                "nested",
+                [
+                  "bad"
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_replace_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_replace_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "update_one_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "update_one_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "upserted_id": {
+            "$document": [
+              [
+                "nested",
+                [
+                  "bad"
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "find_one_and_update_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "WriteError",
+          "code": 66,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "WriteError",
+          "code": 53,
+          "codeName": null,
+          "labels": [],
+          "write_errors": []
+        }
+      }
+    ],
+    "find_one_and_update_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "document": null
+        }
+      }
+    ],
+    "bulk_replace_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              53
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_replace_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "deleted_count": 0,
+          "inserted_count": 0,
+          "upserted_count": 1,
+          "upserted_ids": [
+            [
+              0,
+              {
+                "$document": [
+                  [
+                    "nested",
+                    [
+                      "bad"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ],
+    "bulk_update_False_True": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_False_False": [
+      {
+        "status": "error",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                "a"
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "0"
+                }
+              ]
+            ]
+          }
+        ],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              66
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_True_True": [
+      {
+        "status": "error",
+        "documents": [],
+        "error": {
+          "family": "BulkWriteError",
+          "code": 65,
+          "codeName": null,
+          "labels": [],
+          "write_errors": [
+            [
+              0,
+              53
+            ]
+          ],
+          "partial": {
+            "nInserted": 0,
+            "nMatched": 0,
+            "nModified": 0,
+            "nRemoved": 0,
+            "nUpserted": 0,
+            "upserted": []
+          }
+        }
+      }
+    ],
+    "bulk_update_True_False": [
+      {
+        "status": "ok",
+        "documents": [
+          {
+            "$document": [
+              [
+                "_id",
+                {
+                  "$document": [
+                    [
+                      "nested",
+                      [
+                        "bad"
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "value",
+                {
+                  "$numberInt": "1"
+                }
+              ]
+            ]
+          }
+        ],
+        "result": {
+          "acknowledged": true,
+          "matched_count": 0,
+          "modified_count": 0,
+          "deleted_count": 0,
+          "inserted_count": 0,
+          "upserted_count": 1,
+          "upserted_ids": [
+            [
+              0,
+              {
+                "$document": [
+                  [
+                    "nested",
+                    [
+                      "bad"
+                    ]
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

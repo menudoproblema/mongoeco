@@ -1,0 +1,110 @@
+[
+  {
+    "target": "7.0",
+    "mongodb": "7.0.43",
+    "fcv": {
+      "version": "7.0"
+    },
+    "sdk": "4.19.0",
+    "sync_cases": 172,
+    "async_cases": 172,
+    "raw_cases": 4,
+    "fixture": "tests/fixtures/unacknowledged_mongodb_7_0.json",
+    "capture_sha256": "86de375f6dc6932de5278d7a368af4bd60ba7db59520895d3bdca020f0775c4d",
+    "observations_equal_canonical_fixture": true,
+    "source_fingerprints_match": true,
+    "physical_application_connections_per_case": 1,
+    "cleanup_verified": true,
+    "log": "capture-7.0-4.19.0.txt"
+  },
+  {
+    "target": "7.0",
+    "mongodb": "7.0.43",
+    "fcv": {
+      "version": "7.0"
+    },
+    "sdk": "4.9.2",
+    "sync_cases": 172,
+    "async_cases": 172,
+    "raw_cases": 4,
+    "fixture": "tests/fixtures/unacknowledged_mongodb_7_0.json",
+    "capture_sha256": "4fa2f29454723f16f6f19730752a57766d773547af9882a0dc0bef527b60357b",
+    "observations_equal_canonical_fixture": true,
+    "source_fingerprints_match": true,
+    "physical_application_connections_per_case": 1,
+    "cleanup_verified": true,
+    "log": "capture-7.0-4.9.2.txt"
+  },
+  {
+    "target": "8.0",
+    "mongodb": "8.0.32",
+    "fcv": {
+      "version": "8.0"
+    },
+    "sdk": "4.19.0",
+    "sync_cases": 172,
+    "async_cases": 172,
+    "raw_cases": 4,
+    "fixture": "tests/fixtures/unacknowledged_mongodb_8_0.json",
+    "capture_sha256": "8461e1824f6c1a364eb0b6788bc377d6b5185912e6e8d495ccfd99807c7cdc0e",
+    "observations_equal_canonical_fixture": true,
+    "source_fingerprints_match": true,
+    "physical_application_connections_per_case": 1,
+    "cleanup_verified": true,
+    "log": "capture-8.0-4.19.0.txt"
+  },
+  {
+    "target": "8.0",
+    "mongodb": "8.0.32",
+    "fcv": {
+      "version": "8.0"
+    },
+    "sdk": "4.9.2",
+    "sync_cases": 172,
+    "async_cases": 172,
+    "raw_cases": 4,
+    "fixture": "tests/fixtures/unacknowledged_mongodb_8_0.json",
+    "capture_sha256": "716ae346ea4ac6c702ef8976fc3c11722753d70566ccf30ad7cb76233704ec25",
+    "observations_equal_canonical_fixture": true,
+    "source_fingerprints_match": true,
+    "physical_application_connections_per_case": 1,
+    "cleanup_verified": true,
+    "log": "capture-8.0-4.9.2.txt"
+  },
+  {
+    "target": "9.0",
+    "mongodb": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    },
+    "sdk": "4.19.0",
+    "sync_cases": 172,
+    "async_cases": 172,
+    "raw_cases": 4,
+    "fixture": "tests/fixtures/unacknowledged_mongodb_9_0.json",
+    "capture_sha256": "01e8c0295ab7539f46f7c29ab93a7489f3f5e3cf12cf70c3067a85c1b0a48e6e",
+    "observations_equal_canonical_fixture": true,
+    "source_fingerprints_match": true,
+    "physical_application_connections_per_case": 1,
+    "cleanup_verified": true,
+    "log": "capture-9.0-4.19.0.txt"
+  },
+  {
+    "target": "9.0",
+    "mongodb": "9.0.2",
+    "fcv": {
+      "version": "9.0"
+    },
+    "sdk": "4.9.2",
+    "sync_cases": 172,
+    "async_cases": 172,
+    "raw_cases": 4,
+    "fixture": "tests/fixtures/unacknowledged_mongodb_9_0.json",
+    "capture_sha256": "316d33064bc0bf9db638ebf49add4127fe3a28c36b1bdf64227aaba41a8356e5",
+    "observations_equal_canonical_fixture": true,
+    "source_fingerprints_match": true,
+    "physical_application_connections_per_case": 1,
+    "cleanup_verified": true,
+    "log": "capture-9.0-4.9.2.txt"
+  }
+]

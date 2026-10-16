@@ -1,0 +1,339 @@
+........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  6%]
+........................................................................ [  8%]
+........................................................................ [ 10%]
+........................................................................ [ 12%]
+........................................................................ [ 14%]
+........................................................................ [ 16%]
+........................................................................ [ 18%]
+........................................................................ [ 20%]
+........................................................................ [ 22%]
+........................................................................ [ 25%]
+........................................................................ [ 27%]
+........................................................................ [ 29%]
+........................................................................ [ 31%]
+........................................................................ [ 33%]
+........................................................................ [ 35%]
+........................................................................ [ 37%]
+........................................................................ [ 39%]
+........................................................................ [ 41%]
+........................................................................ [ 43%]
+........................................................................ [ 45%]
+........................................................................ [ 48%]
+........................................................................ [ 50%]
+........................................................................ [ 52%]
+........................................................................ [ 54%]
+........................................................................ [ 56%]
+........................................................................ [ 58%]
+........................................................................ [ 60%]
+........................................................................ [ 62%]
+........................................................................ [ 64%]
+........................................................................ [ 66%]
+........................................................................ [ 68%]
+........................................................................ [ 71%]
+........................................................................ [ 73%]
+........................................................................ [ 75%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 81%]
+........................................................................ [ 83%]
+........................................................................ [ 85%]
+........................................................................ [ 87%]
+........................................................................ [ 89%]
+....................................FFFFFFFFFFFFFFFFFFFFFFFF............ [ 91%]
+........................................................................ [ 93%]
+............FFFFFFFFFFFF................................................ [ 96%]
+........................................................................ [ 98%]
+...............................................................          [100%]
+=================================== FAILURES ===================================
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-7.0-memory-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-7.0-memory-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-7.0-sqlite-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-7.0-sqlite-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-8.0-memory-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-8.0-memory-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-8.0-sqlite-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-8.0-sqlite-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-9.0-memory-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-9.0-memory-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-9.0-sqlite-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-9.0-sqlite-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-7.0-memory-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-7.0-memory-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-7.0-sqlite-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-7.0-sqlite-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-8.0-memory-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-8.0-memory-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-8.0-sqlite-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-8.0-sqlite-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-9.0-memory-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-9.0-memory-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-9.0-sqlite-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-9.0-sqlite-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-7.0-memory-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-7.0-memory-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-7.0-sqlite-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-7.0-sqlite-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-8.0-memory-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-8.0-memory-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-8.0-sqlite-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-8.0-sqlite-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-9.0-memory-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-9.0-memory-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-9.0-sqlite-sync] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+_ test_direct_write_preflight_matches_native[concern_insert_j_decimal-9.0-sqlite-async] _
+tests/integration/api/test_write_preflight_parity.py:56: in test_direct_write_preflight_matches_native
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:223: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-7.0-memory-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-7.0-memory-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-7.0-sqlite-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-7.0-sqlite-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-8.0-memory-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-8.0-memory-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-8.0-sqlite-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-8.0-sqlite-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-9.0-memory-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-9.0-memory-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-9.0-sqlite-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_zero-9.0-sqlite-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-7.0-memory-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-7.0-memory-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-7.0-sqlite-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-7.0-sqlite-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-8.0-memory-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-8.0-memory-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-8.0-sqlite-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-8.0-sqlite-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-9.0-memory-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-9.0-memory-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-9.0-sqlite-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_w_decimal_one-9.0-sqlite-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-7.0-memory-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-7.0-memory-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-7.0-sqlite-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-7.0-sqlite-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-8.0-memory-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-8.0-memory-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-8.0-sqlite-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-8.0-sqlite-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-9.0-memory-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-9.0-memory-async]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-9.0-sqlite-sync]
+FAILED tests/integration/api/test_write_preflight_parity.py::test_direct_write_preflight_matches_native[concern_insert_j_decimal-9.0-sqlite-async]
+36 failed, 3411 passed in 40.97s

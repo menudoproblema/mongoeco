@@ -1,0 +1,18 @@
+{
+  "python_versions": [
+    "3.13",
+    "3.14",
+    "3.15"
+  ],
+  "release_gate_required": true,
+  "installation_minimum": ">=3.13",
+  "common_pins": {
+    "usearch": "2.26.4",
+    "shapely": "2.2.0"
+  },
+  "shell_blocks_parsed": 33,
+  "python_blocks_parsed": 3,
+  "artifacts_reproduce": true,
+  "wheel_sha256": "34b3dcd52d7728b284292dc5e66297b600ab7b4193b68e90a280bf63abefed32",
+  "sdist_sha256": "12c93bcbda199a4d5e2fd0641f010278c985a729e9a5e8750e83558137fd9fd5"
+}

@@ -1,0 +1,26 @@
+{
+  "prior_workset_sha256": "67ab8e258ef9c95e3347102c9709130500bf84e7009d578932f5da785a6b0319",
+  "prior_source_files": 179,
+  "changed_source_paths": [
+    ".github/workflows/ci.yml",
+    ".github/workflows/mongodb-differential.yml",
+    "CHANGELOG.md",
+    "docs/release-checklist.md",
+    "docs/unacknowledged-writes.md",
+    "scripts/capture_unacknowledged_parity.py",
+    "src/mongoeco/api/_async/_database_admin_write_commands.py",
+    "tests/differential/unacknowledged_cases.py",
+    "tests/fixtures/unacknowledged_mongodb_7_0.json",
+    "tests/fixtures/unacknowledged_mongodb_8_0.json",
+    "tests/fixtures/unacknowledged_mongodb_9_0.json",
+    "tests/integration/wire/test_unacknowledged.py",
+    "tests/support_unacknowledged.py"
+  ],
+  "added_source_paths": [
+    "docs/write-command-preflight.md",
+    "src/mongoeco/api/_async/_write_command_validation.py",
+    "tests/differential/write_preflight_cases.py",
+    "tests/integration/api/test_write_preflight_parity.py"
+  ],
+  "all_other_pending_sources_preserved": true
+}

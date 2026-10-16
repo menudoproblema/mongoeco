@@ -1,0 +1,174 @@
+{
+  "checks": [
+    {
+      "applicable": true,
+      "capability": "spi-v2",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.039041973650455475,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-core:capabilities",
+      "name": "capabilities",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-core",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "typed-outcomes",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.6849169731140137,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-core:crud-outcomes",
+      "name": "crud-outcomes",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-core",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "batch-inserts",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.17604208551347256,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-core:batch-outcomes",
+      "name": "batch-outcomes",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-core",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "operation-context",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.08191680535674095,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-core:operation-context",
+      "name": "operation-context",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-core",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "atomic-conditional-mutation",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 1.2814998626708984,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-atomicity:compare-and-set",
+      "name": "compare-and-set",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-atomicity",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "injected-clock",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.43816701509058475,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-clock:injected-clock",
+      "name": "injected-clock",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-clock",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "stable-snapshot",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.4325839690864086,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-snapshots:stable-snapshot",
+      "name": "stable-snapshot",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-snapshots",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "sequenced-change-delivery",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.1962499227374792,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-change-delivery:change-delivery-contract",
+      "name": "change-delivery-contract",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-change-delivery",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "sequenced-change-delivery",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 0.23000012151896954,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "spi-v2-change-delivery:change-delivery-recovery",
+      "name": "change-delivery-recovery",
+      "passed": true,
+      "phase": "contract",
+      "profile": "spi-v2-change-delivery",
+      "status": "passed"
+    },
+    {
+      "applicable": true,
+      "capability": "search-v1",
+      "cleanupError": null,
+      "detail": null,
+      "durationMs": 2.630749950185418,
+      "evidence": {
+        "capabilityDeclared": true
+      },
+      "id": "search-v1:search-contract",
+      "name": "search-contract",
+      "passed": true,
+      "phase": "contract",
+      "profile": "search-v1",
+      "status": "passed"
+    }
+  ],
+  "contractVersion": "spi-v2",
+  "passed": true,
+  "provider": "mongoeco.engines:MemoryEngine",
+  "schemaVersion": "mongoeco-conformance-report/v1",
+  "summary": {
+    "error": 0,
+    "failed": 0,
+    "not-applicable": 0,
+    "passed": 10
+  }
+}

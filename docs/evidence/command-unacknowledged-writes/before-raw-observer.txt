@@ -1,0 +1,25 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_more_to_come_controls_responses_on_the_same_socket[False-False-8.0-memory] _
+tests/integration/wire/test_unacknowledged.py:112: in test_more_to_come_controls_responses_on_the_same_socket
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/wire/test_unacknowledged.py:110: in exercise
+    assert actual == expected
+E   AssertionError: assert {'write_respo..._inserted': 1} == {'write_respo..._inserted': 1}
+E     
+E     Omitting 2 identical items, use -vv to show
+E     Differing items:
+E     {'write_response': {'ok': 1.0, 'n': 1}} != {'write_response': {'ok': 1.0, 'n': 0}}
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/integration/wire/test_unacknowledged.py::test_more_to_come_controls_responses_on_the_same_socket[False-False-8.0-memory]
+1 failed, 815 deselected in 0.86s

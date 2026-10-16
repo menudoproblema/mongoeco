@@ -1,0 +1,3269 @@
+[
+  {
+    "target": "7.0",
+    "build_info": {
+      "version": "7.0.39",
+      "gitVersion": "636e201a5c0732b95e88bb011a72938ce01d290b",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        7,
+        0,
+        39,
+        0
+      ],
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "aarch64",
+        "cc": "/Applications/Xcode13.2.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang: Apple clang version 13.0.0 (clang-1300.0.29.30)",
+        "ccflags": "-Wno-error=unknown-warning-option -isysroot /Applications/Xcode13.2.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.0 --target=darwin20.0.0 -arch arm64 -Werror -include mongo/platform/basic.h -ffp-contract=off -fasynchronous-unwind-tables -g2 -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -fno-omit-frame-pointer -fno-strict-aliasing -O2 -Wno-unused-local-typedefs -Wno-unused-function -Wno-unused-private-field -Wno-deprecated-declarations -Wno-tautological-constant-out-of-range-compare -Wno-tautological-constant-compare -Wno-tautological-unsigned-zero-compare -Wno-tautological-unsigned-enum-zero-compare -Wno-unused-const-variable -Wno-missing-braces -Wno-inconsistent-missing-override -Wno-potentially-evaluated-expression -Wno-unused-lambda-capture -Wunguarded-availability -fstack-protector-strong -fno-limit-debug-info -Wimplicit-fallthrough",
+        "cxx": "/Applications/Xcode13.2.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++: Apple clang version 13.0.0 (clang-1300.0.29.30)",
+        "cxxflags": "-Werror=unused-result -Woverloaded-virtual -Wpessimizing-move -Wno-undefined-var-template -Wno-instantiation-after-specialization -fsized-deallocation -Wno-defaulted-function-deleted -Wunused-exception-parameter -Wno-deprecated -stdlib=libc++ -std=c++20",
+        "linkflags": "-Wl,-syslibroot,/Applications/Xcode13.2.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.0 --target=darwin20.0.0 -arch arm64 -Wl,-fatal_warnings -Wl,-bind_at_load -fstack-protector-strong -stdlib=libc++",
+        "target_arch": "aarch64",
+        "target_os": "macOS",
+        "cppdefines": "SAFEINT_USE_INTRINSICS 0 PCRE2_STATIC NDEBUG ASIO_HAS_STD_INVOKE_RESULT ABSL_FORCE_ALIGNED_ACCESS BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION 5"
+      },
+      "bits": 64,
+      "debug": false,
+      "maxBsonObjectSize": 16777216,
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": 1.0
+    },
+    "fcv": {
+      "version": "7.0"
+    },
+    "sdk": "4.19.0",
+    "observations": [
+      {
+        "status": "ok",
+        "inserted_ids": [
+          "a",
+          "b"
+        ],
+        "id": "I05",
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "b",
+            "value": 2
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 11000,
+              "errmsg": "E11000 duplicate key error collection: write_parity_b0.cases index: _id_ dup key: { _id: \"dup\" }",
+              "keyPattern": {
+                "_id": 1
+              },
+              "keyValue": {
+                "_id": "dup"
+              },
+              "op": {
+                "_id": "dup"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 1,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "I06",
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "dup"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "TypeError",
+        "code": null,
+        "details": null,
+        "id": "I07",
+        "documents": []
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 121,
+              "errmsg": "Document failed validation",
+              "errInfo": {
+                "failingDocumentId": "b",
+                "details": {
+                  "operatorName": "$jsonSchema",
+                  "schemaRulesNotSatisfied": [
+                    {
+                      "operatorName": "required",
+                      "specifiedAs": {
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "missingProperties": [
+                        "name"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "op": {
+                "_id": "b"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 1,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "V04",
+        "documents": [
+          {
+            "_id": "a",
+            "name": "Ada"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 121,
+              "errmsg": "Document failed validation",
+              "errInfo": {
+                "failingDocumentId": "b",
+                "details": {
+                  "operatorName": "$jsonSchema",
+                  "schemaRulesNotSatisfied": [
+                    {
+                      "operatorName": "required",
+                      "specifiedAs": {
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "missingProperties": [
+                        "name"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "op": {
+                "_id": "b"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 2,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "V05",
+        "documents": [
+          {
+            "_id": "a",
+            "name": "Ada"
+          },
+          {
+            "_id": "c",
+            "name": "Cid"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 121,
+              "errmsg": "Document failed validation",
+              "errInfo": {
+                "failingDocumentId": "b",
+                "details": {
+                  "operatorName": "$jsonSchema",
+                  "schemaRulesNotSatisfied": [
+                    {
+                      "operatorName": "required",
+                      "specifiedAs": {
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "missingProperties": [
+                        "name"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "op": {
+                "_id": "b"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 1,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "B04",
+        "documents": [
+          {
+            "_id": "a",
+            "name": "Ada"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 259,
+              "code": 11000,
+              "errmsg": "E11000 duplicate key error collection: write_parity_b0.cases index: _id_ dup key: { _id: 0 }",
+              "keyPattern": {
+                "_id": 1
+              },
+              "keyValue": {
+                "_id": 0
+              },
+              "op": {
+                "_id": 0
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 259,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "B07",
+        "documents": [
+          {
+            "_id": 0
+          },
+          {
+            "_id": 1
+          },
+          {
+            "_id": 2
+          },
+          {
+            "_id": 3
+          },
+          {
+            "_id": 4
+          },
+          {
+            "_id": 5
+          },
+          {
+            "_id": 6
+          },
+          {
+            "_id": 7
+          },
+          {
+            "_id": 8
+          },
+          {
+            "_id": 9
+          },
+          {
+            "_id": 10
+          },
+          {
+            "_id": 11
+          },
+          {
+            "_id": 12
+          },
+          {
+            "_id": 13
+          },
+          {
+            "_id": 14
+          },
+          {
+            "_id": 15
+          },
+          {
+            "_id": 16
+          },
+          {
+            "_id": 17
+          },
+          {
+            "_id": 18
+          },
+          {
+            "_id": 19
+          },
+          {
+            "_id": 20
+          },
+          {
+            "_id": 21
+          },
+          {
+            "_id": 22
+          },
+          {
+            "_id": 23
+          },
+          {
+            "_id": 24
+          },
+          {
+            "_id": 25
+          },
+          {
+            "_id": 26
+          },
+          {
+            "_id": 27
+          },
+          {
+            "_id": 28
+          },
+          {
+            "_id": 29
+          },
+          {
+            "_id": 30
+          },
+          {
+            "_id": 31
+          },
+          {
+            "_id": 32
+          },
+          {
+            "_id": 33
+          },
+          {
+            "_id": 34
+          },
+          {
+            "_id": 35
+          },
+          {
+            "_id": 36
+          },
+          {
+            "_id": 37
+          },
+          {
+            "_id": 38
+          },
+          {
+            "_id": 39
+          },
+          {
+            "_id": 40
+          },
+          {
+            "_id": 41
+          },
+          {
+            "_id": 42
+          },
+          {
+            "_id": 43
+          },
+          {
+            "_id": 44
+          },
+          {
+            "_id": 45
+          },
+          {
+            "_id": 46
+          },
+          {
+            "_id": 47
+          },
+          {
+            "_id": 48
+          },
+          {
+            "_id": 49
+          },
+          {
+            "_id": 50
+          },
+          {
+            "_id": 51
+          },
+          {
+            "_id": 52
+          },
+          {
+            "_id": 53
+          },
+          {
+            "_id": 54
+          },
+          {
+            "_id": 55
+          },
+          {
+            "_id": 56
+          },
+          {
+            "_id": 57
+          },
+          {
+            "_id": 58
+          },
+          {
+            "_id": 59
+          },
+          {
+            "_id": 60
+          },
+          {
+            "_id": 61
+          },
+          {
+            "_id": 62
+          },
+          {
+            "_id": 63
+          },
+          {
+            "_id": 64
+          },
+          {
+            "_id": 65
+          },
+          {
+            "_id": 66
+          },
+          {
+            "_id": 67
+          },
+          {
+            "_id": 68
+          },
+          {
+            "_id": 69
+          },
+          {
+            "_id": 70
+          },
+          {
+            "_id": 71
+          },
+          {
+            "_id": 72
+          },
+          {
+            "_id": 73
+          },
+          {
+            "_id": 74
+          },
+          {
+            "_id": 75
+          },
+          {
+            "_id": 76
+          },
+          {
+            "_id": 77
+          },
+          {
+            "_id": 78
+          },
+          {
+            "_id": 79
+          },
+          {
+            "_id": 80
+          },
+          {
+            "_id": 81
+          },
+          {
+            "_id": 82
+          },
+          {
+            "_id": 83
+          },
+          {
+            "_id": 84
+          },
+          {
+            "_id": 85
+          },
+          {
+            "_id": 86
+          },
+          {
+            "_id": 87
+          },
+          {
+            "_id": 88
+          },
+          {
+            "_id": 89
+          },
+          {
+            "_id": 90
+          },
+          {
+            "_id": 91
+          },
+          {
+            "_id": 92
+          },
+          {
+            "_id": 93
+          },
+          {
+            "_id": 94
+          },
+          {
+            "_id": 95
+          },
+          {
+            "_id": 96
+          },
+          {
+            "_id": 97
+          },
+          {
+            "_id": 98
+          },
+          {
+            "_id": 99
+          },
+          {
+            "_id": 100
+          },
+          {
+            "_id": 101
+          },
+          {
+            "_id": 102
+          },
+          {
+            "_id": 103
+          },
+          {
+            "_id": 104
+          },
+          {
+            "_id": 105
+          },
+          {
+            "_id": 106
+          },
+          {
+            "_id": 107
+          },
+          {
+            "_id": 108
+          },
+          {
+            "_id": 109
+          },
+          {
+            "_id": 110
+          },
+          {
+            "_id": 111
+          },
+          {
+            "_id": 112
+          },
+          {
+            "_id": 113
+          },
+          {
+            "_id": 114
+          },
+          {
+            "_id": 115
+          },
+          {
+            "_id": 116
+          },
+          {
+            "_id": 117
+          },
+          {
+            "_id": 118
+          },
+          {
+            "_id": 119
+          },
+          {
+            "_id": 120
+          },
+          {
+            "_id": 121
+          },
+          {
+            "_id": 122
+          },
+          {
+            "_id": 123
+          },
+          {
+            "_id": 124
+          },
+          {
+            "_id": 125
+          },
+          {
+            "_id": 126
+          },
+          {
+            "_id": 127
+          },
+          {
+            "_id": 128
+          },
+          {
+            "_id": 129
+          },
+          {
+            "_id": 130
+          },
+          {
+            "_id": 131
+          },
+          {
+            "_id": 132
+          },
+          {
+            "_id": 133
+          },
+          {
+            "_id": 134
+          },
+          {
+            "_id": 135
+          },
+          {
+            "_id": 136
+          },
+          {
+            "_id": 137
+          },
+          {
+            "_id": 138
+          },
+          {
+            "_id": 139
+          },
+          {
+            "_id": 140
+          },
+          {
+            "_id": 141
+          },
+          {
+            "_id": 142
+          },
+          {
+            "_id": 143
+          },
+          {
+            "_id": 144
+          },
+          {
+            "_id": 145
+          },
+          {
+            "_id": 146
+          },
+          {
+            "_id": 147
+          },
+          {
+            "_id": 148
+          },
+          {
+            "_id": 149
+          },
+          {
+            "_id": 150
+          },
+          {
+            "_id": 151
+          },
+          {
+            "_id": 152
+          },
+          {
+            "_id": 153
+          },
+          {
+            "_id": 154
+          },
+          {
+            "_id": 155
+          },
+          {
+            "_id": 156
+          },
+          {
+            "_id": 157
+          },
+          {
+            "_id": 158
+          },
+          {
+            "_id": 159
+          },
+          {
+            "_id": 160
+          },
+          {
+            "_id": 161
+          },
+          {
+            "_id": 162
+          },
+          {
+            "_id": 163
+          },
+          {
+            "_id": 164
+          },
+          {
+            "_id": 165
+          },
+          {
+            "_id": 166
+          },
+          {
+            "_id": 167
+          },
+          {
+            "_id": 168
+          },
+          {
+            "_id": 169
+          },
+          {
+            "_id": 170
+          },
+          {
+            "_id": 171
+          },
+          {
+            "_id": 172
+          },
+          {
+            "_id": 173
+          },
+          {
+            "_id": 174
+          },
+          {
+            "_id": 175
+          },
+          {
+            "_id": 176
+          },
+          {
+            "_id": 177
+          },
+          {
+            "_id": 178
+          },
+          {
+            "_id": 179
+          },
+          {
+            "_id": 180
+          },
+          {
+            "_id": 181
+          },
+          {
+            "_id": 182
+          },
+          {
+            "_id": 183
+          },
+          {
+            "_id": 184
+          },
+          {
+            "_id": 185
+          },
+          {
+            "_id": 186
+          },
+          {
+            "_id": 187
+          },
+          {
+            "_id": 188
+          },
+          {
+            "_id": 189
+          },
+          {
+            "_id": 190
+          },
+          {
+            "_id": 191
+          },
+          {
+            "_id": 192
+          },
+          {
+            "_id": 193
+          },
+          {
+            "_id": 194
+          },
+          {
+            "_id": 195
+          },
+          {
+            "_id": 196
+          },
+          {
+            "_id": 197
+          },
+          {
+            "_id": 198
+          },
+          {
+            "_id": 199
+          },
+          {
+            "_id": 200
+          },
+          {
+            "_id": 201
+          },
+          {
+            "_id": 202
+          },
+          {
+            "_id": 203
+          },
+          {
+            "_id": 204
+          },
+          {
+            "_id": 205
+          },
+          {
+            "_id": 206
+          },
+          {
+            "_id": 207
+          },
+          {
+            "_id": 208
+          },
+          {
+            "_id": 209
+          },
+          {
+            "_id": 210
+          },
+          {
+            "_id": 211
+          },
+          {
+            "_id": 212
+          },
+          {
+            "_id": 213
+          },
+          {
+            "_id": 214
+          },
+          {
+            "_id": 215
+          },
+          {
+            "_id": 216
+          },
+          {
+            "_id": 217
+          },
+          {
+            "_id": 218
+          },
+          {
+            "_id": 219
+          },
+          {
+            "_id": 220
+          },
+          {
+            "_id": 221
+          },
+          {
+            "_id": 222
+          },
+          {
+            "_id": 223
+          },
+          {
+            "_id": 224
+          },
+          {
+            "_id": 225
+          },
+          {
+            "_id": 226
+          },
+          {
+            "_id": 227
+          },
+          {
+            "_id": 228
+          },
+          {
+            "_id": 229
+          },
+          {
+            "_id": 230
+          },
+          {
+            "_id": 231
+          },
+          {
+            "_id": 232
+          },
+          {
+            "_id": 233
+          },
+          {
+            "_id": 234
+          },
+          {
+            "_id": 235
+          },
+          {
+            "_id": 236
+          },
+          {
+            "_id": 237
+          },
+          {
+            "_id": 238
+          },
+          {
+            "_id": 239
+          },
+          {
+            "_id": 240
+          },
+          {
+            "_id": 241
+          },
+          {
+            "_id": 242
+          },
+          {
+            "_id": 243
+          },
+          {
+            "_id": 244
+          },
+          {
+            "_id": 245
+          },
+          {
+            "_id": 246
+          },
+          {
+            "_id": 247
+          },
+          {
+            "_id": 248
+          },
+          {
+            "_id": 249
+          },
+          {
+            "_id": 250
+          },
+          {
+            "_id": 251
+          },
+          {
+            "_id": 252
+          },
+          {
+            "_id": 253
+          },
+          {
+            "_id": 254
+          },
+          {
+            "_id": 255
+          },
+          {
+            "_id": 256
+          },
+          {
+            "_id": 257
+          },
+          {
+            "_id": 258
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "ValueError",
+        "code": null,
+        "details": null,
+        "id": "B08",
+        "documents": []
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "build_info": {
+      "version": "8.0.32",
+      "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs",
+      "sysInfo": "deprecated",
+      "versionArray": [
+        8,
+        0,
+        32,
+        0
+      ],
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -DBOOST_NO_CXX98_FUNCTION_BASE --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DASIO_HAS_STD_INVOKE_RESULT -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wimplicit-fallthrough",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -DBOOST_NO_CXX98_FUNCTION_BASE --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DASIO_HAS_STD_INVOKE_RESULT -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wimplicit-fallthrough",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": 64,
+      "debug": false,
+      "maxBsonObjectSize": 16777216,
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": 1.0
+    },
+    "fcv": {
+      "version": "8.0"
+    },
+    "sdk": "4.19.0",
+    "observations": [
+      {
+        "status": "ok",
+        "inserted_ids": [
+          "a",
+          "b"
+        ],
+        "id": "I05",
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "b",
+            "value": 2
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 11000,
+              "errmsg": "E11000 duplicate key error collection: write_parity_b0.cases index: _id_ dup key: { _id: \"dup\" }",
+              "keyPattern": {
+                "_id": 1
+              },
+              "keyValue": {
+                "_id": "dup"
+              },
+              "op": {
+                "_id": "dup"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 1,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "I06",
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "dup"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "TypeError",
+        "code": null,
+        "details": null,
+        "id": "I07",
+        "documents": []
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 121,
+              "errmsg": "Document failed validation",
+              "errInfo": {
+                "failingDocumentId": "b",
+                "details": {
+                  "operatorName": "$jsonSchema",
+                  "schemaRulesNotSatisfied": [
+                    {
+                      "operatorName": "required",
+                      "specifiedAs": {
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "missingProperties": [
+                        "name"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "op": {
+                "_id": "b"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 1,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "V04",
+        "documents": [
+          {
+            "_id": "a",
+            "name": "Ada"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 121,
+              "errmsg": "Document failed validation",
+              "errInfo": {
+                "failingDocumentId": "b",
+                "details": {
+                  "operatorName": "$jsonSchema",
+                  "schemaRulesNotSatisfied": [
+                    {
+                      "operatorName": "required",
+                      "specifiedAs": {
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "missingProperties": [
+                        "name"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "op": {
+                "_id": "b"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 2,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "V05",
+        "documents": [
+          {
+            "_id": "a",
+            "name": "Ada"
+          },
+          {
+            "_id": "c",
+            "name": "Cid"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 121,
+              "errmsg": "Document failed validation",
+              "errInfo": {
+                "failingDocumentId": "b",
+                "details": {
+                  "operatorName": "$jsonSchema",
+                  "schemaRulesNotSatisfied": [
+                    {
+                      "operatorName": "required",
+                      "specifiedAs": {
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "missingProperties": [
+                        "name"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "op": {
+                "_id": "b"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 1,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "B04",
+        "documents": [
+          {
+            "_id": "a",
+            "name": "Ada"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 259,
+              "code": 11000,
+              "errmsg": "E11000 duplicate key error collection: write_parity_b0.cases index: _id_ dup key: { _id: 0 }",
+              "keyPattern": {
+                "_id": 1
+              },
+              "keyValue": {
+                "_id": 0
+              },
+              "op": {
+                "_id": 0
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 259,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "B07",
+        "documents": [
+          {
+            "_id": 0
+          },
+          {
+            "_id": 1
+          },
+          {
+            "_id": 2
+          },
+          {
+            "_id": 3
+          },
+          {
+            "_id": 4
+          },
+          {
+            "_id": 5
+          },
+          {
+            "_id": 6
+          },
+          {
+            "_id": 7
+          },
+          {
+            "_id": 8
+          },
+          {
+            "_id": 9
+          },
+          {
+            "_id": 10
+          },
+          {
+            "_id": 11
+          },
+          {
+            "_id": 12
+          },
+          {
+            "_id": 13
+          },
+          {
+            "_id": 14
+          },
+          {
+            "_id": 15
+          },
+          {
+            "_id": 16
+          },
+          {
+            "_id": 17
+          },
+          {
+            "_id": 18
+          },
+          {
+            "_id": 19
+          },
+          {
+            "_id": 20
+          },
+          {
+            "_id": 21
+          },
+          {
+            "_id": 22
+          },
+          {
+            "_id": 23
+          },
+          {
+            "_id": 24
+          },
+          {
+            "_id": 25
+          },
+          {
+            "_id": 26
+          },
+          {
+            "_id": 27
+          },
+          {
+            "_id": 28
+          },
+          {
+            "_id": 29
+          },
+          {
+            "_id": 30
+          },
+          {
+            "_id": 31
+          },
+          {
+            "_id": 32
+          },
+          {
+            "_id": 33
+          },
+          {
+            "_id": 34
+          },
+          {
+            "_id": 35
+          },
+          {
+            "_id": 36
+          },
+          {
+            "_id": 37
+          },
+          {
+            "_id": 38
+          },
+          {
+            "_id": 39
+          },
+          {
+            "_id": 40
+          },
+          {
+            "_id": 41
+          },
+          {
+            "_id": 42
+          },
+          {
+            "_id": 43
+          },
+          {
+            "_id": 44
+          },
+          {
+            "_id": 45
+          },
+          {
+            "_id": 46
+          },
+          {
+            "_id": 47
+          },
+          {
+            "_id": 48
+          },
+          {
+            "_id": 49
+          },
+          {
+            "_id": 50
+          },
+          {
+            "_id": 51
+          },
+          {
+            "_id": 52
+          },
+          {
+            "_id": 53
+          },
+          {
+            "_id": 54
+          },
+          {
+            "_id": 55
+          },
+          {
+            "_id": 56
+          },
+          {
+            "_id": 57
+          },
+          {
+            "_id": 58
+          },
+          {
+            "_id": 59
+          },
+          {
+            "_id": 60
+          },
+          {
+            "_id": 61
+          },
+          {
+            "_id": 62
+          },
+          {
+            "_id": 63
+          },
+          {
+            "_id": 64
+          },
+          {
+            "_id": 65
+          },
+          {
+            "_id": 66
+          },
+          {
+            "_id": 67
+          },
+          {
+            "_id": 68
+          },
+          {
+            "_id": 69
+          },
+          {
+            "_id": 70
+          },
+          {
+            "_id": 71
+          },
+          {
+            "_id": 72
+          },
+          {
+            "_id": 73
+          },
+          {
+            "_id": 74
+          },
+          {
+            "_id": 75
+          },
+          {
+            "_id": 76
+          },
+          {
+            "_id": 77
+          },
+          {
+            "_id": 78
+          },
+          {
+            "_id": 79
+          },
+          {
+            "_id": 80
+          },
+          {
+            "_id": 81
+          },
+          {
+            "_id": 82
+          },
+          {
+            "_id": 83
+          },
+          {
+            "_id": 84
+          },
+          {
+            "_id": 85
+          },
+          {
+            "_id": 86
+          },
+          {
+            "_id": 87
+          },
+          {
+            "_id": 88
+          },
+          {
+            "_id": 89
+          },
+          {
+            "_id": 90
+          },
+          {
+            "_id": 91
+          },
+          {
+            "_id": 92
+          },
+          {
+            "_id": 93
+          },
+          {
+            "_id": 94
+          },
+          {
+            "_id": 95
+          },
+          {
+            "_id": 96
+          },
+          {
+            "_id": 97
+          },
+          {
+            "_id": 98
+          },
+          {
+            "_id": 99
+          },
+          {
+            "_id": 100
+          },
+          {
+            "_id": 101
+          },
+          {
+            "_id": 102
+          },
+          {
+            "_id": 103
+          },
+          {
+            "_id": 104
+          },
+          {
+            "_id": 105
+          },
+          {
+            "_id": 106
+          },
+          {
+            "_id": 107
+          },
+          {
+            "_id": 108
+          },
+          {
+            "_id": 109
+          },
+          {
+            "_id": 110
+          },
+          {
+            "_id": 111
+          },
+          {
+            "_id": 112
+          },
+          {
+            "_id": 113
+          },
+          {
+            "_id": 114
+          },
+          {
+            "_id": 115
+          },
+          {
+            "_id": 116
+          },
+          {
+            "_id": 117
+          },
+          {
+            "_id": 118
+          },
+          {
+            "_id": 119
+          },
+          {
+            "_id": 120
+          },
+          {
+            "_id": 121
+          },
+          {
+            "_id": 122
+          },
+          {
+            "_id": 123
+          },
+          {
+            "_id": 124
+          },
+          {
+            "_id": 125
+          },
+          {
+            "_id": 126
+          },
+          {
+            "_id": 127
+          },
+          {
+            "_id": 128
+          },
+          {
+            "_id": 129
+          },
+          {
+            "_id": 130
+          },
+          {
+            "_id": 131
+          },
+          {
+            "_id": 132
+          },
+          {
+            "_id": 133
+          },
+          {
+            "_id": 134
+          },
+          {
+            "_id": 135
+          },
+          {
+            "_id": 136
+          },
+          {
+            "_id": 137
+          },
+          {
+            "_id": 138
+          },
+          {
+            "_id": 139
+          },
+          {
+            "_id": 140
+          },
+          {
+            "_id": 141
+          },
+          {
+            "_id": 142
+          },
+          {
+            "_id": 143
+          },
+          {
+            "_id": 144
+          },
+          {
+            "_id": 145
+          },
+          {
+            "_id": 146
+          },
+          {
+            "_id": 147
+          },
+          {
+            "_id": 148
+          },
+          {
+            "_id": 149
+          },
+          {
+            "_id": 150
+          },
+          {
+            "_id": 151
+          },
+          {
+            "_id": 152
+          },
+          {
+            "_id": 153
+          },
+          {
+            "_id": 154
+          },
+          {
+            "_id": 155
+          },
+          {
+            "_id": 156
+          },
+          {
+            "_id": 157
+          },
+          {
+            "_id": 158
+          },
+          {
+            "_id": 159
+          },
+          {
+            "_id": 160
+          },
+          {
+            "_id": 161
+          },
+          {
+            "_id": 162
+          },
+          {
+            "_id": 163
+          },
+          {
+            "_id": 164
+          },
+          {
+            "_id": 165
+          },
+          {
+            "_id": 166
+          },
+          {
+            "_id": 167
+          },
+          {
+            "_id": 168
+          },
+          {
+            "_id": 169
+          },
+          {
+            "_id": 170
+          },
+          {
+            "_id": 171
+          },
+          {
+            "_id": 172
+          },
+          {
+            "_id": 173
+          },
+          {
+            "_id": 174
+          },
+          {
+            "_id": 175
+          },
+          {
+            "_id": 176
+          },
+          {
+            "_id": 177
+          },
+          {
+            "_id": 178
+          },
+          {
+            "_id": 179
+          },
+          {
+            "_id": 180
+          },
+          {
+            "_id": 181
+          },
+          {
+            "_id": 182
+          },
+          {
+            "_id": 183
+          },
+          {
+            "_id": 184
+          },
+          {
+            "_id": 185
+          },
+          {
+            "_id": 186
+          },
+          {
+            "_id": 187
+          },
+          {
+            "_id": 188
+          },
+          {
+            "_id": 189
+          },
+          {
+            "_id": 190
+          },
+          {
+            "_id": 191
+          },
+          {
+            "_id": 192
+          },
+          {
+            "_id": 193
+          },
+          {
+            "_id": 194
+          },
+          {
+            "_id": 195
+          },
+          {
+            "_id": 196
+          },
+          {
+            "_id": 197
+          },
+          {
+            "_id": 198
+          },
+          {
+            "_id": 199
+          },
+          {
+            "_id": 200
+          },
+          {
+            "_id": 201
+          },
+          {
+            "_id": 202
+          },
+          {
+            "_id": 203
+          },
+          {
+            "_id": 204
+          },
+          {
+            "_id": 205
+          },
+          {
+            "_id": 206
+          },
+          {
+            "_id": 207
+          },
+          {
+            "_id": 208
+          },
+          {
+            "_id": 209
+          },
+          {
+            "_id": 210
+          },
+          {
+            "_id": 211
+          },
+          {
+            "_id": 212
+          },
+          {
+            "_id": 213
+          },
+          {
+            "_id": 214
+          },
+          {
+            "_id": 215
+          },
+          {
+            "_id": 216
+          },
+          {
+            "_id": 217
+          },
+          {
+            "_id": 218
+          },
+          {
+            "_id": 219
+          },
+          {
+            "_id": 220
+          },
+          {
+            "_id": 221
+          },
+          {
+            "_id": 222
+          },
+          {
+            "_id": 223
+          },
+          {
+            "_id": 224
+          },
+          {
+            "_id": 225
+          },
+          {
+            "_id": 226
+          },
+          {
+            "_id": 227
+          },
+          {
+            "_id": 228
+          },
+          {
+            "_id": 229
+          },
+          {
+            "_id": 230
+          },
+          {
+            "_id": 231
+          },
+          {
+            "_id": 232
+          },
+          {
+            "_id": 233
+          },
+          {
+            "_id": 234
+          },
+          {
+            "_id": 235
+          },
+          {
+            "_id": 236
+          },
+          {
+            "_id": 237
+          },
+          {
+            "_id": 238
+          },
+          {
+            "_id": 239
+          },
+          {
+            "_id": 240
+          },
+          {
+            "_id": 241
+          },
+          {
+            "_id": 242
+          },
+          {
+            "_id": 243
+          },
+          {
+            "_id": 244
+          },
+          {
+            "_id": 245
+          },
+          {
+            "_id": 246
+          },
+          {
+            "_id": 247
+          },
+          {
+            "_id": 248
+          },
+          {
+            "_id": 249
+          },
+          {
+            "_id": 250
+          },
+          {
+            "_id": 251
+          },
+          {
+            "_id": 252
+          },
+          {
+            "_id": 253
+          },
+          {
+            "_id": 254
+          },
+          {
+            "_id": 255
+          },
+          {
+            "_id": 256
+          },
+          {
+            "_id": 257
+          },
+          {
+            "_id": 258
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "ValueError",
+        "code": null,
+        "details": null,
+        "id": "B08",
+        "documents": []
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "build_info": {
+      "version": "9.0.2",
+      "versionArray": [
+        9,
+        0,
+        2,
+        0
+      ],
+      "gitVersion": "c4d309807b94ac30edcca32e35e88a9598eadfc8",
+      "modules": [],
+      "allocator": "system",
+      "javascriptEngine": "mozjs-wasm",
+      "sysinfo": "deprecated",
+      "openssl": {
+        "running": "Apple Secure Transport"
+      },
+      "buildEnvironment": {
+        "distmod": "",
+        "distarch": "arm64",
+        "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "ccflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+        "cxxflags": "-U_FORTIFY_SOURCE -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DNDEBUG -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER -DBOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF -DBOOST_LOG_NO_SHORTHAND_NAMES -DBOOST_LOG_WITHOUT_THREAD_ATTR -DBOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_THREAD_USES_DATETIME -DBOOST_THREAD_VERSION=5 -DBOOST_LOG_USE_NATIVE_SYSLOG -DABSL_FORCE_ALIGNED_ACCESS -DPCRE2_STATIC -DSAFEINT_USE_INTRINSICS=0 -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -g2 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include",
+        "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime -lresolv -framework CoreFoundation -framework Security",
+        "target_arch": "arm64",
+        "target_os": "macOS",
+        "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 BOOST_LOG_USE_NATIVE_SYSLOG ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+      },
+      "bits": 64,
+      "debug": false,
+      "maxBsonObjectSize": 16777216,
+      "macOS": {
+        "osProductVersion": "15.6",
+        "osRelease": "24.6.0",
+        "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+      },
+      "storageEngines": [
+        "devnull",
+        "wiredTiger"
+      ],
+      "ok": 1.0
+    },
+    "fcv": {
+      "version": "9.0"
+    },
+    "sdk": "4.19.0",
+    "observations": [
+      {
+        "status": "ok",
+        "inserted_ids": [
+          "a",
+          "b"
+        ],
+        "id": "I05",
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "b",
+            "value": 2
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 11000,
+              "errmsg": "E11000 duplicate key error collection: write_parity_b0.cases index: _id_ dup key: { _id: \"dup\" }",
+              "keyPattern": {
+                "_id": 1
+              },
+              "keyValue": {
+                "_id": "dup"
+              },
+              "op": {
+                "_id": "dup"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 1,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "I06",
+        "documents": [
+          {
+            "_id": "a",
+            "value": 1
+          },
+          {
+            "_id": "dup"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "TypeError",
+        "code": null,
+        "details": null,
+        "id": "I07",
+        "documents": []
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 121,
+              "errmsg": "Document failed validation",
+              "errInfo": {
+                "failingDocumentId": "b",
+                "details": {
+                  "operatorName": "$jsonSchema",
+                  "schemaRulesNotSatisfied": [
+                    {
+                      "operatorName": "required",
+                      "specifiedAs": {
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "missingProperties": [
+                        "name"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "op": {
+                "_id": "b"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 1,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "V04",
+        "documents": [
+          {
+            "_id": "a",
+            "name": "Ada"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 121,
+              "errmsg": "Document failed validation",
+              "errInfo": {
+                "failingDocumentId": "b",
+                "details": {
+                  "operatorName": "$jsonSchema",
+                  "schemaRulesNotSatisfied": [
+                    {
+                      "operatorName": "required",
+                      "specifiedAs": {
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "missingProperties": [
+                        "name"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "op": {
+                "_id": "b"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 2,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "V05",
+        "documents": [
+          {
+            "_id": "a",
+            "name": "Ada"
+          },
+          {
+            "_id": "c",
+            "name": "Cid"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 1,
+              "code": 121,
+              "errmsg": "Document failed validation",
+              "errInfo": {
+                "failingDocumentId": "b",
+                "details": {
+                  "operatorName": "$jsonSchema",
+                  "schemaRulesNotSatisfied": [
+                    {
+                      "operatorName": "required",
+                      "specifiedAs": {
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "missingProperties": [
+                        "name"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "op": {
+                "_id": "b"
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 1,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "B04",
+        "documents": [
+          {
+            "_id": "a",
+            "name": "Ada"
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "BulkWriteError",
+        "code": 65,
+        "details": {
+          "writeErrors": [
+            {
+              "index": 259,
+              "code": 11000,
+              "errmsg": "E11000 duplicate key error collection: write_parity_b0.cases index: _id_ dup key: { _id: 0 }",
+              "keyPattern": {
+                "_id": 1
+              },
+              "keyValue": {
+                "_id": 0
+              },
+              "op": {
+                "_id": 0
+              }
+            }
+          ],
+          "writeConcernErrors": [],
+          "nInserted": 259,
+          "nUpserted": 0,
+          "nMatched": 0,
+          "nModified": 0,
+          "nRemoved": 0,
+          "upserted": []
+        },
+        "id": "B07",
+        "documents": [
+          {
+            "_id": 0
+          },
+          {
+            "_id": 1
+          },
+          {
+            "_id": 2
+          },
+          {
+            "_id": 3
+          },
+          {
+            "_id": 4
+          },
+          {
+            "_id": 5
+          },
+          {
+            "_id": 6
+          },
+          {
+            "_id": 7
+          },
+          {
+            "_id": 8
+          },
+          {
+            "_id": 9
+          },
+          {
+            "_id": 10
+          },
+          {
+            "_id": 11
+          },
+          {
+            "_id": 12
+          },
+          {
+            "_id": 13
+          },
+          {
+            "_id": 14
+          },
+          {
+            "_id": 15
+          },
+          {
+            "_id": 16
+          },
+          {
+            "_id": 17
+          },
+          {
+            "_id": 18
+          },
+          {
+            "_id": 19
+          },
+          {
+            "_id": 20
+          },
+          {
+            "_id": 21
+          },
+          {
+            "_id": 22
+          },
+          {
+            "_id": 23
+          },
+          {
+            "_id": 24
+          },
+          {
+            "_id": 25
+          },
+          {
+            "_id": 26
+          },
+          {
+            "_id": 27
+          },
+          {
+            "_id": 28
+          },
+          {
+            "_id": 29
+          },
+          {
+            "_id": 30
+          },
+          {
+            "_id": 31
+          },
+          {
+            "_id": 32
+          },
+          {
+            "_id": 33
+          },
+          {
+            "_id": 34
+          },
+          {
+            "_id": 35
+          },
+          {
+            "_id": 36
+          },
+          {
+            "_id": 37
+          },
+          {
+            "_id": 38
+          },
+          {
+            "_id": 39
+          },
+          {
+            "_id": 40
+          },
+          {
+            "_id": 41
+          },
+          {
+            "_id": 42
+          },
+          {
+            "_id": 43
+          },
+          {
+            "_id": 44
+          },
+          {
+            "_id": 45
+          },
+          {
+            "_id": 46
+          },
+          {
+            "_id": 47
+          },
+          {
+            "_id": 48
+          },
+          {
+            "_id": 49
+          },
+          {
+            "_id": 50
+          },
+          {
+            "_id": 51
+          },
+          {
+            "_id": 52
+          },
+          {
+            "_id": 53
+          },
+          {
+            "_id": 54
+          },
+          {
+            "_id": 55
+          },
+          {
+            "_id": 56
+          },
+          {
+            "_id": 57
+          },
+          {
+            "_id": 58
+          },
+          {
+            "_id": 59
+          },
+          {
+            "_id": 60
+          },
+          {
+            "_id": 61
+          },
+          {
+            "_id": 62
+          },
+          {
+            "_id": 63
+          },
+          {
+            "_id": 64
+          },
+          {
+            "_id": 65
+          },
+          {
+            "_id": 66
+          },
+          {
+            "_id": 67
+          },
+          {
+            "_id": 68
+          },
+          {
+            "_id": 69
+          },
+          {
+            "_id": 70
+          },
+          {
+            "_id": 71
+          },
+          {
+            "_id": 72
+          },
+          {
+            "_id": 73
+          },
+          {
+            "_id": 74
+          },
+          {
+            "_id": 75
+          },
+          {
+            "_id": 76
+          },
+          {
+            "_id": 77
+          },
+          {
+            "_id": 78
+          },
+          {
+            "_id": 79
+          },
+          {
+            "_id": 80
+          },
+          {
+            "_id": 81
+          },
+          {
+            "_id": 82
+          },
+          {
+            "_id": 83
+          },
+          {
+            "_id": 84
+          },
+          {
+            "_id": 85
+          },
+          {
+            "_id": 86
+          },
+          {
+            "_id": 87
+          },
+          {
+            "_id": 88
+          },
+          {
+            "_id": 89
+          },
+          {
+            "_id": 90
+          },
+          {
+            "_id": 91
+          },
+          {
+            "_id": 92
+          },
+          {
+            "_id": 93
+          },
+          {
+            "_id": 94
+          },
+          {
+            "_id": 95
+          },
+          {
+            "_id": 96
+          },
+          {
+            "_id": 97
+          },
+          {
+            "_id": 98
+          },
+          {
+            "_id": 99
+          },
+          {
+            "_id": 100
+          },
+          {
+            "_id": 101
+          },
+          {
+            "_id": 102
+          },
+          {
+            "_id": 103
+          },
+          {
+            "_id": 104
+          },
+          {
+            "_id": 105
+          },
+          {
+            "_id": 106
+          },
+          {
+            "_id": 107
+          },
+          {
+            "_id": 108
+          },
+          {
+            "_id": 109
+          },
+          {
+            "_id": 110
+          },
+          {
+            "_id": 111
+          },
+          {
+            "_id": 112
+          },
+          {
+            "_id": 113
+          },
+          {
+            "_id": 114
+          },
+          {
+            "_id": 115
+          },
+          {
+            "_id": 116
+          },
+          {
+            "_id": 117
+          },
+          {
+            "_id": 118
+          },
+          {
+            "_id": 119
+          },
+          {
+            "_id": 120
+          },
+          {
+            "_id": 121
+          },
+          {
+            "_id": 122
+          },
+          {
+            "_id": 123
+          },
+          {
+            "_id": 124
+          },
+          {
+            "_id": 125
+          },
+          {
+            "_id": 126
+          },
+          {
+            "_id": 127
+          },
+          {
+            "_id": 128
+          },
+          {
+            "_id": 129
+          },
+          {
+            "_id": 130
+          },
+          {
+            "_id": 131
+          },
+          {
+            "_id": 132
+          },
+          {
+            "_id": 133
+          },
+          {
+            "_id": 134
+          },
+          {
+            "_id": 135
+          },
+          {
+            "_id": 136
+          },
+          {
+            "_id": 137
+          },
+          {
+            "_id": 138
+          },
+          {
+            "_id": 139
+          },
+          {
+            "_id": 140
+          },
+          {
+            "_id": 141
+          },
+          {
+            "_id": 142
+          },
+          {
+            "_id": 143
+          },
+          {
+            "_id": 144
+          },
+          {
+            "_id": 145
+          },
+          {
+            "_id": 146
+          },
+          {
+            "_id": 147
+          },
+          {
+            "_id": 148
+          },
+          {
+            "_id": 149
+          },
+          {
+            "_id": 150
+          },
+          {
+            "_id": 151
+          },
+          {
+            "_id": 152
+          },
+          {
+            "_id": 153
+          },
+          {
+            "_id": 154
+          },
+          {
+            "_id": 155
+          },
+          {
+            "_id": 156
+          },
+          {
+            "_id": 157
+          },
+          {
+            "_id": 158
+          },
+          {
+            "_id": 159
+          },
+          {
+            "_id": 160
+          },
+          {
+            "_id": 161
+          },
+          {
+            "_id": 162
+          },
+          {
+            "_id": 163
+          },
+          {
+            "_id": 164
+          },
+          {
+            "_id": 165
+          },
+          {
+            "_id": 166
+          },
+          {
+            "_id": 167
+          },
+          {
+            "_id": 168
+          },
+          {
+            "_id": 169
+          },
+          {
+            "_id": 170
+          },
+          {
+            "_id": 171
+          },
+          {
+            "_id": 172
+          },
+          {
+            "_id": 173
+          },
+          {
+            "_id": 174
+          },
+          {
+            "_id": 175
+          },
+          {
+            "_id": 176
+          },
+          {
+            "_id": 177
+          },
+          {
+            "_id": 178
+          },
+          {
+            "_id": 179
+          },
+          {
+            "_id": 180
+          },
+          {
+            "_id": 181
+          },
+          {
+            "_id": 182
+          },
+          {
+            "_id": 183
+          },
+          {
+            "_id": 184
+          },
+          {
+            "_id": 185
+          },
+          {
+            "_id": 186
+          },
+          {
+            "_id": 187
+          },
+          {
+            "_id": 188
+          },
+          {
+            "_id": 189
+          },
+          {
+            "_id": 190
+          },
+          {
+            "_id": 191
+          },
+          {
+            "_id": 192
+          },
+          {
+            "_id": 193
+          },
+          {
+            "_id": 194
+          },
+          {
+            "_id": 195
+          },
+          {
+            "_id": 196
+          },
+          {
+            "_id": 197
+          },
+          {
+            "_id": 198
+          },
+          {
+            "_id": 199
+          },
+          {
+            "_id": 200
+          },
+          {
+            "_id": 201
+          },
+          {
+            "_id": 202
+          },
+          {
+            "_id": 203
+          },
+          {
+            "_id": 204
+          },
+          {
+            "_id": 205
+          },
+          {
+            "_id": 206
+          },
+          {
+            "_id": 207
+          },
+          {
+            "_id": 208
+          },
+          {
+            "_id": 209
+          },
+          {
+            "_id": 210
+          },
+          {
+            "_id": 211
+          },
+          {
+            "_id": 212
+          },
+          {
+            "_id": 213
+          },
+          {
+            "_id": 214
+          },
+          {
+            "_id": 215
+          },
+          {
+            "_id": 216
+          },
+          {
+            "_id": 217
+          },
+          {
+            "_id": 218
+          },
+          {
+            "_id": 219
+          },
+          {
+            "_id": 220
+          },
+          {
+            "_id": 221
+          },
+          {
+            "_id": 222
+          },
+          {
+            "_id": 223
+          },
+          {
+            "_id": 224
+          },
+          {
+            "_id": 225
+          },
+          {
+            "_id": 226
+          },
+          {
+            "_id": 227
+          },
+          {
+            "_id": 228
+          },
+          {
+            "_id": 229
+          },
+          {
+            "_id": 230
+          },
+          {
+            "_id": 231
+          },
+          {
+            "_id": 232
+          },
+          {
+            "_id": 233
+          },
+          {
+            "_id": 234
+          },
+          {
+            "_id": 235
+          },
+          {
+            "_id": 236
+          },
+          {
+            "_id": 237
+          },
+          {
+            "_id": 238
+          },
+          {
+            "_id": 239
+          },
+          {
+            "_id": 240
+          },
+          {
+            "_id": 241
+          },
+          {
+            "_id": 242
+          },
+          {
+            "_id": 243
+          },
+          {
+            "_id": 244
+          },
+          {
+            "_id": 245
+          },
+          {
+            "_id": 246
+          },
+          {
+            "_id": 247
+          },
+          {
+            "_id": 248
+          },
+          {
+            "_id": 249
+          },
+          {
+            "_id": 250
+          },
+          {
+            "_id": 251
+          },
+          {
+            "_id": 252
+          },
+          {
+            "_id": 253
+          },
+          {
+            "_id": 254
+          },
+          {
+            "_id": 255
+          },
+          {
+            "_id": 256
+          },
+          {
+            "_id": 257
+          },
+          {
+            "_id": 258
+          }
+        ]
+      },
+      {
+        "status": "error",
+        "family": "ValueError",
+        "code": null,
+        "details": null,
+        "id": "B08",
+        "documents": []
+      }
+    ]
+  }
+]

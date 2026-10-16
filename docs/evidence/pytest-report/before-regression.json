@@ -1,0 +1,17 @@
+{
+  "status": "expected_failure",
+  "exit_code": 1,
+  "failed": 1,
+  "wheel": "documentation-entry candidate",
+  "reason": "Configuration report is absent before this change.",
+  "command": [
+    "/tmp/mongoeco-pytest-report/before/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/pytest_kit/test_reporting.py::test_report_resolves_installed_profile_without_using_fixtures[True]",
+    "-q",
+    "--tb=short"
+  ],
+  "wheel_sha256": "33d90993c482b8589d9335b9318768abf5a29bf5644238417f7d7cbec5f09bbd",
+  "all_runtime_files_match_prior_wheel": true
+}

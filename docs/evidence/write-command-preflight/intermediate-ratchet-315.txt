@@ -1,0 +1,4 @@
+/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_database_admin_write_commands.py:41:5: FBT001 Boolean-typed positional argument in function definition
+/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_database_admin_write_commands.py:196:89: E501 Line too long (95 > 88)
+/Users/uve/Proyectos/mongoeco/src/mongoeco/api/_async/_database_admin_write_commands.py:380:89: E501 Line too long (94 > 88)
+3 Ruff violation(s) introduced in changed files

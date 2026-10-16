@@ -1,9 +1,25 @@
 # Plan de la siguiente entrega: escrituras fiables para testkits
 
-Estado: objetivo acordado; corpus y criterios preparados para revisión. **La
-implementación de este plan no ha comenzado.** Base inspeccionada: Mongoeco
-`c0746ab`, que ya incluye PyMongo 4.19 en `Unreleased`. No se reserva número de
-versión, ni se autoriza aquí un tag o una publicación. Fecha: 15 de octubre de 2026.
+Plan original conservado como historia. La entrega resultante es
+[Mongoeco 4.10.0](release-4.10.0.md).
+
+Estado: implementación y gates completados para el alcance autorizado sobre la base
+`c0746ab`; ver [resultado y evidencia](write-parity-validation.md). La siguiente
+entrega incluye PyMongo 4.19 en `Unreleased`. No se reserva número de versión ni
+se ejecuta aquí un tag o una publicación. Fecha: 15 de octubre de 2026.
+
+La entrega se amplía después con [soporte oficial de Python 3.15](python-support.md)
+y la retirada de Python 3.13 en octubre de 2028. Ese bloque añade su propia
+matriz final 3.13/3.14/3.15 con pins nativos comunes; las evidencias de escritura
+enlazadas conservan sus candidatos originales.
+
+La ampliación de [operaciones fallidas](write-error-operations.md) añade 42
+casos para `writeErrors[].op` y extiende el observador común. Sus capturas
+renuevan las referencias afectadas sin sustituir las evidencias históricas.
+
+La corrección posterior de [identidades null y regex](null-and-regex-identities.md)
+añade 61 escenarios de identidad y 26 vistas raw, con `did_upsert` observado
+explícitamente y validación de contadores, retornos y efectos parciales.
 
 ## 1. Resultado y perímetro
 
@@ -16,8 +32,8 @@ Mongoeco sin un intérprete que repare su semántica.
 El [manifiesto del corpus](write-parity-corpus.json) es el inventario autoritativo
 de IDs, entradas, peticiones, invariantes y referencias de cobertura. Es una
 especificación de planificación, **no un runner, una fixture ya capturada ni
-un nuevo lenguaje de ejecución**. Los códigos y resultados completos pendientes
-se obtendrán de MongoDB, sin rellenarlos con la salida de Mongoeco.
+un nuevo lenguaje de ejecución**. Los códigos y resultados completos se capturan de MongoDB con
+`scripts/capture_write_parity.py`; nunca se rellenan con la salida de Mongoeco.
 
 | Parte | Tamaño | Disposición |
 | --- | ---: | --- |
@@ -64,7 +80,7 @@ abajo; no acredita por anticipado las nuevas observaciones del corpus.
 | [Preparación SQLite](../tests/integration/api/test_sqlite_bulk_preparation_contract.py) | Trabajo por bloques, progreso de lectores, cancelación, precedencia de validación y error global tras límite de bloque. | Son garantías del engine/rendimiento, no un oráculo nativo completo del API público. Deben mantenerse al corregir la frontera pública. |
 | [Mutaciones seleccionadas](../tests/integration/api/test_atomic_selected_mutations.py) y [snapshots](../tests/integration/api/test_selected_mutation_snapshot_contract.py) | Barreras controladas para CAS/findAndModify, retornos coherentes y CAS SQLite entre instancias. | La matriz competitiva no es simétrica en todas las fachadas/rutas y carece del contraste de historias nativas Q01–Q06. |
 | [PyMongo 4.19 wire](../tests/integration/wire/test_pymongo419_compatibility.py) | Bulk, getMore, sesiones y rechazo de BSON malformado con clientes reales. | No es cobertura de todos los fallos y resultados seleccionados para las ocho vistas write. |
-| Consumidor mochuelo-testkit | Tests de upsert, arrays, borrado, pipeline y entrada Storage. | Actualmente pasan por lowering de array_filters, reparación de filtros y ejecución propia de modelos bulk. No acreditan delegación directa. |
+| Consumidor externo | Tests de upsert, arrays, borrado, pipeline y entrada Storage. | Actualmente pasan por lowering de array_filters, reparación de filtros y ejecución propia de modelos bulk. No acreditan delegación directa. |
 
 Las 284 capturas generales por versión del cierre anterior se conservan como
 regresión. No se suman como 284 escenarios CRUD: sus corpus principales son
@@ -92,9 +108,11 @@ describe conservación de documentos válidos anteriores a un error de schema y
 continuación de los posteriores según `ordered`. La
 [atomicidad de MongoDB](https://www.mongodb.com/docs/manual/core/write-operations-atomicity/)
 es por documento. Esto identifica una diferencia entre expectativas locales y
-norma nativa; **la reproducción con errores/contadores exactos sigue pendiente**.
+norma nativa. La reproducción ejecutada confirmó `BulkWriteError`, código 121
+en la entrada inválida, `nInserted=1` ordered y `nInserted=2` unordered. El baseline
+local 7.0.39 se conserva separado; la admisión usa 7.0.43/8.0.32/9.0.2.
 
-Disposición propuesta para el bloque B0: capturar I05/I06/I07, V04/V05, B04 y B07;
+Disposición del bloque B0, autorizada mediante el encargo de ejecución: capturar I05/I06/I07, V04/V05, B04 y B07;
 separar forma/serialización del driver de validación de colección del servidor;
 documentar el antes/después de la corrección y añadir `ordered` de forma
 compatible en las dos fachadas. Revisar la clasificación SemVer y la migración
@@ -254,7 +272,7 @@ requiere decisión nueva; no entra por descubrimiento durante B3.
 | Nuevo runtime de escritura, modo estricto o normalizador por motor | **no introducir** | El arnés/catálogos y runtime comunes ya cubren el mecanismo; no aportan una garantía diferencial al objetivo acordado. |
 
 Mongoeco es owner del API, semántica y persistencia de esta entrega. El testkit
-es owner de sus dependencias y wrappers; Mochuelo conserva Storage, clock y
+es owner de sus dependencias y wrappers; su aplicación conserva Storage, clock y
 lifecycle. Las fuentes consumidoras inspeccionadas y sus hashes/revisión están
 en `coverage_basis` del manifiesto. Se inspecciona su material actual sin suponer
 que el nombre de rama sea una garantía de frescura.
@@ -276,13 +294,20 @@ Se amplían esos mecanismos; sus comandos actuales de 29 casos y posicionales
 no se presentan como ejecución de los 170 casos.
 
 Durante B1/B2 se elegirán módulos de tests dentro de esas familias y se
-registrarán las selecciones reales descubiertas. Sus nodeids nuevos **todavía
-no existen**; este documento no proporciona comandos inventados como si fueran
-ejecutables. CI deberá contar escenarios/celdas contra el manifiesto y comprobar
-que cada proyección tiene consumidores efectivos. Los globales finales siguen
+registrarán las selecciones reales descubiertas. Los nodeids efectivos y comandos de captura/replay se recogen en
+[la validación](write-parity-validation.md). El workflow diferencial ejecuta
+captura nativa con `--check-dir` y los tests de corpus, historias y rutas; el
+inventario Python se contrasta con este manifiesto sin ejecutarlo como un DSL. Los globales finales siguen
 siendo los declarados por el repositorio, sin sustituirlos por una suite focal.
 
 Cada informe final liga commit/workset, SHA del wheel, hash de corpus, selección,
 Python, SDK, motor, fachada, dialecto/FCV, éxitos/errores/skips, referencias de
 captura, historial competitivo y limpieza. La evidencia de 4.9.1 y PyMongo 4.19
 permanece histórica; no se reescribe para aparentar el cierre de este plan.
+
+## 9. Disposición de la suposición R02
+
+La captura de las tres versiones mostró que un reemplazo idéntico que omite
+`_id` devuelve `modified_count=1`. Se corrige la expectativa inicial de cero,
+conservando las entradas. El reemplazo con `_id` explícito mantiene el no-op.
+No se altera el golden para conservar la conducta candidata.

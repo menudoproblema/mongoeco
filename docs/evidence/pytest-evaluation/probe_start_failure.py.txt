@@ -1,0 +1,29 @@
+import asyncio, json
+from mongoeco.wire import AsyncMongoEcoProxyServer
+from mongoeco.engines.memory import MemoryEngine
+class CountedEngine(MemoryEngine):
+    connected=0
+    disconnected=0
+    async def connect(self):
+        await super().connect()
+        self.connected+=1
+    async def disconnect(self):
+        await super().disconnect()
+        self.disconnected+=1
+async def main():
+    occupied=await asyncio.start_server(lambda r,w:w.close(),'127.0.0.1',0)
+    engine=CountedEngine()
+    proxy=AsyncMongoEcoProxyServer(engine=engine,port=occupied.sockets[0].getsockname()[1])
+    try:
+        await proxy.start()
+    except OSError:
+        result={'engine_connect_calls':engine.connected,'engine_disconnect_calls_after_failed_start':engine.disconnected}
+    else:
+        raise AssertionError('occupied port did not fail')
+    finally:
+        await proxy.close()
+        occupied.close()
+        await occupied.wait_closed()
+    print(json.dumps(result))
+    open('/tmp/mongoeco-pytest-evaluation/probe-start-failure.json','w').write(json.dumps(result,indent=2)+'\n')
+asyncio.run(main())

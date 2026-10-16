@@ -5,7 +5,11 @@ Esta lista prepara una release sin obligar a publicar nada.
 ## 1. Alcance y narrativa publica
 
 - revisar [README.md](../README.md) para que el
-  alcance embebido/local y sus limites sean explicitos;
+  caso principal de pruebas de aplicaciones, la persistencia local y sus
+  límites sean explícitos; comprobar instalación desde PyPI y primer ejemplo;
+- reconciliar las notas «upcoming release» y «próxima entrega» de las guías con
+  la versión que se va a publicar, conservando la distinción entre un candidato
+  probado y una distribución ya disponible;
 - preparar o revisar la nota de release y la guía de migración de la versión
   objetivo (para 4.9.0, [release-4.9.0.md](release-4.9.0.md) y
   [mongodb9-pymongo418.md](mongodb9-pymongo418.md)) para
@@ -38,6 +42,10 @@ Esta lista prepara una release sin obligar a publicar nada.
   - `python scripts/smoke_installed_wheel.py`
   - `python scripts/smoke_installed_wheel.py --sdist`
 - comprobar `pyproject.toml`:
+  - descripción orientada al uso y `project.urls` para documentación,
+    repositorio, incidencias y changelog;
+  - README incluido en la metadata con enlaces absolutos hacia los archivos
+    del repositorio, para evitar resolver `docs/...` bajo PyPI;
   - clasificaciones de Python soportado;
   - dependencia core de `usearch`;
   - extras opcionales vigentes;
@@ -74,9 +82,29 @@ Esta lista prepara una release sin obligar a publicar nada.
 
 ## 3. Validacion funcional
 
-- ejecutar `pytest -q` en Python 3.13 y 3.14 contra el wheel candidato;
+- ejecutar `pytest -q` en Python 3.13, 3.14 y 3.15 contra el wheel candidato;
+- comprobar que las versiones oficiales de Python coinciden con los
+  clasificadores, la matriz obligatoria de CI y la
+  [política de soporte](python-support.md); Python 3.13 se mantiene hasta
+  octubre de 2028, incluido ese mes;
 - ejecutar `python -m unittest discover -s tests -p 'test*.py'`;
 - ejecutar `pytest --cov=mongoeco --cov-report=term -q`;
+- ejecutar el corpus K01–K20 del [kit pytest](pytest.md) contra el wheel,
+  con ambos motores, clientes nativos sync/async y workers 2/4; verificar
+  también las celdas pytest 8.4/9 y PyMongo 4.9.2/4.19.0 en los tres Python;
+- comprobar el diagnóstico de configuración en el resumen normal, con `-q` y
+  una sola vez con xdist; los perfiles inválidos deben conservar los resultados
+  originales y la generación del informe no debe abrir recursos;
+- contrastar las [escrituras no confirmadas](unacknowledged-writes.md) con MongoDB
+  real en sync/async y Memory/SQLite: errores, efectos parciales, contadores y
+  reutilización del mismo socket, incluidos los controles raw de `moreToCome`; verificar también el
+  [preflight de lotes y write concern](write-command-preflight.md), sus errores
+  de forma antes de efectos y los deltas de dialecto;
+- ejecutar `python scripts/smoke_installed_wheel.py --pytest-kit` para
+  comprobar la resolución limpia del nuevo extra;
+- ejecutar el canario consumidor anónimo contra ese mismo wheel sin cambiar
+  aserciones ni lógica, y revisar que fuentes, logs y distribuciones no
+  incorporan identidades de consumidores;
 - ejecutar los property tests con los perfiles `ci` y `deep`, conservando el
   ejemplo reducido si Hypothesis encuentra una divergencia;
 - confirmar que `[tool.coverage.report]` aplica `precision = 2` y
@@ -89,6 +117,14 @@ Esta lista prepara una release sin obligar a publicar nada.
 - ejecutar `python scripts/run_pymongo_profile_matrix.py --versions 4.9.2
   4.11.3 4.13.2 4.17.0 4.18.2 4.19.0 --summary-output
   tests/fixtures/pymongo_profile_matrix.json` y revisar los deltas publicados.
+- verificar conversiones BSON numéricas equivalentes de `_id` por replacement
+  y pipeline, incluidos contadores, no-op posterior, error 66 clásico y parcialidad
+  de update_many/bulk; comprobar rollback, snapshots, índices, Search, TTL,
+  publicación y reapertura de archivos SQLite anteriores. Ver [evidencia](id-bson-conversion.md).
+- verificar el corpus de filtros `q` obligatorios y unicidad numérica de `_id`
+  en helpers/raw/wire, con códigos, contadores y efectos parciales; abrir copias
+  de la fixture SQLite previa al arreglo y de la fixture 4.5, conservando claves
+  físicas, esquema, índices y outbox. Ver [criterios y evidencia](write-query-and-numeric-identity.md).
 - ejecutar las suites de paridad real MongoDB 7.0, 8.0 y 9.0 cuando haya servicios
   disponibles; para valores temporales, comprobar invariantes y no timestamps
   exactos. Ningun caso puede salir de `REAL_CAPTURE_PENDING_CASES` sin golden

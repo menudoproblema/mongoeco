@@ -1,0 +1,4324 @@
+{
+  "target": "8.0",
+  "build_info": {
+    "version": "8.0.32",
+    "gitVersion": "f9eb55a7cc900f33a722a5b32a0fdbf54385c749",
+    "modules": [],
+    "allocator": "system",
+    "javascriptEngine": "mozjs",
+    "sysInfo": "deprecated",
+    "versionArray": [
+      8,
+      0,
+      32,
+      0
+    ],
+    "openssl": {
+      "running": "Apple Secure Transport"
+    },
+    "buildEnvironment": {
+      "distmod": "",
+      "distarch": "arm64",
+      "cc": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+      "ccflags": "-U_FORTIFY_SOURCE -DBOOST_NO_CXX98_FUNCTION_BASE --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DASIO_HAS_STD_INVOKE_RESULT -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wimplicit-fallthrough",
+      "cxx": "/opt/homebrew/Cellar/llvm@19/19.1.7/bin/clang++: Homebrew clang version 19.1.7\nTarget: arm64-apple-darwin23.6.0\nThread model: posix\nInstalledDir: /opt/homebrew/Cellar/llvm@19/19.1.7/bin\nConfiguration file: /opt/homebrew/etc/clang/arm64-apple-darwin23.cfg\n",
+      "cxxflags": "-U_FORTIFY_SOURCE -DBOOST_NO_CXX98_FUNCTION_BASE --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -O2 -Wno-unused-function -Wno-defaulted-function-deleted -Wno-unknown-pragmas -Wno-builtin-macro-redefined -Wno-unused-local-typedefs -Wno-unused-lambda-capture -Wno-deprecated-declarations -Wno-unused-const-variable -Wno-deprecated-this-capture -Wno-undefined-var-template -Wno-unused-private-field -Wno-potentially-evaluated-expression -DASIO_HAS_STD_INVOKE_RESULT -Wunguarded-availability -Wno-enum-constexpr-conversion -fsized-deallocation -std=c++20 -Isrc -I$(GENDIR)/src -I$(GENDIR)/src/mongo/db/modules/enterprise/src -Isrc/mongo/db/modules/enterprise/src -Isrc/third_party/valgrind/include -Wimplicit-fallthrough",
+      "linkflags": "-lc++ -no-canonical-prefixes -fobjc-link-runtime --sysroot=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -lresolv -framework CoreFoundation -framework Security",
+      "target_arch": "arm64",
+      "target_os": "macOS",
+      "cppdefines": "NDEBUG BOOST_ENABLE_ASSERT_DEBUG_HANDLER BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF BOOST_LOG_NO_SHORTHAND_NAMES BOOST_LOG_USE_NATIVE_SYSLOG BOOST_LOG_WITHOUT_THREAD_ATTR BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS BOOST_SYSTEM_NO_DEPRECATED BOOST_THREAD_USES_DATETIME BOOST_THREAD_VERSION=5 ABSL_FORCE_ALIGNED_ACCESS PCRE2_STATIC SAFEINT_USE_INTRINSICS=0"
+    },
+    "bits": 64,
+    "debug": false,
+    "maxBsonObjectSize": 16777216,
+    "macOS": {
+      "osProductVersion": "15.6",
+      "osRelease": "24.6.0",
+      "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041"
+    },
+    "storageEngines": [
+      "devnull",
+      "wiredTiger"
+    ],
+    "ok": 1.0
+  },
+  "fcv": {
+    "version": "8.0"
+  },
+  "sdk": "4.19.0",
+  "catalog_sha256": "3ca48a0262c96d2267a294cf9b5a0127677823967caeb81355632cd0ca469425",
+  "observer_sha256": "86bde288d81da382a0227da99ebf7fa75a8d8a8839f9ca98cc9af9f71e756baa",
+  "legacy_fixture_sha256": "27bf2bfc3a0e1207928068b0d8993163ea7fd6e0dcb3213fe553ac4f17ffdfbd",
+  "histories": [
+    {
+      "repetition": 0,
+      "id": "Q01",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501310997208,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501311052458,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501311494000,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                [
+                  "wins",
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501311943791,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 1,
+      "id": "Q01",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501349515666,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501349589541,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501349939750,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                [
+                  "wins",
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501350031875,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "id": "Q01",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501387984208,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501388075833,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501388767833,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                [
+                  "wins",
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501388855833,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "id": "Q01",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501426478500,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501426535958,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501426909625,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                [
+                  "wins",
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501427008250,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "id": "Q01",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501457280208,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501457335791,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501457743583,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                [
+                  "wins",
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501457826625,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "id": "Q01",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501494892958,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501494948750,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501495371541,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                [
+                  "wins",
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501495475125,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "id": "Q01",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501531803208,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501531931250,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501532327291,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                [
+                  "wins",
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501532425250,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "id": "Q01",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501567771708,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501567867208,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501568234541,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                [
+                  "wins",
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501568320708,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "id": "Q01",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501615674916,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501615730208,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501616127541,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                [
+                  "wins",
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501616230625,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "id": "Q01",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501654304583,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501654349166,
+          "method": "find_one_and_update",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501654708916,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ],
+                [
+                  "wins",
+                  {
+                    "$numberInt": "1"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501654804666,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 0,
+      "id": "Q02",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501711500250,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501711548125,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501711911375,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501711990166,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 1,
+      "id": "Q02",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501754032208,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501754108083,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501754487125,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501754562791,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "id": "Q02",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501790949625,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501791014208,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501791359458,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501791439125,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "id": "Q02",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501836296125,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501836400916,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501836858791,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501837029375,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "id": "Q02",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501874169166,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501874283166,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501874669458,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501874752166,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "id": "Q02",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501908903958,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501908952166,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501909295500,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501909410625,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "id": "Q02",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501946068458,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501946136500,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501946518208,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501946599291,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "id": "Q02",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046501984108958,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046501984161291,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046501984528458,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046501984609166,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "id": "Q02",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502033681208,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502033729666,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502034097916,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502034164000,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "id": "Q02",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502076049875,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502076127250,
+          "method": "update_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "$inc": {
+                "revision": 1,
+                "wins": 1
+              }
+            }
+          ],
+          "kwargs": {
+            "hint": "_id_"
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502076485083,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502076571583,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2,
+          "wins": 1
+        }
+      ]
+    },
+    {
+      "repetition": 0,
+      "id": "Q03",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502119689166,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502119746125,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502120089500,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502120203291,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 1,
+      "id": "Q03",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502162952916,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502163006666,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502163394416,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502163477916,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "id": "Q03",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502201118166,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502201178541,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502201601916,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502201676041,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "id": "Q03",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502238976791,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502239071958,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502239496916,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502239578541,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "id": "Q03",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502273835041,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502273890250,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502274283625,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502274400041,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "id": "Q03",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502315316750,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502315375416,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502315710666,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502315799583,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "id": "Q03",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502341771458,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502341841500,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502342249666,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502342337416,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "id": "Q03",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502373621875,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502373693625,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502374070708,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502374161916,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "id": "Q03",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502412660916,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502412734791,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502413163791,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502413249791,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "id": "Q03",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502454892875,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502454943250,
+          "method": "find_one_and_replace",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {
+            "return_document": true
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502455336541,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "revision",
+                  {
+                    "$numberInt": "2"
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502455412416,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 0,
+      "id": "Q04",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502492059708,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502492132791,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502492509833,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502492585291,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 1,
+      "id": "Q04",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502528792708,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502528850958,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502529177166,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502529251416,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "id": "Q04",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502575028458,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502575072208,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502575391291,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502575465375,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "id": "Q04",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502612460791,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502612536416,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502612901791,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502613008125,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "id": "Q04",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502659643875,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502659686375,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502660006583,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502660077708,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "id": "Q04",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502702779833,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502702831166,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502703155708,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502703220666,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "id": "Q04",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502770174083,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502770304833,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502770629083,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502770711583,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "id": "Q04",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502838170458,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502838222916,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502838550041,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502838624500,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "id": "Q04",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502886338291,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502886406208,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502886749958,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502886830625,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "id": "Q04",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046502952671958,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046502952732750,
+          "method": "replace_one",
+          "args": [
+            {
+              "_id": "a",
+              "revision": 1
+            },
+            {
+              "_id": "a",
+              "revision": 2
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046502953064583,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 1,
+            "modified_count": 1,
+            "upserted_id": null
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046502953137041,
+          "result": {
+            "acknowledged": true,
+            "matched_count": 0,
+            "modified_count": 0,
+            "upserted_id": null
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "revision": 2
+        }
+      ]
+    },
+    {
+      "repetition": 0,
+      "id": "Q05",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503043270291,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "a",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503043325125,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "b",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503043613666,
+          "result": {
+            "acknowledged": true,
+            "inserted_id": "b"
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503043711125,
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "b",
+          "email": "same"
+        }
+      ]
+    },
+    {
+      "repetition": 1,
+      "id": "Q05",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503121633875,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "a",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503121693833,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "b",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503122004833,
+          "result": {
+            "acknowledged": true,
+            "inserted_id": "a"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503122120875,
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "email": "same"
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "id": "Q05",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503187916541,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "a",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503187965083,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "b",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503188277833,
+          "result": {
+            "acknowledged": true,
+            "inserted_id": "a"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503188429250,
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "email": "same"
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "id": "Q05",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503261858791,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "a",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503261919833,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "b",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503262204541,
+          "result": {
+            "acknowledged": true,
+            "inserted_id": "a"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503262330291,
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "email": "same"
+        }
+      ]
+    },
+    {
+      "repetition": 4,
+      "id": "Q05",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503334294166,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "a",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503334531625,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "b",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503334842541,
+          "result": {
+            "acknowledged": true,
+            "inserted_id": "a"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503334951625,
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "email": "same"
+        }
+      ]
+    },
+    {
+      "repetition": 5,
+      "id": "Q05",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503399635583,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "a",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503399691083,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "b",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503399980208,
+          "result": {
+            "acknowledged": true,
+            "inserted_id": "b"
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503400099166,
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "b",
+          "email": "same"
+        }
+      ]
+    },
+    {
+      "repetition": 6,
+      "id": "Q05",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503465085708,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "a",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503465148958,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "b",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503465473958,
+          "result": {
+            "acknowledged": true,
+            "inserted_id": "a"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503465579541,
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "email": "same"
+        }
+      ]
+    },
+    {
+      "repetition": 7,
+      "id": "Q05",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503531724291,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "a",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503531805125,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "b",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503532234541,
+          "result": {
+            "acknowledged": true,
+            "inserted_id": "b"
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503532459958,
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "b",
+          "email": "same"
+        }
+      ]
+    },
+    {
+      "repetition": 8,
+      "id": "Q05",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503601537458,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "a",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503601630708,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "b",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503602110625,
+          "result": {
+            "acknowledged": true,
+            "inserted_id": "b"
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503602344208,
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "b",
+          "email": "same"
+        }
+      ]
+    },
+    {
+      "repetition": 9,
+      "id": "Q05",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503670267166,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "a",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503670346125,
+          "method": "insert_one",
+          "args": [
+            {
+              "_id": "b",
+              "email": "same"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503670640875,
+          "result": {
+            "acknowledged": true,
+            "inserted_id": "a"
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503670784875,
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "documents": [
+        {
+          "_id": "a",
+          "email": "same"
+        }
+      ]
+    },
+    {
+      "repetition": 0,
+      "id": "Q06",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503720980541,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503721043791,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503721365041,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503721437416,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": []
+    },
+    {
+      "repetition": 1,
+      "id": "Q06",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503766992875,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503767074416,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503767395125,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503767474166,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": []
+    },
+    {
+      "repetition": 2,
+      "id": "Q06",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503807067083,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503807139791,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503807517166,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503807580291,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": []
+    },
+    {
+      "repetition": 3,
+      "id": "Q06",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503851288833,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503851363083,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503851704500,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503851789625,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": []
+    },
+    {
+      "repetition": 4,
+      "id": "Q06",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503901328250,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503901389166,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503901840416,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503901919291,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": []
+    },
+    {
+      "repetition": 5,
+      "id": "Q06",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503943955958,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503944085000,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503944447666,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503944503791,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": []
+    },
+    {
+      "repetition": 6,
+      "id": "Q06",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046503998159416,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046503998278875,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046503998608916,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046503998694625,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": []
+    },
+    {
+      "repetition": 7,
+      "id": "Q06",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046504057497375,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046504057553250,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046504057838375,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046504057905541,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": []
+    },
+    {
+      "repetition": 8,
+      "id": "Q06",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046504119707125,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046504119760500,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046504120051250,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046504120109625,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": []
+    },
+    {
+      "repetition": 9,
+      "id": "Q06",
+      "events": [
+        {
+          "actor": 0,
+          "event": "invocation",
+          "time_ns": 2046504181958166,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 1,
+          "event": "invocation",
+          "time_ns": 2046504182014708,
+          "method": "find_one_and_delete",
+          "args": [
+            {
+              "_id": "a"
+            }
+          ],
+          "kwargs": {}
+        },
+        {
+          "actor": 0,
+          "event": "response",
+          "time_ns": 2046504182305916,
+          "result": {
+            "document": {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "actor": 1,
+          "event": "response",
+          "time_ns": 2046504182365625,
+          "result": {
+            "document": null
+          }
+        }
+      ],
+      "documents": []
+    }
+  ]
+}

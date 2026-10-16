@@ -1,0 +1,16 @@
+{
+  "prior_workset_manifest": "docs/evidence/unacknowledged-writes/workset-sources.json",
+  "prior_workset_sha256": "75e11bb072cd1316d465cd7ba7c8007ff1e11f4063046ffc69f0310466fb39ae",
+  "source_paths_compared": 179,
+  "changed_source_paths": [
+    "CHANGELOG.md",
+    "docs/unacknowledged-writes.md",
+    "src/mongoeco/api/_async/_database_admin_write_commands.py",
+    "tests/differential/unacknowledged_cases.py",
+    "tests/fixtures/unacknowledged_mongodb_7_0.json",
+    "tests/fixtures/unacknowledged_mongodb_8_0.json",
+    "tests/fixtures/unacknowledged_mongodb_9_0.json",
+    "tests/support_unacknowledged.py"
+  ],
+  "all_other_pending_sources_preserved": true
+}

@@ -1,0 +1,59 @@
+import asyncio, socket, threading
+import pytest
+import pytest_asyncio
+from pymongo import MongoClient, AsyncMongoClient
+
+@pytest.fixture
+def sync_client(server):
+    with MongoClient(server.address.uri,serverSelectionTimeoutMS=2000) as client:
+        yield client
+
+@pytest.fixture
+async def anyio_client(server):
+    async with AsyncMongoClient(server.address.uri,serverSelectionTimeoutMS=2000) as client:
+        yield client
+
+@pytest_asyncio.fixture(loop_scope='function')
+async def asyncio_client(server):
+    async with AsyncMongoClient(server.address.uri,serverSelectionTimeoutMS=2000) as client:
+        yield client
+
+
+def test_sync(sync_client):
+    assert type(sync_client) is MongoClient
+    assert sync_client.probe.items.count_documents({})==0
+    sync_client.probe.items.insert_one({'_id':'repeat'})
+    assert sync_client.probe.items.find_one({'_id':'repeat'})=={'_id':'repeat'}
+
+@pytest.mark.anyio
+async def test_anyio(anyio_client):
+    assert type(anyio_client) is AsyncMongoClient
+    assert await anyio_client.probe.items.count_documents({})==0
+    await anyio_client.probe.items.insert_one({'_id':'repeat'})
+    assert await anyio_client.probe.items.find_one({'_id':'repeat'})=={'_id':'repeat'}
+
+@pytest.mark.asyncio
+async def test_asyncio(asyncio_client):
+    assert type(asyncio_client) is AsyncMongoClient
+    assert await asyncio_client.probe.items.count_documents({})==0
+    await asyncio_client.probe.items.insert_one({'_id':'repeat'})
+    assert await asyncio_client.probe.items.find_one({'_id':'repeat'})=={'_id':'repeat'}
+
+
+def test_close_after_failure(tmp_path):
+    from probe_thread import Server
+    before={t.ident for t in threading.enumerate()}
+    with pytest.raises(RuntimeError,match='injected'):
+        with Server('sqlite',tmp_path/'failure.sqlite') as server:
+            peer=socket.create_connection((server.address.host,server.address.port),timeout=2)
+            raise RuntimeError('injected')
+    try:
+        assert peer.recv(1)==b''
+    except ConnectionResetError:
+        pass  # A peer closed before accept can be reset by the OS.
+    peer.close()
+    with socket.socket() as probe:
+        assert probe.connect_ex((server.address.host,server.address.port))!=0
+    assert not server.thread.is_alive()
+    assert {t.ident for t in threading.enumerate()}==before
+    (tmp_path/'failure.sqlite').unlink()

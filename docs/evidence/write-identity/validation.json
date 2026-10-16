@@ -1,0 +1,261 @@
+{
+  "schema": "mongoeco-write-identity-validation/v1",
+  "status": "implementation_complete_release_decision_pending",
+  "date": "2026-10-15",
+  "candidate": {
+    "git_head": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "uncommitted_workset": true,
+    "workset_sha256": "49661c9b9c7f30165e5377dce4c4d4b356cf0c0b93ae174e6d646b0df04fdd6e",
+    "workset_manifest": "workset-sources.json",
+    "runtime_sha256": "91439ab028b03696356d23037a761f467bb85926359551462ebaf00dba5982fe",
+    "runtime_manifest": "runtime-sources.json",
+    "wheel_path": "/tmp/mongoeco-write-identity/dist/mongoeco-4.9.1-py3-none-any.whl",
+    "wheel_sha256": "6b91102576c280a6ab2821458b0caed8bfe298f189593d7e5987d21debdd568f",
+    "wheel_runtime_files_compared": 275,
+    "package_version": "4.9.1",
+    "distribution_disposition": "unpublished workset build; not the published 4.9.1; next release number not selected"
+  },
+  "baseline": {
+    "wheel_sha256": "7a703985c5f2a5e83e2101ba6948065617b0d70b40a009392e4e12d3533c6c2c",
+    "observations": 492,
+    "differences_from_native": 330,
+    "record": "baseline-observations.json",
+    "catalog_sha256": "e32ca84f484888ac705cc25b59db16bb19fa56ece94b0e1ee0e42b51eb102277"
+  },
+  "acceptance": {
+    "additional_scenarios": 82,
+    "native_scenario_references": 246,
+    "native_requests_including_recovery": 492,
+    "direct_scenarios": 1968,
+    "wire_scenarios": 984,
+    "wire_cells": 12,
+    "profiles": [
+      "4.9",
+      "4.19"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ],
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "compared": [
+      "BSON state",
+      "caller mutation",
+      "result fields",
+      "error family",
+      "code",
+      "native codeName",
+      "bulk item indices and partial counts",
+      "post-error recovery"
+    ],
+    "invalid_id_event_regressions": 18,
+    "single_write_engine_covered": true,
+    "native_codes": [
+      53,
+      54,
+      66,
+      121,
+      11000
+    ],
+    "bulk_envelope_code": 65,
+    "unexpected_selected_matrix_skips": 0
+  },
+  "native_matrix": [
+    {
+      "target": "7.0",
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "sdk": "4.19.0",
+      "cases": 82,
+      "requests": 164,
+      "fixture": "tests/fixtures/write_identity_mongodb_7_0.json",
+      "sha256": "49011e396e1ea2ae55ef8eaeb56e7bc15ae6a191f04c104b64ad1a5a69642787",
+      "native_capture_imports_candidate": false,
+      "check_dir_exit_code": 0
+    },
+    {
+      "target": "8.0",
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "sdk": "4.19.0",
+      "cases": 82,
+      "requests": 164,
+      "fixture": "tests/fixtures/write_identity_mongodb_8_0.json",
+      "sha256": "a8e4b6253b579a8bb981ac5148794b2b160f3b31b2b350da095bcf4b96da9612",
+      "native_capture_imports_candidate": false,
+      "check_dir_exit_code": 0
+    },
+    {
+      "target": "9.0",
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "sdk": "4.19.0",
+      "cases": 82,
+      "requests": 164,
+      "fixture": "tests/fixtures/write_identity_mongodb_9_0.json",
+      "sha256": "53e16809bce0233ed3050b13d4ec3bbd54ad1d5e630563b11b6e745d151772fa",
+      "native_capture_imports_candidate": false,
+      "check_dir_exit_code": 0
+    }
+  ],
+  "coverage": {
+    "covered_lines": 42967,
+    "num_statements": 43384,
+    "percent_covered": 99.03881615342061,
+    "percent_covered_display": "99.04",
+    "missing_lines": 417,
+    "excluded_lines": 894,
+    "percent_statements_covered": 99.03881615342061,
+    "percent_statements_covered_display": "99.04"
+  },
+  "gates": [
+    {
+      "gate": "pytest-python-313",
+      "command": "python -m pytest -q --tb=short",
+      "passed": 10974,
+      "expected_skips": 31,
+      "subtests_passed": 10699,
+      "exit_code": 0,
+      "log": "pytest313.log"
+    },
+    {
+      "gate": "pytest-python-314",
+      "command": "python -m pytest -q --tb=short --cov=mongoeco --cov-report=term --cov-report=json",
+      "passed": 10974,
+      "expected_skips": 31,
+      "subtests_passed": 10699,
+      "exit_code": 0,
+      "log": "pytest314.log"
+    },
+    {
+      "gate": "unittest",
+      "command": "python -m unittest discover -s tests -p 'test*.py'",
+      "tests": 3613,
+      "expected_skips": 3,
+      "exit_code": 0,
+      "log": "unittest.log"
+    }
+  ],
+  "contract_gates": [
+    {
+      "command": [
+        "scripts/check_public_typing.py"
+      ],
+      "exit_code": 0,
+      "log": "contract-0.log"
+    },
+    {
+      "command": [
+        "scripts/update_public_api_manifest.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "contract-1.log"
+    },
+    {
+      "command": [
+        "scripts/smoke_external_engine.py"
+      ],
+      "exit_code": 0,
+      "log": "contract-2.log"
+    },
+    {
+      "command": [
+        "scripts/update_compat_snapshots.py"
+      ],
+      "exit_code": 0,
+      "log": "contract-3.log"
+    },
+    {
+      "command": [
+        "-m",
+        "pytest",
+        "-q",
+        "tests/property",
+        "--hypothesis-profile=deep"
+      ],
+      "exit_code": 0,
+      "log": "contract-4.log"
+    },
+    {
+      "command": [
+        "-m",
+        "mongoeco.conformance",
+        "mongoeco.engines:MemoryEngine",
+        "--profile",
+        "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+        "--require-success",
+        "--format",
+        "json",
+        "--output",
+        "/tmp/mongoeco-write-identity/conformance-MemoryEngine.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "-m",
+        "mongoeco.conformance",
+        "mongoeco.engines:SQLiteEngine",
+        "--profile",
+        "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+        "--require-success",
+        "--format",
+        "json",
+        "--output",
+        "/tmp/mongoeco-write-identity/conformance-SQLiteEngine.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "consumer": {
+    "flows": 16,
+    "native_payload_replays": 48,
+    "semantic_correctors_invoked": 0,
+    "permanent_consumer_sources_modified": false,
+    "record": "consumer-canary.json"
+  },
+  "previous_evidence": {
+    "reference": "../write-parity/validation.json",
+    "retained_as_history": true,
+    "prior_170_case_native_fixtures_unchanged": true,
+    "prior_170_case_and_raw_goldens_recaptured_checked": true,
+    "prior_sdk_matrix_reused": true,
+    "sdk_matrix_reason": "SDK adapter signatures, profile detection and DNS handling unchanged by this slice; final public typing and manifest gates rerun.",
+    "benchmark_results_reused_as_history_only": true,
+    "benchmark_reason": "No new SQLite pushdown or planner rule; no new performance claim."
+  },
+  "review": {
+    "type": "self_review",
+    "diff_reviewed": true,
+    "documentation_aligned": true,
+    "remaining_findings_in_agreed_scope": [],
+    "prior_authorized_uncommitted_work_preserved": true,
+    "unrelated_user_changes_observed": false,
+    "late_finding_closed": "A replacement array _id must be validated by the selected-document/upsert engine path before a conflicting filter _id can mask it with code 66; covered with literal and $eq filters."
+  },
+  "lint": {
+    "base": "v4.9.1",
+    "result": "passed",
+    "format_result": "passed"
+  },
+  "limits": [
+    "Finite identity/schema corpus; no claim of exhaustive BSON or distributed transaction parity.",
+    "Native servers ran locally on macOS; no hosted GitHub run claimed.",
+    "Publication, tagging, release numbering and consumer repository adoption are outside this request."
+  ],
+  "cleanup": {
+    "native_databases_verified_removed": true,
+    "consumer_databases_verified_removed": true,
+    "native_servers_stopped": true
+  }
+}

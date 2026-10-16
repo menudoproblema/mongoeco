@@ -1,0 +1,12 @@
+{
+  "status": "failed_attempt_not_accepted_as_green",
+  "python": "3.13",
+  "failed_subtest": "explain distinct, SQLite",
+  "observed_exception": "ExecutionTimeout in enforce_deadline from sqlite explain_find_semantics",
+  "test_max_time_ms": 50,
+  "outer_validation_jobs_concurrent": true,
+  "causal_scope": "Trace is in unchanged explain/read/deadline modules; the modified classic write-reply function is absent from the failing path. Scheduling contention is an inference, not a measured CPU trace.",
+  "follow_up": "Run the complete Python3.13 suite alone after all other validation jobs finish. Preserve the same wheel, corpus, assertions, deadline, SDK and pytest versions.",
+  "original_log": "global-concurrent-313.txt",
+  "original_result": "global-concurrent-313.json"
+}

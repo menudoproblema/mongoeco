@@ -1,0 +1,1712 @@
+[
+  {
+    "target": "7.0",
+    "engine": "native",
+    "observations": [
+      {
+        "type": "float",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "replace",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDouble": "1.0"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "pipeline",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDouble": "1.0"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "replace",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberLong": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "pipeline",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberLong": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "replace",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDecimal": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "pipeline",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDecimal": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "engine": "MemoryEngine",
+    "observations": [
+      {
+        "type": "float",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "target": "7.0",
+    "engine": "SQLiteEngine",
+    "observations": [
+      {
+        "type": "float",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "engine": "native",
+    "observations": [
+      {
+        "type": "float",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "replace",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDouble": "1.0"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "pipeline",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDouble": "1.0"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "replace",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberLong": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "pipeline",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberLong": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "replace",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDecimal": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "pipeline",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDecimal": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "engine": "MemoryEngine",
+    "observations": [
+      {
+        "type": "float",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "target": "8.0",
+    "engine": "SQLiteEngine",
+    "observations": [
+      {
+        "type": "float",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "engine": "native",
+    "observations": [
+      {
+        "type": "float",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "replace",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDouble": "1.0"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "pipeline",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDouble": "1.0"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "replace",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberLong": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "pipeline",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberLong": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "replace",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDecimal": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "pipeline",
+        "result": {
+          "matched": {
+            "$numberInt": "1"
+          },
+          "modified": {
+            "$numberInt": "1"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberDecimal": "1"
+            },
+            "x": {
+              "$numberInt": "1"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "engine": "MemoryEngine",
+    "observations": [
+      {
+        "type": "float",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "target": "9.0",
+    "engine": "SQLiteEngine",
+    "observations": [
+      {
+        "type": "float",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "float",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Int64",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "set",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "replace",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Decimal128",
+        "mode": "pipeline",
+        "result": {
+          "family": "WriteError",
+          "code": {
+            "$numberInt": "66"
+          }
+        },
+        "documents": [
+          {
+            "_id": {
+              "$numberInt": "1"
+            },
+            "x": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "wheel_sha256": "414e6d2978fc8bf0dbbb33846fc6a9651c6d0df310e4c179359b6442703b1249",
+  "sdist_sha256": "24682203739dc28fd5055db619c55d3ab494702388e249a89ce9c3ed2bab97bd",
+  "runtime_files": 280,
+  "runtime_changes_since_initial_kit": [
+    "mongoeco/pytest_asyncio.py",
+    "mongoeco/wire/proxy.py"
+  ],
+  "runtime_matches_checkout_three_installs_and_sdist": true,
+  "all_sdist_source_inputs_compared": 288,
+  "reproducible_distributions": true,
+  "wheel_sdist_metadata_equal": true
+}

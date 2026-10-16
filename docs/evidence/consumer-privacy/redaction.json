@@ -1,0 +1,88 @@
+{
+  "schema": "mongoeco-consumer-provenance-redaction/v1",
+  "date": "2026-10-15",
+  "authority": "User requires anonymous consumer provenance in committable materials.",
+  "scope": "Pending workset only; published historical materials are unchanged.",
+  "native_observations_changed": false,
+  "consumer_assertions_or_results_changed": false,
+  "historical_workset_manifests": "Execution-time fingerprints are retained as historical identities; the source and documentation changes here require a new release candidate.",
+  "reports": [
+    {
+      "path": "docs/evidence/api-options/consumer-canary.json",
+      "original_sha256": "4a53a2efb3880c808e1a98e2d7bc3f8599d71acf44c1613cf6bb96913cccaab7",
+      "sanitized_sha256": "f21fa17f8a41e7ba1f3cbee208f35f4d2d3237bee3e58f9edb6c85636ec3cb27",
+      "changed_fields": [
+        "testkit_import",
+        "runs[].storage_type -> storage_role",
+        "provenance_redacted"
+      ]
+    },
+    {
+      "path": "docs/evidence/id-bson-conversion/consumer-canary.json",
+      "original_sha256": "e944176f71801c561ef34985a132a2f9588c62db14c06d6b69225eff0dfd4728",
+      "sanitized_sha256": "b3a930124e3fab5ee5de00f4f62d6d2a1f7cfe48d69b8a3255961f7d88c5d7f8",
+      "changed_fields": [
+        "testkit_import",
+        "runs[].storage_type -> storage_role",
+        "provenance_redacted"
+      ]
+    },
+    {
+      "path": "docs/evidence/null-regex-identities/consumer-canary.json",
+      "original_sha256": "b9f6a193c505add6b2b1c16f1c0b1dffadf3fb3fc5b6ede4d005a2e8223b7a33",
+      "sanitized_sha256": "ba6f5e503a38be55953667a1fe755b35ac8d122f8e5e2f544e7fdfff635ab9b7",
+      "changed_fields": [
+        "testkit_import",
+        "runs[].storage_type -> storage_role",
+        "provenance_redacted"
+      ]
+    },
+    {
+      "path": "docs/evidence/query-numeric-identity/consumer-canary.json",
+      "original_sha256": "8de2f9036136a4e6e6c5fe8bed28197ce2e4f9d684a10f351bf96ec700139e18",
+      "sanitized_sha256": "db54fac1379a5dd833fbd3682deeb98fa5244eaff08831460b060a4caa8da423",
+      "changed_fields": [
+        "testkit_import",
+        "runs[].storage_type -> storage_role",
+        "provenance_redacted"
+      ]
+    },
+    {
+      "path": "docs/evidence/write-identity/consumer-canary.json",
+      "original_sha256": "b5281f147dfaae39e9447eda3b59fbd46498e2e3f90b9bba480f8caee73e53da",
+      "sanitized_sha256": "a55702990fb2dd2f35734d2052e9bb8846e3f58ec0968499418adb972dad5be7",
+      "changed_fields": [
+        "testkit_import",
+        "runs[].storage_type -> storage_role",
+        "provenance_redacted"
+      ]
+    },
+    {
+      "path": "docs/evidence/write-operations/consumer-canary.json",
+      "original_sha256": "bedfbf0593ab7050ea96761a3a38828a0f8acc2f3a1175ddc61bbe4573f68678",
+      "sanitized_sha256": "9bec1c39784b541b81ef16f1a20e104bf7c4bca49284584288a5bf7bb7ba0b1a",
+      "changed_fields": [
+        "testkit_import",
+        "runs[].storage_type -> storage_role",
+        "provenance_redacted"
+      ]
+    },
+    {
+      "path": "docs/evidence/write-parity/consumer-canary.json",
+      "original_sha256": "1379c76232307d2dd4349cacbc68bee0aa3a721398f774a27d1d6edd07456a93",
+      "sanitized_sha256": "ac1488b1db2e9107b7a71958ca15a98595fb7f8a5cf260679611dde3ad2110e7",
+      "changed_fields": [
+        "testkit_import",
+        "runs[].storage_type -> storage_role",
+        "provenance_redacted"
+      ]
+    }
+  ],
+  "verification": {
+    "reports_checked": 7,
+    "consumer_flows_preserved": 112,
+    "native_replays_preserved": 336,
+    "observation_payloads_exactly_unchanged": true,
+    "historical_source_manifests_retained": true
+  }
+}

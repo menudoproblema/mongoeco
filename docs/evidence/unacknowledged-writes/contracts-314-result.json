@@ -1,0 +1,69 @@
+[
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "scripts/check_public_typing.py"
+    ],
+    "exit_code": 0,
+    "log": "contracts-314-0.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "scripts/smoke_external_engine.py"
+    ],
+    "exit_code": 0,
+    "log": "contracts-314-1.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "scripts/update_public_api_manifest.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "contracts-314-2.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "scripts/update_compat_snapshots.py",
+      "--output-dir",
+      "/tmp/mongoeco-unack/compat-314"
+    ],
+    "exit_code": 0,
+    "log": "contracts-314-3.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "scripts/check_lint_ratchet.py",
+      "--base-ref",
+      "v4.9.1"
+    ],
+    "exit_code": 0,
+    "log": "contracts-314-4.txt"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "-m",
+      "mypy",
+      "--strict",
+      "--follow-imports=silent",
+      "--ignore-missing-imports",
+      "-m",
+      "mongoeco.pytest_plugin",
+      "-m",
+      "mongoeco.pytest_asyncio",
+      "-m",
+      "mongoeco.pytest_anyio",
+      "-m",
+      "mongoeco._pytest_runtime",
+      "-m",
+      "mongoeco.wire._lifecycle"
+    ],
+    "exit_code": 0,
+    "log": "contracts-314-5.txt"
+  }
+]

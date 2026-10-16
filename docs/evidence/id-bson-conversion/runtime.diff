@@ -1,0 +1,451 @@
+--- previous/mongoeco/core/identity.py
++++ src/mongoeco/core/identity.py
+@@ -3,7 +3,8 @@
+ from re import Pattern
+ from typing import Any
+ 
+-from mongoeco.core.bson_scalars import is_bson_numeric
++from mongoeco.core.bson_scalars import bson_numeric_alias, is_bson_numeric
++from mongoeco.core.codec import DocumentCodec
+ from mongoeco.errors import WriteError
+ from mongoeco.types import Regex
+ 
+@@ -42,6 +43,23 @@
+     if isinstance(value, (list, tuple)):
+         return any(id_contains_numeric_value(item) for item in value)
+     return is_bson_numeric(value)
++
++
++def _numeric_id_types(value: Any) -> Any:
++    if isinstance(value, dict):
++        return tuple((key, _numeric_id_types(item)) for key, item in value.items())
++    if isinstance(value, list):
++        return tuple(_numeric_id_types(item) for item in value)
++    return bson_numeric_alias(value)
++
++
++def document_id_bson_type_changed(
++    original: dict[str, Any], updated: dict[str, Any]
++) -> bool:
++    """Observe numeric width/type changes independently of BSON value equality."""
++    return _numeric_id_types(DocumentCodec.to_internal(original.get("_id"))) != (
++        _numeric_id_types(DocumentCodec.to_internal(updated.get("_id")))
++    )
+ 
+ 
+ def is_valid_root_document_id(value: Any) -> bool:
+@@ -186,9 +204,10 @@
+ ) -> None:
+     if "_id" in original_doc:
+         original_id = original_doc["_id"]
+-        if "_id" not in updated_doc or not dialect.values_equal(
+-            updated_doc["_id"],
+-            original_id,
++        if (
++            "_id" not in updated_doc
++            or document_id_bson_type_changed(original_doc, updated_doc)
++            or not dialect.values_equal(updated_doc["_id"], original_id)
+         ):
+             raise WriteError(
+                 "Performing an update on the path '_id' would modify the immutable field '_id'",
+--- previous/mongoeco/core/operators.py
++++ src/mongoeco/core/operators.py
+@@ -14,12 +14,14 @@
+     apply_pipeline,
+     compile_pipeline,
+ )
++from mongoeco.core.aggregation.evaluation_environment import aggregation_environment
+ from mongoeco.core.bson_scalars import is_bson_numeric, unwrap_bson_numeric
+ from mongoeco.core.collation import CollationSpec, normalize_collation
+ from mongoeco.core.expression_context import ensure_expression_context
+ from mongoeco.core.filtering import QueryEngine
+ from mongoeco.core.identity import (
+     assert_classic_update_preserves_id,
++    document_id_bson_type_changed,
+     assert_valid_root_document_id,
+     preserve_and_validate_pipeline_id,
+ )
+@@ -163,7 +165,8 @@
+         *,
+         variables: Mapping[str, Any] | None = None,
+     ) -> bool:
+-        variables = ensure_expression_context(variables)
++        variables = aggregation_environment(ensure_expression_context(variables))
++        variables.preserve_numeric_conversion_types = True
+         original = deepcopy(doc)
+         working = deepcopy(doc)
+         if self.compiled_pipeline is not None:
+@@ -184,7 +187,10 @@
+                 "Update pipeline must produce a single document",
+             )
+         replacement = result[0]
+-        modified = not self.context.dialect.values_equal(original, replacement)
++        modified = (
++            document_id_bson_type_changed(original, replacement)
++            or not self.context.dialect.values_equal(original, replacement)
++        )
+         preserve_and_validate_pipeline_id(
+             original,
+             replacement,
+--- previous/mongoeco/core/aggregation/evaluation_environment.py
++++ src/mongoeco/core/aggregation/evaluation_environment.py
+@@ -21,15 +21,17 @@
+         root: Document | None = None,
+         current: Document | None = None,
+         collation=None,
++        preserve_numeric_conversion_types: bool = False,
+     ) -> None:
+         super().__init__(bindings or {})
+         self.root = root
+         self.current = current
+         self.collation = collation
++        self.preserve_numeric_conversion_types = preserve_numeric_conversion_types
+         if root is not None:
+-            self['ROOT'] = root
++            self["ROOT"] = root
+         if current is not None:
+-            self['CURRENT'] = current
++            self["CURRENT"] = current
+ 
+     @property
+     def is_bound(self) -> bool:
+@@ -41,6 +43,7 @@
+             root=self.root,
+             current=self.current,
+             collation=self.collation,
++            preserve_numeric_conversion_types=self.preserve_numeric_conversion_types,
+         )
+ 
+     def with_current(self, document: Document) -> EvaluationEnvironment:
+@@ -49,6 +52,7 @@
+             root=self.root if self.root is not None else document,
+             current=document,
+             collation=self.collation,
++            preserve_numeric_conversion_types=self.preserve_numeric_conversion_types,
+         )
+ 
+ 
+@@ -57,14 +61,10 @@
+     variables: Mapping[str, Any] | None,
+ ) -> EvaluationEnvironment:
+     if isinstance(variables, EvaluationEnvironment):
+-        return (
+-            variables
+-            if variables.is_bound
+-            else variables.with_current(document)
+-        )
++        return variables if variables.is_bound else variables.with_current(document)
+     context = ensure_expression_context(variables)
+     return EvaluationEnvironment(
+-        {**context, 'ROOT': document, 'CURRENT': document},
++        {**context, "ROOT": document, "CURRENT": document},
+         root=document,
+         current=document,
+     )
+--- previous/mongoeco/core/aggregation/scalar_expressions.py
++++ src/mongoeco/core/aggregation/scalar_expressions.py
+@@ -131,12 +131,14 @@
+             if target not in aliases:
+                 raise OperationFailure("$convert target type is not supported")
+             if extended:
+-                return _convert_extended_scalar(
++                converted = _convert_extended_scalar(
+                     value, aliases[target], base=base, stringify_value=stringify_value
+                 )
+-            return _convert_aggregation_scalar(
+-                operator, value, aliases[target], stringify_value=stringify_value
+-            )
++            else:
++                converted = _convert_aggregation_scalar(
++                    operator, value, aliases[target], stringify_value=stringify_value
++                )
++            return _typed_conversion_result(converted, aliases[target], variables)
+         except Exception:
+             if "onError" in spec:
+                 return evaluate_expression(document, spec["onError"], variables)
+@@ -237,9 +239,10 @@
+             "$toObjectId": "objectId",
+             "$toUUID": "uuid",
+         }[operator]
+-        return _convert_aggregation_scalar(
++        converted = _convert_aggregation_scalar(
+             operator, value, target, stringify_value=stringify_value
+         )
++        return _typed_conversion_result(converted, target, variables)
+ 
+     if operator == "$isArray":
+         args = require_expression_args(
+@@ -509,6 +512,21 @@
+     )
+ 
+ 
++def _typed_conversion_result(value: Any, target: str, variables: object) -> Any:
++    if value is None or not getattr(
++        variables, "preserve_numeric_conversion_types", False
++    ):
++        return value
++    constructors = {
++        "int": int,
++        "long": BsonInt64,
++        "double": float,
++        "decimal": Decimal128,
++    }
++    constructor = constructors.get(target)
++    return value if constructor is None else constructor(unwrap_bson_numeric(value))
++
++
+ def _convert_aggregation_scalar(
+     operator: str,
+     value: Any,
+--- previous/mongoeco/engines/_memory_collection.py
++++ src/mongoeco/engines/_memory_collection.py
+@@ -453,6 +453,36 @@
+         self._tail_chunk = chunk_id
+         self._locations = self._locations.insert(key, (chunk_id, 0))
+         self._values = self._values.insert(key, value)
++
++    def replace_key(self, key: K, replacement: K) -> None:
++        """Keep the row's ordinal and snapshot roots when its BSON ID type changes."""
++        if key == replacement:
++            return
++        if replacement in self:
++            raise KeyError(replacement)
++        value = self[key]
++        chunk_id, offset = self._locations[key]
++        chunk = self._chunks[chunk_id]
++        self._chunks = self._chunks.insert(
++            chunk_id,
++            _OrderChunk(
++                chunk.previous,
++                chunk.following,
++                (
++                    *chunk.items[:offset],
++                    (replacement, value),
++                    *chunk.items[offset + 1 :],
++                ),
++                chunk.live_count,
++            ),
++        )
++        self._values = self._values.remove(key).insert(replacement, value)
++        self._ordinals = self._ordinals.remove(key).insert(
++            replacement, self._ordinals[key]
++        )
++        self._locations = self._locations.remove(key).insert(
++            replacement, (chunk_id, offset)
++        )
+ 
+     def __delitem__(self, key: K) -> None:
+         chunk_id, offset = self._locations[key]
+--- previous/mongoeco/engines/_sqlite_modify_ops.py
++++ src/mongoeco/engines/_sqlite_modify_ops.py
+@@ -9,6 +9,8 @@
+     assert_document_kept_storage_key,
+     assert_document_matches_storage_key,
+     assert_valid_upsert_document_id,
++    document_id_bson_type_changed,
++    preserve_and_validate_pipeline_id,
+     materialize_replacement_document,
+ )
+ from mongoeco.core.sorting import sort_documents
+@@ -226,6 +228,7 @@
+     storage_key_for_id: Callable[[DocumentId], str],
+     new_object_id: Callable[[], DocumentId],
+     invalidate_collection_features_cache: Callable[[str, str], None],
++    delete_index_entries_for_storage_key: Callable[[sqlite3.Connection, str, str, str], None],
+     replacement_document: Document | None = None,
+ ) -> MutationOutcome:
+     semantics = compile_update_semantics(
+@@ -311,8 +314,13 @@
+             if replacement_document is not None
+             else deepcopy(original_document)
+         )
++        if replacement_document is not None:
++            preserve_and_validate_pipeline_id(
++                original_document, document, dialect=semantics.dialect
++            )
+         modified = (
+             ("_id" not in replacement_document and "_id" in original_document)
++            or document_id_bson_type_changed(original_document, document)
+             or not semantics.dialect.values_equal(document, original_document)
+             if replacement_document is not None
+             else semantics.compiled_update_plan.apply(
+@@ -327,11 +335,16 @@
+                 before_document=deepcopy(original_document),
+                 after_document=deepcopy(document),
+             )
+-        assert_document_kept_storage_key(
+-            document,
+-            storage_key,
+-            storage_key_for_id=storage_key_for_id,
+-        )
++        updated_storage_key = storage_key_for_id(document.get("_id"))
++        if (
++            "_id" not in original_document
++            or (replacement_document is None and isinstance(
++                semantics.compiled_update_plan, compiled_update_plan_type
++            ))
++        ):
++            assert_document_kept_storage_key(
++                document, storage_key, storage_key_for_id=storage_key_for_id
++            )
+         if not bypass_document_validation:
+             enforce_collection_document_validation(
+                 document,
+@@ -356,7 +369,9 @@
+             if replacement_document is not None:
+                 raise NotImplementedError("replacement updates require Python update fallback")
+             if not isinstance(semantics.compiled_update_plan, compiled_update_plan_type):
+-                raise NotImplementedError("Aggregation pipeline updates require Python update fallback")
++                raise NotImplementedError(
++                    "Aggregation pipeline updates require Python update fallback"
++                )
+             update_sql, update_params = translate_compiled_update_plan(
+                 semantics.compiled_update_plan,
+                 original_document,
+@@ -423,16 +438,23 @@
+                 conn.execute(
+                     """
+                     UPDATE documents
+-                    SET document = ?
++                    SET document = ?, storage_key = ?
+                     WHERE db_name = ? AND coll_name = ? AND storage_key = ?
+                     """,
+-                    (serialize_document(document), db_name, coll_name, storage_key),
+-                )
++                    (
++                        serialize_document(document), updated_storage_key,
++                        db_name, coll_name, storage_key,
++                    ),
++                )
++                if updated_storage_key != storage_key:
++                    delete_index_entries_for_storage_key(
++                        conn, db_name, coll_name, storage_key
++                    )
+                 rebuild_multikey_entries_for_document(
+                     conn,
+                     db_name,
+                     coll_name,
+-                    storage_key,
++                    updated_storage_key,
+                     document,
+                     indexes,
+                 )
+@@ -440,7 +462,7 @@
+                     conn,
+                     db_name,
+                     coll_name,
+-                    storage_key,
++                    updated_storage_key,
+                     document,
+                     indexes,
+                 )
+@@ -448,7 +470,7 @@
+                     conn,
+                     db_name,
+                     coll_name,
+-                    storage_key,
++                    updated_storage_key,
+                     document,
+                     search_indexes,
+                 )
+--- previous/mongoeco/engines/memory.py
++++ src/mongoeco/engines/memory.py
+@@ -33,6 +33,7 @@
+     ensure_expression_context,
+ )
+ from mongoeco.core.filtering import QueryEngine
++from mongoeco.core.operators import CompiledUpdatePlan
+ from mongoeco.core.identity import (
+     assert_document_kept_storage_key,
+     assert_document_matches_storage_key,
+@@ -40,6 +41,8 @@
+     assert_valid_upsert_document_id,
+     id_contains_numeric_value,
+     document_matches_root_id_lookup,
++    document_id_bson_type_changed,
++    preserve_and_validate_pipeline_id,
+     materialize_merge_insert_document,
+     materialize_merge_update_document,
+     materialize_replacement_document,
+@@ -3991,8 +3994,13 @@
+                     storage_key,
+                     storage_key_for_id=self._storage_key,
+                 )
++                if replacement_document is not None:
++                    preserve_and_validate_pipeline_id(
++                        original_document, document, dialect=semantics.dialect
++                    )
+                 modified = (
+                     ("_id" not in replacement_document and "_id" in original_document)
++                    or document_id_bson_type_changed(original_document, document)
+                     or not semantics.dialect.values_equal(
+                         document,
+                         original_document,
+@@ -4003,7 +4011,13 @@
+                         variables=semantics.variables,
+                     )
+                 )
+-                if modified:
++                updated_storage_key = self._storage_key(document.get("_id"))
++                if modified and (
++                    "_id" not in original_document
++                    or (replacement_document is None and isinstance(
++                        semantics.compiled_update_plan, CompiledUpdatePlan
++                    ))
++                ):
+                     assert_document_kept_storage_key(
+                         document,
+                         storage_key,
+@@ -4047,15 +4061,20 @@
+                         index_data_view=index_data_view,
+                         indexes_view=indexes_view,
+                     )
++                    if updated_storage_key != storage_key:
++                        if isinstance(coll, MemoryCollection):
++                            coll.replace_key(storage_key, updated_storage_key)
++                        else:
++                            self._delete_storage_document_locked(coll, storage_key)
+                     self._set_storage_document_locked(
+                         coll,
+-                        storage_key,
++                        updated_storage_key,
+                         self._encode_storage_document(document),
+                     )
+                     self._update_indexes_locked(
+                         db_name,
+                         coll_name,
+-                        storage_key,
++                        updated_storage_key,
+                         document,
+                         action="insert",
+                         index_data_view=index_data_view,
+--- previous/mongoeco/engines/sqlite.py
++++ src/mongoeco/engines/sqlite.py
+@@ -3978,6 +3978,19 @@
+             search_indexes=search_indexes,
+         )
+ 
++    def _delete_document_index_entries(
++        self, conn: sqlite3.Connection, db_name: str, coll_name: str, storage_key: str,
++    ) -> None:
++        self._delete_multikey_entries_for_storage_key(
++            conn, db_name, coll_name, storage_key
++        )
++        self._delete_scalar_entries_for_storage_key(
++            conn, db_name, coll_name, storage_key
++        )
++        self._delete_search_entries_for_storage_key(
++            conn, db_name, coll_name, storage_key
++        )
++
+     def _delete_multikey_entries_for_storage_key(
+         self,
+         conn: sqlite3.Connection,
+@@ -7511,6 +7524,7 @@
+                         storage_key_for_id=self._storage_key,
+                         new_object_id=ObjectId,
+                         invalidate_collection_features_cache=self._invalidate_collection_features_cache,
++                        delete_index_entries_for_storage_key=self._delete_document_index_entries,
+                         replacement_document=replacement_document,
+                     )
+                     enforce_deadline(deadline)

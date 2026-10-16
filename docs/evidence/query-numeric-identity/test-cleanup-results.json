@@ -1,0 +1,47 @@
+[
+  {
+    "python": "313",
+    "command": [
+      "/tmp/mongoeco-python315/py313/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/integration/api/test_numeric_identity_conservation.py",
+      "-W",
+      "error::ResourceWarning",
+      "--tb=short"
+    ],
+    "exit_code": 0,
+    "log": "test-cleanup-313.log"
+  },
+  {
+    "python": "314",
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/integration/api/test_numeric_identity_conservation.py",
+      "-W",
+      "error::ResourceWarning",
+      "--tb=short"
+    ],
+    "exit_code": 0,
+    "log": "test-cleanup-314.log"
+  },
+  {
+    "python": "315",
+    "command": [
+      "/tmp/mongoeco-python315/venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/integration/api/test_numeric_identity_conservation.py",
+      "-W",
+      "error::ResourceWarning",
+      "--tb=short"
+    ],
+    "exit_code": 0,
+    "log": "test-cleanup-315.log"
+  }
+]

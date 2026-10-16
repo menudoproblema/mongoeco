@@ -1,0 +1,82 @@
+{
+  "schema": "mongoeco-pytest-integration-evaluation/v1",
+  "date": "2026-10-15",
+  "status": "proposal_ready_for_review_not_implemented",
+  "proposal": "../../architecture/pytest-integration-proposal.md",
+  "artifact_tested": {
+    "wheel_sha256": "34b3dcd52d7728b284292dc5e66297b600ab7b4193b68e90a280bf63abefed32",
+    "disposition": "Previously validated unpublished workset, not a released pytest integration.",
+    "runtime_files_equal_to_checkout": 275
+  },
+  "environment": {
+    "python": "3.14.5",
+    "pymongo": "4.19.0",
+    "pytest": "9.1.1",
+    "pytest-asyncio": "1.4.0",
+    "anyio": "4.15.1",
+    "pytest-xdist": "3.8.0"
+  },
+  "prototype": {
+    "passed": 7,
+    "xdist_workers": 2,
+    "engines": [
+      "memory",
+      "sqlite"
+    ],
+    "clients": [
+      "native-sync",
+      "native-async"
+    ],
+    "async_runners": [
+      "pytest-asyncio-strict",
+      "anyio-asyncio"
+    ],
+    "sqlite_executor": "Owned single worker",
+    "scope": "Feasibility only; no installed fixture plugin or full lifecycle corpus yet.",
+    "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -p anyio.pytest_plugin -p pytest_asyncio.plugin -p xdist.plugin --asyncio-mode=strict test_probe.py -n 2 -q",
+    "receipt": "prototype-result.txt",
+    "intermediate_observation": "An initial TCP cleanup check required EOF only. A close-before-accept may produce reset; the final check accepts either transport-closed outcome. No production behavior was changed to pass the probe."
+  },
+  "observed_defects": {
+    "active_connection_close": "probe-close.json",
+    "failed_bind_engine_cleanup": "probe-start-failure.json"
+  },
+  "consumer_inspection": {
+    "identity": "anonymous-consumer",
+    "suite_execution_performed": false,
+    "native_client_substitution_proven": false,
+    "runner": "AnyIO asyncio",
+    "test_inventory": {
+      "async_business_tests": 31,
+      "sync_construction_tests": 7
+    },
+    "minimum_python_adoption_limit": "Consumer also supports interpreters older than Mongoeco minimum 3.13.",
+    "inputs_retained": "Private mapping outside checkout; no consumer identities, links or checkout paths in this record."
+  },
+  "verification": {
+    "existing_corpus_and_observer_regressions_passed": 8,
+    "launcher_help": true,
+    "canary_help": true,
+    "ruff_two_canary_files": true,
+    "diff_whitespace": true,
+    "privacy_report_observations_preserved": "../consumer-privacy/redaction.json"
+  },
+  "limits": [
+    "No fixture plugin, extra or public client contract implemented.",
+    "No consumer suite run against the proposal.",
+    "No claim of full CPython/pytest matrix or full lifecycle failure coverage.",
+    "Prior execution-time candidate hashes stay historical; packaging must be rebuilt before release.",
+    "No version selection, commit, tag or publication."
+  ],
+  "files_sha256": {
+    "test_probe.py.txt": "ae230ba2e51c299ce46ddad9563e3714504fdde91ccd31e434facb7108ab55b0",
+    "prototype-result.txt": "7c20b1d28d898306ecdc2c5bf07dd81095cf5372a12b285de6a630c1e05a90ac",
+    "probe_close_bounded.py.txt": "a42b0c17065db763e92890c9175ddad05fd67784d257db337de0aba8f2d1b60d",
+    "conftest.py.txt": "e508d8cdbdfb5360b667afedf6a34e0d5fec50442cd535ec3ca16386d466d5a1",
+    "source-basis.json": "97c5f53add0ca9b69bc76a6618f8718294e4930ea8c8a4539ef3ce5ad9c708d9",
+    "probe-close.json": "f35f01f9d3170499a98bd46a09e870a98cbe61dbaa7c259176676e6e0bd79227",
+    "probe_thread.py.txt": "39ed6e22ae267a3421cc5ba2c226c380ca03ec9d733e9ec3fbae1ca89f3020db",
+    "probe-start-failure.json": "88b493bd320d60ccabce266806deb7bec81094b329bfa91a777178e6ef129899",
+    "probe_start_failure.py.txt": "f7ac0199cc881bde51ef3316cf6f89aaedb619025ba4472caea98afa4287a42e"
+  }
+}

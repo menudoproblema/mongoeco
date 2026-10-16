@@ -90,6 +90,15 @@ MongoEco rechaza en la frontera del adaptador outcomes v2 aplicados que no
 incluyan las imagenes requeridas, conteos imposibles o secuencias de commit en
 operaciones no aplicadas.
 
+`UpdateResult.did_upsert` distingue la existencia de un upsert del valor de
+`upserted_id`, que puede ser null. El nuevo argumento es opcional y keyword-only:
+los constructores anteriores con ID no null siguen infiriendo `did_upsert=True`.
+Los engines que inserten un ID null deben proporcionar `did_upsert=True` y
+mantener `matched_count=0` en el outcome del SPI. La fachada individual adapta
+ese conteo a la representación de PyMongo; bulk, raw y publicación usan el
+indicador explícito. No cambia la versión del SPI ni los parámetros de sus
+operaciones.
+
 Los value objects de outcome toman una copia profunda de imagenes y payloads
 al construirse. Un engine puede reutilizar o mutar sus buffers internos despues
 de retornar sin alterar el resultado ya publicado; la garantia vive en los

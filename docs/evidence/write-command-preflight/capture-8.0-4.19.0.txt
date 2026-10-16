@@ -1,0 +1,1 @@
+MongoDB 8.0.32 / PyMongo 4.19.0: 172 cases per facade and 4 raw; native sync/async equal, physical connection reused and cleanup verified

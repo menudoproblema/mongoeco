@@ -1,0 +1,13 @@
+{
+  "wheel_sha256": "d75af90706c338fcca2ab05cc8fd0e11c46e921dd4e0d0419b5dd637e11711d4",
+  "sdist_sha256": "b05c09afefce099fa3b7adbfcd3fadee82579abdff4da7e03a3f82350ac0671f",
+  "runtime_files": 280,
+  "runtime_changes_since_documentation_candidate": [
+    "mongoeco/pytest_plugin.py"
+  ],
+  "runtime_matches_checkout_three_installs_and_sdist": true,
+  "all_sdist_source_inputs_compared": 288,
+  "reproducible_distributions": true,
+  "wheel_sdist_metadata_equal": true,
+  "comparison_baseline_wheel_sha256": "33d90993c482b8589d9335b9318768abf5a29bf5644238417f7d7cbec5f09bbd"
+}

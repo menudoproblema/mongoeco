@@ -1,0 +1,471 @@
+--- previous/mongoeco/api/_async/_database_admin_write_commands.py
++++ src/mongoeco/api/_async/_database_admin_write_commands.py
+@@ -29,18 +29,30 @@
+ 
+ 
+ _FAILED_TO_PARSE = 9
++_MISSING_REQUIRED_FIELD = 40414
+ 
+ 
+ def _command_shape_error(message: str, *, code: int = 14) -> None:
+     raise OperationFailure(message, code=code, details={
+-        "codeName": "FailedToParse" if code == _FAILED_TO_PARSE else "TypeMismatch",
++        "codeName": {
++            _FAILED_TO_PARSE: "FailedToParse",
++            _MISSING_REQUIRED_FIELD: "IDLFailedToParse",
++        }.get(code, "TypeMismatch"),
+     })
++
++
++def _validate_write_query(spec) -> None:
++    if spec.get("q") is None:
++        _command_shape_error("missing required field q", code=_MISSING_REQUIRED_FIELD)
++    if not isinstance(spec["q"], dict):
++        _command_shape_error("q must be a document")
+ 
+ 
+ def _validate_update_command_shapes(updates) -> None:
+     # Command parsing precedes execution of every item. An invalid final spec
+     # must not publish an earlier valid update, even for unordered commands.
+     for spec in updates:
++        _validate_write_query(spec)
+         if not isinstance(spec.get("u"), (dict, list)):
+             _command_shape_error("u must be a document or pipeline", code=9)
+         for field in ("multi", "upsert"):
+@@ -57,6 +69,7 @@
+ 
+ def _validate_delete_command_shapes(deletes) -> None:
+     for spec in deletes:
++        _validate_write_query(spec)
+         limit = spec.get("limit")
+         if isinstance(limit, bool) or limit not in (0, 1):
+             _command_shape_error("limit must be 0 or 1", code=9)
+--- previous/mongoeco/core/identity.py
++++ src/mongoeco/core/identity.py
+@@ -3,6 +3,7 @@
+ from re import Pattern
+ from typing import Any
+ 
++from mongoeco.core.bson_scalars import is_bson_numeric
+ from mongoeco.errors import WriteError
+ from mongoeco.types import Regex
+ 
+@@ -32,6 +33,15 @@
+         return (type(value), value)
+     except TypeError:
+         return ("repr", repr(value))
++
++
++def id_contains_numeric_value(value: Any) -> bool:
++    """Numeric IDs need logical equality in addition to physical type identity."""
++    if isinstance(value, dict):
++        return any(id_contains_numeric_value(item) for item in value.values())
++    if isinstance(value, (list, tuple)):
++        return any(id_contains_numeric_value(item) for item in value)
++    return is_bson_numeric(value)
+ 
+ 
+ def is_valid_root_document_id(value: Any) -> bool:
+--- previous/mongoeco/engines/_sqlite_plan_heuristics.py
++++ src/mongoeco/engines/_sqlite_plan_heuristics.py
+@@ -1,8 +1,12 @@
+ from __future__ import annotations
+ 
+-from collections.abc import Callable
++from typing import TYPE_CHECKING
+ 
+-from mongoeco.core.query_plan import QueryNode
++
++if TYPE_CHECKING:
++    from collections.abc import Callable
++
++    from mongoeco.core.query_plan import QueryNode
+ 
+ 
+ def plan_has_array_traversing_paths(
+@@ -98,7 +102,9 @@
+                 json_type(document, {path_literal}) = 'array'
+                 OR (
+                     json_type(document, {path_literal}) = 'object'
+-                    AND {type_expression_sql(field)} = ''
++                    AND {type_expression_sql(field)} IN (
++                        '', 'int64', 'decimal', 'decimal128', 'decimal128_public'
++                    )
+                 )
+               )
+             LIMIT 1
+--- previous/mongoeco/engines/_sqlite_read_ops.py
++++ src/mongoeco/engines/_sqlite_read_ops.py
+@@ -6,7 +6,10 @@
+ from typing import TYPE_CHECKING
+ 
+ from mongoeco.compat import MONGODB_DIALECT_70, MongoDialect
+-from mongoeco.core.identity import document_matches_root_id_lookup
++from mongoeco.core.identity import (
++    document_matches_root_id_lookup,
++    id_contains_numeric_value,
++)
+ from mongoeco.core.projections import apply_projection
+ from mongoeco.core.search import (
+     SearchQuery,
+@@ -18,6 +21,7 @@
+     vector_field_paths,
+ )
+ from mongoeco.errors import OperationFailure
++
+ 
+ if TYPE_CHECKING:
+     from mongoeco.engines.sqlite_planner import SQLiteReadExecutionPlan
+@@ -45,7 +49,26 @@
+         (db_name, coll_name, storage_key),
+     ).fetchone()
+     if row is None:
+-        return None
++        if not id_contains_numeric_value(doc_id):
++            return None
++        row = next(
++            (
++                (payload,)
++                for (payload,) in conn.execute(
++                    "SELECT document FROM documents "
++                    "WHERE db_name = ? AND coll_name = ?",
++                    (db_name, coll_name),
++                )
++                if document_matches_root_id_lookup(
++                    deserialize_document(payload),
++                    doc_id,
++                    dialect=effective_dialect,
++                )
++            ),
++            None,
++        )
++        if row is None:
++            return None
+     document = deserialize_document(row[0])
+     if not document_matches_root_id_lookup(
+         document,
+--- previous/mongoeco/engines/_sqlite_write_ops.py
++++ src/mongoeco/engines/_sqlite_write_ops.py
+@@ -1,12 +1,18 @@
+ from __future__ import annotations
+ 
+ import sqlite3
++
+ from typing import TYPE_CHECKING
+ 
+-from mongoeco.core.identity import assert_valid_root_document_id
++from mongoeco.core.bson_ordering import bson_equality_key
++from mongoeco.core.identity import (
++    assert_valid_root_document_id,
++    id_contains_numeric_value,
++)
++from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
++from mongoeco.engines.semantic_core import enforce_collection_document_validation
+ from mongoeco.errors import DuplicateKeyError
+-from mongoeco.engines.semantic_core import enforce_collection_document_validation
+-from mongoeco.engines._sqlite_write_scope import sqlite_write_scope
++
+ 
+ if TYPE_CHECKING:
+     from collections.abc import Callable
+@@ -148,7 +154,28 @@
+         return True
+ 
+ 
+-def insert_document_batch(  # noqa: PLR0913 - SQLite batch transaction boundary
++def _batch_id_equality_keys(
++    conn: sqlite3.Connection,
++    db_name: str,
++    coll_name: str,
++    documents: list[Document],
++    deserialize_document: Callable[[str], Document],
++) -> set[object] | None:
++    if not any(
++        id_contains_numeric_value(document.get("_id")) for document in documents
++    ):
++        return None
++    return {
++        bson_equality_key(document["_id"])
++        for (payload,) in conn.execute(
++            "SELECT document FROM documents WHERE db_name = ? AND coll_name = ?",
++            (db_name, coll_name),
++        )
++        if "_id" in (document := deserialize_document(payload))
++    }
++
++
++def insert_document_batch(  # noqa: PLR0913, PLR0915 - SQLite batch transaction boundary
+     conn: sqlite3.Connection,
+     *,
+     db_name: str,
+@@ -159,6 +186,7 @@
+     bypass_document_validation: bool,
+     dialect: MongoDialect,
+     snapshot_options: dict[str, object] | None,
++    deserialize_document: Callable[[str], Document],
+     purge_expired_documents: Callable[[sqlite3.Connection, str, str], None],
+     collection_options_or_empty: Callable[
+         [sqlite3.Connection, str, str], dict[str, object]
+@@ -252,6 +280,9 @@
+             ).fetchall()
+             existing_storage_keys.update(row[0] for row in rows)
+         seen_storage_keys: set[str] = set()
++        id_equality_keys = _batch_id_equality_keys(
++            conn, db_name, coll_name, documents, deserialize_document
++        )
+         for document, (storage_key, serialized_document, prepared_multikey_rows) in zip(
+             documents,
+             prepared_documents,
+@@ -263,10 +294,13 @@
+                 if (
+                     storage_key in seen_storage_keys
+                     or storage_key in existing_storage_keys
++                    or (
++                        id_equality_keys is not None
++                        and bson_equality_key(document.get("_id")) in id_equality_keys
++                    )
+                 ):
+                     results.append(False)
+                     break
+-                seen_storage_keys.add(storage_key)
+                 validate_document_against_unique_indexes(
+                     db_name,
+                     coll_name,
+@@ -286,6 +320,8 @@
+                 if cursor.rowcount == 0:
+                     results.append(False)
+                     break
++                if id_equality_keys is not None:
++                    id_equality_keys.add(bson_equality_key(document["_id"]))
+                 delete_multikey_entries_for_storage_key(
+                     conn, db_name, coll_name, storage_key
+                 )
+@@ -361,6 +397,7 @@
+                     search_indexes,
+                 )
+                 results.append(True)
++                seen_storage_keys.add(storage_key)
+             except (DuplicateKeyError, sqlite3.IntegrityError):
+                 results.append(False)
+                 break
+--- previous/mongoeco/engines/memory.py
++++ src/mongoeco/engines/memory.py
+@@ -38,6 +38,7 @@
+     assert_document_matches_storage_key,
+     assert_valid_root_document_id,
+     assert_valid_upsert_document_id,
++    id_contains_numeric_value,
+     document_matches_root_id_lookup,
+     materialize_merge_insert_document,
+     materialize_merge_update_document,
+@@ -2836,7 +2837,10 @@
+                 raise DuplicateKeyError(
+                     f"Duplicate key: _id={candidate['_id']}",
+                 )
+-            if scan_payload_id:
++            if scan_payload_id or (
++                candidate_id_storage_key != normalized_exclude
++                and id_contains_numeric_value(candidate["_id"])
++            ):
+                 for storage_key, data in coll.items():
+                     if (
+                         normalized_exclude is not None
+@@ -2846,8 +2850,8 @@
+                     existing = self._borrow_storage_document(data)
+                     if (
+                         "_id" in existing
+-                        and self._storage_key(existing["_id"])
+-                        == candidate_id_storage_key
++                        and bson_equality_key(existing["_id"])
++                        == bson_equality_key(candidate["_id"])
+                     ):
+                         raise DuplicateKeyError(
+                             f"Duplicate key: _id={candidate['_id']}",
+@@ -3176,6 +3180,17 @@
+ 
+                 results: list[bool] = []
+                 modified_any = False
++                id_equality_keys = (
++                    {
++                        bson_equality_key(self._borrow_storage_document(data)["_id"])
++                        for data in coll.values()
++                        if "_id" in self._borrow_storage_document(data)
++                    }
++                    if not overwrite and any(
++                        id_contains_numeric_value(document.get("_id"))
++                        for document in documents
++                    ) else None
++                )
+                 for document in documents:
+                     if "_id" in document:
+                         assert_valid_root_document_id(document["_id"])
+@@ -3201,6 +3216,13 @@
+                     if not overwrite and storage_key in coll:
+                         results.append(False)
+                         break
++                    numeric_id = (
++                        id_equality_keys is not None
++                        and id_contains_numeric_value(doc_id)
++                    )
++                    if numeric_id and bson_equality_key(doc_id) in id_equality_keys:
++                        results.append(False)
++                        break
+ 
+                     if not bypass_document_validation and not bulk_insert_prevalidated:
+                         enforce_collection_document_validation(
+@@ -3219,7 +3241,7 @@
+                             indexes_view=indexes_view,
+                             storage_view=storage,
+                             index_data_view=index_data_view,
+-                            check_id_storage=True,
++                            check_id_storage=not numeric_id,
+                             scan_payload_id=len(documents) == 1,
+                         )
+                     except DuplicateKeyError:
+@@ -3249,6 +3271,8 @@
+                         storage_key,
+                         self._encode_storage_document(document),
+                     )
++                    if id_equality_keys is not None and "_id" in document:
++                        id_equality_keys.add(bson_equality_key(doc_id))
+                     self._update_indexes_locked(
+                         db_name,
+                         coll_name,
+@@ -3553,12 +3577,18 @@
+                 ),
+             )
+             storage_key = self._storage_key(doc_id)
+-            data = (
+-                self._storage_view(context)
+-                .get(db_name, {})
+-                .get(coll_name, {})
+-                .get(storage_key)
+-            )
++            coll = self._storage_view(context).get(db_name, {}).get(coll_name, {})
++            data = coll.get(storage_key)
++            if data is None and id_contains_numeric_value(doc_id):
++                data = next(
++                    (
++                        candidate for candidate in coll.values()
++                        if document_matches_root_id_lookup(
++                            self._borrow_storage_document(candidate), doc_id,
++                            dialect=effective_dialect,
++                        )
++                    ), None,
++                )
+         if data is None:
+             return None
+         document = self._copy_document_containers(
+@@ -3606,6 +3636,16 @@
+                 now=self._ttl_now(),
+             )
+             storage_key = self._storage_key(doc_id)
++            if storage_key not in coll and id_contains_numeric_value(doc_id):
++                storage_key = next(
++                    (
++                        key for key, candidate in coll.items()
++                        if document_matches_root_id_lookup(
++                            self._borrow_storage_document(candidate), doc_id,
++                            dialect=MONGODB_DIALECT_70,
++                        )
++                    ), storage_key,
++                )
+             if storage_key in coll:
+                 document = self._borrow_storage_document(coll[storage_key])
+                 public_document = DocumentCodec.to_public(document)
+--- previous/mongoeco/engines/sqlite.py
++++ src/mongoeco/engines/sqlite.py
+@@ -59,6 +59,7 @@
+     assert_valid_root_document_id,
+     canonical_document_id,
+     document_matches_root_id_lookup,
++    id_contains_numeric_value,
+     materialize_merge_insert_document,
+     materialize_merge_update_document,
+ )
+@@ -3128,7 +3129,10 @@
+                     raise DuplicateKeyError(
+                         f"Duplicate key: _id={document['_id']}",
+                     )
+-            if scan_payload_id:
++            if scan_payload_id or (
++                document_id_storage_key != exclude_storage_key
++                and id_contains_numeric_value(document["_id"])
++            ):
+                 for storage_key, existing_document in self._load_documents(
+                     db_name,
+                     coll_name,
+@@ -3140,8 +3144,8 @@
+                         continue
+                     if (
+                         "_id" in existing_document
+-                        and self._storage_key(existing_document["_id"])
+-                        == document_id_storage_key
++                        and bson_equality_key(existing_document["_id"])
++                        == bson_equality_key(document["_id"])
+                     ):
+                         raise DuplicateKeyError(
+                             f"Duplicate key: _id={document['_id']}",
+@@ -5652,6 +5656,7 @@
+                         documents=documents,
+                         prepared_documents=prepared_documents,
+                         snapshot_indexes=snapshot_indexes,
++                        deserialize_document=self._deserialize_document,
+                         bypass_document_validation=bypass_document_validation,
+                         dialect=effective_dialect,
+                         snapshot_options=snapshot_options,
+@@ -5902,7 +5907,7 @@
+                     conn,
+                     db_name=db_name,
+                     coll_name=coll_name,
+-                    storage_key=self._storage_key(doc_id),
++                    storage_key=self._storage_key(document.get("_id")),
+                     begin_write=lambda current: self._begin_write(
+                         current,
+                         context,
+--- previous/mongoeco/engines/sqlite_query.py
++++ src/mongoeco/engines/sqlite_query.py
+@@ -5,6 +5,7 @@
+ from mongoeco.core.bson_ordering import SQLITE_SORT_BUCKET_WEIGHTS
+ from mongoeco.core.operators import CompiledUpdatePlan, UpdateEngine
+ from mongoeco.core.codec import DocumentCodec
++from mongoeco.core.identity import id_contains_numeric_value
+ from mongoeco.core.json_compat import json_dumps_compact
+ from mongoeco.core.sql_translation import BaseSQLTranslator
+ from mongoeco.core.query_plan import (
+@@ -616,12 +617,23 @@
+     )
+ 
+ 
++def _require_sql_identity_comparison(field: object, *values: object) -> None:
++    if (
++        isinstance(field, str)
++        and (field == "_id" or field.startswith("_id."))
++        and any(id_contains_numeric_value(value) for value in values)
++    ):
++        message = "Numeric identity comparisons require BSON equality"
++        raise NotImplementedError(message)
++
++
+ def _translate_equals_scalar_only(
+     field: str,
+     value: object,
+     *,
+     null_matches_undefined: bool = False,
+ ) -> SqlFragment:
++    _require_sql_identity_comparison(field, value)
+     if not _is_translatable_equality_value(value):
+         raise NotImplementedError(
+             'Unsupported equality value for SQL translation'
+@@ -1136,7 +1148,10 @@
+ def translate_query_plan(plan: QueryNode) -> SqlFragment:
+     if not is_concrete_query_node(plan):
+         raise TypeError(f'Unsupported query plan node: {type(plan)!r}')
+-    field = getattr(plan, 'field', None)
++    _require_sql_identity_comparison(
++        field := getattr(plan, 'field', None),
++        *(getattr(plan, name, None) for name in ('value', 'values', 'lower', 'upper')),
++    )
+     if isinstance(field, str) and _path_uses_dbref_special_segment(field):
+         raise NotImplementedError(
+             'DBRef special subfields require Python query fallback'

@@ -1,0 +1,31 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ ProxyLifecycleTests.test_cancelled_start_after_bind_closes_unpublished_listener _
+
+self = <tests.integration.wire.test_proxy_lifecycle.ProxyLifecycleTests testMethod=test_cancelled_start_after_bind_closes_unpublished_listener>
+
+    async def test_cancelled_start_after_bind_closes_unpublished_listener(self):
+        proxy = AsyncMongoEcoProxyServer(engine=MemoryEngine())
+        original = asyncio.Server._start_serving
+        servers = []
+    
+        def cancel_after_bind(server):
+            original(server)
+            servers.append(server)
+            asyncio.current_task().cancel()
+    
+        try:
+            # Cancel at asyncio's first yield after binding the real socket.
+            with (
+                patch.object(asyncio.Server, "_start_serving", cancel_after_bind),
+                self.assertRaises(asyncio.CancelledError),
+            ):
+                await proxy.start()
+            self.assertEqual(len(servers), 1)
+>           self.assertFalse(servers[0].sockets, "cancelled start leaked its listener")
+E           AssertionError: (<asyncio.TransportSocket fd=14, family=2, type=1, proto=6, laddr=('127.0.0.1', 63282)>,) is not false : cancelled start leaked its listener
+
+tests/integration/wire/test_proxy_lifecycle.py:35: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/wire/test_proxy_lifecycle.py::ProxyLifecycleTests::test_cancelled_start_after_bind_closes_unpublished_listener
+1 failed in 0.41s

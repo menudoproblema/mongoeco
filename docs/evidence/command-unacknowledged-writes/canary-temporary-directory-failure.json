@@ -1,0 +1,8 @@
+{
+  "status": "failed_attempt_not_accepted_as_green",
+  "python": "3.14",
+  "workers": 2,
+  "observation": "38 tests completed successfully, then pytest failed cleaning its shared numbered temporary directory with OSError 66. Stack traverses cleanup_numbered_dir, maybe_delete_a_numbered_dir and shutil.rmtree.",
+  "correction": "Isolate TMPDIR per validation cell; rerun the failed and unexecuted cells. No product, consumer source, assertions or tests changed.",
+  "private_original_preserved": true
+}

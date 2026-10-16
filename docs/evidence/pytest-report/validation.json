@@ -1,0 +1,345 @@
+{
+  "schema": "mongoeco-pytest-report/v1",
+  "date": "2026-10-16",
+  "status": "implemented_and_validated",
+  "contract_source": "Explicit user request to add configuration diagnostics and regressions; invalid configuration, sync/async, Memory/SQLite, parallelism and no resources opened to generate the report.",
+  "candidate": {
+    "wheel_sha256": "d75af90706c338fcca2ab05cc8fd0e11c46e921dd4e0d0419b5dd637e11711d4",
+    "sdist_sha256": "b05c09afefce099fa3b7adbfcd3fadee82579abdff4da7e03a3f82350ac0671f",
+    "runtime_files": 280,
+    "runtime_changes_since_documentation_candidate": [
+      "mongoeco/pytest_plugin.py"
+    ],
+    "runtime_matches_checkout_three_installs_and_sdist": true,
+    "all_sdist_source_inputs_compared": 288,
+    "reproducible_distributions": true,
+    "wheel_sdist_metadata_equal": true,
+    "comparison_baseline_wheel_sha256": "33d90993c482b8589d9335b9318768abf5a29bf5644238417f7d7cbec5f09bbd",
+    "git_head": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "uncommitted_workset": true,
+    "package_version": "4.9.1",
+    "disposition": "Unpublished candidate, distinguished by SHA256; no commit, tag or publication.",
+    "runtime_manifest": "runtime-sources.json",
+    "workset_manifest": "workset-sources.json",
+    "workset_sha256": "b75154445949f1f4450712915a5cc9cb89fe98059c53fdd2c3960f2eb60bdd10"
+  },
+  "report": {
+    "hook": "pytest_terminal_summary",
+    "once_on_xdist_controller": true,
+    "quiet_mode": true,
+    "fields": [
+      "Mongoeco version",
+      "Installed PyMongo distribution version",
+      "Selected backends",
+      "MongoDB dialect",
+      "Requested and resolved PyMongo profile",
+      "Loaded Mongoeco async adapter"
+    ],
+    "no_uri_or_client_options": true,
+    "invalid_profile_preserves_setup_error_and_unrelated_test_outcome": true,
+    "invalid_backend_and_dialect_preserve_usage_exit_4": true,
+    "resource_creation_calls_during_report": 0,
+    "guarded_boundaries": [
+      "socket",
+      "SQLite connection",
+      "temporary directory",
+      "thread start",
+      "async server",
+      "proxy runtime",
+      "both engine constructors",
+      "proxy constructor",
+      "sync and async native clients"
+    ]
+  },
+  "regressions": {
+    "new_cases": 37,
+    "source": "tests/integration/pytest_kit/test_reporting.py",
+    "valid_native_clients": 9,
+    "parallel_cases": 6,
+    "without_kit_fixtures_normal_and_quiet": 2,
+    "invalid_profile_and_simulated_missing_or_unsupported_sdk_metadata": 18,
+    "invalid_cli_choices": 2,
+    "before_change": "before-regression.json",
+    "before_failure_is_expected_not_a_green_gate": true,
+    "focal_log": "reporting-final.txt"
+  },
+  "gates": {
+    "313": {
+      "pytest_passed": 22441,
+      "expected_skips": 31,
+      "subtests_passed": 14450,
+      "pytest_record": "pytest-313.json",
+      "contracts": {
+        "status": "passed",
+        "record": "contracts-313-result.json"
+      },
+      "unittest": {
+        "status": "passed",
+        "record": "unittest-313-result.json"
+      },
+      "smoke-kit": {
+        "status": "passed",
+        "record": "smoke-kit-313-result.json"
+      },
+      "smoke-wheel": {
+        "status": "passed",
+        "record": "smoke-wheel-313-result.json"
+      },
+      "smoke-sdist": {
+        "status": "passed",
+        "record": "smoke-sdist-313-result.json"
+      }
+    },
+    "314": {
+      "pytest_passed": 22441,
+      "expected_skips": 31,
+      "subtests_passed": 14450,
+      "pytest_record": "pytest-314.json",
+      "contracts": {
+        "status": "passed",
+        "record": "contracts-314-result.json"
+      },
+      "unittest": {
+        "status": "passed",
+        "record": "unittest-314-result.json"
+      },
+      "smoke-kit": {
+        "status": "passed",
+        "record": "smoke-kit-314-result.json"
+      },
+      "smoke-wheel": {
+        "status": "passed",
+        "record": "smoke-wheel-314-result.json"
+      },
+      "smoke-sdist": {
+        "status": "passed",
+        "record": "smoke-sdist-314-result.json"
+      }
+    },
+    "315": {
+      "pytest_passed": 22441,
+      "expected_skips": 31,
+      "subtests_passed": 14450,
+      "pytest_record": "pytest-315.json",
+      "contracts": {
+        "status": "passed",
+        "record": "contracts-315-result.json"
+      },
+      "unittest": {
+        "status": "passed",
+        "record": "unittest-315-result.json"
+      },
+      "smoke-kit": {
+        "status": "passed",
+        "record": "smoke-kit-315-result.json"
+      },
+      "smoke-wheel": {
+        "status": "passed",
+        "record": "smoke-wheel-315-result.json"
+      },
+      "smoke-sdist": {
+        "status": "passed",
+        "record": "smoke-sdist-315-result.json"
+      }
+    }
+  },
+  "fixture_matrix": [
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-313-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-313-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-313-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-313-4.9.2-9.1.1.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-314-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-314-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-314-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-314-4.9.2-9.1.1.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-315-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-315-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-315-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 82,
+      "record": "matrix-315-4.9.2-9.1.1.json"
+    }
+  ],
+  "fixture_case_executions": 984,
+  "consumer_canary": {
+    "identity": "anonymous-consumer",
+    "runs": [
+      {
+        "record": "consumer-313-0.json",
+        "python": "3.13.15",
+        "workers": 0,
+        "cases": 76
+      },
+      {
+        "record": "consumer-313-2.json",
+        "python": "3.13.15",
+        "workers": 2,
+        "cases": 76
+      },
+      {
+        "record": "consumer-313-4.json",
+        "python": "3.13.15",
+        "workers": 4,
+        "cases": 76
+      },
+      {
+        "record": "consumer-314-0.json",
+        "python": "3.14.5",
+        "workers": 0,
+        "cases": 76
+      },
+      {
+        "record": "consumer-314-2.json",
+        "python": "3.14.5",
+        "workers": 2,
+        "cases": 76
+      },
+      {
+        "record": "consumer-314-4.json",
+        "python": "3.14.5",
+        "workers": 4,
+        "cases": 76
+      },
+      {
+        "record": "consumer-315-0.json",
+        "python": "3.15.0",
+        "workers": 0,
+        "cases": 76
+      },
+      {
+        "record": "consumer-315-2.json",
+        "python": "3.15.0",
+        "workers": 2,
+        "cases": 76
+      },
+      {
+        "record": "consumer-315-4.json",
+        "python": "3.15.0",
+        "workers": 4,
+        "cases": 76
+      }
+    ],
+    "case_executions": 684,
+    "business_source_and_assertions_unchanged": true
+  },
+  "coverage_python_314": {
+    "covered_lines": 43409,
+    "num_statements": 43827,
+    "percent_covered": 99.04625002852123,
+    "percent_covered_display": "99.05",
+    "missing_lines": 418,
+    "excluded_lines": 921,
+    "percent_statements_covered": 99.04625002852123,
+    "percent_statements_covered_display": "99.05"
+  },
+  "clean_installs": {
+    "with_extras": 9,
+    "without_extras": 1,
+    "minimal_record": "minimal-final-result.json"
+  },
+  "environment": "environment.json",
+  "reused_independent_gates": {
+    "source": "../pytest-review/validation.json",
+    "gates": [
+      "Engine conformance",
+      "Deep engine properties",
+      "Memory/SQLite search benchmarks",
+      "SDK-only signature probes"
+    ],
+    "reason": "All 280 runtime files compared with the documentation candidate: only pytest_plugin.py changes. The added report reads configuration and metadata; resource-construction fences pass. Engine/API, proxy, adapters, dependencies and SDK probe inputs remain identical. All complete suites, contracts, kit matrix, canary and clean installs are rerun."
+  },
+  "review": {
+    "final_diff_reviewed": true,
+    "documentation_aligned": true,
+    "prior_authorized_work_preserved": true,
+    "remaining_findings_in_scope": [],
+    "no_additional_dependency": true,
+    "privacy_audit": "privacy-audit.json"
+  },
+  "limits": [
+    "Local macOS arm64 validation; hosted CI not executed here.",
+    "No new live MongoDB capture: this change only reports pytest configuration; complete suites replay existing native references.",
+    "Package version remains provisional until the release decision."
+  ]
+}

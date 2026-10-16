@@ -1,0 +1,14 @@
+[
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/property",
+      "--hypothesis-profile=deep"
+    ],
+    "exit_code": 0,
+    "log": "deep-314.txt"
+  }
+]

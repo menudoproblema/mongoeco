@@ -1,0 +1,17 @@
+{
+  "tests/fixtures/write_parity_mongodb_7_0.json": "0a5a6a6d6305eaebca0cd41ca04f28bc9ab5b9eb9fe7b314891be22ad699a08e",
+  "tests/fixtures/write_identity_mongodb_7_0.json": "31d103ef763b40b25b4293d710e02bc941ea3ecc2008bf4060253d70db14ae2c",
+  "tests/fixtures/write_operations_mongodb_7_0.json": "d42d8ff2d48adf7f764d4cf33426c79c4bd1f4996c71c0ff8836591f29f28ee9",
+  "tests/fixtures/write_raw_mongodb_7_0.json": "be71a1e489c131bbe5736dc56388ac2e4ee2360681a6535bf599a75d9b74f741",
+  "tests/fixtures/api_options_mongodb_7_0.json": "d3201a42b462b5233af054dca04ced1050ab0946e8aebd007c14c7e86a972961",
+  "tests/fixtures/write_parity_mongodb_8_0.json": "66125e0ee130532f76d3e081f37d5b87ea4647045fde871ce2dd02d258659e3a",
+  "tests/fixtures/write_identity_mongodb_8_0.json": "80031a9ab7419e73f3c755e2a1815b9b85bfca3bca7961ec945170d012ca24b2",
+  "tests/fixtures/write_operations_mongodb_8_0.json": "15d872045b5c6329e0c311e39839577ff134eca8bd3cd207f9518ed8fe9a10fe",
+  "tests/fixtures/write_raw_mongodb_8_0.json": "5bcca1d7a78be5198dce662612cb955ef4675127614f57dd633b5323a185ea36",
+  "tests/fixtures/api_options_mongodb_8_0.json": "939a6e576143a95a06aff251b13550536b09b266532d7d4075d77da30657284d",
+  "tests/fixtures/write_parity_mongodb_9_0.json": "72b71c39661bb0f1e4949a420e7377cf6c9391eca4a16619f8b038953244a57e",
+  "tests/fixtures/write_identity_mongodb_9_0.json": "305e45ec98c32922bcea3db8b9658bef7c02defd7a4cfb6baf7638bdea41fcc1",
+  "tests/fixtures/write_operations_mongodb_9_0.json": "0f94c6f0ca9c0d89744e6360b42aadadc1f7da10fce61976a94e011e623db812",
+  "tests/fixtures/write_raw_mongodb_9_0.json": "0c4353f9826b66356cf1537f972ee0afd70b4df0e875cc53de96625778743a61",
+  "tests/fixtures/api_options_mongodb_9_0.json": "ee7f54105f164e4be893aa0537244ac34edd725808a76f328d4b788f9e32b289"
+}

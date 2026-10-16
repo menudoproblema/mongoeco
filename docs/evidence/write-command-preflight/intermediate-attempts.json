@@ -1,0 +1,54 @@
+{
+  "green_gate": false,
+  "original_source_attempt_logs": [
+    "focal-source-all.txt",
+    "focal-direct.txt",
+    "focal-final-source.txt"
+  ],
+  "intermediate_wheel": {
+    "wheel_sha256": "1dfd3636a4cdae3d17cee9db4c9499c672677f6f5170814457b969a5588f2d3a",
+    "sdist_sha256": "e19f2dad205803c610d5a25050e94df56f49b5d1cef1887bbe25862b9666023f",
+    "runtime_files": 281,
+    "runtime_changes_since_command_reply_candidate": [
+      "mongoeco/api/_async/_database_admin_write_commands.py",
+      "mongoeco/api/_async/_write_command_validation.py"
+    ],
+    "runtime_matches_checkout_three_installs_and_sdist": true,
+    "all_sdist_source_inputs_compared": 289,
+    "reproducible_distributions": true,
+    "wheel_sdist_metadata_equal": true
+  },
+  "attempts": [
+    {
+      "stage": "initial native-dialect regressions",
+      "failures": 12,
+      "cause": "MongoDB9 accepts writeConcern:null; corrected dialect normalization."
+    },
+    {
+      "stage": "first direct-command regressions",
+      "failures": 48,
+      "cause": "The 12 null-concern divergences plus 36 native Decimal128 direct-command failures; corrected with public DocumentCodec conversion."
+    },
+    {
+      "stage": "final combined source attempt before Decimal128 correction",
+      "failures": 36,
+      "cause": "Direct Decimal128 values were not normalized; corrected before final artifact."
+    },
+    {
+      "stage": "intermediate artifact lint ratchet",
+      "failures_per_python": 3,
+      "python_versions": [
+        "3.13",
+        "3.14",
+        "3.15"
+      ],
+      "cause": "One positional boolean and two long lines introduced in the command module. Fixed, rebuilt reproducibly and all candidate gates rerun.",
+      "logs": [
+        "intermediate-ratchet-313.txt",
+        "intermediate-ratchet-314.txt",
+        "intermediate-ratchet-315.txt"
+      ]
+    }
+  ],
+  "intermediate_full_suites": "The intermediate artifact passed all three complete suites before its lint rejection. Those runs do not accredit the rebuilt final candidate; final complete suites and all closing gates are fresh."
+}

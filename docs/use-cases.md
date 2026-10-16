@@ -1,45 +1,38 @@
-# Use Cases
+# Choose a Mongoeco workflow
 
-`mongoeco` is easiest to adopt when you start from a concrete local-first
-workflow rather than from the full compatibility matrix.
+## 1. Test a Python application that uses MongoDB
 
-Use one of these three entry points:
+Start here to replace database preparation in a test fixture while preserving
+application operations and assertions. The pytest kit offers real PyMongo
+sync/async clients and an isolated local URI, with Memory/SQLite selection.
 
-## 1. Embedded App
+- [Application testing](use-cases/test-runtime.md).
+- [Coming from mongomock](migrating-from-mongomock.md).
+- [Pytest configuration](pytest.md).
+- [Native write compatibility evidence](write-parity-validation.md).
 
-Choose this when you want persistence on disk, a PyMongo-shaped API and a
-single-process local runtime.
+The kit is available from Mongoeco 4.10.0 with the optional `pytest` extra.
+Direct-client examples are [memory_quickstart.py](../examples/memory_quickstart.py)
+and [test_runtime_local.py](../examples/test_runtime_local.py).
 
-* Guide: [embedded-app.md](use-cases/embedded-app.md)
-* Example: [sqlite_embedded_app.py](../examples/sqlite_embedded_app.py)
+## 2. Persist data in an embedded application
 
-## 2. Test Runtime
+Choose SQLite when a desktop app, CLI or local service needs data on disk
+without a separate database service, using the documented PyMongo-shaped API.
 
-Choose this when you want a local contract runtime that is more faithful than a
-lightweight mock and can run against both memory and SQLite.
+- [Embedded application guide](use-cases/embedded-app.md).
+- [sqlite_embedded_app.py](../examples/sqlite_embedded_app.py).
 
-* Guide: [test-runtime.md](use-cases/test-runtime.md)
-* Examples:
-  * [memory_quickstart.py](../examples/memory_quickstart.py)
-  * [test_runtime_local.py](../examples/test_runtime_local.py)
+## 3. Search and retrieve locally
 
-## 3. Local Search And Retrieval
+Choose the local `$search` and `$vectorSearch` subsets for embedded retrieval,
+with explicit index mappings and planning diagnostics.
 
-Choose this when you want local `$search` and `$vectorSearch` with explicit
-diagnostics, not a hidden Atlas-like promise.
+- [Search and retrieval guide](use-cases/local-search-and-retrieval.md).
+- [search_and_vector_local.py](../examples/search_and_vector_local.py).
+- [vector_search_diagnostics.py](../examples/vector_search_diagnostics.py).
 
-* Guide: [local-search-and-retrieval.md](use-cases/local-search-and-retrieval.md)
-* Examples:
-  * [search_and_vector_local.py](../examples/search_and_vector_local.py)
-  * [vector_search_diagnostics.py](../examples/vector_search_diagnostics.py)
-
-## What `mongoeco` is not
-
-`mongoeco` is not the right fit when you need:
-
-* a production MongoDB cluster replacement;
-* Atlas Search parity or remote service semantics;
-* distributed topology behavior;
-* server-grade operational guarantees outside the documented subset.
-
-For the exact compatibility envelope, see [COMPATIBILITY.md](../COMPATIBILITY.md).
+Keep MongoDB tests for deployment-dependent behavior and operations outside
+the verified subset. The [compatibility guide](../COMPATIBILITY.md) and
+[comparisons](comparisons.md) describe that boundary. The
+[documentation index](README.md) links advanced runtime, architecture and CXP.

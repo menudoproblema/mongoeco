@@ -1,0 +1,102 @@
+[
+  {
+    "name": "benchmark-confirm-memory-sync-baseline",
+    "command": [
+      "-m",
+      "benchmarks.report",
+      "--engine",
+      "memory-sync",
+      "--size",
+      "1000",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "5",
+      "--subject-root",
+      "/tmp/mongoeco-write-parity/baseline-source",
+      "--output-json",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/benchmark-confirm-memory-sync-baseline.json",
+      "--output-markdown",
+      "/tmp/mongoeco-write-parity/benchmark-confirm-memory-sync-baseline.md",
+      "--workload",
+      "filter_selectivity",
+      "--workload",
+      "vector_search_diagnostics"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "benchmark-confirm-memory-sync-candidate",
+    "command": [
+      "-m",
+      "benchmarks.report",
+      "--engine",
+      "memory-sync",
+      "--size",
+      "1000",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "5",
+      "--subject-root",
+      "/Users/uve/Proyectos/mongoeco",
+      "--output-json",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/benchmark-confirm-memory-sync-candidate.json",
+      "--output-markdown",
+      "/tmp/mongoeco-write-parity/benchmark-confirm-memory-sync-candidate.md",
+      "--workload",
+      "filter_selectivity",
+      "--workload",
+      "vector_search_diagnostics"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "benchmark-confirm-sqlite-sync-baseline",
+    "command": [
+      "-m",
+      "benchmarks.report",
+      "--engine",
+      "sqlite-sync",
+      "--size",
+      "1000",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "5",
+      "--subject-root",
+      "/tmp/mongoeco-write-parity/baseline-source",
+      "--output-json",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/benchmark-confirm-sqlite-sync-baseline.json",
+      "--output-markdown",
+      "/tmp/mongoeco-write-parity/benchmark-confirm-sqlite-sync-baseline.md",
+      "--workload",
+      "filter_selectivity"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "benchmark-confirm-sqlite-sync-candidate",
+    "command": [
+      "-m",
+      "benchmarks.report",
+      "--engine",
+      "sqlite-sync",
+      "--size",
+      "1000",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "5",
+      "--subject-root",
+      "/Users/uve/Proyectos/mongoeco",
+      "--output-json",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/benchmark-confirm-sqlite-sync-candidate.json",
+      "--output-markdown",
+      "/tmp/mongoeco-write-parity/benchmark-confirm-sqlite-sync-candidate.md",
+      "--workload",
+      "filter_selectivity"
+    ],
+    "exit_code": 0
+  }
+]

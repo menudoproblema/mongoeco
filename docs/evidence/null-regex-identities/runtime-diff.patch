@@ -1,0 +1,274 @@
+--- previous/mongoeco/_types/__init__.py
++++ candidate/mongoeco/_types/__init__.py
+@@ -1,4 +1,10 @@
+ from importlib import import_module
++from typing import TYPE_CHECKING
++
++
++if TYPE_CHECKING:
++    from mongoeco._types.writes import UpdateResult as UpdateResult
++
+ 
+ _BSON_EXPORTS = (
+     "Binary",
+--- previous/mongoeco/_types/documents.py
++++ candidate/mongoeco/_types/documents.py
+@@ -489,7 +489,9 @@
+         document: dict[str, object] = {"n": self.count}
+         if self.updated_existing is not None:
+             document["updatedExisting"] = self.updated_existing
+-        if self.upserted_id is not None:
++        if self.upserted_id is not None or (
++            self.count == 1 and self.updated_existing is False
++        ):
+             document["upserted"] = self.upserted_id
+         return document
+ 
+--- previous/mongoeco/_types/writes.py
++++ candidate/mongoeco/_types/writes.py
+@@ -1,6 +1,6 @@
+ from __future__ import annotations
+ 
+-from dataclasses import dataclass
++from dataclasses import dataclass, field
+ from typing import Any
+ 
+ type Document = dict[str, Any]
+@@ -73,7 +73,9 @@
+     collation: Any | None = None
+ 
+ 
+-type WriteModel = InsertOne | UpdateOne | UpdateMany | ReplaceOne | DeleteOne | DeleteMany
++type WriteModel = (
++    InsertOne | UpdateOne | UpdateMany | ReplaceOne | DeleteOne | DeleteMany
++)
+ 
+ 
+ @dataclass(frozen=True, slots=True)
+@@ -94,6 +96,13 @@
+     modified_count: int
+     upserted_id: T | None = None
+     acknowledged: bool = True
++    did_upsert: bool = field(default=False, kw_only=True)
++
++    def __post_init__(self) -> None:
++        # Older SPI v2 engines express an upsert by its non-null ID alone.
++        # A null ID needs the explicit flag while preserving those constructors.
++        if self.upserted_id is not None:
++            object.__setattr__(self, "did_upsert", True)
+ 
+ 
+ @dataclass(frozen=True, slots=True)
+--- previous/mongoeco/api/_async/_collection_bulk.py
++++ candidate/mongoeco/api/_async/_collection_bulk.py
+@@ -472,9 +472,9 @@
+                     if bypass_document_validation:
+                         update_one_kwargs["bypass_document_validation"] = True
+                     result = await collection.update_one(request.filter, request.update, request.upsert, **update_one_kwargs)
+-                    matched_count += result.matched_count
++                    matched_count += 0 if result.did_upsert else result.matched_count
+                     modified_count += result.modified_count
+-                    if result.upserted_id is not None:
++                    if result.did_upsert:
+                         upserted_ids[index] = result.upserted_id
+                 elif isinstance(request, UpdateMany):
+                     update_many_kwargs = {
+@@ -488,9 +488,9 @@
+                     if bypass_document_validation:
+                         update_many_kwargs["bypass_document_validation"] = True
+                     result = await collection.update_many(request.filter, request.update, request.upsert, **update_many_kwargs)
+-                    matched_count += result.matched_count
++                    matched_count += 0 if result.did_upsert else result.matched_count
+                     modified_count += result.modified_count
+-                    if result.upserted_id is not None:
++                    if result.did_upsert:
+                         upserted_ids[index] = result.upserted_id
+                 elif isinstance(request, ReplaceOne):
+                     replace_one_kwargs = {
+@@ -509,9 +509,9 @@
+                         request.upsert,
+                         **replace_one_kwargs,
+                     )
+-                    matched_count += result.matched_count
++                    matched_count += 0 if result.did_upsert else result.matched_count
+                     modified_count += result.modified_count
+-                    if result.upserted_id is not None:
++                    if result.did_upsert:
+                         upserted_ids[index] = result.upserted_id
+                 elif isinstance(request, DeleteOne):
+                     result = await collection.delete_one(
+--- previous/mongoeco/api/_async/_collection_runtime.py
++++ candidate/mongoeco/api/_async/_collection_runtime.py
+@@ -380,12 +380,12 @@
+         if (
+             document is None
+             or "_id" not in document
+-            or (result.upserted_id is None and result.modified_count == 0)
++            or (not result.did_upsert and result.modified_count == 0)
+         ):
+             return
+         self.publish_change_event(
+             operation_type=(
+-                "insert" if result.upserted_id is not None else matched_operation_type
++                "insert" if result.did_upsert else matched_operation_type
+             ),
+             document_key={"_id": deepcopy(document["_id"])},
+             full_document=document,
+--- previous/mongoeco/api/_async/_database_admin_write_commands.py
++++ candidate/mongoeco/api/_async/_database_admin_write_commands.py
+@@ -260,9 +260,9 @@
+                         bypass_document_validation=bypass_document_validation,
+                         session=session,
+                     )
+-                matched += result.matched_count
++                matched += 0 if result.did_upsert else result.matched_count
+                 modified += result.modified_count
+-                if result.upserted_id is not None:
++                if result.did_upsert:
+                     upserted.append(
+                         UpsertedWriteEntry(index=index, document_id=result.upserted_id)
+                     )
+@@ -458,7 +458,7 @@
+         if not isinstance(outcome, FindAndModifyOutcome):
+             raise TypeError('find_one_and_update did not return an atomic outcome')
+         result = outcome.captured.result
+-        applied = result.matched_count > 0 or result.upserted_id is not None
++        applied = result.matched_count > 0 or result.did_upsert
+         return FindAndModifyCommandResult(
+             last_error_object=FindAndModifyLastErrorObject(
+                 count=1 if applied else 0,
+@@ -495,7 +495,7 @@
+         if not isinstance(outcome, FindAndModifyOutcome):
+             raise TypeError('find_one_and_replace did not return an atomic outcome')
+         result = outcome.captured.result
+-        applied = result.matched_count > 0 or result.upserted_id is not None
++        applied = result.matched_count > 0 or result.did_upsert
+         return FindAndModifyCommandResult(
+             last_error_object=FindAndModifyLastErrorObject(
+                 count=1 if applied else 0,
+--- previous/mongoeco/api/_async/collection.py
++++ candidate/mongoeco/api/_async/collection.py
+@@ -506,10 +506,16 @@
+         result: UpdateResult[DocumentId],
+     ) -> UpdateResult[DocumentId]:
+         return UpdateResult(
+-            matched_count=result.matched_count,
++            # PyMongo's individual UpdateResult exposes n=1 when the upsert ID
++            # is null. Bulk/raw consumers use did_upsert, not this public count.
++            matched_count=(
++                1 if result.did_upsert and result.upserted_id is None
++                else result.matched_count
++            ),
+             modified_count=result.modified_count,
+             upserted_id=DocumentCodec.to_pymongo(result.upserted_id),
+             acknowledged=result.acknowledged,
++            did_upsert=result.did_upsert,
+         )
+ 
+     @staticmethod
+--- previous/mongoeco/core/identity.py
++++ candidate/mongoeco/core/identity.py
+@@ -1,8 +1,16 @@
+ from collections.abc import Callable
+ from copy import deepcopy
++from re import Pattern
+ from typing import Any
+ 
+ from mongoeco.errors import WriteError
++from mongoeco.types import Regex
++
++
++try:
++    from bson.regex import Regex as BsonRegex
++except ImportError:  # pragma: no cover - optional wire dependency
++    BsonRegex = None
+ 
+ 
+ SELECTED_DOCUMENT_STORAGE_MISMATCH_MESSAGE = (
+@@ -27,17 +35,21 @@
+ 
+ 
+ def is_valid_root_document_id(value: Any) -> bool:
+-    return not isinstance(value, list)
++    return not isinstance(value, (list, Regex, Pattern)) and not (
++        BsonRegex is not None and isinstance(value, BsonRegex)
++    )
+ 
+ 
+ def assert_valid_root_document_id(value: Any) -> None:
+     if is_valid_root_document_id(value):
+         return
+-    raise WriteError("The '_id' value cannot be of type array", code=53)
++    kind = "array" if isinstance(value, list) else "regex"
++    message = f"The '_id' value cannot be of type {kind}"
++    raise WriteError(message, code=53)
+ 
+ 
+ def assert_valid_upsert_document_id(value: Any, *, is_replacement: bool) -> None:
+-    if is_replacement and not is_valid_root_document_id(value):
++    if is_replacement and isinstance(value, list):
+         message = "After applying the update, the '_id' field was found to be an array"
+         raise WriteError(message, code=54)
+     assert_valid_root_document_id(value)
+--- previous/mongoeco/engines/_sqlite_modify_ops.py
++++ candidate/mongoeco/engines/_sqlite_modify_ops.py
+@@ -545,6 +545,7 @@
+         matched_count=0,
+         modified_count=0,
+         upserted_id=new_doc["_id"],
++        did_upsert=True,
+     )
+     return MutationOutcome(
+         result=result,
+--- previous/mongoeco/engines/adapter.py
++++ candidate/mongoeco/engines/adapter.py
+@@ -664,7 +664,7 @@
+     ) -> MutationOutcome:
+         if isinstance(result, MutationOutcome):
+             matched = result.matched_count > 0
+-            applied = result.modified_count > 0 or result.upserted_id is not None
++            applied = result.modified_count > 0 or result.result.did_upsert
+             if (matched or applied) and result.after_document is None:
+                 message = "an applied SPI v2 mutation must expose its after image"
+                 raise RuntimeError(message)
+--- previous/mongoeco/engines/memory.py
++++ candidate/mongoeco/engines/memory.py
+@@ -4154,6 +4154,7 @@
+                     matched_count=0,
+                     modified_count=0,
+                     upserted_id=new_doc["_id"],
++                    did_upsert=True,
+                 )
+                 captured = MutationOutcome(
+                     result=result,
+--- previous/mongoeco/engines/results.py
++++ candidate/mongoeco/engines/results.py
+@@ -29,7 +29,7 @@
+         if matched not in {0, 1} or modified not in {0, 1} or modified > matched:
+             message = "mutation counts are inconsistent"
+             raise ValueError(message)
+-        upserted = self.result.upserted_id is not None
++        upserted = self.result.did_upsert
+         if upserted and matched != 0:
+             message = "an upsert cannot also match an existing document"
+             raise ValueError(message)
+--- previous/mongoeco/engines/sqlite.py
++++ candidate/mongoeco/engines/sqlite.py
+@@ -7510,7 +7510,7 @@
+                     )
+                     enforce_deadline(deadline)
+                     if result.after_document is not None and (
+-                        result.result.upserted_id is not None
++                        result.result.did_upsert
+                         or result.result.modified_count > 0
+                     ):
+                         change_context = operation_context
+@@ -7524,7 +7524,7 @@
+                             context=change_context,
+                             operation_type=(
+                                 "insert"
+-                                if result.result.upserted_id is not None
++                                if result.result.did_upsert
+                                 else (
+                                     operation_context.change_operation_type
+                                     if operation_context is not None

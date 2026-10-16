@@ -1,0 +1,7 @@
+test_core_api_imports_without_bson_installed (tests.unit.test_optional_bson_imports.OptionalBsonImportTests.test_core_api_imports_without_bson_installed) ... ok
+test_object_id_public_contract_is_stable_without_bson (tests.unit.test_optional_bson_imports.OptionalBsonImportTests.test_object_id_public_contract_is_stable_without_bson) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.407s
+
+OK

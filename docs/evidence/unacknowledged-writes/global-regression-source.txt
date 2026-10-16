@@ -1,0 +1,106 @@
+"""Unacknowledged writes preserve native errors, effects and physical sockets."""
+
+import asyncio
+import hashlib
+import json
+
+from itertools import product
+from pathlib import Path
+
+import pymongo
+import pytest
+
+from mongoeco.engines import MemoryEngine, SQLiteEngine
+from mongoeco.wire import AsyncMongoEcoProxyServer
+
+from tests.differential.unacknowledged_cases import UNACKNOWLEDGED_CASES
+from tests.support_unacknowledged import (
+    RAW_CASES,
+    PoolObservation,
+    assert_observation,
+    client_options,
+    observe,
+    observe_async,
+    observe_raw,
+)
+
+
+TARGETS = ("7.0", "8.0", "9.0")
+BACKENDS = ("memory", "sqlite")
+
+
+def reference(target):
+    root = Path(__file__).parents[3]
+    capture = json.loads(
+        (
+            root
+            / f"tests/fixtures/unacknowledged_mongodb_{target.replace('.', '_')}.json"
+        ).read_text()
+    )
+    for name, digest in capture["source_sha256"].items():
+        assert hashlib.sha256((root / name).read_bytes()).hexdigest() == digest
+    assert set(capture["observations"]) == {case.id for case in UNACKNOWLEDGED_CASES}
+    return capture
+
+
+def engine(backend, tmp_path):
+    return (
+        MemoryEngine()
+        if backend == "memory"
+        else SQLiteEngine(str(tmp_path / "data.sqlite"), executor_workers=1)
+    )
+
+
+@pytest.mark.parametrize(
+    ["target", "backend", "surface"],
+    list(product(TARGETS, BACKENDS, ("sync", "async"))),
+)
+@pytest.mark.parametrize("case", UNACKNOWLEDGED_CASES, ids=lambda case: case.id)
+def test_unacknowledged_writes_match_native(target, backend, surface, case, tmp_path):
+    expected = reference(target)["observations"][case.id]
+
+    async def exercise():
+        profile = ".".join(str(v) for v in pymongo.version_tuple[:2])
+        async with AsyncMongoEcoProxyServer(
+            engine=engine(backend, tmp_path),
+            mongodb_dialect=target,
+            pymongo_profile=profile,
+        ) as proxy:
+
+            def synchronous():
+                pool = PoolObservation()
+                with pymongo.MongoClient(
+                    proxy.address.uri, **client_options(pool)
+                ) as client:
+                    return observe(client, "unack", case.id, case, pool)
+
+            if surface == "sync":
+                actual = await asyncio.to_thread(synchronous)
+            else:
+                pool = PoolObservation()
+                async with pymongo.AsyncMongoClient(
+                    proxy.address.uri, **client_options(pool)
+                ) as client:
+                    actual = await observe_async(client, "unack", case.id, case, pool)
+            assert_observation(actual, expected)
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize(["target", "backend"], list(product(TARGETS, BACKENDS)))
+@pytest.mark.parametrize(["more", "fails"], RAW_CASES)
+def test_more_to_come_controls_responses_on_the_same_socket(
+    target, backend, more, fails, tmp_path
+):
+    expected = reference(target)["raw"][f"more_{more}_error_{fails}"]
+
+    async def exercise():
+        async with AsyncMongoEcoProxyServer(
+            engine=engine(backend, tmp_path), mongodb_dialect=target
+        ) as proxy:
+            actual = await observe_raw(
+                proxy.address.uri, "raw", "items", more=more, fails=fails
+            )
+            assert actual == expected
+
+    asyncio.run(exercise())

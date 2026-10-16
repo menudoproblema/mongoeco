@@ -1,0 +1,16 @@
+{
+  "previous_validation": "docs/evidence/query-numeric-identity/validation.json",
+  "previous_wheel_sha256": "ecb65044a3d47ef9d2792cd10131907192179170acd30d5c738618251bf1a294",
+  "files": {
+    "sdk-results.json": "42a11c4ea50fadb783c3606666a8be22b7ee17578fdcec9bcb441d911a9c4264",
+    "sdk-summary.json": "ae83143edfd7498d7408bd372ff9c8b98cd0478bf57fbab22346802a26ef8520",
+    "sdk.log": "42a11c4ea50fadb783c3606666a8be22b7ee17578fdcec9bcb441d911a9c4264",
+    "capture-api_option-7.0.log": "3126cdd9c071264e3e7a0dece6ba56f494f758b67838261df8b1b8f850c76d6b",
+    "capture-api_option-8.0.log": "3bfe32c955f23207db747c9da43afac7c9f45caae89e9abecbdbc92a27334919",
+    "capture-api_option-9.0.log": "cd35901dc7e8f34c783a035bb5173e3608ef68684866d4eebfba9587c61b521e"
+  },
+  "reasons": [
+    "API-option native inputs, capture script and observer unchanged; real PyMongo oracle is independent of Mongoeco runtime.",
+    "SDK profile probe script introspects the official SDKs; candidate engines/aggregation evaluation are not its inputs. Probe script, summary fixture and public profile contracts unchanged."
+  ]
+}

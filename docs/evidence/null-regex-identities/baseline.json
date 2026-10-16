@@ -1,0 +1,1469 @@
+{
+  "runtime": "/tmp/mongoeco-python315/venv/lib/python3.15/site-packages/mongoeco/__init__.py",
+  "runs": [
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_update_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_update_one_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_update_one_no_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_update_many_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_update_many_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_update_many_no_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_replace_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_replace_one_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_replace_one_no_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_False_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_False_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_False_no_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_True_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_True_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_True_no_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_False_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_False_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_False_no_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_True_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_True_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_True_no_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "falsy_id_update_one_int",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "falsy_id_replace_one_int",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "falsy_id_update_one_str",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "falsy_id_replace_one_str",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "falsy_id_update_one_bool",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "falsy_id_replace_one_bool",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateOne_True_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateOne_True_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateOne_False_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateOne_False_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateMany_True_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateMany_True_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateMany_False_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateMany_False_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_ReplaceOne_True_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_ReplaceOne_True_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_ReplaceOne_False_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "null_id_bulk_ReplaceOne_False_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_insert_one",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_insert_many_True_0",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_insert_many_True_1",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_insert_many_True_2",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_insert_many_False_0",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_insert_many_False_1",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_insert_many_False_2",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_True_0",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_True_1",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_True_2",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_False_0",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_False_1",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_False_2",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_update_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_update_many_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_replace_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_find_one_and_update_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_find_one_and_replace_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_bulk_update_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "regex_id_bulk_replace_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "embedded_regex_id_insert_one",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "embedded_regex_id_replace_one",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_update_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_update_one_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_update_one_no_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_update_many_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_update_many_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_update_many_no_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_replace_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_replace_one_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_replace_one_no_match",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_False_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_False_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_False_no_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_True_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_True_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_True_no_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_False_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_False_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_False_no_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_True_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_True_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_True_no_match",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "falsy_id_update_one_int",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "falsy_id_replace_one_int",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "falsy_id_update_one_str",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "falsy_id_replace_one_str",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "falsy_id_update_one_bool",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "falsy_id_replace_one_bool",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateOne_True_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateOne_True_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateOne_False_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateOne_False_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateMany_True_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateMany_True_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateMany_False_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateMany_False_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_ReplaceOne_True_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_ReplaceOne_True_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_ReplaceOne_False_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "null_id_bulk_ReplaceOne_False_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_insert_one",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_insert_many_True_0",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_insert_many_True_1",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_insert_many_True_2",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_insert_many_False_0",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_insert_many_False_1",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_insert_many_False_2",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_bulk_write_True_0",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_bulk_write_True_1",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_bulk_write_True_2",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_bulk_write_False_0",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_bulk_write_False_1",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_bulk_write_False_2",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_update_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_update_many_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_replace_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_find_one_and_update_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_find_one_and_replace_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_bulk_update_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "regex_id_bulk_replace_upsert",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "embedded_regex_id_insert_one",
+      "matches": true
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "embedded_regex_id_replace_one",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_update_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_update_one_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_update_one_no_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_update_many_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_update_many_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_update_many_no_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_replace_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_replace_one_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_replace_one_no_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_False_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_False_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_False_no_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_True_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_True_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_update_True_no_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_False_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_False_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_False_no_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_True_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_True_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_find_one_and_replace_True_no_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "falsy_id_update_one_int",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "falsy_id_replace_one_int",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "falsy_id_update_one_str",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "falsy_id_replace_one_str",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "falsy_id_update_one_bool",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "falsy_id_replace_one_bool",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateOne_True_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateOne_True_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateOne_False_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateOne_False_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateMany_True_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateMany_True_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateMany_False_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_UpdateMany_False_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_ReplaceOne_True_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_ReplaceOne_True_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_ReplaceOne_False_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "null_id_bulk_ReplaceOne_False_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_insert_one",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_insert_many_True_0",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_insert_many_True_1",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_insert_many_True_2",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_insert_many_False_0",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_insert_many_False_1",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_insert_many_False_2",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_True_0",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_True_1",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_True_2",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_False_0",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_False_1",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_bulk_write_False_2",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_update_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_update_many_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_replace_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_find_one_and_update_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_find_one_and_replace_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_bulk_update_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "regex_id_bulk_replace_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "embedded_regex_id_insert_one",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "embedded_regex_id_replace_one",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_update_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_update_one_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_update_one_no_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_update_many_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_update_many_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_update_many_no_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_replace_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_replace_one_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_replace_one_no_match",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_False_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_False_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_False_no_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_True_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_True_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_update_True_no_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_False_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_False_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_False_no_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_True_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_True_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_find_one_and_replace_True_no_match",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "falsy_id_update_one_int",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "falsy_id_replace_one_int",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "falsy_id_update_one_str",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "falsy_id_replace_one_str",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "falsy_id_update_one_bool",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "falsy_id_replace_one_bool",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateOne_True_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateOne_True_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateOne_False_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateOne_False_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateMany_True_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateMany_True_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateMany_False_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_UpdateMany_False_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_ReplaceOne_True_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_ReplaceOne_True_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_ReplaceOne_False_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "null_id_bulk_ReplaceOne_False_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_insert_one",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_insert_many_True_0",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_insert_many_True_1",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_insert_many_True_2",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_insert_many_False_0",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_insert_many_False_1",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_insert_many_False_2",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_bulk_write_True_0",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_bulk_write_True_1",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_bulk_write_True_2",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_bulk_write_False_0",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_bulk_write_False_1",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_bulk_write_False_2",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_update_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_update_many_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_replace_one_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_find_one_and_update_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_find_one_and_replace_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_bulk_update_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "regex_id_bulk_replace_upsert",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "embedded_regex_id_insert_one",
+      "matches": true
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "embedded_regex_id_replace_one",
+      "matches": false
+    }
+  ]
+}

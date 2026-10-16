@@ -1,0 +1,363 @@
+{
+  "schema": "mongoeco-command-unacknowledged-writes/v1",
+  "date": "2026-10-16",
+  "status": "implemented_and_validated",
+  "candidate": {
+    "wheel_sha256": "2d349d49d3b1a5a7862e0143966f02015f2ab7628b87ae6aaab33a0daa6de3c3",
+    "sdist_sha256": "cbac629ce78aba96e3b1848c4aa92997c353e49147d9a5d6d5b6386016242e6c",
+    "runtime_files": 280,
+    "runtime_changes_since_transport_fix_candidate": [
+      "mongoeco/api/_async/_database_admin_write_commands.py"
+    ],
+    "runtime_matches_checkout_three_installs_and_sdist": true,
+    "all_sdist_source_inputs_compared": 288,
+    "reproducible_distributions": true,
+    "wheel_sdist_metadata_equal": true,
+    "baseline_wheel_sha256": "41b20645df8632e8806edb6f844d525e304da243be465c10eba7e70a8bb4ba0a",
+    "git_head": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "uncommitted_workset": true,
+    "package_version": "4.9.1",
+    "disposition": "Unpublished candidate; version unchanged pending release decision.",
+    "runtime_manifest": "runtime-sources.json",
+    "workset_manifest": "workset-sources.json",
+    "workset_sha256": "67ab8e258ef9c95e3347102c9709130500bf84e7009d578932f5da785a6b0319"
+  },
+  "environment": "environment.json",
+  "contract_source": "Explicit request to correct explicit w=0 command replies, expand the observer and add regressions against real MongoDB in sync/async and Memory/SQLite, including counters, errors, effects and physical connection reuse.",
+  "fix": {
+    "file": "src/mongoeco/api/_async/_database_admin_write_commands.py",
+    "behavior": "Execute insert/update/delete commands first, then return n=0 (and nModified=0 for update) without writeErrors or upserted entries for explicit writeConcern.w=0. Preserve command parsing errors and flag-based transport response selection.",
+    "no_engine_spi_dependency_or_sqlite_format_change": true
+  },
+  "regressions": {
+    "scenarios": 33,
+    "helper_scenarios": 19,
+    "explicit_command_scenarios": 14,
+    "write_concerns": [
+      0,
+      1
+    ],
+    "native_cases_per_facade": 66,
+    "raw_cases": 4,
+    "candidate_cases": 816,
+    "new_candidate_cases": 336,
+    "sdk_extremes": [
+      "4.9.2",
+      "4.19.0"
+    ],
+    "surfaces": [
+      "sync",
+      "async"
+    ],
+    "backends": [
+      "memory",
+      "file-backed sqlite"
+    ],
+    "dialects": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "command_error_codes": [
+      11000,
+      14,
+      40414
+    ],
+    "observer": "Preserves semantic field presence, n/nModified/upserted, error indexes/codes/codeName/op/labels and writeConcernError; diagnostic errmsg text excluded. Raw and native command replies use the same observer.",
+    "checks": [
+      "zero counters and hidden per-write errors/upsert IDs under w=0",
+      "w=1 controls retain counts, error codes and upsert IDs",
+      "40414 command parsing errors survive w=0 with no write effects",
+      "ordered/unordered and update_many partial effects",
+      "ping, reads and following acknowledged write",
+      "one physical CMAP pool connection with retries disabled",
+      "raw response IDs on one uninterrupted TCP socket"
+    ]
+  },
+  "native_capture_record": "native-captures.json",
+  "native_case_executions": 816,
+  "gates": {
+    "313": {
+      "pytest_passed": 23257,
+      "expected_skips": 31,
+      "subtests_passed": 14450,
+      "pytest_record": "pytest-313.json",
+      "contracts": {
+        "status": "passed",
+        "record": "contracts-313-result.json"
+      },
+      "unittest": {
+        "status": "passed",
+        "record": "unittest-313-result.json"
+      },
+      "smoke-kit": {
+        "status": "passed",
+        "record": "smoke-kit-313-result.json"
+      },
+      "smoke-wheel": {
+        "status": "passed",
+        "record": "smoke-wheel-313-result.json"
+      },
+      "smoke-sdist": {
+        "status": "passed",
+        "record": "smoke-sdist-313-result.json"
+      }
+    },
+    "314": {
+      "pytest_passed": 23257,
+      "expected_skips": 31,
+      "subtests_passed": 14450,
+      "pytest_record": "pytest-314.json",
+      "contracts": {
+        "status": "passed",
+        "record": "contracts-314-result.json"
+      },
+      "unittest": {
+        "status": "passed",
+        "record": "unittest-314-result.json"
+      },
+      "smoke-kit": {
+        "status": "passed",
+        "record": "smoke-kit-314-result.json"
+      },
+      "smoke-wheel": {
+        "status": "passed",
+        "record": "smoke-wheel-314-result.json"
+      },
+      "smoke-sdist": {
+        "status": "passed",
+        "record": "smoke-sdist-314-result.json"
+      }
+    },
+    "315": {
+      "pytest_passed": 23257,
+      "expected_skips": 31,
+      "subtests_passed": 14450,
+      "pytest_record": "pytest-315.json",
+      "contracts": {
+        "status": "passed",
+        "record": "contracts-315-result.json"
+      },
+      "unittest": {
+        "status": "passed",
+        "record": "unittest-315-result.json"
+      },
+      "smoke-kit": {
+        "status": "passed",
+        "record": "smoke-kit-315-result.json"
+      },
+      "smoke-wheel": {
+        "status": "passed",
+        "record": "smoke-wheel-315-result.json"
+      },
+      "smoke-sdist": {
+        "status": "passed",
+        "record": "smoke-sdist-315-result.json"
+      }
+    }
+  },
+  "fixture_matrix": [
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-313-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-313-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-313-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-313-4.9.2-9.1.1.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-314-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-314-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-314-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-314-4.9.2-9.1.1.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-315-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-315-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-315-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 898,
+      "record": "matrix-315-4.9.2-9.1.1.json"
+    }
+  ],
+  "fixture_matrix_test_executions": 10776,
+  "consumer_canary": {
+    "identity": "anonymous-consumer",
+    "runs": [
+      {
+        "record": "consumer-313-0.json",
+        "python": "3.13.15",
+        "workers": 0,
+        "cases": 76
+      },
+      {
+        "record": "consumer-313-2.json",
+        "python": "3.13.15",
+        "workers": 2,
+        "cases": 76
+      },
+      {
+        "record": "consumer-313-4.json",
+        "python": "3.13.15",
+        "workers": 4,
+        "cases": 76
+      },
+      {
+        "record": "consumer-314-0.json",
+        "python": "3.14.5",
+        "workers": 0,
+        "cases": 76
+      },
+      {
+        "record": "consumer-314-2.json",
+        "python": "3.14.5",
+        "workers": 2,
+        "cases": 76
+      },
+      {
+        "record": "consumer-314-4.json",
+        "python": "3.14.5",
+        "workers": 4,
+        "cases": 76
+      },
+      {
+        "record": "consumer-315-0.json",
+        "python": "3.15.0",
+        "workers": 0,
+        "cases": 76
+      },
+      {
+        "record": "consumer-315-2.json",
+        "python": "3.15.0",
+        "workers": 2,
+        "cases": 76
+      },
+      {
+        "record": "consumer-315-4.json",
+        "python": "3.15.0",
+        "workers": 4,
+        "cases": 76
+      }
+    ],
+    "case_executions": 684,
+    "source_and_assertions_unchanged": true
+  },
+  "coverage_python_314": {
+    "covered_lines": 43421,
+    "num_statements": 43839,
+    "percent_covered": 99.04651109742467,
+    "percent_covered_display": "99.05",
+    "missing_lines": 418,
+    "excluded_lines": 921,
+    "percent_statements_covered": 99.04651109742467,
+    "percent_statements_covered_display": "99.05"
+  },
+  "clean_installs": {
+    "with_extras": 9,
+    "without_extras": 1
+  },
+  "review": {
+    "final_diff_reviewed": true,
+    "documentation_aligned": true,
+    "prior_authorized_work_preserved": true,
+    "remaining_findings_in_scope": [],
+    "runtime_diff": "runtime-diff.txt",
+    "privacy_audit": "privacy-audit.json"
+  },
+  "test_execution_notes": [
+    "The first concurrent full Python3.13 suite recorded one ExecutionTimeout at an unchanged 50ms SQLite explain distinct deadline. Its original failure is preserved. Python3.14/3.15 completed green; the complete Python3.13 suite is rerun alone with the same wheel, corpus, deadline and assertions. See global-concurrency-failure.json.",
+    "The final regression fails against the prior transport-fix wheel. before-regression.txt and before-raw-observer.txt are expected failures and not green gates; the raw observer exposes n=1 versus native n=0.",
+    "A first focal command test attempt was run under the socket-restricted sandbox: its wire cases failed binding loopback with PermissionError. The unchanged tests pass with local socket permission; service-focal-final.txt is the admitted gate.",
+    "The first consumer Python3.14/2-worker attempt completed all 38 tests but pytest failed in its shared numbered-temporary-directory cleanup with OSError66. The original remains private; canary-temporary-directory-failure.json records the failure without consumer identity. The failed and unexecuted cells pass with a per-cell TMPDIR; no runtime, consumer source, assertions or test semantics changed."
+  ],
+  "independent_verification": {
+    "deep_properties": "deep-source.txt",
+    "deep_source_execution": "Final source runtime bytes equal the installed candidate; deep properties run on this source.",
+    "reused_from": "../unacknowledged-writes/validation.json",
+    "gates": [
+      "Engine conformance",
+      "Search benchmarks",
+      "SDK signature probes"
+    ],
+    "reason": "All 280 runtime files compared: only the classic write-command reply module changed. Engine, SPI, storage format, search, SDK signatures and their corpus inputs are byte-identical; those gates do not call classic database write commands. Complete suites, coverage, contracts, unittest, 12-cell fixture matrix, anonymous consumer canary and clean installs are fresh."
+  },
+  "limits": [
+    "Local macOS arm64 validation; configured hosted CI not executed here.",
+    "Early PyMongo4.9 async peers run on independent event loops, as with the official pytest kit and a real server.",
+    "No commit, tag or publication performed."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "ci_yaml_parsed": true,
+  "bash_blocks_syntax_checked": 26,
+  "pytest_matrix_cells": 12,
+  "publish_requires_kit": true,
+  "new_guide_contract_closure_links_checked": 10,
+  "evidence_json_files_parsed": 567,
+  "git_diff_check": "passed",
+  "source_runtime_changed_after_gates": false
+}

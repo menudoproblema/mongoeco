@@ -1,0 +1,12 @@
+[
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py313/bin/python",
+      "scripts/smoke_installed_wheel.py",
+      "--wheel",
+      "/tmp/mongoeco-command-unack/dist/mongoeco-4.9.1-py3-none-any.whl"
+    ],
+    "exit_code": 0,
+    "log": "smoke-wheel-313.txt"
+  }
+]

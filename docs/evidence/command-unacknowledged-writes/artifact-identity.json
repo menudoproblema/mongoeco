@@ -1,0 +1,12 @@
+{
+  "wheel_sha256": "2d349d49d3b1a5a7862e0143966f02015f2ab7628b87ae6aaab33a0daa6de3c3",
+  "sdist_sha256": "cbac629ce78aba96e3b1848c4aa92997c353e49147d9a5d6d5b6386016242e6c",
+  "runtime_files": 280,
+  "runtime_changes_since_transport_fix_candidate": [
+    "mongoeco/api/_async/_database_admin_write_commands.py"
+  ],
+  "runtime_matches_checkout_three_installs_and_sdist": true,
+  "all_sdist_source_inputs_compared": 288,
+  "reproducible_distributions": true,
+  "wheel_sdist_metadata_equal": true
+}

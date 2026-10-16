@@ -1,0 +1,65 @@
+--- prior-wheel/mongoeco/api/_async/_database_admin_write_commands.py
++++ candidate/mongoeco/api/_async/_database_admin_write_commands.py
+@@ -30,6 +30,20 @@
+ 
+ _FAILED_TO_PARSE = 9
+ _MISSING_REQUIRED_FIELD = 40414
++
++
++def _write_command_result(
++    spec: dict[str, object], result: WriteCommandResult
++) -> WriteCommandResult:
++    concern = spec.get("writeConcern")
++    if isinstance(concern, dict) and concern.get("w") == 0:
++        # Execute the complete ordered/unordered write first. Only its reply
++        # loses counters and per-write errors; command parsing still raises.
++        return WriteCommandResult(
++            count=0,
++            modified_count=0 if result.modified_count is not None else None,
++        )
++    return result
+ 
+ 
+ def _command_shape_error(message: str, *, code: int = 14) -> None:
+@@ -177,7 +191,9 @@
+                 )
+                 if ordered:
+                     break
+-        return WriteCommandResult(count=inserted, write_errors=write_errors or None)
++        return _write_command_result(
++            spec, WriteCommandResult(count=inserted, write_errors=write_errors or None)
++        )
+ 
+     async def command_update(
+         self,
+@@ -289,11 +305,14 @@
+                 )
+                 if ordered:
+                     break
+-        return WriteCommandResult(
+-            count=matched + len(upserted),
+-            modified_count=modified,
+-            upserted=upserted or None,
+-            write_errors=write_errors or None,
++        return _write_command_result(
++            spec,
++            WriteCommandResult(
++                count=matched + len(upserted),
++                modified_count=modified,
++                upserted=upserted or None,
++                write_errors=write_errors or None,
++            ),
+         )
+ 
+     async def command_delete(
+@@ -354,7 +373,9 @@
+                 )
+                 if ordered:
+                     break
+-        return WriteCommandResult(count=deleted, write_errors=write_errors or None)
++        return _write_command_result(
++            spec, WriteCommandResult(count=deleted, write_errors=write_errors or None)
++        )
+ 
+     async def execute_find_and_modify(
+         self,

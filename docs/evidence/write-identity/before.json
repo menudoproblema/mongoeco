@@ -1,0 +1,2143 @@
+{
+  "7.0": {
+    "version": "7.0.43",
+    "cases": {
+      "insert_many_True": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 1,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          },
+          "caller": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  [
+                    "bad"
+                  ]
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "bulk_write_True": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 1,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          }
+        }
+      ],
+      "insert_many_False": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 2,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          },
+          "caller": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  [
+                    "bad"
+                  ]
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "bulk_write_False": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 2,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          }
+        }
+      ],
+      "find_one_and_update_immutable": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 66,
+            "codeName": "ImmutableField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_schema": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_array_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 53,
+            "codeName": "InvalidIdField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_schema_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_duplicate": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "b"
+                ],
+                [
+                  "name",
+                  "Bea"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": "DuplicateKey",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_immutable": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 66,
+            "codeName": "ImmutableField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_schema": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_array_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 54,
+            "codeName": "NotSingleValueField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_schema_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_duplicate": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "b"
+                ],
+                [
+                  "name",
+                  "Bea"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": "DuplicateKey",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ]
+    }
+  },
+  "8.0": {
+    "version": "8.0.32",
+    "cases": {
+      "insert_many_True": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 1,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          },
+          "caller": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  [
+                    "bad"
+                  ]
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "bulk_write_True": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 1,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          }
+        }
+      ],
+      "insert_many_False": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 2,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          },
+          "caller": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  [
+                    "bad"
+                  ]
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "bulk_write_False": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 2,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          }
+        }
+      ],
+      "find_one_and_update_immutable": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 66,
+            "codeName": "ImmutableField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_schema": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_array_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 53,
+            "codeName": "InvalidIdField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_schema_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_duplicate": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "b"
+                ],
+                [
+                  "name",
+                  "Bea"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": "DuplicateKey",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_immutable": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 66,
+            "codeName": "ImmutableField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_schema": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_array_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 54,
+            "codeName": "NotSingleValueField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_schema_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_duplicate": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "b"
+                ],
+                [
+                  "name",
+                  "Bea"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": "DuplicateKey",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ]
+    }
+  },
+  "9.0": {
+    "version": "9.0.2",
+    "cases": {
+      "insert_many_True": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 1,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          },
+          "caller": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  [
+                    "bad"
+                  ]
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "bulk_write_True": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 1,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          }
+        }
+      ],
+      "insert_many_False": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 2,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          },
+          "caller": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  [
+                    "bad"
+                  ]
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "bulk_write_False": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 2,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          }
+        }
+      ],
+      "find_one_and_update_immutable": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 66,
+            "codeName": "ImmutableField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_schema": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_array_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 53,
+            "codeName": "InvalidIdField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_schema_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_duplicate": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "b"
+                ],
+                [
+                  "name",
+                  "Bea"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": "DuplicateKey",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_immutable": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 66,
+            "codeName": "ImmutableField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_schema": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_array_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 54,
+            "codeName": "NotSingleValueField",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_schema_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "OperationFailure",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_duplicate": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "b"
+                ],
+                [
+                  "name",
+                  "Bea"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": "DuplicateKey",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ]
+    }
+  },
+  "memory": {
+    "version": "7.0.0",
+    "cases": {
+      "insert_many_True": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 53,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          },
+          "caller": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  [
+                    "bad"
+                  ]
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "bulk_write_True": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 1,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          }
+        }
+      ],
+      "insert_many_False": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 53,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          },
+          "caller": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  [
+                    "bad"
+                  ]
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "bulk_write_False": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 2,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          }
+        }
+      ],
+      "find_one_and_update_immutable": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "WriteError",
+            "code": 66,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_schema": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "WriteError",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_array_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 53,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_schema_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_duplicate": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "b"
+                ],
+                [
+                  "name",
+                  "Bea"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_immutable": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "WriteError",
+            "code": 66,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_schema": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "WriteError",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_array_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 53,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_schema_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_duplicate": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "b"
+                ],
+                [
+                  "name",
+                  "Bea"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ]
+    }
+  },
+  "sqlite": {
+    "version": "7.0.0",
+    "cases": {
+      "insert_many_True": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 53,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          },
+          "caller": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  [
+                    "bad"
+                  ]
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "bulk_write_True": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 1,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          }
+        }
+      ],
+      "insert_many_False": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 53,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          },
+          "caller": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  [
+                    "bad"
+                  ]
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "bulk_write_False": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "c"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "BulkWriteError",
+            "code": 65,
+            "codeName": null,
+            "labels": [],
+            "write_errors": [
+              [
+                1,
+                53
+              ]
+            ],
+            "partial": {
+              "nInserted": 2,
+              "nMatched": 0,
+              "nModified": 0,
+              "nRemoved": 0,
+              "nUpserted": 0,
+              "upserted": []
+            }
+          }
+        }
+      ],
+      "find_one_and_update_immutable": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "WriteError",
+            "code": 66,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_schema": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "WriteError",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_array_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 53,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_schema_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_update_duplicate": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "b"
+                ],
+                [
+                  "name",
+                  "Bea"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_immutable": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "WriteError",
+            "code": 66,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_schema": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "WriteError",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_array_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 53,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_schema_upsert": [
+        {
+          "status": "error",
+          "documents": [],
+          "error": {
+            "family": "WriteError",
+            "code": 121,
+            "codeName": "DocumentValidationFailure",
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ],
+      "find_one_and_replace_duplicate": [
+        {
+          "status": "error",
+          "documents": [
+            {
+              "$document": [
+                [
+                  "_id",
+                  "a"
+                ],
+                [
+                  "name",
+                  "Ada"
+                ]
+              ]
+            },
+            {
+              "$document": [
+                [
+                  "_id",
+                  "b"
+                ],
+                [
+                  "name",
+                  "Bea"
+                ]
+              ]
+            }
+          ],
+          "error": {
+            "family": "DuplicateKeyError",
+            "code": 11000,
+            "codeName": null,
+            "labels": [],
+            "write_errors": []
+          }
+        }
+      ]
+    }
+  }
+}

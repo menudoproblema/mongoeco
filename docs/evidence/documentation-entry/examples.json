@@ -1,0 +1,157 @@
+{
+  "status": "passed",
+  "pytest_cases": 30,
+  "standalone_snippets": 12,
+  "runs": [
+    {
+      "python": "313",
+      "example": "quickstart",
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "example": "direct-async",
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "example": "sqlite",
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "example": "runtime-cxp",
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "example": "readme-sync",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "example": "readme-async",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "example": "application-sync",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "example": "application-async",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "313",
+      "example": "migration",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "example": "quickstart",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "example": "direct-async",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "example": "sqlite",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "example": "runtime-cxp",
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "example": "readme-sync",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "example": "readme-async",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "example": "application-sync",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "example": "application-async",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "314",
+      "example": "migration",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "example": "quickstart",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "example": "direct-async",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "example": "sqlite",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "example": "runtime-cxp",
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "example": "readme-sync",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "example": "readme-async",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "example": "application-sync",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "example": "application-async",
+      "cases": 2,
+      "exit_code": 0
+    },
+    {
+      "python": "315",
+      "example": "migration",
+      "cases": 2,
+      "exit_code": 0
+    }
+  ]
+}

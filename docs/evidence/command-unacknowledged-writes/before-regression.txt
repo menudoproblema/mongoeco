@@ -1,0 +1,24 @@
+F
+=================================== FAILURES ===================================
+__ test_unacknowledged_writes_match_native[command_insert_w0-8.0-memory-sync] __
+tests/integration/wire/test_unacknowledged.py:93: in test_unacknowledged_writes_match_native
+    asyncio.run(exercise())
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:204: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/integration/wire/test_unacknowledged.py:91: in exercise
+    assert_observation(actual, expected)
+tests/support_unacknowledged.py:214: in assert_observation
+    assert actual == expected
+           ^^^^^^^^^^^^^^^^^^
+E   AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/wire/test_unacknowledged.py::test_unacknowledged_writes_match_native[command_insert_w0-8.0-memory-sync]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 814 deselected in 1.14s

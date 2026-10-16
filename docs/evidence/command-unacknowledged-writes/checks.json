@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "documentation_links_checked": 146,
+  "readme_relative_rendered_links": 0,
+  "pypi_markdown_rendered": true,
+  "metadata_summary": "Local MongoDB testing and embedded persistence for Python, with PyMongo-style sync and async APIs.",
+  "metadata_project_urls": {
+    "Homepage": "https://github.com/menudoproblema/mongoeco",
+    "Documentation": "https://github.com/menudoproblema/mongoeco/blob/main/docs/README.md",
+    "Repository": "https://github.com/menudoproblema/mongoeco",
+    "Issues": "https://github.com/menudoproblema/mongoeco/issues",
+    "Changelog": "https://github.com/menudoproblema/mongoeco/blob/main/CHANGELOG.md"
+  },
+  "wheel_sdist_readme_matches_source": true,
+  "wheel_sdist_metadata_aligned": true,
+  "runtime_files_compared": 280,
+  "dependencies_extras_python_policy_unchanged": true,
+  "first_python_example_line": 20,
+  "published_pypi_updated": false,
+  "remote_new_document_pages_verified": false,
+  "propagation": "Commit/push and release publication remain outside this documentation edit."
+}

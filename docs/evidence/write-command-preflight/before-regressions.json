@@ -1,0 +1,10 @@
+{
+  "status": "expected_failure",
+  "baseline_wheel_sha256": "2d349d49d3b1a5a7862e0143966f02015f2ab7628b87ae6aaab33a0daa6de3c3",
+  "failing_cases": [
+    "preflight_delete_hint_null_False-8.0-memory-sync",
+    "concern_duplicate_j_ack-8.0-memory-sync"
+  ],
+  "log": "before-regressions.txt",
+  "green_gate": false
+}

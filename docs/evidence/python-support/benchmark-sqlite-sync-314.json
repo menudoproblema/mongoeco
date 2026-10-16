@@ -1,0 +1,1714 @@
+{
+  "sqlite-sync": {
+    "search_diagnostics": {
+      "search_text_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.4083,
+        "wall_time_median_sec": 0.4083,
+        "wall_time_min_sec": 0.4083,
+        "wall_time_max_sec": 0.4083,
+        "cpu_user_mean_sec": 0.4,
+        "cpu_sys_mean_sec": 0.02,
+        "rss_delta_mean_mb": 1.61,
+        "rss_peak_max_mb": 90.7,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "text",
+          "backend": "fts5",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 10,
+          "candidate_count_before_topk": 63,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 63,
+            "afterCount": 10,
+            "strategy": "stable-prefix",
+            "cutoffMatchedShould": null
+          },
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.text title/body ada",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:57faa1778b11fd196ed31f83eb5bd72a236ba195edf7dd5c82d23f470428f7fe",
+          "outcome_items": 100
+        }
+      },
+      "search_autocomplete_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.41,
+        "wall_time_median_sec": 0.41,
+        "wall_time_min_sec": 0.41,
+        "wall_time_max_sec": 0.41,
+        "cpu_user_mean_sec": 0.39,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.17,
+        "rss_peak_max_mb": 91.0,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "autocomplete",
+          "backend": "fts5",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 10,
+          "candidate_count_before_topk": 63,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 63,
+            "afterCount": 10,
+            "strategy": "stable-prefix",
+            "cutoffMatchedShould": null
+          },
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.autocomplete title/body alg",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:57faa1778b11fd196ed31f83eb5bd72a236ba195edf7dd5c82d23f470428f7fe",
+          "outcome_items": 100
+        }
+      },
+      "search_wildcard_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.3977,
+        "wall_time_median_sec": 0.3977,
+        "wall_time_min_sec": 0.3977,
+        "wall_time_max_sec": 0.3977,
+        "cpu_user_mean_sec": 0.37,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.2,
+        "rss_peak_max_mb": 91.5,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "wildcard",
+          "backend": "fts5-glob",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 10,
+          "candidate_count_before_topk": 62,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 62,
+            "afterCount": 10,
+            "strategy": "stable-prefix",
+            "cutoffMatchedShould": null
+          },
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.wildcard body *vector*",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:e5af1d46fa7b36754953f956c6a5bd1242aea3816321f5749f3232a3581ada03",
+          "outcome_items": 100
+        }
+      },
+      "search_regex_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 1.0255,
+        "wall_time_median_sec": 1.0255,
+        "wall_time_min_sec": 1.0255,
+        "wall_time_max_sec": 1.0255,
+        "cpu_user_mean_sec": 1.0,
+        "cpu_sys_mean_sec": 0.04,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 91.66,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "regex",
+          "backend": "python",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": 10,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.regex title Ada.*algorithms",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:57faa1778b11fd196ed31f83eb5bd72a236ba195edf7dd5c82d23f470428f7fe",
+          "outcome_items": 100
+        }
+      },
+      "search_compound_hybrid_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.4623,
+        "wall_time_median_sec": 0.4623,
+        "wall_time_min_sec": 0.4623,
+        "wall_time_max_sec": 0.4623,
+        "cpu_user_mean_sec": 0.44,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.08,
+        "rss_peak_max_mb": 92.22,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 10,
+          "candidate_count_before_topk": 62,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 62,
+            "afterCount": 10,
+            "strategy": "stable-prefix",
+            "cutoffMatchedShould": null
+          },
+          "ranking_source": null,
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              }
+            ],
+            "should": [],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "should": [],
+              "mustNot": []
+            },
+            "downstreamFilter": null,
+            "requiredCandidateableShould": 0,
+            "candidateableShouldCount": 0,
+            "candidateableShouldOperators": [],
+            "partialRanking": {
+              "supported": false,
+              "strategy": null
+            }
+          },
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.compound must(text=report 0)+filter(exists,wildcard)",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:e5af1d46fa7b36754953f956c6a5bd1242aea3816321f5749f3232a3581ada03",
+          "outcome_items": 100
+        }
+      },
+      "search_compound_should_near_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.4721,
+        "wall_time_median_sec": 0.4721,
+        "wall_time_min_sec": 0.4721,
+        "wall_time_max_sec": 0.4721,
+        "cpu_user_mean_sec": 0.47,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.03,
+        "rss_peak_max_mb": 92.3,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 62,
+          "candidate_count_before_topk": 62,
+          "topk_limit_hint": 10,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              }
+            ],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "near",
+                "candidateable": false,
+                "exact": false,
+                "backend": null
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [
+                "candidateable-exact"
+              ],
+              "should": [
+                "candidateable-exact",
+                "post-match-only"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": null,
+            "requiredCandidateableShould": 1,
+            "candidateableShouldCount": 1,
+            "candidateableShouldOperators": [
+              "exists"
+            ],
+            "partialRanking": {
+              "supported": false,
+              "strategy": null
+            }
+          },
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.compound must(text=report 0)+filter(wildcard)+should(exists,near)",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:e24b6048fb1c9f84acb7a5ffa0d3f13114f0acfadf4baebb9e1b3811a8f118f0",
+          "outcome_items": 100
+        }
+      },
+      "search_compound_candidateable_should_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.2453,
+        "wall_time_median_sec": 0.2453,
+        "wall_time_min_sec": 0.2453,
+        "wall_time_max_sec": 0.2453,
+        "cpu_user_mean_sec": 0.23,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.58,
+        "rss_peak_max_mb": 93.53,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 125,
+          "candidate_count_before_topk": 250,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 250,
+            "afterCount": 125,
+            "strategy": "exact-should-score-tier",
+            "cutoffMatchedShould": 1,
+            "cutoffShouldScore": 1.0,
+            "cutoffTier": {
+              "matchedShould": 1,
+              "shouldScore": 1.0
+            },
+            "candidateCountBeforePartialRanking": 250,
+            "candidateCountAfterPartialRanking": 125,
+            "partialRanking": {
+              "strategy": "matched-should-prefilter+exact-should-score-tier",
+              "matchedShouldCutoff": 2
+            }
+          },
+          "ranking_source": "fts-materialized-entries",
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              },
+              {
+                "operator": "autocomplete",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [],
+              "should": [
+                "candidateable-exact",
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": null,
+            "requiredCandidateableShould": 1,
+            "candidateableShouldCount": 3,
+            "candidateableShouldOperators": [
+              "exists",
+              "wildcard",
+              "autocomplete"
+            ],
+            "partialRanking": {
+              "supported": true,
+              "strategy": "fts-materialized-entries"
+            }
+          },
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:192dc40067ad71fe06852659f20de101565b380c2c14c21481ffe32c8690b425",
+          "outcome_items": 100
+        }
+      },
+      "search_compound_candidateable_should_matched_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.347,
+        "wall_time_median_sec": 0.347,
+        "wall_time_min_sec": 0.347,
+        "wall_time_max_sec": 0.347,
+        "cpu_user_mean_sec": 0.33,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.02,
+        "rss_peak_max_mb": 93.83,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 2,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 83,
+          "candidate_count_before_topk": 166,
+          "topk_limit_hint": 10,
+          "topk_prefilter": {
+            "applied": true,
+            "beforeCount": 166,
+            "afterCount": 83,
+            "strategy": "exact-should-score-tier",
+            "cutoffMatchedShould": 1,
+            "cutoffShouldScore": 1.0,
+            "cutoffTier": {
+              "matchedShould": 1,
+              "shouldScore": 1.0
+            },
+            "candidateCountBeforePartialRanking": 166,
+            "candidateCountAfterPartialRanking": 83,
+            "partialRanking": {
+              "strategy": "matched-should-prefilter+exact-should-score-tier",
+              "matchedShouldCutoff": 2
+            }
+          },
+          "ranking_source": "fts-materialized-entries",
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              },
+              {
+                "operator": "autocomplete",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [],
+              "should": [
+                "candidateable-exact",
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": {
+              "spec": {
+                "kind": "note"
+              },
+              "candidateable": true,
+              "exact": true,
+              "backend": "fts5-downstream-filter",
+              "supportedPaths": [
+                "kind"
+              ],
+              "supportedClauseCount": 1,
+              "unsupportedClauseCount": 0,
+              "supportedOperators": [
+                "eq"
+              ],
+              "booleanShape": "flat"
+            },
+            "requiredCandidateableShould": 1,
+            "candidateableShouldCount": 3,
+            "candidateableShouldOperators": [
+              "exists",
+              "wildcard",
+              "autocomplete"
+            ],
+            "partialRanking": {
+              "supported": true,
+              "strategy": "fts-materialized-entries"
+            }
+          },
+          "downstream_filter_prefilter": {
+            "kind": "note"
+          },
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "prefix-iterative",
+          "search_topk_growth_strategy": "adaptive-retention",
+          "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+match(kind=note)",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:725009f78539b31408fc343b3400ad1d1d088148b81daad4718759fa07431e25",
+          "outcome_items": 100
+        }
+      },
+      "search_compound_candidateable_should_title_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.7759,
+        "wall_time_median_sec": 0.7759,
+        "wall_time_min_sec": 0.7759,
+        "wall_time_max_sec": 0.7759,
+        "cpu_user_mean_sec": 0.51,
+        "cpu_sys_mean_sec": 0.03,
+        "rss_delta_mean_mb": 0.31,
+        "rss_peak_max_mb": 94.19,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 2,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 63,
+          "candidate_count_before_topk": 63,
+          "topk_limit_hint": 10,
+          "topk_prefilter": null,
+          "ranking_source": "fts-materialized-entries",
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path+downstream-filter",
+                "downstreamRefinement": {
+                  "applied": true,
+                  "path": "title",
+                  "valueCount": 1,
+                  "backend": "fts5-path+downstream-filter",
+                  "exact": true
+                }
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              },
+              {
+                "operator": "autocomplete",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5+downstream-filter",
+                "downstreamRefinement": {
+                  "applied": true,
+                  "path": "title",
+                  "valueCount": 1,
+                  "backend": "fts5+downstream-filter",
+                  "exact": true
+                }
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [],
+              "should": [
+                "candidateable-exact",
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": {
+              "spec": {
+                "title": "Ada algorithms"
+              },
+              "candidateable": true,
+              "exact": true,
+              "backend": "fts5-downstream-filter",
+              "supportedPaths": [
+                "title"
+              ],
+              "supportedClauseCount": 1,
+              "unsupportedClauseCount": 0,
+              "supportedOperators": [
+                "eq"
+              ],
+              "booleanShape": "flat"
+            },
+            "requiredCandidateableShould": 1,
+            "candidateableShouldCount": 3,
+            "candidateableShouldOperators": [
+              "exists",
+              "wildcard",
+              "autocomplete"
+            ],
+            "partialRanking": {
+              "supported": true,
+              "strategy": "fts-materialized-entries"
+            }
+          },
+          "downstream_filter_prefilter": {
+            "title": "Ada algorithms"
+          },
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "prefix-iterative",
+          "search_topk_growth_strategy": "adaptive-retention",
+          "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+match(title=Ada algorithms)",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:57faa1778b11fd196ed31f83eb5bd72a236ba195edf7dd5c82d23f470428f7fe",
+          "outcome_items": 100
+        }
+      },
+      "search_compound_candidateable_should_msm2_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.7701,
+        "wall_time_median_sec": 0.7701,
+        "wall_time_min_sec": 0.7701,
+        "wall_time_max_sec": 0.7701,
+        "cpu_user_mean_sec": 0.46,
+        "cpu_sys_mean_sec": 0.02,
+        "rss_delta_mean_mb": 0.09,
+        "rss_peak_max_mb": 94.7,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 125,
+          "candidate_count_before_topk": 125,
+          "topk_limit_hint": 10,
+          "topk_prefilter": null,
+          "ranking_source": "fts-materialized-entries",
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              },
+              {
+                "operator": "autocomplete",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [],
+              "should": [
+                "candidateable-exact",
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": null,
+            "requiredCandidateableShould": 2,
+            "candidateableShouldCount": 3,
+            "candidateableShouldOperators": [
+              "exists",
+              "wildcard",
+              "autocomplete"
+            ],
+            "partialRanking": {
+              "supported": true,
+              "strategy": "fts-materialized-entries"
+            }
+          },
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.compound must(text=report 0)+should(exists,wildcard,autocomplete)+minimumShouldMatch(2)",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:192dc40067ad71fe06852659f20de101565b380c2c14c21481ffe32c8690b425",
+          "outcome_items": 100
+        }
+      },
+      "search_compound_candidateable_should_tie_heavy_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.8365,
+        "wall_time_median_sec": 0.8365,
+        "wall_time_min_sec": 0.8365,
+        "wall_time_max_sec": 0.8365,
+        "cpu_user_mean_sec": 0.42,
+        "cpu_sys_mean_sec": 0.03,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 94.8,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 1,
+          "physical_plan": null,
+          "query_operator": "compound",
+          "backend": "fts5-prefilter",
+          "mode": null,
+          "similarity": null,
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": null,
+          "candidates_requested": null,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": 62,
+          "candidate_count_before_topk": 62,
+          "topk_limit_hint": 10,
+          "topk_prefilter": null,
+          "ranking_source": "fts-materialized-entries",
+          "compound_prefilter": {
+            "must": [
+              {
+                "operator": "text",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5"
+              }
+            ],
+            "filter": [],
+            "should": [
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "exists",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-path"
+              },
+              {
+                "operator": "wildcard",
+                "candidateable": true,
+                "exact": true,
+                "backend": "fts5-glob"
+              }
+            ],
+            "mustNot": [],
+            "clauseClasses": {
+              "must": [
+                "candidateable-exact"
+              ],
+              "filter": [],
+              "should": [
+                "candidateable-exact",
+                "candidateable-exact",
+                "candidateable-exact"
+              ],
+              "mustNot": []
+            },
+            "downstreamFilter": null,
+            "requiredCandidateableShould": 1,
+            "candidateableShouldCount": 3,
+            "candidateableShouldOperators": [
+              "exists",
+              "exists",
+              "wildcard"
+            ],
+            "partialRanking": {
+              "supported": true,
+              "strategy": "fts-materialized-entries"
+            }
+          },
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": null,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": "direct-window",
+          "search_topk_growth_strategy": null,
+          "query_shape": "$search.compound must(text=vector)+should(exists(title),exists(body),wildcard(body=*vector*))",
+          "outcome_oracle": "exact-output",
+          "outcome_sha256": "sha256:e5af1d46fa7b36754953f956c6a5bd1242aea3816321f5749f3232a3581ada03",
+          "outcome_items": 100
+        }
+      }
+    },
+    "vector_search_diagnostics": {
+      "vector_search_ann_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 1.1609,
+        "wall_time_median_sec": 1.1609,
+        "wall_time_min_sec": 1.1609,
+        "wall_time_max_sec": 1.1609,
+        "cpu_user_mean_sec": 0.29,
+        "cpu_sys_mean_sec": 0.02,
+        "rss_delta_mean_mb": 0.03,
+        "rss_peak_max_mb": 95.94,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "vectorSearch",
+          "backend": "usearch",
+          "mode": "ann",
+          "similarity": "cosine",
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": 10,
+          "candidates_requested": 24,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": 250,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "query_shape": "$vectorSearch cosine topk",
+          "outcome_oracle": "ann-result-shape",
+          "outcome_sha256": "sha256:d6e946d01b2ef613128a98f7b5425e36f26afed7f9205c087e7d4aa94f73a3c3",
+          "outcome_items": 100
+        }
+      },
+      "vector_search_cosine_low_candidates_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.503,
+        "wall_time_median_sec": 0.503,
+        "wall_time_min_sec": 0.503,
+        "wall_time_max_sec": 0.503,
+        "cpu_user_mean_sec": 0.26,
+        "cpu_sys_mean_sec": 0.02,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 96.36,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "vectorSearch",
+          "backend": "usearch",
+          "mode": "ann",
+          "similarity": "cosine",
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": 10,
+          "candidates_requested": 10,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": 250,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "query_shape": "$vectorSearch cosine topk + numCandidates(10)",
+          "outcome_oracle": "ann-result-shape",
+          "outcome_sha256": "sha256:d6e946d01b2ef613128a98f7b5425e36f26afed7f9205c087e7d4aa94f73a3c3",
+          "outcome_items": 100
+        }
+      },
+      "vector_search_cosine_high_candidates_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.7233,
+        "wall_time_median_sec": 0.7233,
+        "wall_time_min_sec": 0.7233,
+        "wall_time_max_sec": 0.7233,
+        "cpu_user_mean_sec": 0.35,
+        "cpu_sys_mean_sec": 0.03,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 96.78,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "vectorSearch",
+          "backend": "usearch",
+          "mode": "ann",
+          "similarity": "cosine",
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": 10,
+          "candidates_requested": 48,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": 250,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "query_shape": "$vectorSearch cosine topk + numCandidates(48)",
+          "outcome_oracle": "ann-result-shape",
+          "outcome_sha256": "sha256:d6e946d01b2ef613128a98f7b5425e36f26afed7f9205c087e7d4aa94f73a3c3",
+          "outcome_items": 100
+        }
+      },
+      "vector_search_dot_product_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.6759,
+        "wall_time_median_sec": 0.6759,
+        "wall_time_min_sec": 0.6759,
+        "wall_time_max_sec": 0.6759,
+        "cpu_user_mean_sec": 0.3,
+        "cpu_sys_mean_sec": 0.02,
+        "rss_delta_mean_mb": 0.08,
+        "rss_peak_max_mb": 97.64,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "vectorSearch",
+          "backend": "usearch",
+          "mode": "ann",
+          "similarity": "dotProduct",
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": 10,
+          "candidates_requested": 24,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": 250,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "query_shape": "$vectorSearch dotProduct topk",
+          "outcome_oracle": "ann-result-shape",
+          "outcome_sha256": "sha256:d6e946d01b2ef613128a98f7b5425e36f26afed7f9205c087e7d4aa94f73a3c3",
+          "outcome_items": 100
+        }
+      },
+      "vector_search_euclidean_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.5699,
+        "wall_time_median_sec": 0.5699,
+        "wall_time_min_sec": 0.5699,
+        "wall_time_max_sec": 0.5699,
+        "cpu_user_mean_sec": 0.29,
+        "cpu_sys_mean_sec": 0.02,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 97.7,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "vectorSearch",
+          "backend": "usearch",
+          "mode": "ann",
+          "similarity": "euclidean",
+          "min_score": null,
+          "filter_mode": null,
+          "exact_fallback_reason": null,
+          "candidates_evaluated": 10,
+          "candidates_requested": 24,
+          "documents_filtered": null,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": null,
+          "vector_filter_residual": null,
+          "candidate_expansion_strategy": null,
+          "documents_scanned": 250,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "query_shape": "$vectorSearch euclidean topk",
+          "outcome_oracle": "ann-result-shape",
+          "outcome_sha256": "sha256:d6e946d01b2ef613128a98f7b5425e36f26afed7f9205c087e7d4aa94f73a3c3",
+          "outcome_items": 100
+        }
+      },
+      "vector_search_filtered_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.5511,
+        "wall_time_median_sec": 0.5511,
+        "wall_time_min_sec": 0.5511,
+        "wall_time_max_sec": 0.5511,
+        "cpu_user_mean_sec": 0.28,
+        "cpu_sys_mean_sec": 0.03,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 97.73,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "vectorSearch",
+          "backend": "usearch",
+          "mode": "ann",
+          "similarity": "cosine",
+          "min_score": null,
+          "filter_mode": "candidate-prefilter",
+          "exact_fallback_reason": null,
+          "candidates_evaluated": 10,
+          "candidates_requested": 32,
+          "documents_filtered": 0,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": {
+            "spec": {
+              "kind": "reference"
+            },
+            "candidateable": true,
+            "exact": true,
+            "backend": "vector-filter-index",
+            "supportedPaths": [
+              "kind"
+            ],
+            "supportedClauseCount": 1,
+            "unsupportedClauseCount": 0,
+            "supportedOperators": [
+              "eq"
+            ],
+            "booleanShape": "flat"
+          },
+          "vector_filter_residual": {
+            "required": false,
+            "reason": null,
+            "candidateable": true,
+            "exact": true,
+            "supportedClauseCount": 1,
+            "unsupportedClauseCount": 0,
+            "spec": {
+              "kind": "reference"
+            }
+          },
+          "candidate_expansion_strategy": "adaptive-retention",
+          "documents_scanned": 250,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "query_shape": "$vectorSearch cosine topk + post-filter",
+          "outcome_oracle": "ann-result-shape",
+          "outcome_sha256": "sha256:d6e946d01b2ef613128a98f7b5425e36f26afed7f9205c087e7d4aa94f73a3c3",
+          "outcome_items": 100
+        }
+      },
+      "vector_search_filtered_boolean_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.1733,
+        "wall_time_median_sec": 0.1733,
+        "wall_time_min_sec": 0.1733,
+        "wall_time_max_sec": 0.1733,
+        "cpu_user_mean_sec": 0.16,
+        "cpu_sys_mean_sec": 0.0,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 97.8,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "vectorSearch",
+          "backend": "usearch",
+          "mode": "ann",
+          "similarity": "cosine",
+          "min_score": null,
+          "filter_mode": "candidate-prefilter",
+          "exact_fallback_reason": null,
+          "candidates_evaluated": 10,
+          "candidates_requested": 24,
+          "documents_filtered": 0,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": {
+            "spec": {
+              "$or": [
+                {
+                  "kind": "reference"
+                },
+                {
+                  "score": {
+                    "$gte": 10
+                  }
+                }
+              ]
+            },
+            "candidateable": true,
+            "exact": true,
+            "backend": "vector-filter-index",
+            "supportedPaths": [
+              "kind",
+              "score"
+            ],
+            "supportedClauseCount": 2,
+            "unsupportedClauseCount": 0,
+            "supportedOperators": [
+              "eq",
+              "range"
+            ],
+            "booleanShape": "$or"
+          },
+          "vector_filter_residual": {
+            "required": false,
+            "reason": null,
+            "candidateable": true,
+            "exact": true,
+            "supportedClauseCount": 2,
+            "unsupportedClauseCount": 0,
+            "spec": {
+              "$or": [
+                {
+                  "kind": "reference"
+                },
+                {
+                  "score": {
+                    "$gte": 10
+                  }
+                }
+              ]
+            }
+          },
+          "candidate_expansion_strategy": "adaptive-retention",
+          "documents_scanned": 250,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "query_shape": "$vectorSearch cosine topk + boolean candidate filter",
+          "outcome_oracle": "ann-result-shape",
+          "outcome_sha256": "sha256:d6e946d01b2ef613128a98f7b5425e36f26afed7f9205c087e7d4aa94f73a3c3",
+          "outcome_items": 100
+        }
+      },
+      "vector_search_filtered_underflow_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.2198,
+        "wall_time_median_sec": 0.2198,
+        "wall_time_min_sec": 0.2198,
+        "wall_time_max_sec": 0.2198,
+        "cpu_user_mean_sec": 0.2,
+        "cpu_sys_mean_sec": 0.02,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 97.95,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "vectorSearch",
+          "backend": "usearch",
+          "mode": "ann",
+          "similarity": "cosine",
+          "min_score": null,
+          "filter_mode": "candidate-prefilter",
+          "exact_fallback_reason": "candidate-prefilter-underflow",
+          "candidates_evaluated": 0,
+          "candidates_requested": 10,
+          "documents_filtered": 0,
+          "documents_filtered_by_min_score": null,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": {
+            "spec": {
+              "$and": [
+                {
+                  "kind": "reference"
+                },
+                {
+                  "score": {
+                    "$gte": 10
+                  }
+                }
+              ]
+            },
+            "candidateable": true,
+            "exact": true,
+            "backend": "vector-filter-index",
+            "supportedPaths": [
+              "kind",
+              "score"
+            ],
+            "supportedClauseCount": 2,
+            "unsupportedClauseCount": 0,
+            "supportedOperators": [
+              "eq",
+              "range"
+            ],
+            "booleanShape": "$and"
+          },
+          "vector_filter_residual": {
+            "required": false,
+            "reason": null,
+            "candidateable": true,
+            "exact": true,
+            "supportedClauseCount": 2,
+            "unsupportedClauseCount": 0,
+            "spec": {
+              "$and": [
+                {
+                  "kind": "reference"
+                },
+                {
+                  "score": {
+                    "$gte": 10
+                  }
+                }
+              ]
+            }
+          },
+          "candidate_expansion_strategy": "adaptive-retention",
+          "documents_scanned": 250,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "query_shape": "$vectorSearch cosine topk + rare boolean candidate filter",
+          "outcome_oracle": "ann-result-shape",
+          "outcome_sha256": "sha256:d6e946d01b2ef613128a98f7b5425e36f26afed7f9205c087e7d4aa94f73a3c3",
+          "outcome_items": 100
+        }
+      },
+      "vector_search_filtered_min_score_topk_100": {
+        "repetitions": 1,
+        "wall_time_mean_sec": 0.2797,
+        "wall_time_median_sec": 0.2797,
+        "wall_time_min_sec": 0.2797,
+        "wall_time_max_sec": 0.2797,
+        "cpu_user_mean_sec": 0.2,
+        "cpu_sys_mean_sec": 0.01,
+        "rss_delta_mean_mb": 0.0,
+        "rss_peak_max_mb": 97.95,
+        "metadata": {
+          "summary": "sqlite/search opaque",
+          "engine": "sqlite",
+          "strategy": "search",
+          "planning_mode": "strict",
+          "streaming_batch_execution": false,
+          "incremental_group_input": false,
+          "partitioned_group_state_candidate": false,
+          "streaming_group_output_candidate": false,
+          "incremental_sort_input": false,
+          "streaming_sort_output": false,
+          "remaining_stage_count": 0,
+          "physical_plan": null,
+          "query_operator": "vectorSearch",
+          "backend": "usearch",
+          "mode": "ann",
+          "similarity": "cosine",
+          "min_score": 0.999,
+          "filter_mode": "candidate-prefilter",
+          "exact_fallback_reason": null,
+          "candidates_evaluated": 10,
+          "candidates_requested": 24,
+          "documents_filtered": 0,
+          "documents_filtered_by_min_score": 0,
+          "candidate_count": null,
+          "candidate_count_before_topk": null,
+          "topk_limit_hint": null,
+          "topk_prefilter": null,
+          "ranking_source": null,
+          "compound_prefilter": null,
+          "downstream_filter_prefilter": null,
+          "vector_filter_prefilter": {
+            "spec": {
+              "kind": "note"
+            },
+            "candidateable": true,
+            "exact": true,
+            "backend": "vector-filter-index",
+            "supportedPaths": [
+              "kind"
+            ],
+            "supportedClauseCount": 1,
+            "unsupportedClauseCount": 0,
+            "supportedOperators": [
+              "eq"
+            ],
+            "booleanShape": "flat"
+          },
+          "vector_filter_residual": {
+            "required": false,
+            "reason": null,
+            "candidateable": true,
+            "exact": true,
+            "supportedClauseCount": 1,
+            "unsupportedClauseCount": 0,
+            "spec": {
+              "kind": "note"
+            }
+          },
+          "candidate_expansion_strategy": "adaptive-retention",
+          "documents_scanned": 250,
+          "documents_scanned_after_prefilter": null,
+          "search_topk_strategy": null,
+          "search_topk_growth_strategy": null,
+          "query_shape": "$vectorSearch cosine topk + filter(kind=note) + minScore(0.999)",
+          "outcome_oracle": "ann-result-shape",
+          "outcome_sha256": "sha256:d6e946d01b2ef613128a98f7b5425e36f26afed7f9205c087e7d4aa94f73a3c3",
+          "outcome_items": 100
+        }
+      }
+    }
+  }
+}

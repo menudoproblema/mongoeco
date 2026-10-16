@@ -1,0 +1,55 @@
+--- previous tested proxy
++++ src/mongoeco/wire/proxy.py
+@@ -16,6 +16,7 @@
+ from mongoeco.wire.executor import WireCommandExecutor
+ from mongoeco.wire.protocol import (
+     OP_MSG,
++    OP_MSG_MORE_TO_COME,
+     OP_QUERY,
+     decode_op_msg,
+     decode_op_query,
+@@ -193,8 +194,9 @@
+                 response = await self._dispatch_wire_request(
+                     header, payload, connection=connection
+                 )
+-                writer.write(response)
+-                await writer.drain()
++                if response is not None:
++                    writer.write(response)
++                    await writer.drain()
+         except (asyncio.IncompleteReadError, ConnectionError):
+             pass
+         finally:
+@@ -205,16 +207,20 @@
+ 
+     async def _dispatch_wire_request(
+         self, header, payload: bytes, *, connection
+-    ) -> bytes:
++    ) -> bytes | None:
+         request_id = next(self._request_ids)
++        more_to_come = False
+         try:
+             if not self._surface.supports_opcode(header.op_code):
+                 raise OperationFailure(f"unsupported wire opCode: {header.op_code}")
+             if header.op_code == OP_MSG:
+                 request = decode_op_msg(header, payload)
++                more_to_come = bool(request.flag_bits & OP_MSG_MORE_TO_COME)
+                 result = await self._executor.execute_command(
+                     request.body, connection=connection
+                 )
++                if more_to_come:
++                    return None
+                 return encode_op_msg_response(
+                     result,
+                     request_id=request_id,
+@@ -235,6 +241,10 @@
+                 )
+             raise OperationFailure(f"unsupported wire opCode: {header.op_code}")
+         except Exception as exc:
++            # Unacknowledged requests must not leave an error response waiting
++            # for the next command on this connection either.
++            if more_to_come:
++                return None
+             result = self._executor.error_document(exc)
+             if header.op_code == OP_QUERY:
+                 return encode_op_reply(

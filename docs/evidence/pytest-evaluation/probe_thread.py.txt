@@ -1,0 +1,46 @@
+import asyncio, concurrent.futures, threading
+from contextlib import AbstractContextManager
+from mongoeco.wire import AsyncMongoEcoProxyServer
+from mongoeco.engines.memory import MemoryEngine
+from mongoeco.engines.sqlite import SQLiteEngine
+
+class Server(AbstractContextManager):
+    def __init__(self,backend,path):
+        self.backend=backend
+        self.path=path
+        self.ready=concurrent.futures.Future()
+        self.thread=threading.Thread(target=self.run,name='mongoeco-probe-server')
+    def run(self):
+        try:
+            asyncio.run(self.serve())
+        except BaseException as exc:
+            if not self.ready.done(): self.ready.set_exception(exc)
+            else: self.error=exc
+    async def serve(self):
+        self.loop=asyncio.get_running_loop()
+        self.stop=asyncio.Event()
+        engine=MemoryEngine() if self.backend=='memory' else SQLiteEngine(str(self.path),executor_workers=1)
+        proxy=AsyncMongoEcoProxyServer(engine=engine,pymongo_profile='4.19')
+        try:
+            await proxy.start()
+            self.ready.set_result(proxy.address)
+            await self.stop.wait()
+        finally:
+            # Prototype owns its loop: cancel and await connection handlers
+            # BEFORE engine disconnect, unlike the current public close.
+            tasks=asyncio.all_tasks()-{asyncio.current_task()}
+            for task in tasks:task.cancel()
+            await asyncio.gather(*tasks,return_exceptions=True)
+            await proxy.close()
+    def __enter__(self):
+        self.thread.start()
+        try:self.address=self.ready.result(10)
+        except BaseException:
+            self.thread.join(10)
+            raise
+        return self
+    def __exit__(self,*args):
+        self.loop.call_soon_threadsafe(self.stop.set)
+        self.thread.join(10)
+        assert not self.thread.is_alive()
+        if hasattr(self,'error'):raise self.error

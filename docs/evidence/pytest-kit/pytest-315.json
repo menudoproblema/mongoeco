@@ -1,0 +1,12 @@
+{
+  "exit_code": 0,
+  "command": [
+    "/tmp/mongoeco-python315/venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--tb=short",
+    "-o",
+    "faulthandler_timeout=45"
+  ]
+}

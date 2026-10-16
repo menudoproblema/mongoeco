@@ -1,0 +1,10 @@
+{
+  "whitespace": "passed",
+  "ci_yaml": "passed",
+  "bash_blocks": 35,
+  "workflow_sha256": {
+    "ci.yml": "6b2eef211b004cda626b8303105ad760b7e8b49f99f17ff0b2fbfd7ebd3f7b9a",
+    "mongodb-differential.yml": "929bad833a61de5c1ac350f0dffc1128766c5e27dbb92bd5bb70550001d74855"
+  },
+  "hosted_jobs_executed_here": false
+}

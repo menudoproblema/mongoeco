@@ -1,0 +1,88 @@
+[
+  {
+    "command": [
+      "-m",
+      "unittest",
+      "tests.differential.test_positional_update_parity",
+      "-v"
+    ],
+    "exit_code": 0,
+    "seconds": 35.08278699987568,
+    "log": "real-9_0-0.log"
+  },
+  {
+    "command": [
+      "scripts/run_mongodb_real_differential.py",
+      "9.0",
+      "--json-report",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/native-9_0.json"
+    ],
+    "exit_code": 0,
+    "seconds": 4.927830582950264,
+    "log": "real-9_0-1.log"
+  },
+  {
+    "command": [
+      "scripts/capture_differential_replay_golden.py",
+      "--target",
+      "9.0",
+      "--case-set",
+      "review-improvements",
+      "--output",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/review-improvements-9_0.json",
+      "--check",
+      "tests/fixtures/mongodb_review_improvements_9_0.json"
+    ],
+    "exit_code": 0,
+    "seconds": 4.646462749922648,
+    "log": "real-9_0-2.log"
+  },
+  {
+    "command": [
+      "scripts/capture_differential_replay_golden.py",
+      "--target",
+      "9.0",
+      "--case-set",
+      "version-deltas",
+      "--output",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/version-deltas-9_0.json",
+      "--check",
+      "tests/fixtures/mongodb_version_deltas_9_0.json"
+    ],
+    "exit_code": 0,
+    "seconds": 7.200744125060737,
+    "log": "real-9_0-3.log"
+  },
+  {
+    "command": [
+      "scripts/capture_differential_replay_golden.py",
+      "--target",
+      "9.0",
+      "--case-set",
+      "semantic-guarantees",
+      "--output",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/semantic-guarantees-9_0.json",
+      "--check",
+      "tests/fixtures/mongodb_semantic_guarantees_9_0.json"
+    ],
+    "exit_code": 0,
+    "seconds": 2.69993158406578,
+    "log": "real-9_0-4.log"
+  },
+  {
+    "command": [
+      "scripts/capture_differential_replay_golden.py",
+      "--target",
+      "9.0",
+      "--case-set",
+      "index-guarantees",
+      "--output",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/index-guarantees-9_0.json",
+      "--check",
+      "tests/fixtures/mongodb_index_guarantees_9_0.json"
+    ],
+    "exit_code": 0,
+    "seconds": 0.6233653749804944,
+    "log": "real-9_0-5.log"
+  }
+]

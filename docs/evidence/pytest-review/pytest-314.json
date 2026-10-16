@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "command": [
+    "/tmp/mongoeco-python315/py314/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--tb=short",
+    "-o",
+    "faulthandler_timeout=45",
+    "--cov=mongoeco",
+    "--cov-report=term",
+    "--cov-report=json:/tmp/mongoeco-pytest-review/coverage314.json"
+  ]
+}

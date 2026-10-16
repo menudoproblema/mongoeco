@@ -1,0 +1,23 @@
+{
+  "schema": "mongoeco-python-support-policy-extension/v1",
+  "date": "2026-10-15",
+  "authority": "User explicitly confirms Python 3.13 support through October 2028.",
+  "python_313_support_through": "2028-10",
+  "prior_python_313_support_through": "2027-10",
+  "supersedes_policy_in": "policy-amendment.json",
+  "prior_amendment_sha256": "fdcc6463ac43c9cb10fbf1ffd4aab5c7b4a1112af5e145400db58599ec0a5528",
+  "runtime_unchanged": true,
+  "ci_matrix_unchanged": true,
+  "verification": "Active policy references checked; historical execution reports retain their original policy. Documentation-only support date change; no new runtime test claim.",
+  "packaging": "Rebuild the release candidate to include the current README. Prior wheel/sdist identities and gate results remain historical.",
+  "policy_sources_sha256": {
+    "README.md": "b9798e53703f68935eecb9f33a0de71297c6f7c568a21ff09977c6634e430135",
+    "COMPATIBILITY.md": "0adf4021c7f813a6d66a1ef3d323bad23f188dca7fc8b8303aa1958545d96ee0",
+    "CHANGELOG.md": "f67fb9b881c53caaff5d6438a0e9029ddc4968482355c160768aa3dfa6df0bd1",
+    "TODO.md": "932bd017f703ec441d42ee80e877a3679a4eaec450132cca886642415ac1d11a",
+    "docs/python-support.md": "6179fd5bc6639d8bd1314f33de43a36bbc72706454c7ef3ef5e2bcb794ceda28",
+    "docs/architecture/testing-and-compatibility.md": "aefe5c0c5b890520054f4cbc4b04f0a3a4d2703f846ec0cdb6a9bfd97abded3e",
+    "docs/release-checklist.md": "3158be4d8837686f2773a75968a2c7057c2050819d761d4c56f42a1accaa63c9",
+    "docs/plan-write-parity.md": "ae6d7e689473260eb574d2f848c658e11ca37496c0ead31981c55e86fe18ea1b"
+  }
+}

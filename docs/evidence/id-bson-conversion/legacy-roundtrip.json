@@ -1,0 +1,12 @@
+{
+  "old_reader_wheel_sha256": "ecb65044a3d47ef9d2792cd10131907192179170acd30d5c738618251bf1a294",
+  "new_writer_wheel_sha256": "34b3dcd52d7728b284292dc5e66297b600ab7b4193b68e90a280bf63abefed32",
+  "fixture_origin": "tests/fixtures/sqlite/numeric-identities-before-fix.sqlite",
+  "old_reader_runtime_files_compared": 275,
+  "result": {
+    "old_reader_module": "/private/tmp/mongoeco-id-conversion/old-reader/lib/python3.14/site-packages/mongoeco/__init__.py",
+    "rows_per_facade": 5,
+    "sync_async_equal": true,
+    "secondary_indexes_valid": true
+  }
+}

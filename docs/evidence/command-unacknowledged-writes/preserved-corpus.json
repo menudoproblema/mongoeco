@@ -1,0 +1,20 @@
+[
+  {
+    "target": "7.0",
+    "legacy_helper_observations": 38,
+    "unchanged": true,
+    "added_command_observations": 28
+  },
+  {
+    "target": "8.0",
+    "legacy_helper_observations": 38,
+    "unchanged": true,
+    "added_command_observations": 28
+  },
+  {
+    "target": "9.0",
+    "legacy_helper_observations": 38,
+    "unchanged": true,
+    "added_command_observations": 28
+  }
+]

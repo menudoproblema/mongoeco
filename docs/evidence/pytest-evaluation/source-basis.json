@@ -1,0 +1,14 @@
+{
+  "pyproject.toml": "29010ff0f82e0ec0d7322b368f23ac5a54840b4060c237d43450a509b8d28971",
+  "src/mongoeco/wire/proxy.py": "f1abe4b1f69b460b6a43a163e0182caf214d653c4bcc5d4dcb0e900ccd075c03",
+  "src/mongoeco/wire/connections.py": "e578f5566887ce9b1942eb5d160615a11c913d79e32a10c0c2de58dfe19ae8c7",
+  "src/mongoeco/conformance/pytest.py": "d99f03522fa60a6d57d085544524881de6e349421ed0b04752b4bf29205adfd7",
+  "src/mongoeco/compat/registry.py": "f2f97e1bcaf0508319ae95a37f8606e5274076fa4dd9e49a6d49e75548ddd0bb",
+  "src/mongoeco/engines/sqlite.py": "ee6c9a63aac134f3c8862c0da255283e1a20c9580ab14ab8fe0a8cbc93ee5b88",
+  "tests/conftest.py": "2bd367a45e1d68699ed220d9a1da8a466022eec6d344677705b37319474cafa4",
+  "docs/architecture/driver-and-wire.md": "60073916d439420a920955bfa7af0ea9abf6cc6d26a2f952f293c102da57993a",
+  "docs/architecture/decisions/ADR-009-parity-tests-como-politica-de-aceptacion.md": "f584e37f3153d8b7c80b062c16a9426951397e4568935751935ea5bc5af0ed5b",
+  ".github/workflows/ci.yml": "82293860e5611200fd17819894f240491cd9e48d104be4253d181c623e771f52",
+  "scripts/run_write_consumer_canary.py": "942bb72aceb525a2ce73c6c688b863f38147d6804f6296d8f814a07ef4485425",
+  "tests/consumers/write_canary.py": "d48c45d7f85771c8f85be86d884ec1da85046f85f292cab32b53752305337236"
+}

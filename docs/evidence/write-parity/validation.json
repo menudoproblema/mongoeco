@@ -1,0 +1,236 @@
+{
+  "schema": "mongoeco-write-parity-validation/v1",
+  "status": "implementation_complete_release_decision_pending",
+  "date": "2026-10-15",
+  "candidate": {
+    "git_head": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "uncommitted_workset": true,
+    "workset_sha256": "7f0e897bc1ac3325baa8369c7042275123817a53529cc893e29b1eafa452f164",
+    "workset_manifest": "workset-sources.json",
+    "runtime_sha256": "a434b95e3d40881883697da8335212525277e626821e32f5f8ebe2919088d1ba",
+    "runtime_manifest": "runtime-sources.json",
+    "wheel_path": "/tmp/mongoeco-write-parity/final-dist/mongoeco-4.9.1-py3-none-any.whl",
+    "wheel_sha256": "7a703985c5f2a5e83e2101ba6948065617b0d70b40a009392e4e12d3533c6c2c",
+    "wheel_runtime_files_compared": 275,
+    "package_version": "4.9.1",
+    "distribution_disposition": "unpublished workset build; not the published 4.9.1; next release number not selected"
+  },
+  "acceptance": {
+    "sequential_ids": 170,
+    "direct_observations": 4080,
+    "native_write_references": 510,
+    "local_histories": 1440,
+    "native_histories": 180,
+    "raw_observations": 96,
+    "wire_observations": 96,
+    "native_raw_references": 24,
+    "consumer_flows": 16,
+    "consumer_native_payload_replays": 48,
+    "required_consumer_native_references": 24,
+    "auxiliary_preflight_native_captures": 36,
+    "unexpected_skips_in_selected_matrices": 0
+  },
+  "native_matrix": [
+    {
+      "target": "7.0",
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "writes": 170,
+      "raw_commands": 8,
+      "histories": 60,
+      "fixture": "tests/fixtures/write_parity_mongodb_7_0.json",
+      "sha256": "d52d85c2a8b93a2e65d828c0eae5ce989d801c17a690685e20cfc18ae7aeaa77"
+    },
+    {
+      "target": "8.0",
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "writes": 170,
+      "raw_commands": 8,
+      "histories": 60,
+      "fixture": "tests/fixtures/write_parity_mongodb_8_0.json",
+      "sha256": "5b5274868c3003d81f91d3e5baf2d6a11a007f1cd32c992060cd7e022a15b55f"
+    },
+    {
+      "target": "9.0",
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "writes": 170,
+      "raw_commands": 8,
+      "histories": 60,
+      "fixture": "tests/fixtures/write_parity_mongodb_9_0.json",
+      "sha256": "661ade7d090a45c5780981bfc372dc33d2017905e59be1011b77e4e1524502bd"
+    }
+  ],
+  "sdk": {
+    "versions": [
+      "4.11.3",
+      "4.13.2",
+      "4.17.0",
+      "4.18.2",
+      "4.19.0",
+      "4.9.2"
+    ],
+    "probes": 324,
+    "statuses": {
+      "arguments-accepted": 252,
+      "signature-rejected": 46,
+      "configuration-rejected": 19,
+      "completed": 7
+    }
+  },
+  "coverage": {
+    "covered_lines": 42942,
+    "num_statements": 43359,
+    "percent_covered": 99.0382619525358,
+    "percent_covered_display": "99.04",
+    "missing_lines": 417,
+    "excluded_lines": 894,
+    "percent_statements_covered": 99.0382619525358,
+    "percent_statements_covered_display": "99.04"
+  },
+  "gates": [
+    {
+      "gate": "pytest-python-313",
+      "command": "python -m pytest -q",
+      "passed": 8976,
+      "expected_skips": 31,
+      "subtests_passed": 10699,
+      "exit_code": 0,
+      "log": "pytest313-final.log"
+    },
+    {
+      "gate": "pytest-python-314",
+      "command": "python -m pytest -q --cov=mongoeco --cov-report=term --cov-report=json",
+      "passed": 8976,
+      "expected_skips": 31,
+      "subtests_passed": 10699,
+      "exit_code": 0,
+      "log": "pytest314-final.log"
+    },
+    {
+      "gate": "unittest-final",
+      "exit_code": 0,
+      "log": "unittest-final.log"
+    },
+    {
+      "gate": "properties-deep",
+      "exit_code": 0,
+      "log": "properties-deep.log"
+    },
+    {
+      "gate": "typing-final",
+      "exit_code": 0,
+      "log": "typing-final.log"
+    },
+    {
+      "gate": "installed-corpus-final",
+      "exit_code": 0,
+      "log": "installed-corpus-final.log"
+    },
+    {
+      "gate": "oracle-binding-final",
+      "exit_code": 0,
+      "log": "oracle-binding-final.log"
+    },
+    {
+      "gate": "inventory-observer-final",
+      "exit_code": 0,
+      "log": "inventory-observer-final.log"
+    },
+    {
+      "gate": "minimal-imports",
+      "exit_code": 0,
+      "log": "minimal-imports.log"
+    },
+    {
+      "gate": "minimal-module-imports",
+      "exit_code": 0,
+      "log": "minimal-module-imports.log"
+    }
+  ],
+  "other_gates": {
+    "conformance_memory": 10,
+    "conformance_sqlite": 10,
+    "external_spi_canary": "passed; see contracts-2.log",
+    "current_compat_snapshots": "passed",
+    "sqlite_45_fixture_compatibility": "passed",
+    "public_manifest": "passed; only ordered added to both insert_many signatures",
+    "lint_base": "v4.9.1",
+    "lint_result": "passed; 58 changed Python files vs release base",
+    "new_file_format": "passed; 16 files",
+    "native_legacy_regressions": "29 general cases, 114 positional inputs, 284 native captures per server; see native-gates reports",
+    "native_capture_imports_candidate": false
+  },
+  "benchmarks": {
+    "baseline_commit": "c0746abee8f0271698bffb1ac4bd00a3a35c6d1f",
+    "size": 1000,
+    "warmup": 1,
+    "repetitions": 5,
+    "comparisons": [
+      {
+        "group": "benchmark",
+        "comparable_inputs_and_outcomes": true,
+        "maximum_median_ratio": 1.2435530085959885
+      },
+      {
+        "group": "benchmark-confirm-memory-sync",
+        "comparable_inputs_and_outcomes": true,
+        "maximum_median_ratio": 1.1460674157303372
+      },
+      {
+        "group": "benchmark-confirm-sqlite-sync",
+        "comparable_inputs_and_outcomes": true,
+        "maximum_median_ratio": 1.0401381096245144
+      },
+      {
+        "group": "benchmark-reverse-memory-sync",
+        "comparable_inputs_and_outcomes": true,
+        "maximum_median_ratio": 1.0276162790697674
+      }
+    ],
+    "assessment": "No stable regression reproduced: initial maximum +24.4%, isolated SQLite maximum +4.1%, Memory first confirmation +14.7% then maximum +2.8% with reversed order. All input and output hashes match. No universal latency claim."
+  },
+  "review": {
+    "type": "self_review",
+    "base": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "diff_reviewed": true,
+    "documentation_aligned": true,
+    "workset_fixed_by_manifest": true,
+    "remaining_findings_in_scope": [],
+    "additional_review_finding_closed": "Single-write engine validation after a committed prefix must not retry the prefix; covered by SingleWriteMemoryEngine tests. Consumer replay uses unique databases and verifies cleanup."
+  },
+  "consumer": {
+    "original_source_hashes_unchanged": true,
+    "permanent_dependency_pin_changed": false,
+    "semantic_correctors_invoked": 0,
+    "framework_revision": "327491fd14960b2b496001d326d5d9a0b6760529",
+    "framework_storage_sha256": "baa9f1e98a41ec2593d11189ca7634abc1081b3152c73f49106fd9d38b02dde1"
+  },
+  "limits": [
+    "Finite corpus and schedules, not distributed transaction or network retry parity.",
+    "Native admission ran locally on macOS with exact server patches/FCVs; workflow is updated but no hosted GitHub run is claimed.",
+    "Permanent consumer adoption belongs to the consumer owner.",
+    "No release version selected, no tag, no distribution published."
+  ],
+  "cleanup": {
+    "native_capture_databases_verified_removed": true,
+    "consumer_replay_databases_verified_removed": true,
+    "native_server_processes_stopped": true
+  },
+  "verification_reuse": {
+    "final_wheel_unchanged_after_full_suites": true,
+    "later_changes": [
+      "Additional oracle hash assertions in corpus replay; rerun 4080 observations passed.",
+      "Consumer replay database names made unique and cleanup asserted; rerun all 16 flows against all 3 servers passed.",
+      "Documentation and CI selection/dependency updates; inventory, lint and YAML checks passed."
+    ],
+    "reason_no_duplicate_global_run": "No runtime/resource file changed after the final wheel and global suites; affected verification paths were rerun."
+  }
+}

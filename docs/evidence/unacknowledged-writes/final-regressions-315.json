@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "command": [
+    "/tmp/mongoeco-python315/venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/integration/wire/test_unacknowledged.py",
+    "-q",
+    "--tb=short"
+  ]
+}

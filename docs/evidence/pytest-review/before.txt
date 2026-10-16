@@ -1,0 +1,335 @@
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+_ test_asyncio_effective_broader_loop_rejected_before_start[@pytest.mark.asyncio-strict-module] _
+
+pytester = <Pytester PosixPath('/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start0')>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10c650c30>
+marker = '@pytest.mark.asyncio', mode = 'strict', default_scope = 'module'
+
+    @pytest.mark.parametrize(
+        ("marker", "mode", "default_scope"),
+        [
+            ("@pytest.mark.asyncio", "strict", "module"),
+            ("", "auto", "module"),
+            ("@pytest.mark.asyncio(loop_scope=None)", "strict", "module"),
+            ("@pytest.mark.asyncio(scope='module')", "strict", "function"),
+        ],
+    )
+    def test_asyncio_effective_broader_loop_rejected_before_start(
+        pytester, monkeypatch, marker, mode, default_scope
+    ):
+        args = prepare(
+            pytester,
+            monkeypatch,
+            "pytest_asyncio",
+            f"import pytest\n{marker}\nasync def test_loop(mongoeco_async_client): pass",
+        )
+        pytester.makeini(
+            "[pytest]\nasyncio_default_fixture_loop_scope=function\n"
+            f"asyncio_default_test_loop_scope={default_scope}\nasyncio_mode={mode}"
+        )
+        result = run_session(pytester, *args, "--mongoeco-backend=both")
+>       result.assert_outcomes(errors=2)
+E       AssertionError: assert {'passed': 2,...rors': 0, ...} == {'passed': 0,...rors': 2, ...}
+E         
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {'errors': 0} != {'errors': 2}
+E         {'passed': 2} != {'passed': 0}
+E         Use -v to get more diff
+
+/Users/uve/Proyectos/mongoeco/tests/integration/pytest_kit/test_fixtures.py:373: AssertionError
+----------------------------- Captured stdout call -----------------------------
+running: /private/tmp/mongoeco-python315/py314/bin/python -mpytest --basetemp=/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start0/runpytest-0 -p pytest_asyncio.plugin -p anyio.pytest_plugin -q --mongoeco-backend=both
+     in: /private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start0
+..                                                                       [100%]
+2 passed in 0.06s
+___ test_asyncio_effective_broader_loop_rejected_before_start[-auto-module] ____
+
+pytester = <Pytester PosixPath('/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start1')>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x108e65940>
+marker = '', mode = 'auto', default_scope = 'module'
+
+    @pytest.mark.parametrize(
+        ("marker", "mode", "default_scope"),
+        [
+            ("@pytest.mark.asyncio", "strict", "module"),
+            ("", "auto", "module"),
+            ("@pytest.mark.asyncio(loop_scope=None)", "strict", "module"),
+            ("@pytest.mark.asyncio(scope='module')", "strict", "function"),
+        ],
+    )
+    def test_asyncio_effective_broader_loop_rejected_before_start(
+        pytester, monkeypatch, marker, mode, default_scope
+    ):
+        args = prepare(
+            pytester,
+            monkeypatch,
+            "pytest_asyncio",
+            f"import pytest\n{marker}\nasync def test_loop(mongoeco_async_client): pass",
+        )
+        pytester.makeini(
+            "[pytest]\nasyncio_default_fixture_loop_scope=function\n"
+            f"asyncio_default_test_loop_scope={default_scope}\nasyncio_mode={mode}"
+        )
+        result = run_session(pytester, *args, "--mongoeco-backend=both")
+>       result.assert_outcomes(errors=2)
+E       AssertionError: assert {'passed': 2,...rors': 0, ...} == {'passed': 0,...rors': 2, ...}
+E         
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {'errors': 0} != {'errors': 2}
+E         {'passed': 2} != {'passed': 0}
+E         Use -v to get more diff
+
+/Users/uve/Proyectos/mongoeco/tests/integration/pytest_kit/test_fixtures.py:373: AssertionError
+----------------------------- Captured stdout call -----------------------------
+running: /private/tmp/mongoeco-python315/py314/bin/python -mpytest --basetemp=/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start1/runpytest-0 -p pytest_asyncio.plugin -p anyio.pytest_plugin -q --mongoeco-backend=both
+     in: /private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start1
+..                                                                       [100%]
+2 passed in 0.07s
+_ test_asyncio_effective_broader_loop_rejected_before_start[@pytest.mark.asyncio(loop_scope=None)-strict-module] _
+
+pytester = <Pytester PosixPath('/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start2')>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10c66c3b0>
+marker = '@pytest.mark.asyncio(loop_scope=None)', mode = 'strict'
+default_scope = 'module'
+
+    @pytest.mark.parametrize(
+        ("marker", "mode", "default_scope"),
+        [
+            ("@pytest.mark.asyncio", "strict", "module"),
+            ("", "auto", "module"),
+            ("@pytest.mark.asyncio(loop_scope=None)", "strict", "module"),
+            ("@pytest.mark.asyncio(scope='module')", "strict", "function"),
+        ],
+    )
+    def test_asyncio_effective_broader_loop_rejected_before_start(
+        pytester, monkeypatch, marker, mode, default_scope
+    ):
+        args = prepare(
+            pytester,
+            monkeypatch,
+            "pytest_asyncio",
+            f"import pytest\n{marker}\nasync def test_loop(mongoeco_async_client): pass",
+        )
+        pytester.makeini(
+            "[pytest]\nasyncio_default_fixture_loop_scope=function\n"
+            f"asyncio_default_test_loop_scope={default_scope}\nasyncio_mode={mode}"
+        )
+        result = run_session(pytester, *args, "--mongoeco-backend=both")
+        result.assert_outcomes(errors=2)
+        result.stdout.fnmatch_lines(["*require a function-scoped test loop*"])
+>       assert json.loads((pytester.path / "cleanup.json").read_text())["endpoints"] == 0
+E       assert 2 == 0
+
+/Users/uve/Proyectos/mongoeco/tests/integration/pytest_kit/test_fixtures.py:375: AssertionError
+----------------------------- Captured stdout call -----------------------------
+running: /private/tmp/mongoeco-python315/py314/bin/python -mpytest --basetemp=/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start2/runpytest-0 -p pytest_asyncio.plugin -p anyio.pytest_plugin -q --mongoeco-backend=both
+     in: /private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start2
+EE                                                                       [100%]
+==================================== ERRORS ====================================
+_____________________ ERROR at setup of test_loop[memory] ______________________
+
+self = <Coroutine test_loop[memory]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest_asyncio/plugin.py:407: in _asyncgen_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest_asyncio/plugin.py:403: in setup
+    res = await gen_obj.__anext__()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+request = <SubRequest 'mongoeco_async_client' for <Coroutine test_loop[memory]>>
+mongoeco_uri = 'mongodb://127.0.0.1:61806/?directConnection=true'
+_mongoeco_options = {'serverSelectionTimeoutMS': 3000}
+
+    @pytest_asyncio.fixture(loop_scope="function")
+    async def mongoeco_async_client(
+        request: pytest.FixtureRequest, mongoeco_uri: str, _mongoeco_options: dict[str, Any]
+    ) -> AsyncIterator[AsyncMongoClient[dict[str, Any]]]:
+        """Yield a real client bound to the test's function-scoped asyncio loop."""
+        marker = request.node.get_closest_marker("asyncio")
+        scope = (
+            marker.kwargs.get("loop_scope", "function")
+            if marker is not None
+            else request.config.getini("asyncio_default_test_loop_scope")
+        )
+        if scope != "function":
+            message = "Mongoeco async clients require a function-scoped test loop"
+>           raise pytest.UsageError(message)
+E           pytest.UsageError: Mongoeco async clients require a function-scoped test loop
+
+/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/pytest_asyncio.py:42: UsageError
+_____________________ ERROR at setup of test_loop[sqlite] ______________________
+
+self = <Coroutine test_loop[sqlite]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest_asyncio/plugin.py:407: in _asyncgen_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:127: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.14/3.14.5/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py:719: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest_asyncio/plugin.py:403: in setup
+    res = await gen_obj.__anext__()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+request = <SubRequest 'mongoeco_async_client' for <Coroutine test_loop[sqlite]>>
+mongoeco_uri = 'mongodb://127.0.0.1:61808/?directConnection=true'
+_mongoeco_options = {'serverSelectionTimeoutMS': 3000}
+
+    @pytest_asyncio.fixture(loop_scope="function")
+    async def mongoeco_async_client(
+        request: pytest.FixtureRequest, mongoeco_uri: str, _mongoeco_options: dict[str, Any]
+    ) -> AsyncIterator[AsyncMongoClient[dict[str, Any]]]:
+        """Yield a real client bound to the test's function-scoped asyncio loop."""
+        marker = request.node.get_closest_marker("asyncio")
+        scope = (
+            marker.kwargs.get("loop_scope", "function")
+            if marker is not None
+            else request.config.getini("asyncio_default_test_loop_scope")
+        )
+        if scope != "function":
+            message = "Mongoeco async clients require a function-scoped test loop"
+>           raise pytest.UsageError(message)
+E           pytest.UsageError: Mongoeco async clients require a function-scoped test loop
+
+/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/pytest_asyncio.py:42: UsageError
+=========================== short test summary info ============================
+ERROR test_consumer.py::test_loop[memory] - pytest.UsageError: Mongoeco async...
+ERROR test_consumer.py::test_loop[sqlite] - pytest.UsageError: Mongoeco async...
+2 errors in 0.11s
+_ test_asyncio_effective_broader_loop_rejected_before_start[@pytest.mark.asyncio(scope='module')-strict-function] _
+
+pytester = <Pytester PosixPath('/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start3')>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10c596f10>
+marker = "@pytest.mark.asyncio(scope='module')", mode = 'strict'
+default_scope = 'function'
+
+    @pytest.mark.parametrize(
+        ("marker", "mode", "default_scope"),
+        [
+            ("@pytest.mark.asyncio", "strict", "module"),
+            ("", "auto", "module"),
+            ("@pytest.mark.asyncio(loop_scope=None)", "strict", "module"),
+            ("@pytest.mark.asyncio(scope='module')", "strict", "function"),
+        ],
+    )
+    def test_asyncio_effective_broader_loop_rejected_before_start(
+        pytester, monkeypatch, marker, mode, default_scope
+    ):
+        args = prepare(
+            pytester,
+            monkeypatch,
+            "pytest_asyncio",
+            f"import pytest\n{marker}\nasync def test_loop(mongoeco_async_client): pass",
+        )
+        pytester.makeini(
+            "[pytest]\nasyncio_default_fixture_loop_scope=function\n"
+            f"asyncio_default_test_loop_scope={default_scope}\nasyncio_mode={mode}"
+        )
+        result = run_session(pytester, *args, "--mongoeco-backend=both")
+>       result.assert_outcomes(errors=2)
+E       AssertionError: assert {'passed': 2,...rors': 0, ...} == {'passed': 0,...rors': 2, ...}
+E         
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {'errors': 0} != {'errors': 2}
+E         {'passed': 2} != {'passed': 0}
+E         Use -v to get more diff
+
+/Users/uve/Proyectos/mongoeco/tests/integration/pytest_kit/test_fixtures.py:373: AssertionError
+----------------------------- Captured stdout call -----------------------------
+running: /private/tmp/mongoeco-python315/py314/bin/python -mpytest --basetemp=/private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start3/runpytest-0 -p pytest_asyncio.plugin -p anyio.pytest_plugin -q --mongoeco-backend=both
+     in: /private/var/folders/gh/m3pllfqn6m14srd4s448b0zw0000gn/T/pytest-of-uve/pytest-16524/test_asyncio_effective_broader_loop_rejected_before_start3
+..                                                                       [100%]
+=============================== warnings summary ===============================
+../../../../../../../../../tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest_asyncio/plugin.py:977
+  /tmp/mongoeco-python315/py314/lib/python3.14/site-packages/pytest_asyncio/plugin.py:977: PytestDeprecationWarning: The "scope" keyword argument to the asyncio marker has been deprecated. Please use the "loop_scope" argument instead.
+  
+    warnings.warn(PytestDeprecationWarning(_MARKER_SCOPE_KWARG_DEPRECATION_WARNING))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2 passed, 1 warning in 0.02s
+_ ProxyLifecycleTests.test_cancelled_close_waiting_for_start_still_releases_resources _
+
+self = <tests.integration.wire.test_proxy_lifecycle.ProxyLifecycleTests testMethod=test_cancelled_close_waiting_for_start_still_releases_resources>
+
+    async def test_cancelled_close_waiting_for_start_still_releases_resources(self):
+        entered, release = asyncio.Event(), asyncio.Event()
+        engine = MemoryEngine()
+        connect = engine.connect
+    
+        async def delayed_connect():
+            entered.set()
+            await release.wait()
+            await connect()
+    
+        engine.connect = delayed_connect
+        proxy = AsyncMongoEcoProxyServer(engine=engine)
+        starting = asyncio.create_task(proxy.start())
+        await entered.wait()
+        closing = asyncio.create_task(proxy.close())
+        try:
+            await asyncio.sleep(0)
+            closing.cancel()
+            await asyncio.sleep(0)
+>           self.assertFalse(closing.done(), "cancelled close abandoned pending start")
+E           AssertionError: True is not false : cancelled close abandoned pending start
+
+tests/integration/wire/test_proxy_lifecycle.py:36: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/pytest_kit/test_fixtures.py::test_asyncio_effective_broader_loop_rejected_before_start[@pytest.mark.asyncio-strict-module]
+FAILED tests/integration/pytest_kit/test_fixtures.py::test_asyncio_effective_broader_loop_rejected_before_start[-auto-module]
+FAILED tests/integration/pytest_kit/test_fixtures.py::test_asyncio_effective_broader_loop_rejected_before_start[@pytest.mark.asyncio(loop_scope=None)-strict-module]
+FAILED tests/integration/pytest_kit/test_fixtures.py::test_asyncio_effective_broader_loop_rejected_before_start[@pytest.mark.asyncio(scope='module')-strict-function]
+FAILED tests/integration/wire/test_proxy_lifecycle.py::ProxyLifecycleTests::test_cancelled_close_waiting_for_start_still_releases_resources
+5 failed in 3.35s

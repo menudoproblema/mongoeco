@@ -1,0 +1,36 @@
+[
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "-m",
+      "mongoeco.conformance",
+      "mongoeco.engines:MemoryEngine",
+      "--profile",
+      "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+      "--require-success",
+      "--format",
+      "json",
+      "--output",
+      "/tmp/mongoeco-write-ops/conformance-MemoryEngine-314.json"
+    ],
+    "exit_code": 0,
+    "engine": "MemoryEngine"
+  },
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "-m",
+      "mongoeco.conformance",
+      "mongoeco.engines:SQLiteEngine",
+      "--profile",
+      "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+      "--require-success",
+      "--format",
+      "json",
+      "--output",
+      "/tmp/mongoeco-write-ops/conformance-SQLiteEngine-314.json"
+    ],
+    "exit_code": 0,
+    "engine": "SQLiteEngine"
+  }
+]

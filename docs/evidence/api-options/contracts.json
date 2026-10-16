@@ -1,0 +1,72 @@
+[
+  {
+    "command": [
+      "scripts/check_public_typing.py"
+    ],
+    "exit_code": 0,
+    "log": "contract-0.log"
+  },
+  {
+    "command": [
+      "scripts/update_public_api_manifest.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "contract-1.log"
+  },
+  {
+    "command": [
+      "scripts/smoke_external_engine.py"
+    ],
+    "exit_code": 0,
+    "log": "contract-2.log"
+  },
+  {
+    "command": [
+      "scripts/update_compat_snapshots.py"
+    ],
+    "exit_code": 0,
+    "log": "contract-3.log"
+  },
+  {
+    "command": [
+      "-m",
+      "pytest",
+      "-q",
+      "tests/property",
+      "--hypothesis-profile=deep"
+    ],
+    "exit_code": 0,
+    "log": "contract-4.log"
+  },
+  {
+    "command": [
+      "-m",
+      "mongoeco.conformance",
+      "mongoeco.engines:MemoryEngine",
+      "--profile",
+      "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+      "--require-success",
+      "--format",
+      "json",
+      "--output",
+      "/tmp/mongoeco-api-conveniences/conformance-MemoryEngine.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "-m",
+      "mongoeco.conformance",
+      "mongoeco.engines:SQLiteEngine",
+      "--profile",
+      "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+      "--require-success",
+      "--format",
+      "json",
+      "--output",
+      "/tmp/mongoeco-api-conveniences/conformance-SQLiteEngine.json"
+    ],
+    "exit_code": 0
+  }
+]

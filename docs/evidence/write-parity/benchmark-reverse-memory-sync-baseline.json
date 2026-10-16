@@ -1,0 +1,672 @@
+{
+  "schema": "mongoeco-benchmark-report/v2",
+  "environment": {
+    "python": "3.14.5",
+    "pythonImplementation": "CPython",
+    "platform": "macOS-15.6-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "sqlite": "3.53.4",
+    "jsonBackend": "stdlib",
+    "mongoeco": "4.9.1",
+    "dependencies": {
+      "mongomock": "4.3.0",
+      "orjson": "3.11.9",
+      "psutil": "7.2.2",
+      "pymongo": "4.19.0",
+      "usearch": "2.25.3"
+    },
+    "executable": "/Users/uve/Proyectos/mongoeco/.venv/bin/python"
+  },
+  "source": {
+    "gitRevision": null,
+    "gitDirty": false,
+    "mongoecoModule": "/private/tmp/mongoeco-write-parity/baseline-source/src/mongoeco/__init__.py",
+    "harnessSha256": "sha256:a46f2e9c5ecbf5811289439caba8210f62a24928d1a5ad295da6a7337e8b3de3",
+    "datasetSha256": "sha256:c2b95c2ef946b1eee07d3311fedac30f6712de6ff7668d0f095f4ba705f4df63"
+  },
+  "config": {
+    "size": 1000,
+    "warmup": 1,
+    "repetitions": 5,
+    "workloads": [
+      "vector_search_diagnostics"
+    ],
+    "rssPeakSamplingIntervalMs": 5.0
+  },
+  "results": {
+    "memory-sync": {
+      "vector_search_diagnostics": {
+        "vector_search_ann_topk_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.0704,
+          "wall_time_median_sec": 0.0705,
+          "wall_time_min_sec": 0.0693,
+          "wall_time_max_sec": 0.0712,
+          "cpu_user_mean_sec": 0.068,
+          "cpu_sys_mean_sec": 0.0,
+          "rss_delta_mean_mb": 0.0,
+          "rss_peak_max_mb": 204.22,
+          "metadata": {
+            "summary": "memory/search opaque",
+            "engine": "memory",
+            "strategy": "search",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": null,
+            "query_operator": "vectorSearch",
+            "backend": "python",
+            "mode": "exact",
+            "similarity": "cosine",
+            "min_score": null,
+            "filter_mode": null,
+            "exact_fallback_reason": null,
+            "candidates_evaluated": 1000,
+            "candidates_requested": 24,
+            "documents_filtered": 0,
+            "documents_filtered_by_min_score": null,
+            "candidate_count": null,
+            "candidate_count_before_topk": null,
+            "topk_limit_hint": null,
+            "topk_prefilter": null,
+            "ranking_source": null,
+            "compound_prefilter": null,
+            "downstream_filter_prefilter": null,
+            "vector_filter_prefilter": null,
+            "vector_filter_residual": null,
+            "candidate_expansion_strategy": "exact-baseline",
+            "documents_scanned": 1000,
+            "documents_scanned_after_prefilter": 1000,
+            "search_topk_strategy": null,
+            "search_topk_growth_strategy": null,
+            "query_shape": "$vectorSearch cosine topk",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:57faa1778b11fd196ed31f83eb5bd72a236ba195edf7dd5c82d23f470428f7fe",
+            "outcome_items": 100
+          }
+        },
+        "vector_search_cosine_low_candidates_topk_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.0693,
+          "wall_time_median_sec": 0.0688,
+          "wall_time_min_sec": 0.0683,
+          "wall_time_max_sec": 0.0711,
+          "cpu_user_mean_sec": 0.068,
+          "cpu_sys_mean_sec": 0.002,
+          "rss_delta_mean_mb": 0.0,
+          "rss_peak_max_mb": 204.22,
+          "metadata": {
+            "summary": "memory/search opaque",
+            "engine": "memory",
+            "strategy": "search",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": null,
+            "query_operator": "vectorSearch",
+            "backend": "python",
+            "mode": "exact",
+            "similarity": "cosine",
+            "min_score": null,
+            "filter_mode": null,
+            "exact_fallback_reason": null,
+            "candidates_evaluated": 1000,
+            "candidates_requested": 10,
+            "documents_filtered": 0,
+            "documents_filtered_by_min_score": null,
+            "candidate_count": null,
+            "candidate_count_before_topk": null,
+            "topk_limit_hint": null,
+            "topk_prefilter": null,
+            "ranking_source": null,
+            "compound_prefilter": null,
+            "downstream_filter_prefilter": null,
+            "vector_filter_prefilter": null,
+            "vector_filter_residual": null,
+            "candidate_expansion_strategy": "exact-baseline",
+            "documents_scanned": 1000,
+            "documents_scanned_after_prefilter": 1000,
+            "search_topk_strategy": null,
+            "search_topk_growth_strategy": null,
+            "query_shape": "$vectorSearch cosine topk + numCandidates(10)",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:57faa1778b11fd196ed31f83eb5bd72a236ba195edf7dd5c82d23f470428f7fe",
+            "outcome_items": 100
+          }
+        },
+        "vector_search_cosine_high_candidates_topk_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.0696,
+          "wall_time_median_sec": 0.0701,
+          "wall_time_min_sec": 0.068,
+          "wall_time_max_sec": 0.0704,
+          "cpu_user_mean_sec": 0.064,
+          "cpu_sys_mean_sec": 0.002,
+          "rss_delta_mean_mb": 0.0,
+          "rss_peak_max_mb": 204.22,
+          "metadata": {
+            "summary": "memory/search opaque",
+            "engine": "memory",
+            "strategy": "search",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": null,
+            "query_operator": "vectorSearch",
+            "backend": "python",
+            "mode": "exact",
+            "similarity": "cosine",
+            "min_score": null,
+            "filter_mode": null,
+            "exact_fallback_reason": null,
+            "candidates_evaluated": 1000,
+            "candidates_requested": 48,
+            "documents_filtered": 0,
+            "documents_filtered_by_min_score": null,
+            "candidate_count": null,
+            "candidate_count_before_topk": null,
+            "topk_limit_hint": null,
+            "topk_prefilter": null,
+            "ranking_source": null,
+            "compound_prefilter": null,
+            "downstream_filter_prefilter": null,
+            "vector_filter_prefilter": null,
+            "vector_filter_residual": null,
+            "candidate_expansion_strategy": "exact-baseline",
+            "documents_scanned": 1000,
+            "documents_scanned_after_prefilter": 1000,
+            "search_topk_strategy": null,
+            "search_topk_growth_strategy": null,
+            "query_shape": "$vectorSearch cosine topk + numCandidates(48)",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:57faa1778b11fd196ed31f83eb5bd72a236ba195edf7dd5c82d23f470428f7fe",
+            "outcome_items": 100
+          }
+        },
+        "vector_search_dot_product_topk_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.0706,
+          "wall_time_median_sec": 0.0709,
+          "wall_time_min_sec": 0.0694,
+          "wall_time_max_sec": 0.0721,
+          "cpu_user_mean_sec": 0.068,
+          "cpu_sys_mean_sec": 0.004,
+          "rss_delta_mean_mb": 0.02,
+          "rss_peak_max_mb": 208.44,
+          "metadata": {
+            "summary": "memory/search opaque",
+            "engine": "memory",
+            "strategy": "search",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": null,
+            "query_operator": "vectorSearch",
+            "backend": "python",
+            "mode": "exact",
+            "similarity": "dotProduct",
+            "min_score": null,
+            "filter_mode": null,
+            "exact_fallback_reason": null,
+            "candidates_evaluated": 1000,
+            "candidates_requested": 24,
+            "documents_filtered": 0,
+            "documents_filtered_by_min_score": null,
+            "candidate_count": null,
+            "candidate_count_before_topk": null,
+            "topk_limit_hint": null,
+            "topk_prefilter": null,
+            "ranking_source": null,
+            "compound_prefilter": null,
+            "downstream_filter_prefilter": null,
+            "vector_filter_prefilter": null,
+            "vector_filter_residual": null,
+            "candidate_expansion_strategy": "exact-baseline",
+            "documents_scanned": 1000,
+            "documents_scanned_after_prefilter": 1000,
+            "search_topk_strategy": null,
+            "search_topk_growth_strategy": null,
+            "query_shape": "$vectorSearch dotProduct topk",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:57faa1778b11fd196ed31f83eb5bd72a236ba195edf7dd5c82d23f470428f7fe",
+            "outcome_items": 100
+          }
+        },
+        "vector_search_euclidean_topk_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.07,
+          "wall_time_median_sec": 0.0695,
+          "wall_time_min_sec": 0.0686,
+          "wall_time_max_sec": 0.0716,
+          "cpu_user_mean_sec": 0.066,
+          "cpu_sys_mean_sec": 0.002,
+          "rss_delta_mean_mb": 0.02,
+          "rss_peak_max_mb": 212.42,
+          "metadata": {
+            "summary": "memory/search opaque",
+            "engine": "memory",
+            "strategy": "search",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": null,
+            "query_operator": "vectorSearch",
+            "backend": "python",
+            "mode": "exact",
+            "similarity": "euclidean",
+            "min_score": null,
+            "filter_mode": null,
+            "exact_fallback_reason": null,
+            "candidates_evaluated": 1000,
+            "candidates_requested": 24,
+            "documents_filtered": 0,
+            "documents_filtered_by_min_score": null,
+            "candidate_count": null,
+            "candidate_count_before_topk": null,
+            "topk_limit_hint": null,
+            "topk_prefilter": null,
+            "ranking_source": null,
+            "compound_prefilter": null,
+            "downstream_filter_prefilter": null,
+            "vector_filter_prefilter": null,
+            "vector_filter_residual": null,
+            "candidate_expansion_strategy": "exact-baseline",
+            "documents_scanned": 1000,
+            "documents_scanned_after_prefilter": 1000,
+            "search_topk_strategy": null,
+            "search_topk_growth_strategy": null,
+            "query_shape": "$vectorSearch euclidean topk",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:f4479471be8b50d600bbcaa029ba8920c18d01a9d1b918cc51f4a9ea585f01d6",
+            "outcome_items": 100
+          }
+        },
+        "vector_search_filtered_topk_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.0725,
+          "wall_time_median_sec": 0.0715,
+          "wall_time_min_sec": 0.07,
+          "wall_time_max_sec": 0.0761,
+          "cpu_user_mean_sec": 0.07,
+          "cpu_sys_mean_sec": 0.002,
+          "rss_delta_mean_mb": 0.02,
+          "rss_peak_max_mb": 212.42,
+          "metadata": {
+            "summary": "memory/search opaque",
+            "engine": "memory",
+            "strategy": "search",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": null,
+            "query_operator": "vectorSearch",
+            "backend": "python",
+            "mode": "exact",
+            "similarity": "cosine",
+            "min_score": null,
+            "filter_mode": "candidate-prefilter",
+            "exact_fallback_reason": null,
+            "candidates_evaluated": 334,
+            "candidates_requested": 24,
+            "documents_filtered": 0,
+            "documents_filtered_by_min_score": null,
+            "candidate_count": null,
+            "candidate_count_before_topk": null,
+            "topk_limit_hint": null,
+            "topk_prefilter": null,
+            "ranking_source": null,
+            "compound_prefilter": null,
+            "downstream_filter_prefilter": null,
+            "vector_filter_prefilter": {
+              "spec": {
+                "kind": "reference"
+              },
+              "candidateable": true,
+              "exact": true,
+              "backend": "memory-vector-filter-index",
+              "supportedPaths": [
+                "kind"
+              ],
+              "supportedClauseCount": 1,
+              "unsupportedClauseCount": 0,
+              "supportedOperators": [
+                "eq"
+              ],
+              "booleanShape": "flat"
+            },
+            "vector_filter_residual": {
+              "required": false,
+              "reason": null,
+              "candidateable": true,
+              "exact": true,
+              "supportedClauseCount": 1,
+              "unsupportedClauseCount": 0,
+              "spec": {
+                "kind": "reference"
+              }
+            },
+            "candidate_expansion_strategy": "exact-baseline",
+            "documents_scanned": 1000,
+            "documents_scanned_after_prefilter": 334,
+            "search_topk_strategy": null,
+            "search_topk_growth_strategy": null,
+            "query_shape": "$vectorSearch cosine topk + post-filter",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:e2748fcf056994224f5cb2ecb9851a5ba85f3429c60d23bec962b3e8d5c5f2ae",
+            "outcome_items": 100
+          }
+        },
+        "vector_search_filtered_boolean_topk_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.0768,
+          "wall_time_median_sec": 0.0741,
+          "wall_time_min_sec": 0.0737,
+          "wall_time_max_sec": 0.0829,
+          "cpu_user_mean_sec": 0.072,
+          "cpu_sys_mean_sec": 0.002,
+          "rss_delta_mean_mb": 0.02,
+          "rss_peak_max_mb": 212.42,
+          "metadata": {
+            "summary": "memory/search opaque",
+            "engine": "memory",
+            "strategy": "search",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": null,
+            "query_operator": "vectorSearch",
+            "backend": "python",
+            "mode": "exact",
+            "similarity": "cosine",
+            "min_score": null,
+            "filter_mode": "candidate-prefilter",
+            "exact_fallback_reason": null,
+            "candidates_evaluated": 454,
+            "candidates_requested": 24,
+            "documents_filtered": 0,
+            "documents_filtered_by_min_score": null,
+            "candidate_count": null,
+            "candidate_count_before_topk": null,
+            "topk_limit_hint": null,
+            "topk_prefilter": null,
+            "ranking_source": null,
+            "compound_prefilter": null,
+            "downstream_filter_prefilter": null,
+            "vector_filter_prefilter": {
+              "spec": {
+                "$or": [
+                  {
+                    "kind": "reference"
+                  },
+                  {
+                    "score": {
+                      "$gte": 10
+                    }
+                  }
+                ]
+              },
+              "candidateable": true,
+              "exact": true,
+              "backend": "memory-vector-filter-index",
+              "supportedPaths": [
+                "kind",
+                "score"
+              ],
+              "supportedClauseCount": 2,
+              "unsupportedClauseCount": 0,
+              "supportedOperators": [
+                "eq",
+                "range"
+              ],
+              "booleanShape": "$or"
+            },
+            "vector_filter_residual": {
+              "required": false,
+              "reason": null,
+              "candidateable": true,
+              "exact": true,
+              "supportedClauseCount": 2,
+              "unsupportedClauseCount": 0,
+              "spec": {
+                "$or": [
+                  {
+                    "kind": "reference"
+                  },
+                  {
+                    "score": {
+                      "$gte": 10
+                    }
+                  }
+                ]
+              }
+            },
+            "candidate_expansion_strategy": "exact-baseline",
+            "documents_scanned": 1000,
+            "documents_scanned_after_prefilter": 454,
+            "search_topk_strategy": null,
+            "search_topk_growth_strategy": null,
+            "query_shape": "$vectorSearch cosine topk + boolean candidate filter",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:9d3f2695a2f63f18a3bce70a92b7cd1c8ee2979abb3c278386a00bcc904d0e29",
+            "outcome_items": 100
+          }
+        },
+        "vector_search_filtered_underflow_topk_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.0788,
+          "wall_time_median_sec": 0.0738,
+          "wall_time_min_sec": 0.073,
+          "wall_time_max_sec": 0.094,
+          "cpu_user_mean_sec": 0.076,
+          "cpu_sys_mean_sec": 0.002,
+          "rss_delta_mean_mb": 0.02,
+          "rss_peak_max_mb": 212.5,
+          "metadata": {
+            "summary": "memory/search opaque",
+            "engine": "memory",
+            "strategy": "search",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": null,
+            "query_operator": "vectorSearch",
+            "backend": "python",
+            "mode": "exact",
+            "similarity": "cosine",
+            "min_score": null,
+            "filter_mode": "candidate-prefilter",
+            "exact_fallback_reason": null,
+            "candidates_evaluated": 61,
+            "candidates_requested": 10,
+            "documents_filtered": 0,
+            "documents_filtered_by_min_score": null,
+            "candidate_count": null,
+            "candidate_count_before_topk": null,
+            "topk_limit_hint": null,
+            "topk_prefilter": null,
+            "ranking_source": null,
+            "compound_prefilter": null,
+            "downstream_filter_prefilter": null,
+            "vector_filter_prefilter": {
+              "spec": {
+                "$and": [
+                  {
+                    "kind": "reference"
+                  },
+                  {
+                    "score": {
+                      "$gte": 10
+                    }
+                  }
+                ]
+              },
+              "candidateable": true,
+              "exact": true,
+              "backend": "memory-vector-filter-index",
+              "supportedPaths": [
+                "kind",
+                "score"
+              ],
+              "supportedClauseCount": 2,
+              "unsupportedClauseCount": 0,
+              "supportedOperators": [
+                "eq",
+                "range"
+              ],
+              "booleanShape": "$and"
+            },
+            "vector_filter_residual": {
+              "required": false,
+              "reason": null,
+              "candidateable": true,
+              "exact": true,
+              "supportedClauseCount": 2,
+              "unsupportedClauseCount": 0,
+              "spec": {
+                "$and": [
+                  {
+                    "kind": "reference"
+                  },
+                  {
+                    "score": {
+                      "$gte": 10
+                    }
+                  }
+                ]
+              }
+            },
+            "candidate_expansion_strategy": "exact-baseline",
+            "documents_scanned": 1000,
+            "documents_scanned_after_prefilter": 61,
+            "search_topk_strategy": null,
+            "search_topk_growth_strategy": null,
+            "query_shape": "$vectorSearch cosine topk + rare boolean candidate filter",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:68907f8103fab95a200c46afb4f6b1ec65873ccc7b13851fb301020da67b6afe",
+            "outcome_items": 100
+          }
+        },
+        "vector_search_filtered_min_score_topk_100": {
+          "repetitions": 5,
+          "wall_time_mean_sec": 0.0729,
+          "wall_time_median_sec": 0.0731,
+          "wall_time_min_sec": 0.0722,
+          "wall_time_max_sec": 0.0736,
+          "cpu_user_mean_sec": 0.07,
+          "cpu_sys_mean_sec": 0.002,
+          "rss_delta_mean_mb": 0.03,
+          "rss_peak_max_mb": 212.5,
+          "metadata": {
+            "summary": "memory/search opaque",
+            "engine": "memory",
+            "strategy": "search",
+            "planning_mode": "strict",
+            "streaming_batch_execution": false,
+            "incremental_group_input": false,
+            "partitioned_group_state_candidate": false,
+            "streaming_group_output_candidate": false,
+            "incremental_sort_input": false,
+            "streaming_sort_output": false,
+            "remaining_stage_count": 0,
+            "physical_plan": null,
+            "query_operator": "vectorSearch",
+            "backend": "python",
+            "mode": "exact",
+            "similarity": "cosine",
+            "min_score": 0.999,
+            "filter_mode": "candidate-prefilter",
+            "exact_fallback_reason": null,
+            "candidates_evaluated": 666,
+            "candidates_requested": 24,
+            "documents_filtered": 0,
+            "documents_filtered_by_min_score": 500,
+            "candidate_count": null,
+            "candidate_count_before_topk": null,
+            "topk_limit_hint": null,
+            "topk_prefilter": null,
+            "ranking_source": null,
+            "compound_prefilter": null,
+            "downstream_filter_prefilter": null,
+            "vector_filter_prefilter": {
+              "spec": {
+                "kind": "note"
+              },
+              "candidateable": true,
+              "exact": true,
+              "backend": "memory-vector-filter-index",
+              "supportedPaths": [
+                "kind"
+              ],
+              "supportedClauseCount": 1,
+              "unsupportedClauseCount": 0,
+              "supportedOperators": [
+                "eq"
+              ],
+              "booleanShape": "flat"
+            },
+            "vector_filter_residual": {
+              "required": false,
+              "reason": null,
+              "candidateable": true,
+              "exact": true,
+              "supportedClauseCount": 1,
+              "unsupportedClauseCount": 0,
+              "spec": {
+                "kind": "note"
+              }
+            },
+            "candidate_expansion_strategy": "exact-baseline",
+            "documents_scanned": 1000,
+            "documents_scanned_after_prefilter": 666,
+            "search_topk_strategy": null,
+            "search_topk_growth_strategy": null,
+            "query_shape": "$vectorSearch cosine topk + filter(kind=note) + minScore(0.999)",
+            "outcome_oracle": "exact-output",
+            "outcome_sha256": "sha256:19df7255754b07ce2d7f2a58828228fb597981d1604684dcdeb758c8c42db3c3",
+            "outcome_items": 100
+          }
+        }
+      }
+    }
+  }
+}

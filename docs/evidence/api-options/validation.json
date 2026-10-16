@@ -1,0 +1,302 @@
+{
+  "schema": "mongoeco-api-option-validation/v1",
+  "status": "implementation_complete_release_decision_pending",
+  "date": "2026-10-15",
+  "candidate": {
+    "git_head": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "uncommitted_workset": true,
+    "workset_sha256": "412672dd6aa6a98a80ea362cdd6bf0ae75f47be605b10fef32dfb18978641e3b",
+    "workset_manifest": "workset-sources.json",
+    "runtime_sha256": "acabd47d769b0d077b9e0bd384a4798d9b0ffcac7be83be7108bd8959facda37",
+    "runtime_manifest": "runtime-sources.json",
+    "wheel_path": "/tmp/mongoeco-api-conveniences/dist/mongoeco-4.9.1-py3-none-any.whl",
+    "wheel_sha256": "7aedfcf4a771ca8f9c350564c73fb319438f888799cb41c755d29e09c9d568f1",
+    "wheel_runtime_files_compared": 275,
+    "package_version": "4.9.1",
+    "distribution_disposition": "unpublished workset build; not the published 4.9.1; no next release number selected"
+  },
+  "baseline": {
+    "wheel_sha256": "6b91102576c280a6ab2821458b0caed8bfe298f189593d7e5987d21debdd568f",
+    "scenario_observations": 624,
+    "differences_from_native": 480,
+    "record": "baseline-observations.json"
+  },
+  "acceptance": {
+    "scenarios": 104,
+    "native_observations": 624,
+    "direct_observations": 2496,
+    "wire_observations": 1248,
+    "wire_cells": 12,
+    "local_profiles": [
+      "4.9",
+      "4.19"
+    ],
+    "engines": [
+      "Memory",
+      "SQLite"
+    ],
+    "facades": [
+      "sync",
+      "async"
+    ],
+    "compared": [
+      "projection results and BSON state",
+      "caller IDs and mutation",
+      "error families and codes",
+      "bulk partial counts and indices",
+      "profile comments on success and duplicate/schema failures"
+    ],
+    "error_codes": [
+      121,
+      11000
+    ],
+    "bulk_envelope_code": 65,
+    "projection_invalid_inputs": "TypeError before mutation",
+    "conservation_tests": 8,
+    "conservation_checks": [
+      "comment active-operation visibility",
+      "comment session metadata",
+      "comment detached while insertion is active",
+      "profiling uses entry comment snapshot",
+      "comment absent from stored documents",
+      "lazy cursor projection clone detached",
+      "single-pass iterable consumed once in both facades"
+    ],
+    "unexpected_selected_matrix_skips": 0
+  },
+  "native_matrix": [
+    {
+      "target": "7.0",
+      "version": "7.0.43",
+      "fcv": {
+        "version": "7.0"
+      },
+      "sdk": "4.19.0",
+      "cases_per_facade": 104,
+      "facades": [
+        "sync",
+        "async"
+      ],
+      "sync_async_observations_equal": true,
+      "fixture": "tests/fixtures/api_options_mongodb_7_0.json",
+      "sha256": "c006253e6fe5840db84ad369a7de7b7fbd74df48842c66c8cc1506a13c8da99f",
+      "native_capture_imports_candidate": false,
+      "native_recheck_exit_code": 0
+    },
+    {
+      "target": "8.0",
+      "version": "8.0.32",
+      "fcv": {
+        "version": "8.0"
+      },
+      "sdk": "4.19.0",
+      "cases_per_facade": 104,
+      "facades": [
+        "sync",
+        "async"
+      ],
+      "sync_async_observations_equal": true,
+      "fixture": "tests/fixtures/api_options_mongodb_8_0.json",
+      "sha256": "2812bd8d6033a29d6e9262180ea9287009cf5326abddb287b062d557b0191135",
+      "native_capture_imports_candidate": false,
+      "native_recheck_exit_code": 0
+    },
+    {
+      "target": "9.0",
+      "version": "9.0.2",
+      "fcv": {
+        "version": "9.0"
+      },
+      "sdk": "4.19.0",
+      "cases_per_facade": 104,
+      "facades": [
+        "sync",
+        "async"
+      ],
+      "sync_async_observations_equal": true,
+      "fixture": "tests/fixtures/api_options_mongodb_9_0.json",
+      "sha256": "4ddc8b1ab4083c5062fdad7e0c8ebd614ddf798d0b216b8c89deaea38ab5b7d6",
+      "native_capture_imports_candidate": false,
+      "native_recheck_exit_code": 0
+    }
+  ],
+  "coverage": {
+    "covered_lines": 42986,
+    "num_statements": 43402,
+    "percent_covered": 99.04151882401733,
+    "percent_covered_display": "99.04",
+    "missing_lines": 416,
+    "excluded_lines": 896,
+    "percent_statements_covered": 99.04151882401733,
+    "percent_statements_covered_display": "99.04"
+  },
+  "gates": [
+    {
+      "gate": "pytest-python-313",
+      "command": "python -m pytest -q --tb=short",
+      "passed": 11018,
+      "expected_skips": 31,
+      "subtests_passed": 14445,
+      "exit_code": 0,
+      "log": "pytest313.log"
+    },
+    {
+      "gate": "pytest-python-314",
+      "command": "python -m pytest -q --tb=short --cov=mongoeco --cov-report=term --cov-report=json",
+      "passed": 11018,
+      "expected_skips": 31,
+      "subtests_passed": 14445,
+      "exit_code": 0,
+      "log": "pytest314.log"
+    },
+    {
+      "gate": "unittest",
+      "tests": 3613,
+      "expected_skips": 3,
+      "exit_code": 0,
+      "log": "unittest.log"
+    }
+  ],
+  "contract_gates": [
+    {
+      "command": [
+        "scripts/check_public_typing.py"
+      ],
+      "exit_code": 0,
+      "log": "contract-0.log"
+    },
+    {
+      "command": [
+        "scripts/update_public_api_manifest.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "contract-1.log"
+    },
+    {
+      "command": [
+        "scripts/smoke_external_engine.py"
+      ],
+      "exit_code": 0,
+      "log": "contract-2.log"
+    },
+    {
+      "command": [
+        "scripts/update_compat_snapshots.py"
+      ],
+      "exit_code": 0,
+      "log": "contract-3.log"
+    },
+    {
+      "command": [
+        "-m",
+        "pytest",
+        "-q",
+        "tests/property",
+        "--hypothesis-profile=deep"
+      ],
+      "exit_code": 0,
+      "log": "contract-4.log"
+    },
+    {
+      "command": [
+        "-m",
+        "mongoeco.conformance",
+        "mongoeco.engines:MemoryEngine",
+        "--profile",
+        "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+        "--require-success",
+        "--format",
+        "json",
+        "--output",
+        "/tmp/mongoeco-api-conveniences/conformance-MemoryEngine.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "-m",
+        "mongoeco.conformance",
+        "mongoeco.engines:SQLiteEngine",
+        "--profile",
+        "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+        "--require-success",
+        "--format",
+        "json",
+        "--output",
+        "/tmp/mongoeco-api-conveniences/conformance-SQLiteEngine.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "sdk": {
+    "versions": [
+      "4.11.3",
+      "4.13.2",
+      "4.17.0",
+      "4.18.2",
+      "4.19.0",
+      "4.9.2"
+    ],
+    "probes": 324,
+    "statuses": {
+      "arguments-accepted": 252,
+      "signature-rejected": 46,
+      "configuration-rejected": 19,
+      "completed": 7
+    },
+    "scope": "Existing version signature/DNS probes rerun; new API option native parity is exercised with PyMongo 4.19.0."
+  },
+  "consumer": {
+    "flows": 16,
+    "native_payload_replays": 48,
+    "semantic_correctors_invoked": 0,
+    "permanent_sources_modified": false,
+    "record": "consumer-canary.json"
+  },
+  "cxp": {
+    "catalog_name": "org.mongoeco:mongodb@1.2.0",
+    "catalog_sha256": "f2b3d7c51846a00858b4d7c17ae1b439adc0b7285df11f67c291302c0f7013b9",
+    "operational_metadata_sha256": "c9202430c0df54520ac93a7f04d972617b222be2595f50fe725f591b450b9bba",
+    "meaning_change": "Existing insert_one/insert_many acceptsComment properties become true and supportedOptions contains comment; vocabulary/schema version unchanged. Source revision is pinned by content digest and current exact catalog pins are updated.",
+    "historical_snapshots_rewritten": false,
+    "historical_deltas": "Two explicit insert operation_options additions; historical fixture unchanged."
+  },
+  "previous_corpus": {
+    "sequential_cases": 170,
+    "identity_cases": 82,
+    "native_captures_checked": true,
+    "native_histories_recaptured": 180,
+    "fixtures_unchanged": true,
+    "installed_consumers_pass_in_full_suites": true
+  },
+  "review": {
+    "type": "self_review",
+    "diff_reviewed": true,
+    "documentation_aligned": true,
+    "remaining_findings_in_scope": [],
+    "prior_authorized_changes_preserved": true,
+    "unrelated_user_changes_observed": false,
+    "initial_gate_findings_resolved": [
+      "Old tests treated empty projection lists as invalid; now use invalid integer members.",
+      "Catalog exact hash, owner inventory hashes and explicit current-vs-historical option deltas updated without rewriting historical fixtures."
+    ]
+  },
+  "lint": {
+    "base": "v4.9.1",
+    "result": "passed",
+    "format_result": "passed"
+  },
+  "limits": [
+    "Finite API option corpus, not exhaustive PyMongo or BSON parity.",
+    "Native runs are local macOS servers with exact patch/FCV, not a hosted GitHub run.",
+    "No SPI, SQLite format, Search or bulk op error-payload changes.",
+    "Iterable inputs retain eager one-time materialization; no streaming memory guarantee.",
+    "Publication, release numbering and permanent consumer adoption are outside the request."
+  ],
+  "cleanup": {
+    "native_databases_verified_removed": true,
+    "consumer_databases_verified_removed": true,
+    "native_servers_stopped": true
+  }
+}

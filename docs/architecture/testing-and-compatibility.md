@@ -26,6 +26,21 @@ Esto se prueba y documenta como parte del contrato observable.
 
 ## Estrategia de testing
 
+Las versiones oficiales de CPython son 3.13, 3.14 y 3.15. La
+[política de Python](../python-support.md) fija la retirada de 3.13 en octubre
+de 2028. Cada versión tiene una celda obligatoria contra el wheel inmutable,
+con pytest completo, unittest, typing, SPI y smokes de distribución. La
+cobertura `>=99 %` se mide en 3.14; las demás versiones también ejecutan pytest
+completo y no son celdas experimentales.
+
+El [kit pytest](../pytest.md) ofrece clientes PyMongo nativos sobre el proxy
+wire, con motor y servidor de función y cierre de recursos propios. Sus
+pruebas ejecutan sesiones consumidoras en procesos separados y agregan su
+cobertura cuando está activa. La matriz del kit cubre pytest 8.4/9 y los
+extremos SDK 4.9.2/4.19.0; se conserva además el canario consumidor anónimo
+contra el wheel instalado. El helper de `conformance.pytest` conserva su
+contrato independiente para motores externos.
+
 La suite se apoya en varias capas:
 
 - unit tests para helpers y semantica local;

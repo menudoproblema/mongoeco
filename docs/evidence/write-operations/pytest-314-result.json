@@ -1,0 +1,16 @@
+[
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py314/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "--tb=short",
+      "--cov=mongoeco",
+      "--cov-report=term",
+      "--cov-report=json:/tmp/mongoeco-write-ops/coverage314.json"
+    ],
+    "exit_code": 0,
+    "log": "pytest-314.log"
+  }
+]

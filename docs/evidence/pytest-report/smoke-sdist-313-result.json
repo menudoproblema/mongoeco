@@ -1,0 +1,12 @@
+[
+  {
+    "command": [
+      "/tmp/mongoeco-python315/py313/bin/python",
+      "scripts/smoke_installed_wheel.py",
+      "--sdist",
+      "/tmp/mongoeco-pytest-report/dist/mongoeco-4.9.1.tar.gz"
+    ],
+    "exit_code": 0,
+    "log": "smoke-sdist-313.txt"
+  }
+]

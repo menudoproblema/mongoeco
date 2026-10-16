@@ -1,0 +1,376 @@
+{
+  "schema": "mongoeco-write-command-preflight/v1",
+  "date": "2026-10-16",
+  "status": "implemented_and_validated",
+  "candidate": {
+    "wheel_sha256": "5322606ae2b4e496ea142a5dea8b593a9b1bf39ec0f955051ab60c5fe2d14858",
+    "sdist_sha256": "64d7bda0f1c3170c21f823450ae744ad2bc84c511c4a17332b36fced774f2308",
+    "runtime_files": 281,
+    "runtime_changes_since_command_reply_candidate": [
+      "mongoeco/api/_async/_database_admin_write_commands.py",
+      "mongoeco/api/_async/_write_command_validation.py"
+    ],
+    "runtime_matches_checkout_three_installs_and_sdist": true,
+    "all_sdist_source_inputs_compared": 289,
+    "reproducible_distributions": true,
+    "wheel_sdist_metadata_equal": true,
+    "baseline_wheel_sha256": "2d349d49d3b1a5a7862e0143966f02015f2ab7628b87ae6aaab33a0daa6de3c3",
+    "git_head": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "uncommitted_workset": true,
+    "package_version": "4.9.1",
+    "disposition": "Unpublished candidate; version unchanged pending release decision.",
+    "runtime_manifest": "runtime-sources.json",
+    "workset_manifest": "workset-sources.json",
+    "workset_sha256": "67783b7e58fad7c595d8ebc9eb98f5cc4a40df599b3387b41121df47fa80f199"
+  },
+  "environment": "environment.json",
+  "contract_source": "Explicit request to correct the two reviewed command preflight and writeConcern defects, add corpus regressions and verify MongoDB7/8/9 parity in sync/async and Memory/SQLite, including codes, counters, partial effects and connection reuse.",
+  "fixes": [
+    {
+      "behavior": "Validate every update/delete hint, collation and sort shape before the first write; retain per-item missing-index failures and ordered/unordered partial effects.",
+      "files": [
+        "src/mongoeco/api/_async/_database_admin_write_commands.py",
+        "src/mongoeco/api/_async/_write_command_validation.py"
+      ]
+    },
+    {
+      "behavior": "Validate writeConcern before effects and determine acknowledgement from normalized w, j and fsync; preserve acknowledged counts and duplicate errors for w:0 with synchronization.",
+      "files": [
+        "src/mongoeco/api/_async/_write_command_validation.py"
+      ]
+    }
+  ],
+  "dialect_deltas": [
+    "MongoDB7 rejects any update sort presence with40415, including null.",
+    "writeConcern:null is rejected with14 by MongoDB7/8 and accepted as default by MongoDB9."
+  ],
+  "no_engine_spi_dependency_or_sqlite_format_change": true,
+  "regressions": {
+    "new_corpus_cases": 106,
+    "preserved_cases": 66,
+    "native_cases_per_facade": 172,
+    "raw_cases": 4,
+    "candidate_wire_cases": 2088,
+    "candidate_direct_cases": 1272,
+    "candidate_parity_cases": 3360,
+    "sdk_extremes": [
+      "4.9.2",
+      "4.19.0"
+    ],
+    "surfaces": [
+      "sync",
+      "async"
+    ],
+    "backends": [
+      "memory",
+      "file-backed sqlite"
+    ],
+    "dialects": [
+      "7.0",
+      "8.0",
+      "9.0"
+    ],
+    "new_error_codes": [
+      2,
+      9,
+      14,
+      40415,
+      11000
+    ],
+    "observer": "Preserves semantic field presence, n/nModified/upserted, error indexes/codes/codeName/op/labels and writeConcernError; diagnostic errmsg text excluded. Raw and native command replies use the same observer.",
+    "checks": [
+      "Invalid middle specification rejects the complete ordered/unordered batch with no effects.",
+      "Valid null collation and sort controls and per-item missing-index partial effects.",
+      "Invalid concerns rejected before insert/update/delete effects.",
+      "w:0 j/fsync controls retain native counters and errors; unsynchronized controls remain unacknowledged.",
+      "Native numeric, Decimal128, tagged concern and opaque legacy-field controls.",
+      "ping, reads and following acknowledged write on one physical CMAP pool connection, retries disabled.",
+      "raw response IDs on one uninterrupted TCP socket."
+    ]
+  },
+  "native_capture_record": "native-captures.json",
+  "native_case_executions": 2088,
+  "gates": {
+    "313": {
+      "pytest_passed": 25801,
+      "expected_skips": 31,
+      "subtests_passed": 14451,
+      "pytest_record": "pytest-313.json",
+      "contracts": {
+        "status": "passed",
+        "record": "contracts-313-result.json"
+      },
+      "unittest": {
+        "status": "passed",
+        "record": "unittest-313-result.json"
+      },
+      "smoke-kit": {
+        "status": "passed",
+        "record": "smoke-kit-313-result.json"
+      },
+      "smoke-wheel": {
+        "status": "passed",
+        "record": "smoke-wheel-313-result.json"
+      },
+      "smoke-sdist": {
+        "status": "passed",
+        "record": "smoke-sdist-313-result.json"
+      }
+    },
+    "314": {
+      "pytest_passed": 25801,
+      "expected_skips": 31,
+      "subtests_passed": 14451,
+      "pytest_record": "pytest-314.json",
+      "contracts": {
+        "status": "passed",
+        "record": "contracts-314-result.json"
+      },
+      "unittest": {
+        "status": "passed",
+        "record": "unittest-314-result.json"
+      },
+      "smoke-kit": {
+        "status": "passed",
+        "record": "smoke-kit-314-result.json"
+      },
+      "smoke-wheel": {
+        "status": "passed",
+        "record": "smoke-wheel-314-result.json"
+      },
+      "smoke-sdist": {
+        "status": "passed",
+        "record": "smoke-sdist-314-result.json"
+      }
+    },
+    "315": {
+      "pytest_passed": 25801,
+      "expected_skips": 31,
+      "subtests_passed": 14451,
+      "pytest_record": "pytest-315.json",
+      "contracts": {
+        "status": "passed",
+        "record": "contracts-315-result.json"
+      },
+      "unittest": {
+        "status": "passed",
+        "record": "unittest-315-result.json"
+      },
+      "smoke-kit": {
+        "status": "passed",
+        "record": "smoke-kit-315-result.json"
+      },
+      "smoke-wheel": {
+        "status": "passed",
+        "record": "smoke-wheel-315-result.json"
+      },
+      "smoke-sdist": {
+        "status": "passed",
+        "record": "smoke-sdist-315-result.json"
+      }
+    }
+  },
+  "fixture_matrix": [
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-313-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-313-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-313-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.13.15",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-313-4.9.2-9.1.1.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-314-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-314-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-314-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.14.5",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-314-4.9.2-9.1.1.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "8.4.2",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-315-4.19.0-8.4.2.json"
+    },
+    {
+      "sdk": "4.19.0",
+      "pytest": "9.1.1",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-315-4.19.0-9.1.1.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "8.4.2",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-315-4.9.2-8.4.2.json"
+    },
+    {
+      "sdk": "4.9.2",
+      "pytest": "9.1.1",
+      "python": "3.15.0",
+      "exit_code": 0,
+      "passed": 3442,
+      "record": "matrix-315-4.9.2-9.1.1.json"
+    }
+  ],
+  "fixture_matrix_test_executions": 41304,
+  "consumer_canary": {
+    "identity": "anonymous-consumer",
+    "runs": [
+      {
+        "record": "consumer-313-0.json",
+        "python": "3.13.15",
+        "workers": 0,
+        "cases": 76
+      },
+      {
+        "record": "consumer-313-2.json",
+        "python": "3.13.15",
+        "workers": 2,
+        "cases": 76
+      },
+      {
+        "record": "consumer-313-4.json",
+        "python": "3.13.15",
+        "workers": 4,
+        "cases": 76
+      },
+      {
+        "record": "consumer-314-0.json",
+        "python": "3.14.5",
+        "workers": 0,
+        "cases": 76
+      },
+      {
+        "record": "consumer-314-2.json",
+        "python": "3.14.5",
+        "workers": 2,
+        "cases": 76
+      },
+      {
+        "record": "consumer-314-4.json",
+        "python": "3.14.5",
+        "workers": 4,
+        "cases": 76
+      },
+      {
+        "record": "consumer-315-0.json",
+        "python": "3.15.0",
+        "workers": 0,
+        "cases": 76
+      },
+      {
+        "record": "consumer-315-2.json",
+        "python": "3.15.0",
+        "workers": 2,
+        "cases": 76
+      },
+      {
+        "record": "consumer-315-4.json",
+        "python": "3.15.0",
+        "workers": 4,
+        "cases": 76
+      }
+    ],
+    "case_executions": 684,
+    "source_and_assertions_unchanged": true
+  },
+  "coverage_python_314": {
+    "covered_lines": 43490,
+    "num_statements": 43908,
+    "percent_covered": 99.04800947435547,
+    "percent_covered_display": "99.05",
+    "missing_lines": 418,
+    "excluded_lines": 923,
+    "percent_statements_covered": 99.04800947435547,
+    "percent_statements_covered_display": "99.05"
+  },
+  "clean_installs": {
+    "with_extras": 9,
+    "without_extras": 1
+  },
+  "review": {
+    "final_diff_reviewed": true,
+    "documentation_aligned": true,
+    "prior_authorized_work_preserved": true,
+    "remaining_findings_in_scope": [],
+    "runtime_diff": "runtime-diff.txt",
+    "privacy_audit": "privacy-audit.json"
+  },
+  "test_execution_notes": [
+    "The two retained baseline regressions are expected failures against the prior wheel and are not green gates.",
+    "Initial dialect and Decimal128 mismatches and the intermediate lint rejection are recorded in intermediate-attempts.json. All required final gates use the rebuilt candidate.",
+    "Parallel validation jobs use independent temporary directories. No runtime deadline or assertion was relaxed."
+  ],
+  "independent_verification": {
+    "reused_from": "../command-unacknowledged-writes/validation.json",
+    "gates": [
+      "Engine conformance",
+      "Deep property profiles",
+      "Search benchmarks",
+      "SDK signature probes"
+    ],
+    "reason": "All281 final runtime files compared with the prior candidate: only the private classic write-command module and new private validator changed. Engines, SPI, SQLite format, search, public SDK signatures and property inputs are byte-identical, and those gates do not invoke classic database commands. Complete suites, coverage, contracts, unittest,12-cell matrix, anonymous canary and clean installs are fresh."
+  },
+  "limits": [
+    "Local macOS arm64 validation; configured hosted CI not executed here.",
+    "Finite standalone command corpus; does not simulate replication or cluster durability guarantees.",
+    "Early PyMongo4.9 async peers run on independent event loops, as with the official pytest kit and a real server.",
+    "No commit, tag or publication performed."
+  ]
+}

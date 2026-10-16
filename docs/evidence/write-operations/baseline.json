@@ -1,0 +1,1013 @@
+{
+  "runtime": "/tmp/mongoeco-python315/venv/lib/python3.15/site-packages/mongoeco/__init__.py",
+  "runs": [
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "sort_batch_preflight_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "insert_many_duplicate_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "bulk_write_duplicate_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "insert_many_schema_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "bulk_write_schema_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "insert_many_invalid_id_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "bulk_write_invalid_id_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "insert_many_mixed_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "bulk_write_mixed_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "insert_many_shared_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "bulk_write_shared_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "UpdateOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "UpdateMany_options_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "ReplaceOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "DeleteOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "DeleteMany_options_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "UpdateOne_type_error_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "UpdateMany_type_error_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "mixed_families_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "replace_identity_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "pipeline_failure_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "sort_batch_preflight_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "insert_many_duplicate_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "bulk_write_duplicate_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "insert_many_schema_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "bulk_write_schema_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "insert_many_invalid_id_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "bulk_write_invalid_id_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "insert_many_mixed_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "bulk_write_mixed_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "insert_many_shared_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "bulk_write_shared_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "UpdateOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "UpdateMany_options_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "ReplaceOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "DeleteOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "DeleteMany_options_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "UpdateOne_type_error_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "UpdateMany_type_error_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "mixed_families_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "replace_identity_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "sync",
+      "case": "pipeline_failure_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "sort_batch_preflight_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "insert_many_duplicate_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "bulk_write_duplicate_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "insert_many_schema_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "bulk_write_schema_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "insert_many_invalid_id_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "bulk_write_invalid_id_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "insert_many_mixed_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "bulk_write_mixed_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "insert_many_shared_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "bulk_write_shared_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "UpdateOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "UpdateMany_options_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "ReplaceOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "DeleteOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "DeleteMany_options_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "UpdateOne_type_error_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "UpdateMany_type_error_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "mixed_families_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "replace_identity_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "pipeline_failure_True",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "sort_batch_preflight_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "insert_many_duplicate_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "bulk_write_duplicate_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "insert_many_schema_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "bulk_write_schema_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "insert_many_invalid_id_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "bulk_write_invalid_id_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "insert_many_mixed_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "bulk_write_mixed_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "insert_many_shared_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "bulk_write_shared_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "UpdateOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "UpdateMany_options_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "ReplaceOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "DeleteOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "DeleteMany_options_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "UpdateOne_type_error_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "UpdateMany_type_error_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "mixed_families_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "replace_identity_False",
+      "matches": false
+    },
+    {
+      "engine": "memory",
+      "facade": "async",
+      "case": "pipeline_failure_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "sort_batch_preflight_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "insert_many_duplicate_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "bulk_write_duplicate_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "insert_many_schema_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "bulk_write_schema_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "insert_many_invalid_id_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "bulk_write_invalid_id_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "insert_many_mixed_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "bulk_write_mixed_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "insert_many_shared_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "bulk_write_shared_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "UpdateOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "UpdateMany_options_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "ReplaceOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "DeleteOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "DeleteMany_options_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "UpdateOne_type_error_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "UpdateMany_type_error_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "mixed_families_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "replace_identity_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "pipeline_failure_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "sort_batch_preflight_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "insert_many_duplicate_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "bulk_write_duplicate_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "insert_many_schema_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "bulk_write_schema_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "insert_many_invalid_id_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "bulk_write_invalid_id_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "insert_many_mixed_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "bulk_write_mixed_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "insert_many_shared_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "bulk_write_shared_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "UpdateOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "UpdateMany_options_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "ReplaceOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "DeleteOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "DeleteMany_options_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "UpdateOne_type_error_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "UpdateMany_type_error_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "mixed_families_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "replace_identity_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "sync",
+      "case": "pipeline_failure_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "sort_batch_preflight_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "insert_many_duplicate_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "bulk_write_duplicate_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "insert_many_schema_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "bulk_write_schema_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "insert_many_invalid_id_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "bulk_write_invalid_id_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "insert_many_mixed_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "bulk_write_mixed_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "insert_many_shared_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "bulk_write_shared_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "UpdateOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "UpdateMany_options_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "ReplaceOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "DeleteOne_options_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "DeleteMany_options_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "UpdateOne_type_error_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "UpdateMany_type_error_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "mixed_families_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "replace_identity_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "pipeline_failure_True",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "sort_batch_preflight_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "insert_many_duplicate_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "bulk_write_duplicate_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "insert_many_schema_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "bulk_write_schema_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "insert_many_invalid_id_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "bulk_write_invalid_id_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "insert_many_mixed_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "bulk_write_mixed_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "insert_many_shared_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "bulk_write_shared_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "UpdateOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "UpdateMany_options_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "ReplaceOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "DeleteOne_options_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "DeleteMany_options_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "UpdateOne_type_error_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "UpdateMany_type_error_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "mixed_families_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "replace_identity_False",
+      "matches": false
+    },
+    {
+      "engine": "sqlite",
+      "facade": "async",
+      "case": "pipeline_failure_False",
+      "matches": false
+    }
+  ]
+}

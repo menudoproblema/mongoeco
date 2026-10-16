@@ -1,0 +1,19 @@
+--- full-gate/test_numeric_identity_conservation.py
++++ tests/integration/api/test_numeric_identity_conservation.py
+@@ -6,6 +6,7 @@
+ import shutil
+ import sqlite3
+ 
++from contextlib import closing
+ from pathlib import Path
+ 
+ import pytest
+@@ -27,7 +28,7 @@
+ 
+ 
+ def snapshot(database):
+-    with sqlite3.connect(database) as conn:
++    with closing(sqlite3.connect(database)) as conn:
+         return (
+             conn.execute(
+                 "SELECT type,name,sql FROM sqlite_master ORDER BY type,name"

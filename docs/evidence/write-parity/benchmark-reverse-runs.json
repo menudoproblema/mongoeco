@@ -1,0 +1,50 @@
+[
+  {
+    "name": "benchmark-reverse-memory-sync-candidate",
+    "command": [
+      "-m",
+      "benchmarks.report",
+      "--engine",
+      "memory-sync",
+      "--size",
+      "1000",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "5",
+      "--workload",
+      "vector_search_diagnostics",
+      "--subject-root",
+      "/Users/uve/Proyectos/mongoeco",
+      "--output-json",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/benchmark-reverse-memory-sync-candidate.json",
+      "--output-markdown",
+      "/tmp/mongoeco-write-parity/benchmark-reverse-memory-sync-candidate.md"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "benchmark-reverse-memory-sync-baseline",
+    "command": [
+      "-m",
+      "benchmarks.report",
+      "--engine",
+      "memory-sync",
+      "--size",
+      "1000",
+      "--warmup",
+      "1",
+      "--repetitions",
+      "5",
+      "--workload",
+      "vector_search_diagnostics",
+      "--subject-root",
+      "/tmp/mongoeco-write-parity/baseline-source",
+      "--output-json",
+      "/Users/uve/Proyectos/mongoeco/docs/evidence/write-parity/benchmark-reverse-memory-sync-baseline.json",
+      "--output-markdown",
+      "/tmp/mongoeco-write-parity/benchmark-reverse-memory-sync-baseline.md"
+    ],
+    "exit_code": 0
+  }
+]

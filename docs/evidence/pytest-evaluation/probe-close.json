@@ -1,0 +1,5 @@
+{
+  "proxy_close_completed_with_open_connection": false,
+  "client_stream_eof_before_peer_close": false,
+  "proxy_close_completed_after_peer_close": true
+}

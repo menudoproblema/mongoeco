@@ -1,0 +1,684 @@
+{
+  "schema": "mongoeco-python-support-validation/v1",
+  "status": "implementation_complete_release_decision_pending",
+  "date": "2026-10-15",
+  "candidate": {
+    "git_head": "3a05d7daa62115bf68d28d721aa2d3fe9b5c0eaa",
+    "uncommitted_workset": true,
+    "workset_manifest": "workset-sources.json",
+    "workset_sha256": "2399b762440336c3e5dfcedb8634dd835c9fae48fd80e4daf82157ef73f2b3db",
+    "runtime_manifest": "runtime-sources.json",
+    "runtime_sha256": "d7178bf84063409ca304fbb65d4b72e723219f8c847913a2a65db30ff643b5b9",
+    "wheel_sha256": "25157c8b94aa7c2dceb5f7b1575faf7fb3b82e82bb653b64a0e9a104f7bd10f3",
+    "sdist_sha256": "93fb65c644d035cbeebb6fd2b2cf20ab5a00373a8e1fc93740abb1c245e23055",
+    "wheel_path": "/tmp/mongoeco-python315/dist/mongoeco-4.9.1-py3-none-any.whl",
+    "sdist_path": "/tmp/mongoeco-python315/dist/mongoeco-4.9.1.tar.gz",
+    "package_version": "4.9.1",
+    "disposition": "Unpublished workset build; not the published 4.9.1. Next release number remains undecided.",
+    "runtime_files_compared": 275
+  },
+  "policy": {
+    "supported_cpython": [
+      "3.13",
+      "3.14",
+      "3.15"
+    ],
+    "installation_minimum": ">=3.13",
+    "build": "standard GIL-enabled CPython",
+    "python_313_support_through": "2028-10",
+    "minimum_change": "A later release may remove Python 3.13 after October 2028; no runtime date switch or automatic withdrawal of existing distributions."
+  },
+  "common_dependency_pins": {
+    "usearch": "2.26.4",
+    "shapely": "2.2.0",
+    "python_specific_exceptions": [],
+    "installation_and_tests_fresh_on_all_three_interpreters": true
+  },
+  "environments": [
+    {
+      "python": "3.13.15 (main, Aug  5 2026, 12:25:43) [Clang 17.0.0 (clang-1700.6.4.2)]",
+      "version": [
+        3,
+        13,
+        15
+      ],
+      "module": "/private/tmp/mongoeco-python315/py313/lib/python3.13/site-packages/mongoeco/__init__.py",
+      "gil_disabled": 0,
+      "sqlite": "3.53.4",
+      "usearch": "2.26.4",
+      "shapely": "2.2.0",
+      "pymongo": "4.19.0",
+      "pytest": {
+        "passed": 11024,
+        "expected_skips": 31,
+        "subtests_passed": 14445
+      },
+      "unittest": {
+        "tests": 3613,
+        "expected_skips": 3
+      },
+      "installed_runtime_files_compared": 275
+    },
+    {
+      "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)]",
+      "version": [
+        3,
+        14,
+        5
+      ],
+      "module": "/private/tmp/mongoeco-python315/py314/lib/python3.14/site-packages/mongoeco/__init__.py",
+      "gil_disabled": 0,
+      "sqlite": "3.53.4",
+      "usearch": "2.26.4",
+      "shapely": "2.2.0",
+      "pymongo": "4.19.0",
+      "pytest": {
+        "passed": 11024,
+        "expected_skips": 31,
+        "subtests_passed": 14445
+      },
+      "unittest": {
+        "tests": 3613,
+        "expected_skips": 3
+      },
+      "installed_runtime_files_compared": 275
+    },
+    {
+      "python": "3.15.0 (main, Oct 15 2026, 15:02:52) [Clang 17.0.0 (clang-1700.6.4.2)]",
+      "version": [
+        3,
+        15,
+        0
+      ],
+      "module": "/tmp/mongoeco-python315/venv/lib/python3.15/site-packages/mongoeco/__init__.py",
+      "gil_disabled": 0,
+      "sqlite": "3.43.2",
+      "usearch": "2.26.4",
+      "shapely": "2.2.0",
+      "pymongo": "4.19.0",
+      "pytest": {
+        "passed": 11024,
+        "expected_skips": 31,
+        "subtests_passed": 14445
+      },
+      "unittest": {
+        "tests": 3613,
+        "expected_skips": 3
+      },
+      "installed_runtime_files_compared": 275
+    }
+  ],
+  "gates": [
+    {
+      "python": "313",
+      "gate": "pytest",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "--tb=short"
+          ],
+          "exit_code": 0,
+          "log": "pytest-313.log"
+        }
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "unittest",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            "test*.py"
+          ],
+          "exit_code": 0,
+          "log": "unittest-313.log"
+        }
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "contracts",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/check_public_typing.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-0.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/smoke_external_engine.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-1.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/update_public_api_manifest.py",
+            "--check"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-2.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/update_compat_snapshots.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-3.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/check_lint_ratchet.py",
+            "--base-ref",
+            "v4.9.1"
+          ],
+          "exit_code": 0,
+          "log": "contracts-313-4.log"
+        }
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "smoke-wheel",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--wheel",
+            "/tmp/mongoeco-python315/dist/mongoeco-4.9.1-py3-none-any.whl"
+          ],
+          "exit_code": 0,
+          "log": "smoke-wheel-313.log"
+        }
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "smoke-sdist",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--sdist",
+            "/tmp/mongoeco-python315/dist/mongoeco-4.9.1.tar.gz"
+          ],
+          "exit_code": 0,
+          "log": "smoke-sdist-313.log"
+        }
+      ]
+    },
+    {
+      "python": "313",
+      "gate": "conformance",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:MemoryEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-python315/conformance-MemoryEngine-313.json"
+          ],
+          "exit_code": 0,
+          "engine": "MemoryEngine"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py313/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:SQLiteEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-python315/conformance-SQLiteEngine-313.json"
+          ],
+          "exit_code": 0,
+          "engine": "SQLiteEngine"
+        }
+      ]
+    },
+    {
+      "python": "314",
+      "gate": "pytest",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "--tb=short",
+            "--cov=mongoeco",
+            "--cov-report=term",
+            "--cov-report=json:/tmp/mongoeco-python315/coverage314.json"
+          ],
+          "exit_code": 0,
+          "log": "pytest-314.log"
+        }
+      ]
+    },
+    {
+      "python": "314",
+      "gate": "unittest",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            "test*.py"
+          ],
+          "exit_code": 0,
+          "log": "unittest-314.log"
+        }
+      ]
+    },
+    {
+      "python": "314",
+      "gate": "contracts",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/check_public_typing.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-0.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/smoke_external_engine.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-1.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/update_public_api_manifest.py",
+            "--check"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-2.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/update_compat_snapshots.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-3.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/check_lint_ratchet.py",
+            "--base-ref",
+            "v4.9.1"
+          ],
+          "exit_code": 0,
+          "log": "contracts-314-4.log"
+        }
+      ]
+    },
+    {
+      "python": "314",
+      "gate": "smoke-wheel",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--wheel",
+            "/tmp/mongoeco-python315/dist/mongoeco-4.9.1-py3-none-any.whl"
+          ],
+          "exit_code": 0,
+          "log": "smoke-wheel-314.log"
+        }
+      ]
+    },
+    {
+      "python": "314",
+      "gate": "smoke-sdist",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--sdist",
+            "/tmp/mongoeco-python315/dist/mongoeco-4.9.1.tar.gz"
+          ],
+          "exit_code": 0,
+          "log": "smoke-sdist-314.log"
+        }
+      ]
+    },
+    {
+      "python": "314",
+      "gate": "conformance",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:MemoryEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-python315/conformance-MemoryEngine-314.json"
+          ],
+          "exit_code": 0,
+          "engine": "MemoryEngine"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/py314/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:SQLiteEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-python315/conformance-SQLiteEngine-314.json"
+          ],
+          "exit_code": 0,
+          "engine": "SQLiteEngine"
+        }
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "pytest",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "--tb=short"
+          ],
+          "exit_code": 0,
+          "log": "pytest-315.log"
+        }
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "unittest",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            "test*.py"
+          ],
+          "exit_code": 0,
+          "log": "unittest-315.log"
+        }
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "contracts",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/check_public_typing.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-0.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/smoke_external_engine.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-1.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/update_public_api_manifest.py",
+            "--check"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-2.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/update_compat_snapshots.py"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-3.log"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/check_lint_ratchet.py",
+            "--base-ref",
+            "v4.9.1"
+          ],
+          "exit_code": 0,
+          "log": "contracts-315-4.log"
+        }
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "smoke-wheel",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--wheel",
+            "/tmp/mongoeco-python315/dist/mongoeco-4.9.1-py3-none-any.whl"
+          ],
+          "exit_code": 0,
+          "log": "smoke-wheel-315.log"
+        }
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "smoke-sdist",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "scripts/smoke_installed_wheel.py",
+            "--sdist",
+            "/tmp/mongoeco-python315/dist/mongoeco-4.9.1.tar.gz"
+          ],
+          "exit_code": 0,
+          "log": "smoke-sdist-315.log"
+        }
+      ]
+    },
+    {
+      "python": "315",
+      "gate": "conformance",
+      "runs": [
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:MemoryEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-python315/conformance-MemoryEngine-315.json"
+          ],
+          "exit_code": 0,
+          "engine": "MemoryEngine"
+        },
+        {
+          "command": [
+            "/tmp/mongoeco-python315/venv/bin/python",
+            "-m",
+            "mongoeco.conformance",
+            "mongoeco.engines:SQLiteEngine",
+            "--profile",
+            "spi-v2-core,spi-v2-atomicity,spi-v2-clock,spi-v2-snapshots,spi-v2-change-delivery,search-v1",
+            "--require-success",
+            "--format",
+            "json",
+            "--output",
+            "/tmp/mongoeco-python315/conformance-SQLiteEngine-315.json"
+          ],
+          "exit_code": 0,
+          "engine": "SQLiteEngine"
+        }
+      ]
+    }
+  ],
+  "coverage_python_314": {
+    "covered_lines": 42997,
+    "num_statements": 43413,
+    "percent_covered": 99.04176168428812,
+    "percent_covered_display": "99.04",
+    "missing_lines": 416,
+    "excluded_lines": 896,
+    "percent_statements_covered": 99.04176168428812,
+    "percent_statements_covered_display": "99.04"
+  },
+  "ci": {
+    "python_versions": [
+      "3.13",
+      "3.14",
+      "3.15"
+    ],
+    "release_gate_required": true,
+    "installation_minimum": ">=3.13",
+    "common_pins": {
+      "usearch": "2.26.4",
+      "shapely": "2.2.0"
+    },
+    "shell_blocks_parsed": 33,
+    "python_blocks_parsed": 3,
+    "artifacts_reproduce": true,
+    "wheel_sha256": "25157c8b94aa7c2dceb5f7b1575faf7fb3b82e82bb653b64a0e9a104f7bd10f3",
+    "sdist_sha256": "93fb65c644d035cbeebb6fd2b2cf20ab5a00373a8e1fc93740abb1c245e23055"
+  },
+  "python_315_source": {
+    "url": "https://www.python.org/ftp/python/3.15.0/Python-3.15.0.tar.xz",
+    "sha256": "ba4bed1ba346b916890b76d9e320451420aa69f6408997d33c66482eeae3d575",
+    "version": "3.15.0 stable",
+    "build_configure": [
+      "--prefix=/tmp/mongoeco-python315/cpython",
+      "--with-openssl=/opt/homebrew/opt/openssl@3",
+      "--with-ensurepip=install"
+    ],
+    "source_hash_verified_against_official_release_page": true
+  },
+  "regressions": {
+    "new_tests": 6,
+    "focal_manifest_tests_per_interpreter": 12,
+    "public_manifest_reference_rewritten": false,
+    "same_manifest_across_interpreters": true,
+    "cases": [
+      "alias in unions",
+      "alias in list and Iterable generic arguments",
+      "alias nested in Callable arguments and return",
+      "unrelated class name sharing alias prefix preserves its module",
+      "exported alias qualifiedName remains stable"
+    ]
+  },
+  "native_dependency_installation": {
+    "usearch_315": "Official 2.26.4 source distribution built and tested with no source patches or private binary substitution.",
+    "shapely_315": "Public 2.2.0 compatible wheel.",
+    "clean_smokes": "Wheel and sdist install into separate new venvs on each interpreter, resolve public dependencies without CI constraints, and pass runtime plus SPI core smokes."
+  },
+  "additional_gates": {
+    "deep_property_python_314": {
+      "passed": 9
+    },
+    "benchmarks_python_314": [
+      "memory-sync search/vector smoke",
+      "sqlite-sync search/vector smoke"
+    ],
+    "twine": "wheel and sdist passed",
+    "distribution_reproduction": "two sequential builds, normalized sdist, both distributions byte-identical",
+    "lint_base": "v4.9.1",
+    "lint_changed_python_files": 76,
+    "format": "passed",
+    "workflow_shell_blocks_parsed": 33,
+    "workflow_python_blocks_parsed": 3
+  },
+  "prior_corpora": {
+    "native_fixtures_preserved": true,
+    "sync_async_memory_sqlite_replay": "All full pytest suites consume the existing native write, identity and API-option references, including PyMongo sync/async wire clients.",
+    "fresh_native_capture_in_this_slice": false,
+    "prior_evidence_not_overwritten": true
+  },
+  "review": {
+    "type": "self_review",
+    "diff_reviewed": true,
+    "documentation_aligned": true,
+    "required_candidate_gates_passed": true,
+    "prior_authorized_work_preserved": true,
+    "unrelated_changes_observed": false,
+    "remaining_findings_in_scope": []
+  },
+  "limits": [
+    "Local runs use macOS arm64; hosted GitHub CI is configured but not executed here.",
+    "USearch has no published cp315 wheel at validation time; installing it on Python 3.15 requires the public source build and a C/C++ toolchain.",
+    "No free-threaded, JIT-enabled or PyPy support claim.",
+    "No release number selection, tag, publication or permanent external consumer modification."
+  ]
+}

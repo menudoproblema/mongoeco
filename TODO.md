@@ -171,11 +171,23 @@ Pendientes futuros:
 
 ## 7. Criterio de prioridad
 
-Para la siguiente entrega, el objetivo acordado es **escrituras fiables para
+Para la entrega 4.10.0, el objetivo acordado es **escrituras fiables para
 testkits**, además del soporte PyMongo 4.19 ya implementado. El
 [plan acotado](docs/plan-write-parity.md) define corpus, cobertura actual,
-criterios de aceptación y bloques pendientes. La planificación no acredita su
-implementación ni el cierre de sus gates.
+criterios de aceptación y bloques. El [resultado de implementación](docs/write-parity-validation.md)
+conserva las correcciones y su evidencia, y la ampliación de
+[identidad y validación](docs/write-identity-validation.md) cubre los 82 escenarios
+adicionales acordados. También están implementadas las
+[ampliaciones de API PyMongo](docs/pymongo-api-conveniences.md)
+(proyecciones por campos, comentarios en inserts y tipado Iterable).
+También se ha completado el [soporte oficial de Python 3.15](docs/python-support.md),
+con dependencias nativas comunes probadas en 3.13/3.14/3.15, y se fija octubre
+de 2028 como fin de soporte de Python 3.13. Está implementado el
+[contrato del kit pytest](docs/architecture/pytest-integration-proposal.md),
+con fixtures wire, aislamiento y canario contra el wheel instalado. Incluye regresiones de cleanup
+y concurrencia y un canario consumidor anónimo; los gates del candidato
+se registran en su evidencia de implementación. El
+[cierre 4.10.0](docs/release-4.10.0.md) consolida el alcance y la entrega.
 
 Orden de las demás líneas de evolución después de esa entrega:
 

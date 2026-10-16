@@ -46,6 +46,10 @@ completa de verdad de la estructura interna.
 12. [testing-and-compatibility.md](testing-and-compatibility.md)
 13. [decisions/index.md](decisions/index.md)
 
+Integración oficial con pytest:
+[contrato y aceptación](pytest-integration-proposal.md) y [guía de uso](../pytest.md).
+La autorización de implementación consta en el encargo del usuario.
+
 ## Patrones principales
 
 Los patrones de diseno que aparecen de forma sistematica en el codigo son:

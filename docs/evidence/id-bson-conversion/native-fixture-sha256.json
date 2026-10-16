@@ -1,0 +1,20 @@
+{
+  "tests/fixtures/write_parity_mongodb_7_0.json": "77a66070b05f61334c565d6c87525548bb3611465bef4fa3c12f759a5232ba1d",
+  "tests/fixtures/write_identity_mongodb_7_0.json": "50e80e4a139203dae0a1150b727ff1ebaa92aaf7576b3eed3c6711f90d2422d7",
+  "tests/fixtures/write_operations_mongodb_7_0.json": "a4befaffcbbbd741819cb2dd30296f94ddfc7058736293acd4c86dc7356e5e75",
+  "tests/fixtures/write_raw_mongodb_7_0.json": "0154e7599f32a56591ce1ac3050d9e0e0f2f26edeafa767b99ec1ee89eb02eaa",
+  "tests/fixtures/write_queries_mongodb_7_0.json": "60901690d7975f5b351b496f29fb19b7d4ee26f5c60196be7ea1df568f916d4e",
+  "tests/fixtures/api_options_mongodb_7_0.json": "8c8508abdeaf495ac98b748524f5e023eea9d178ab94215ce97a62ccc7e31117",
+  "tests/fixtures/write_parity_mongodb_8_0.json": "b1336484c1ac2a71299b6475e1b5ca44706af1058ace5194fe83e9ddccfcb3df",
+  "tests/fixtures/write_identity_mongodb_8_0.json": "86deedd4ca0512d64feb3ad12bbf47db877887764ddf2d9a1ef1249ff5be887c",
+  "tests/fixtures/write_operations_mongodb_8_0.json": "d5d9051b1174c675f144ea3d10b781d3b766b818a6dbdf583309f96b4d2c2d44",
+  "tests/fixtures/write_raw_mongodb_8_0.json": "bcfba20b27fa5363b7a2ed15366b43cca8a89d2e9c89d75f6e50c7f490525b1b",
+  "tests/fixtures/write_queries_mongodb_8_0.json": "d58a58a69f91c210c1f87eeb645c7505d442d9630ffabe857019542c676c4b72",
+  "tests/fixtures/api_options_mongodb_8_0.json": "149d3a469481daddc5c8cee385bb6666ba82ccd548054addc23a3453c08fed63",
+  "tests/fixtures/write_parity_mongodb_9_0.json": "09bfb25675761d66da03dd2d55fc76384c20a19ce8be1bffc242ac411066580b",
+  "tests/fixtures/write_identity_mongodb_9_0.json": "d6208658348b882c082b2e3908a08bb7465d244bdb25900ea3c6a0983601760c",
+  "tests/fixtures/write_operations_mongodb_9_0.json": "dc4b2fda3a13b472b5bf51b6118e7314ed277d796f9e62aac9cb38338038304b",
+  "tests/fixtures/write_raw_mongodb_9_0.json": "6351a18aef97c3f6e2de19781c2f17e4270be0e1709b12f57c9c56a7b7cbe77b",
+  "tests/fixtures/write_queries_mongodb_9_0.json": "f04b45670896501c9f701942b78f9c3cef75d1a9ed78a1d98faf215476bab70e",
+  "tests/fixtures/api_options_mongodb_9_0.json": "8876c9ff86d82612a736b2e7d4f1a90dcef150604b3ab2732faa7c1ab406052d"
+}

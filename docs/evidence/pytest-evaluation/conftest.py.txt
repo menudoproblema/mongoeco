@@ -1,0 +1,11 @@
+import pytest
+from probe_thread import Server
+
+@pytest.fixture(params=['memory','sqlite'])
+def server(request,tmp_path):
+    with Server(request.param,tmp_path/'database.sqlite') as instance:
+        yield instance
+
+@pytest.fixture
+def anyio_backend():
+    return 'asyncio'

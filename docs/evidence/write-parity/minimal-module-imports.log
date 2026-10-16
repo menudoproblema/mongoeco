@@ -1,0 +1,7 @@
+test_every_source_module_imports_in_a_clean_interpreter (tests.unit.test_module_imports.ModuleImportSmokeTests.test_every_source_module_imports_in_a_clean_interpreter) ... ok
+test_modules_without_future_annotations_do_not_reference_unbound_names (tests.unit.test_module_imports.ModuleImportSmokeTests.test_modules_without_future_annotations_do_not_reference_unbound_names) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 3.683s
+
+OK
