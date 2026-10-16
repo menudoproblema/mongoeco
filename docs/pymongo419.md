@@ -88,7 +88,10 @@ El consumidor externo observado ya fija PyMongo 4.19.0; el testkit observado
 mantiene una restricción de Mongoeco anterior a 4.9. Sus manifests no se cambian
 en esta implementación ni se acredita su adopción permanente.
 
-## Verificación
+## Verificación del candidato histórico
+
+Esta sección conserva los resultados previos al cierre. La identidad y los gates
+de la entrega están en [release-4.10.0.md](release-4.10.0.md).
 
 Las pruebas protegen selección explícita y automática, defaults, errores de
 configuración, callback por host, rechazo completo, sufijos privados y públicos,

@@ -1,6 +1,6 @@
 # Escrituras no confirmadas y reutilización de la conexión
 
-Corrección para la próxima entrega, autorizada por el encargo de corregir
+Corrección incluida en **4.10.0**, autorizada por el encargo de corregir
 `w=0` y comprobar errores, efectos y reutilización con clientes PyMongo reales.
 No cambia el SPI, los motores, el formato SQLite ni las dependencias.
 
@@ -83,6 +83,9 @@ a un servidor real. Así el `select` bloqueante del cliente async de PyMongo 4.9
 no impide que el servidor avance cuando SQLite cede el control al executor.
 
 ## Contraste nativo y reproducción
+
+Los siguientes registros conservan los candidatos anteriores. El estado de la
+entrega está en [release-4.10.0.md](release-4.10.0.md).
 
 Se han capturado MongoDB **7.0.43, 8.0.32 y 9.0.2**, con sus FCV exactas.
 PyMongo **4.9.2 y 4.19.0** coinciden en los 172 casos sync/async y cuatro raw por

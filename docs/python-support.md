@@ -76,7 +76,10 @@ uniones, genéricos, argumentos de Callable, alias exportados y nombres de
 clases parecidos que deben conservar su módulo. No se reescribe la referencia
 para aceptar diferencias propias del intérprete.
 
-## Validación final
+## Validación final del candidato histórico
+
+Esta sección conserva los resultados previos al cierre. La identidad y los gates
+de la entrega están en [release-4.10.0.md](release-4.10.0.md).
 
 Implementación completada el 15 de octubre de 2026. Se construyeron dos veces
 el wheel y el sdist; ambos artefactos coinciden byte a byte tras normalizar
